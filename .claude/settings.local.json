@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter --version)",
+      "Bash(where flutter:*)",
+      "Read(//c/Users/User/flutter/bin/**)",
+      "Read(//c/src/flutter/bin/**)",
+      "Bash(dart --version)",
+      "Bash(export PATH=\"$PATH:/c/Users/User/flutter/bin:/c/src/flutter/bin:$LOCALAPPDATA/Pub/Cache/bin\")",
+      "Bash(winget install:*)",
+      "Bash(git clone:*)",
+      "Bash(export PATH=\"/c/src/flutter/bin:$PATH\")",
+      "Bash(flutter create:*)",
+      "Bash(powershell -Command \"[Environment]::SetEnvironmentVariable\\(''Path'', [Environment]::GetEnvironmentVariable\\(''Path'', ''User''\\) + '';C:\\\\src\\\\flutter\\\\bin'', ''User''\\)\")"
+    ]
+  }
+}
