@@ -1,4 +1,4 @@
-# finna_bbear
+# chubiPocket
 
 A new Flutter project.
 

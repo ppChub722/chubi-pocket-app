@@ -1,4 +1,4 @@
-package com.finnabbear.finna_bbear
+package com.chubipocket.chubi_pocket
 
 import io.flutter.embedding.android.FlutterActivity
 
