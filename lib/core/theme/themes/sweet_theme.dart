@@ -1,0 +1,73 @@
+import 'package:flutter/material.dart';
+
+import '../app_colors.dart';
+import '../app_theme.dart';
+
+const _sweetPink = Color(0xFFFFB3C6);
+const _sweetPinkDeep = Color(0xFFFF8FB1);
+const _sweetAccent = Color(0xFFFFD6E0);
+
+final sweetTheme = AppTheme(
+  id: 'sweet',
+  nameKey: 'theme_sweet',
+  isPremium: false,
+  previewSwatch: const [_sweetPink, _sweetAccent, Color(0xFFFFFFFF)],
+  lightColors: const AppColors(
+    brightness: Brightness.light,
+    primary: _sweetPinkDeep,
+    onPrimary: Color(0xFFFFFFFF),
+    primaryContainer: _sweetAccent,
+    onPrimaryContainer: Color(0xFF4A1029),
+    secondary: Color(0xFFFFC2CF),
+    onSecondary: Color(0xFF4A1029),
+    background: Color(0xFFFFF7FA),
+    onBackground: Color(0xFF2B1A21),
+    surface: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF2B1A21),
+    surfaceVariant: Color(0xFFFCEEF2),
+    onSurfaceVariant: Color(0xFF6B5258),
+    outline: Color(0xFFE8C9D2),
+    outlineSoft: Color(0xFFF5E0E7),
+    income: Color(0xFF22C55E),
+    onIncome: Color(0xFFFFFFFF),
+    expense: Color(0xFFE11D63),
+    onExpense: Color(0xFFFFFFFF),
+    warning: Color(0xFFF59E0B),
+    onWarning: Color(0xFF3D2A00),
+    info: Color(0xFFA855F7),
+    onInfo: Color(0xFFFFFFFF),
+    success: Color(0xFF22C55E),
+    onSuccess: Color(0xFFFFFFFF),
+    error: Color(0xFFE11D63),
+    onError: Color(0xFFFFFFFF),
+  ),
+  darkColors: const AppColors(
+    brightness: Brightness.dark,
+    primary: _sweetPink,
+    onPrimary: Color(0xFF4A1029),
+    primaryContainer: Color(0xFF6B1D3F),
+    onPrimaryContainer: _sweetAccent,
+    secondary: Color(0xFFFFC2CF),
+    onSecondary: Color(0xFF4A1029),
+    background: Color(0xFF1A1014),
+    onBackground: Color(0xFFF5E6EB),
+    surface: Color(0xFF221519),
+    onSurface: Color(0xFFF5E6EB),
+    surfaceVariant: Color(0xFF2D1C22),
+    onSurfaceVariant: Color(0xFFD6B8C1),
+    outline: Color(0xFF4A2F38),
+    outlineSoft: Color(0xFF2D1C22),
+    income: Color(0xFF4ADE80),
+    onIncome: Color(0xFF052E16),
+    expense: Color(0xFFFB7185),
+    onExpense: Color(0xFF4A0E1F),
+    warning: Color(0xFFFBBF24),
+    onWarning: Color(0xFF3D2A00),
+    info: Color(0xFFC084FC),
+    onInfo: Color(0xFF2E1065),
+    success: Color(0xFF4ADE80),
+    onSuccess: Color(0xFF052E16),
+    error: Color(0xFFFB7185),
+    onError: Color(0xFF4A0E1F),
+  ),
+);

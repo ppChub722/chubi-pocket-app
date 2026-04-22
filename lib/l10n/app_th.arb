@@ -1,0 +1,28 @@
+{
+  "@@locale": "th",
+
+  "appName": "chubiPocket",
+
+  "previewTitle": "ตัวอย่างคอร์",
+  "sectionTheme": "ธีม",
+  "sectionMode": "โหมด",
+  "sectionLanguage": "ภาษา",
+  "sectionFont": "ฟอนต์",
+  "sectionCurrentSelection": "การเลือกปัจจุบัน",
+  "sectionTypographySamples": "ตัวอย่างตัวอักษร",
+  "sectionSemanticColors": "สีเชิงความหมาย",
+  "sectionFormatters": "รูปแบบการแสดงผล",
+  "sectionControls": "ปุ่ม",
+  "sectionInput": "ช่องกรอก",
+  "sectionCard": "การ์ด",
+
+  "modeLight": "สว่าง",
+  "modeDark": "มืด",
+  "modeSystem": "ระบบ",
+
+  "fontsAvailableFor": "มี {count} รายการสำหรับ \"{lang}\"",
+
+  "amountLabel": "จำนวนเงิน",
+  "amountHint": "0.00",
+  "monthlyBalance": "ยอดคงเหลือรายเดือน"
+}

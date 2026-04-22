@@ -1,0 +1,35 @@
+{
+  "@@locale": "en",
+
+  "appName": "chubiPocket",
+  "@appName": { "description": "Application name" },
+
+  "previewTitle": "Core Preview",
+  "sectionTheme": "Theme",
+  "sectionMode": "Mode",
+  "sectionLanguage": "Language",
+  "sectionFont": "Font",
+  "sectionCurrentSelection": "Current selection",
+  "sectionTypographySamples": "Typography samples",
+  "sectionSemanticColors": "Semantic colors",
+  "sectionFormatters": "Formatters",
+  "sectionControls": "Controls",
+  "sectionInput": "Input",
+  "sectionCard": "Card",
+
+  "modeLight": "Light",
+  "modeDark": "Dark",
+  "modeSystem": "System",
+
+  "fontsAvailableFor": "{count} available for \"{lang}\"",
+  "@fontsAvailableFor": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "lang": { "type": "String" }
+    }
+  },
+
+  "amountLabel": "Amount",
+  "amountHint": "0.00",
+  "monthlyBalance": "Monthly balance"
+}
