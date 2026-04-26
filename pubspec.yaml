@@ -15,11 +15,16 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
-  # State management
-  flutter_riverpod: ^2.6.1
+  # State management — Bloc + Cubit + Repository pattern (locked)
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
 
   # Navigation
   go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+  connectivity_plus: ^6.0.5
 
   # Fonts
   google_fonts: ^6.2.1
@@ -28,14 +33,26 @@ dependencies:
   intl: any
 
   # Persistence
-  shared_preferences: ^2.3.3
+  shared_preferences: ^2.3.3      # non-sensitive prefs (theme, locale, font)
+  flutter_secure_storage: ^9.2.2  # auth tokens (mobile keystore; web falls back)
+
+  # Android: opt in to highest available display refresh rate (120Hz on capable devices).
+  # No-op on web / iOS / desktop.
+  flutter_displaymode: ^0.6.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
 
   flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
   generate: true
+  # When the first avatar PNG is added (see assets/avatars/README.md),
+  # uncomment the line below to register the folder. Leave it commented
+  # while the folder has no PNGs — Flutter rejects empty asset entries.
+  # assets:
+  #   - assets/avatars/

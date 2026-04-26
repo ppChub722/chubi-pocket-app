@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/storage_keys.dart';
-import 'shared_preferences_provider.dart';
+import '../../../../core/constants/storage_keys.dart';
 
-final themeModeProvider =
-    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return ThemeModeNotifier(prefs);
-});
-
-class ThemeModeNotifier extends StateNotifier<ThemeMode> {
-  ThemeModeNotifier(this._prefs) : super(_load(_prefs));
+/// Holds the active [ThemeMode] (light / dark / system) and persists it.
+///
+/// Orthogonal to [ThemeIdCubit]: each themeId can render in any [ThemeMode].
+class ThemeModeCubit extends Cubit<ThemeMode> {
+  ThemeModeCubit(this._prefs) : super(_load(_prefs));
 
   final SharedPreferences _prefs;
 
   static ThemeMode _load(SharedPreferences prefs) {
-    final raw = prefs.getString(StorageKeys.themeMode);
-    switch (raw) {
+    switch (prefs.getString(StorageKeys.themeMode)) {
       case 'light':
         return ThemeMode.light;
       case 'dark':
@@ -30,7 +25,8 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 
   Future<void> set(ThemeMode mode) async {
-    state = mode;
+    if (state == mode) return;
+    emit(mode);
     await _prefs.setString(StorageKeys.themeMode, mode.name);
   }
 

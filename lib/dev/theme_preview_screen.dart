@@ -1,33 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../core/constants/app_radius.dart';
 import '../core/constants/app_spacing.dart';
 import '../core/fonts/font_registry.dart';
-import '../core/providers/font_id_provider.dart';
-import '../core/providers/locale_provider.dart';
-import '../core/providers/theme_data_provider.dart';
-import '../core/providers/theme_id_provider.dart';
-import '../core/providers/theme_mode_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/theme_registry.dart';
 import '../core/utils/currency_formatter.dart';
 import '../core/utils/date_formatter.dart';
+import '../features/preferences/presentation/cubit/font_id_cubit.dart';
+import '../features/preferences/presentation/cubit/locale_cubit.dart';
+import '../features/preferences/presentation/cubit/theme_id_cubit.dart';
+import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../l10n/gen/app_localizations.dart';
 
-class ThemePreviewScreen extends ConsumerWidget {
+class ThemePreviewScreen extends StatelessWidget {
   const ThemePreviewScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeId = ref.watch(themeIdProvider);
-    final themeMode = ref.watch(themeModeProvider);
-    final fontId = ref.watch(fontIdProvider);
-    final locale = ref.watch(localeProvider);
-    final currentFont = ref.watch(currentFontProvider);
+  Widget build(BuildContext context) {
+    final themeId = context.watch<ThemeIdCubit>().state;
+    final themeMode = context.watch<ThemeModeCubit>().state;
+    final fontId = context.watch<FontIdCubit>().state;
+    final locale = context.watch<LocaleCubit>().state;
+    final currentFont = FontRegistry.byId(fontId);
 
-    final availableFonts =
-        FontRegistry.availableFor(locale.languageCode);
+    final availableFonts = FontRegistry.availableFor(locale.languageCode);
 
     final colors = Theme.of(context).extension<AppColors>()!;
     final l = AppLocalizations.of(context)!;
@@ -49,8 +47,7 @@ class ThemePreviewScreen extends ConsumerWidget {
                   label: Text(t.id),
                   selected: selected,
                   avatar: _SwatchDot(color: t.previewSwatch.first),
-                  onSelected: (_) =>
-                      ref.read(themeIdProvider.notifier).set(t.id),
+                  onSelected: (_) => context.read<ThemeIdCubit>().set(t.id),
                 );
               }).toList(),
             ),
@@ -77,20 +74,19 @@ class ThemePreviewScreen extends ConsumerWidget {
               ],
               selected: {themeMode},
               onSelectionChanged: (s) =>
-                  ref.read(themeModeProvider.notifier).set(s.first),
+                  context.read<ThemeModeCubit>().set(s.first),
             ),
           ),
           _Section(
             title: l.sectionLanguage,
             child: Wrap(
               spacing: AppSpacing.sm,
-              children: supportedLocales.map((l) {
-                final selected = l.languageCode == locale.languageCode;
+              children: supportedLocales.map((loc) {
+                final selected = loc.languageCode == locale.languageCode;
                 return ChoiceChip(
-                  label: Text(l.languageCode.toUpperCase()),
+                  label: Text(loc.languageCode.toUpperCase()),
                   selected: selected,
-                  onSelected: (_) =>
-                      ref.read(localeProvider.notifier).set(l),
+                  onSelected: (_) => context.read<LocaleCubit>().set(loc),
                 );
               }).toList(),
             ),
@@ -109,8 +105,7 @@ class ThemePreviewScreen extends ConsumerWidget {
                 return ChoiceChip(
                   label: Text(f.family),
                   selected: selected,
-                  onSelected: (_) =>
-                      ref.read(fontIdProvider.notifier).set(f.id),
+                  onSelected: (_) => context.read<FontIdCubit>().set(f.id),
                 );
               }).toList(),
             ),
