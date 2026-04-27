@@ -150,6 +150,300 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeSettingsTooltip => 'การตั้งค่า';
 
   @override
+  String get navDashboard => 'แดชบอร์ด';
+
+  @override
+  String get navAccounts => 'บัญชี';
+
+  @override
+  String get navAddTransaction => 'เพิ่มรายการ';
+
+  @override
+  String get navProjects => 'โปรเจกต์';
+
+  @override
+  String get navMore => 'เพิ่มเติม';
+
+  @override
+  String get navNotificationsTooltip => 'การแจ้งเตือน';
+
+  @override
+  String get navProfileTooltip => 'โปรไฟล์และการตั้งค่า';
+
+  @override
+  String get addTransactionComingSoon => 'การบันทึกรายการจะมาในเฟส 1a';
+
+  @override
+  String get notificationsComingSoon => 'กล่องแจ้งเตือนจะมาในเฟส 1b';
+
+  @override
+  String get accountsPlaceholderTitle => 'ยังไม่มีบัญชี';
+
+  @override
+  String get accountsPlaceholderMessage => 'การเพิ่มบัญชีจะมาในเฟส 1a';
+
+  @override
+  String get accountsAddNew => 'เพิ่มบัญชี';
+
+  @override
+  String get accountTypeCash => 'เงินสด';
+
+  @override
+  String get accountTypeBank => 'ธนาคาร';
+
+  @override
+  String get accountTypeEWallet => 'อีวอลเล็ท';
+
+  @override
+  String get accountTypeCreditCard => 'บัตรเครดิต';
+
+  @override
+  String get accountTypePayLater => 'ผ่อนทีหลัง';
+
+  @override
+  String accountCreditUsedPercent(int percent) {
+    return 'ใช้ $percent%';
+  }
+
+  @override
+  String get accountDetailNotFound => 'ไม่พบบัญชี';
+
+  @override
+  String get accountDetailNotFoundMessage =>
+      'บัญชีนี้อาจถูกเก็บเข้าคลังหรือลบไปแล้ว';
+
+  @override
+  String get accountDetailEdit => 'แก้ไข';
+
+  @override
+  String get accountDetailAdjustBalance => 'ปรับยอด';
+
+  @override
+  String get accountDetailArchive => 'เก็บเข้าคลัง';
+
+  @override
+  String get accountDetailActionComingSoon => 'ฟังก์ชันนี้จะมาในเฟส 1a';
+
+  @override
+  String accountDetailCreditAvailable(String available, String limit) {
+    return 'เหลือ $available จาก $limit';
+  }
+
+  @override
+  String get accountDetailSummaryTitle => '30 วันที่ผ่านมา';
+
+  @override
+  String get accountDetailSummaryIncome => 'รายรับ';
+
+  @override
+  String get accountDetailSummaryExpense => 'รายจ่าย';
+
+  @override
+  String get accountDetailSummaryNet => 'สุทธิ';
+
+  @override
+  String accountDetailSummaryTransactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count รายการ',
+      zero: 'ไม่มีรายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get accountDetailBillingTitle => 'การเรียกเก็บเงิน';
+
+  @override
+  String get accountDetailStatementDate => 'วันสรุปยอด';
+
+  @override
+  String get accountDetailPaymentDue => 'วันครบกำหนด';
+
+  @override
+  String get accountDetailMinimumPayment => 'ขั้นต่ำที่ต้องจ่าย';
+
+  @override
+  String accountDetailDayOfMonth(int day) {
+    return 'วันที่ $day ของทุกเดือน';
+  }
+
+  @override
+  String get accountDetailTransactionsTitle => 'รายการ';
+
+  @override
+  String get accountDetailTransactionsEmptyTitle => 'ยังไม่มีรายการ';
+
+  @override
+  String get accountDetailTransactionsEmptyMessage =>
+      'การบันทึกรายการจะมาในเฟส 1a';
+
+  @override
+  String get accountFormTitle => 'บัญชีใหม่';
+
+  @override
+  String get accountFormPreviewLabel => 'ตัวอย่าง';
+
+  @override
+  String get accountFormTypeLabel => 'ประเภท';
+
+  @override
+  String get accountFormNameLabel => 'ชื่อบัญชี';
+
+  @override
+  String get accountFormNameRequired => 'จำเป็น';
+
+  @override
+  String get accountFormNameTooLong => 'สูงสุด 100 ตัวอักษร';
+
+  @override
+  String get accountFormIconLabel => 'ไอคอน';
+
+  @override
+  String get accountFormColorLabel => 'สี';
+
+  @override
+  String get accountFormUploadLogo => 'อัปโหลดโลโก้ (เฟส 2)';
+
+  @override
+  String get accountFormBalanceLabel => 'ยอดเริ่มต้น';
+
+  @override
+  String get accountFormBalanceHelper =>
+      'เงินที่มีอยู่ในบัญชีนี้ ณ วันที่เริ่มติดตาม';
+
+  @override
+  String get accountFormCreditSection => 'รายละเอียดบัตรเครดิต';
+
+  @override
+  String get accountFormCreditLimitLabel => 'วงเงิน';
+
+  @override
+  String get accountFormCreditLimitRequired => 'จำเป็นสำหรับบัญชีเครดิต';
+
+  @override
+  String get accountFormStatementDateLabel => 'วันสรุปยอด';
+
+  @override
+  String get accountFormStatementDateHelper => 'วันของเดือน (1–31)';
+
+  @override
+  String get accountFormPaymentDueLabel => 'วันครบกำหนดชำระ';
+
+  @override
+  String get accountFormPaymentDueHelper => 'วันของเดือน (1–31)';
+
+  @override
+  String get accountFormMinimumPaymentLabel => 'ขั้นต่ำที่ต้องจ่าย';
+
+  @override
+  String get accountFormDayInvalid => 'ต้องเป็น 1–31';
+
+  @override
+  String get accountFormSave => 'บันทึกบัญชี';
+
+  @override
+  String get accountFormDiscardTitle => 'ยกเลิกบัญชีใหม่?';
+
+  @override
+  String get accountFormDiscardBody => 'การเปลี่ยนแปลงของคุณจะหายไป';
+
+  @override
+  String get accountFormCurrencyLabel => 'สกุลเงิน';
+
+  @override
+  String get accountFormCurrencyPhase2 => 'หลายสกุลเงินจะมาในเฟส 2';
+
+  @override
+  String get accountFormPhase2Badge => 'เฟส 2';
+
+  @override
+  String get accountFormNoteLabel => 'บันทึกย่อ';
+
+  @override
+  String get accountFormNoteHelper =>
+      'ไม่บังคับ — บันทึกที่คุณเห็นคนเดียว (เช่น \"เงินไปเที่ยวญี่ปุ่น\")';
+
+  @override
+  String get accountFormNoteTooLong => 'สูงสุด 500 ตัวอักษร';
+
+  @override
+  String get iconPickerSectionStyle => 'สไตล์';
+
+  @override
+  String get iconPickerSectionColor => 'สี';
+
+  @override
+  String get iconPickerUseThis => 'ใช้รูปนี้';
+
+  @override
+  String get iconPickerRemove => 'ลบ';
+
+  @override
+  String get iconPickerUploadComingSoon => 'อัปโหลด (เฟส 2)';
+
+  @override
+  String get iconPickerCropComingSoon => 'ครอป (เฟส 2)';
+
+  @override
+  String get projectsPlaceholderTitle => 'ยังไม่มีโปรเจกต์';
+
+  @override
+  String get projectsPlaceholderMessage => 'โปรเจกต์ร่วมจะมาในเฟส 1b';
+
+  @override
+  String get moreSheetTitle => 'เพิ่มเติม';
+
+  @override
+  String get morePhase1aHeader => 'เฟส 1a — เร็ว ๆ นี้';
+
+  @override
+  String get morePhase1bHeader => 'เฟส 1b — เร็ว ๆ นี้';
+
+  @override
+  String get morePhase1cHeader => 'เฟส 1c — เร็ว ๆ นี้';
+
+  @override
+  String get moreTransactions => 'รายการทั้งหมด';
+
+  @override
+  String get moreCategories => 'หมวดหมู่';
+
+  @override
+  String get moreTags => 'แท็ก';
+
+  @override
+  String get moreContacts => 'ผู้ติดต่อ';
+
+  @override
+  String get moreDebts => 'หนี้สิน';
+
+  @override
+  String get moreNotifications => 'การแจ้งเตือน';
+
+  @override
+  String get moreBudgets => 'งบประมาณ';
+
+  @override
+  String get moreSavingGoals => 'เป้าหมายการออม';
+
+  @override
+  String get moreScheduled => 'รายการตามกำหนด';
+
+  @override
+  String get moreComingSoonBadge => 'เร็ว ๆ นี้';
+
+  @override
+  String get moreComingInPhase1a => 'จะมาในเฟส 1a';
+
+  @override
+  String get moreComingInPhase1b => 'จะมาในเฟส 1b';
+
+  @override
+  String get moreComingInPhase1c => 'จะมาในเฟส 1c';
+
+  @override
   String get settingsTitle => 'การตั้งค่า';
 
   @override

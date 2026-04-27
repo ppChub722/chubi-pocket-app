@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/avatar_picker.dart';
+import '../../../../shared/widgets/avatar_presets.dart';
+import '../../../../shared/widgets/editable_circle.dart';
+import '../../../../shared/widgets/icon_color_picker_sheet.dart';
 import '../../../../shared/widgets/user_avatar.dart';
+import '../../../../shared/widgets/user_profile_preview.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
@@ -85,24 +88,77 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _openAvatarPicker() async {
-    final result = await showAvatarPicker(
+    final l = AppLocalizations.of(context)!;
+    final displayName = _displayNameCtrl.text.trim().isEmpty
+        ? _initial.displayName
+        : _displayNameCtrl.text.trim();
+    final initial = AvatarPresetSelection.tryParse(_avatarUrlCtrl.text) ??
+        AvatarPresetSelection.defaultSelection;
+
+    final result = await showIconColorPickerSheet(
       context: context,
-      displayName: _displayNameCtrl.text.trim().isEmpty
-          ? _initial.displayName
-          : _displayNameCtrl.text.trim(),
-      currentAvatarUrl: _avatarUrlCtrl.text.trim().isEmpty
-          ? null
-          : _avatarUrlCtrl.text.trim(),
+      iconOptions: [
+        for (final p in AvatarPreset.all)
+          IconPickerOption(
+            id: p.id,
+            icon: p.icon,
+            assetPath: p.assetPath,
+            // The Initials preset draws the user's first letter on the
+            // swatch instead of an icon — domain rendering the avatar
+            // context owns, surfaced to the generic picker via customThumb.
+            customThumb: p.id == AvatarPreset.initials.id
+                ? (swatchColor) => _initialsThumb(displayName, swatchColor)
+                : null,
+          ),
+      ],
+      swatches: [
+        for (final c in AvatarColor.all)
+          IconPickerSwatch(id: c.id, color: c.color),
+      ],
+      initialIconId: initial.preset.id,
+      initialSwatchId: initial.color.id,
+      iconSectionLabel: l.avatarPickerStyleLabel,
+      colorSectionLabel: l.avatarPickerColorLabel,
+      useThisLabel: l.avatarPickerUseThis,
+      removeLabel: l.commonRemove,
+      uploadComingSoonLabel: l.avatarPickerUploadDisabled,
+      cropComingSoonLabel: l.avatarPickerCropDisabled,
+      previewBuilder: (icon, swatch) => UserProfilePreview(
+        displayName: displayName,
+        avatarUrl: 'preset:${icon.id}:${swatch.id}',
+      ),
     );
+
     if (!mounted || result == null) return;
     setState(() {
       switch (result) {
-        case AvatarPickerPresetSelected(:final encoded):
-          _avatarUrlCtrl.text = encoded;
-        case AvatarPickerRemove():
+        case IconColorPickerSelected(:final iconId, :final swatchId):
+          _avatarUrlCtrl.text = AvatarPresetSelection(
+            preset: AvatarPreset.byId(iconId),
+            color: AvatarColor.byId(swatchId),
+          ).encode();
+        case IconColorPickerRemoved():
           _avatarUrlCtrl.text = '';
       }
     });
+  }
+
+  Widget _initialsThumb(String displayName, Color swatchColor) {
+    final initial = displayName.trim().isNotEmpty
+        ? displayName.trim().characters.first.toUpperCase()
+        : '?';
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: swatchColor,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+          fontSize: 18,
+        ),
+      ),
+    );
   }
 
   Future<bool> _confirmDiscard() async {
@@ -277,41 +333,14 @@ class _AvatarSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Center(
-      child: InkResponse(
+      child: EditableCircle(
+        size: 96,
         onTap: onTap,
-        radius: 56,
-        child: SizedBox(
-          width: 96,
-          height: 96,
-          child: Stack(
-            children: [
-              UserAvatar(
-                displayName: displayName,
-                avatarUrl: avatarUrl,
-                size: 96,
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: scheme.primary,
-                    border: Border.all(color: scheme.surface, width: 2),
-                  ),
-                  child: Icon(
-                    Icons.edit,
-                    size: 14,
-                    color: scheme.onPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        child: UserAvatar(
+          displayName: displayName,
+          avatarUrl: avatarUrl,
+          size: 96,
         ),
       ),
     );

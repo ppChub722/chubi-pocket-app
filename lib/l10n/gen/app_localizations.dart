@@ -374,6 +374,558 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get homeSettingsTooltip;
 
+  /// No description provided for @navDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get navDashboard;
+
+  /// No description provided for @navAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts'**
+  String get navAccounts;
+
+  /// No description provided for @navAddTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add transaction'**
+  String get navAddTransaction;
+
+  /// No description provided for @navProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get navProjects;
+
+  /// No description provided for @navMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get navMore;
+
+  /// No description provided for @navNotificationsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get navNotificationsTooltip;
+
+  /// No description provided for @navProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile & settings'**
+  String get navProfileTooltip;
+
+  /// No description provided for @addTransactionComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging transactions ships in Phase 1a'**
+  String get addTransactionComingSoon;
+
+  /// No description provided for @notificationsComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'The notifications inbox ships in Phase 1b'**
+  String get notificationsComingSoon;
+
+  /// No description provided for @accountsPlaceholderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts yet'**
+  String get accountsPlaceholderTitle;
+
+  /// No description provided for @accountsPlaceholderMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding accounts ships in Phase 1a.'**
+  String get accountsPlaceholderMessage;
+
+  /// No description provided for @accountsAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add account'**
+  String get accountsAddNew;
+
+  /// No description provided for @accountTypeCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get accountTypeCash;
+
+  /// No description provided for @accountTypeBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank'**
+  String get accountTypeBank;
+
+  /// No description provided for @accountTypeEWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'E-wallet'**
+  String get accountTypeEWallet;
+
+  /// No description provided for @accountTypeCreditCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit card'**
+  String get accountTypeCreditCard;
+
+  /// No description provided for @accountTypePayLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay later'**
+  String get accountTypePayLater;
+
+  /// No description provided for @accountCreditUsedPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% used'**
+  String accountCreditUsedPercent(int percent);
+
+  /// No description provided for @accountDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Account not found'**
+  String get accountDetailNotFound;
+
+  /// No description provided for @accountDetailNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This account may have been archived or deleted.'**
+  String get accountDetailNotFoundMessage;
+
+  /// No description provided for @accountDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get accountDetailEdit;
+
+  /// No description provided for @accountDetailAdjustBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust balance'**
+  String get accountDetailAdjustBalance;
+
+  /// No description provided for @accountDetailArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get accountDetailArchive;
+
+  /// No description provided for @accountDetailActionComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'This action ships in Phase 1a'**
+  String get accountDetailActionComingSoon;
+
+  /// No description provided for @accountDetailCreditAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{available} available of {limit}'**
+  String accountDetailCreditAvailable(String available, String limit);
+
+  /// No description provided for @accountDetailSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get accountDetailSummaryTitle;
+
+  /// No description provided for @accountDetailSummaryIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get accountDetailSummaryIncome;
+
+  /// No description provided for @accountDetailSummaryExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get accountDetailSummaryExpense;
+
+  /// No description provided for @accountDetailSummaryNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get accountDetailSummaryNet;
+
+  /// No description provided for @accountDetailSummaryTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No transactions} =1{1 transaction} other{{count} transactions}}'**
+  String accountDetailSummaryTransactions(int count);
+
+  /// No description provided for @accountDetailBillingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing'**
+  String get accountDetailBillingTitle;
+
+  /// No description provided for @accountDetailStatementDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement date'**
+  String get accountDetailStatementDate;
+
+  /// No description provided for @accountDetailPaymentDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment due'**
+  String get accountDetailPaymentDue;
+
+  /// No description provided for @accountDetailMinimumPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum payment'**
+  String get accountDetailMinimumPayment;
+
+  /// No description provided for @accountDetailDayOfMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} of every month'**
+  String accountDetailDayOfMonth(int day);
+
+  /// No description provided for @accountDetailTransactionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get accountDetailTransactionsTitle;
+
+  /// No description provided for @accountDetailTransactionsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get accountDetailTransactionsEmptyTitle;
+
+  /// No description provided for @accountDetailTransactionsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging transactions ships in Phase 1a.'**
+  String get accountDetailTransactionsEmptyMessage;
+
+  /// No description provided for @accountFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New account'**
+  String get accountFormTitle;
+
+  /// No description provided for @accountFormPreviewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get accountFormPreviewLabel;
+
+  /// No description provided for @accountFormTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get accountFormTypeLabel;
+
+  /// No description provided for @accountFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account name'**
+  String get accountFormNameLabel;
+
+  /// No description provided for @accountFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get accountFormNameRequired;
+
+  /// No description provided for @accountFormNameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 100 characters'**
+  String get accountFormNameTooLong;
+
+  /// No description provided for @accountFormIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get accountFormIconLabel;
+
+  /// No description provided for @accountFormColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get accountFormColorLabel;
+
+  /// No description provided for @accountFormUploadLogo.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload custom logo (Phase 2)'**
+  String get accountFormUploadLogo;
+
+  /// No description provided for @accountFormBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get accountFormBalanceLabel;
+
+  /// No description provided for @accountFormBalanceHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Money already in this account on the day you start tracking.'**
+  String get accountFormBalanceHelper;
+
+  /// No description provided for @accountFormCreditSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit details'**
+  String get accountFormCreditSection;
+
+  /// No description provided for @accountFormCreditLimitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit limit'**
+  String get accountFormCreditLimitLabel;
+
+  /// No description provided for @accountFormCreditLimitRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required for credit accounts'**
+  String get accountFormCreditLimitRequired;
+
+  /// No description provided for @accountFormStatementDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement date'**
+  String get accountFormStatementDateLabel;
+
+  /// No description provided for @accountFormStatementDateHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of month (1–31)'**
+  String get accountFormStatementDateHelper;
+
+  /// No description provided for @accountFormPaymentDueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment due'**
+  String get accountFormPaymentDueLabel;
+
+  /// No description provided for @accountFormPaymentDueHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of month (1–31)'**
+  String get accountFormPaymentDueHelper;
+
+  /// No description provided for @accountFormMinimumPaymentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum payment'**
+  String get accountFormMinimumPaymentLabel;
+
+  /// No description provided for @accountFormDayInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be 1–31'**
+  String get accountFormDayInvalid;
+
+  /// No description provided for @accountFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save account'**
+  String get accountFormSave;
+
+  /// No description provided for @accountFormDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard new account?'**
+  String get accountFormDiscardTitle;
+
+  /// No description provided for @accountFormDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes will be lost.'**
+  String get accountFormDiscardBody;
+
+  /// No description provided for @accountFormCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get accountFormCurrencyLabel;
+
+  /// No description provided for @accountFormCurrencyPhase2.
+  ///
+  /// In en, this message translates to:
+  /// **'Multi-currency ships in Phase 2'**
+  String get accountFormCurrencyPhase2;
+
+  /// No description provided for @accountFormPhase2Badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase 2'**
+  String get accountFormPhase2Badge;
+
+  /// No description provided for @accountFormNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get accountFormNoteLabel;
+
+  /// No description provided for @accountFormNoteHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — context only you see (e.g. \"Travel money for Japan trip\").'**
+  String get accountFormNoteHelper;
+
+  /// No description provided for @accountFormNoteTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 500 characters'**
+  String get accountFormNoteTooLong;
+
+  /// No description provided for @iconPickerSectionStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get iconPickerSectionStyle;
+
+  /// No description provided for @iconPickerSectionColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get iconPickerSectionColor;
+
+  /// No description provided for @iconPickerUseThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this'**
+  String get iconPickerUseThis;
+
+  /// No description provided for @iconPickerRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get iconPickerRemove;
+
+  /// No description provided for @iconPickerUploadComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload (Phase 2)'**
+  String get iconPickerUploadComingSoon;
+
+  /// No description provided for @iconPickerCropComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop (Phase 2)'**
+  String get iconPickerCropComingSoon;
+
+  /// No description provided for @projectsPlaceholderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects yet'**
+  String get projectsPlaceholderTitle;
+
+  /// No description provided for @projectsPlaceholderMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared projects ship in Phase 1b.'**
+  String get projectsPlaceholderMessage;
+
+  /// No description provided for @moreSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get moreSheetTitle;
+
+  /// No description provided for @morePhase1aHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase 1a — coming soon'**
+  String get morePhase1aHeader;
+
+  /// No description provided for @morePhase1bHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase 1b — coming soon'**
+  String get morePhase1bHeader;
+
+  /// No description provided for @morePhase1cHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Phase 1c — coming soon'**
+  String get morePhase1cHeader;
+
+  /// No description provided for @moreTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get moreTransactions;
+
+  /// No description provided for @moreCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get moreCategories;
+
+  /// No description provided for @moreTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get moreTags;
+
+  /// No description provided for @moreContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get moreContacts;
+
+  /// No description provided for @moreDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts'**
+  String get moreDebts;
+
+  /// No description provided for @moreNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get moreNotifications;
+
+  /// No description provided for @moreBudgets.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgets'**
+  String get moreBudgets;
+
+  /// No description provided for @moreSavingGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving goals'**
+  String get moreSavingGoals;
+
+  /// No description provided for @moreScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled transactions'**
+  String get moreScheduled;
+
+  /// No description provided for @moreComingSoonBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Soon'**
+  String get moreComingSoonBadge;
+
+  /// No description provided for @moreComingInPhase1a.
+  ///
+  /// In en, this message translates to:
+  /// **'Ships in Phase 1a'**
+  String get moreComingInPhase1a;
+
+  /// No description provided for @moreComingInPhase1b.
+  ///
+  /// In en, this message translates to:
+  /// **'Ships in Phase 1b'**
+  String get moreComingInPhase1b;
+
+  /// No description provided for @moreComingInPhase1c.
+  ///
+  /// In en, this message translates to:
+  /// **'Ships in Phase 1c'**
+  String get moreComingInPhase1c;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

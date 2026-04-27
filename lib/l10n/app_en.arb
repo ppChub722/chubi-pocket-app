@@ -55,6 +55,127 @@
   "homeEmptyMessage": "Phase 0 home — feature modules (accounts, transactions, budgets) land in Phase 1.",
   "homeSettingsTooltip": "Settings",
 
+  "navDashboard": "Dashboard",
+  "navAccounts": "Accounts",
+  "navAddTransaction": "Add transaction",
+  "navProjects": "Projects",
+  "navMore": "More",
+  "navNotificationsTooltip": "Notifications",
+  "navProfileTooltip": "Profile & settings",
+
+  "addTransactionComingSoon": "Logging transactions ships in Phase 1a",
+  "notificationsComingSoon": "The notifications inbox ships in Phase 1b",
+
+  "accountsPlaceholderTitle": "No accounts yet",
+  "accountsPlaceholderMessage": "Adding accounts ships in Phase 1a.",
+
+  "accountsAddNew": "Add account",
+  "accountTypeCash": "Cash",
+  "accountTypeBank": "Bank",
+  "accountTypeEWallet": "E-wallet",
+  "accountTypeCreditCard": "Credit card",
+  "accountTypePayLater": "Pay later",
+  "accountCreditUsedPercent": "{percent}% used",
+  "@accountCreditUsedPercent": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+
+  "accountDetailNotFound": "Account not found",
+  "accountDetailNotFoundMessage": "This account may have been archived or deleted.",
+  "accountDetailEdit": "Edit",
+  "accountDetailAdjustBalance": "Adjust balance",
+  "accountDetailArchive": "Archive",
+  "accountDetailActionComingSoon": "This action ships in Phase 1a",
+
+  "accountDetailCreditAvailable": "{available} available of {limit}",
+  "@accountDetailCreditAvailable": {
+    "placeholders": {
+      "available": { "type": "String" },
+      "limit": { "type": "String" }
+    }
+  },
+
+  "accountDetailSummaryTitle": "Last 30 days",
+  "accountDetailSummaryIncome": "Income",
+  "accountDetailSummaryExpense": "Expense",
+  "accountDetailSummaryNet": "Net",
+  "accountDetailSummaryTransactions": "{count, plural, =0{No transactions} =1{1 transaction} other{{count} transactions}}",
+  "@accountDetailSummaryTransactions": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "accountDetailBillingTitle": "Billing",
+  "accountDetailStatementDate": "Statement date",
+  "accountDetailPaymentDue": "Payment due",
+  "accountDetailMinimumPayment": "Minimum payment",
+  "accountDetailDayOfMonth": "{day} of every month",
+  "@accountDetailDayOfMonth": {
+    "placeholders": { "day": { "type": "int" } }
+  },
+
+  "accountDetailTransactionsTitle": "Transactions",
+  "accountDetailTransactionsEmptyTitle": "No transactions yet",
+  "accountDetailTransactionsEmptyMessage": "Logging transactions ships in Phase 1a.",
+
+  "accountFormTitle": "New account",
+  "accountFormPreviewLabel": "Preview",
+  "accountFormTypeLabel": "Type",
+  "accountFormNameLabel": "Account name",
+  "accountFormNameRequired": "Required",
+  "accountFormNameTooLong": "Max 100 characters",
+  "accountFormIconLabel": "Icon",
+  "accountFormColorLabel": "Color",
+  "accountFormUploadLogo": "Upload custom logo (Phase 2)",
+  "accountFormBalanceLabel": "Opening balance",
+  "accountFormBalanceHelper": "Money already in this account on the day you start tracking.",
+  "accountFormCreditSection": "Credit details",
+  "accountFormCreditLimitLabel": "Credit limit",
+  "accountFormCreditLimitRequired": "Required for credit accounts",
+  "accountFormStatementDateLabel": "Statement date",
+  "accountFormStatementDateHelper": "Day of month (1–31)",
+  "accountFormPaymentDueLabel": "Payment due",
+  "accountFormPaymentDueHelper": "Day of month (1–31)",
+  "accountFormMinimumPaymentLabel": "Minimum payment",
+  "accountFormDayInvalid": "Must be 1–31",
+  "accountFormSave": "Save account",
+  "accountFormDiscardTitle": "Discard new account?",
+  "accountFormDiscardBody": "Your changes will be lost.",
+
+  "accountFormCurrencyLabel": "Currency",
+  "accountFormCurrencyPhase2": "Multi-currency ships in Phase 2",
+  "accountFormPhase2Badge": "Phase 2",
+
+  "accountFormNoteLabel": "Note",
+  "accountFormNoteHelper": "Optional — context only you see (e.g. \"Travel money for Japan trip\").",
+  "accountFormNoteTooLong": "Max 500 characters",
+
+  "iconPickerSectionStyle": "Style",
+  "iconPickerSectionColor": "Color",
+  "iconPickerUseThis": "Use this",
+  "iconPickerRemove": "Remove",
+  "iconPickerUploadComingSoon": "Upload (Phase 2)",
+  "iconPickerCropComingSoon": "Crop (Phase 2)",
+  "projectsPlaceholderTitle": "No projects yet",
+  "projectsPlaceholderMessage": "Shared projects ship in Phase 1b.",
+
+  "moreSheetTitle": "More",
+  "morePhase1aHeader": "Phase 1a — coming soon",
+  "morePhase1bHeader": "Phase 1b — coming soon",
+  "morePhase1cHeader": "Phase 1c — coming soon",
+  "moreTransactions": "Transactions",
+  "moreCategories": "Categories",
+  "moreTags": "Tags",
+  "moreContacts": "Contacts",
+  "moreDebts": "Debts",
+  "moreNotifications": "Notifications",
+  "moreBudgets": "Budgets",
+  "moreSavingGoals": "Saving goals",
+  "moreScheduled": "Scheduled transactions",
+  "moreComingSoonBadge": "Soon",
+  "moreComingInPhase1a": "Ships in Phase 1a",
+  "moreComingInPhase1b": "Ships in Phase 1b",
+  "moreComingInPhase1c": "Ships in Phase 1c",
+
   "settingsTitle": "Settings",
   "settingsSectionAccount": "Account",
   "settingsSectionPreferences": "Preferences",

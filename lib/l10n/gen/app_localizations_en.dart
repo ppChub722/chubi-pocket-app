@@ -151,6 +151,303 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSettingsTooltip => 'Settings';
 
   @override
+  String get navDashboard => 'Dashboard';
+
+  @override
+  String get navAccounts => 'Accounts';
+
+  @override
+  String get navAddTransaction => 'Add transaction';
+
+  @override
+  String get navProjects => 'Projects';
+
+  @override
+  String get navMore => 'More';
+
+  @override
+  String get navNotificationsTooltip => 'Notifications';
+
+  @override
+  String get navProfileTooltip => 'Profile & settings';
+
+  @override
+  String get addTransactionComingSoon =>
+      'Logging transactions ships in Phase 1a';
+
+  @override
+  String get notificationsComingSoon =>
+      'The notifications inbox ships in Phase 1b';
+
+  @override
+  String get accountsPlaceholderTitle => 'No accounts yet';
+
+  @override
+  String get accountsPlaceholderMessage => 'Adding accounts ships in Phase 1a.';
+
+  @override
+  String get accountsAddNew => 'Add account';
+
+  @override
+  String get accountTypeCash => 'Cash';
+
+  @override
+  String get accountTypeBank => 'Bank';
+
+  @override
+  String get accountTypeEWallet => 'E-wallet';
+
+  @override
+  String get accountTypeCreditCard => 'Credit card';
+
+  @override
+  String get accountTypePayLater => 'Pay later';
+
+  @override
+  String accountCreditUsedPercent(int percent) {
+    return '$percent% used';
+  }
+
+  @override
+  String get accountDetailNotFound => 'Account not found';
+
+  @override
+  String get accountDetailNotFoundMessage =>
+      'This account may have been archived or deleted.';
+
+  @override
+  String get accountDetailEdit => 'Edit';
+
+  @override
+  String get accountDetailAdjustBalance => 'Adjust balance';
+
+  @override
+  String get accountDetailArchive => 'Archive';
+
+  @override
+  String get accountDetailActionComingSoon => 'This action ships in Phase 1a';
+
+  @override
+  String accountDetailCreditAvailable(String available, String limit) {
+    return '$available available of $limit';
+  }
+
+  @override
+  String get accountDetailSummaryTitle => 'Last 30 days';
+
+  @override
+  String get accountDetailSummaryIncome => 'Income';
+
+  @override
+  String get accountDetailSummaryExpense => 'Expense';
+
+  @override
+  String get accountDetailSummaryNet => 'Net';
+
+  @override
+  String accountDetailSummaryTransactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+      zero: 'No transactions',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get accountDetailBillingTitle => 'Billing';
+
+  @override
+  String get accountDetailStatementDate => 'Statement date';
+
+  @override
+  String get accountDetailPaymentDue => 'Payment due';
+
+  @override
+  String get accountDetailMinimumPayment => 'Minimum payment';
+
+  @override
+  String accountDetailDayOfMonth(int day) {
+    return '$day of every month';
+  }
+
+  @override
+  String get accountDetailTransactionsTitle => 'Transactions';
+
+  @override
+  String get accountDetailTransactionsEmptyTitle => 'No transactions yet';
+
+  @override
+  String get accountDetailTransactionsEmptyMessage =>
+      'Logging transactions ships in Phase 1a.';
+
+  @override
+  String get accountFormTitle => 'New account';
+
+  @override
+  String get accountFormPreviewLabel => 'Preview';
+
+  @override
+  String get accountFormTypeLabel => 'Type';
+
+  @override
+  String get accountFormNameLabel => 'Account name';
+
+  @override
+  String get accountFormNameRequired => 'Required';
+
+  @override
+  String get accountFormNameTooLong => 'Max 100 characters';
+
+  @override
+  String get accountFormIconLabel => 'Icon';
+
+  @override
+  String get accountFormColorLabel => 'Color';
+
+  @override
+  String get accountFormUploadLogo => 'Upload custom logo (Phase 2)';
+
+  @override
+  String get accountFormBalanceLabel => 'Opening balance';
+
+  @override
+  String get accountFormBalanceHelper =>
+      'Money already in this account on the day you start tracking.';
+
+  @override
+  String get accountFormCreditSection => 'Credit details';
+
+  @override
+  String get accountFormCreditLimitLabel => 'Credit limit';
+
+  @override
+  String get accountFormCreditLimitRequired => 'Required for credit accounts';
+
+  @override
+  String get accountFormStatementDateLabel => 'Statement date';
+
+  @override
+  String get accountFormStatementDateHelper => 'Day of month (1–31)';
+
+  @override
+  String get accountFormPaymentDueLabel => 'Payment due';
+
+  @override
+  String get accountFormPaymentDueHelper => 'Day of month (1–31)';
+
+  @override
+  String get accountFormMinimumPaymentLabel => 'Minimum payment';
+
+  @override
+  String get accountFormDayInvalid => 'Must be 1–31';
+
+  @override
+  String get accountFormSave => 'Save account';
+
+  @override
+  String get accountFormDiscardTitle => 'Discard new account?';
+
+  @override
+  String get accountFormDiscardBody => 'Your changes will be lost.';
+
+  @override
+  String get accountFormCurrencyLabel => 'Currency';
+
+  @override
+  String get accountFormCurrencyPhase2 => 'Multi-currency ships in Phase 2';
+
+  @override
+  String get accountFormPhase2Badge => 'Phase 2';
+
+  @override
+  String get accountFormNoteLabel => 'Note';
+
+  @override
+  String get accountFormNoteHelper =>
+      'Optional — context only you see (e.g. \"Travel money for Japan trip\").';
+
+  @override
+  String get accountFormNoteTooLong => 'Max 500 characters';
+
+  @override
+  String get iconPickerSectionStyle => 'Style';
+
+  @override
+  String get iconPickerSectionColor => 'Color';
+
+  @override
+  String get iconPickerUseThis => 'Use this';
+
+  @override
+  String get iconPickerRemove => 'Remove';
+
+  @override
+  String get iconPickerUploadComingSoon => 'Upload (Phase 2)';
+
+  @override
+  String get iconPickerCropComingSoon => 'Crop (Phase 2)';
+
+  @override
+  String get projectsPlaceholderTitle => 'No projects yet';
+
+  @override
+  String get projectsPlaceholderMessage => 'Shared projects ship in Phase 1b.';
+
+  @override
+  String get moreSheetTitle => 'More';
+
+  @override
+  String get morePhase1aHeader => 'Phase 1a — coming soon';
+
+  @override
+  String get morePhase1bHeader => 'Phase 1b — coming soon';
+
+  @override
+  String get morePhase1cHeader => 'Phase 1c — coming soon';
+
+  @override
+  String get moreTransactions => 'Transactions';
+
+  @override
+  String get moreCategories => 'Categories';
+
+  @override
+  String get moreTags => 'Tags';
+
+  @override
+  String get moreContacts => 'Contacts';
+
+  @override
+  String get moreDebts => 'Debts';
+
+  @override
+  String get moreNotifications => 'Notifications';
+
+  @override
+  String get moreBudgets => 'Budgets';
+
+  @override
+  String get moreSavingGoals => 'Saving goals';
+
+  @override
+  String get moreScheduled => 'Scheduled transactions';
+
+  @override
+  String get moreComingSoonBadge => 'Soon';
+
+  @override
+  String get moreComingInPhase1a => 'Ships in Phase 1a';
+
+  @override
+  String get moreComingInPhase1b => 'Ships in Phase 1b';
+
+  @override
+  String get moreComingInPhase1c => 'Ships in Phase 1c';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
