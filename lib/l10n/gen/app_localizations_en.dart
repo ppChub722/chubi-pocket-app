@@ -448,6 +448,149 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreComingInPhase1c => 'Ships in Phase 1c';
 
   @override
+  String get categoriesTitle => 'Categories';
+
+  @override
+  String get categoriesSectionExpense => 'Expense';
+
+  @override
+  String get categoriesSectionIncome => 'Income';
+
+  @override
+  String get categoriesEmptyTitle => 'No categories yet';
+
+  @override
+  String get categoriesEmptyMessage =>
+      'Add your first category to start organizing transactions.';
+
+  @override
+  String get categoriesLimitReached =>
+      '100-category limit reached. Archive or delete one to add another.';
+
+  @override
+  String get categoryTypeExpense => 'Expense';
+
+  @override
+  String get categoryTypeIncome => 'Income';
+
+  @override
+  String get categoryHiddenFromReport => 'Hidden from reports';
+
+  @override
+  String get categoryFormTitleNew => 'New category';
+
+  @override
+  String get categoryFormTitleEdit => 'Edit category';
+
+  @override
+  String get categoryFormBadge => 'Category';
+
+  @override
+  String get categoryFormPreviewLabel => 'Preview';
+
+  @override
+  String get categoryFormNameLabel => 'Name';
+
+  @override
+  String get categoryFormNameRequired => 'Required';
+
+  @override
+  String get categoryFormNameTooLong => 'Max 100 characters';
+
+  @override
+  String get categoryFormNameDuplicate =>
+      'Another category at this level already uses this name';
+
+  @override
+  String get categoryFormTypeLabel => 'Type';
+
+  @override
+  String get categoryFormTypeImmutableHelper =>
+      'Type can\'t be changed after creation. Delete and recreate to switch.';
+
+  @override
+  String get categoryFormParentLabel => 'Parent';
+
+  @override
+  String get categoryFormParentNone => '(None — top level)';
+
+  @override
+  String get categoryFormParentDepthHint =>
+      'Categories can nest up to 3 levels deep.';
+
+  @override
+  String get categoryFormIconLabel => 'Icon';
+
+  @override
+  String get categoryFormColorLabel => 'Color';
+
+  @override
+  String get categoryFormDescriptionLabel => 'Description';
+
+  @override
+  String get categoryFormDescriptionHelper =>
+      'What this category is for. Visible to you only.';
+
+  @override
+  String get categoryFormDescriptionTooLong => 'Max 200 characters';
+
+  @override
+  String get categoryFormNoteLabel => 'Note';
+
+  @override
+  String get categoryFormNoteHelper =>
+      'Personal scratch note (e.g. \"Don\'t use for snacks\").';
+
+  @override
+  String get categoryFormNoteTooLong => 'Max 200 characters';
+
+  @override
+  String get categoryFormIncludeInReportLabel => 'Include in reports';
+
+  @override
+  String get categoryFormIncludeInReportHelper =>
+      'Off = transactions in this category are excluded from totals and charts.';
+
+  @override
+  String get categoryFormSave => 'Save category';
+
+  @override
+  String get categoryFormDiscardTitle => 'Discard changes?';
+
+  @override
+  String get categoryFormDiscardBody => 'Your edits will be lost.';
+
+  @override
+  String get categoriesAddNew => 'Add category';
+
+  @override
+  String get categoriesReorderEnter => 'Reorder';
+
+  @override
+  String get categoriesReorderSave => 'Save';
+
+  @override
+  String get categoriesReorderDiscard => 'Discard';
+
+  @override
+  String get categoriesReorderHint =>
+      'Drag to reorder. Drop near another category to move under its parent.';
+
+  @override
+  String get categoriesUndo => 'Undo';
+
+  @override
+  String get categoriesReorderTooDeep =>
+      'That move would exceed the 3-level limit';
+
+  @override
+  String get categoriesReorderCycle =>
+      'Can\'t drop a category into its own descendant';
+
+  @override
+  String get categoriesReorderCancel => 'Cancel';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

@@ -444,6 +444,145 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moreComingInPhase1c => 'จะมาในเฟส 1c';
 
   @override
+  String get categoriesTitle => 'หมวดหมู่';
+
+  @override
+  String get categoriesSectionExpense => 'รายจ่าย';
+
+  @override
+  String get categoriesSectionIncome => 'รายรับ';
+
+  @override
+  String get categoriesEmptyTitle => 'ยังไม่มีหมวดหมู่';
+
+  @override
+  String get categoriesEmptyMessage => 'เพิ่มหมวดหมู่แรกเพื่อจัดระเบียบรายการ';
+
+  @override
+  String get categoriesLimitReached =>
+      'ถึงขีดจำกัด 100 หมวดหมู่แล้ว เก็บเข้าคลังหรือลบหนึ่งรายการก่อนเพิ่มใหม่';
+
+  @override
+  String get categoryTypeExpense => 'รายจ่าย';
+
+  @override
+  String get categoryTypeIncome => 'รายรับ';
+
+  @override
+  String get categoryHiddenFromReport => 'ซ่อนจากรายงาน';
+
+  @override
+  String get categoryFormTitleNew => 'หมวดหมู่ใหม่';
+
+  @override
+  String get categoryFormTitleEdit => 'แก้ไขหมวดหมู่';
+
+  @override
+  String get categoryFormBadge => 'หมวดหมู่';
+
+  @override
+  String get categoryFormPreviewLabel => 'ตัวอย่าง';
+
+  @override
+  String get categoryFormNameLabel => 'ชื่อ';
+
+  @override
+  String get categoryFormNameRequired => 'จำเป็น';
+
+  @override
+  String get categoryFormNameTooLong => 'สูงสุด 100 ตัวอักษร';
+
+  @override
+  String get categoryFormNameDuplicate =>
+      'มีหมวดหมู่ในระดับนี้ที่ใช้ชื่อนี้แล้ว';
+
+  @override
+  String get categoryFormTypeLabel => 'ประเภท';
+
+  @override
+  String get categoryFormTypeImmutableHelper =>
+      'เปลี่ยนประเภทหลังสร้างไม่ได้ ถ้าต้องการเปลี่ยนให้ลบแล้วสร้างใหม่';
+
+  @override
+  String get categoryFormParentLabel => 'หมวดหลัก';
+
+  @override
+  String get categoryFormParentNone => '(ไม่มี — ระดับบนสุด)';
+
+  @override
+  String get categoryFormParentDepthHint => 'หมวดหมู่ซ้อนกันได้สูงสุด 3 ระดับ';
+
+  @override
+  String get categoryFormIconLabel => 'ไอคอน';
+
+  @override
+  String get categoryFormColorLabel => 'สี';
+
+  @override
+  String get categoryFormDescriptionLabel => 'คำอธิบาย';
+
+  @override
+  String get categoryFormDescriptionHelper =>
+      'ใช้สำหรับอะไร เห็นเฉพาะคุณคนเดียว';
+
+  @override
+  String get categoryFormDescriptionTooLong => 'สูงสุด 200 ตัวอักษร';
+
+  @override
+  String get categoryFormNoteLabel => 'บันทึกย่อ';
+
+  @override
+  String get categoryFormNoteHelper => 'บันทึกส่วนตัว (เช่น \"อย่าใช้กับขนม\")';
+
+  @override
+  String get categoryFormNoteTooLong => 'สูงสุด 200 ตัวอักษร';
+
+  @override
+  String get categoryFormIncludeInReportLabel => 'รวมในรายงาน';
+
+  @override
+  String get categoryFormIncludeInReportHelper =>
+      'ปิด = รายการในหมวดนี้จะไม่ถูกนับในยอดรวมและกราฟ';
+
+  @override
+  String get categoryFormSave => 'บันทึกหมวดหมู่';
+
+  @override
+  String get categoryFormDiscardTitle => 'ยกเลิกการเปลี่ยนแปลง?';
+
+  @override
+  String get categoryFormDiscardBody => 'การแก้ไขของคุณจะหายไป';
+
+  @override
+  String get categoriesAddNew => 'เพิ่มหมวดหมู่';
+
+  @override
+  String get categoriesReorderEnter => 'จัดลำดับ';
+
+  @override
+  String get categoriesReorderSave => 'บันทึก';
+
+  @override
+  String get categoriesReorderDiscard => 'ยกเลิก';
+
+  @override
+  String get categoriesReorderHint =>
+      'ลากเพื่อจัดลำดับ ปล่อยใกล้รายการอื่นเพื่อย้ายไปอยู่ใต้หมวดเดียวกัน';
+
+  @override
+  String get categoriesUndo => 'ย้อนกลับ';
+
+  @override
+  String get categoriesReorderTooDeep => 'การย้ายจะเกิน 3 ระดับที่อนุญาต';
+
+  @override
+  String get categoriesReorderCycle =>
+      'ไม่สามารถย้ายหมวดหมู่เข้าสู่หมวดย่อยของตัวเองได้';
+
+  @override
+  String get categoriesReorderCancel => 'ยกเลิก';
+
+  @override
   String get settingsTitle => 'การตั้งค่า';
 
   @override

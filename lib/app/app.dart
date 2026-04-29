@@ -14,6 +14,7 @@ import '../core/theme/theme_registry.dart';
 import '../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/presentation/cubit/auth_cubit.dart';
+import '../features/categories/presentation/cubit/categories_cubit.dart';
 import '../features/users/data/users_repository.dart';
 import '../features/preferences/presentation/cubit/font_id_cubit.dart';
 import '../features/preferences/presentation/cubit/locale_cubit.dart';
@@ -96,6 +97,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           ),
           BlocProvider<AccountsCubit>(
             create: (_) => AccountsCubit(),
+          ),
+          BlocProvider<CategoriesCubit>(
+            create: (_) => CategoriesCubit(),
           ),
         ],
         child: Builder(

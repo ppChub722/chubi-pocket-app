@@ -12,6 +12,8 @@ import '../../dev/theme_preview_screen.dart';
 import '../../features/accounts/presentation/pages/account_detail_page.dart';
 import '../../features/accounts/presentation/pages/account_form_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
+import '../../features/categories/presentation/pages/categories_page.dart';
+import '../../features/categories/presentation/pages/category_form_page.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -130,6 +132,22 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
         builder: (context, state) => AccountDetailPage(
           accountId: state.pathParameters['id']!,
         ),
+      ),
+      GoRoute(
+        path: '/categories',
+        name: 'categories',
+        builder: (context, state) => const CategoriesPage(),
+      ),
+      GoRoute(
+        path: '/categories/new',
+        name: 'category-new',
+        builder: (context, state) => const CategoryFormPage(),
+      ),
+      GoRoute(
+        path: '/categories/:id/edit',
+        name: 'category-edit',
+        builder: (context, state) =>
+            CategoryFormPage(editingId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/settings',

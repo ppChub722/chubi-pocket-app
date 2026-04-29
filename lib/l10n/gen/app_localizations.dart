@@ -926,6 +926,270 @@ abstract class AppLocalizations {
   /// **'Ships in Phase 1c'**
   String get moreComingInPhase1c;
 
+  /// No description provided for @categoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoriesTitle;
+
+  /// No description provided for @categoriesSectionExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get categoriesSectionExpense;
+
+  /// No description provided for @categoriesSectionIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get categoriesSectionIncome;
+
+  /// No description provided for @categoriesEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet'**
+  String get categoriesEmptyTitle;
+
+  /// No description provided for @categoriesEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first category to start organizing transactions.'**
+  String get categoriesEmptyMessage;
+
+  /// No description provided for @categoriesLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'100-category limit reached. Archive or delete one to add another.'**
+  String get categoriesLimitReached;
+
+  /// No description provided for @categoryTypeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get categoryTypeExpense;
+
+  /// No description provided for @categoryTypeIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get categoryTypeIncome;
+
+  /// No description provided for @categoryHiddenFromReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from reports'**
+  String get categoryHiddenFromReport;
+
+  /// No description provided for @categoryFormTitleNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New category'**
+  String get categoryFormTitleNew;
+
+  /// No description provided for @categoryFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get categoryFormTitleEdit;
+
+  /// No description provided for @categoryFormBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get categoryFormBadge;
+
+  /// No description provided for @categoryFormPreviewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get categoryFormPreviewLabel;
+
+  /// No description provided for @categoryFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get categoryFormNameLabel;
+
+  /// No description provided for @categoryFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get categoryFormNameRequired;
+
+  /// No description provided for @categoryFormNameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 100 characters'**
+  String get categoryFormNameTooLong;
+
+  /// No description provided for @categoryFormNameDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Another category at this level already uses this name'**
+  String get categoryFormNameDuplicate;
+
+  /// No description provided for @categoryFormTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get categoryFormTypeLabel;
+
+  /// No description provided for @categoryFormTypeImmutableHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Type can\'t be changed after creation. Delete and recreate to switch.'**
+  String get categoryFormTypeImmutableHelper;
+
+  /// No description provided for @categoryFormParentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get categoryFormParentLabel;
+
+  /// No description provided for @categoryFormParentNone.
+  ///
+  /// In en, this message translates to:
+  /// **'(None — top level)'**
+  String get categoryFormParentNone;
+
+  /// No description provided for @categoryFormParentDepthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories can nest up to 3 levels deep.'**
+  String get categoryFormParentDepthHint;
+
+  /// No description provided for @categoryFormIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get categoryFormIconLabel;
+
+  /// No description provided for @categoryFormColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get categoryFormColorLabel;
+
+  /// No description provided for @categoryFormDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get categoryFormDescriptionLabel;
+
+  /// No description provided for @categoryFormDescriptionHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'What this category is for. Visible to you only.'**
+  String get categoryFormDescriptionHelper;
+
+  /// No description provided for @categoryFormDescriptionTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 200 characters'**
+  String get categoryFormDescriptionTooLong;
+
+  /// No description provided for @categoryFormNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get categoryFormNoteLabel;
+
+  /// No description provided for @categoryFormNoteHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal scratch note (e.g. \"Don\'t use for snacks\").'**
+  String get categoryFormNoteHelper;
+
+  /// No description provided for @categoryFormNoteTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 200 characters'**
+  String get categoryFormNoteTooLong;
+
+  /// No description provided for @categoryFormIncludeInReportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Include in reports'**
+  String get categoryFormIncludeInReportLabel;
+
+  /// No description provided for @categoryFormIncludeInReportHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Off = transactions in this category are excluded from totals and charts.'**
+  String get categoryFormIncludeInReportHelper;
+
+  /// No description provided for @categoryFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save category'**
+  String get categoryFormSave;
+
+  /// No description provided for @categoryFormDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get categoryFormDiscardTitle;
+
+  /// No description provided for @categoryFormDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your edits will be lost.'**
+  String get categoryFormDiscardBody;
+
+  /// No description provided for @categoriesAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get categoriesAddNew;
+
+  /// No description provided for @categoriesReorderEnter.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get categoriesReorderEnter;
+
+  /// No description provided for @categoriesReorderSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get categoriesReorderSave;
+
+  /// No description provided for @categoriesReorderDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get categoriesReorderDiscard;
+
+  /// No description provided for @categoriesReorderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder. Drop near another category to move under its parent.'**
+  String get categoriesReorderHint;
+
+  /// No description provided for @categoriesUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get categoriesUndo;
+
+  /// No description provided for @categoriesReorderTooDeep.
+  ///
+  /// In en, this message translates to:
+  /// **'That move would exceed the 3-level limit'**
+  String get categoriesReorderTooDeep;
+
+  /// No description provided for @categoriesReorderCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t drop a category into its own descendant'**
+  String get categoriesReorderCycle;
+
+  /// No description provided for @categoriesReorderCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get categoriesReorderCancel;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

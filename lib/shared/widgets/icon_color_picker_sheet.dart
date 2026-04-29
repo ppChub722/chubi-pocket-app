@@ -98,6 +98,7 @@ Future<IconColorPickerResult?> showIconColorPickerSheet({
   String? removeLabel,
   String? uploadComingSoonLabel,
   String? cropComingSoonLabel,
+  bool showColorSection = true,
 }) {
   final isWide = MediaQuery.sizeOf(context).width >= 600;
   final body = _Sheet(
@@ -113,6 +114,7 @@ Future<IconColorPickerResult?> showIconColorPickerSheet({
     removeLabel: removeLabel,
     uploadComingSoonLabel: uploadComingSoonLabel,
     cropComingSoonLabel: cropComingSoonLabel,
+    showColorSection: showColorSection,
   );
 
   if (isWide) {
@@ -148,6 +150,7 @@ class _Sheet extends StatefulWidget {
     required this.removeLabel,
     required this.uploadComingSoonLabel,
     required this.cropComingSoonLabel,
+    required this.showColorSection,
   });
 
   final List<IconPickerOption> iconOptions;
@@ -162,6 +165,13 @@ class _Sheet extends StatefulWidget {
   final String? removeLabel;
   final String? uploadComingSoonLabel;
   final String? cropComingSoonLabel;
+
+  /// When false, the color label + swatch row are not rendered. The
+  /// initial swatch is still applied (icons in the grid + preview tint
+  /// with that swatch) — the user just can't change it. Used by
+  /// consumers like child categories whose color is inherited from a
+  /// parent and shouldn't be independently editable.
+  final bool showColorSection;
 
   @override
   State<_Sheet> createState() => _SheetState();
@@ -222,15 +232,17 @@ class _SheetState extends State<_Sheet> {
               swatchColor: _currentSwatch.color,
               onSelected: (o) => setState(() => _iconId = o.id),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            _SectionHeader(
-                text: widget.colorSectionLabel ?? l.iconPickerSectionColor),
-            const SizedBox(height: AppSpacing.sm),
-            _SwatchRow(
-              swatches: widget.swatches,
-              selectedId: _swatchId,
-              onSelected: (s) => setState(() => _swatchId = s.id),
-            ),
+            if (widget.showColorSection) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _SectionHeader(
+                  text: widget.colorSectionLabel ?? l.iconPickerSectionColor),
+              const SizedBox(height: AppSpacing.sm),
+              _SwatchRow(
+                swatches: widget.swatches,
+                selectedId: _swatchId,
+                onSelected: (s) => setState(() => _swatchId = s.id),
+              ),
+            ],
             if (showUploadCropRow) ...[
               const SizedBox(height: AppSpacing.xl),
               _DisabledUploadCropRow(

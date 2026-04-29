@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_spacing.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -46,7 +47,7 @@ class MoreMenuSheet extends StatelessWidget {
             _MoreItem(
               icon: Icons.category_outlined,
               title: l.moreCategories,
-              comingSoonMessage: l.moreComingInPhase1a,
+              route: '/categories',
             ),
             _MoreItem(
               icon: Icons.sell_outlined,
@@ -112,49 +113,68 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Tappable list tile with a "Soon" badge — every entry in Phase 0 is in this
-/// state. Tap shows a snackbar pointing at the phase that ships the feature.
-/// When the corresponding phase ships, swap the snackbar for `context.go(...)`
-/// to the real page.
+/// Tappable list tile with a "Soon" badge for unshipped features. Each
+/// entry takes **either** a [route] (navigate via go_router and dismiss
+/// the sheet) **or** a [comingSoonMessage] (show a snackbar). Exactly one
+/// must be set.
+///
+/// As features ship, swap `comingSoonMessage` → `route` for that entry.
+/// The "Soon" badge auto-disappears once a route is provided.
 class _MoreItem extends StatelessWidget {
   const _MoreItem({
     required this.icon,
     required this.title,
-    required this.comingSoonMessage,
-  });
+    this.route,
+    this.comingSoonMessage,
+  }) : assert(
+          (route != null) ^ (comingSoonMessage != null),
+          'Exactly one of `route` or `comingSoonMessage` must be set.',
+        );
 
   final IconData icon;
   final String title;
-  final String comingSoonMessage;
+  final String? route;
+  final String? comingSoonMessage;
+
+  bool get _isShipped => route != null;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final titleColor =
+        _isShipped ? scheme.onSurface : scheme.onSurfaceVariant;
     return ListTile(
-      leading: Icon(icon, color: scheme.onSurfaceVariant),
-      title: Text(
-        title,
-        style: TextStyle(color: scheme.onSurfaceVariant),
+      leading: Icon(
+        icon,
+        color: _isShipped ? scheme.onSurface : scheme.onSurfaceVariant,
       ),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          l.moreComingSoonBadge,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+      title: Text(title, style: TextStyle(color: titleColor)),
+      trailing: _isShipped
+          ? Icon(Icons.chevron_right, color: scheme.onSurfaceVariant)
+          : Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(999),
               ),
-        ),
-      ),
+              child: Text(
+                l.moreComingSoonBadge,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
       onTap: () {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(comingSoonMessage)));
+        if (_isShipped) {
+          context.push(route!);
+        } else {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(comingSoonMessage!)));
+        }
       },
     );
   }
