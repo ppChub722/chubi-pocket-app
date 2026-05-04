@@ -144,13 +144,36 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get homeEmptyMessage =>
-      'หน้าหลักเฟส 0 — โมดูลฟีเจอร์ (บัญชี, รายการ, งบประมาณ) จะมาในเฟส 1';
+      'เพิ่มบัญชีจากแท็บบัญชี แล้วกดปุ่ม + เพื่อเริ่มบันทึกรายการ';
+
+  @override
+  String get homeNetWorthLabel => 'ทรัพย์สินสุทธิ';
+
+  @override
+  String homeNetWorthAccountCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count บัญชี',
+      one: '1 บัญชี',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeRecentTitle => 'รายการล่าสุด';
+
+  @override
+  String get homeRecentViewAll => 'ดูทั้งหมด';
 
   @override
   String get homeSettingsTooltip => 'การตั้งค่า';
 
   @override
   String get navDashboard => 'แดชบอร์ด';
+
+  @override
+  String get navTransactions => 'รายการ';
 
   @override
   String get navAccounts => 'บัญชี';
@@ -230,7 +253,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get accountDetailSummaryTitle => '30 วันที่ผ่านมา';
+  String get accountDetailSummaryTitle => 'สรุป';
 
   @override
   String get accountDetailSummaryIncome => 'รายรับ';
@@ -281,6 +304,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountFormTitle => 'บัญชีใหม่';
+
+  @override
+  String get accountFormTitleEdit => 'แก้ไขบัญชี';
+
+  @override
+  String get accountFormSaveEdit => 'บันทึกการแก้ไข';
 
   @override
   String get accountFormPreviewLabel => 'ตัวอย่าง';
@@ -350,6 +379,44 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormDiscardBody => 'การเปลี่ยนแปลงของคุณจะหายไป';
 
   @override
+  String get accountFormDiscardTitleEdit => 'ยกเลิกการแก้ไข?';
+
+  @override
+  String get accountAdjustBalanceTitle => 'ปรับยอดเงิน';
+
+  @override
+  String get accountAdjustBalanceBody =>
+      'ตั้งยอดใหม่ ระบบจะบันทึกส่วนต่างเป็นรายการ Adjustment เพื่อให้ประวัติตรงกัน';
+
+  @override
+  String get accountAdjustBalanceCurrentLabel => 'ยอดปัจจุบัน';
+
+  @override
+  String get accountAdjustBalanceNewLabel => 'ยอดใหม่';
+
+  @override
+  String get accountAdjustBalanceNoteLabel => 'บันทึก (ไม่บังคับ)';
+
+  @override
+  String get accountAdjustBalanceInvalidAmount => 'ใส่ตัวเลข';
+
+  @override
+  String get accountAdjustBalanceNoChange => 'ยอดใหม่ต้องต่างจากยอดปัจจุบัน';
+
+  @override
+  String get accountAdjustBalanceConfirm => 'ปรับ';
+
+  @override
+  String get accountArchiveConfirmTitle => 'เก็บบัญชีนี้?';
+
+  @override
+  String get accountArchiveConfirmBody =>
+      'บัญชีจะถูกซ่อนจากรายการที่ใช้งาน รายการที่มีอยู่จะยังคงอ้างถึงได้';
+
+  @override
+  String get accountArchiveConfirmAction => 'เก็บ';
+
+  @override
   String get accountFormCurrencyLabel => 'สกุลเงิน';
 
   @override
@@ -359,14 +426,24 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormPhase2Badge => 'เฟส 2';
 
   @override
+  String get accountFormDescriptionLabel => 'คำอธิบาย';
+
+  @override
+  String get accountFormDescriptionHelper =>
+      'ใช้สำหรับอะไร เห็นเฉพาะคุณคนเดียว';
+
+  @override
+  String get accountFormDescriptionTooLong => 'สูงสุด 200 ตัวอักษร';
+
+  @override
   String get accountFormNoteLabel => 'บันทึกย่อ';
 
   @override
   String get accountFormNoteHelper =>
-      'ไม่บังคับ — บันทึกที่คุณเห็นคนเดียว (เช่น \"เงินไปเที่ยวญี่ปุ่น\")';
+      'บันทึกส่วนตัว (เช่น \"เงินไปเที่ยวญี่ปุ่น\")';
 
   @override
-  String get accountFormNoteTooLong => 'สูงสุด 500 ตัวอักษร';
+  String get accountFormNoteTooLong => 'สูงสุด 200 ตัวอักษร';
 
   @override
   String get iconPickerSectionStyle => 'สไตล์';
@@ -409,6 +486,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreCategories => 'หมวดหมู่';
+
+  @override
+  String get moreProjects => 'โปรเจกต์';
 
   @override
   String get moreTags => 'แท็ก';
@@ -581,6 +661,76 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get categoriesReorderCancel => 'ยกเลิก';
+
+  @override
+  String get tagsTitle => 'แท็ก';
+
+  @override
+  String get tagsEmptyTitle => 'ยังไม่มีแท็ก';
+
+  @override
+  String get tagsEmptyMessage =>
+      'ใช้แท็กกับรายการเพื่อแบ่งกลุ่มการใช้จ่ายตามที่ต้องการ';
+
+  @override
+  String get tagsAddNew => 'เพิ่มแท็ก';
+
+  @override
+  String tagsUsageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '×$count',
+      zero: '',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagDeleteConfirmTitle => 'ลบแท็ก?';
+
+  @override
+  String get tagDeleteConfirmBody =>
+      'จะลบแท็กออกจากรายการที่ใช้แท็กนี้ ไม่สามารถย้อนกลับได้';
+
+  @override
+  String get tagDeleteConfirmAction => 'ลบ';
+
+  @override
+  String get tagFormTitleNew => 'แท็กใหม่';
+
+  @override
+  String get tagFormTitleEdit => 'แก้ไขแท็ก';
+
+  @override
+  String get tagFormPreviewLabel => 'ตัวอย่าง';
+
+  @override
+  String get tagFormNameLabel => 'ชื่อ';
+
+  @override
+  String get tagFormNameRequired => 'จำเป็น';
+
+  @override
+  String get tagFormNameTooLong => 'สูงสุด 50 ตัวอักษร';
+
+  @override
+  String get tagFormNameDuplicate => 'มีแท็กที่ใช้ชื่อนี้อยู่แล้ว';
+
+  @override
+  String get tagFormIconLabel => 'ไอคอน';
+
+  @override
+  String get tagFormColorLabel => 'สี';
+
+  @override
+  String get tagFormSave => 'บันทึกแท็ก';
+
+  @override
+  String get tagFormDiscardTitle => 'ยกเลิกการเปลี่ยนแปลง?';
+
+  @override
+  String get tagFormDiscardBody => 'การแก้ไขของคุณจะหายไป';
 
   @override
   String get settingsTitle => 'การตั้งค่า';
@@ -810,4 +960,188 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get monthlyBalance => 'ยอดคงเหลือรายเดือน';
+
+  @override
+  String get transactionFormTitleNew => 'รายการใหม่';
+
+  @override
+  String get transactionFormTitleEdit => 'แก้ไขรายการ';
+
+  @override
+  String get transactionTypeExpense => 'รายจ่าย';
+
+  @override
+  String get transactionTypeIncome => 'รายรับ';
+
+  @override
+  String get transactionTypeTransfer => 'โอนเงิน';
+
+  @override
+  String get transactionFormAccountLabel => 'บัญชี';
+
+  @override
+  String get transactionFormFromAccountLabel => 'จากบัญชี';
+
+  @override
+  String get transactionFormToAccountLabel => 'ไปบัญชี';
+
+  @override
+  String get transactionFormAccountRequired => 'เลือกบัญชี';
+
+  @override
+  String get transactionFormAccountSameError =>
+      'บัญชีต้นทางและปลายทางต้องไม่ใช่บัญชีเดียวกัน';
+
+  @override
+  String get transactionFormCategoryLabel => 'หมวดหมู่';
+
+  @override
+  String get transactionFormCategoryNone => 'ไม่ระบุหมวด';
+
+  @override
+  String get transactionFormTransferCategoryHint =>
+      'ระบบจะตั้งหมวด Transfer In/Out ให้อัตโนมัติ';
+
+  @override
+  String get transactionFormDateLabel => 'วันที่';
+
+  @override
+  String get transactionFormAmountLabel => 'จำนวนเงิน';
+
+  @override
+  String get transactionFormAmountRequired => 'จำเป็น';
+
+  @override
+  String get transactionFormAmountInvalid => 'ใส่ตัวเลขที่ถูกต้อง';
+
+  @override
+  String get transactionFormAmountTooSmall => 'ต้องมากกว่า 0';
+
+  @override
+  String get transactionFormNoteLabel => 'บันทึก (ไม่บังคับ)';
+
+  @override
+  String get transactionFormNoteAddLabel => '+ เพิ่มบันทึก';
+
+  @override
+  String get transactionFormTagsLabel => 'แท็ก';
+
+  @override
+  String get transactionFormTagsEmpty => 'ยังไม่มีแท็ก สร้างได้จากหน้าแท็ก';
+
+  @override
+  String get transactionFormSave => 'บันทึก';
+
+  @override
+  String get transactionFormSaveAndAddAnother => 'บันทึกและเพิ่มอีกรายการ';
+
+  @override
+  String get transactionFormSavedAddedAnother =>
+      'บันทึกแล้ว เพิ่มรายการต่อด้านล่างได้';
+
+  @override
+  String get transactionFormAccountPickerTitle => 'เลือกบัญชี';
+
+  @override
+  String get transactionFormAccountPickerEmpty =>
+      'ยังไม่มีบัญชีที่ใช้งาน เพิ่มบัญชีก่อน';
+
+  @override
+  String get transactionFormCategoryPickerTitle => 'เลือกหมวดหมู่';
+
+  @override
+  String get transactionFormCategoryPickerNoneOption => 'ไม่ระบุหมวด';
+
+  @override
+  String get transactionFormCategoryPickerEmpty => 'ยังไม่มีหมวดประเภทนี้';
+
+  @override
+  String get transactionFormDiscardTitle => 'ยกเลิกรายการ?';
+
+  @override
+  String get transactionFormDiscardTitleEdit => 'ยกเลิกการแก้ไข?';
+
+  @override
+  String get transactionFormDiscardBody => 'การเปลี่ยนแปลงของคุณจะหายไป';
+
+  @override
+  String get transactionDetailEdit => 'แก้ไข';
+
+  @override
+  String get transactionDetailDelete => 'ลบ';
+
+  @override
+  String get transactionDetailNotFound => 'ไม่พบรายการ';
+
+  @override
+  String get transactionDetailNotFoundMessage => 'รายการนี้อาจถูกลบไปแล้ว';
+
+  @override
+  String get transactionDetailDeleteConfirmTitle => 'ลบรายการนี้?';
+
+  @override
+  String get transactionDetailDeleteConfirmTitleTransfer => 'ลบการโอนนี้?';
+
+  @override
+  String get transactionDetailDeleteConfirmBody => 'ระบบจะย้อนยอดที่บัญชีให้';
+
+  @override
+  String get transactionDetailDeleteConfirmBodyTransfer =>
+      'ทั้งสองรายการของการโอนจะถูกลบ และยอดที่ทั้งสองบัญชีจะย้อนกลับ';
+
+  @override
+  String get transactionDetailDeleteConfirmAction => 'ลบ';
+
+  @override
+  String get transactionDetailTransferReadonlyHint =>
+      'หากต้องการเปลี่ยนบัญชี ให้ลบแล้วสร้างการโอนใหม่';
+
+  @override
+  String get transactionDetailSystemRowBanner =>
+      'ระบบสร้างให้อัตโนมัติ หากต้องการแก้ไขให้ใช้การแก้ไขบัญชี หรือปรับยอดเงิน';
+
+  @override
+  String get transactionsRangeWeek => 'สัปดาห์นี้';
+
+  @override
+  String get transactionsRangeMonth => 'เดือนนี้';
+
+  @override
+  String get transactionsRangeYear => 'ปีนี้';
+
+  @override
+  String get transactionsRangeAll => 'ทั้งหมด';
+
+  @override
+  String get transactionsEmptyAccountTitle => 'ยังไม่มีรายการ';
+
+  @override
+  String get transactionsEmptyAccountMessage => 'กดปุ่ม + เพื่อเพิ่มรายการ';
+
+  @override
+  String get transactionsListTitle => 'รายการทั้งหมด';
+
+  @override
+  String get transactionsListFilterAll => 'ทั้งหมด';
+
+  @override
+  String get transactionsListFilterCategoryAll => 'ทุกหมวดหมู่';
+
+  @override
+  String get transactionsListEmptyMessage => 'ไม่มีรายการตรงตัวกรอง';
+
+  @override
+  String get transactionsListRetry => 'ลองใหม่';
+
+  @override
+  String get transactionsListDateToday => 'วันนี้';
+
+  @override
+  String get transactionsListDateYesterday => 'เมื่อวาน';
+
+  @override
+  String get accountAdjustBalanceViewTransaction => 'ดู';
+
+  @override
+  String get accountAdjustBalanceSuccess => 'ปรับยอดเรียบร้อย';
 }

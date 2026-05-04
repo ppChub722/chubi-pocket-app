@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/main_bottom_nav.dart';
 import '../../../../app/shell/more_menu_sheet.dart';
+import '../../../transactions/presentation/pages/transaction_form_page.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/reorder_action_bar.dart';
@@ -60,6 +62,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   bool _reorderMode = false;
   List<Category>? _staged;
   bool _dirty = false;
+  bool _savingReorder = false;
 
   static const int _inModeUndoLimit = 5;
   final List<List<Category>> _inModeUndoStack = [];
@@ -88,6 +91,16 @@ class _CategoriesPageState extends State<CategoriesPage> {
   double _autoScrollSpeed = 0;
 
   @override
+  void initState() {
+    super.initState();
+    // Cold-start fetch — idempotent, safe to re-enter the page.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CategoriesCubit>().loadIfNeeded();
+    });
+  }
+
+  @override
   void dispose() {
     _hover.dispose();
     _scrollController.dispose();
@@ -114,17 +127,35 @@ class _CategoriesPageState extends State<CategoriesPage> {
       _inModeUndoStack.clear();
       _dirty = false;
       _draggingNow = false;
+      _savingReorder = false;
       _hover.value = _HoverState.empty;
     });
     _stopAutoScroll();
   }
 
-  void _saveReorder() {
-    if (_staged != null) {
-      context.read<CategoriesCubit>().replaceAll(_staged!);
+  Future<void> _saveReorder() async {
+    if (_staged == null) {
+      _cancelReorder();
+      return;
     }
-    HapticFeedback.mediumImpact();
-    _cancelReorder();
+    final cubit = context.read<CategoriesCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context)!;
+    setState(() => _savingReorder = true);
+    try {
+      await cubit.saveReorder(_staged!);
+      HapticFeedback.mediumImpact();
+      if (!mounted) return;
+      _cancelReorder();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _savingReorder = false);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('${l.categoriesReorderSave}: ${e.message}')),
+        );
+    }
   }
 
   void _undoLastDrag() {
@@ -156,24 +187,31 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   // ── Drag lifecycle ──────────────────────────────────────────────────
 
-  /// IDs of every row currently traveling with the dragged item (the
-  /// dragged subtree). Populated on drag start so the rows can fade
-  /// while the drag is in flight.
-  final Set<String> _draggedSubtreeIds = <String>{};
+  /// IDs of the dragged item's **descendants** (not including the root
+  /// itself). These rows are never valid drop anchors — dropping a
+  /// parent into its own descendant would be a cycle. The root is
+  /// tracked separately in [_draggedRoot] because it IS a valid anchor
+  /// (drop-on-self enables in-place level change).
+  final Set<String> _draggedDescendantIds = <String>{};
 
-  /// The ROOT of the currently-dragged subtree. Distinct from the rest
-  /// of [_draggedSubtreeIds] because the root is allowed to be its own
-  /// drop anchor — hovering over the dragged row's ghost lets the user
-  /// change its level in place. Descendants stay non-anchorable.
+  /// The ROOT of the currently-dragged subtree.
   Category? _draggedRoot;
+
+  /// True when the dragged root is **collapsed** at drag start — in
+  /// that case the whole subtree travels with it as a block. False
+  /// when expanded — only the root row moves; descendants stay where
+  /// they are and get re-parented by the outliner rebuild.
+  bool _dragsAsBlock = false;
 
   void _onDragStarted(Category dragged) {
     setState(() {
       _draggingNow = true;
       _draggedRoot = dragged;
-      _draggedSubtreeIds
+      _dragsAsBlock = _collapsedIds.contains(dragged.id);
+      _draggedDescendantIds
         ..clear()
-        ..addAll(CategoryReorderLogic.subtreeIds(dragged.id, _staged!));
+        ..addAll(CategoryReorderLogic.subtreeIds(dragged.id, _staged!)
+            .where((id) => id != dragged.id));
     });
     HapticFeedback.mediumImpact();
   }
@@ -182,57 +220,73 @@ class _CategoriesPageState extends State<CategoriesPage> {
     setState(() {
       _draggingNow = false;
       _draggedRoot = null;
-      _draggedSubtreeIds.clear();
+      _dragsAsBlock = false;
+      _draggedDescendantIds.clear();
     });
     _hover.value = _HoverState.empty;
     _stopAutoScroll();
   }
 
-  /// Called from each row's `DragTarget.onMove`. Computes the anchor
-  /// (this row) and the effective level (cursor column with the two
-  /// clamps applied: top-of-section → L1, col-3-over-L1 → L2).
+  /// Called from each row's `DragTarget.onMove`. Resolves the anchor
+  /// based on the cursor's *vertical* position within the row:
+  /// - **Upper portion** (~top 30%) → anchor = the row directly above
+  ///   in the flat list. For the first row of a section, that's
+  ///   `null` (= top-of-section drop).
+  /// - **Lower portion** → anchor = this row (existing behavior).
+  ///
+  /// This generalizes "drop above" to every row, not just the first,
+  /// and removes the need for a dedicated top-of-section widget that
+  /// claims layout space.
   void _onPointerOverRow({
     required Category dragged,
-    required Category anchor,
+    required Category thisRow,
     required Offset globalOffset,
     required RenderBox rowBox,
   }) {
-    // Descendants of the dragged subtree can't be a valid drop anchor —
-    // the whole subtree is traveling with the cursor, so dropping onto
-    // one of the dragged item's own descendants is meaningless. The
-    // dragged root itself IS a valid anchor: hovering over its ghost
-    // lets the user change its level in place without moving the row.
-    final isDescendant = _draggedSubtreeIds.contains(anchor.id) &&
-        anchor.id != _draggedRoot?.id;
-    if (isDescendant) {
-      if (_hover.value != _HoverState.empty) {
-        _hover.value = _HoverState.empty;
-      }
-      return;
-    }
-
     // Throttle: skip if last update < 16 ms ago.
     final now = DateTime.now();
     if (now.difference(_lastHoverUpdate).inMilliseconds < 16) return;
     _lastHoverUpdate = now;
 
-    final localX =
-        rowBox.globalToLocal(globalOffset).dx.clamp(0.0, rowBox.size.width);
+    final local = rowBox.globalToLocal(globalOffset);
+    final localX = local.dx.clamp(0.0, rowBox.size.width);
+    final localY = local.dy;
+
+    // Top 30% of the row = "drop above this row"; the rest = "drop
+    // after this row". 30% feels right for finger taps without
+    // accidentally triggering the upper region while aiming at body.
+    final inUpperPortion = localY < rowBox.size.height * 0.3;
+
+    final anchor =
+        inUpperPortion ? _previousInFlat(thisRow) : thisRow;
+
     final laneWidth = (rowBox.size.width / 3).clamp(60.0, 120.0);
     final cursorCol = (localX / laneWidth).floor().clamp(0, 2) + 1;
 
-    final level = CategoryReorderLogic.effectiveLevel(
-      cursorCol: cursorCol,
-      anchor: anchor,
-      all: _staged!,
-    );
-
-    final next = _HoverState(
-      anchorRowId: anchor.id,
-      depth: level,
-      isValid: true,
-      isEnd: false,
-    );
+    final _HoverState next;
+    if (anchor == null) {
+      // Top-of-section drop — always L1, signalled by null anchor
+      // and `endType` so the section's top-line widget can find it.
+      next = _HoverState(
+        anchorRowId: null,
+        depth: 1,
+        isValid: true,
+        isEnd: true,
+        endType: thisRow.type,
+      );
+    } else {
+      final level = CategoryReorderLogic.effectiveLevel(
+        cursorCol: cursorCol,
+        anchor: anchor,
+        all: _staged!,
+      );
+      next = _HoverState(
+        anchorRowId: anchor.id,
+        depth: level,
+        isValid: true,
+        isEnd: false,
+      );
+    }
 
     if (next != _hover.value) {
       _hover.value = next;
@@ -242,23 +296,43 @@ class _CategoriesPageState extends State<CategoriesPage> {
     _maybeAutoScroll(globalOffset);
   }
 
-  /// Top-of-section drop zone — anchor is null, level is forced to 1.
-  void _onPointerOverTop({
-    required CategoryType type,
-    required Offset globalOffset,
-  }) {
-    final now = DateTime.now();
-    if (now.difference(_lastHoverUpdate).inMilliseconds < 16) return;
-    _lastHoverUpdate = now;
-    final next = _HoverState(
-      anchorRowId: null,
-      depth: 1,
-      isValid: true,
-      isEnd: true,
-      endType: type,
+  /// Returns the row directly above [thisRow] in the user's flat list
+  /// of [thisRow.type], or null when [thisRow] is the first.
+  Category? _previousInFlat(Category thisRow) {
+    final flat =
+        CategoryReorderLogic.flatten(_staged!, thisRow.type);
+    final idx = flat.indexWhere((r) => r.category.id == thisRow.id);
+    if (idx <= 0) return null;
+    return flat[idx - 1].category;
+  }
+
+  /// Resolves a category id back to its [Category] from the staged
+  /// state. Used by [_commitFromHover] to convert the hover state's
+  /// anchor id into the object [_commitDropOnRow] needs.
+  Category? _findById(String id) {
+    for (final c in _staged!) {
+      if (c.id == id) return c;
+    }
+    return null;
+  }
+
+  /// Single dispatcher used by every row's `DragTarget.onAccept`.
+  /// Reads the live hover state and routes to either the
+  /// top-of-section commit or the row-anchored commit.
+  void _commitFromHover(Category dragged) {
+    final state = _hover.value;
+    if (state.depth == null) return;
+    if (state.anchorRowId == null) {
+      _commitDropAtTop(state.endType ?? dragged.type, dragged);
+      return;
+    }
+    final anchor = _findById(state.anchorRowId!);
+    if (anchor == null) return;
+    _commitDropOnRow(
+      dragged: dragged,
+      anchor: anchor,
+      level: state.depth!,
     );
-    if (next != _hover.value) _hover.value = next;
-    _maybeAutoScroll(globalOffset);
   }
 
   void _onPointerLeftAllRows() {
@@ -281,6 +355,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
         dragged: dragged,
         anchor: anchor,
         targetLevel: level,
+        dragOnlyRoot: !_dragsAsBlock,
       );
       _dirty = true;
     });
@@ -297,6 +372,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
         dragged: dragged,
         anchor: null,
         targetLevel: 1,
+        dragOnlyRoot: !_dragsAsBlock,
       );
       _dirty = true;
     });
@@ -350,10 +426,13 @@ class _CategoriesPageState extends State<CategoriesPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return BlocBuilder<CategoriesCubit, List<Category>>(
-      builder: (context, all) {
+    return BlocBuilder<CategoriesCubit, CategoriesState>(
+      builder: (context, state) {
+        final all = state.categories;
         final source = _reorderMode ? (_staged ?? all) : all;
         final users = source.where((c) => !c.isSystem).toList();
+        final isLoading = state.status == CategoriesStatus.loading &&
+            all.isEmpty;
         return PopScope(
           canPop: !_reorderMode,
           onPopInvokedWithResult: (didPop, _) {
@@ -380,17 +459,21 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   ? const []
                   : _buildBrowseActions(context, l),
             ),
-            body: users.isEmpty
-                ? EmptyView(
-                    icon: Icons.category_outlined,
-                    title: l.categoriesEmptyTitle,
-                    message: l.categoriesEmptyMessage,
-                  )
-                : _ListBody(
+            body: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : users.isEmpty
+                    ? EmptyView(
+                        icon: Icons.category_outlined,
+                        title: l.categoriesEmptyTitle,
+                        message: l.categoriesEmptyMessage,
+                      )
+                    : _ListBody(
                     users: users,
                     reorderMode: _reorderMode,
                     collapsedIds: _collapsedIds,
-                    draggedSubtreeIds: _draggedSubtreeIds,
+                    draggedRootId: _draggedRoot?.id,
+                    draggedDescendantIds: _draggedDescendantIds,
+                    dragsAsBlock: _dragsAsBlock,
                     hover: _hover,
                     scrollController: _scrollController,
                     onLongPressEnter: () => _enterReorder(all),
@@ -398,19 +481,17 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     onDragStarted: _onDragStarted,
                     onDragEnded: _onDragEnded,
                     onPointerOverRow: _onPointerOverRow,
-                    onPointerOverTop: _onPointerOverTop,
                     onPointerLeftAllRows: _onPointerLeftAllRows,
-                    onCommitDropOnRow: _commitDropOnRow,
-                    onCommitDropAtTop: _commitDropAtTop,
+                    onCommit: _commitFromHover,
                   ),
             bottomNavigationBar: _reorderMode
                 ? ReorderActionBar(
-                    canUndo: _inModeUndoStack.isNotEmpty,
-                    canSave: _dirty,
+                    canUndo: _inModeUndoStack.isNotEmpty && !_savingReorder,
+                    canSave: _dirty && !_savingReorder,
                     cancelLabel: l.categoriesReorderCancel,
                     saveLabel: l.categoriesReorderSave,
                     undoTooltip: l.categoriesUndo,
-                    onCancel: _cancelReorder,
+                    onCancel: _savingReorder ? () {} : _cancelReorder,
                     onUndo: _undoLastDrag,
                     onSave: _saveReorder,
                   )
@@ -421,19 +502,19 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         case 0:
                           context.go('/');
                         case 1:
-                          context.go('/accounts');
+                          context.go('/transactions');
                         case 2:
-                          context.go('/projects');
+                          context.go('/accounts');
                       }
                     },
-                    onAddPressed: () => _showAddTransactionStub(context, l),
+                    onAddPressed: () => showTransactionFormSheet(context),
                     onMorePressed: () => MoreMenuSheet.show(context),
                   ),
             floatingActionButton: _reorderMode
                 ? null
                 : FloatingActionButton(
                     tooltip: l.navAddTransaction,
-                    onPressed: () => _showAddTransactionStub(context, l),
+                    onPressed: () => showTransactionFormSheet(context),
                     shape: const CircleBorder(),
                     child: const Icon(Icons.add),
                   ),
@@ -479,13 +560,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     ];
   }
 
-  void _showAddTransactionStub(BuildContext context, AppLocalizations l) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(l.addTransactionComingSoon)),
-      );
-  }
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -534,7 +608,9 @@ class _ListBody extends StatelessWidget {
     required this.users,
     required this.reorderMode,
     required this.collapsedIds,
-    required this.draggedSubtreeIds,
+    required this.draggedRootId,
+    required this.draggedDescendantIds,
+    required this.dragsAsBlock,
     required this.hover,
     required this.scrollController,
     required this.onLongPressEnter,
@@ -542,16 +618,29 @@ class _ListBody extends StatelessWidget {
     required this.onDragStarted,
     required this.onDragEnded,
     required this.onPointerOverRow,
-    required this.onPointerOverTop,
     required this.onPointerLeftAllRows,
-    required this.onCommitDropOnRow,
-    required this.onCommitDropAtTop,
+    required this.onCommit,
   });
 
   final List<Category> users;
   final bool reorderMode;
+
   final Set<String> collapsedIds;
-  final Set<String> draggedSubtreeIds;
+
+  /// Id of the dragged subtree's root, or null when no drag is active.
+  /// The root always fades (it's the row being moved).
+  final String? draggedRootId;
+
+  /// Descendants of the dragged root. Faded only when [dragsAsBlock] is
+  /// true (collapsed parent travels with subtree); when false (expanded
+  /// parent), descendants stay solid because they aren't moving.
+  final Set<String> draggedDescendantIds;
+
+  /// True = drag a collapsed parent's whole subtree as one block.
+  /// False = drag only the dragged row; descendants stay in place and
+  /// get re-parented by the outliner walk during reconstruction.
+  final bool dragsAsBlock;
+
   final ValueNotifier<_HoverState> hover;
   final ScrollController scrollController;
   final VoidCallback onLongPressEnter;
@@ -560,21 +649,15 @@ class _ListBody extends StatelessWidget {
   final VoidCallback onDragEnded;
   final void Function({
     required Category dragged,
-    required Category anchor,
+    required Category thisRow,
     required Offset globalOffset,
     required RenderBox rowBox,
   }) onPointerOverRow;
-  final void Function({
-    required CategoryType type,
-    required Offset globalOffset,
-  }) onPointerOverTop;
   final VoidCallback onPointerLeftAllRows;
-  final void Function({
-    required Category dragged,
-    required Category anchor,
-    required int level,
-  }) onCommitDropOnRow;
-  final void Function(CategoryType type, Category dragged) onCommitDropAtTop;
+
+  /// Single commit dispatcher. Reads the live hover state to decide
+  /// between top-of-section drops (anchor null) and row-anchored drops.
+  final void Function(Category dragged) onCommit;
 
   @override
   Widget build(BuildContext context) {
@@ -594,25 +677,13 @@ class _ListBody extends StatelessWidget {
       children: [
         _SectionHeader(label: l.categoriesSectionExpense),
         if (reorderMode)
-          _TopZone(
-            type: CategoryType.expense,
-            hover: hover,
-            onPointerOverTop: onPointerOverTop,
-            onAccept: (dragged) =>
-                onCommitDropAtTop(CategoryType.expense, dragged),
-          ),
+          _TopOfSectionLine(type: CategoryType.expense, hover: hover),
         for (final parent in expense)
           ..._renderSubtree(parent, depth: 0),
         const SizedBox(height: AppSpacing.lg),
         _SectionHeader(label: l.categoriesSectionIncome),
         if (reorderMode)
-          _TopZone(
-            type: CategoryType.income,
-            hover: hover,
-            onPointerOverTop: onPointerOverTop,
-            onAccept: (dragged) =>
-                onCommitDropAtTop(CategoryType.income, dragged),
-          ),
+          _TopOfSectionLine(type: CategoryType.income, hover: hover),
         for (final c in income) ..._renderSubtree(c, depth: 0),
         const SizedBox(height: 96),
       ],
@@ -623,7 +694,13 @@ class _ListBody extends StatelessWidget {
     final children = users.where((c) => c.parentId == category.id).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final isCollapsed = collapsedIds.contains(category.id);
-    final isDraggingThis = draggedSubtreeIds.contains(category.id);
+    // Fade rules:
+    // - The dragged root always fades (it's the row being moved).
+    // - Descendants fade only when the parent is collapsed at drag
+    //   start (`dragsAsBlock`). When expanded, descendants stay solid
+    //   because they're not moving with the drag.
+    final isDraggingThis = category.id == draggedRootId ||
+        (dragsAsBlock && draggedDescendantIds.contains(category.id));
 
     // Color inheritance — every row's display color comes from its L1
     // ancestor. Override the color field once here so every downstream
@@ -651,7 +728,7 @@ class _ListBody extends StatelessWidget {
             onDragEnded: onDragEnded,
             onPointerOverRow: onPointerOverRow,
             onPointerLeftAllRows: onPointerLeftAllRows,
-            onCommitDropOnRow: onCommitDropOnRow,
+            onCommit: onCommit,
           ),
         ),
       ),
@@ -680,7 +757,7 @@ class _Row extends StatelessWidget {
     required this.onDragEnded,
     required this.onPointerOverRow,
     required this.onPointerLeftAllRows,
-    required this.onCommitDropOnRow,
+    required this.onCommit,
   });
 
   final Category category;
@@ -695,16 +772,15 @@ class _Row extends StatelessWidget {
   final VoidCallback onDragEnded;
   final void Function({
     required Category dragged,
-    required Category anchor,
+    required Category thisRow,
     required Offset globalOffset,
     required RenderBox rowBox,
   }) onPointerOverRow;
   final VoidCallback onPointerLeftAllRows;
-  final void Function({
-    required Category dragged,
-    required Category anchor,
-    required int level,
-  }) onCommitDropOnRow;
+
+  /// Single dispatcher invoked on drop accept. Reads the live hover
+  /// state to route between top-of-section and row-anchored commits.
+  final void Function(Category dragged) onCommit;
 
   @override
   Widget build(BuildContext context) {
@@ -714,79 +790,101 @@ class _Row extends StatelessWidget {
       reorderMode: reorderMode,
       hasChildren: hasChildren,
       isCollapsed: isCollapsed,
-      onLongPressEnter: onLongPressEnter,
       onToggleCollapse: () => onToggleCollapse(category.id),
     );
 
-    if (!reorderMode) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [body],
-      );
-    }
-
+    // The LongPressDraggable wraps every row in BOTH modes so that one
+    // continuous long-press in browse mode can fall through into a drag
+    // without the user having to release and long-press again. In
+    // browse mode, [onDragStarted] also flips the page into reorder
+    // mode in the same frame; the drag overlay keeps following the
+    // pointer because Draggable's gesture stream isn't tied to the
+    // rebuild cycle.
+    //
+    // DragTarget is also always present for symmetry, but its handlers
+    // short-circuit when [reorderMode] is false. Keeping the structural
+    // shape stable across mode transitions avoids gesture-recognizer
+    // resets mid-press.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Builder(builder: (rowContext) {
           return DragTarget<Category>(
             onMove: (details) {
+              if (!reorderMode) return;
               final box = rowContext.findRenderObject() as RenderBox?;
               if (box == null) return;
               onPointerOverRow(
                 dragged: details.data,
-                anchor: category,
+                thisRow: category,
                 globalOffset: details.offset,
                 rowBox: box,
               );
             },
-            onLeave: (_) => onPointerLeftAllRows(),
+            onLeave: (_) {
+              if (reorderMode) onPointerLeftAllRows();
+            },
             // Self-drop is allowed — the page-level handler distinguishes
             // descendants (rejected via empty hover state) from the root
             // itself (accepted, used for in-place level change).
-            onWillAcceptWithDetails: (_) => true,
+            onWillAcceptWithDetails: (_) => reorderMode,
             onAcceptWithDetails: (d) {
-              final state = hover.value;
-              if (state.anchorRowId != category.id || state.depth == null) {
-                return;
-              }
-              onCommitDropOnRow(
-                dragged: d.data,
-                anchor: category,
-                level: state.depth!,
-              );
+              if (!reorderMode) return;
+              if (hover.value.depth == null) return;
+              onCommit(d.data);
             },
             builder: (context, candidate, rejected) {
               return LongPressDraggable<Category>(
                 data: category,
-                delay: const Duration(milliseconds: 350),
+                // 500 ms in browse mode — entering reorder mode is a
+                // mode switch, so the gesture should feel deliberate.
+                // 350 ms in reorder mode — the user is already
+                // committed; quicker pickup keeps successive drags
+                // snappy.
+                delay: Duration(milliseconds: reorderMode ? 350 : 500),
                 hapticFeedbackOnStart: false, // we trigger our own
-                onDragStarted: () => onDragStarted(category),
+                onDragStarted: () {
+                  // Browse mode: flip into reorder mode first so the
+                  // staged list and tilt cue are ready by the time the
+                  // user moves. The same gesture continues into the drag.
+                  if (!reorderMode) onLongPressEnter();
+                  onDragStarted(category);
+                },
                 onDraggableCanceled: (_, _) => onDragEnded(),
                 onDragEnd: (_) => onDragEnded(),
                 onDragCompleted: onDragEnded,
                 feedback: _DragProxy(category: category),
-                childWhenDragging:
-                    Opacity(opacity: 0.3, child: body),
+                // The outer wrapper in `_renderSubtree` already applies
+                // Opacity(0.3) to the dragged root (and to descendants
+                // when [dragsAsBlock] is true). Wrapping body in another
+                // Opacity here would multiply (0.3 × 0.3 = 0.09) and
+                // make the placeholder almost invisible.
+                childWhenDragging: body,
                 child: body,
               );
             },
           );
         }),
-        // Drop-line indicator under this row. Only rebuilds when the
-        // cursor anchors here; otherwise renders an empty zero-height
-        // placeholder.
+        // Drop-line indicator under this row. Always rendered so the
+        // widget tree shape doesn't change when reorder mode toggles —
+        // in browse mode, hover is always empty so the AnimatedSize
+        // collapses to zero height.
         ValueListenableBuilder<_HoverState>(
           valueListenable: hover,
           builder: (context, state, _) {
-            if (state.anchorRowId != category.id || state.depth == null) {
-              return const SizedBox(height: 4);
-            }
-            return ReorderDropLine(
-              depth: state.depth!,
-              isValid: state.isValid,
-              indentPerDepth: AppSpacing.xxl,
-              baseIndent: AppSpacing.lg,
+            final anchored = state.anchorRowId == category.id &&
+                state.depth != null;
+            return AnimatedSize(
+              duration: const Duration(milliseconds: 120),
+              alignment: Alignment.topCenter,
+              child: anchored
+                  ? ReorderDropLine(
+                      depth: state.depth!,
+                      isValid: state.isValid,
+                      indentPerDepth: AppSpacing.xxl,
+                      baseIndent: AppSpacing.lg,
+                    )
+                  : const SizedBox.shrink(),
             );
           },
         ),
@@ -802,7 +900,6 @@ class _RowContent extends StatelessWidget {
     required this.reorderMode,
     required this.hasChildren,
     required this.isCollapsed,
-    required this.onLongPressEnter,
     required this.onToggleCollapse,
   });
 
@@ -811,7 +908,6 @@ class _RowContent extends StatelessWidget {
   final bool reorderMode;
   final bool hasChildren;
   final bool isCollapsed;
-  final VoidCallback onLongPressEnter;
   final VoidCallback onToggleCollapse;
 
   @override
@@ -849,7 +945,6 @@ class _RowContent extends StatelessWidget {
         onTap: reorderMode
             ? null
             : () => context.push('/categories/${category.id}/edit'),
-        onLongPress: reorderMode ? null : onLongPressEnter,
       ),
     );
   }
@@ -871,30 +966,19 @@ class _RowTrailing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (reorderMode) {
-      // In reorder mode, parent rows still get a collapse chevron so
-      // users can shrink the tree before dragging. The drag handle stays
-      // as the visual cue that the row itself is grabbable.
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (hasChildren)
-            IconButton(
-              icon: AnimatedRotation(
-                turns: isCollapsed ? 0 : 0.25,
-                duration: const Duration(milliseconds: 160),
-                child: const Icon(Icons.chevron_right),
-              ),
-              onPressed: onToggleCollapse,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                  minWidth: 36, minHeight: 36),
-              visualDensity: VisualDensity.compact,
-            ),
-          const Padding(
-            padding: EdgeInsets.only(left: 4),
-            child: Icon(Icons.drag_handle),
-          ),
-        ],
+      // Reorder-mode trailing matches browse mode: chevron toggle for
+      // parents (still works mid-reorder), nothing for leaves. The
+      // drag-handle icon is intentionally absent — the corner-bracket
+      // overlay on the icon already signals draggability, and dropping
+      // the handle keeps row width identical to browse mode.
+      if (!hasChildren) return const SizedBox.shrink();
+      return IconButton(
+        icon: AnimatedRotation(
+          turns: isCollapsed ? 0 : 0.25,
+          duration: const Duration(milliseconds: 160),
+          child: const Icon(Icons.chevron_right),
+        ),
+        onPressed: onToggleCollapse,
       );
     }
     if (hasChildren) {
@@ -942,62 +1026,38 @@ class _IconCircle extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Top-of-section drop zone — drops here always land at L1 as the first
-// row of the section. Replaces the old end-of-section zone now that
-// reorder follows the outliner model (anchor = row above, top of
-// section means anchor = null).
+// Top-of-section drop indicator — a thin line that appears between the
+// section header and the first row only when the live hover state has
+// `anchorRowId == null` (cursor is in the upper portion of the first
+// row). Layout cost is zero when no drop is targeted at the top, so
+// reorder mode keeps the same spacing as browse mode.
 // ────────────────────────────────────────────────────────────────────
 
-class _TopZone extends StatelessWidget {
-  const _TopZone({
-    required this.type,
-    required this.hover,
-    required this.onPointerOverTop,
-    required this.onAccept,
-  });
+class _TopOfSectionLine extends StatelessWidget {
+  const _TopOfSectionLine({required this.type, required this.hover});
 
   final CategoryType type;
   final ValueNotifier<_HoverState> hover;
-  final void Function({
-    required CategoryType type,
-    required Offset globalOffset,
-  }) onPointerOverTop;
-  final void Function(Category) onAccept;
 
   @override
   Widget build(BuildContext context) {
-    return DragTarget<Category>(
-      onMove: (details) =>
-          onPointerOverTop(type: type, globalOffset: details.offset),
-      onLeave: (_) {
-        if (hover.value.isEnd && hover.value.endType == type) {
-          hover.value = _HoverState.empty;
-        }
-      },
-      onWillAcceptWithDetails: (d) => d.data.type == type,
-      onAcceptWithDetails: (d) => onAccept(d.data),
-      builder: (context, candidate, rejected) {
-        return ValueListenableBuilder<_HoverState>(
-          valueListenable: hover,
-          builder: (context, state, _) {
-            final hovered = state.isEnd && state.endType == type;
-            final scheme = Theme.of(context).colorScheme;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 140),
-              height: hovered ? 56 : 24,
-              margin: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
-              decoration: BoxDecoration(
-                color: hovered
-                    ? scheme.primary.withValues(alpha: 0.18)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                border: hovered
-                    ? Border.all(color: scheme.primary, width: 1)
-                    : null,
-              ),
-            );
-          },
+    return ValueListenableBuilder<_HoverState>(
+      valueListenable: hover,
+      builder: (context, state, _) {
+        final active = state.anchorRowId == null &&
+            state.endType == type &&
+            state.depth != null;
+        return AnimatedSize(
+          duration: const Duration(milliseconds: 120),
+          alignment: Alignment.topCenter,
+          child: active
+              ? ReorderDropLine(
+                  depth: state.depth!,
+                  isValid: state.isValid,
+                  indentPerDepth: AppSpacing.xxl,
+                  baseIndent: AppSpacing.lg,
+                )
+              : const SizedBox.shrink(),
         );
       },
     );

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/icon_color_picker_sheet.dart';
 import '../../domain/category.dart';
@@ -127,8 +128,9 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
         ),
         body: Form(
           key: _formKey,
-          child: BlocBuilder<CategoriesCubit, List<Category>>(
-            builder: (context, all) {
+          child: BlocBuilder<CategoriesCubit, CategoriesState>(
+            builder: (context, state) {
+              final all = state.categories;
               return ListView(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
@@ -272,7 +274,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
   /// the inheritance rule used in the categories list.
   CategoryColor _resolvedDisplayColor() {
     if (_parentId == null) return _color;
-    final all = context.read<CategoriesCubit>().state;
+    final all = context.read<CategoriesCubit>().state.categories;
     String? cursor = _parentId;
     while (cursor != null) {
       final parent = all.firstWhere(
@@ -307,7 +309,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
   Future<void> _openIconPicker(
       BuildContext context, AppLocalizations l) async {
     final basePreview = _previewCategory();
-    final all = context.read<CategoriesCubit>().state;
+    final all = context.read<CategoriesCubit>().state.categories;
     final breadcrumb = _parentBreadcrumb(all);
 
     // For L2/L3 categories, color is inherited from the L1 ancestor —
@@ -356,10 +358,11 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final cubit = context.read<CategoriesCubit>();
+    final messenger = ScaffoldMessenger.of(context);
     final l = AppLocalizations.of(context)!;
 
     if (!widget.isEdit && !cubit.canAddMore) {
-      ScaffoldMessenger.of(context)
+      messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l.categoriesLimitReached)));
       return;
@@ -368,34 +371,45 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
     final description = _descriptionController.text.trim();
     final note = _noteController.text.trim();
 
-    if (widget.isEdit) {
-      final updated = _initial!.copyWith(
-        name: _nameController.text.trim(),
-        parentId: _parentId,
-        clearParent: _parentId == null,
-        icon: _icon,
-        color: _color,
-        description: description.isEmpty ? null : description,
-        note: note.isEmpty ? null : note,
-        includeInReport: _includeInReport,
-      );
-      cubit.update(updated);
-    } else {
-      final created = Category(
-        id: 'mock-${DateTime.now().microsecondsSinceEpoch}',
-        name: _nameController.text.trim(),
-        type: _type,
-        icon: _icon,
-        color: _color,
-        parentId: _parentId,
-        description: description.isEmpty ? null : description,
-        note: note.isEmpty ? null : note,
-        includeInReport: _includeInReport,
-        sortOrder:
-            cubit.state.fold<int>(0, (m, c) => c.sortOrder > m ? c.sortOrder : m) +
-                1,
-      );
-      cubit.add(created);
+    try {
+      if (widget.isEdit) {
+        final updated = _initial!.copyWith(
+          name: _nameController.text.trim(),
+          parentId: _parentId,
+          clearParent: _parentId == null,
+          icon: _icon,
+          color: _color,
+          description: description.isEmpty ? null : description,
+          note: note.isEmpty ? null : note,
+          includeInReport: _includeInReport,
+        );
+        await cubit.update(updated);
+      } else {
+        // Server assigns id + sort_order on create. The local id placeholder
+        // here ("draft") never reaches the wire — toCreateJson() drops it.
+        final draft = Category(
+          id: 'draft',
+          name: _nameController.text.trim(),
+          type: _type,
+          icon: _icon,
+          color: _color,
+          parentId: _parentId,
+          description: description.isEmpty ? null : description,
+          note: note.isEmpty ? null : note,
+          includeInReport: _includeInReport,
+        );
+        await cubit.add(draft);
+      }
+    } on CategoryLimitExceeded {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l.categoriesLimitReached)));
+      return;
+    } on ApiException catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+      return;
     }
     if (!mounted) return;
     context.pop();

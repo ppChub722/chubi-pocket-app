@@ -82,10 +82,12 @@ enum CategoryIconPreset {
   swapHoriz('swap_horiz', Icons.swap_horiz),
   redeem('redeem', Icons.redeem_outlined),
 
-  // System (for completeness, used by the 6 hidden seed entries)
+  // System (for completeness, used by the 8 hidden seed entries)
   systemTransfer('system_transfer', Icons.swap_vert),
   systemAdjustment('system_adjustment', Icons.tune),
-  systemOpening('system_opening', Icons.flag_outlined);
+  systemOpening('system_opening', Icons.flag_outlined),
+  systemDebtReceived('system_debt_received', Icons.call_received),
+  systemDebtPaid('system_debt_paid', Icons.payments_outlined);
 
   const CategoryIconPreset(this.id, this.icon);
 
@@ -144,5 +146,27 @@ class CategoryColor {
       (c) => c.id == id,
       orElse: () => CategoryColor.blue,
     );
+  }
+
+  /// `#RRGGBB` representation. The BE stores `categories.color` as
+  /// `VARCHAR(7)` containing exactly this format (spec §3.1).
+  String toHex() {
+    int channel(double c) => (c * 255).round() & 0xff;
+    final r = channel(color.r).toRadixString(16).padLeft(2, '0');
+    final g = channel(color.g).toRadixString(16).padLeft(2, '0');
+    final b = channel(color.b).toRadixString(16).padLeft(2, '0');
+    return '#${(r + g + b).toUpperCase()}';
+  }
+
+  /// Resolve a `#RRGGBB` from the BE back to one of the 12 swatches.
+  /// Falls back to [blue] when the hex doesn't match a known swatch
+  /// (e.g. legacy data or a future swatch added by another client).
+  static CategoryColor fromHex(String? hex) {
+    if (hex == null) return CategoryColor.blue;
+    final normalized = hex.toUpperCase();
+    for (final c in all) {
+      if (c.toHex() == normalized) return c;
+    }
+    return CategoryColor.blue;
   }
 }

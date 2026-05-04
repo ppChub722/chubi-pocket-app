@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
-import '../../domain/account.dart';
 import '../cubit/accounts_cubit.dart';
 import '../widgets/account_card.dart';
 import '../widgets/add_account_tile.dart';
@@ -20,15 +19,34 @@ import '../widgets/add_account_tile.dart';
 /// a single, consistent card visual.
 ///
 /// The [AddAccountTile] is rendered as the **last** item in the grid (not
-/// first). Phase 0 generates a placeholder account on tap; the real form
-/// ships in Phase 1a.
-class AccountsPage extends StatelessWidget {
+/// first). Tapping it opens the create form.
+class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
 
   @override
+  State<AccountsPage> createState() => _AccountsPageState();
+}
+
+class _AccountsPageState extends State<AccountsPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AccountsCubit>().loadIfNeeded();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AccountsCubit, List<Account>>(
-      builder: (context, accounts) {
+    return BlocBuilder<AccountsCubit, AccountsState>(
+      builder: (context, state) {
+        final accounts = state.accounts;
+        final isLoading = state.status == AccountsStatus.loading &&
+            accounts.isEmpty;
+        if (isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
         final cols = isTablet ? 2 : 1;
         return GridView.builder(
@@ -40,7 +58,11 @@ class AccountsPage extends StatelessWidget {
             crossAxisCount: cols,
             mainAxisSpacing: AppSpacing.md,
             crossAxisSpacing: AppSpacing.md,
-            mainAxisExtent: 80,
+            // 96 dp leaves room for an optional description / note line
+            // under the type label without squishing the icon or
+            // balance. Cards without those fields render with a tiny
+            // bit of extra padding — acceptable trade for consistency.
+            mainAxisExtent: 96,
           ),
           itemCount: accounts.length + 1,
           itemBuilder: (context, index) {

@@ -52,10 +52,20 @@
   "authRegisterEmailTakenInline": "Already registered",
 
   "homeEmptyTitle": "Nothing to show yet",
-  "homeEmptyMessage": "Phase 0 home — feature modules (accounts, transactions, budgets) land in Phase 1.",
+  "homeEmptyMessage": "Add an account from the Accounts tab, then tap the + button to log your first transaction.",
+  "homeNetWorthLabel": "Net worth",
+  "homeNetWorthAccountCount": "{count, plural, =1{1 account} other{{count} accounts}}",
+  "@homeNetWorthAccountCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "homeRecentTitle": "Recent transactions",
+  "homeRecentViewAll": "View all",
   "homeSettingsTooltip": "Settings",
 
   "navDashboard": "Dashboard",
+  "navTransactions": "Transactions",
   "navAccounts": "Accounts",
   "navAddTransaction": "Add transaction",
   "navProjects": "Projects",
@@ -95,7 +105,7 @@
     }
   },
 
-  "accountDetailSummaryTitle": "Last 30 days",
+  "accountDetailSummaryTitle": "Summary",
   "accountDetailSummaryIncome": "Income",
   "accountDetailSummaryExpense": "Expense",
   "accountDetailSummaryNet": "Net",
@@ -118,6 +128,8 @@
   "accountDetailTransactionsEmptyMessage": "Logging transactions ships in Phase 1a.",
 
   "accountFormTitle": "New account",
+  "accountFormTitleEdit": "Edit account",
+  "accountFormSaveEdit": "Save changes",
   "accountFormPreviewLabel": "Preview",
   "accountFormTypeLabel": "Type",
   "accountFormNameLabel": "Account name",
@@ -140,14 +152,31 @@
   "accountFormSave": "Save account",
   "accountFormDiscardTitle": "Discard new account?",
   "accountFormDiscardBody": "Your changes will be lost.",
+  "accountFormDiscardTitleEdit": "Discard changes?",
+
+  "accountAdjustBalanceTitle": "Adjust balance",
+  "accountAdjustBalanceBody": "Set a new balance. The difference will be recorded as an Adjustment transaction so the history stays consistent.",
+  "accountAdjustBalanceCurrentLabel": "Current balance",
+  "accountAdjustBalanceNewLabel": "New balance",
+  "accountAdjustBalanceNoteLabel": "Note (optional)",
+  "accountAdjustBalanceInvalidAmount": "Enter a number",
+  "accountAdjustBalanceNoChange": "New balance must differ from the current balance.",
+  "accountAdjustBalanceConfirm": "Adjust",
+
+  "accountArchiveConfirmTitle": "Archive this account?",
+  "accountArchiveConfirmBody": "The account will be hidden from the active list. Its transactions stay intact and remain referenced.",
+  "accountArchiveConfirmAction": "Archive",
 
   "accountFormCurrencyLabel": "Currency",
   "accountFormCurrencyPhase2": "Multi-currency ships in Phase 2",
   "accountFormPhase2Badge": "Phase 2",
 
+  "accountFormDescriptionLabel": "Description",
+  "accountFormDescriptionHelper": "What this account is for. Visible to you only.",
+  "accountFormDescriptionTooLong": "Max 200 characters",
   "accountFormNoteLabel": "Note",
-  "accountFormNoteHelper": "Optional — context only you see (e.g. \"Travel money for Japan trip\").",
-  "accountFormNoteTooLong": "Max 500 characters",
+  "accountFormNoteHelper": "Personal scratch note (e.g. \"Travel money for Japan trip\").",
+  "accountFormNoteTooLong": "Max 200 characters",
 
   "iconPickerSectionStyle": "Style",
   "iconPickerSectionColor": "Color",
@@ -164,6 +193,7 @@
   "morePhase1cHeader": "Phase 1c — coming soon",
   "moreTransactions": "Transactions",
   "moreCategories": "Categories",
+  "moreProjects": "Projects",
   "moreTags": "Tags",
   "moreContacts": "Contacts",
   "moreDebts": "Debts",
@@ -221,6 +251,32 @@
   "categoriesReorderTooDeep": "That move would exceed the 3-level limit",
   "categoriesReorderCycle": "Can't drop a category into its own descendant",
   "categoriesReorderCancel": "Cancel",
+
+  "tagsTitle": "Tags",
+  "tagsEmptyTitle": "No tags yet",
+  "tagsEmptyMessage": "Tag transactions to slice your spending however you want.",
+  "tagsAddNew": "Add tag",
+  "tagsUsageCount": "{count, plural, =0{} =1{×1} other{×{count}}}",
+  "@tagsUsageCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "tagDeleteConfirmTitle": "Delete tag?",
+  "tagDeleteConfirmBody": "Removes the tag from any transactions using it. This can't be undone.",
+  "tagDeleteConfirmAction": "Delete",
+
+  "tagFormTitleNew": "New tag",
+  "tagFormTitleEdit": "Edit tag",
+  "tagFormPreviewLabel": "Preview",
+  "tagFormNameLabel": "Name",
+  "tagFormNameRequired": "Required",
+  "tagFormNameTooLong": "Max 50 characters",
+  "tagFormNameDuplicate": "Another tag already uses this name",
+  "tagFormIconLabel": "Icon",
+  "tagFormColorLabel": "Color",
+  "tagFormSave": "Save tag",
+  "tagFormDiscardTitle": "Discard changes?",
+  "tagFormDiscardBody": "Your edits will be lost.",
 
   "settingsTitle": "Settings",
   "settingsSectionAccount": "Account",
@@ -311,5 +367,75 @@
 
   "amountLabel": "Amount",
   "amountHint": "0.00",
-  "monthlyBalance": "Monthly balance"
+  "monthlyBalance": "Monthly balance",
+
+  "transactionFormTitleNew": "New transaction",
+  "transactionFormTitleEdit": "Edit transaction",
+  "transactionTypeExpense": "Expense",
+  "transactionTypeIncome": "Income",
+  "transactionTypeTransfer": "Transfer",
+
+  "transactionFormAccountLabel": "Account",
+  "transactionFormFromAccountLabel": "From account",
+  "transactionFormToAccountLabel": "To account",
+  "transactionFormAccountRequired": "Pick an account",
+  "transactionFormAccountSameError": "Source and destination must differ",
+  "transactionFormCategoryLabel": "Category",
+  "transactionFormCategoryNone": "Uncategorized",
+  "transactionFormTransferCategoryHint": "Auto-set to Transfer In/Out",
+  "transactionFormDateLabel": "Date",
+  "transactionFormAmountLabel": "Amount",
+  "transactionFormAmountRequired": "Required",
+  "transactionFormAmountInvalid": "Enter a valid number",
+  "transactionFormAmountTooSmall": "Must be greater than 0",
+  "transactionFormNoteLabel": "Note (optional)",
+  "transactionFormNoteAddLabel": "+ Add note",
+  "transactionFormTagsLabel": "Tags",
+  "transactionFormTagsEmpty": "No tags yet. Create one from the Tags page.",
+  "transactionFormSave": "Save",
+  "transactionFormSaveAndAddAnother": "Save & add another",
+  "transactionFormSavedAddedAnother": "Saved. Add another below.",
+
+  "transactionFormAccountPickerTitle": "Pick an account",
+  "transactionFormAccountPickerEmpty": "No active accounts. Create one first.",
+
+  "transactionFormCategoryPickerTitle": "Pick a category",
+  "transactionFormCategoryPickerNoneOption": "Uncategorized",
+  "transactionFormCategoryPickerEmpty": "No categories of this type yet.",
+
+  "transactionFormDiscardTitle": "Discard transaction?",
+  "transactionFormDiscardTitleEdit": "Discard changes?",
+  "transactionFormDiscardBody": "Your changes will be lost.",
+
+  "transactionDetailEdit": "Edit",
+  "transactionDetailDelete": "Delete",
+  "transactionDetailNotFound": "Transaction not found",
+  "transactionDetailNotFoundMessage": "This transaction may have been deleted.",
+  "transactionDetailDeleteConfirmTitle": "Delete this transaction?",
+  "transactionDetailDeleteConfirmTitleTransfer": "Delete this transfer?",
+  "transactionDetailDeleteConfirmBody": "This will reverse the balance change on the account.",
+  "transactionDetailDeleteConfirmBodyTransfer": "Both rows of the transfer will be deleted and balances on both accounts will reverse.",
+  "transactionDetailDeleteConfirmAction": "Delete",
+
+  "transactionDetailTransferReadonlyHint": "To change accounts, delete and create a new transfer.",
+  "transactionDetailSystemRowBanner": "Auto-created — to change this, use the matching account-level action (account edit, or Adjust balance).",
+
+  "transactionsRangeWeek": "This week",
+  "transactionsRangeMonth": "This month",
+  "transactionsRangeYear": "This year",
+  "transactionsRangeAll": "All",
+
+  "transactionsEmptyAccountTitle": "No transactions yet",
+  "transactionsEmptyAccountMessage": "Tap the + button to add one.",
+
+  "transactionsListTitle": "Transactions",
+  "transactionsListFilterAll": "All",
+  "transactionsListFilterCategoryAll": "All categories",
+  "transactionsListEmptyMessage": "No transactions match these filters.",
+  "transactionsListRetry": "Retry",
+  "transactionsListDateToday": "Today",
+  "transactionsListDateYesterday": "Yesterday",
+
+  "accountAdjustBalanceViewTransaction": "View",
+  "accountAdjustBalanceSuccess": "Balance adjusted"
 }

@@ -16,7 +16,7 @@ class ReorderModeTilt extends StatelessWidget {
     this.angleDegrees = -2,
     this.showCornerMark = true,
     this.cornerSize = 6,
-    this.cornerOffset = 3,
+    this.cornerOffset = 0,
     this.strokeWidth = 1.5,
     super.key,
   });
@@ -30,8 +30,13 @@ class ReorderModeTilt extends StatelessWidget {
   /// Side length of each L corner bracket.
   final double cornerSize;
 
-  /// Distance from the child's edge to where each L sits (negative
-  /// position relative to child bounds).
+  /// How far the corner brackets sit from the child's edge.
+  /// - `0` (default): brackets sit *at* the child's bounding-box corners,
+  ///   staying within the layout's vertical bounds. For round children
+  ///   (e.g. a 36×36 icon circle), this places the L brackets in the
+  ///   transparent corners between the circle and its bounding box.
+  /// - `> 0`: brackets sit `cornerOffset` dp outside the bounding box.
+  ///   Looks like a viewfinder, but bleeds into adjacent rows visually.
   final double cornerOffset;
 
   /// Border thickness of each L stroke.

@@ -6,14 +6,13 @@ import '../../l10n/gen/app_localizations.dart';
 
 /// Five-slot bottom navigation:
 ///
-/// `[Dashboard] [Accounts] [+ Add (FAB)] [Projects] [☰ More]`
+/// `[Dashboard] [Transactions] [+ Add (FAB)] [Accounts] [☰ More]`
 ///
-/// Three of the five are tab destinations (Dashboard / Accounts / Projects)
-/// and switch the [StatefulNavigationShell] branch on tap. The center `+` is
-/// an action that opens the QuickAdd modal (Phase 1a — for now a snackbar).
-/// `☰ More` is also an action — it opens [MoreMenuSheet] without changing the
-/// active branch, so the user returns to whichever tab they were on when they
-/// dismiss the sheet.
+/// Three of the five are tab destinations (Dashboard=0 / Transactions=1 /
+/// Accounts=2) and switch the [StatefulNavigationShell] branch on tap.
+/// The center `+` opens the QuickAdd transaction modal. `☰ More` opens
+/// the [MoreMenuSheet] without changing the active branch — Projects /
+/// Categories / Tags / etc. live there.
 class MainBottomNav extends StatelessWidget {
   const MainBottomNav({
     required this.currentIndex,
@@ -23,9 +22,9 @@ class MainBottomNav extends StatelessWidget {
     super.key,
   });
 
-  /// Branch index of the active destination tab (Dashboard=0, Accounts=1,
-  /// Projects=2). `+` and `More` are actions, not branches, so they never
-  /// drive this value.
+  /// Branch index of the active destination tab
+  /// (Dashboard=0, Transactions=1, Accounts=2). `+` and `More` are
+  /// actions, not branches, so they never drive this value.
   final int currentIndex;
 
   /// Called with the target branch index (0, 1, or 2).
@@ -52,9 +51,9 @@ class MainBottomNav extends StatelessWidget {
             onTap: () => onTabSelected(0),
           ),
           _NavItem(
-            icon: Icons.account_balance_wallet_outlined,
-            iconSelected: Icons.account_balance_wallet,
-            label: l.navAccounts,
+            icon: Icons.list_alt_outlined,
+            iconSelected: Icons.list_alt,
+            label: l.navTransactions,
             selected: currentIndex == 1,
             onTap: () => onTabSelected(1),
           ),
@@ -62,9 +61,9 @@ class MainBottomNav extends StatelessWidget {
           // the [Scaffold.floatingActionButton] above this bar).
           const SizedBox(width: 56),
           _NavItem(
-            icon: Icons.groups_outlined,
-            iconSelected: Icons.groups,
-            label: l.navProjects,
+            icon: Icons.account_balance_wallet_outlined,
+            iconSelected: Icons.account_balance_wallet,
+            label: l.navAccounts,
             selected: currentIndex == 2,
             onTap: () => onTabSelected(2),
           ),

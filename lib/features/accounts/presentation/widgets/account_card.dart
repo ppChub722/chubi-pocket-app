@@ -70,6 +70,11 @@ class _HorizontalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final desc = account.description?.trim();
+    final note = account.note?.trim();
+    final hasDesc = desc != null && desc.isNotEmpty;
+    final hasNote = note != null && note.isNotEmpty;
     return Row(
       children: [
         _IconCircle(account: account, size: 44, onTap: onIconTap),
@@ -86,12 +91,29 @@ class _HorizontalLayout extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 2),
+              // Subtitle: description preferred, else fallback to type.
+              // Keeps the most useful "what is this account for" hint
+              // visible at the grid level without an extra line.
               Text(
-                _typeLabel(context, account.type),
+                hasDesc ? desc : _typeLabel(context, account.type),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: scheme.onSurfaceVariant,
                     ),
               ),
+              if (hasNote) ...[
+                const SizedBox(height: 2),
+                Text(
+                  note,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              ],
             ],
           ),
         ),

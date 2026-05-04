@@ -6,14 +6,24 @@ import '../../l10n/gen/app_localizations.dart';
 
 /// Bottom sheet shown when the user taps `More` on the bottom nav.
 ///
-/// Lists features that don't have a primary tab. Phase 0 ships every entry as
-/// "Coming soon" — they activate as their phases land:
-/// - **Phase 1a** — Transactions (full list), Categories, Tags
-/// - **Phase 1b** — Contacts, Debts, Notifications
-/// - **Phase 1c** — Budgets, Saving goals, Scheduled
+/// Lists features that don't have a primary tab, grouped by **function**
+/// (not phase) and separated with thin dividers. Each entry is either a
+/// shipped route or a "Soon" stub waiting for its module to land. As
+/// features ship, swap `comingSoonMessage` → `route` on the matching
+/// `_MoreItem`.
 ///
-/// Profile / Settings / Logout intentionally do NOT live here — they live
-/// behind the avatar tap in the top bar (`/settings`).
+/// Groups (top → bottom):
+///
+/// 1. **Library** — taxonomy of the user's own data.
+///    Categories, Tags.
+/// 2. **People & Money flow** — collaboration / IOU tracking.
+///    Contacts, Projects, Debts.
+/// 3. **Notifications** — alerts about shared state.
+/// 4. **Planning** — forward-looking allocations & schedules.
+///    Budgets, Saving goals, Scheduled.
+///
+/// Profile / Settings / Logout intentionally do NOT live here — they
+/// live behind the avatar tap in the top bar (`/settings`).
 class MoreMenuSheet extends StatelessWidget {
   const MoreMenuSheet({super.key});
 
@@ -38,12 +48,7 @@ class MoreMenuSheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _SectionHeader(text: l.morePhase1aHeader),
-            _MoreItem(
-              icon: Icons.list_alt_outlined,
-              title: l.moreTransactions,
-              comingSoonMessage: l.moreComingInPhase1a,
-            ),
+            // Group 1 — Library (taxonomy of the user's own data).
             _MoreItem(
               icon: Icons.category_outlined,
               title: l.moreCategories,
@@ -52,25 +57,34 @@ class MoreMenuSheet extends StatelessWidget {
             _MoreItem(
               icon: Icons.sell_outlined,
               title: l.moreTags,
-              comingSoonMessage: l.moreComingInPhase1a,
+              route: '/tags',
             ),
-            _SectionHeader(text: l.morePhase1bHeader),
+            const Divider(height: 1),
+            // Group 2 — People & money flow (collaboration / IOU).
             _MoreItem(
               icon: Icons.contacts_outlined,
               title: l.moreContacts,
-              comingSoonMessage: l.moreComingInPhase1b,
+              route: '/contacts',
+            ),
+            _MoreItem(
+              icon: Icons.groups_outlined,
+              title: l.moreProjects,
+              route: '/projects',
             ),
             _MoreItem(
               icon: Icons.account_balance_outlined,
               title: l.moreDebts,
-              comingSoonMessage: l.moreComingInPhase1b,
+              route: '/personal-debts',
             ),
+            const Divider(height: 1),
+            // Group 3 — Notifications.
             _MoreItem(
               icon: Icons.notifications_outlined,
               title: l.moreNotifications,
-              comingSoonMessage: l.moreComingInPhase1b,
+              route: '/notifications',
             ),
-            _SectionHeader(text: l.morePhase1cHeader),
+            const Divider(height: 1),
+            // Group 4 — Planning (forward-looking).
             _MoreItem(
               icon: Icons.savings_outlined,
               title: l.moreBudgets,
@@ -88,26 +102,6 @@ class MoreMenuSheet extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
-      child: Text(
-        text.toUpperCase(),
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              letterSpacing: 0.5,
-            ),
       ),
     );
   }

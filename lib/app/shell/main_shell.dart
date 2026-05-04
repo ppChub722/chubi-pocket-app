@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/transactions/presentation/pages/transaction_form_page.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'main_bottom_nav.dart';
 import 'main_top_bar.dart';
 import 'more_menu_sheet.dart';
 
-/// App chrome shared by every primary tab (Dashboard / Accounts / Projects).
+/// App chrome shared by every primary tab (Dashboard / Transactions /
+/// Accounts).
 ///
-/// Owns the top app bar, the bottom navigation, and the centered `+` FAB.
-/// Sub-pages routed outside this shell (e.g. `/settings`, `/accounts/:id`)
-/// supply their own [Scaffold] + [AppBar] with a back button.
+/// Owns the top app bar, the bottom navigation, and the centered `+`
+/// FAB. Sub-pages routed outside this shell (`/settings`,
+/// `/accounts/:id`, `/projects`, etc.) supply their own [Scaffold] +
+/// [AppBar] with a back button.
 class MainShell extends StatelessWidget {
   const MainShell({required this.navigationShell, super.key});
 
@@ -26,7 +29,7 @@ class MainShell extends StatelessWidget {
       body: navigationShell,
       floatingActionButton: FloatingActionButton(
         tooltip: l.navAddTransaction,
-        onPressed: () => _showAddComingSoon(context, l),
+        onPressed: () => showTransactionFormSheet(context),
         shape: const CircleBorder(),
         child: const Icon(Icons.add),
       ),
@@ -39,7 +42,7 @@ class MainShell extends StatelessWidget {
           // behaviour users expect from native bottom nav.
           initialLocation: i == navigationShell.currentIndex,
         ),
-        onAddPressed: () => _showAddComingSoon(context, l),
+        onAddPressed: () => showTransactionFormSheet(context),
         onMorePressed: () => MoreMenuSheet.show(context),
       ),
     );
@@ -50,19 +53,12 @@ class MainShell extends StatelessWidget {
       case 0:
         return l.navDashboard;
       case 1:
-        return l.navAccounts;
+        return l.navTransactions;
       case 2:
-        return l.navProjects;
+        return l.navAccounts;
       default:
         return l.appName;
     }
   }
 
-  void _showAddComingSoon(BuildContext context, AppLocalizations l) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(l.addTransactionComingSoon)),
-      );
-  }
 }

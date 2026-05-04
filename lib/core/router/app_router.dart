@@ -14,12 +14,28 @@ import '../../features/accounts/presentation/pages/account_form_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
 import '../../features/categories/presentation/pages/category_form_page.dart';
+import '../../features/contacts/presentation/pages/contact_detail_page.dart';
+import '../../features/contacts/presentation/pages/contact_form_page.dart';
+import '../../features/contacts/presentation/pages/contacts_page.dart';
+import '../../features/notifications/presentation/pages/notification_settings_page.dart';
+import '../../features/notifications/presentation/pages/notifications_inbox_page.dart';
+import '../../features/personal_debts/presentation/pages/personal_debt_detail_page.dart';
+import '../../features/personal_debts/presentation/pages/personal_debt_form_page.dart';
+import '../../features/personal_debts/presentation/pages/personal_debts_page.dart';
+import '../../features/projects/presentation/pages/project_detail_page.dart';
+import '../../features/projects/presentation/pages/project_form_page.dart';
+import '../../features/projects/presentation/pages/project_transaction_form_page.dart';
+import '../../features/projects/presentation/pages/projects_page.dart';
+import '../../features/tags/presentation/pages/tag_form_page.dart';
+import '../../features/tags/presentation/pages/tags_page.dart';
+import '../../features/transactions/presentation/pages/transaction_detail_page.dart';
+import '../../features/transactions/presentation/pages/transaction_form_page.dart';
+import '../../features/transactions/presentation/pages/transactions_list_page.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
-import '../../features/projects/presentation/pages/projects_placeholder_page.dart';
 import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
@@ -44,8 +60,8 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 ///   button.
 GoRouter buildAppRouter(AuthCubit authCubit) {
   final dashboardNavigatorKey = GlobalKey<NavigatorState>();
+  final transactionsNavigatorKey = GlobalKey<NavigatorState>();
   final accountsNavigatorKey = GlobalKey<NavigatorState>();
-  final projectsNavigatorKey = GlobalKey<NavigatorState>();
 
   return GoRouter(
     initialLocation: '/',
@@ -90,6 +106,16 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
             ],
           ),
           StatefulShellBranch(
+            navigatorKey: transactionsNavigatorKey,
+            routes: [
+              GoRoute(
+                path: '/transactions',
+                name: 'transactions',
+                builder: (context, state) => const TransactionsListPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
             navigatorKey: accountsNavigatorKey,
             routes: [
               GoRoute(
@@ -99,17 +125,88 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               ),
             ],
           ),
-          StatefulShellBranch(
-            navigatorKey: projectsNavigatorKey,
-            routes: [
-              GoRoute(
-                path: '/projects',
-                name: 'projects',
-                builder: (context, state) => const ProjectsPlaceholderPage(),
-              ),
-            ],
-          ),
         ],
+      ),
+      // Projects (Phase 1b.2). Outside the bottom-nav shell.
+      GoRoute(
+        path: '/projects',
+        name: 'projects',
+        builder: (context, state) => const ProjectsPage(),
+      ),
+      GoRoute(
+        path: '/projects/new',
+        name: 'project-new',
+        builder: (context, state) => const ProjectFormPage(),
+      ),
+      GoRoute(
+        path: '/projects/:id',
+        name: 'project-detail',
+        builder: (context, state) =>
+            ProjectDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/projects/:id/edit',
+        name: 'project-edit',
+        builder: (context, state) =>
+            ProjectFormPage(editingId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/projects/:id/transactions/new',
+        name: 'project-tx-new',
+        builder: (context, state) => ProjectTransactionFormPage(
+          projectId: state.pathParameters['id']!,
+        ),
+      ),
+      // Notifications (Phase 1b.2)
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        builder: (context, state) => const NotificationsInboxPage(),
+      ),
+      GoRoute(
+        path: '/notifications/settings',
+        name: 'notifications-settings',
+        builder: (context, state) => const NotificationSettingsPage(),
+      ),
+      // Contacts (Phase 1b.1)
+      GoRoute(
+        path: '/contacts',
+        name: 'contacts',
+        builder: (context, state) => const ContactsPage(),
+      ),
+      GoRoute(
+        path: '/contacts/new',
+        name: 'contact-new',
+        builder: (context, state) => const ContactFormPage(),
+      ),
+      GoRoute(
+        path: '/contacts/:id',
+        name: 'contact-detail',
+        builder: (context, state) =>
+            ContactDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/contacts/:id/edit',
+        name: 'contact-edit',
+        builder: (context, state) =>
+            ContactFormPage(editingId: state.pathParameters['id']),
+      ),
+      // Personal debts (bidirectional — replaces splits)
+      GoRoute(
+        path: '/personal-debts',
+        name: 'personal-debts',
+        builder: (context, state) => const PersonalDebtsPage(),
+      ),
+      GoRoute(
+        path: '/personal-debts/new',
+        name: 'personal-debt-new',
+        builder: (context, state) => const PersonalDebtFormPage(),
+      ),
+      GoRoute(
+        path: '/personal-debts/:id',
+        name: 'personal-debt-detail',
+        builder: (context, state) =>
+            PersonalDebtDetailPage(id: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/auth/login',
@@ -134,6 +231,12 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
         ),
       ),
       GoRoute(
+        path: '/accounts/:id/edit',
+        name: 'account-edit',
+        builder: (context, state) =>
+            AccountFormPage(editingId: state.pathParameters['id']),
+      ),
+      GoRoute(
         path: '/categories',
         name: 'categories',
         builder: (context, state) => const CategoriesPage(),
@@ -148,6 +251,43 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
         name: 'category-edit',
         builder: (context, state) =>
             CategoryFormPage(editingId: state.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/tags',
+        name: 'tags',
+        builder: (context, state) => const TagsPage(),
+      ),
+      GoRoute(
+        path: '/tags/new',
+        name: 'tag-new',
+        builder: (context, state) => const TagFormPage(),
+      ),
+      GoRoute(
+        path: '/tags/:id/edit',
+        name: 'tag-edit',
+        builder: (context, state) =>
+            TagFormPage(editingId: state.pathParameters['id']),
+      ),
+      // /transactions itself is a shell branch (bottom-nav slot 1); the
+      // create / detail / edit routes below are top-level so they
+      // present without the bottom nav.
+      GoRoute(
+        path: '/transactions/new',
+        name: 'transaction-new',
+        builder: (context, state) => const TransactionFormPage(),
+      ),
+      GoRoute(
+        path: '/transactions/:id',
+        name: 'transaction-detail',
+        builder: (context, state) => TransactionDetailPage(
+          transactionId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/transactions/:id/edit',
+        name: 'transaction-edit',
+        builder: (context, state) =>
+            TransactionFormPage(editingId: state.pathParameters['id']),
       ),
       GoRoute(
         path: '/settings',

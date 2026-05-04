@@ -51,10 +51,15 @@
   "authRegisterEmailTakenInline": "ถูกใช้แล้ว",
 
   "homeEmptyTitle": "ยังไม่มีรายการ",
-  "homeEmptyMessage": "หน้าหลักเฟส 0 — โมดูลฟีเจอร์ (บัญชี, รายการ, งบประมาณ) จะมาในเฟส 1",
+  "homeEmptyMessage": "เพิ่มบัญชีจากแท็บบัญชี แล้วกดปุ่ม + เพื่อเริ่มบันทึกรายการ",
+  "homeNetWorthLabel": "ทรัพย์สินสุทธิ",
+  "homeNetWorthAccountCount": "{count, plural, =1{1 บัญชี} other{{count} บัญชี}}",
+  "homeRecentTitle": "รายการล่าสุด",
+  "homeRecentViewAll": "ดูทั้งหมด",
   "homeSettingsTooltip": "การตั้งค่า",
 
   "navDashboard": "แดชบอร์ด",
+  "navTransactions": "รายการ",
   "navAccounts": "บัญชี",
   "navAddTransaction": "เพิ่มรายการ",
   "navProjects": "โปรเจกต์",
@@ -85,7 +90,7 @@
 
   "accountDetailCreditAvailable": "เหลือ {available} จาก {limit}",
 
-  "accountDetailSummaryTitle": "30 วันที่ผ่านมา",
+  "accountDetailSummaryTitle": "สรุป",
   "accountDetailSummaryIncome": "รายรับ",
   "accountDetailSummaryExpense": "รายจ่าย",
   "accountDetailSummaryNet": "สุทธิ",
@@ -102,6 +107,8 @@
   "accountDetailTransactionsEmptyMessage": "การบันทึกรายการจะมาในเฟส 1a",
 
   "accountFormTitle": "บัญชีใหม่",
+  "accountFormTitleEdit": "แก้ไขบัญชี",
+  "accountFormSaveEdit": "บันทึกการแก้ไข",
   "accountFormPreviewLabel": "ตัวอย่าง",
   "accountFormTypeLabel": "ประเภท",
   "accountFormNameLabel": "ชื่อบัญชี",
@@ -124,14 +131,31 @@
   "accountFormSave": "บันทึกบัญชี",
   "accountFormDiscardTitle": "ยกเลิกบัญชีใหม่?",
   "accountFormDiscardBody": "การเปลี่ยนแปลงของคุณจะหายไป",
+  "accountFormDiscardTitleEdit": "ยกเลิกการแก้ไข?",
+
+  "accountAdjustBalanceTitle": "ปรับยอดเงิน",
+  "accountAdjustBalanceBody": "ตั้งยอดใหม่ ระบบจะบันทึกส่วนต่างเป็นรายการ Adjustment เพื่อให้ประวัติตรงกัน",
+  "accountAdjustBalanceCurrentLabel": "ยอดปัจจุบัน",
+  "accountAdjustBalanceNewLabel": "ยอดใหม่",
+  "accountAdjustBalanceNoteLabel": "บันทึก (ไม่บังคับ)",
+  "accountAdjustBalanceInvalidAmount": "ใส่ตัวเลข",
+  "accountAdjustBalanceNoChange": "ยอดใหม่ต้องต่างจากยอดปัจจุบัน",
+  "accountAdjustBalanceConfirm": "ปรับ",
+
+  "accountArchiveConfirmTitle": "เก็บบัญชีนี้?",
+  "accountArchiveConfirmBody": "บัญชีจะถูกซ่อนจากรายการที่ใช้งาน รายการที่มีอยู่จะยังคงอ้างถึงได้",
+  "accountArchiveConfirmAction": "เก็บ",
 
   "accountFormCurrencyLabel": "สกุลเงิน",
   "accountFormCurrencyPhase2": "หลายสกุลเงินจะมาในเฟส 2",
   "accountFormPhase2Badge": "เฟส 2",
 
+  "accountFormDescriptionLabel": "คำอธิบาย",
+  "accountFormDescriptionHelper": "ใช้สำหรับอะไร เห็นเฉพาะคุณคนเดียว",
+  "accountFormDescriptionTooLong": "สูงสุด 200 ตัวอักษร",
   "accountFormNoteLabel": "บันทึกย่อ",
-  "accountFormNoteHelper": "ไม่บังคับ — บันทึกที่คุณเห็นคนเดียว (เช่น \"เงินไปเที่ยวญี่ปุ่น\")",
-  "accountFormNoteTooLong": "สูงสุด 500 ตัวอักษร",
+  "accountFormNoteHelper": "บันทึกส่วนตัว (เช่น \"เงินไปเที่ยวญี่ปุ่น\")",
+  "accountFormNoteTooLong": "สูงสุด 200 ตัวอักษร",
 
   "iconPickerSectionStyle": "สไตล์",
   "iconPickerSectionColor": "สี",
@@ -148,6 +172,7 @@
   "morePhase1cHeader": "เฟส 1c — เร็ว ๆ นี้",
   "moreTransactions": "รายการทั้งหมด",
   "moreCategories": "หมวดหมู่",
+  "moreProjects": "โปรเจกต์",
   "moreTags": "แท็ก",
   "moreContacts": "ผู้ติดต่อ",
   "moreDebts": "หนี้สิน",
@@ -205,6 +230,29 @@
   "categoriesReorderTooDeep": "การย้ายจะเกิน 3 ระดับที่อนุญาต",
   "categoriesReorderCycle": "ไม่สามารถย้ายหมวดหมู่เข้าสู่หมวดย่อยของตัวเองได้",
   "categoriesReorderCancel": "ยกเลิก",
+
+  "tagsTitle": "แท็ก",
+  "tagsEmptyTitle": "ยังไม่มีแท็ก",
+  "tagsEmptyMessage": "ใช้แท็กกับรายการเพื่อแบ่งกลุ่มการใช้จ่ายตามที่ต้องการ",
+  "tagsAddNew": "เพิ่มแท็ก",
+  "tagsUsageCount": "{count, plural, =0{} other{×{count}}}",
+
+  "tagDeleteConfirmTitle": "ลบแท็ก?",
+  "tagDeleteConfirmBody": "จะลบแท็กออกจากรายการที่ใช้แท็กนี้ ไม่สามารถย้อนกลับได้",
+  "tagDeleteConfirmAction": "ลบ",
+
+  "tagFormTitleNew": "แท็กใหม่",
+  "tagFormTitleEdit": "แก้ไขแท็ก",
+  "tagFormPreviewLabel": "ตัวอย่าง",
+  "tagFormNameLabel": "ชื่อ",
+  "tagFormNameRequired": "จำเป็น",
+  "tagFormNameTooLong": "สูงสุด 50 ตัวอักษร",
+  "tagFormNameDuplicate": "มีแท็กที่ใช้ชื่อนี้อยู่แล้ว",
+  "tagFormIconLabel": "ไอคอน",
+  "tagFormColorLabel": "สี",
+  "tagFormSave": "บันทึกแท็ก",
+  "tagFormDiscardTitle": "ยกเลิกการเปลี่ยนแปลง?",
+  "tagFormDiscardBody": "การแก้ไขของคุณจะหายไป",
 
   "settingsTitle": "การตั้งค่า",
   "settingsSectionAccount": "บัญชี",
@@ -289,5 +337,75 @@
 
   "amountLabel": "จำนวนเงิน",
   "amountHint": "0.00",
-  "monthlyBalance": "ยอดคงเหลือรายเดือน"
+  "monthlyBalance": "ยอดคงเหลือรายเดือน",
+
+  "transactionFormTitleNew": "รายการใหม่",
+  "transactionFormTitleEdit": "แก้ไขรายการ",
+  "transactionTypeExpense": "รายจ่าย",
+  "transactionTypeIncome": "รายรับ",
+  "transactionTypeTransfer": "โอนเงิน",
+
+  "transactionFormAccountLabel": "บัญชี",
+  "transactionFormFromAccountLabel": "จากบัญชี",
+  "transactionFormToAccountLabel": "ไปบัญชี",
+  "transactionFormAccountRequired": "เลือกบัญชี",
+  "transactionFormAccountSameError": "บัญชีต้นทางและปลายทางต้องไม่ใช่บัญชีเดียวกัน",
+  "transactionFormCategoryLabel": "หมวดหมู่",
+  "transactionFormCategoryNone": "ไม่ระบุหมวด",
+  "transactionFormTransferCategoryHint": "ระบบจะตั้งหมวด Transfer In/Out ให้อัตโนมัติ",
+  "transactionFormDateLabel": "วันที่",
+  "transactionFormAmountLabel": "จำนวนเงิน",
+  "transactionFormAmountRequired": "จำเป็น",
+  "transactionFormAmountInvalid": "ใส่ตัวเลขที่ถูกต้อง",
+  "transactionFormAmountTooSmall": "ต้องมากกว่า 0",
+  "transactionFormNoteLabel": "บันทึก (ไม่บังคับ)",
+  "transactionFormNoteAddLabel": "+ เพิ่มบันทึก",
+  "transactionFormTagsLabel": "แท็ก",
+  "transactionFormTagsEmpty": "ยังไม่มีแท็ก สร้างได้จากหน้าแท็ก",
+  "transactionFormSave": "บันทึก",
+  "transactionFormSaveAndAddAnother": "บันทึกและเพิ่มอีกรายการ",
+  "transactionFormSavedAddedAnother": "บันทึกแล้ว เพิ่มรายการต่อด้านล่างได้",
+
+  "transactionFormAccountPickerTitle": "เลือกบัญชี",
+  "transactionFormAccountPickerEmpty": "ยังไม่มีบัญชีที่ใช้งาน เพิ่มบัญชีก่อน",
+
+  "transactionFormCategoryPickerTitle": "เลือกหมวดหมู่",
+  "transactionFormCategoryPickerNoneOption": "ไม่ระบุหมวด",
+  "transactionFormCategoryPickerEmpty": "ยังไม่มีหมวดประเภทนี้",
+
+  "transactionFormDiscardTitle": "ยกเลิกรายการ?",
+  "transactionFormDiscardTitleEdit": "ยกเลิกการแก้ไข?",
+  "transactionFormDiscardBody": "การเปลี่ยนแปลงของคุณจะหายไป",
+
+  "transactionDetailEdit": "แก้ไข",
+  "transactionDetailDelete": "ลบ",
+  "transactionDetailNotFound": "ไม่พบรายการ",
+  "transactionDetailNotFoundMessage": "รายการนี้อาจถูกลบไปแล้ว",
+  "transactionDetailDeleteConfirmTitle": "ลบรายการนี้?",
+  "transactionDetailDeleteConfirmTitleTransfer": "ลบการโอนนี้?",
+  "transactionDetailDeleteConfirmBody": "ระบบจะย้อนยอดที่บัญชีให้",
+  "transactionDetailDeleteConfirmBodyTransfer": "ทั้งสองรายการของการโอนจะถูกลบ และยอดที่ทั้งสองบัญชีจะย้อนกลับ",
+  "transactionDetailDeleteConfirmAction": "ลบ",
+
+  "transactionDetailTransferReadonlyHint": "หากต้องการเปลี่ยนบัญชี ให้ลบแล้วสร้างการโอนใหม่",
+  "transactionDetailSystemRowBanner": "ระบบสร้างให้อัตโนมัติ หากต้องการแก้ไขให้ใช้การแก้ไขบัญชี หรือปรับยอดเงิน",
+
+  "transactionsRangeWeek": "สัปดาห์นี้",
+  "transactionsRangeMonth": "เดือนนี้",
+  "transactionsRangeYear": "ปีนี้",
+  "transactionsRangeAll": "ทั้งหมด",
+
+  "transactionsEmptyAccountTitle": "ยังไม่มีรายการ",
+  "transactionsEmptyAccountMessage": "กดปุ่ม + เพื่อเพิ่มรายการ",
+
+  "transactionsListTitle": "รายการทั้งหมด",
+  "transactionsListFilterAll": "ทั้งหมด",
+  "transactionsListFilterCategoryAll": "ทุกหมวดหมู่",
+  "transactionsListEmptyMessage": "ไม่มีรายการตรงตัวกรอง",
+  "transactionsListRetry": "ลองใหม่",
+  "transactionsListDateToday": "วันนี้",
+  "transactionsListDateYesterday": "เมื่อวาน",
+
+  "accountAdjustBalanceViewTransaction": "ดู",
+  "accountAdjustBalanceSuccess": "ปรับยอดเรียบร้อย"
 }

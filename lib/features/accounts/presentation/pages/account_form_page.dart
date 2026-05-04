@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/icon_color_picker_sheet.dart';
 import '../../domain/account.dart';
@@ -12,25 +13,38 @@ import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
 import '../widgets/account_card.dart';
 
-/// Create-account form — full-page route at `/accounts/new`.
+/// Create / edit account form — routed at `/accounts/new` and
+/// `/accounts/:id/edit`.
 ///
-/// Phase 0 mock: Save adds the account to [AccountsCubit] in memory and
-/// pops back to the grid. Phase 1a wires Save to `POST /v1/accounts` with
-/// optimistic insert + rollback on failure.
+/// **Create mode** (default): Save calls `cubit.add(...)` →
+/// `POST /v1/accounts`. Opening balance can be non-zero and the server
+/// auto-creates an Opening Balance transaction.
+///
+/// **Edit mode** (`editingId` set): controllers are pre-populated from
+/// the cubit's cache. Save calls `cubit.update(...)` →
+/// `PUT /v1/accounts/:id`. Per spec §2.4, **balance is NOT editable
+/// here** — the field is hidden and the user adjusts via the detail-
+/// page "Adjust balance" overflow menu (which calls
+/// `POST /v1/accounts/:id/adjust-balance`).
 ///
 /// Sections (top to bottom):
 /// - Live preview card (re-renders every change)
 /// - Type chips with leading icons
 /// - Name
-/// - [IconColorPicker] (shared widget — used by future category / tag /
-///   project forms; avatar picker can migrate to it in P2 polish)
-/// - Currency — disabled tile with "Phase 2" badge (single-currency until
-///   multi-currency lands per spec Phase summary)
-/// - Opening balance
-/// - Note (free-text, optional, ~500-char advisory)
+/// - [IconColorPicker] (shared widget)
+/// - Currency — disabled tile with "Phase 2" badge
+/// - Opening balance (create mode only)
+/// - Description (200 chars, optional)
+/// - Note (200 chars, optional)
 /// - Credit details (only when [AccountType.isCredit])
 class AccountFormPage extends StatefulWidget {
-  const AccountFormPage({super.key});
+  const AccountFormPage({this.editingId, super.key});
+
+  /// Non-null when the page is opened for edit (`/accounts/:id/edit`).
+  /// Null for create (`/accounts/new`).
+  final String? editingId;
+
+  bool get isEdit => editingId != null;
 
   @override
   State<AccountFormPage> createState() => _AccountFormPageState();
@@ -40,6 +54,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _balanceController = TextEditingController(text: '0');
+  final _descriptionController = TextEditingController();
   final _noteController = TextEditingController();
   final _creditLimitController = TextEditingController();
   final _statementDateController = TextEditingController();
@@ -50,11 +65,52 @@ class _AccountFormPageState extends State<AccountFormPage> {
   AccountIconPreset _icon = AccountIconPreset.wallet;
   AccountColor _color = AccountColor.blue;
 
+  /// The pre-edit snapshot when [AccountFormPage.isEdit] is true. Used
+  /// to compute dirty-ness for the discard-confirm dialog and to build
+  /// the [Account] body for the PUT call (preserving id, currency, etc.).
+  Account? _initial;
+
   bool get _isCredit => _type.isCredit;
 
   bool get _hasUserInput {
+    if (widget.isEdit) {
+      // Edit mode: dirty if anything differs from the loaded initial.
+      if (_initial == null) return false;
+      final i = _initial!;
+      final desc = _descriptionController.text.trim();
+      final note = _noteController.text.trim();
+      final initialDesc = (i.description ?? '');
+      final initialNote = (i.note ?? '');
+      if (_nameController.text != i.name) return true;
+      if (_type != i.type) return true;
+      if (_icon != i.icon) return true;
+      if (_color.id != i.color.id) return true;
+      if (desc != initialDesc) return true;
+      if (note != initialNote) return true;
+      if (_isCredit) {
+        if (_creditLimitController.text !=
+            (i.creditLimit?.toString() ?? '')) {
+          return true;
+        }
+        if (_statementDateController.text !=
+            (i.statementDate?.toString() ?? '')) {
+          return true;
+        }
+        if (_paymentDueController.text !=
+            (i.paymentDueDate?.toString() ?? '')) {
+          return true;
+        }
+        if (_minimumPaymentController.text !=
+            (i.minimumPayment?.toString() ?? '')) {
+          return true;
+        }
+      }
+      return false;
+    }
+    // Create mode: dirty if any user input is present.
     return _nameController.text.isNotEmpty ||
         _balanceController.text != '0' ||
+        _descriptionController.text.isNotEmpty ||
         _noteController.text.isNotEmpty ||
         _creditLimitController.text.isNotEmpty ||
         _statementDateController.text.isNotEmpty ||
@@ -63,9 +119,41 @@ class _AccountFormPageState extends State<AccountFormPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.isEdit) {
+      // Cubit cache populated by the list page or detail page navigation.
+      // If the user deep-links into an unloaded edit URL, byId returns
+      // null and we render a not-found scaffold.
+      final existing =
+          context.read<AccountsCubit>().byId(widget.editingId!);
+      if (existing != null) {
+        _initial = existing;
+        _nameController.text = existing.name;
+        _descriptionController.text = existing.description ?? '';
+        _noteController.text = existing.note ?? '';
+        _type = existing.type;
+        _icon = existing.icon;
+        _color = existing.color;
+        if (existing.type.isCredit) {
+          _creditLimitController.text =
+              existing.creditLimit?.toString() ?? '';
+          _statementDateController.text =
+              existing.statementDate?.toString() ?? '';
+          _paymentDueController.text =
+              existing.paymentDueDate?.toString() ?? '';
+          _minimumPaymentController.text =
+              existing.minimumPayment?.toString() ?? '';
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _balanceController.dispose();
+    _descriptionController.dispose();
     _noteController.dispose();
     _creditLimitController.dispose();
     _statementDateController.dispose();
@@ -77,6 +165,25 @@ class _AccountFormPageState extends State<AccountFormPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+
+    // Edit mode + the account isn't in the cubit cache → user deep-linked
+    // an unloaded id. Show a minimal not-found scaffold rather than an
+    // empty form that would create a wrong PUT body on save.
+    if (widget.isEdit && _initial == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l.accountFormTitleEdit)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Text(
+              l.accountDetailNotFoundMessage,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
     return PopScope(
       canPop: !_hasUserInput,
       onPopInvokedWithResult: (didPop, _) async {
@@ -85,7 +192,11 @@ class _AccountFormPageState extends State<AccountFormPage> {
         if (ok && context.mounted) context.pop();
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(l.accountFormTitle)),
+        appBar: AppBar(
+          title: Text(
+            widget.isEdit ? l.accountFormTitleEdit : l.accountFormTitle,
+          ),
+        ),
         body: Form(
           key: _formKey,
           child: ListView(
@@ -125,39 +236,57 @@ class _AccountFormPageState extends State<AccountFormPage> {
                 },
               ),
               const SizedBox(height: AppSpacing.lg),
-              _CurrencyTile(currency: 'THB'),
-              const SizedBox(height: AppSpacing.lg),
-              TextFormField(
-                controller: _balanceController,
-                keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true, signed: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[\-0-9.]')),
-                ],
-                decoration: InputDecoration(
-                  labelText: l.accountFormBalanceLabel,
-                  helperText: l.accountFormBalanceHelper,
-                  helperMaxLines: 2,
-                  prefixText: '฿ ',
+              _CurrencyTile(currency: _initial?.currency ?? 'THB'),
+              if (!widget.isEdit) ...[
+                // Edit mode hides the balance field — per spec §2.4 PUT
+                // can't change `balance`. The detail page's "Adjust
+                // balance" overflow menu calls /adjust-balance instead,
+                // which creates an Adjustment transaction so the cached
+                // balance stays consistent with the transaction history.
+                const SizedBox(height: AppSpacing.lg),
+                TextFormField(
+                  controller: _balanceController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[\-0-9.]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: l.accountFormBalanceLabel,
+                    helperText: l.accountFormBalanceHelper,
+                    helperMaxLines: 2,
+                    prefixText: '฿ ',
+                  ),
+                  onChanged: (_) => setState(() {}),
                 ),
-                onChanged: (_) => setState(() {}),
+              ],
+              const SizedBox(height: AppSpacing.md),
+              TextFormField(
+                controller: _descriptionController,
+                maxLength: 200,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: l.accountFormDescriptionLabel,
+                  helperText: l.accountFormDescriptionHelper,
+                  helperMaxLines: 2,
+                ),
+                validator: (v) => (v != null && v.length > 200)
+                    ? l.accountFormDescriptionTooLong
+                    : null,
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _noteController,
-                maxLength: 500,
-                maxLines: 3,
+                maxLength: 200,
+                maxLines: 2,
                 decoration: InputDecoration(
                   labelText: l.accountFormNoteLabel,
                   helperText: l.accountFormNoteHelper,
-                  helperMaxLines: 3,
+                  helperMaxLines: 2,
                 ),
-                validator: (v) {
-                  if (v != null && v.length > 500) {
-                    return l.accountFormNoteTooLong;
-                  }
-                  return null;
-                },
+                validator: (v) => (v != null && v.length > 200)
+                    ? l.accountFormNoteTooLong
+                    : null,
               ),
               if (_isCredit) ...[
                 const SizedBox(height: AppSpacing.lg),
@@ -245,7 +374,9 @@ class _AccountFormPageState extends State<AccountFormPage> {
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
               ),
-              child: Text(l.accountFormSave),
+              child: Text(widget.isEdit
+                  ? l.accountFormSaveEdit
+                  : l.accountFormSave),
             ),
           ),
         ),
@@ -328,31 +459,77 @@ class _AccountFormPageState extends State<AccountFormPage> {
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final balance = double.tryParse(_balanceController.text) ?? 0;
+    final cubit = context.read<AccountsCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    final description = _descriptionController.text.trim();
     final note = _noteController.text.trim();
-    final account = Account(
-      id: 'mock-${DateTime.now().microsecondsSinceEpoch}',
-      name: _nameController.text.trim(),
-      type: _type,
-      balance: balance,
-      currency: 'THB',
-      icon: _icon,
-      color: _color,
-      note: note.isEmpty ? null : note,
-      creditLimit: _isCredit
-          ? double.tryParse(_creditLimitController.text)
-          : null,
-      statementDate: _isCredit
-          ? int.tryParse(_statementDateController.text)
-          : null,
-      paymentDueDate: _isCredit
-          ? int.tryParse(_paymentDueController.text)
-          : null,
-      minimumPayment: _isCredit
-          ? double.tryParse(_minimumPaymentController.text)
-          : null,
-    );
-    context.read<AccountsCubit>().add(account);
+    final descValue = description.isEmpty ? null : description;
+    final noteValue = note.isEmpty ? null : note;
+    final creditLimit =
+        _isCredit ? double.tryParse(_creditLimitController.text) : null;
+    final statementDate =
+        _isCredit ? int.tryParse(_statementDateController.text) : null;
+    final paymentDue =
+        _isCredit ? int.tryParse(_paymentDueController.text) : null;
+    final minimumPayment = _isCredit
+        ? double.tryParse(_minimumPaymentController.text)
+        : null;
+
+    try {
+      if (widget.isEdit) {
+        // Edit mode preserves id + balance + currency from the loaded
+        // initial. Balance is intentionally NOT touched — adjust-balance
+        // is the only path to mutate it (spec §2.4 / §2.5).
+        //
+        // NOT using copyWith here: copyWith.description treats `null` as
+        // "leave current" via `?? this.description`, so a cleared field
+        // would silently reset to the prior value. Constructing the
+        // Account directly keeps explicit-null semantics, which the BE's
+        // presence-tracked Update DTO needs to clear the column.
+        final updated = Account(
+          id: _initial!.id,
+          name: _nameController.text.trim(),
+          type: _type,
+          balance: _initial!.balance,
+          currency: _initial!.currency,
+          icon: _icon,
+          color: _color,
+          description: descValue,
+          note: noteValue,
+          creditLimit: creditLimit,
+          statementDate: statementDate,
+          paymentDueDate: paymentDue,
+          minimumPayment: minimumPayment,
+        );
+        await cubit.update(updated);
+      } else {
+        // Server assigns id; placeholder never reaches the wire
+        // (toCreateJson omits it).
+        final draft = Account(
+          id: 'draft',
+          name: _nameController.text.trim(),
+          type: _type,
+          balance: double.tryParse(_balanceController.text) ?? 0,
+          currency: 'THB',
+          icon: _icon,
+          color: _color,
+          description: descValue,
+          note: noteValue,
+          creditLimit: creditLimit,
+          statementDate: statementDate,
+          paymentDueDate: paymentDue,
+          minimumPayment: minimumPayment,
+        );
+        await cubit.add(draft);
+      }
+    } on ApiException catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!mounted) return;
     context.pop();
   }
 
@@ -360,7 +537,9 @@ class _AccountFormPageState extends State<AccountFormPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.accountFormDiscardTitle),
+        title: Text(widget.isEdit
+            ? l.accountFormDiscardTitleEdit
+            : l.accountFormDiscardTitle),
         content: Text(l.accountFormDiscardBody),
         actions: [
           TextButton(

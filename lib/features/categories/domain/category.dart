@@ -71,6 +71,61 @@ class Category extends Equatable {
   /// drag-and-drop reorder flow.
   final int sortOrder;
 
+  /// Reconstructs a [Category] from the BE's `GET /v1/categories` row.
+  ///
+  /// Wire format (spec §3.2):
+  /// - `icon` and `color` are nullable strings; missing icon → fallback
+  ///   `category` preset, missing color → fallback `blue` swatch.
+  /// - `color` is `#RRGGBB`; resolved against the local swatch palette.
+  ///   Unknown hex falls back to blue rather than failing the whole list.
+  /// - `parent_id`, `description`, `note` are nullable.
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      type: CategoryType.values.byName(json['type'] as String),
+      parentId: json['parent_id'] as String?,
+      icon: CategoryIconPreset.byId((json['icon'] as String?) ?? 'category'),
+      color: CategoryColor.fromHex(json['color'] as String?),
+      description: json['description'] as String?,
+      note: json['note'] as String?,
+      includeInReport: (json['include_in_report'] as bool?) ?? true,
+      isSystem: (json['is_system'] as bool?) ?? false,
+      sortOrder: (json['sort_order'] as int?) ?? 0,
+    );
+  }
+
+  /// Body for `POST /v1/categories`. Excludes id / type / system flags
+  /// (server-owned) and `sort_order` (server appends — spec §3.1).
+  Map<String, dynamic> toCreateJson() {
+    return <String, dynamic>{
+      'name': name,
+      'type': type.name,
+      'parent_id': parentId,
+      'icon': icon.id,
+      'color': color.toHex(),
+      'include_in_report': includeInReport,
+      if (description != null) 'description': description,
+      if (note != null) 'note': note,
+    };
+  }
+
+  /// Body for `PUT /v1/categories/:id`. Only sends fields the user can
+  /// edit; presence-sensitive fields (`parent_id`, `description`, `note`)
+  /// are always included so the server can distinguish "leave alone"
+  /// (don't call this method) from "explicitly clear" (caller passed null).
+  Map<String, dynamic> toUpdateJson() {
+    return <String, dynamic>{
+      'name': name,
+      'parent_id': parentId,
+      'icon': icon.id,
+      'color': color.toHex(),
+      'include_in_report': includeInReport,
+      'description': description,
+      'note': note,
+    };
+  }
+
   Category copyWith({
     String? id,
     String? name,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/domain/user.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../shared/widgets/user_avatar.dart';
 
@@ -31,10 +32,18 @@ class MainTopBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(title),
       actions: [
-        IconButton(
-          tooltip: l.navNotificationsTooltip,
-          icon: const Icon(Icons.notifications_outlined),
-          onPressed: () => _showNotificationsComingSoon(context, l),
+        BlocBuilder<UnreadBadgeCubit, int>(
+          builder: (context, unread) {
+            return IconButton(
+              tooltip: l.navNotificationsTooltip,
+              icon: Badge(
+                isLabelVisible: unread > 0,
+                label: Text(unread > 99 ? '99+' : '$unread'),
+                child: const Icon(Icons.notifications_outlined),
+              ),
+              onPressed: () => context.push('/notifications'),
+            );
+          },
         ),
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
@@ -58,16 +67,6 @@ class MainTopBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  void _showNotificationsComingSoon(
-    BuildContext context,
-    AppLocalizations l,
-  ) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(l.notificationsComingSoon)),
-      );
-  }
 }
 
 User? _userOf(AuthState state) {

@@ -145,13 +145,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeEmptyMessage =>
-      'Phase 0 home — feature modules (accounts, transactions, budgets) land in Phase 1.';
+      'Add an account from the Accounts tab, then tap the + button to log your first transaction.';
+
+  @override
+  String get homeNetWorthLabel => 'Net worth';
+
+  @override
+  String homeNetWorthAccountCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count accounts',
+      one: '1 account',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeRecentTitle => 'Recent transactions';
+
+  @override
+  String get homeRecentViewAll => 'View all';
 
   @override
   String get homeSettingsTooltip => 'Settings';
 
   @override
   String get navDashboard => 'Dashboard';
+
+  @override
+  String get navTransactions => 'Transactions';
 
   @override
   String get navAccounts => 'Accounts';
@@ -233,7 +256,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accountDetailSummaryTitle => 'Last 30 days';
+  String get accountDetailSummaryTitle => 'Summary';
 
   @override
   String get accountDetailSummaryIncome => 'Income';
@@ -285,6 +308,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormTitle => 'New account';
+
+  @override
+  String get accountFormTitleEdit => 'Edit account';
+
+  @override
+  String get accountFormSaveEdit => 'Save changes';
 
   @override
   String get accountFormPreviewLabel => 'Preview';
@@ -354,6 +383,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormDiscardBody => 'Your changes will be lost.';
 
   @override
+  String get accountFormDiscardTitleEdit => 'Discard changes?';
+
+  @override
+  String get accountAdjustBalanceTitle => 'Adjust balance';
+
+  @override
+  String get accountAdjustBalanceBody =>
+      'Set a new balance. The difference will be recorded as an Adjustment transaction so the history stays consistent.';
+
+  @override
+  String get accountAdjustBalanceCurrentLabel => 'Current balance';
+
+  @override
+  String get accountAdjustBalanceNewLabel => 'New balance';
+
+  @override
+  String get accountAdjustBalanceNoteLabel => 'Note (optional)';
+
+  @override
+  String get accountAdjustBalanceInvalidAmount => 'Enter a number';
+
+  @override
+  String get accountAdjustBalanceNoChange =>
+      'New balance must differ from the current balance.';
+
+  @override
+  String get accountAdjustBalanceConfirm => 'Adjust';
+
+  @override
+  String get accountArchiveConfirmTitle => 'Archive this account?';
+
+  @override
+  String get accountArchiveConfirmBody =>
+      'The account will be hidden from the active list. Its transactions stay intact and remain referenced.';
+
+  @override
+  String get accountArchiveConfirmAction => 'Archive';
+
+  @override
   String get accountFormCurrencyLabel => 'Currency';
 
   @override
@@ -363,14 +431,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormPhase2Badge => 'Phase 2';
 
   @override
+  String get accountFormDescriptionLabel => 'Description';
+
+  @override
+  String get accountFormDescriptionHelper =>
+      'What this account is for. Visible to you only.';
+
+  @override
+  String get accountFormDescriptionTooLong => 'Max 200 characters';
+
+  @override
   String get accountFormNoteLabel => 'Note';
 
   @override
   String get accountFormNoteHelper =>
-      'Optional — context only you see (e.g. \"Travel money for Japan trip\").';
+      'Personal scratch note (e.g. \"Travel money for Japan trip\").';
 
   @override
-  String get accountFormNoteTooLong => 'Max 500 characters';
+  String get accountFormNoteTooLong => 'Max 200 characters';
 
   @override
   String get iconPickerSectionStyle => 'Style';
@@ -413,6 +491,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreCategories => 'Categories';
+
+  @override
+  String get moreProjects => 'Projects';
 
   @override
   String get moreTags => 'Tags';
@@ -589,6 +670,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoriesReorderCancel => 'Cancel';
+
+  @override
+  String get tagsTitle => 'Tags';
+
+  @override
+  String get tagsEmptyTitle => 'No tags yet';
+
+  @override
+  String get tagsEmptyMessage =>
+      'Tag transactions to slice your spending however you want.';
+
+  @override
+  String get tagsAddNew => 'Add tag';
+
+  @override
+  String tagsUsageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '×$count',
+      one: '×1',
+      zero: '',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tagDeleteConfirmTitle => 'Delete tag?';
+
+  @override
+  String get tagDeleteConfirmBody =>
+      'Removes the tag from any transactions using it. This can\'t be undone.';
+
+  @override
+  String get tagDeleteConfirmAction => 'Delete';
+
+  @override
+  String get tagFormTitleNew => 'New tag';
+
+  @override
+  String get tagFormTitleEdit => 'Edit tag';
+
+  @override
+  String get tagFormPreviewLabel => 'Preview';
+
+  @override
+  String get tagFormNameLabel => 'Name';
+
+  @override
+  String get tagFormNameRequired => 'Required';
+
+  @override
+  String get tagFormNameTooLong => 'Max 50 characters';
+
+  @override
+  String get tagFormNameDuplicate => 'Another tag already uses this name';
+
+  @override
+  String get tagFormIconLabel => 'Icon';
+
+  @override
+  String get tagFormColorLabel => 'Color';
+
+  @override
+  String get tagFormSave => 'Save tag';
+
+  @override
+  String get tagFormDiscardTitle => 'Discard changes?';
+
+  @override
+  String get tagFormDiscardBody => 'Your edits will be lost.';
 
   @override
   String get settingsTitle => 'Settings';
@@ -819,4 +971,193 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monthlyBalance => 'Monthly balance';
+
+  @override
+  String get transactionFormTitleNew => 'New transaction';
+
+  @override
+  String get transactionFormTitleEdit => 'Edit transaction';
+
+  @override
+  String get transactionTypeExpense => 'Expense';
+
+  @override
+  String get transactionTypeIncome => 'Income';
+
+  @override
+  String get transactionTypeTransfer => 'Transfer';
+
+  @override
+  String get transactionFormAccountLabel => 'Account';
+
+  @override
+  String get transactionFormFromAccountLabel => 'From account';
+
+  @override
+  String get transactionFormToAccountLabel => 'To account';
+
+  @override
+  String get transactionFormAccountRequired => 'Pick an account';
+
+  @override
+  String get transactionFormAccountSameError =>
+      'Source and destination must differ';
+
+  @override
+  String get transactionFormCategoryLabel => 'Category';
+
+  @override
+  String get transactionFormCategoryNone => 'Uncategorized';
+
+  @override
+  String get transactionFormTransferCategoryHint =>
+      'Auto-set to Transfer In/Out';
+
+  @override
+  String get transactionFormDateLabel => 'Date';
+
+  @override
+  String get transactionFormAmountLabel => 'Amount';
+
+  @override
+  String get transactionFormAmountRequired => 'Required';
+
+  @override
+  String get transactionFormAmountInvalid => 'Enter a valid number';
+
+  @override
+  String get transactionFormAmountTooSmall => 'Must be greater than 0';
+
+  @override
+  String get transactionFormNoteLabel => 'Note (optional)';
+
+  @override
+  String get transactionFormNoteAddLabel => '+ Add note';
+
+  @override
+  String get transactionFormTagsLabel => 'Tags';
+
+  @override
+  String get transactionFormTagsEmpty =>
+      'No tags yet. Create one from the Tags page.';
+
+  @override
+  String get transactionFormSave => 'Save';
+
+  @override
+  String get transactionFormSaveAndAddAnother => 'Save & add another';
+
+  @override
+  String get transactionFormSavedAddedAnother => 'Saved. Add another below.';
+
+  @override
+  String get transactionFormAccountPickerTitle => 'Pick an account';
+
+  @override
+  String get transactionFormAccountPickerEmpty =>
+      'No active accounts. Create one first.';
+
+  @override
+  String get transactionFormCategoryPickerTitle => 'Pick a category';
+
+  @override
+  String get transactionFormCategoryPickerNoneOption => 'Uncategorized';
+
+  @override
+  String get transactionFormCategoryPickerEmpty =>
+      'No categories of this type yet.';
+
+  @override
+  String get transactionFormDiscardTitle => 'Discard transaction?';
+
+  @override
+  String get transactionFormDiscardTitleEdit => 'Discard changes?';
+
+  @override
+  String get transactionFormDiscardBody => 'Your changes will be lost.';
+
+  @override
+  String get transactionDetailEdit => 'Edit';
+
+  @override
+  String get transactionDetailDelete => 'Delete';
+
+  @override
+  String get transactionDetailNotFound => 'Transaction not found';
+
+  @override
+  String get transactionDetailNotFoundMessage =>
+      'This transaction may have been deleted.';
+
+  @override
+  String get transactionDetailDeleteConfirmTitle => 'Delete this transaction?';
+
+  @override
+  String get transactionDetailDeleteConfirmTitleTransfer =>
+      'Delete this transfer?';
+
+  @override
+  String get transactionDetailDeleteConfirmBody =>
+      'This will reverse the balance change on the account.';
+
+  @override
+  String get transactionDetailDeleteConfirmBodyTransfer =>
+      'Both rows of the transfer will be deleted and balances on both accounts will reverse.';
+
+  @override
+  String get transactionDetailDeleteConfirmAction => 'Delete';
+
+  @override
+  String get transactionDetailTransferReadonlyHint =>
+      'To change accounts, delete and create a new transfer.';
+
+  @override
+  String get transactionDetailSystemRowBanner =>
+      'Auto-created — to change this, use the matching account-level action (account edit, or Adjust balance).';
+
+  @override
+  String get transactionsRangeWeek => 'This week';
+
+  @override
+  String get transactionsRangeMonth => 'This month';
+
+  @override
+  String get transactionsRangeYear => 'This year';
+
+  @override
+  String get transactionsRangeAll => 'All';
+
+  @override
+  String get transactionsEmptyAccountTitle => 'No transactions yet';
+
+  @override
+  String get transactionsEmptyAccountMessage => 'Tap the + button to add one.';
+
+  @override
+  String get transactionsListTitle => 'Transactions';
+
+  @override
+  String get transactionsListFilterAll => 'All';
+
+  @override
+  String get transactionsListFilterCategoryAll => 'All categories';
+
+  @override
+  String get transactionsListEmptyMessage =>
+      'No transactions match these filters.';
+
+  @override
+  String get transactionsListRetry => 'Retry';
+
+  @override
+  String get transactionsListDateToday => 'Today';
+
+  @override
+  String get transactionsListDateYesterday => 'Yesterday';
+
+  @override
+  String get accountAdjustBalanceViewTransaction => 'View';
+
+  @override
+  String get accountAdjustBalanceSuccess => 'Balance adjusted';
 }

@@ -1,124 +1,160 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/network/api_exception.dart';
+import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
-import '../../domain/account_icon_preset.dart';
-import '../../domain/account_type.dart';
 
-/// In-memory accounts store for Phase 0 / early P1a UI work.
+/// State for [AccountsCubit]. See [CategoriesState] for rationale on the
+/// single-class-with-enum-status shape.
+class AccountsState extends Equatable {
+  const AccountsState({
+    this.accounts = const [],
+    this.status = AccountsStatus.initial,
+    this.errorMessage,
+  });
+
+  final List<Account> accounts;
+  final AccountsStatus status;
+  final String? errorMessage;
+
+  AccountsState copyWith({
+    List<Account>? accounts,
+    AccountsStatus? status,
+    String? errorMessage,
+    bool clearError = false,
+  }) {
+    return AccountsState(
+      accounts: accounts ?? this.accounts,
+      status: status ?? this.status,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+    );
+  }
+
+  @override
+  List<Object?> get props => [accounts, status, errorMessage];
+}
+
+enum AccountsStatus { initial, loading, loaded, error }
+
+/// Accounts store backed by [AccountsRepository].
 ///
-/// State is the full list of accounts in display order. Sort order is local
-/// only — when the backend ships its `sort_order` column (planned Phase 2,
-/// see spec §3.5), we'll persist the same list ordering.
+/// **No registration seed.** Per product decision, new users start with
+/// zero accounts — the empty-state UX prompts them to create their first.
+/// (Categories and tags are seeded; accounts are deliberately not.)
 ///
-/// Phase 1a backend integration: replace seed data with a Repository call
-/// (`GET /v1/accounts`) and surface async states (loading / error). The
-/// public method shape (`add` / `remove` / `reorder` / `update`) stays
-/// stable so the UI layer doesn't churn.
-class AccountsCubit extends Cubit<List<Account>> {
-  AccountsCubit() : super(_seed());
+/// Mutators round-trip through the API and re-throw [ApiException] on
+/// failure so the form page can show a snackbar. Local reorder is
+/// in-memory only for now — the BE has a `sort_order` column but no
+/// reorder endpoint yet (spec §3.5 Phase 2).
+class AccountsCubit extends Cubit<AccountsState> {
+  AccountsCubit({required AccountsRepository repository})
+      : _repo = repository,
+        super(const AccountsState());
 
-  void add(Account account) {
-    emit([...state, account]);
+  final AccountsRepository _repo;
+
+  Future<void> loadIfNeeded() async {
+    if (state.status == AccountsStatus.loaded ||
+        state.status == AccountsStatus.loading) {
+      return;
+    }
+    return load();
   }
 
-  void remove(String id) {
-    emit(state.where((a) => a.id != id).toList());
+  Future<void> load() async {
+    emit(state.copyWith(status: AccountsStatus.loading, clearError: true));
+    try {
+      final list = await _repo.list();
+      emit(state.copyWith(
+        accounts: list,
+        status: AccountsStatus.loaded,
+        clearError: true,
+      ));
+    } on ApiException catch (e) {
+      emit(state.copyWith(
+        status: AccountsStatus.error,
+        errorMessage: e.message,
+      ));
+    }
   }
 
-  void update(Account account) {
-    emit([
-      for (final a in state)
-        if (a.id == account.id) account else a,
-    ]);
+  Future<void> add(Account draft) async {
+    final created = await _repo.create(draft);
+    emit(state.copyWith(accounts: [...state.accounts, created]));
   }
 
-  /// Returns the account with [id], or `null` if it has been removed /
-  /// archived since the caller looked it up. The detail page uses this to
-  /// render a "not found" state when the user navigates to a stale id.
+  Future<void> update(Account account) async {
+    final updated = await _repo.update(account);
+    emit(state.copyWith(accounts: [
+      for (final a in state.accounts)
+        if (a.id == updated.id) updated else a,
+    ]));
+  }
+
+  /// Archive (soft delete) — spec §3.10. The server flips status to
+  /// 'archived'; locally we drop the row from the active list since
+  /// `loadIfNeeded` only fetches active accounts by default.
+  Future<void> remove(String id) async {
+    await _repo.archive(id);
+    emit(state.copyWith(
+      accounts: state.accounts.where((a) => a.id != id).toList(),
+    ));
+  }
+
+  /// Manual balance adjustment (spec §2.5). Server creates an
+  /// Adjustment transaction whose delta brings the account to
+  /// [newBalance]. Returns the outcome so the caller can show a
+  /// "View" snackbar that links to the new transaction.
+  Future<AdjustBalanceOutcome> adjustBalance({
+    required String id,
+    required double newBalance,
+    String? note,
+    String? date,
+  }) async {
+    final outcome = await _repo.adjustBalance(
+      id: id,
+      newBalance: newBalance,
+      note: note,
+      date: date,
+    );
+    emit(state.copyWith(accounts: [
+      for (final a in state.accounts)
+        if (a.id == outcome.account.id) outcome.account else a,
+    ]));
+    return outcome;
+  }
+
   Account? byId(String id) {
-    for (final a in state) {
+    for (final a in state.accounts) {
       if (a.id == id) return a;
     }
     return null;
   }
 
+  /// Surgical balance update used by [TransactionsCubit] consumers
+  /// after a transaction mutation. Avoids a full `/v1/accounts` reload
+  /// when the BE already told us the post-state via
+  /// `account_balance_after` (spec §3.1).
+  void patchBalance({
+    required String accountId,
+    required double newBalance,
+  }) {
+    emit(state.copyWith(accounts: [
+      for (final a in state.accounts)
+        if (a.id == accountId) a.copyWith(balance: newBalance) else a,
+    ]));
+  }
+
+  /// Local-only reorder — the spec-§3.5 reorder endpoint isn't on the
+  /// roadmap until Phase 2. Until then we shuffle the in-memory list so
+  /// the user gets immediate feedback; on next [load] the server's
+  /// stored order wins.
   void reorder(int oldIndex, int newIndex) {
-    final list = [...state];
+    final list = [...state.accounts];
     final adjusted = newIndex > oldIndex ? newIndex - 1 : newIndex;
     final item = list.removeAt(oldIndex);
     list.insert(adjusted, item);
-    emit(list);
+    emit(state.copyWith(accounts: list));
   }
-
-  static List<Account> _seed() => const [
-        Account(
-          id: 'seed-1',
-          name: 'Cash wallet',
-          type: AccountType.cash,
-          balance: 1200,
-          currency: 'THB',
-          icon: AccountIconPreset.cash,
-          color: AccountColor.green,
-        ),
-        Account(
-          id: 'seed-2',
-          name: 'KBank Savings',
-          type: AccountType.bank,
-          balance: 45300,
-          currency: 'THB',
-          icon: AccountIconPreset.bank,
-          color: AccountColor.blue,
-        ),
-        Account(
-          id: 'seed-3',
-          name: 'TrueMoney',
-          type: AccountType.eWallet,
-          balance: 850,
-          currency: 'THB',
-          icon: AccountIconPreset.eWallet,
-          color: AccountColor.orange,
-        ),
-        Account(
-          id: 'seed-4',
-          name: 'KTC Visa',
-          type: AccountType.creditCard,
-          balance: -12000,
-          currency: 'THB',
-          icon: AccountIconPreset.card,
-          color: AccountColor.purple,
-          creditLimit: 50000,
-          statementDate: 25,
-          paymentDueDate: 15,
-          minimumPayment: 1000,
-        ),
-        Account(
-          id: 'seed-5',
-          name: 'ShopeePay',
-          type: AccountType.eWallet,
-          balance: 300,
-          currency: 'THB',
-          icon: AccountIconPreset.shopping,
-          color: AccountColor.pink,
-        ),
-        Account(
-          id: 'seed-6',
-          name: 'Atome',
-          type: AccountType.payLater,
-          balance: -1800,
-          currency: 'THB',
-          icon: AccountIconPreset.contactlessCard,
-          color: AccountColor.red,
-          creditLimit: 8000,
-          paymentDueDate: 5,
-        ),
-        Account(
-          id: 'seed-7',
-          name: 'SCB Future',
-          type: AccountType.bank,
-          balance: 15200,
-          currency: 'THB',
-          icon: AccountIconPreset.savings,
-          color: AccountColor.cyan,
-        ),
-      ];
 }

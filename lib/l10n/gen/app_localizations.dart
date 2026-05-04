@@ -365,8 +365,32 @@ abstract class AppLocalizations {
   /// No description provided for @homeEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'Phase 0 home — feature modules (accounts, transactions, budgets) land in Phase 1.'**
+  /// **'Add an account from the Accounts tab, then tap the + button to log your first transaction.'**
   String get homeEmptyMessage;
+
+  /// No description provided for @homeNetWorthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Net worth'**
+  String get homeNetWorthLabel;
+
+  /// No description provided for @homeNetWorthAccountCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 account} other{{count} accounts}}'**
+  String homeNetWorthAccountCount(int count);
+
+  /// No description provided for @homeRecentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent transactions'**
+  String get homeRecentTitle;
+
+  /// No description provided for @homeRecentViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get homeRecentViewAll;
 
   /// No description provided for @homeSettingsTooltip.
   ///
@@ -379,6 +403,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dashboard'**
   String get navDashboard;
+
+  /// No description provided for @navTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get navTransactions;
 
   /// No description provided for @navAccounts.
   ///
@@ -527,7 +557,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountDetailSummaryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Last 30 days'**
+  /// **'Summary'**
   String get accountDetailSummaryTitle;
 
   /// No description provided for @accountDetailSummaryIncome.
@@ -607,6 +637,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New account'**
   String get accountFormTitle;
+
+  /// No description provided for @accountFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit account'**
+  String get accountFormTitleEdit;
+
+  /// No description provided for @accountFormSaveEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get accountFormSaveEdit;
 
   /// No description provided for @accountFormPreviewLabel.
   ///
@@ -740,6 +782,78 @@ abstract class AppLocalizations {
   /// **'Your changes will be lost.'**
   String get accountFormDiscardBody;
 
+  /// No description provided for @accountFormDiscardTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get accountFormDiscardTitleEdit;
+
+  /// No description provided for @accountAdjustBalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust balance'**
+  String get accountAdjustBalanceTitle;
+
+  /// No description provided for @accountAdjustBalanceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a new balance. The difference will be recorded as an Adjustment transaction so the history stays consistent.'**
+  String get accountAdjustBalanceBody;
+
+  /// No description provided for @accountAdjustBalanceCurrentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current balance'**
+  String get accountAdjustBalanceCurrentLabel;
+
+  /// No description provided for @accountAdjustBalanceNewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New balance'**
+  String get accountAdjustBalanceNewLabel;
+
+  /// No description provided for @accountAdjustBalanceNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get accountAdjustBalanceNoteLabel;
+
+  /// No description provided for @accountAdjustBalanceInvalidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number'**
+  String get accountAdjustBalanceInvalidAmount;
+
+  /// No description provided for @accountAdjustBalanceNoChange.
+  ///
+  /// In en, this message translates to:
+  /// **'New balance must differ from the current balance.'**
+  String get accountAdjustBalanceNoChange;
+
+  /// No description provided for @accountAdjustBalanceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust'**
+  String get accountAdjustBalanceConfirm;
+
+  /// No description provided for @accountArchiveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this account?'**
+  String get accountArchiveConfirmTitle;
+
+  /// No description provided for @accountArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The account will be hidden from the active list. Its transactions stay intact and remain referenced.'**
+  String get accountArchiveConfirmBody;
+
+  /// No description provided for @accountArchiveConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get accountArchiveConfirmAction;
+
   /// No description provided for @accountFormCurrencyLabel.
   ///
   /// In en, this message translates to:
@@ -758,6 +872,24 @@ abstract class AppLocalizations {
   /// **'Phase 2'**
   String get accountFormPhase2Badge;
 
+  /// No description provided for @accountFormDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get accountFormDescriptionLabel;
+
+  /// No description provided for @accountFormDescriptionHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'What this account is for. Visible to you only.'**
+  String get accountFormDescriptionHelper;
+
+  /// No description provided for @accountFormDescriptionTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 200 characters'**
+  String get accountFormDescriptionTooLong;
+
   /// No description provided for @accountFormNoteLabel.
   ///
   /// In en, this message translates to:
@@ -767,13 +899,13 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormNoteHelper.
   ///
   /// In en, this message translates to:
-  /// **'Optional — context only you see (e.g. \"Travel money for Japan trip\").'**
+  /// **'Personal scratch note (e.g. \"Travel money for Japan trip\").'**
   String get accountFormNoteHelper;
 
   /// No description provided for @accountFormNoteTooLong.
   ///
   /// In en, this message translates to:
-  /// **'Max 500 characters'**
+  /// **'Max 200 characters'**
   String get accountFormNoteTooLong;
 
   /// No description provided for @iconPickerSectionStyle.
@@ -859,6 +991,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Categories'**
   String get moreCategories;
+
+  /// No description provided for @moreProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get moreProjects;
 
   /// No description provided for @moreTags.
   ///
@@ -1189,6 +1327,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get categoriesReorderCancel;
+
+  /// No description provided for @tagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get tagsTitle;
+
+  /// No description provided for @tagsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet'**
+  String get tagsEmptyTitle;
+
+  /// No description provided for @tagsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag transactions to slice your spending however you want.'**
+  String get tagsEmptyMessage;
+
+  /// No description provided for @tagsAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tag'**
+  String get tagsAddNew;
+
+  /// No description provided for @tagsUsageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{} =1{×1} other{×{count}}}'**
+  String tagsUsageCount(int count);
+
+  /// No description provided for @tagDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag?'**
+  String get tagDeleteConfirmTitle;
+
+  /// No description provided for @tagDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes the tag from any transactions using it. This can\'t be undone.'**
+  String get tagDeleteConfirmBody;
+
+  /// No description provided for @tagDeleteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get tagDeleteConfirmAction;
+
+  /// No description provided for @tagFormTitleNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag'**
+  String get tagFormTitleNew;
+
+  /// No description provided for @tagFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit tag'**
+  String get tagFormTitleEdit;
+
+  /// No description provided for @tagFormPreviewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get tagFormPreviewLabel;
+
+  /// No description provided for @tagFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get tagFormNameLabel;
+
+  /// No description provided for @tagFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get tagFormNameRequired;
+
+  /// No description provided for @tagFormNameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 50 characters'**
+  String get tagFormNameTooLong;
+
+  /// No description provided for @tagFormNameDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Another tag already uses this name'**
+  String get tagFormNameDuplicate;
+
+  /// No description provided for @tagFormIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get tagFormIconLabel;
+
+  /// No description provided for @tagFormColorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get tagFormColorLabel;
+
+  /// No description provided for @tagFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save tag'**
+  String get tagFormSave;
+
+  /// No description provided for @tagFormDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get tagFormDiscardTitle;
+
+  /// No description provided for @tagFormDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your edits will be lost.'**
+  String get tagFormDiscardBody;
 
   /// No description provided for @settingsTitle.
   ///
@@ -1639,6 +1897,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Monthly balance'**
   String get monthlyBalance;
+
+  /// No description provided for @transactionFormTitleNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New transaction'**
+  String get transactionFormTitleNew;
+
+  /// No description provided for @transactionFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transaction'**
+  String get transactionFormTitleEdit;
+
+  /// No description provided for @transactionTypeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get transactionTypeExpense;
+
+  /// No description provided for @transactionTypeIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get transactionTypeIncome;
+
+  /// No description provided for @transactionTypeTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get transactionTypeTransfer;
+
+  /// No description provided for @transactionFormAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get transactionFormAccountLabel;
+
+  /// No description provided for @transactionFormFromAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'From account'**
+  String get transactionFormFromAccountLabel;
+
+  /// No description provided for @transactionFormToAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'To account'**
+  String get transactionFormToAccountLabel;
+
+  /// No description provided for @transactionFormAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an account'**
+  String get transactionFormAccountRequired;
+
+  /// No description provided for @transactionFormAccountSameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Source and destination must differ'**
+  String get transactionFormAccountSameError;
+
+  /// No description provided for @transactionFormCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get transactionFormCategoryLabel;
+
+  /// No description provided for @transactionFormCategoryNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get transactionFormCategoryNone;
+
+  /// No description provided for @transactionFormTransferCategoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-set to Transfer In/Out'**
+  String get transactionFormTransferCategoryHint;
+
+  /// No description provided for @transactionFormDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get transactionFormDateLabel;
+
+  /// No description provided for @transactionFormAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get transactionFormAmountLabel;
+
+  /// No description provided for @transactionFormAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get transactionFormAmountRequired;
+
+  /// No description provided for @transactionFormAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number'**
+  String get transactionFormAmountInvalid;
+
+  /// No description provided for @transactionFormAmountTooSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be greater than 0'**
+  String get transactionFormAmountTooSmall;
+
+  /// No description provided for @transactionFormNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get transactionFormNoteLabel;
+
+  /// No description provided for @transactionFormNoteAddLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add note'**
+  String get transactionFormNoteAddLabel;
+
+  /// No description provided for @transactionFormTagsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get transactionFormTagsLabel;
+
+  /// No description provided for @transactionFormTagsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet. Create one from the Tags page.'**
+  String get transactionFormTagsEmpty;
+
+  /// No description provided for @transactionFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get transactionFormSave;
+
+  /// No description provided for @transactionFormSaveAndAddAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & add another'**
+  String get transactionFormSaveAndAddAnother;
+
+  /// No description provided for @transactionFormSavedAddedAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. Add another below.'**
+  String get transactionFormSavedAddedAnother;
+
+  /// No description provided for @transactionFormAccountPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an account'**
+  String get transactionFormAccountPickerTitle;
+
+  /// No description provided for @transactionFormAccountPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No active accounts. Create one first.'**
+  String get transactionFormAccountPickerEmpty;
+
+  /// No description provided for @transactionFormCategoryPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category'**
+  String get transactionFormCategoryPickerTitle;
+
+  /// No description provided for @transactionFormCategoryPickerNoneOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get transactionFormCategoryPickerNoneOption;
+
+  /// No description provided for @transactionFormCategoryPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories of this type yet.'**
+  String get transactionFormCategoryPickerEmpty;
+
+  /// No description provided for @transactionFormDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard transaction?'**
+  String get transactionFormDiscardTitle;
+
+  /// No description provided for @transactionFormDiscardTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get transactionFormDiscardTitleEdit;
+
+  /// No description provided for @transactionFormDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes will be lost.'**
+  String get transactionFormDiscardBody;
+
+  /// No description provided for @transactionDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get transactionDetailEdit;
+
+  /// No description provided for @transactionDetailDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get transactionDetailDelete;
+
+  /// No description provided for @transactionDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction not found'**
+  String get transactionDetailNotFound;
+
+  /// No description provided for @transactionDetailNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This transaction may have been deleted.'**
+  String get transactionDetailNotFoundMessage;
+
+  /// No description provided for @transactionDetailDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transaction?'**
+  String get transactionDetailDeleteConfirmTitle;
+
+  /// No description provided for @transactionDetailDeleteConfirmTitleTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transfer?'**
+  String get transactionDetailDeleteConfirmTitleTransfer;
+
+  /// No description provided for @transactionDetailDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will reverse the balance change on the account.'**
+  String get transactionDetailDeleteConfirmBody;
+
+  /// No description provided for @transactionDetailDeleteConfirmBodyTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Both rows of the transfer will be deleted and balances on both accounts will reverse.'**
+  String get transactionDetailDeleteConfirmBodyTransfer;
+
+  /// No description provided for @transactionDetailDeleteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get transactionDetailDeleteConfirmAction;
+
+  /// No description provided for @transactionDetailTransferReadonlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To change accounts, delete and create a new transfer.'**
+  String get transactionDetailTransferReadonlyHint;
+
+  /// No description provided for @transactionDetailSystemRowBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-created — to change this, use the matching account-level action (account edit, or Adjust balance).'**
+  String get transactionDetailSystemRowBanner;
+
+  /// No description provided for @transactionsRangeWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get transactionsRangeWeek;
+
+  /// No description provided for @transactionsRangeMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get transactionsRangeMonth;
+
+  /// No description provided for @transactionsRangeYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get transactionsRangeYear;
+
+  /// No description provided for @transactionsRangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get transactionsRangeAll;
+
+  /// No description provided for @transactionsEmptyAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get transactionsEmptyAccountTitle;
+
+  /// No description provided for @transactionsEmptyAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the + button to add one.'**
+  String get transactionsEmptyAccountMessage;
+
+  /// No description provided for @transactionsListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get transactionsListTitle;
+
+  /// No description provided for @transactionsListFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get transactionsListFilterAll;
+
+  /// No description provided for @transactionsListFilterCategoryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get transactionsListFilterCategoryAll;
+
+  /// No description provided for @transactionsListEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions match these filters.'**
+  String get transactionsListEmptyMessage;
+
+  /// No description provided for @transactionsListRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get transactionsListRetry;
+
+  /// No description provided for @transactionsListDateToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get transactionsListDateToday;
+
+  /// No description provided for @transactionsListDateYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get transactionsListDateYesterday;
+
+  /// No description provided for @accountAdjustBalanceViewTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get accountAdjustBalanceViewTransaction;
+
+  /// No description provided for @accountAdjustBalanceSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance adjusted'**
+  String get accountAdjustBalanceSuccess;
 }
 
 class _AppLocalizationsDelegate
