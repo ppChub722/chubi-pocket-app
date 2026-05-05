@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/tags_repository.dart';
 import '../../domain/tag.dart';
@@ -45,12 +46,15 @@ enum TagsStatus { initial, loading, loaded, error }
 ///
 /// Mutators round-trip through the API and re-throw [ApiException]
 /// on failure so the form page can show a snackbar.
-class TagsCubit extends Cubit<TagsState> {
+class TagsCubit extends Cubit<TagsState> with Clearable {
   TagsCubit({required TagsRepository repository})
       : _repo = repository,
         super(const TagsState());
 
   final TagsRepository _repo;
+
+  @override
+  void clear() => emit(const TagsState());
 
   Future<void> loadIfNeeded() async {
     if (state.status == TagsStatus.loaded ||

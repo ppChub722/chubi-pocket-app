@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
@@ -40,12 +41,15 @@ class ProjectsState extends Equatable {
       [projects, status, errorMessage, statusFilter];
 }
 
-class ProjectsCubit extends Cubit<ProjectsState> {
+class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   ProjectsCubit({required ProjectsRepository repository})
       : _repo = repository,
         super(const ProjectsState());
 
   final ProjectsRepository _repo;
+
+  @override
+  void clear() => emit(const ProjectsState());
 
   Future<void> load({String? statusFilter}) async {
     emit(state.copyWith(

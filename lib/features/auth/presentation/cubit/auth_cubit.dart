@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/logger/app_logger.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/storage/secure_token_storage.dart';
@@ -139,8 +140,16 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final res = await _repo.login(identifier: identifier, password: password);
       await _tokens.writeAuthToken(res.token.accessToken);
+      AppLogger.instance.setUserId(res.user.id);
+      AppLogger.instance.info('auth.login_success',
+          fields: {'user_id': res.user.id, 'username': res.user.username});
       emit(AuthAuthenticated(res.user));
     } on ApiException catch (e) {
+      AppLogger.instance.warn('auth.login_failed', fields: {
+        'identifier': identifier,
+        'code': e.code,
+        'status': e.statusCode,
+      });
       emit(AuthFailure(error: e, previous: previous));
     }
   }
@@ -163,8 +172,16 @@ class AuthCubit extends Cubit<AuthState> {
         currency: currency,
       );
       await _tokens.writeAuthToken(res.token.accessToken);
+      AppLogger.instance.setUserId(res.user.id);
+      AppLogger.instance.info('auth.register_success',
+          fields: {'user_id': res.user.id, 'username': res.user.username});
       emit(AuthAuthenticated(res.user));
     } on ApiException catch (e) {
+      AppLogger.instance.warn('auth.register_failed', fields: {
+        'username': username,
+        'code': e.code,
+        'status': e.statusCode,
+      });
       emit(AuthFailure(error: e, previous: previous));
     }
   }
@@ -189,9 +206,11 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> logout() async {
     final previous = state;
+    AppLogger.instance.info('auth.logout');
     emit(AuthLoading(previous));
     await _repo.logout();
     await _tokens.clearAuthToken();
+    AppLogger.instance.setUserId(null);
     emit(const AuthUnauthenticated());
   }
 
@@ -211,7 +230,9 @@ class AuthCubit extends Cubit<AuthState> {
   /// Triggered by [ApiClient.onUnauthorized] — wipe token and route to login.
   Future<void> _onUnauthorized() async {
     if (state is! AuthAuthenticated) return;
+    AppLogger.instance.warn('auth.unauthorized_kicked');
     await _tokens.clearAuthToken();
+    AppLogger.instance.setUserId(null);
     emit(const AuthUnauthenticated());
   }
 

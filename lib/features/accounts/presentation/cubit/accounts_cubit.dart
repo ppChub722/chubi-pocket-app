@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
@@ -47,12 +48,15 @@ enum AccountsStatus { initial, loading, loaded, error }
 /// failure so the form page can show a snackbar. Local reorder is
 /// in-memory only for now — the BE has a `sort_order` column but no
 /// reorder endpoint yet (spec §3.5 Phase 2).
-class AccountsCubit extends Cubit<AccountsState> {
+class AccountsCubit extends Cubit<AccountsState> with Clearable {
   AccountsCubit({required AccountsRepository repository})
       : _repo = repository,
         super(const AccountsState());
 
   final AccountsRepository _repo;
+
+  @override
+  void clear() => emit(const AccountsState());
 
   Future<void> loadIfNeeded() async {
     if (state.status == AccountsStatus.loaded ||

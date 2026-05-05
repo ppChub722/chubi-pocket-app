@@ -19,7 +19,6 @@ class ContactFormPage extends StatefulWidget {
 class _ContactFormPageState extends State<ContactFormPage> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
-  final _nick = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _notes = TextEditingController();
@@ -41,7 +40,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
       final c = await context.read<ContactsRepository>().get(widget.editingId!);
       if (!mounted) return;
       _name.text = c.displayName;
-      _nick.text = c.nickname ?? '';
       _email.text = c.email ?? '';
       _phone.text = c.phone ?? '';
       _notes.text = c.notes ?? '';
@@ -64,7 +62,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
         await cubit.update(
           widget.editingId!,
           displayName: _name.text.trim(),
-          nickname: _nick.text.trim().isEmpty ? null : _nick.text.trim(),
           email: _email.text.trim().isEmpty ? null : _email.text.trim(),
           phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
           notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
@@ -72,7 +69,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
       } else {
         await cubit.create(
           displayName: _name.text.trim(),
-          nickname: _nick.text.trim().isEmpty ? null : _nick.text.trim(),
           email: _email.text.trim().isEmpty ? null : _email.text.trim(),
           phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
           notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
@@ -100,14 +96,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 children: [
                   TextFormField(
                     controller: _name,
-                    decoration: const InputDecoration(labelText: 'Display name *'),
+                    decoration: const InputDecoration(labelText: 'Name *'),
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _nick,
-                    decoration: const InputDecoration(labelText: 'Nickname'),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -143,7 +134,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
   @override
   void dispose() {
     _name.dispose();
-    _nick.dispose();
     _email.dispose();
     _phone.dispose();
     _notes.dispose();

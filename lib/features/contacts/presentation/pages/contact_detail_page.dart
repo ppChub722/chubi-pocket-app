@@ -97,9 +97,7 @@ class _ContactBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _Field(label: 'Display name', value: contact.displayName),
-        if (contact.nickname != null)
-          _Field(label: 'Nickname', value: contact.nickname!),
+        _Field(label: 'Name', value: contact.displayName),
         if (contact.email != null)
           _Field(label: 'Email', value: contact.email!),
         if (contact.phone != null)

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../storage/secure_token_storage.dart';
+import 'http_logger_interceptor.dart';
 
 /// Dev API base URL — picks the right host depending on the running platform.
 ///
@@ -44,7 +45,13 @@ class ApiClient {
       ..headers['Content-Type'] = 'application/json'
       ..headers['Accept'] = 'application/json';
 
+    // Order matters: auth runs first so the bearer token is attached
+    // BEFORE the logger captures the headers (which redacts it on the
+    // way out — we don't want the raw token in any log line). The
+    // unauthorized notifier sits last so 401 is observed on the inbound
+    // path.
     _dio.interceptors.add(_authInterceptor());
+    _dio.interceptors.add(HttpLoggerInterceptor());
     _dio.interceptors.add(_unauthorizedNotifier());
   }
 

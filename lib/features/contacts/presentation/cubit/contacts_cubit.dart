@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
@@ -50,12 +51,15 @@ class ContactsState extends Equatable {
       [contacts, status, errorMessage, statusFilter, linkedFilter, search];
 }
 
-class ContactsCubit extends Cubit<ContactsState> {
+class ContactsCubit extends Cubit<ContactsState> with Clearable {
   ContactsCubit({required ContactsRepository repository})
       : _repo = repository,
         super(const ContactsState());
 
   final ContactsRepository _repo;
+
+  @override
+  void clear() => emit(const ContactsState());
 
   Future<void> load({
     String? statusFilter,
@@ -90,7 +94,6 @@ class ContactsCubit extends Cubit<ContactsState> {
 
   Future<Contact> create({
     required String displayName,
-    String? nickname,
     String? email,
     String? phone,
     String? notes,
@@ -99,7 +102,6 @@ class ContactsCubit extends Cubit<ContactsState> {
   }) async {
     final res = await _repo.create(
       displayName: displayName,
-      nickname: nickname,
       email: email,
       phone: phone,
       notes: notes,
@@ -112,7 +114,6 @@ class ContactsCubit extends Cubit<ContactsState> {
 
   Future<Contact> update(String id, {
     String? displayName,
-    String? nickname,
     String? email,
     String? phone,
     String? notes,
@@ -121,7 +122,6 @@ class ContactsCubit extends Cubit<ContactsState> {
     final updated = await _repo.update(
       id,
       displayName: displayName,
-      nickname: nickname,
       email: email,
       phone: phone,
       notes: notes,

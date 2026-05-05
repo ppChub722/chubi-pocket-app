@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
@@ -59,12 +60,24 @@ enum TransactionsStatus { initial, loading, loaded, error }
 /// the API and are reflected via **surgical updates** — single-row
 /// mutations replace one row in state; transfer mutations replace two
 /// (matched by id). No full reload after a write.
-class TransactionsCubit extends Cubit<TransactionsState> {
+class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   TransactionsCubit({required TransactionsRepository repository})
       : _repo = repository,
         super(const TransactionsState());
 
   final TransactionsRepository _repo;
+
+  @override
+  void clear() {
+    _lastAccountId = null;
+    _lastCategoryId = null;
+    _lastType = null;
+    _lastFrom = null;
+    _lastTo = null;
+    _lastSort = 'date_desc';
+    _lastPerPage = 20;
+    emit(const TransactionsState());
+  }
 
   /// Last-used filter / sort, reused by [loadMore].
   String? _lastAccountId;

@@ -46,7 +46,6 @@ class ContactsRepository {
 
   Future<ContactCreateResult> create({
     required String displayName,
-    String? nickname,
     String? email,
     String? phone,
     String? notes,
@@ -58,7 +57,6 @@ class ContactsRepository {
         '/contacts',
         data: <String, dynamic>{
           'display_name': displayName,
-          'nickname': ?nickname,
           'email': ?email,
           'phone': ?phone,
           'notes': ?notes,
@@ -77,7 +75,6 @@ class ContactsRepository {
 
   Future<Contact> update(String id, {
     String? displayName,
-    String? nickname,
     String? email,
     String? phone,
     String? notes,
@@ -88,7 +85,6 @@ class ContactsRepository {
         '/contacts/$id',
         data: <String, dynamic>{
           'display_name': ?displayName,
-          'nickname': ?nickname,
           'email': ?email,
           'phone': ?phone,
           'notes': ?notes,

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/personal_debt.dart';
@@ -96,12 +97,15 @@ class PersonalDebtsState extends Equatable {
       ];
 }
 
-class PersonalDebtsCubit extends Cubit<PersonalDebtsState> {
+class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
   PersonalDebtsCubit({required PersonalDebtsRepository repository})
       : _repo = repository,
         super(const PersonalDebtsState());
 
   final PersonalDebtsRepository _repo;
+
+  @override
+  void clear() => emit(const PersonalDebtsState());
 
   Future<void> loadList({
     DebtDirection? directionFilter,

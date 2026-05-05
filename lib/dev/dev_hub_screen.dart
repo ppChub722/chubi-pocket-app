@@ -25,6 +25,13 @@ class DevHubScreen extends StatelessWidget {
         route: '/dev/state-widgets',
         icon: Icons.layers_outlined,
       ),
+      _DevEntry(
+        title: 'Logs',
+        subtitle:
+            'Live log tail · level filter · search · copy / share — env-gated',
+        route: '/dev/logs',
+        icon: Icons.receipt_long_outlined,
+      ),
     ];
 
     return Scaffold(

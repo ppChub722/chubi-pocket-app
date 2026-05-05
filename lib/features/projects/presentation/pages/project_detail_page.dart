@@ -154,14 +154,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             ? null
             : TabBar(controller: tabs, tabs: tabLabels),
       ),
-      floatingActionButton: p != null && !p.isLocked
-          ? FloatingActionButton(
-              tooltip: 'New project transaction',
-              onPressed: () =>
-                  context.push('/projects/${widget.id}/transactions/new'),
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: _buildFabs(p),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -202,6 +195,42 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                       ],
                     ),
     );
+  }
+
+  /// Two stacked FABs at bottom-right: transaction (primary, on top) and
+  /// add-member (secondary, below). Both visible at the same time so the
+  /// owner can record a tx or add a participant without switching tabs.
+  /// Returns null when there's nothing to surface (project locked, etc).
+  Widget? _buildFabs(Project? p) {
+    if (p == null || p.isLocked) return null;
+    final canAddMember = _isOwner;
+    final children = <Widget>[
+      FloatingActionButton(
+        heroTag: 'add-tx',
+        tooltip: 'New project transaction',
+        onPressed: () =>
+            context.push('/projects/${widget.id}/transactions/new'),
+        child: const Icon(Icons.add),
+      ),
+      if (canAddMember) ...[
+        const SizedBox(height: 12),
+        FloatingActionButton.small(
+          heroTag: 'add-member',
+          tooltip: 'Add member',
+          onPressed: _onAddMemberPressed,
+          child: const Icon(Icons.person_add),
+        ),
+      ],
+    ];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: children,
+    );
+  }
+
+  Future<void> _onAddMemberPressed() async {
+    final added = await showAddMemberSheet(context, projectId: widget.id);
+    if (added == true) await _load();
   }
 
   PopupMenuButton<String> _buildLifecycleMenu(Project p) {
@@ -896,54 +925,38 @@ class _MembersList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ListView.separated(
-          itemCount: members.length,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, i) {
-            final m = members[i];
-            return ListTile(
-              leading: CircleAvatar(
-                child: Text(
-                  m.displayName.isNotEmpty
-                      ? m.displayName[0].toUpperCase()
-                      : '?',
-                ),
-              ),
-              title: Text(m.displayName),
-              subtitle: Text(
-                  '${m.role.wire} · ${m.status.wire}${m.isLinked ? ' · linked' : ''}'),
-              trailing: isOwner && !m.isOwner
-                  ? IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () async {
-                        await context
-                            .read<ProjectsRepository>()
-                            .removeMember(projectId, m.id);
-                        await onChanged();
-                      },
-                    )
-                  : null,
-            );
-          },
-        ),
-        if (isOwner)
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton.extended(
-              heroTag: 'add-member',
-              icon: const Icon(Icons.person_add),
-              label: const Text('Add member'),
-              onPressed: () async {
-                final added =
-                    await showAddMemberSheet(context, projectId: projectId);
-                if (added == true) await onChanged();
-              },
+    // The "add member" affordance moved up to the scaffold-level FAB
+    // stack so it's visible alongside "add transaction" on every tab.
+    // This list is just the roster.
+    return ListView.separated(
+      itemCount: members.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, i) {
+        final m = members[i];
+        return ListTile(
+          leading: CircleAvatar(
+            child: Text(
+              m.displayName.isNotEmpty
+                  ? m.displayName[0].toUpperCase()
+                  : '?',
             ),
           ),
-      ],
+          title: Text(m.displayName),
+          subtitle: Text(
+              '${m.role.wire} · ${m.status.wire}${m.isLinked ? ' · linked' : ''}'),
+          trailing: isOwner && !m.isOwner
+              ? IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () async {
+                    await context
+                        .read<ProjectsRepository>()
+                        .removeMember(projectId, m.id);
+                    await onChanged();
+                  },
+                )
+              : null,
+        );
+      },
     );
   }
 }

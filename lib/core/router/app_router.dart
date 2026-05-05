@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/shell/main_shell.dart';
 import '../../dev/dev_hub_screen.dart';
+import '../../dev/logs_viewer_screen.dart';
 import '../../dev/state_widgets_preview_screen.dart';
 import '../../dev/theme_preview_screen.dart';
 import '../../features/accounts/presentation/pages/account_detail_page.dart';
@@ -318,6 +319,11 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
             path: 'state-widgets',
             name: 'dev-state-widgets',
             builder: (context, state) => const StateWidgetsPreviewScreen(),
+          ),
+          GoRoute(
+            path: 'logs',
+            name: 'dev-logs',
+            builder: (context, state) => const LogsViewerScreen(),
           ),
         ],
       ),

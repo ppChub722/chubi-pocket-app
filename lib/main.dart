@@ -5,9 +5,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
 import 'core/fonts/font_preloader.dart';
+import 'core/logger/app_logger.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Logger first — every line below this should be capturable. The
+  // active config is resolved from APP_ENV / dart-defines; defaults
+  // mirror the BE plan (debug+bodies in local, info in staging,
+  // warn-only in prod).
+  await AppLogger.instance.init();
 
   await _setHighRefreshRate();
 

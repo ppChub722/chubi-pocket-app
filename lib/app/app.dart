@@ -179,7 +179,24 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             final theme = ThemeRegistry.byId(themeId);
             final font = FontRegistry.byId(fontId);
 
-            return MaterialApp.router(
+            // Auth-driven state lifecycle: when AuthCubit transitions
+            // from authenticated to not, OR from one identity to another,
+            // wipe every per-user cubit so the previous user's data
+            // doesn't bleed across sessions. UI-only cubits (theme,
+            // locale, font, connectivity) are not Clearable and survive.
+            return BlocListener<AuthCubit, AuthState>(
+              listenWhen: _authIdentityChanged,
+              listener: (ctx, state) {
+                _clearPerUserCubits(ctx);
+                // After clearing on login, kick the badge poller. Done
+                // here (instead of in the new cubit's create:) because
+                // the existing instance is reused — clear() called
+                // stop(), so we need to start() again.
+                if (state is AuthAuthenticated) {
+                  ctx.read<UnreadBadgeCubit>().start();
+                }
+              },
+              child: MaterialApp.router(
               debugShowCheckedModeBanner: false,
               title: 'chubiPocket',
               theme: ThemeBuilder.build(
@@ -209,10 +226,47 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                   Expanded(child: child ?? const SizedBox.shrink()),
                 ],
               ),
+              ),
             );
           },
         ),
       ),
     );
+  }
+
+  /// Fires the listener iff the user-identity dimension of [AuthState]
+  /// actually changed: log-in (un-auth → auth) or log-out (auth → un-auth)
+  /// or auth-as-different-user (auth A → auth B). Loading / failure
+  /// transitions that wrap the same identity are ignored — those keep
+  /// the cubits hot.
+  bool _authIdentityChanged(AuthState prev, AuthState curr) {
+    final prevId = _identityOf(prev);
+    final currId = _identityOf(curr);
+    return prevId != currId;
+  }
+
+  String? _identityOf(AuthState s) {
+    if (s is AuthAuthenticated) return s.user.id;
+    if (s is AuthLoading && s.previous is AuthAuthenticated) {
+      return (s.previous as AuthAuthenticated).user.id;
+    }
+    if (s is AuthFailure && s.previous is AuthAuthenticated) {
+      return (s.previous as AuthAuthenticated).user.id;
+    }
+    return null; // AuthInitial / AuthUnauthenticated / failure-of-unauth
+  }
+
+  /// Calls [Clearable.clear] on every per-user cubit registered in the
+  /// MultiBlocProvider above. Order doesn't matter — each cubit just
+  /// emits its initial state.
+  void _clearPerUserCubits(BuildContext ctx) {
+    ctx.read<AccountsCubit>().clear();
+    ctx.read<CategoriesCubit>().clear();
+    ctx.read<TagsCubit>().clear();
+    ctx.read<TransactionsCubit>().clear();
+    ctx.read<ContactsCubit>().clear();
+    ctx.read<PersonalDebtsCubit>().clear();
+    ctx.read<ProjectsCubit>().clear();
+    ctx.read<UnreadBadgeCubit>().clear();
   }
 }

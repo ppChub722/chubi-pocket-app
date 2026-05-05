@@ -8,7 +8,6 @@ class Contact extends Equatable {
     required this.userId,
     required this.displayName,
     required this.status,
-    this.nickname,
     this.email,
     this.phone,
     this.notes,
@@ -20,7 +19,6 @@ class Contact extends Equatable {
   final String id;
   final String userId;
   final String displayName;
-  final String? nickname;
   final String? email;
   final String? phone;
   final String? notes;
@@ -35,14 +33,17 @@ class Contact extends Equatable {
 
   bool get isLinked => linkedUserId != null;
   bool get isArchived => status == ContactStatus.archived;
-  String get effectiveName => nickname?.isNotEmpty == true ? nickname! : displayName;
+
+  /// Kept as an alias of [displayName] for one cycle so existing callers
+  /// don't need to be touched all at once. New code should use
+  /// [displayName] directly.
+  String get effectiveName => displayName;
 
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       displayName: json['display_name'] as String,
-      nickname: json['nickname'] as String?,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
       notes: json['notes'] as String?,
@@ -59,7 +60,6 @@ class Contact extends Equatable {
 
   Contact copyWith({
     String? displayName,
-    String? nickname,
     String? email,
     String? phone,
     String? notes,
@@ -73,7 +73,6 @@ class Contact extends Equatable {
       id: id,
       userId: userId,
       displayName: displayName ?? this.displayName,
-      nickname: nickname ?? this.nickname,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       notes: notes ?? this.notes,
@@ -89,7 +88,6 @@ class Contact extends Equatable {
         id,
         userId,
         displayName,
-        nickname,
         email,
         phone,
         notes,

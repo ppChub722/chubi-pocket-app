@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/categories_repository.dart';
 import '../../domain/category.dart';
@@ -66,12 +67,15 @@ enum CategoriesStatus { initial, loading, loaded, error }
 /// it and emits — no server round-trip. The next mutation will re-sync
 /// state with the server. Phase 1a accepts this trade — the alternative
 /// (round-trip undo via inverse API calls) is much more complex.
-class CategoriesCubit extends Cubit<CategoriesState> {
+class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   CategoriesCubit({required CategoriesRepository repository})
       : _repo = repository,
         super(const CategoriesState());
 
   final CategoriesRepository _repo;
+
+  @override
+  void clear() => emit(const CategoriesState());
 
   /// Hard cap on user-editable categories per spec discussion (not yet in
   /// canonical spec — flag for P1a doc bump). System categories don't

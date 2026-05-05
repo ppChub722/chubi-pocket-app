@@ -2,17 +2,23 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/bloc/clearable_cubit.dart';
 import '../../data/notifications_repository.dart';
 
 /// App-wide unread-count cubit. Powers the bell badge in the top app bar.
 /// Polls every 30s while authenticated; spec §13.4.8 (in-app polling in 1b).
-class UnreadBadgeCubit extends Cubit<int> {
+class UnreadBadgeCubit extends Cubit<int> with Clearable {
   UnreadBadgeCubit({
     required NotificationsRepository repository,
     Duration interval = const Duration(seconds: 30),
   })  : _repo = repository,
         _interval = interval,
         super(0);
+
+  /// On logout: stop polling AND wipe the cached count so the bell
+  /// doesn't briefly show the previous user's number after re-login.
+  @override
+  void clear() => stop();
 
   final NotificationsRepository _repo;
   final Duration _interval;
