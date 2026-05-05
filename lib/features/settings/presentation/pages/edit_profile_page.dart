@@ -27,6 +27,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _displayNameCtrl;
   late final TextEditingController _avatarUrlCtrl;
+  late final TextEditingController _emailCtrl;
   late String _currency;
   late User _initial;
 
@@ -40,6 +41,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _initial = user!;
     _displayNameCtrl = TextEditingController(text: user.displayName);
     _avatarUrlCtrl = TextEditingController(text: user.avatarUrl ?? '');
+    _emailCtrl = TextEditingController(text: user.email ?? '');
     _currency = user.currency;
   }
 
@@ -47,14 +49,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void dispose() {
     _displayNameCtrl.dispose();
     _avatarUrlCtrl.dispose();
+    _emailCtrl.dispose();
     super.dispose();
   }
 
   bool get _dirty {
+    final emailTrimmed = _emailCtrl.text.trim();
+    final emailChanged = emailTrimmed.isNotEmpty &&
+        emailTrimmed != (_initial.email ?? '');
     return _displayNameCtrl.text.trim() != _initial.displayName ||
         _currency != _initial.currency ||
         (_avatarUrlCtrl.text.trim().isEmpty ? null : _avatarUrlCtrl.text.trim()) !=
-            _initial.avatarUrl;
+            _initial.avatarUrl ||
+        emailChanged;
   }
 
   Future<void> _save() async {
@@ -66,6 +73,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final repo = context.read<UsersRepository>();
       final newUrl = _avatarUrlCtrl.text.trim();
+      final newEmail = _emailCtrl.text.trim();
+      final emailChanged =
+          newEmail.isNotEmpty && newEmail != (_initial.email ?? '');
       final updated = await repo.updateMe(
         displayName: _displayNameCtrl.text.trim() != _initial.displayName
             ? _displayNameCtrl.text.trim()
@@ -73,6 +83,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         currency: _currency != _initial.currency ? _currency : null,
         avatarUrl: newUrl.isNotEmpty ? newUrl : null,
         clearAvatar: newUrl.isEmpty && _initial.avatarUrl != null,
+        email: emailChanged ? newEmail : null,
       );
       if (!mounted) return;
       context.read<AuthCubit>().updateUser(updated);
@@ -81,7 +92,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
       context.pop();
     } on ApiException catch (e) {
-      setState(() => _error = e);
+      // EMAIL_EXISTS surfaces inline against the email field instead of
+      // the generic top-of-form banner — matches the register page's UX.
+      if (e.code == 'EMAIL_EXISTS' && mounted) {
+        final l = AppLocalizations.of(context)!;
+        setState(() => _error = ApiException(
+              code: e.code,
+              message: l.editProfileEmailTaken,
+            ));
+      } else {
+        setState(() => _error = e);
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -295,10 +316,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         helper: l.editProfileReadOnlyHelper,
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      _ReadOnlyField(
-                        label: l.editProfileEmailLabel,
-                        value: _initial.email ?? l.editProfileEmailNone,
-                        helper: l.editProfileReadOnlyHelper,
+                      TextFormField(
+                        controller: _emailCtrl,
+                        enabled: !_submitting,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: l.editProfileEmailLabel,
+                          helperText: l.editProfileEmailHelper,
+                          helperMaxLines: 3,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        validator: (v) {
+                          final s = v?.trim() ?? '';
+                          if (s.isEmpty) return null; // optional
+                          // Match BE binding tag: omitempty,email,max=255.
+                          if (s.length > 255) {
+                            return l.editProfileEmailTooLong;
+                          }
+                          // Lightweight format check — same shape as
+                          // dart:core's HTML5 email regex.
+                          final ok = RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(s);
+                          if (!ok) return l.editProfileEmailInvalid;
+                          return null;
+                        },
                       ),
                     ],
                   ),

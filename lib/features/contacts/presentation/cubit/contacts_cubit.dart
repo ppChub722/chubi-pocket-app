@@ -150,6 +150,18 @@ class ContactsCubit extends Cubit<ContactsState> {
     await _repo.requestLink(id);
   }
 
+  /// `GET /contacts/unlinked-names` — every (person_name, count) pair from
+  /// the caller's personal_debts where contact_id is still NULL. Backs the
+  /// "Wire split names" surface on contact detail.
+  Future<List<UnlinkedName>> unlinkedNames() => _repo.unlinkedNames();
+
+  /// `POST /contacts/:id/absorb` — wires every personal_debts row whose
+  /// counterparty_person_name (case-insensitive exact) is in [names] to the
+  /// given contact. Returns the count rewritten. Caller refreshes the
+  /// contact + unlinked-names list afterwards.
+  Future<int> absorb(String contactId, List<String> names) =>
+      _repo.absorb(contactId, names);
+
   Future<void> delete(String id) async {
     await _repo.delete(id);
     emit(state.copyWith(

@@ -815,6 +815,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfileEmailLabel => 'Email';
 
   @override
+  String get editProfileEmailHelper =>
+      'Used as your account ID and as the matching key when other people send you a contact link request.';
+
+  @override
+  String get editProfileEmailInvalid => 'Enter a valid email address.';
+
+  @override
+  String get editProfileEmailTooLong => 'Email is too long.';
+
+  @override
+  String get editProfileEmailTaken =>
+      'That email is already registered to another account.';
+
+  @override
   String get editProfileReadOnlyHelper => 'Cannot be changed in this version';
 
   @override

@@ -132,6 +132,7 @@ class _ContactBody extends StatelessWidget {
               child: const Text('Request'),
             ),
           ),
+        _WireNamesTile(contact: contact, onChanged: onChanged),
         ListTile(
           leading: Icon(contact.isArchived ? Icons.unarchive : Icons.archive),
           title: Text(contact.isArchived ? 'Restore' : 'Archive'),
@@ -212,6 +213,256 @@ class _Field extends StatelessWidget {
           Text(label, style: Theme.of(context).textTheme.labelSmall),
           Text(value, style: Theme.of(context).textTheme.bodyLarge),
         ],
+      ),
+    );
+  }
+}
+
+/// "Wire split names → N" tile. N = total un-wired person_name occurrences
+/// across all of the user's personal_debts. Loads lazily on mount; tapping
+/// opens [_WireNamesSheet] which lets the user multi-select names to wire
+/// to this contact in one absorb call.
+class _WireNamesTile extends StatefulWidget {
+  const _WireNamesTile({required this.contact, required this.onChanged});
+  final Contact contact;
+  final Future<void> Function() onChanged;
+
+  @override
+  State<_WireNamesTile> createState() => _WireNamesTileState();
+}
+
+class _WireNamesTileState extends State<_WireNamesTile> {
+  List<UnlinkedName>? _names;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _refresh();
+    });
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final list = await context.read<ContactsCubit>().unlinkedNames();
+      if (!mounted) return;
+      setState(() => _names = list);
+    } on ApiException {
+      // Silent — tile just shows "—" until next refresh. Errors here would
+      // be noisy; the user didn't trigger this load.
+      if (mounted) setState(() => _names = const []);
+    }
+  }
+
+  int get _totalSplits =>
+      _names == null ? 0 : _names!.fold<int>(0, (a, n) => a + n.count);
+
+  @override
+  Widget build(BuildContext context) {
+    final names = _names;
+    final total = _totalSplits;
+    final loading = names == null;
+    final empty = !loading && names.isEmpty;
+
+    final summary = loading
+        ? 'Loading…'
+        : empty
+            ? 'No un-wired split names found'
+            : 'Pick which typed names belong to this contact '
+                '(${names.length} ${names.length == 1 ? "name" : "names"} '
+                '· $total ${total == 1 ? "split" : "splits"})';
+
+    return ListTile(
+      leading: const Icon(Icons.link_outlined),
+      title: const Text('Wire split names'),
+      subtitle: Text(summary),
+      enabled: !loading && !empty,
+      onTap: () => _openSheet(names ?? const []),
+    );
+  }
+
+  Future<void> _openSheet(List<UnlinkedName> names) async {
+    final wired = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _WireNamesSheet(
+        contact: widget.contact,
+        names: names,
+      ),
+    );
+    if (!mounted || wired == null || wired <= 0) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Wired $wired ${wired == 1 ? "split" : "splits"} to '
+          '${widget.contact.effectiveName}',
+        ),
+      ),
+    );
+    await _refresh();
+    await widget.onChanged();
+  }
+}
+
+/// Modal: search + multi-select list of un-wired person_names. Tapping
+/// "Save" calls `cubit.absorb(contactId, selectedNames)` and pops with the
+/// rewritten count so the parent tile can show a snackbar + refresh.
+class _WireNamesSheet extends StatefulWidget {
+  const _WireNamesSheet({required this.contact, required this.names});
+  final Contact contact;
+  final List<UnlinkedName> names;
+
+  @override
+  State<_WireNamesSheet> createState() => _WireNamesSheetState();
+}
+
+class _WireNamesSheetState extends State<_WireNamesSheet> {
+  final _searchCtrl = TextEditingController();
+  final Set<String> _selected = <String>{};
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<UnlinkedName> get _filtered {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    if (q.isEmpty) return widget.names;
+    return widget.names
+        .where((n) => n.name.toLowerCase().contains(q))
+        .toList(growable: false);
+  }
+
+  Future<void> _save() async {
+    if (_selected.isEmpty) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      final wired = await context.read<ContactsCubit>().absorb(
+            widget.contact.id,
+            _selected.toList(),
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop(wired);
+    } on ApiException catch (e) {
+      _error = e.message;
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _filtered;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Wire to ${widget.contact.effectiveName}',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pick the typed names from your splits that should be linked '
+              'to this contact. All matching transactions get updated.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _searchCtrl,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search names',
+                isDense: true,
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        widget.names.isEmpty
+                            ? 'No un-wired names'
+                            : 'No matches',
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, i) {
+                        final n = filtered[i];
+                        final picked = _selected.contains(n.name);
+                        return CheckboxListTile(
+                          value: picked,
+                          onChanged: _saving
+                              ? null
+                              : (v) => setState(() {
+                                    if (v == true) {
+                                      _selected.add(n.name);
+                                    } else {
+                                      _selected.remove(n.name);
+                                    }
+                                  }),
+                          title: Text(n.name.isEmpty ? '(empty)' : n.name),
+                          subtitle: Text(
+                            '${n.count} ${n.count == 1 ? "split" : "splits"}',
+                          ),
+                          dense: true,
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      },
+                    ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _saving
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: (_selected.isEmpty || _saving) ? null : _save,
+                    child: Text(
+                      _saving
+                          ? 'Saving…'
+                          : _selected.isEmpty
+                              ? 'Pick names'
+                              : 'Wire ${_selected.length}',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

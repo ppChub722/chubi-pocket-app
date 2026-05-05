@@ -804,6 +804,19 @@ class AppLocalizationsTh extends AppLocalizations {
   String get editProfileEmailLabel => 'อีเมล';
 
   @override
+  String get editProfileEmailHelper =>
+      'ใช้เป็นรหัสบัญชีของคุณ และเป็นคีย์ที่คนอื่นใช้ค้นหาเพื่อส่งคำขอเชื่อมโยงผู้ติดต่อ';
+
+  @override
+  String get editProfileEmailInvalid => 'กรุณากรอกอีเมลให้ถูกต้อง';
+
+  @override
+  String get editProfileEmailTooLong => 'อีเมลยาวเกินไป';
+
+  @override
+  String get editProfileEmailTaken => 'อีเมลนี้ถูกใช้กับบัญชีอื่นแล้ว';
+
+  @override
   String get editProfileReadOnlyHelper => 'ไม่สามารถเปลี่ยนได้ในเวอร์ชันนี้';
 
   @override

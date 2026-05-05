@@ -1586,6 +1586,30 @@ abstract class AppLocalizations {
   /// **'Email'**
   String get editProfileEmailLabel;
 
+  /// No description provided for @editProfileEmailHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Used as your account ID and as the matching key when other people send you a contact link request.'**
+  String get editProfileEmailHelper;
+
+  /// No description provided for @editProfileEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get editProfileEmailInvalid;
+
+  /// No description provided for @editProfileEmailTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is too long.'**
+  String get editProfileEmailTooLong;
+
+  /// No description provided for @editProfileEmailTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'That email is already registered to another account.'**
+  String get editProfileEmailTaken;
+
   /// No description provided for @editProfileReadOnlyHelper.
   ///
   /// In en, this message translates to:

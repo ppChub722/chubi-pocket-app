@@ -14,6 +14,7 @@ class Contact extends Equatable {
     this.notes,
     this.icon,
     this.linkedUserId,
+    this.lastUsedAt,
   });
 
   final String id;
@@ -26,6 +27,11 @@ class Contact extends Equatable {
   final String? icon;
   final String? linkedUserId;
   final ContactStatus status;
+
+  /// Bumped server-side whenever this contact is referenced by a new
+  /// personal_debts row (split debtor). Drives the typeahead "recent first"
+  /// sort on the split debtor picker. Null = never used.
+  final DateTime? lastUsedAt;
 
   bool get isLinked => linkedUserId != null;
   bool get isArchived => status == ContactStatus.archived;
@@ -45,6 +51,9 @@ class Contact extends Equatable {
       status: (json['status'] as String?) == 'archived'
           ? ContactStatus.archived
           : ContactStatus.active,
+      lastUsedAt: json['last_used_at'] != null
+          ? DateTime.parse(json['last_used_at'] as String)
+          : null,
     );
   }
 
@@ -57,6 +66,7 @@ class Contact extends Equatable {
     String? icon,
     String? linkedUserId,
     ContactStatus? status,
+    DateTime? lastUsedAt,
     bool clearLinkedUserId = false,
   }) {
     return Contact(
@@ -70,6 +80,7 @@ class Contact extends Equatable {
       icon: icon ?? this.icon,
       linkedUserId: clearLinkedUserId ? null : (linkedUserId ?? this.linkedUserId),
       status: status ?? this.status,
+      lastUsedAt: lastUsedAt ?? this.lastUsedAt,
     );
   }
 
@@ -85,6 +96,7 @@ class Contact extends Equatable {
         icon,
         linkedUserId,
         status,
+        lastUsedAt,
       ];
 }
 

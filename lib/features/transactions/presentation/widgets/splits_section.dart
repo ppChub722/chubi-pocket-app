@@ -7,15 +7,18 @@ import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 
 /// One debtor row in the create-transaction "Split with…" section.
 ///
-/// `personName` is required (always set per spec §06.2.5). `contactId` is
-/// optional — when present, we display the contact's name instead. The
-/// splits-creator hook on the BE rewrites `person_name` to the contact's
-/// snapshot at insert time, so what the user types here is mostly for
-/// preview / for free-text debtors.
+/// Two binding modes for the same row:
+///   - free text: user typed a name that doesn't match any contact ⇒
+///     `personName` set, `contactId` null. BE stores as a typed person_name
+///     on the resulting personal_debts row; the user can later wire it to
+///     a contact from the contact detail page.
+///   - wired: user picked a suggestion from the typeahead ⇒ `contactId`
+///     set + `personName` snapshotted to the contact's effective name.
 class SplitDraft {
   SplitDraft({
     String? personName,
     this.contactId,
+    this.contactDisplayName,
     this.owedAmount,
   }) : personName = personName ?? '';
 
@@ -33,11 +36,13 @@ class SplitDraft {
 
   bool get isComplete =>
       personName.trim().isNotEmpty && (owedAmount ?? 0) > 0;
+
+  bool get isWired => contactId != null;
 }
 
 /// Collapsible splits editor. Sits inside the transaction form body for
-/// non-transfer transactions. Returns the current draft list via the
-/// `onChanged` callback so the parent can pass it to `cubit.add(splits:)`.
+/// non-transfer expense transactions. Returns the current draft list via
+/// the `onChanged` callback so the parent can pass it to `cubit.add`.
 class SplitsSection extends StatefulWidget {
   const SplitsSection({
     required this.totalAmount,
@@ -66,7 +71,7 @@ class _SplitsSectionState extends State<SplitsSection> {
     _expanded = widget.drafts.isNotEmpty;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // Warm the contacts cache so the picker has data ready.
+      // Warm the contacts cache so the typeahead has data ready.
       final cubit = context.read<ContactsCubit>();
       if (cubit.state.contacts.isEmpty) {
         cubit.load();
@@ -139,11 +144,12 @@ class _SplitsSectionState extends State<SplitsSection> {
         const SizedBox(height: AppSpacing.xs),
         for (var i = 0; i < widget.drafts.length; i++) ...[
           _DraftRow(
+            // Re-mount each row when its identity changes (e.g. after
+            // remove). Without a key, the underlying TextEditingController
+            // bleeds between siblings on list edits.
+            key: ValueKey(i),
             draft: widget.drafts[i],
-            onPickContact: () => _pickContact(i),
-            onChange: () {
-              widget.onChanged(List.of(widget.drafts));
-            },
+            onChange: () => widget.onChanged(List.of(widget.drafts)),
             onRemove: () {
               final next = List<SplitDraft>.of(widget.drafts)..removeAt(i);
               widget.onChanged(next);
@@ -192,33 +198,20 @@ class _SplitsSectionState extends State<SplitsSection> {
     }
     widget.onChanged(List.of(widget.drafts));
   }
-
-  Future<void> _pickContact(int index) async {
-    final picked = await showModalBottomSheet<Contact?>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const _ContactPickerSheet(),
-    );
-    if (picked != null) {
-      widget.drafts[index].contactId = picked.id;
-      widget.drafts[index].contactDisplayName = picked.effectiveName;
-      // Snapshot the contact's name into person_name (matches BE behavior).
-      widget.drafts[index].personName = picked.effectiveName;
-      widget.onChanged(List.of(widget.drafts));
-    }
-  }
 }
 
+/// A single draft row. The name field is a typeahead `Autocomplete<Contact>`:
+/// suggestions narrow as the user types; picking one wires `contactId`,
+/// otherwise the typed text becomes a free-text `person_name`.
 class _DraftRow extends StatefulWidget {
   const _DraftRow({
     required this.draft,
-    required this.onPickContact,
     required this.onChange,
     required this.onRemove,
+    super.key,
   });
 
   final SplitDraft draft;
-  final VoidCallback onPickContact;
   final VoidCallback onChange;
   final VoidCallback onRemove;
 
@@ -227,13 +220,11 @@ class _DraftRow extends StatefulWidget {
 }
 
 class _DraftRowState extends State<_DraftRow> {
-  late final TextEditingController _name;
   late final TextEditingController _amount;
 
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(text: widget.draft.personName);
     _amount = TextEditingController(
       text: widget.draft.owedAmount == null
           ? ''
@@ -244,10 +235,6 @@ class _DraftRowState extends State<_DraftRow> {
   @override
   void didUpdateWidget(covariant _DraftRow old) {
     super.didUpdateWidget(old);
-    // Sync from external changes (split-equally button, contact pick).
-    if (_name.text != widget.draft.personName) {
-      _name.text = widget.draft.personName;
-    }
     final ext = widget.draft.owedAmount == null
         ? ''
         : widget.draft.owedAmount!.toStringAsFixed(2);
@@ -258,113 +245,161 @@ class _DraftRowState extends State<_DraftRow> {
 
   @override
   void dispose() {
-    _name.dispose();
     _amount.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          tooltip: widget.draft.contactId == null
-              ? 'Pick contact'
-              : 'Linked to contact',
-          icon: Icon(
-            widget.draft.contactId == null
-                ? Icons.person_outline
-                : Icons.contact_phone,
-          ),
-          onPressed: widget.onPickContact,
-        ),
-        Expanded(
-          flex: 3,
-          child: TextField(
-            controller: _name,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              isDense: true,
-            ),
-            onChanged: (v) {
-              widget.draft.personName = v;
-              widget.onChange();
-            },
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          flex: 2,
-          child: TextField(
-            controller: _amount,
-            decoration: const InputDecoration(
-              labelText: 'Owes',
-              isDense: true,
-            ),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (v) {
-              widget.draft.owedAmount = double.tryParse(v);
-              widget.onChange();
-            },
-          ),
-        ),
-        IconButton(
-          tooltip: 'Remove',
-          icon: const Icon(Icons.delete_outline),
-          onPressed: widget.onRemove,
-        ),
-      ],
-    );
+  /// Filtered + sorted contact list for the typeahead. Empty input shows
+  /// every active contact ordered by `lastUsedAt DESC NULLS LAST` (BE
+  /// already serves the list in this order, so we just preserve it).
+  Iterable<Contact> _suggestionsFor(String text, List<Contact> all) {
+    final active = all.where((c) => c.status == ContactStatus.active);
+    final q = text.trim().toLowerCase();
+    if (q.isEmpty) return active;
+    return active.where((c) {
+      final hay = c.effectiveName.toLowerCase();
+      return hay.contains(q);
+    });
   }
-}
-
-class _ContactPickerSheet extends StatelessWidget {
-  const _ContactPickerSheet();
 
   @override
   Widget build(BuildContext context) {
+    final draft = widget.draft;
     return BlocBuilder<ContactsCubit, ContactsState>(
-      builder: (ctx, state) {
-        final active = state.contacts
-            .where((c) => c.status == ContactStatus.active)
-            .toList();
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('Pick a contact',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+      builder: (context, state) {
+        return Row(
+          children: [
+            // Visual cue: filled link icon when wired, outline when free text.
+            Tooltip(
+              message: draft.isWired
+                  ? 'Wired to contact'
+                  : 'Free text — pick a contact from suggestions to wire',
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(
+                  draft.isWired ? Icons.contact_phone : Icons.person_outline,
+                  color: draft.isWired
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  size: 20,
                 ),
-                Expanded(
-                  child: active.isEmpty
-                      ? const Center(child: Text('No contacts yet'))
-                      : ListView.separated(
-                          itemCount: active.length,
-                          separatorBuilder: (_, _) => const Divider(height: 1),
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Autocomplete<Contact>(
+                initialValue: TextEditingValue(text: draft.personName),
+                displayStringForOption: (c) => c.effectiveName,
+                optionsBuilder: (textEditingValue) =>
+                    _suggestionsFor(textEditingValue.text, state.contacts),
+                onSelected: (c) {
+                  setState(() {
+                    draft.personName = c.effectiveName;
+                    draft.contactId = c.id;
+                    draft.contactDisplayName = c.effectiveName;
+                  });
+                  widget.onChange();
+                },
+                fieldViewBuilder:
+                    (context, controller, focusNode, onSubmit) {
+                  return TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      isDense: true,
+                    ),
+                    onChanged: (v) {
+                      // Typing past or away from a picked contact clears
+                      // the wire — otherwise the BE would receive a stale
+                      // contact_id that no longer matches the name.
+                      final stale = draft.contactDisplayName != null &&
+                          v != draft.contactDisplayName;
+                      setState(() {
+                        draft.personName = v;
+                        if (stale) {
+                          draft.contactId = null;
+                          draft.contactDisplayName = null;
+                        }
+                      });
+                      widget.onChange();
+                    },
+                  );
+                },
+                optionsViewBuilder: (context, onSelected, options) {
+                  // Default Material 3 dropdown shape constrained so it
+                  // doesn't grow taller than 280 px (typical 6 rows).
+                  final list = options.toList(growable: false);
+                  return Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(8),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxHeight: 280,
+                          maxWidth: 320,
+                        ),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: list.length,
                           itemBuilder: (context, i) {
-                            final c = active[i];
+                            final c = list[i];
                             return ListTile(
+                              dense: true,
                               leading: CircleAvatar(
+                                radius: 14,
                                 child: Text(
                                   c.effectiveName.isNotEmpty
                                       ? c.effectiveName[0].toUpperCase()
                                       : '?',
+                                  style: const TextStyle(fontSize: 12),
                                 ),
                               ),
                               title: Text(c.effectiveName),
-                              subtitle: c.email != null ? Text(c.email!) : null,
-                              onTap: () => Navigator.pop(context, c),
+                              subtitle: c.email != null
+                                  ? Text(
+                                      c.email!,
+                                      style: const TextStyle(fontSize: 11),
+                                    )
+                                  : null,
+                              trailing: c.isLinked
+                                  ? const Icon(Icons.link, size: 14)
+                                  : null,
+                              onTap: () => onSelected(c),
                             );
                           },
                         ),
-                ),
-              ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: _amount,
+                decoration: const InputDecoration(
+                  labelText: 'Owes',
+                  isDense: true,
+                ),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                onChanged: (v) {
+                  draft.owedAmount = double.tryParse(v);
+                  widget.onChange();
+                },
+              ),
+            ),
+            IconButton(
+              tooltip: 'Remove',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: widget.onRemove,
+            ),
+          ],
         );
       },
     );
