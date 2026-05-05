@@ -13,6 +13,7 @@ import '../../../transactions/domain/transaction.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/domain/transactions_summary.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 
 /// Dashboard. Three blocks (top to bottom):
 /// 1. **Net worth** — sum of every active account's cached balance
@@ -406,13 +407,13 @@ class _RecentRow extends StatelessWidget {
     // aren't in the user's visible list).
     final cubit = context.watch<CategoriesCubit>();
     final cat = tx.category != null ? cubit.byId(tx.category!.id) : null;
-    final iconData = cat?.icon.icon ?? _iconForType(tx.type);
+    final iconData = IconRegistry.get(cat?.iconCode?.icon, fallback: _iconForType(tx.type));
     final fallbackColor = switch (tx.type) {
       TransactionType.expense => scheme.error,
       TransactionType.income => Colors.green.shade400,
       _ => scheme.onSurfaceVariant,
     };
-    final iconColor = cat?.color.color ?? fallbackColor;
+    final iconColor = cat?.iconCode?.accentColor ?? fallbackColor;
 
     return InkWell(
       onTap: () => context.push('/transactions/${tx.id}'),

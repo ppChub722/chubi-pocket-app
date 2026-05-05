@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../shared/widgets/icon_color_picker_sheet.dart';
-import '../../../categories/domain/category_icon_preset.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_maker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 
@@ -41,8 +42,7 @@ class _ProjectTransactionEditPageState
   late final TextEditingController _note;
   late final TextEditingController _categoryName;
 
-  String? _categoryIconId;
-  String? _categoryColorId;
+  IconCode? _categoryIconCode;
 
   late List<_SplitEditEntry> _splits;
 
@@ -61,8 +61,7 @@ class _ProjectTransactionEditPageState
     _date = TextEditingController(text: _tx.date);
     _note = TextEditingController(text: _tx.note ?? '');
     _categoryName = TextEditingController(text: _tx.categoryName ?? '');
-    _categoryIconId = _tx.categoryIconId;
-    _categoryColorId = _tx.categoryColorId;
+    _categoryIconCode = _tx.categoryIconCode;
 
     _splits = widget.tree.children
         .map((c) => _SplitEditEntry(
@@ -99,25 +98,15 @@ class _ProjectTransactionEditPageState
   }
 
   Future<void> _pickCategoryIcon() async {
-    final iconOptions = CategoryIconPreset.values
-        .map((p) => IconPickerOption(id: p.id, icon: p.icon))
-        .toList();
-    final swatches = CategoryColor.all
-        .map((c) => IconPickerSwatch(id: c.id, color: c.color))
-        .toList();
-    final result = await showIconColorPickerSheet(
+    final result = await showIconMakerSheet(
       context: context,
-      iconOptions: iconOptions,
-      swatches: swatches,
-      initialIconId:
-          _categoryIconId ?? CategoryIconPreset.values.first.id,
-      initialSwatchId: _categoryColorId ?? CategoryColor.all.first.id,
+      iconIds: IconRegistry.categoryIconIds,
+      style: IconMakerStyle.background,
+      initial: _categoryIconCode,
     );
-    if (result is IconColorPickerSelected) {
-      setState(() {
-        _categoryIconId = result.iconId;
-        _categoryColorId = result.swatchId;
-      });
+    if (!mounted || result == null) return;
+    if (result is IconMakerSelected) {
+      setState(() => _categoryIconCode = result.iconCode);
     }
   }
 
@@ -135,7 +124,7 @@ class _ProjectTransactionEditPageState
   Future<void> _submit() async {
     if (!(_form.currentState?.validate() ?? false)) return;
     final catName = _categoryName.text.trim();
-    if (catName.isEmpty || _categoryIconId == null || _categoryColorId == null) {
+    if (catName.isEmpty || _categoryIconCode == null) {
       setState(() => _error = 'Category name and icon are required');
       return;
     }
@@ -162,8 +151,7 @@ class _ProjectTransactionEditPageState
             date: _date.text.trim(),
             note: _note.text.trim().isEmpty ? null : _note.text.trim(),
             categoryName: catName,
-            categoryIconId: _categoryIconId,
-            categoryColorId: _categoryColorId,
+            categoryIconCode: _categoryIconCode,
             splits: splits,
           );
       if (!mounted) return;
@@ -178,12 +166,11 @@ class _ProjectTransactionEditPageState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final catIconPreset = _categoryIconId != null
-        ? CategoryIconPreset.byId(_categoryIconId!)
-        : null;
-    final catColor = _categoryColorId != null
-        ? CategoryColor.byId(_categoryColorId!).color
-        : null;
+    final catBg = _categoryIconCode?.resolvedBgColor;
+    final catIcon = IconRegistry.get(
+      _categoryIconCode?.icon,
+      fallback: Icons.category_outlined,
+    );
     final actor = _memberName(_actorId);
     final isExpense = _tx.type == 'expense';
     final nonActorMembers =
@@ -196,7 +183,6 @@ class _ProjectTransactionEditPageState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Read-only info strip
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -272,11 +258,11 @@ class _ProjectTransactionEditPageState
                   onTap: _pickCategoryIcon,
                   child: CircleAvatar(
                     radius: 22,
-                    backgroundColor: catColor?.withValues(alpha: 0.18) ??
+                    backgroundColor: catBg?.withValues(alpha: 0.18) ??
                         scheme.surfaceContainerHighest,
                     child: Icon(
-                      catIconPreset?.icon ?? Icons.category_outlined,
-                      color: catColor ?? scheme.onSurfaceVariant,
+                      catIcon,
+                      color: catBg ?? scheme.onSurfaceVariant,
                       size: 20,
                     ),
                   ),

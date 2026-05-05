@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/icon_maker/icon_code.dart';
 import '../domain/project.dart';
 
 class ProjectsRepository {
@@ -41,8 +42,7 @@ class ProjectsRepository {
     String? description,
     String? startDate,
     String? endDate,
-    String? iconId,
-    String? colorId,
+    IconCode? iconCode,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -53,8 +53,7 @@ class ProjectsRepository {
           'description': ?description,
           'start_date': ?startDate,
           'end_date': ?endDate,
-          'icon_id': ?iconId,
-          'color_id': ?colorId,
+          if (iconCode != null) 'icon_code': iconCode.toJson(),
         },
       );
       return Project.fromJson(res.data!);
@@ -70,8 +69,7 @@ class ProjectsRepository {
     String? startDate,
     String? endDate,
     ProjectStatus? status,
-    String? iconId,
-    String? colorId,
+    IconCode? iconCode,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -83,8 +81,7 @@ class ProjectsRepository {
           'start_date': ?startDate,
           'end_date': ?endDate,
           'status': ?status?.wire,
-          'icon_id': ?iconId,
-          'color_id': ?colorId,
+          if (iconCode != null) 'icon_code': iconCode.toJson(),
         },
       );
       return Project.fromJson(res.data!);
@@ -224,8 +221,7 @@ class ProjectsRepository {
     String? description,
     String? note,
     String? categoryName,
-    String? categoryIconId,
-    String? categoryColorId,
+    IconCode? categoryIconCode,
     List<ProjectSplitInput> splits = const [],
   }) async {
     try {
@@ -240,8 +236,8 @@ class ProjectsRepository {
           'description': ?description,
           'note': ?note,
           'category_name': ?categoryName,
-          'category_icon_id': ?categoryIconId,
-          'category_color_id': ?categoryColorId,
+          if (categoryIconCode != null)
+            'category_icon_code': categoryIconCode.toJson(),
           if (splits.isNotEmpty)
             'splits': splits.map((s) => s.toJson()).toList(),
         },
@@ -262,8 +258,7 @@ class ProjectsRepository {
     String? description,
     String? note,
     String? categoryName,
-    String? categoryIconId,
-    String? categoryColorId,
+    IconCode? categoryIconCode,
     List<ProjectSplitInput>? splits,
   }) async {
     try {
@@ -275,8 +270,8 @@ class ProjectsRepository {
           'description': ?description,
           'note': ?note,
           'category_name': ?categoryName,
-          'category_icon_id': ?categoryIconId,
-          'category_color_id': ?categoryColorId,
+          if (categoryIconCode != null)
+            'category_icon_code': categoryIconCode.toJson(),
           if (splits != null) 'splits': splits.map((s) => s.toJson()).toList(),
         },
       );

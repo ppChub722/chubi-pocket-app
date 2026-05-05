@@ -3,22 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/icon_maker/icon_code_widget.dart';
 import '../../../../shared/widgets/editable_circle.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 
 /// Renders one account in the grid.
 ///
-/// Visual rule (locked in design discussion): the account's [color] drives
-/// the icon background, the card border, and the balance text. The card
-/// surface stays neutral (`surfaceContainer`) so dark/light themes both
-/// remain legible.
-///
-/// Two layouts:
-/// - [_HorizontalLayout] — used when the parent grid has 1 column (mobile
-///   portrait). Reads like a list row: icon · name+type · balance.
-/// - [_VerticalLayout] — used at 2 / 3 columns (mobile landscape, tablet,
-///   web). Stacks icon top-left, name middle, balance bottom.
+/// The account's [iconCode] drives the icon background, card border, and
+/// balance text. Card surface stays neutral (`surfaceContainer`).
 class AccountCard extends StatelessWidget {
   const AccountCard({
     required this.account,
@@ -29,26 +22,20 @@ class AccountCard extends StatelessWidget {
   });
 
   final Account account;
-
-  /// True for 1-col grids; false for 2 / 3-col grids.
   final bool horizontal;
   final VoidCallback? onTap;
-
-  /// When set, the icon circle becomes its own tap target — used by the
-  /// account create / edit form to open the icon-color picker without
-  /// hijacking taps on the rest of the card. Pass `null` to keep the icon
-  /// non-interactive (the default in the grid).
   final VoidCallback? onIconTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final accent = account.iconCode?.accentColor ?? const Color(0xFF64B5F6);
     return Card(
       clipBehavior: Clip.antiAlias,
       color: scheme.surfaceContainer,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: account.color.color, width: 1.5),
+        side: BorderSide(color: accent, width: 1.5),
       ),
       child: InkWell(
         onTap: onTap,
@@ -71,6 +58,7 @@ class _HorizontalLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final accent = account.iconCode?.accentColor ?? const Color(0xFF64B5F6);
     final desc = account.description?.trim();
     final note = account.note?.trim();
     final hasDesc = desc != null && desc.isNotEmpty;
@@ -91,9 +79,6 @@ class _HorizontalLayout extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 2),
-              // Subtitle: description preferred, else fallback to type.
-              // Keeps the most useful "what is this account for" hint
-              // visible at the grid level without an extra line.
               Text(
                 hasDesc ? desc : _typeLabel(context, account.type),
                 maxLines: 1,
@@ -125,7 +110,7 @@ class _HorizontalLayout extends StatelessWidget {
             Text(
               CurrencyFormatter.format(account.balance),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: account.color.color,
+                    color: accent,
                     fontWeight: FontWeight.w700,
                   ),
             ),
@@ -133,7 +118,7 @@ class _HorizontalLayout extends StatelessWidget {
               const SizedBox(height: 4),
               _UtilizationBar(
                 fraction: account.creditUtilization!,
-                color: account.color.color,
+                color: accent,
                 width: 100,
               ),
               const SizedBox(height: 2),
@@ -142,7 +127,7 @@ class _HorizontalLayout extends StatelessWidget {
                   (account.creditUtilization! * 100).round(),
                 ),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: scheme.onSurfaceVariant,
                     ),
               ),
             ],
@@ -160,6 +145,7 @@ class _VerticalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = account.iconCode?.accentColor ?? const Color(0xFF64B5F6);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -187,7 +173,7 @@ class _VerticalLayout extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: account.color.color,
+                color: accent,
                 fontWeight: FontWeight.w700,
               ),
         ),
@@ -195,7 +181,7 @@ class _VerticalLayout extends StatelessWidget {
           const SizedBox(height: 4),
           _UtilizationBar(
             fraction: account.creditUtilization!,
-            color: account.color.color,
+            color: accent,
             width: double.infinity,
           ),
         ],
@@ -205,11 +191,7 @@ class _VerticalLayout extends StatelessWidget {
 }
 
 class _IconCircle extends StatelessWidget {
-  const _IconCircle({
-    required this.account,
-    required this.size,
-    this.onTap,
-  });
+  const _IconCircle({required this.account, required this.size, this.onTap});
   final Account account;
   final double size;
   final VoidCallback? onTap;
@@ -219,14 +201,10 @@ class _IconCircle extends StatelessWidget {
     return EditableCircle(
       size: size,
       onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: account.color.color,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(account.icon.icon, size: size * 0.55, color: Colors.white),
+      child: IconCodeWidget(
+        iconCode: account.iconCode,
+        size: size,
+        fallbackIcon: Icons.account_balance_wallet,
       ),
     );
   }
@@ -241,8 +219,6 @@ class _UtilizationBar extends StatelessWidget {
 
   final double fraction;
   final Color color;
-
-  /// Pass [double.infinity] to stretch to the parent's available width.
   final double width;
 
   @override

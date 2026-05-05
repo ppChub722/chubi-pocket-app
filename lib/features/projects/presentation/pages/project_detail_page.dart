@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../../categories/domain/category_icon_preset.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
@@ -182,8 +184,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                           projectName: p?.name ?? '',
                           projectType: p?.type,
                           projectDescription: p?.description,
-                          projectIconId: p?.iconId,
-                          projectColorId: p?.colorId,
+                          projectIconCode: p?.iconCode,
                           isOwner: _isOwner,
                           onAddMember: _onAddMemberPressed,
                           onMembersTap: _onMembersTap,
@@ -374,8 +375,7 @@ class _ProjectDashboard extends StatefulWidget {
     required this.currency,
     this.projectType,
     this.projectDescription,
-    this.projectIconId,
-    this.projectColorId,
+    this.projectIconCode,
   });
   final List<ProjectTxTree> trees;
   final ProjectSummary? summary;
@@ -388,8 +388,7 @@ class _ProjectDashboard extends StatefulWidget {
   final String projectName;
   final String? projectType;
   final String? projectDescription;
-  final String? projectIconId;
-  final String? projectColorId;
+  final IconCode? projectIconCode;
   final bool isOwner;
   final Future<void> Function() onAddMember;
   final Future<void> Function() onMembersTap;
@@ -451,13 +450,6 @@ class _ProjectDashboardState extends State<_ProjectDashboard> {
     final overflow = activeMembers.length - 5;
     final displayTrees = _filteredSorted();
 
-    final projIconPreset = widget.projectIconId != null
-        ? CategoryIconPreset.byId(widget.projectIconId!)
-        : null;
-    final projColor = widget.projectColorId != null
-        ? CategoryColor.byId(widget.projectColorId!).color
-        : null;
-
     return RefreshIndicator(
       onRefresh: widget.onChanged,
       child: CustomScrollView(
@@ -471,16 +463,11 @@ class _ProjectDashboardState extends State<_ProjectDashboard> {
                   // Project name + icon
                   Row(
                     children: [
-                      if (projIconPreset != null) ...[
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: (projColor ?? scheme.primary)
-                              .withValues(alpha: 0.18),
-                          child: Icon(
-                            projIconPreset.icon,
-                            color: projColor ?? scheme.primary,
-                            size: 18,
-                          ),
+                      if (widget.projectIconCode != null) ...[
+                        IconCodeWidget(
+                          iconCode: widget.projectIconCode,
+                          size: 36,
+                          fallbackIcon: Icons.folder_shared_outlined,
                         ),
                         const SizedBox(width: 10),
                       ],
@@ -793,12 +780,9 @@ class _TxTreeTile extends StatelessWidget {
         isExpense ? Theme.of(context).colorScheme.error : Colors.green;
     final sign = isExpense ? '−' : '+';
     final formattedAmount = '$sign${_fmtCurrency(parent.amount, parent.currency)}';
-    final catIconPreset = parent.categoryIconId != null
-        ? CategoryIconPreset.byId(parent.categoryIconId!)
-        : null;
-    final catColor = parent.categoryColorId != null
-        ? CategoryColor.byId(parent.categoryColorId!).color
-        : null;
+    final catBg = parent.categoryIconCode?.resolvedBgColor;
+    final catIcon = IconRegistry.get(parent.categoryIconCode?.icon,
+        fallback: isExpense ? Icons.remove : Icons.add);
 
     return Opacity(
       opacity: iMarked ? 0.5 : 1.0,
@@ -823,12 +807,11 @@ class _TxTreeTile extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: (catColor ?? amountColor)
+                          backgroundColor: (catBg ?? amountColor)
                               .withValues(alpha: 0.15),
                           child: Icon(
-                            catIconPreset?.icon ??
-                                (isExpense ? Icons.remove : Icons.add),
-                            color: catColor ?? amountColor,
+                            catIcon,
+                            color: catBg ?? amountColor,
                             size: 18,
                           ),
                         ),
@@ -1006,12 +989,9 @@ class _TxTreeTile extends StatelessWidget {
     final isExpense = tx.type == 'expense';
     final canResolve = _canResolve(tx,
         isParent: isParent, parent: parent, parentActor: parentActor);
-    final menuCatIcon = tx.categoryIconId != null
-        ? CategoryIconPreset.byId(tx.categoryIconId!)
-        : null;
-    final menuCatColor = tx.categoryColorId != null
-        ? CategoryColor.byId(tx.categoryColorId!).color
-        : null;
+    final menuCatBg = tx.categoryIconCode?.resolvedBgColor;
+    final menuCatIcon = IconRegistry.get(tx.categoryIconCode?.icon,
+        fallback: isExpense ? Icons.remove : Icons.add);
     final menuAmountColor =
         isExpense ? Theme.of(context).colorScheme.error : Colors.green;
 
@@ -1027,12 +1007,11 @@ class _TxTreeTile extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: (menuCatColor ?? menuAmountColor)
+                    backgroundColor: (menuCatBg ?? menuAmountColor)
                         .withValues(alpha: 0.15),
                     child: Icon(
-                      menuCatIcon?.icon ??
-                          (isExpense ? Icons.remove : Icons.add),
-                      color: menuCatColor ?? menuAmountColor,
+                      menuCatIcon,
+                      color: menuCatBg ?? menuAmountColor,
                       size: 18,
                     ),
                   ),
@@ -1811,8 +1790,8 @@ class _ProjectMembersScreenState extends State<_ProjectMembersScreen> {
 
 // ─── Member avatar ────────────────────────────────────────────────────────────
 
-/// Shows the member's avatar. Linked member with avatarUrl → NetworkImage.
-/// Any other member → deterministic colored initial from their member id.
+/// Shows the member's avatar. Uses iconCode if set; falls back to
+/// deterministic colored initial from their member id.
 class _MemberAvatar extends StatelessWidget {
   const _MemberAvatar({required this.member, this.radius = 16});
   final ProjectMember member;
@@ -1840,11 +1819,11 @@ class _MemberAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = member.avatarUrl;
-    if (url != null && url.isNotEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundImage: NetworkImage(url),
+    if (member.iconCode != null) {
+      return IconCodeWidget(
+        iconCode: member.iconCode,
+        size: radius * 2,
+        fallbackIcon: Icons.person_outline,
       );
     }
     final initial = member.displayName.isNotEmpty

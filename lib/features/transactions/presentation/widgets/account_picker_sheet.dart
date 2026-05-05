@@ -4,6 +4,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/domain/account.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 
 /// Modal bottom sheet for picking one of the user's active accounts.
 ///
@@ -90,8 +91,8 @@ class _AccountPickerBody extends StatelessWidget {
                   final isSelected = a.id == selected?.id;
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: a.color.color,
-                      child: Icon(a.icon.icon, color: Colors.white, size: 20),
+                      backgroundColor: a.iconCode?.resolvedBgColor ?? Colors.grey,
+                      child: Icon(IconRegistry.get(a.iconCode?.icon, fallback: Icons.account_balance_wallet_outlined), color: Colors.white, size: 20),
                     ),
                     title: Text(a.name),
                     subtitle: Text(

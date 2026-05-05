@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../shared/icon_maker/icon_code.dart';
+
 enum ContactStatus { active, archived }
 
 class Contact extends Equatable {
@@ -11,7 +13,7 @@ class Contact extends Equatable {
     this.email,
     this.phone,
     this.notes,
-    this.icon,
+    this.iconCode,
     this.linkedUserId,
     this.lastUsedAt,
   });
@@ -22,21 +24,13 @@ class Contact extends Equatable {
   final String? email;
   final String? phone;
   final String? notes;
-  final String? icon;
+  final IconCode? iconCode;
   final String? linkedUserId;
   final ContactStatus status;
-
-  /// Bumped server-side whenever this contact is referenced by a new
-  /// personal_debts row (split debtor). Drives the typeahead "recent first"
-  /// sort on the split debtor picker. Null = never used.
   final DateTime? lastUsedAt;
 
   bool get isLinked => linkedUserId != null;
   bool get isArchived => status == ContactStatus.archived;
-
-  /// Kept as an alias of [displayName] for one cycle so existing callers
-  /// don't need to be touched all at once. New code should use
-  /// [displayName] directly.
   String get effectiveName => displayName;
 
   factory Contact.fromJson(Map<String, dynamic> json) {
@@ -47,7 +41,9 @@ class Contact extends Equatable {
       email: json['email'] as String?,
       phone: json['phone'] as String?,
       notes: json['notes'] as String?,
-      icon: json['icon'] as String?,
+      iconCode: json['icon_code'] != null
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
       linkedUserId: json['linked_user_id'] as String?,
       status: (json['status'] as String?) == 'archived'
           ? ContactStatus.archived
@@ -63,7 +59,7 @@ class Contact extends Equatable {
     String? email,
     String? phone,
     String? notes,
-    String? icon,
+    IconCode? iconCode,
     String? linkedUserId,
     ContactStatus? status,
     DateTime? lastUsedAt,
@@ -76,8 +72,9 @@ class Contact extends Equatable {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       notes: notes ?? this.notes,
-      icon: icon ?? this.icon,
-      linkedUserId: clearLinkedUserId ? null : (linkedUserId ?? this.linkedUserId),
+      iconCode: iconCode ?? this.iconCode,
+      linkedUserId:
+          clearLinkedUserId ? null : (linkedUserId ?? this.linkedUserId),
       status: status ?? this.status,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
     );
@@ -91,7 +88,7 @@ class Contact extends Equatable {
         email,
         phone,
         notes,
-        icon,
+        iconCode,
         linkedUserId,
         status,
         lastUsedAt,

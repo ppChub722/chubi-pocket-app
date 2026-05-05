@@ -13,6 +13,7 @@ import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../widgets/category_picker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 
 /// Global transactions list, routed at `/transactions` (entry point: the
 /// More menu's "Transactions" item, formerly a stub).
@@ -342,9 +343,9 @@ class _FilterBar extends StatelessWidget {
     return InputChip(
       avatar: CircleAvatar(
         radius: 12,
-        backgroundColor: categoryFilter!.color.color,
+        backgroundColor: categoryFilter!.iconCode?.resolvedBgColor ?? Colors.grey,
         child: Icon(
-          categoryFilter!.icon.icon,
+          IconRegistry.get(categoryFilter!.iconCode?.icon, fallback: Icons.category_outlined),
           color: Colors.white,
           size: 14,
         ),
@@ -485,13 +486,13 @@ class _Row extends StatelessWidget {
 
     final cubit = context.watch<CategoriesCubit>();
     final cat = tx.category != null ? cubit.byId(tx.category!.id) : null;
-    final iconData = cat?.icon.icon ?? _iconForType(tx.type);
+    final iconData = IconRegistry.get(cat?.iconCode?.icon, fallback: _iconForType(tx.type));
     final fallbackColor = switch (tx.type) {
       TransactionType.expense => scheme.error,
       TransactionType.income => Colors.green.shade400,
       _ => scheme.onSurfaceVariant,
     };
-    final iconColor = cat?.color.color ?? fallbackColor;
+    final iconColor = cat?.iconCode?.accentColor ?? fallbackColor;
 
     return InkWell(
       onTap: () => context.push('/transactions/${tx.id}'),

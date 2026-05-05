@@ -1,9 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../shared/icon_maker/icon_code.dart';
+
 /// Authenticated user — the subset of fields surfaced in the Phase 0 UI.
-///
-/// `/users/me` returns more (`status`, `preferences`, `email_verified_at`,
-/// `created_at`) — those will be added when Phase 1+ settings need them.
 class User extends Equatable {
   const User({
     required this.id,
@@ -11,7 +10,7 @@ class User extends Equatable {
     required this.displayName,
     required this.currency,
     this.email,
-    this.avatarUrl,
+    this.iconCode,
   });
 
   final String id;
@@ -19,7 +18,7 @@ class User extends Equatable {
   final String displayName;
   final String currency;
   final String? email;
-  final String? avatarUrl;
+  final IconCode? iconCode;
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -28,7 +27,9 @@ class User extends Equatable {
       displayName: json['display_name'] as String,
       currency: (json['currency'] as String?) ?? 'THB',
       email: json['email'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
+      iconCode: json['icon_code'] != null
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -36,9 +37,9 @@ class User extends Equatable {
     String? displayName,
     String? currency,
     String? email,
-    String? avatarUrl,
+    IconCode? iconCode,
     bool clearEmail = false,
-    bool clearAvatar = false,
+    bool clearIconCode = false,
   }) {
     return User(
       id: id,
@@ -46,11 +47,11 @@ class User extends Equatable {
       displayName: displayName ?? this.displayName,
       currency: currency ?? this.currency,
       email: clearEmail ? null : (email ?? this.email),
-      avatarUrl: clearAvatar ? null : (avatarUrl ?? this.avatarUrl),
+      iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
     );
   }
 
   @override
   List<Object?> get props =>
-      [id, username, displayName, currency, email, avatarUrl];
+      [id, username, displayName, currency, email, iconCode];
 }

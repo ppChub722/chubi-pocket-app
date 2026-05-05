@@ -1,5 +1,5 @@
+import '../../../shared/icon_maker/icon_code.dart';
 import 'category.dart';
-import 'category_icon_preset.dart';
 
 /// Helpers for navigating the category tree built from a flat list of
 /// [Category] rows linked by `parent_id`.
@@ -107,10 +107,10 @@ class CategoryTree {
     return current;
   }
 
-  /// Color the row should display, derived from [rootOf]. L1 rows return
-  /// their own color; L2/L3 rows inherit from their L1 ancestor.
-  static CategoryColor resolveColor(Category category, List<Category> all) {
-    return rootOf(category, all).color;
+  /// IconCode to display, derived from [rootOf]. L1 rows return their own
+  /// iconCode; L2/L3 rows inherit from their L1 ancestor.
+  static IconCode? resolveIconCode(Category category, List<Category> all) {
+    return rootOf(category, all).iconCode;
   }
 
   /// Renders an ancestor-path breadcrumb for a category, e.g.

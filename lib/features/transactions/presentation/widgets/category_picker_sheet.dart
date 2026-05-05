@@ -4,6 +4,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 
 /// Result returned by [showCategoryPickerSheet]. Distinct from `null`
 /// (which means "user dismissed without picking") — `clear` means
@@ -215,8 +216,8 @@ class _CategoryRow extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: category.color.color,
-              child: Icon(category.icon.icon, color: Colors.white, size: 16),
+              backgroundColor: category.iconCode?.resolvedBgColor ?? Colors.grey,
+              child: Icon(IconRegistry.get(category.iconCode?.icon, fallback: Icons.category_outlined), color: Colors.white, size: 16),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(

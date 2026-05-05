@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 
@@ -74,8 +75,7 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     String? description,
     String? startDate,
     String? endDate,
-    String? iconId,
-    String? colorId,
+    IconCode? iconCode,
   }) async {
     final p = await _repo.create(
       name: name,
@@ -83,8 +83,7 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
       description: description,
       startDate: startDate,
       endDate: endDate,
-      iconId: iconId,
-      colorId: colorId,
+      iconCode: iconCode,
     );
     emit(state.copyWith(projects: [p, ...state.projects]));
     return p;
@@ -94,16 +93,14 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     String? name,
     String? description,
     ProjectStatus? status,
-    String? iconId,
-    String? colorId,
+    IconCode? iconCode,
   }) async {
     final updated = await _repo.update(
       id,
       name: name,
       description: description,
       status: status,
-      iconId: iconId,
-      colorId: colorId,
+      iconCode: iconCode,
     );
     _replace(updated);
     return updated;

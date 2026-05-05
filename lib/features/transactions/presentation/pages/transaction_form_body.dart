@@ -18,6 +18,7 @@ import '../cubit/transactions_cubit.dart';
 import '../widgets/account_picker_sheet.dart';
 import '../widgets/category_picker_sheet.dart';
 import '../widgets/splits_section.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 
 /// Initial values for [TransactionFormBody], used when editing or when
 /// the caller wants to pre-fill specific fields (e.g. tap an account
@@ -687,9 +688,8 @@ class _AccountTile extends StatelessWidget {
               if (account != null)
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: account!.color.color,
-                  child:
-                      Icon(account!.icon.icon, color: Colors.white, size: 14),
+                  backgroundColor: account!.iconCode?.resolvedBgColor ?? Colors.grey,
+                  child: Icon(IconRegistry.get(account!.iconCode?.icon, fallback: Icons.account_balance_wallet_outlined), color: Colors.white, size: 14),
                 )
               else
                 Icon(Icons.account_balance_wallet_outlined,
@@ -751,9 +751,8 @@ class _CategoryTile extends StatelessWidget {
               if (category != null)
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: category!.color.color,
-                  child:
-                      Icon(category!.icon.icon, color: Colors.white, size: 14),
+                  backgroundColor: category!.iconCode?.resolvedBgColor ?? Colors.grey,
+                  child: Icon(IconRegistry.get(category!.iconCode?.icon, fallback: Icons.category_outlined), color: Colors.white, size: 14),
                 )
               else
                 Icon(Icons.category_outlined,
@@ -931,10 +930,10 @@ class _TagChipsRow extends StatelessWidget {
                     for (final t in tags)
                       FilterChip(
                         label: Text(t.name),
-                        avatar: Icon(t.icon.icon, size: 16),
+                        avatar: Icon(IconRegistry.get(t.iconCode?.icon, fallback: Icons.label_outline), size: 16),
                         selected: selectedIds.contains(t.id),
                         onSelected: (_) => onToggle(t.id),
-                        selectedColor: t.color.color.withValues(alpha: 0.35),
+                        selectedColor: (t.iconCode?.accentColor ?? Colors.grey).withValues(alpha: 0.35),
                       ),
                   ],
                 ),

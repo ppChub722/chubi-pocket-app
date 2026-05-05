@@ -14,6 +14,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/reorder_action_bar.dart';
 import '../../../../shared/widgets/reorder_drop_line.dart';
+import '../../../../shared/icon_maker/icon_code_widget.dart';
 import '../../../../shared/widgets/reorder_mode_tilt.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
@@ -706,10 +707,10 @@ class _ListBody extends StatelessWidget {
     // ancestor. Override the color field once here so every downstream
     // widget (icon circle, drag proxy, etc.) picks it up without prop
     // drilling.
-    final inheritedColor = CategoryTree.resolveColor(category, users);
-    final renderCategory = inheritedColor.id == category.color.id
+    final inheritedIconCode = CategoryTree.resolveIconCode(category, users);
+    final renderCategory = inheritedIconCode == category.iconCode
         ? category
-        : category.copyWith(color: inheritedColor);
+        : category.copyWith(iconCode: inheritedIconCode);
 
     return [
       RepaintBoundary(
@@ -1010,14 +1011,10 @@ class _IconCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final circle = Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: category.color.color,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(category.icon.icon, color: Colors.white, size: 20),
+    final circle = IconCodeWidget(
+      iconCode: category.iconCode,
+      size: 36,
+      fallbackIcon: Icons.category_outlined,
     );
     if (!reorderMode) return circle;
     // Reorder mode visual cue is shared across reorderable surfaces.
@@ -1086,15 +1083,10 @@ class _DragProxy extends StatelessWidget {
               horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
           child: Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: category.color.color,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(category.icon.icon,
-                    color: Colors.white, size: 20),
+              IconCodeWidget(
+                iconCode: category.iconCode,
+                size: 36,
+                fallbackIcon: Icons.category_outlined,
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(

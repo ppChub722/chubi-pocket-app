@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../shared/widgets/icon_color_picker_sheet.dart';
-import '../../../categories/domain/category_icon_preset.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_maker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../data/projects_repository.dart';
 import '../cubit/projects_cubit.dart';
 
@@ -23,8 +25,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   final _type = TextEditingController();
   final _description = TextEditingController();
 
-  String? _iconId;
-  String? _colorId;
+  IconCode? _iconCode;
 
   bool _saving = false;
   String? _error;
@@ -45,8 +46,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
         _name.text = p.name;
         _type.text = p.type ?? '';
         _description.text = p.description ?? '';
-        _iconId = p.iconId;
-        _colorId = p.colorId;
+        _iconCode = p.iconCode;
       });
     } on ApiException catch (e) {
       _error = e.message;
@@ -54,31 +54,20 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   }
 
   Future<void> _pickIcon() async {
-    final iconOptions = CategoryIconPreset.values
-        .map((p) => IconPickerOption(id: p.id, icon: p.icon))
-        .toList();
-    final swatches = CategoryColor.all
-        .map((c) => IconPickerSwatch(id: c.id, color: c.color))
-        .toList();
-
-    final result = await showIconColorPickerSheet(
+    final result = await showIconMakerSheet(
       context: context,
-      iconOptions: iconOptions,
-      swatches: swatches,
-      initialIconId: _iconId ?? CategoryIconPreset.values.first.id,
-      initialSwatchId: _colorId ?? CategoryColor.all.first.id,
+      iconIds: IconRegistry.categoryIconIds,
+      style: IconMakerStyle.background,
+      initial: _iconCode,
     );
-    if (result is IconColorPickerSelected) {
-      setState(() {
-        _iconId = result.iconId;
-        _colorId = result.swatchId;
-      });
-    } else if (result is IconColorPickerRemoved) {
-      setState(() {
-        _iconId = null;
-        _colorId = null;
-      });
-    }
+    if (!mounted || result == null) return;
+    setState(() {
+      if (result is IconMakerSelected) {
+        _iconCode = result.iconCode;
+      } else if (result is IconMakerRemoved) {
+        _iconCode = null;
+      }
+    });
   }
 
   Future<void> _submit() async {
@@ -95,8 +84,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
           name: _name.text.trim(),
           description:
               _description.text.trim().isEmpty ? null : _description.text.trim(),
-          iconId: _iconId,
-          colorId: _colorId,
+          iconCode: _iconCode,
         );
       } else {
         await cubit.create(
@@ -104,8 +92,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
           type: _type.text.trim().isEmpty ? null : _type.text.trim(),
           description:
               _description.text.trim().isEmpty ? null : _description.text.trim(),
-          iconId: _iconId,
-          colorId: _colorId,
+          iconCode: _iconCode,
         );
       }
       if (!mounted) return;
@@ -120,11 +107,6 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final iconPreset =
-        _iconId != null ? CategoryIconPreset.byId(_iconId!) : null;
-    final iconColor =
-        _colorId != null ? CategoryColor.byId(_colorId!).color : null;
-
     return Scaffold(
       appBar: AppBar(title: Text(_isEdit ? 'Edit project' : 'New project')),
       body: Form(
@@ -153,23 +135,20 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                backgroundColor: iconColor?.withValues(alpha: 0.18) ??
-                    scheme.surfaceContainerHighest,
-                child: Icon(
-                  iconPreset?.icon ?? Icons.folder_shared_outlined,
-                  color: iconColor ?? scheme.onSurfaceVariant,
-                ),
+              leading: IconCodeWidget(
+                iconCode: _iconCode,
+                size: 40,
+                fallbackIcon: Icons.folder_shared_outlined,
+                fallbackColor: scheme.onSurfaceVariant,
               ),
-              title: Text(_iconId != null ? 'Project icon set' : 'Project icon'),
-              subtitle: Text(_iconId != null
+              title: Text(_iconCode != null ? 'Project icon set' : 'Project icon'),
+              subtitle: Text(_iconCode != null
                   ? 'Tap to change'
                   : 'Optional — tap to pick icon & color'),
-              trailing: _iconId != null
+              trailing: _iconCode != null
                   ? IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () =>
-                          setState(() => _iconId = _colorId = null),
+                      onPressed: () => setState(() => _iconCode = null),
                     )
                   : null,
               onTap: _pickIcon,

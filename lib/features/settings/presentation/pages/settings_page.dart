@@ -131,7 +131,7 @@ class _ProfileCard extends StatelessWidget {
               children: [
                 UserAvatar(
                   displayName: user.displayName,
-                  avatarUrl: user.avatarUrl,
+                  iconCode: user.iconCode,
                   size: 56,
                 ),
                 const SizedBox(width: AppSpacing.md),

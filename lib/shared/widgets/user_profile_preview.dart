@@ -1,29 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_spacing.dart';
+import '../icon_maker/icon_code.dart';
 import 'user_avatar.dart';
 
 /// Compact user preview row: `[ avatar ] displayName`.
-///
-/// Mirrors the `[ icon ] name` layout of `AccountCard` so both contexts
-/// read the same way at a glance — once a user has interacted with one,
-/// they predict how the other looks. Used as the `previewBuilder` for the
-/// avatar picker (and any future flow that wants a compact "this user"
-/// header).
 class UserProfilePreview extends StatelessWidget {
   const UserProfilePreview({
     required this.displayName,
-    required this.avatarUrl,
+    this.iconCode,
     this.size = 56,
     super.key,
   });
 
   final String displayName;
-  final String? avatarUrl;
-
-  /// Avatar diameter in dp. Defaults to 56 — matches the picker preview's
-  /// visual weight (where the previous design used a 96 dp centered
-  /// avatar; the row layout reads better at a slightly smaller size).
+  final IconCode? iconCode;
   final double size;
 
   @override
@@ -35,7 +26,7 @@ class UserProfilePreview extends StatelessWidget {
         children: [
           UserAvatar(
             displayName: displayName,
-            avatarUrl: avatarUrl,
+            iconCode: iconCode,
             size: size,
           ),
           const SizedBox(width: AppSpacing.lg),

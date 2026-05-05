@@ -6,9 +6,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/icon_color_picker_sheet.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_maker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../domain/account.dart';
-import '../../domain/account_icon_preset.dart';
 import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
 import '../widgets/account_card.dart';
@@ -62,8 +63,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   final _minimumPaymentController = TextEditingController();
 
   AccountType _type = AccountType.cash;
-  AccountIconPreset _icon = AccountIconPreset.wallet;
-  AccountColor _color = AccountColor.blue;
+  IconCode? _iconCode;
 
   /// The pre-edit snapshot when [AccountFormPage.isEdit] is true. Used
   /// to compute dirty-ness for the discard-confirm dialog and to build
@@ -83,8 +83,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
       final initialNote = (i.note ?? '');
       if (_nameController.text != i.name) return true;
       if (_type != i.type) return true;
-      if (_icon != i.icon) return true;
-      if (_color.id != i.color.id) return true;
+      if (_iconCode != i.iconCode) return true;
       if (desc != initialDesc) return true;
       if (note != initialNote) return true;
       if (_isCredit) {
@@ -133,8 +132,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
         _descriptionController.text = existing.description ?? '';
         _noteController.text = existing.note ?? '';
         _type = existing.type;
-        _icon = existing.icon;
-        _color = existing.color;
+        _iconCode = existing.iconCode;
         if (existing.type.isCredit) {
           _creditLimitController.text =
               existing.creditLimit?.toString() ?? '';
@@ -211,7 +209,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
               AccountCard(
                 account: _previewAccount(),
                 horizontal: true,
-                onIconTap: () => _openIconPicker(context, l),
+                onIconTap: () => _openIconMaker(context, l),
               ),
               const SizedBox(height: AppSpacing.lg),
               _SectionLabel(text: l.accountFormTypeLabel),
@@ -393,37 +391,22 @@ class _AccountFormPageState extends State<AccountFormPage> {
   /// the form's preview slot — so the user sees their pick in the same
   /// visual frame the grid renders. Future contexts (categories / tags /
   /// projects, eventually user avatar) supply their own previewBuilder.
-  Future<void> _openIconPicker(BuildContext context, AppLocalizations l) async {
-    final basePreview = _previewAccount();
-    final result = await showIconColorPickerSheet(
+  Future<void> _openIconMaker(BuildContext context, AppLocalizations l) async {
+    final result = await showIconMakerSheet(
       context: context,
-      iconOptions: [
-        for (final p in AccountIconPreset.values)
-          IconPickerOption(id: p.id, icon: p.icon),
-      ],
-      swatches: [
-        for (final c in AccountColor.all)
-          IconPickerSwatch(id: c.id, color: c.color),
-      ],
-      initialIconId: _icon.id,
-      initialSwatchId: _color.id,
+      iconIds: IconRegistry.accountIconIds,
+      style: IconMakerStyle.background,
+      initial: _iconCode,
       iconSectionLabel: l.accountFormIconLabel,
       colorSectionLabel: l.accountFormColorLabel,
-      previewBuilder: (icon, swatch) => AccountCard(
-        account: basePreview.copyWith(
-          icon: AccountIconPreset.byId(icon.id),
-          color: AccountColor.byId(swatch.id),
-        ),
+      previewBuilder: (iconCode) => AccountCard(
+        account: _previewAccount().copyWith(iconCode: iconCode),
         horizontal: true,
       ),
-      uploadComingSoonLabel: l.accountFormUploadLogo,
     );
     if (!mounted || result == null) return;
-    if (result is IconColorPickerSelected) {
-      setState(() {
-        _icon = AccountIconPreset.byId(result.iconId);
-        _color = AccountColor.byId(result.swatchId);
-      });
+    if (result is IconMakerSelected) {
+      setState(() => _iconCode = result.iconCode);
     }
   }
 
@@ -451,8 +434,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
       type: _type,
       balance: balance,
       currency: 'THB',
-      icon: _icon,
-      color: _color,
+      iconCode: _iconCode,
       creditLimit: creditLimit,
     );
   }
@@ -493,8 +475,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
           type: _type,
           balance: _initial!.balance,
           currency: _initial!.currency,
-          icon: _icon,
-          color: _color,
+          iconCode: _iconCode,
           description: descValue,
           note: noteValue,
           creditLimit: creditLimit,
@@ -512,8 +493,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
           type: _type,
           balance: double.tryParse(_balanceController.text) ?? 0,
           currency: 'THB',
-          icon: _icon,
-          color: _color,
+          iconCode: _iconCode,
           description: descValue,
           note: noteValue,
           creditLimit: creditLimit,

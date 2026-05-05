@@ -5,19 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/icon_color_picker_sheet.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_maker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../domain/tag.dart';
-import '../../domain/tag_icon_preset.dart';
 import '../cubit/tags_cubit.dart';
 import '../widgets/tag_chip.dart';
 
-/// Create / edit a tag — full-page route at `/tags/new` and
-/// `/tags/:id/edit`. Smaller than the category form: no parent, no
-/// description / note, no include-in-report toggle.
-///
-/// Tap the preview chip's icon → opens the universal
-/// `IconColorPickerSheet`. Both sections (icon + color) are visible —
-/// tags don't inherit color from anything.
+/// Create / edit a tag — full-page route at `/tags/new` and `/tags/:id/edit`.
 class TagFormPage extends StatefulWidget {
   const TagFormPage({this.editingId, super.key});
 
@@ -33,8 +28,7 @@ class _TagFormPageState extends State<TagFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
-  TagIconPreset _icon = TagIconPreset.label;
-  TagColor _color = TagColor.blue;
+  IconCode? _iconCode;
 
   Tag? _initial;
 
@@ -46,8 +40,7 @@ class _TagFormPageState extends State<TagFormPage> {
       if (existing != null) {
         _initial = existing;
         _nameController.text = existing.name;
-        _icon = existing.icon;
-        _color = existing.color;
+        _iconCode = existing.iconCode;
       }
     }
   }
@@ -60,14 +53,10 @@ class _TagFormPageState extends State<TagFormPage> {
 
   bool get _dirty {
     if (_initial == null) {
-      return _nameController.text.isNotEmpty ||
-          _icon != TagIconPreset.label ||
-          _color.id != TagColor.blue.id;
+      return _nameController.text.isNotEmpty || _iconCode != null;
     }
     final i = _initial!;
-    return _nameController.text != i.name ||
-        _icon != i.icon ||
-        _color.id != i.color.id;
+    return _nameController.text != i.name || _iconCode != i.iconCode;
   }
 
   @override
@@ -82,9 +71,7 @@ class _TagFormPageState extends State<TagFormPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            widget.isEdit ? l.tagFormTitleEdit : l.tagFormTitleNew,
-          ),
+          title: Text(widget.isEdit ? l.tagFormTitleEdit : l.tagFormTitleNew),
         ),
         body: Form(
           key: _formKey,
@@ -102,16 +89,14 @@ class _TagFormPageState extends State<TagFormPage> {
                 alignment: Alignment.centerLeft,
                 child: TagChip(
                   tag: _previewTag(),
-                  onIconTap: () => _openIconPicker(context, l),
+                  onIconTap: () => _openIconMaker(context, l),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
               TextFormField(
                 controller: _nameController,
                 maxLength: 50,
-                decoration: InputDecoration(
-                  labelText: l.tagFormNameLabel,
-                ),
+                decoration: InputDecoration(labelText: l.tagFormNameLabel),
                 onChanged: (_) => setState(() {}),
                 validator: (v) {
                   final name = v?.trim() ?? '';
@@ -147,45 +132,27 @@ class _TagFormPageState extends State<TagFormPage> {
     return Tag(
       id: _initial?.id ?? 'preview',
       name: _nameController.text,
-      color: _color,
-      icon: _icon,
+      iconCode: _iconCode,
       usageCount: _initial?.usageCount ?? 0,
     );
   }
 
-  Future<void> _openIconPicker(
-      BuildContext context, AppLocalizations l) async {
-    final basePreview = _previewTag();
-    final result = await showIconColorPickerSheet(
+  Future<void> _openIconMaker(BuildContext context, AppLocalizations l) async {
+    final result = await showIconMakerSheet(
       context: context,
-      iconOptions: [
-        for (final p in TagIconPreset.values)
-          IconPickerOption(id: p.id, icon: p.icon),
-      ],
-      swatches: [
-        for (final c in TagColor.all)
-          IconPickerSwatch(id: c.id, color: c.color),
-      ],
-      initialIconId: _icon.id,
-      initialSwatchId: _color.id,
+      iconIds: IconRegistry.tagIconIds,
+      style: IconMakerStyle.iconColor,
+      initial: _iconCode,
       iconSectionLabel: l.tagFormIconLabel,
       colorSectionLabel: l.tagFormColorLabel,
-      previewBuilder: (icon, swatch) => Align(
+      previewBuilder: (iconCode) => Align(
         alignment: Alignment.centerLeft,
-        child: TagChip(
-          tag: basePreview.copyWith(
-            icon: TagIconPreset.byId(icon.id),
-            color: TagColor.byId(swatch.id),
-          ),
-        ),
+        child: TagChip(tag: _previewTag().copyWith(iconCode: iconCode)),
       ),
     );
     if (!mounted || result == null) return;
-    if (result is IconColorPickerSelected) {
-      setState(() {
-        _icon = TagIconPreset.byId(result.iconId);
-        _color = TagColor.byId(result.swatchId);
-      });
+    if (result is IconMakerSelected) {
+      setState(() => _iconCode = result.iconCode);
     }
   }
 
@@ -197,17 +164,13 @@ class _TagFormPageState extends State<TagFormPage> {
       if (widget.isEdit) {
         await cubit.update(_initial!.copyWith(
           name: _nameController.text.trim(),
-          icon: _icon,
-          color: _color,
+          iconCode: _iconCode,
         ));
       } else {
-        // Server assigns id; the placeholder here never reaches the wire
-        // because [Tag.toCreateJson] doesn't include it.
         await cubit.add(Tag(
           id: 'draft',
           name: _nameController.text.trim(),
-          icon: _icon,
-          color: _color,
+          iconCode: _iconCode,
         ));
       }
     } on ApiException catch (e) {

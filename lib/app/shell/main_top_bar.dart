@@ -56,7 +56,7 @@ class MainTopBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () => context.push('/settings'),
                 icon: UserAvatar(
                   displayName: user.displayName,
-                  avatarUrl: user.avatarUrl,
+                  iconCode: user.iconCode,
                   size: 32,
                 ),
               ),

@@ -5,9 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/avatar_presets.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_maker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../shared/widgets/editable_circle.dart';
-import '../../../../shared/widgets/icon_color_picker_sheet.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../../shared/widgets/user_profile_preview.dart';
 import '../../../auth/domain/user.dart';
@@ -26,10 +27,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _displayNameCtrl;
-  late final TextEditingController _avatarUrlCtrl;
   late final TextEditingController _emailCtrl;
   late String _currency;
   late User _initial;
+  IconCode? _iconCode;
 
   bool _submitting = false;
   ApiException? _error;
@@ -40,27 +41,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final user = _userOrNull(context.read<AuthCubit>().state);
     _initial = user!;
     _displayNameCtrl = TextEditingController(text: user.displayName);
-    _avatarUrlCtrl = TextEditingController(text: user.avatarUrl ?? '');
     _emailCtrl = TextEditingController(text: user.email ?? '');
     _currency = user.currency;
+    _iconCode = user.iconCode;
   }
 
   @override
   void dispose() {
     _displayNameCtrl.dispose();
-    _avatarUrlCtrl.dispose();
     _emailCtrl.dispose();
     super.dispose();
   }
 
   bool get _dirty {
     final emailTrimmed = _emailCtrl.text.trim();
-    final emailChanged = emailTrimmed.isNotEmpty &&
-        emailTrimmed != (_initial.email ?? '');
+    final emailChanged =
+        emailTrimmed.isNotEmpty && emailTrimmed != (_initial.email ?? '');
     return _displayNameCtrl.text.trim() != _initial.displayName ||
         _currency != _initial.currency ||
-        (_avatarUrlCtrl.text.trim().isEmpty ? null : _avatarUrlCtrl.text.trim()) !=
-            _initial.avatarUrl ||
+        _iconCode != _initial.iconCode ||
         emailChanged;
   }
 
@@ -72,28 +71,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
     try {
       final repo = context.read<UsersRepository>();
-      final newUrl = _avatarUrlCtrl.text.trim();
       final newEmail = _emailCtrl.text.trim();
       final emailChanged =
           newEmail.isNotEmpty && newEmail != (_initial.email ?? '');
+      final iconChanged = _iconCode != _initial.iconCode;
       final updated = await repo.updateMe(
         displayName: _displayNameCtrl.text.trim() != _initial.displayName
             ? _displayNameCtrl.text.trim()
             : null,
         currency: _currency != _initial.currency ? _currency : null,
-        avatarUrl: newUrl.isNotEmpty ? newUrl : null,
-        clearAvatar: newUrl.isEmpty && _initial.avatarUrl != null,
         email: emailChanged ? newEmail : null,
+        iconCode: iconChanged ? _iconCode : null,
+        clearIconCode: iconChanged && _iconCode == null,
       );
       if (!mounted) return;
       context.read<AuthCubit>().updateUser(updated);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.editProfileSnackSuccess)),
+        SnackBar(
+            content: Text(
+                AppLocalizations.of(context)!.editProfileSnackSuccess)),
       );
       context.pop();
     } on ApiException catch (e) {
-      // EMAIL_EXISTS surfaces inline against the email field instead of
-      // the generic top-of-form banner — matches the register page's UX.
       if (e.code == 'EMAIL_EXISTS' && mounted) {
         final l = AppLocalizations.of(context)!;
         setState(() => _error = ApiException(
@@ -113,73 +112,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final displayName = _displayNameCtrl.text.trim().isEmpty
         ? _initial.displayName
         : _displayNameCtrl.text.trim();
-    final initial = AvatarPresetSelection.tryParse(_avatarUrlCtrl.text) ??
-        AvatarPresetSelection.defaultSelection;
-
-    final result = await showIconColorPickerSheet(
+    final result = await showIconMakerSheet(
       context: context,
-      iconOptions: [
-        for (final p in AvatarPreset.all)
-          IconPickerOption(
-            id: p.id,
-            icon: p.icon,
-            assetPath: p.assetPath,
-            // The Initials preset draws the user's first letter on the
-            // swatch instead of an icon — domain rendering the avatar
-            // context owns, surfaced to the generic picker via customThumb.
-            customThumb: p.id == AvatarPreset.initials.id
-                ? (swatchColor) => _initialsThumb(displayName, swatchColor)
-                : null,
-          ),
-      ],
-      swatches: [
-        for (final c in AvatarColor.all)
-          IconPickerSwatch(id: c.id, color: c.color),
-      ],
-      initialIconId: initial.preset.id,
-      initialSwatchId: initial.color.id,
+      iconIds: IconRegistry.userIconIds,
+      style: IconMakerStyle.background,
+      initial: _iconCode,
       iconSectionLabel: l.avatarPickerStyleLabel,
       colorSectionLabel: l.avatarPickerColorLabel,
       useThisLabel: l.avatarPickerUseThis,
       removeLabel: l.commonRemove,
-      uploadComingSoonLabel: l.avatarPickerUploadDisabled,
-      cropComingSoonLabel: l.avatarPickerCropDisabled,
-      previewBuilder: (icon, swatch) => UserProfilePreview(
+      previewBuilder: (iconCode) => UserProfilePreview(
         displayName: displayName,
-        avatarUrl: 'preset:${icon.id}:${swatch.id}',
+        iconCode: iconCode,
       ),
     );
-
     if (!mounted || result == null) return;
     setState(() {
-      switch (result) {
-        case IconColorPickerSelected(:final iconId, :final swatchId):
-          _avatarUrlCtrl.text = AvatarPresetSelection(
-            preset: AvatarPreset.byId(iconId),
-            color: AvatarColor.byId(swatchId),
-          ).encode();
-        case IconColorPickerRemoved():
-          _avatarUrlCtrl.text = '';
+      if (result is IconMakerSelected) {
+        _iconCode = result.iconCode;
+      } else if (result is IconMakerRemoved) {
+        _iconCode = null;
       }
     });
-  }
-
-  Widget _initialsThumb(String displayName, Color swatchColor) {
-    final initial = displayName.trim().isNotEmpty
-        ? displayName.trim().characters.first.toUpperCase()
-        : '?';
-    return CircleAvatar(
-      radius: 22,
-      backgroundColor: swatchColor,
-      child: Text(
-        initial,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: 18,
-        ),
-      ),
-    );
   }
 
   Future<bool> _confirmDiscard() async {
@@ -260,9 +214,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         displayName: _displayNameCtrl.text.isEmpty
                             ? _initial.displayName
                             : _displayNameCtrl.text,
-                        avatarUrl: _avatarUrlCtrl.text.trim().isEmpty
-                            ? null
-                            : _avatarUrlCtrl.text.trim(),
+                        iconCode: _iconCode,
                         onTap: _submitting ? null : _openAvatarPicker,
                       ),
                       const SizedBox(height: AppSpacing.xl),
@@ -298,17 +250,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             ? null
                             : (v) => setState(() => _currency = v ?? 'THB'),
                       ),
-                      const SizedBox(height: AppSpacing.md),
-                      TextFormField(
-                        controller: _avatarUrlCtrl,
-                        enabled: !_submitting,
-                        keyboardType: TextInputType.url,
-                        decoration: InputDecoration(
-                          labelText: l.editProfileAvatarUrlLabel,
-                          helperText: l.editProfileAvatarUrlHelper,
-                        ),
-                        onChanged: (_) => setState(() {}),
-                      ),
                       const SizedBox(height: AppSpacing.xl),
                       _ReadOnlyField(
                         label: l.editProfileUsernameLabel,
@@ -328,13 +269,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         onChanged: (_) => setState(() {}),
                         validator: (v) {
                           final s = v?.trim() ?? '';
-                          if (s.isEmpty) return null; // optional
-                          // Match BE binding tag: omitempty,email,max=255.
+                          if (s.isEmpty) return null;
                           if (s.length > 255) {
                             return l.editProfileEmailTooLong;
                           }
-                          // Lightweight format check — same shape as
-                          // dart:core's HTML5 email regex.
                           final ok = RegExp(
                             r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                           ).hasMatch(s);
@@ -366,11 +304,11 @@ class _AvatarSection extends StatelessWidget {
   const _AvatarSection({
     required this.displayName,
     required this.onTap,
-    this.avatarUrl,
+    this.iconCode,
   });
 
   final String displayName;
-  final String? avatarUrl;
+  final IconCode? iconCode;
   final VoidCallback? onTap;
 
   @override
@@ -381,7 +319,7 @@ class _AvatarSection extends StatelessWidget {
         onTap: onTap,
         child: UserAvatar(
           displayName: displayName,
-          avatarUrl: avatarUrl,
+          iconCode: iconCode,
           size: 96,
         ),
       ),

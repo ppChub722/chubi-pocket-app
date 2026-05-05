@@ -3,8 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
-import '../../../../shared/widgets/icon_color_picker_sheet.dart';
-import '../../../categories/domain/category_icon_preset.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_maker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 
@@ -24,16 +25,10 @@ class _SplitEntry {
   final TextEditingController amountCtrl;
 }
 
-/// A category as picked / autocompleted in the form.
 class _CategoryDraft {
-  _CategoryDraft({
-    required this.name,
-    required this.iconId,
-    required this.colorId,
-  });
+  _CategoryDraft({required this.name, required this.iconCode});
   final String name;
-  final String iconId;
-  final String colorId;
+  final IconCode iconCode;
 }
 
 class _ProjectTransactionFormPageState
@@ -77,20 +72,15 @@ class _ProjectTransactionFormPageState
       final ms = results[0] as List<ProjectMember>;
       final txs = results[1] as List<ProjectTransaction>;
 
-      // Collect distinct categories from past transactions.
       final seen = <String, _CategoryDraft>{};
       for (final tx in txs) {
-        if (tx.categoryName != null &&
-            tx.categoryIconId != null &&
-            tx.categoryColorId != null) {
-          final key =
-              '${tx.categoryName}|${tx.categoryIconId}|${tx.categoryColorId}';
+        if (tx.categoryName != null && tx.categoryIconCode != null) {
+          final key = '${tx.categoryName}|${tx.categoryIconCode!.icon}';
           seen.putIfAbsent(
             key,
             () => _CategoryDraft(
               name: tx.categoryName!,
-              iconId: tx.categoryIconId!,
-              colorId: tx.categoryColorId!,
+              iconCode: tx.categoryIconCode!,
             ),
           );
         }
@@ -109,30 +99,21 @@ class _ProjectTransactionFormPageState
   }
 
   Future<void> _pickCategoryIcon() async {
-    final iconOptions = CategoryIconPreset.values
-        .map((p) => IconPickerOption(id: p.id, icon: p.icon))
-        .toList();
-    final swatches = CategoryColor.all
-        .map((c) => IconPickerSwatch(id: c.id, color: c.color))
-        .toList();
-    final result = await showIconColorPickerSheet(
+    final result = await showIconMakerSheet(
       context: context,
-      iconOptions: iconOptions,
-      swatches: swatches,
-      initialIconId: _selectedCategory?.iconId ??
-          CategoryIconPreset.values.first.id,
-      initialSwatchId:
-          _selectedCategory?.colorId ?? CategoryColor.all.first.id,
+      iconIds: IconRegistry.categoryIconIds,
+      style: IconMakerStyle.background,
+      initial: _selectedCategory?.iconCode,
     );
-    if (result is IconColorPickerSelected) {
+    if (!mounted || result == null) return;
+    if (result is IconMakerSelected) {
       setState(() {
         final name = _categoryName.text.trim().isNotEmpty
             ? _categoryName.text.trim()
             : (_selectedCategory?.name ?? '');
         _selectedCategory = _CategoryDraft(
           name: name,
-          iconId: result.iconId,
-          colorId: result.swatchId,
+          iconCode: result.iconCode,
         );
         if (name.isNotEmpty) _categoryName.text = name;
       });
@@ -195,8 +176,7 @@ class _ProjectTransactionFormPageState
                 : _description.text.trim(),
             note: _note.text.trim().isEmpty ? null : _note.text.trim(),
             categoryName: catName,
-            categoryIconId: _selectedCategory!.iconId,
-            categoryColorId: _selectedCategory!.colorId,
+            categoryIconCode: _selectedCategory!.iconCode,
             splits: splits,
           );
       if (!mounted) return;
@@ -211,12 +191,11 @@ class _ProjectTransactionFormPageState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final catIconPreset = _selectedCategory?.iconId != null
-        ? CategoryIconPreset.byId(_selectedCategory!.iconId)
-        : null;
-    final catColor = _selectedCategory?.colorId != null
-        ? CategoryColor.byId(_selectedCategory!.colorId).color
-        : null;
+    final catBg = _selectedCategory?.iconCode.resolvedBgColor;
+    final catIcon = IconRegistry.get(
+      _selectedCategory?.iconCode.icon,
+      fallback: Icons.category_outlined,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('New project transaction')),
@@ -299,7 +278,6 @@ class _ProjectTransactionFormPageState
                     maxLines: 2,
                   ),
                   const SizedBox(height: 16),
-                  // ── Category ─────────────────────────────────────────────
                   Text('Category *',
                       style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 8),
@@ -312,28 +290,31 @@ class _ProjectTransactionFormPageState
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: Builder(builder: (context) {
-                                final ip =
-                                    CategoryIconPreset.byId(cat.iconId);
-                                final cc =
-                                    CategoryColor.byId(cat.colorId).color;
-                                final selected = _selectedCategory?.name ==
-                                        cat.name &&
-                                    _selectedCategory?.iconId == cat.iconId;
+                                final bg = cat.iconCode.resolvedBgColor;
+                                final ic = IconRegistry.get(cat.iconCode.icon,
+                                    fallback: Icons.category_outlined);
+                                final selected =
+                                    _selectedCategory?.name == cat.name &&
+                                        _selectedCategory?.iconCode ==
+                                            cat.iconCode;
                                 return GestureDetector(
                                   onTap: () => _selectPastCategory(cat),
                                   child: Chip(
                                     avatar: CircleAvatar(
                                       backgroundColor:
-                                          cc.withValues(alpha: 0.18),
-                                      child: Icon(ip.icon,
-                                          size: 14, color: cc),
+                                          (bg ?? scheme.primary).withValues(alpha: 0.18),
+                                      child: Icon(ic,
+                                          size: 14,
+                                          color: bg ?? scheme.primary),
                                     ),
                                     label: Text(cat.name),
                                     backgroundColor: selected
-                                        ? cc.withValues(alpha: 0.18)
+                                        ? (bg ?? scheme.primary)
+                                            .withValues(alpha: 0.18)
                                         : null,
                                     side: selected
-                                        ? BorderSide(color: cc)
+                                        ? BorderSide(
+                                            color: bg ?? scheme.primary)
                                         : null,
                                   ),
                                 );
@@ -358,8 +339,7 @@ class _ProjectTransactionFormPageState
                               setState(() {
                                 _selectedCategory = _CategoryDraft(
                                   name: v.trim(),
-                                  iconId: _selectedCategory!.iconId,
-                                  colorId: _selectedCategory!.colorId,
+                                  iconCode: _selectedCategory!.iconCode,
                                 );
                               });
                             }
@@ -371,18 +351,17 @@ class _ProjectTransactionFormPageState
                         onTap: _pickCategoryIcon,
                         child: CircleAvatar(
                           radius: 22,
-                          backgroundColor: catColor?.withValues(alpha: 0.18) ??
+                          backgroundColor: catBg?.withValues(alpha: 0.18) ??
                               scheme.surfaceContainerHighest,
                           child: Icon(
-                            catIconPreset?.icon ?? Icons.category_outlined,
-                            color: catColor ?? scheme.onSurfaceVariant,
+                            catIcon,
+                            color: catBg ?? scheme.onSurfaceVariant,
                             size: 20,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  // ── Splits ───────────────────────────────────────────────
                   const SizedBox(height: 16),
                   if (_memberId != null && _members.length > 1) ...[
                     Text(

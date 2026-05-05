@@ -14,6 +14,7 @@ import '../../../transactions/domain/transactions_summary.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../cubit/accounts_cubit.dart';
 
 /// Account detail — Phase 0 mock implementation.
@@ -258,7 +259,7 @@ class _Header extends StatelessWidget {
       color: scheme.surfaceContainer,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: account.color.color, width: 1.5),
+        side: BorderSide(color: account.iconCode?.accentColor ?? Colors.grey, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -269,17 +270,16 @@ class _Header extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: account.color.color,
+                color: account.iconCode?.resolvedBgColor ?? Colors.grey,
                 shape: BoxShape.circle,
               ),
-              child: Icon(account.icon.icon,
-                  size: 30, color: Colors.white),
+              child: Icon(IconRegistry.get(account.iconCode?.icon, fallback: Icons.account_balance_wallet_outlined), size: 30, color: Colors.white),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               CurrencyFormatter.format(account.balance),
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: account.color.color,
+                    color: account.iconCode?.accentColor ?? Colors.grey,
                     fontWeight: FontWeight.w700,
                   ),
             ),
@@ -299,7 +299,7 @@ class _Header extends StatelessWidget {
                   minHeight: 6,
                   backgroundColor: scheme.surfaceContainerHighest,
                   valueColor:
-                      AlwaysStoppedAnimation<Color>(account.color.color),
+                      AlwaysStoppedAnimation<Color>(account.iconCode?.accentColor ?? Colors.grey),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),

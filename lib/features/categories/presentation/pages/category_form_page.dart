@@ -5,9 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/icon_color_picker_sheet.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
+import '../../../../shared/icon_maker/icon_maker_sheet.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../domain/category.dart';
-import '../../domain/category_icon_preset.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../cubit/categories_cubit.dart';
@@ -50,8 +51,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
 
   CategoryType _type = CategoryType.expense;
   String? _parentId;
-  CategoryIconPreset _icon = CategoryIconPreset.category;
-  CategoryColor _color = CategoryColor.blue;
+  IconCode? _iconCode;
   bool _includeInReport = true;
 
   Category? _initial;
@@ -73,8 +73,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
         _noteController.text = existing.note ?? '';
         _type = existing.type;
         _parentId = existing.parentId;
-        _icon = existing.icon;
-        _color = existing.color;
+        _iconCode = existing.iconCode;
         _includeInReport = existing.includeInReport;
       }
     }
@@ -95,8 +94,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
           _descriptionController.text.isNotEmpty ||
           _noteController.text.isNotEmpty ||
           _parentId != null ||
-          _icon != CategoryIconPreset.category ||
-          _color.id != CategoryColor.blue.id ||
+          _iconCode != null ||
           _includeInReport != true ||
           _type != CategoryType.expense;
     }
@@ -105,8 +103,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
         _descriptionController.text != (i.description ?? '') ||
         _noteController.text != (i.note ?? '') ||
         _parentId != i.parentId ||
-        _icon != i.icon ||
-        _color.id != i.color.id ||
+        _iconCode != i.iconCode ||
         _includeInReport != i.includeInReport;
   }
 
@@ -143,7 +140,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
                   CategoryPreviewCard(
                     category: _previewCategory(),
                     parentPath: _parentBreadcrumb(all),
-                    onIconTap: () => _openIconPicker(context, l),
+                    onIconTap: () => _openIconMaker(context, l),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _SectionLabel(text: l.categoryFormTypeLabel),
@@ -262,35 +259,28 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
       id: _initial?.id ?? 'preview',
       name: _nameController.text,
       type: _type,
-      icon: _icon,
-      color: _resolvedDisplayColor(),
+      iconCode: _resolvedDisplayIconCode(),
       parentId: _parentId,
       includeInReport: _includeInReport,
     );
   }
 
-  /// Color the preview row should display. L1 (no parent) shows the
-  /// user-picked color; L2/L3 inherits from the L1 ancestor — matches
-  /// the inheritance rule used in the categories list.
-  CategoryColor _resolvedDisplayColor() {
-    if (_parentId == null) return _color;
+  /// IconCode the preview card should display. L1 shows the user's own
+  /// iconCode; L2/L3 inherits from the L1 ancestor so the preview tints
+  /// with the inherited colour, matching the categories list behaviour.
+  IconCode? _resolvedDisplayIconCode() {
+    if (_parentId == null) return _iconCode;
     final all = context.read<CategoriesCubit>().state.categories;
     String? cursor = _parentId;
     while (cursor != null) {
       final parent = all.firstWhere(
         (c) => c.id == cursor,
-        orElse: () => Category(
-          id: cursor!,
-          name: '',
-          type: _type,
-          icon: _icon,
-          color: _color,
-        ),
+        orElse: () => Category(id: cursor!, name: '', type: _type),
       );
-      if (parent.parentId == null) return parent.color;
+      if (parent.parentId == null) return parent.iconCode;
       cursor = parent.parentId;
     }
-    return _color;
+    return _iconCode;
   }
 
   /// True when the form's color picker should be available — only L1
@@ -306,50 +296,34 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
     return ancestors.isEmpty ? parent.name : '$ancestors › ${parent.name}';
   }
 
-  Future<void> _openIconPicker(
+  Future<void> _openIconMaker(
       BuildContext context, AppLocalizations l) async {
-    final basePreview = _previewCategory();
     final all = context.read<CategoriesCubit>().state.categories;
     final breadcrumb = _parentBreadcrumb(all);
+    final displayIconCode = _resolvedDisplayIconCode();
 
-    // For L2/L3 categories, color is inherited from the L1 ancestor —
-    // hide the swatch row in the picker and lock the color to the
-    // resolved display color so the icon-grid tiles render in the right
-    // tint.
-    final lockedColor = _resolvedDisplayColor();
-
-    final result = await showIconColorPickerSheet(
+    final result = await showIconMakerSheet(
       context: context,
-      iconOptions: [
-        for (final p in CategoryIconPreset.values)
-          IconPickerOption(id: p.id, icon: p.icon),
-      ],
-      swatches: [
-        for (final c in CategoryColor.all)
-          IconPickerSwatch(id: c.id, color: c.color),
-      ],
-      initialIconId: _icon.id,
-      initialSwatchId: lockedColor.id,
+      iconIds: IconRegistry.categoryIconIds,
+      style: IconMakerStyle.background,
+      initial: displayIconCode,
       iconSectionLabel: l.categoryFormIconLabel,
       colorSectionLabel: l.categoryFormColorLabel,
       showColorSection: _isColorEditable,
-      previewBuilder: (icon, swatch) => CategoryPreviewCard(
-        category: basePreview.copyWith(
-          icon: CategoryIconPreset.byId(icon.id),
-          color: CategoryColor.byId(swatch.id),
-        ),
+      previewBuilder: (iconCode) => CategoryPreviewCard(
+        category: _previewCategory().copyWith(iconCode: iconCode),
         parentPath: breadcrumb,
       ),
     );
     if (!mounted || result == null) return;
-    if (result is IconColorPickerSelected) {
+    if (result is IconMakerSelected) {
       setState(() {
-        _icon = CategoryIconPreset.byId(result.iconId);
-        // Only persist the color when the user actually picked it. For
-        // child categories (color section hidden) we leave _color alone
-        // so it stays valid if they later detach from the parent.
         if (_isColorEditable) {
-          _color = CategoryColor.byId(result.swatchId);
+          _iconCode = result.iconCode;
+        } else {
+          // L2/L3: preserve own bgColors; only update icon.
+          _iconCode = (_iconCode ?? const IconCode())
+              .copyWith(icon: result.iconCode.icon);
         }
       });
     }
@@ -377,8 +351,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
           name: _nameController.text.trim(),
           parentId: _parentId,
           clearParent: _parentId == null,
-          icon: _icon,
-          color: _color,
+          iconCode: _iconCode,
           description: description.isEmpty ? null : description,
           note: note.isEmpty ? null : note,
           includeInReport: _includeInReport,
@@ -391,8 +364,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
           id: 'draft',
           name: _nameController.text.trim(),
           type: _type,
-          icon: _icon,
-          color: _color,
+          iconCode: _iconCode,
           parentId: _parentId,
           description: description.isEmpty ? null : description,
           note: note.isEmpty ? null : note,

@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../shared/icon_maker/icon_code.dart';
+
 enum ProjectStatus { active, completed, cancelled, archived }
 
 extension ProjectStatusWire on ProjectStatus {
@@ -93,8 +95,7 @@ class Project extends Equatable {
     this.startDate,
     this.endDate,
     this.membersCount = 0,
-    this.iconId,
-    this.colorId,
+    this.iconCode,
   });
 
   final String id;
@@ -106,8 +107,7 @@ class Project extends Equatable {
   final String? endDate;
   final ProjectStatus status;
   final int membersCount;
-  final String? iconId;
-  final String? colorId;
+  final IconCode? iconCode;
 
   bool get isActive => status == ProjectStatus.active;
   bool get isLocked =>
@@ -126,8 +126,9 @@ class Project extends Equatable {
       endDate: json['end_date'] as String?,
       status: ProjectStatusWire.parse(json['status'] as String?),
       membersCount: (json['members_count'] as num?)?.toInt() ?? 0,
-      iconId: json['icon_id'] as String?,
-      colorId: json['color_id'] as String?,
+      iconCode: json['icon_code'] != null
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -142,8 +143,7 @@ class Project extends Equatable {
         endDate,
         status,
         membersCount,
-        iconId,
-        colorId,
+        iconCode,
       ];
 }
 
@@ -160,7 +160,7 @@ class ProjectMember extends Equatable {
     required this.role,
     required this.status,
     this.userId,
-    this.avatarUrl,
+    this.iconCode,
   });
 
   final String id;
@@ -169,7 +169,7 @@ class ProjectMember extends Equatable {
   final String displayName;
   final MemberRole role;
   final MemberStatus status;
-  final String? avatarUrl;
+  final IconCode? iconCode;
 
   bool get isLinked => userId != null;
   bool get isAdHoc => userId == null;
@@ -183,13 +183,15 @@ class ProjectMember extends Equatable {
       displayName: json['display_name'] as String,
       role: MemberRoleWire.parse(json['role'] as String?),
       status: MemberStatusWire.parse(json['status'] as String?),
-      avatarUrl: json['avatar_url'] as String?,
+      iconCode: json['icon_code'] != null
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
     );
   }
 
   @override
   List<Object?> get props =>
-      [id, projectId, userId, displayName, role, status, avatarUrl];
+      [id, projectId, userId, displayName, role, status, iconCode];
 }
 
 class ProjectTransaction extends Equatable {
@@ -207,8 +209,7 @@ class ProjectTransaction extends Equatable {
     this.description,
     this.note,
     this.categoryName,
-    this.categoryIconId,
-    this.categoryColorId,
+    this.categoryIconCode,
   });
 
   final String id;
@@ -228,8 +229,7 @@ class ProjectTransaction extends Equatable {
   final String? description;
   final String? note;
   final String? categoryName;
-  final String? categoryIconId;
-  final String? categoryColorId;
+  final IconCode? categoryIconCode;
 
   /// project_member ids who have flagged this row resolved on the board.
   final List<String> marks;
@@ -254,8 +254,9 @@ class ProjectTransaction extends Equatable {
       description: json['description'] as String?,
       note: json['note'] as String?,
       categoryName: json['category_name'] as String?,
-      categoryIconId: json['category_icon_id'] as String?,
-      categoryColorId: json['category_color_id'] as String?,
+      categoryIconCode: json['category_icon_code'] != null
+          ? IconCode.fromJson(json['category_icon_code'] as Map<String, dynamic>)
+          : null,
       marks: ((json['marks'] as List?) ?? const [])
           .map((e) => e as String)
           .toList(growable: false),
@@ -276,8 +277,7 @@ class ProjectTransaction extends Equatable {
         description,
         note,
         categoryName,
-        categoryIconId,
-        categoryColorId,
+        categoryIconCode,
         marks,
       ];
 }
