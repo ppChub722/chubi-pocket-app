@@ -251,9 +251,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _saving ? null : _submit,
-            child: Text(_saving
-                ? 'Adding…'
-                : (_isAdHoc ? 'Add ad-hoc member' : 'Invite member')),
+            child: Text(_saving ? 'Adding…' : 'Add Member'),
           ),
           const SizedBox(height: 16),
         ],

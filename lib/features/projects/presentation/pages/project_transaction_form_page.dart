@@ -3,13 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../shared/widgets/icon_color_picker_sheet.dart';
+import '../../../categories/domain/category_icon_preset.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 
-/// `/projects/:id/transactions/new` — record a project_transaction. Caller
-/// picks the actor (transaction member) and may add per-member splits. The
-/// BE wires the recorder = caller. No category picker — categories are
-/// user-scoped, picked at resolve time.
+/// `/projects/:id/transactions/new` — record a project_transaction.
 class ProjectTransactionFormPage extends StatefulWidget {
   const ProjectTransactionFormPage({required this.projectId, super.key});
   final String projectId;
@@ -19,22 +18,43 @@ class ProjectTransactionFormPage extends StatefulWidget {
       _ProjectTransactionFormPageState();
 }
 
+class _SplitEntry {
+  _SplitEntry() : amountCtrl = TextEditingController();
+  String? memberId;
+  final TextEditingController amountCtrl;
+}
+
+/// A category as picked / autocompleted in the form.
+class _CategoryDraft {
+  _CategoryDraft({
+    required this.name,
+    required this.iconId,
+    required this.colorId,
+  });
+  final String name;
+  final String iconId;
+  final String colorId;
+}
+
 class _ProjectTransactionFormPageState
     extends State<ProjectTransactionFormPage> {
   final _form = GlobalKey<FormState>();
+  final _description = TextEditingController();
   final _amount = TextEditingController();
   final _currency = TextEditingController(text: 'THB');
   final _date = TextEditingController(
       text: DateTime.now().toIso8601String().substring(0, 10));
   final _note = TextEditingController();
+  final _categoryName = TextEditingController();
 
   String _type = 'expense';
   String? _memberId;
   List<ProjectMember> _members = const [];
+  List<_CategoryDraft> _pastCategories = const [];
 
-  /// member_id -> share amount controller. Empty/0 means "not splitting to
-  /// this member". `_memberId` (the actor) is excluded from this map.
-  final Map<String, TextEditingController> _splitControllers = {};
+  _CategoryDraft? _selectedCategory;
+
+  final List<_SplitEntry> _splitEntries = [];
 
   bool _loading = true;
   bool _saving = false;
@@ -43,18 +63,43 @@ class _ProjectTransactionFormPageState
   @override
   void initState() {
     super.initState();
-    _loadMembers();
+    _loadData();
   }
 
-  Future<void> _loadMembers() async {
+  Future<void> _loadData() async {
     try {
-      final ms =
-          await context.read<ProjectsRepository>().listMembers(widget.projectId);
+      final repo = context.read<ProjectsRepository>();
+      final results = await Future.wait([
+        repo.listMembers(widget.projectId),
+        repo.listTransactions(widget.projectId, perPage: 100),
+      ]);
       if (!mounted) return;
+      final ms = results[0] as List<ProjectMember>;
+      final txs = results[1] as List<ProjectTransaction>;
+
+      // Collect distinct categories from past transactions.
+      final seen = <String, _CategoryDraft>{};
+      for (final tx in txs) {
+        if (tx.categoryName != null &&
+            tx.categoryIconId != null &&
+            tx.categoryColorId != null) {
+          final key =
+              '${tx.categoryName}|${tx.categoryIconId}|${tx.categoryColorId}';
+          seen.putIfAbsent(
+            key,
+            () => _CategoryDraft(
+              name: tx.categoryName!,
+              iconId: tx.categoryIconId!,
+              colorId: tx.categoryColorId!,
+            ),
+          );
+        }
+      }
+
       setState(() {
-        _members = ms.where((m) => m.status == MemberStatus.active).toList();
+        _members = ms.where((m) => m.status != MemberStatus.left).toList();
         _memberId = _members.firstOrNull?.id;
-        _rebuildSplitControllers();
+        _pastCategories = seen.values.toList();
         _loading = false;
       });
     } on ApiException catch (e) {
@@ -63,29 +108,53 @@ class _ProjectTransactionFormPageState
     }
   }
 
-  void _rebuildSplitControllers() {
-    // Drop controllers for members no longer eligible (e.g., the new actor).
-    final eligible =
-        _members.where((m) => m.id != _memberId).map((m) => m.id).toSet();
-    for (final id in _splitControllers.keys.toList()) {
-      if (!eligible.contains(id)) {
-        _splitControllers[id]?.dispose();
-        _splitControllers.remove(id);
-      }
+  Future<void> _pickCategoryIcon() async {
+    final iconOptions = CategoryIconPreset.values
+        .map((p) => IconPickerOption(id: p.id, icon: p.icon))
+        .toList();
+    final swatches = CategoryColor.all
+        .map((c) => IconPickerSwatch(id: c.id, color: c.color))
+        .toList();
+    final result = await showIconColorPickerSheet(
+      context: context,
+      iconOptions: iconOptions,
+      swatches: swatches,
+      initialIconId: _selectedCategory?.iconId ??
+          CategoryIconPreset.values.first.id,
+      initialSwatchId:
+          _selectedCategory?.colorId ?? CategoryColor.all.first.id,
+    );
+    if (result is IconColorPickerSelected) {
+      setState(() {
+        final name = _categoryName.text.trim().isNotEmpty
+            ? _categoryName.text.trim()
+            : (_selectedCategory?.name ?? '');
+        _selectedCategory = _CategoryDraft(
+          name: name,
+          iconId: result.iconId,
+          colorId: result.swatchId,
+        );
+        if (name.isNotEmpty) _categoryName.text = name;
+      });
     }
-    for (final id in eligible) {
-      _splitControllers.putIfAbsent(id, () => TextEditingController());
-    }
+  }
+
+  void _selectPastCategory(_CategoryDraft cat) {
+    setState(() {
+      _selectedCategory = cat;
+      _categoryName.text = cat.name;
+    });
   }
 
   List<ProjectSplitInput> _collectSplits() {
     final out = <ProjectSplitInput>[];
-    for (final entry in _splitControllers.entries) {
-      final raw = entry.value.text.trim();
-      if (raw.isEmpty) continue;
+    for (final entry in _splitEntries) {
+      final id = entry.memberId;
+      final raw = entry.amountCtrl.text.trim();
+      if (id == null || raw.isEmpty) continue;
       final n = double.tryParse(raw);
       if (n == null || n <= 0) continue;
-      out.add(ProjectSplitInput(memberId: entry.key, amount: n));
+      out.add(ProjectSplitInput(memberId: id, amount: n));
     }
     return out;
   }
@@ -96,13 +165,17 @@ class _ProjectTransactionFormPageState
       setState(() => _error = 'Pick a member');
       return;
     }
+    final catName = _categoryName.text.trim();
+    if (catName.isEmpty || _selectedCategory == null) {
+      setState(() => _error = 'Pick a category with icon & color');
+      return;
+    }
     final amount = double.parse(_amount.text);
     final splits = _collectSplits();
-    final splitSum =
-        splits.fold<double>(0, (acc, s) => acc + s.amount);
+    final splitSum = splits.fold<double>(0, (acc, s) => acc + s.amount);
     if (splitSum > amount + 0.005) {
-      setState(() => _error =
-          'Sum of splits ($splitSum) exceeds total ($amount)');
+      setState(() =>
+          _error = 'Sum of splits ($splitSum) exceeds total ($amount)');
       return;
     }
     setState(() {
@@ -117,7 +190,13 @@ class _ProjectTransactionFormPageState
             amount: amount,
             currency: _currency.text.trim().toUpperCase(),
             date: _date.text,
+            description: _description.text.trim().isEmpty
+                ? null
+                : _description.text.trim(),
             note: _note.text.trim().isEmpty ? null : _note.text.trim(),
+            categoryName: catName,
+            categoryIconId: _selectedCategory!.iconId,
+            categoryColorId: _selectedCategory!.colorId,
             splits: splits,
           );
       if (!mounted) return;
@@ -131,6 +210,14 @@ class _ProjectTransactionFormPageState
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final catIconPreset = _selectedCategory?.iconId != null
+        ? CategoryIconPreset.byId(_selectedCategory!.iconId)
+        : null;
+    final catColor = _selectedCategory?.colorId != null
+        ? CategoryColor.byId(_selectedCategory!.colorId).color
+        : null;
+
     return Scaffold(
       appBar: AppBar(title: const Text('New project transaction')),
       body: _loading
@@ -161,7 +248,13 @@ class _ProjectTransactionFormPageState
                         .toList(),
                     onChanged: (v) => setState(() {
                       _memberId = v;
-                      _rebuildSplitControllers();
+                      _splitEntries.removeWhere((e) {
+                        if (e.memberId == v) {
+                          e.amountCtrl.dispose();
+                          return true;
+                        }
+                        return false;
+                      });
                     }),
                     validator: (v) => v == null ? 'Required' : null,
                   ),
@@ -193,10 +286,103 @@ class _ProjectTransactionFormPageState
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
+                    controller: _description,
+                    decoration:
+                        const InputDecoration(labelText: 'Description *'),
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
                     controller: _note,
                     decoration: const InputDecoration(labelText: 'Note'),
                     maxLines: 2,
                   ),
+                  const SizedBox(height: 16),
+                  // ── Category ─────────────────────────────────────────────
+                  Text('Category *',
+                      style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  if (_pastCategories.isNotEmpty) ...[
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final cat in _pastCategories)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Builder(builder: (context) {
+                                final ip =
+                                    CategoryIconPreset.byId(cat.iconId);
+                                final cc =
+                                    CategoryColor.byId(cat.colorId).color;
+                                final selected = _selectedCategory?.name ==
+                                        cat.name &&
+                                    _selectedCategory?.iconId == cat.iconId;
+                                return GestureDetector(
+                                  onTap: () => _selectPastCategory(cat),
+                                  child: Chip(
+                                    avatar: CircleAvatar(
+                                      backgroundColor:
+                                          cc.withValues(alpha: 0.18),
+                                      child: Icon(ip.icon,
+                                          size: 14, color: cc),
+                                    ),
+                                    label: Text(cat.name),
+                                    backgroundColor: selected
+                                        ? cc.withValues(alpha: 0.18)
+                                        : null,
+                                    side: selected
+                                        ? BorderSide(color: cc)
+                                        : null,
+                                  ),
+                                );
+                              }),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _categoryName,
+                          decoration: const InputDecoration(
+                            labelText: 'Category name',
+                            hintText: 'e.g. Meals, Accommodation',
+                          ),
+                          onChanged: (v) {
+                            if (_selectedCategory != null) {
+                              setState(() {
+                                _selectedCategory = _CategoryDraft(
+                                  name: v.trim(),
+                                  iconId: _selectedCategory!.iconId,
+                                  colorId: _selectedCategory!.colorId,
+                                );
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _pickCategoryIcon,
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: catColor?.withValues(alpha: 0.18) ??
+                              scheme.surfaceContainerHighest,
+                          child: Icon(
+                            catIconPreset?.icon ?? Icons.category_outlined,
+                            color: catColor ?? scheme.onSurfaceVariant,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // ── Splits ───────────────────────────────────────────────
                   const SizedBox(height: 16),
                   if (_memberId != null && _members.length > 1) ...[
                     Text(
@@ -205,28 +391,65 @@ class _ProjectTransactionFormPageState
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Amounts each other member owes the actor for this entry. '
-                      'Leave blank to skip. Sum must be ≤ total amount; the '
-                      'remainder is the actor\'s own share.',
+                      'Add shares each member owes the actor. '
+                      'Sum must be ≤ total; actor keeps the remainder.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),
-                    ..._members
-                        .where((m) => m.id != _memberId)
-                        .map((m) => Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4),
+                    for (int i = 0; i < _splitEntries.length; i++)
+                      Padding(
+                        key: ValueKey(i),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _splitEntries[i].memberId,
+                                hint: const Text('Member'),
+                                decoration:
+                                    const InputDecoration(isDense: true),
+                                items: _members
+                                    .where((m) => m.id != _memberId)
+                                    .map((m) => DropdownMenuItem(
+                                          value: m.id,
+                                          child: Text(m.displayName),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) => setState(
+                                    () => _splitEntries[i].memberId = v),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 96,
                               child: TextFormField(
-                                controller: _splitControllers[m.id],
+                                controller: _splitEntries[i].amountCtrl,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
-                                decoration: InputDecoration(
-                                  labelText: m.displayName,
-                                  hintText: '0',
+                                decoration: const InputDecoration(
+                                  hintText: 'Amount',
+                                  isDense: true,
                                 ),
                               ),
-                            )),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline,
+                                  size: 20),
+                              onPressed: () => setState(() {
+                                _splitEntries[i].amountCtrl.dispose();
+                                _splitEntries.removeAt(i);
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+                    TextButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add split'),
+                      onPressed: () =>
+                          setState(() => _splitEntries.add(_SplitEntry())),
+                    ),
                   ],
                   const SizedBox(height: 16),
                   if (_error != null)
@@ -244,12 +467,14 @@ class _ProjectTransactionFormPageState
 
   @override
   void dispose() {
+    _description.dispose();
     _amount.dispose();
     _currency.dispose();
     _date.dispose();
     _note.dispose();
-    for (final c in _splitControllers.values) {
-      c.dispose();
+    _categoryName.dispose();
+    for (final e in _splitEntries) {
+      e.amountCtrl.dispose();
     }
     super.dispose();
   }

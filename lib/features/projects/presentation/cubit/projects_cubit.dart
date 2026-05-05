@@ -74,6 +74,8 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     String? description,
     String? startDate,
     String? endDate,
+    String? iconId,
+    String? colorId,
   }) async {
     final p = await _repo.create(
       name: name,
@@ -81,6 +83,8 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
       description: description,
       startDate: startDate,
       endDate: endDate,
+      iconId: iconId,
+      colorId: colorId,
     );
     emit(state.copyWith(projects: [p, ...state.projects]));
     return p;
@@ -90,12 +94,16 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     String? name,
     String? description,
     ProjectStatus? status,
+    String? iconId,
+    String? colorId,
   }) async {
     final updated = await _repo.update(
       id,
       name: name,
       description: description,
       status: status,
+      iconId: iconId,
+      colorId: colorId,
     );
     _replace(updated);
     return updated;

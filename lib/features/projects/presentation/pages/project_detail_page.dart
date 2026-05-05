@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../categories/domain/category_icon_preset.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/personal_debt.dart';
 import '../../../transactions/data/transactions_repository.dart';
@@ -79,7 +81,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   void _ensureTabs() {
     final p = _project;
     if (p == null) return;
-    final length = p.isResolveReady ? 4 : 3;
+    final length = (p.isResolveReady || kDebugMode) ? 3 : 2;
     if (_tabs?.length == length) return;
     _tabs?.dispose();
     _tabs = TabController(length: length, vsync: this);
@@ -107,6 +109,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     return p.ownerUserId == uid;
   }
 
+  String get _currency => _txs.isNotEmpty ? _txs.first.currency : 'THB';
+
   ProjectMember _memberOrPlaceholder(String memberId) {
     return _members.firstWhere(
       (m) => m.id == memberId,
@@ -132,9 +136,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final p = _project;
     final tabLabels = <Tab>[
       const Tab(text: 'Transactions'),
-      const Tab(text: 'Members'),
-      const Tab(text: 'Summary'),
-      if (p != null && p.isResolveReady) const Tab(text: 'Resolve'),
+      const Tab(text: 'Report'),
+      if (p != null && (p.isResolveReady || kDebugMode)) const Tab(text: 'Resolve'),
     ];
     return Scaffold(
       appBar: AppBar(
@@ -164,29 +167,36 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                   : TabBarView(
                       controller: tabs,
                       children: [
-                        _TxList(
+                        _ProjectDashboard(
                           trees: buildProjectTxTree(_txs),
+                          summary: _summary,
+                          members: _members,
                           memberLookup: _memberOrPlaceholder,
                           myMemberId: _myMember?.id,
                           projectId: widget.id,
                           isLocked: p?.isLocked ?? true,
                           onChanged: _load,
-                        ),
-                        _MembersList(
-                          members: _members,
-                          projectId: widget.id,
+                          projectName: p?.name ?? '',
+                          projectType: p?.type,
+                          projectDescription: p?.description,
                           isOwner: _isOwner,
-                          onChanged: _load,
+                          onAddMember: _onAddMemberPressed,
+                          onMembersTap: _onMembersTap,
+                          currency: _currency,
                         ),
-                        _SummaryView(summary: _summary),
-                        if (p != null && p.isResolveReady)
+                        _ReportTab(
+                          trees: buildProjectTxTree(_txs),
+                          members: _members,
+                          summary: _summary,
+                          currency: _currency,
+                        ),
+                        if (p != null && (p.isResolveReady || kDebugMode))
                           _ResolveSummary(
                             trees: buildProjectTxTree(_txs),
                             memberLookup: _memberOrPlaceholder,
                             myMember: _myMember,
                             projectId: widget.id,
-                            currency:
-                                _txs.isNotEmpty ? _txs.first.currency : 'THB',
+                            currency: _currency,
                             suppressed: _resolvedThisSession,
                             onResolved: (key) {
                               setState(() => _resolvedThisSession.add(key));
@@ -197,40 +207,34 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  /// Two stacked FABs at bottom-right: transaction (primary, on top) and
-  /// add-member (secondary, below). Both visible at the same time so the
-  /// owner can record a tx or add a participant without switching tabs.
-  /// Returns null when there's nothing to surface (project locked, etc).
   Widget? _buildFabs(Project? p) {
     if (p == null || p.isLocked) return null;
-    final canAddMember = _isOwner;
-    final children = <Widget>[
-      FloatingActionButton(
-        heroTag: 'add-tx',
-        tooltip: 'New project transaction',
-        onPressed: () =>
-            context.push('/projects/${widget.id}/transactions/new'),
-        child: const Icon(Icons.add),
-      ),
-      if (canAddMember) ...[
-        const SizedBox(height: 12),
-        FloatingActionButton.small(
-          heroTag: 'add-member',
-          tooltip: 'Add member',
-          onPressed: _onAddMemberPressed,
-          child: const Icon(Icons.person_add),
-        ),
-      ],
-    ];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: children,
+    return FloatingActionButton(
+      heroTag: 'add-tx',
+      tooltip: 'New project transaction',
+      onPressed: () => context
+          .push('/projects/${widget.id}/transactions/new')
+          .then((_) => _load()),
+      child: const Icon(Icons.add),
     );
   }
 
   Future<void> _onAddMemberPressed() async {
     final added = await showAddMemberSheet(context, projectId: widget.id);
     if (added == true) await _load();
+  }
+
+  Future<void> _onMembersTap() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ProjectMembersScreen(
+          projectId: widget.id,
+          isOwner: _isOwner,
+        ),
+      ),
+    );
+    await _load();
   }
 
   PopupMenuButton<String> _buildLifecycleMenu(Project p) {
@@ -344,55 +348,238 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   }
 }
 
-// ─── Transactions tab — accordion (parent → children) ────────────────────────
+// ─── Transactions dashboard tab ──────────────────────────────────────────────
 
-class _TxList extends StatelessWidget {
-  const _TxList({
+class _ProjectDashboard extends StatelessWidget {
+  const _ProjectDashboard({
     required this.trees,
+    required this.summary,
+    required this.members,
     required this.memberLookup,
     required this.myMemberId,
     required this.projectId,
     required this.isLocked,
     required this.onChanged,
+    required this.projectName,
+    required this.isOwner,
+    required this.onAddMember,
+    required this.onMembersTap,
+    required this.currency,
+    this.projectType,
+    this.projectDescription,
   });
   final List<ProjectTxTree> trees;
+  final ProjectSummary? summary;
+  final List<ProjectMember> members;
   final ProjectMember Function(String memberId) memberLookup;
   final String? myMemberId;
   final String projectId;
   final bool isLocked;
   final Future<void> Function() onChanged;
+  final String projectName;
+  final String? projectType;
+  final String? projectDescription;
+  final bool isOwner;
+  final Future<void> Function() onAddMember;
+  final Future<void> Function() onMembersTap;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
-    if (trees.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: onChanged,
-        child: ListView(
-          children: const [
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 80),
-              child: Center(child: Text('No project transactions yet')),
+    final s = summary;
+    final scheme = Theme.of(context).colorScheme;
+    final activeMembers =
+        members.where((m) => m.status != MemberStatus.left).toList();
+    final visibleCount = activeMembers.length.clamp(0, 6);
+    final overflow = activeMembers.length - 5;
+
+    return RefreshIndicator(
+      onRefresh: onChanged,
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    projectName,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  Builder(builder: (_) {
+                    final parts = [
+                      if (projectType != null && projectType!.isNotEmpty)
+                        projectType!,
+                      if (projectDescription != null &&
+                          projectDescription!.isNotEmpty)
+                        projectDescription!,
+                    ];
+                    if (parts.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        parts.join(' | '),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatCard(
+                          label: 'Expense',
+                          value: s != null
+                              ? _fmtCurrency(s.totalExpense, currency)
+                              : '—',
+                          valueColor: scheme.error,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _StatCard(
+                          label: 'Income',
+                          value: s != null
+                              ? _fmtCurrency(s.totalIncome, currency)
+                              : '—',
+                          valueColor: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onMembersTap(),
+                        child: Text(
+                          'Members',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (isOwner)
+                        GestureDetector(
+                          onTap: () => onAddMember(),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(Icons.person_add_alt_1,
+                                size: 18, color: scheme.primary),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (activeMembers.isNotEmpty)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onMembersTap(),
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < visibleCount; i++) ...[
+                            if (i > 0) const SizedBox(width: 6),
+                            if (i == 5 && overflow > 1)
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor:
+                                    scheme.surfaceContainerHighest,
+                                child: Text(
+                                  '+$overflow',
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color: scheme.onSurfaceVariant),
+                                ),
+                              )
+                            else
+                              Tooltip(
+                                message: activeMembers[i].displayName,
+                                child: _MemberAvatar(
+                                  member: activeMembers[i],
+                                  radius: 16,
+                                ),
+                              ),
+                          ],
+                          const SizedBox(width: 8),
+                          Icon(Icons.chevron_right,
+                              size: 16, color: scheme.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: Divider(height: 1)),
+          if (trees.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 80),
+                child: Center(child: Text('No project transactions yet')),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, i) => Column(
+                  children: [
+                    _TxTreeTile(
+                      tree: trees[i],
+                      memberLookup: memberLookup,
+                      myMemberId: myMemberId,
+                      projectId: projectId,
+                      isLocked: isLocked,
+                      onChanged: onChanged,
+                    ),
+                    const Divider(height: 1),
+                  ],
+                ),
+                childCount: trees.length,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+  });
+  final String label;
+  final String value;
+  final Color valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: valueColor,
+                    fontWeight: FontWeight.w700,
+                  ),
             ),
           ],
         ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: onChanged,
-      child: ListView.separated(
-        itemCount: trees.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, i) {
-          final tree = trees[i];
-          return _TxTreeTile(
-            tree: tree,
-            memberLookup: memberLookup,
-            myMemberId: myMemberId,
-            projectId: projectId,
-            isLocked: isLocked,
-            onChanged: onChanged,
-          );
-        },
       ),
     );
   }
@@ -419,84 +606,213 @@ class _TxTreeTile extends StatelessWidget {
     final parent = tree.parent;
     final actor = memberLookup(parent.transactionMemberId);
     final myId = myMemberId;
-    final iMarkedParent = myId != null && parent.isMarkedBy(myId);
+    final iMarked = myId != null && parent.isMarkedBy(myId);
     final hasChildren = tree.children.isNotEmpty;
+    final isExpense = parent.type == 'expense';
+    final amountColor =
+        isExpense ? Theme.of(context).colorScheme.error : Colors.green;
+    final sign = isExpense ? '−' : '+';
+    final formattedAmount = '$sign${_fmtCurrency(parent.amount, parent.currency)}';
+    final catIconPreset = parent.categoryIconId != null
+        ? CategoryIconPreset.byId(parent.categoryIconId!)
+        : null;
+    final catColor = parent.categoryColorId != null
+        ? CategoryColor.byId(parent.categoryColorId!).color
+        : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ListTile(
-          leading: Icon(
-            parent.type == 'expense'
-                ? Icons.arrow_upward
-                : Icons.arrow_downward,
-          ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                    '${parent.amount.toStringAsFixed(2)} ${parent.currency}'),
-              ),
-              if (iMarkedParent)
-                const Icon(Icons.check_circle, size: 18, color: Colors.green),
-            ],
-          ),
-          subtitle: Text(
-            '${actor.displayName} · ${parent.date}'
-            '${hasChildren ? " · split ×${tree.children.length}" : ""}',
-          ),
-          trailing: parent.note != null
-              ? IconButton(
-                  icon: const Icon(Icons.notes),
-                  onPressed: () => _showNote(context, parent.note!),
-                )
-              : null,
-          onTap: () => _showRowSheet(
-            context,
-            tx: parent,
-            actor: actor,
-            isParent: true,
-          ),
-        ),
-        if (hasChildren)
-          Padding(
-            padding: const EdgeInsets.only(left: 24),
-            child: Column(
-              children: [
-                for (final child in tree.children)
-                  _ChildTile(
-                    child: child,
-                    parent: parent,
-                    debtor: memberLookup(child.transactionMemberId),
-                    creditor: actor,
-                    iMarked: myId != null && child.isMarkedBy(myId),
-                    onTap: () => _showRowSheet(
-                      context,
-                      tx: child,
-                      actor: memberLookup(child.transactionMemberId),
-                      isParent: false,
-                      parent: parent,
-                      parentActor: actor,
+    return Opacity(
+      opacity: iMarked ? 0.5 : 1.0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => _showActionMenu(context,
+                tx: parent, actor: actor, isParent: true),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 16, 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => iMarked
+                        ? _showActionMenu(context,
+                            tx: parent, actor: actor, isParent: true)
+                        : _onCheckTap(context, parent, isParent: true),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: (catColor ?? amountColor)
+                              .withValues(alpha: 0.15),
+                          child: Icon(
+                            catIconPreset?.icon ??
+                                (isExpense ? Icons.remove : Icons.add),
+                            color: catColor ?? amountColor,
+                            size: 18,
+                          ),
+                        ),
+                        if (iMarked)
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: const Icon(Icons.check,
+                                  size: 9, color: Colors.white),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          parent.description ?? '—',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            _MemberAvatar(member: actor, radius: 8),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                '${actor.displayName} · ${parent.date}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (parent.note != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            parent.note!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    formattedAmount,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: amountColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
             ),
           ),
-      ],
-    );
-  }
-
-  void _showNote(BuildContext context, String note) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Note'),
-        content: Text(note),
+          if (hasChildren)
+            Padding(
+              padding: const EdgeInsets.only(left: 44),
+              child: Column(
+                children: [
+                  for (final child in tree.children)
+                    _ChildTile(
+                      child: child,
+                      parent: parent,
+                      debtor: memberLookup(child.transactionMemberId),
+                      creditor: actor,
+                      myMemberId: myMemberId,
+                      projectId: projectId,
+                      isLocked: isLocked,
+                      iMarked: myId != null && child.isMarkedBy(myId),
+                      onChanged: onChanged,
+                    ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Future<void> _showRowSheet(
+  Future<void> _onCheckTap(
+    BuildContext context,
+    ProjectTransaction tx, {
+    required bool isParent,
+    ProjectTransaction? parent,
+    ProjectMember? parentActor,
+  }) async {
+    final canResolve = _canResolve(tx,
+        isParent: isParent, parent: parent, parentActor: parentActor);
+    if (canResolve && myMemberId != null) {
+      await _resolveAndMark(context,
+          tx: tx, isParent: isParent, parent: parent, parentActor: parentActor);
+    } else {
+      await _toggleMark(context, tx, true);
+    }
+  }
+
+  Future<void> _resolveAndMark(
+    BuildContext context, {
+    required ProjectTransaction tx,
+    required bool isParent,
+    ProjectTransaction? parent,
+    ProjectMember? parentActor,
+  }) async {
+    final myId = myMemberId!;
+    final actor = parentActor ?? memberLookup(tx.transactionMemberId);
+    final counterparty = isParent
+        ? null
+        : tx.transactionMemberId == myId
+            ? actor
+            : memberLookup(tx.transactionMemberId);
+
+    final resolved = await showModalBottomSheet<bool?>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _ResolveSheet(
+        tx: tx,
+        isParent: isParent,
+        parentChildrenTotal: isParent ? _parentChildrenTotal(tx) : 0,
+        myMemberId: myId,
+        counterparty: counterparty,
+        onDone: () async {},
+      ),
+    );
+    if (resolved == true && context.mounted) {
+      await _toggleMark(context, tx, true);
+    }
+  }
+
+  Future<void> _showActionMenu(
     BuildContext context, {
     required ProjectTransaction tx,
     required ProjectMember actor,
@@ -506,10 +822,18 @@ class _TxTreeTile extends StatelessWidget {
   }) async {
     final myId = myMemberId;
     final iMarked = myId != null && tx.isMarkedBy(myId);
-    final canMark = myId != null && !isLocked;
     final canDelete = isParent && !isLocked;
+    final isExpense = tx.type == 'expense';
     final canResolve = _canResolve(tx,
         isParent: isParent, parent: parent, parentActor: parentActor);
+    final menuCatIcon = tx.categoryIconId != null
+        ? CategoryIconPreset.byId(tx.categoryIconId!)
+        : null;
+    final menuCatColor = tx.categoryColorId != null
+        ? CategoryColor.byId(tx.categoryColorId!).color
+        : null;
+    final menuAmountColor =
+        isExpense ? Theme.of(context).colorScheme.error : Colors.green;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -517,26 +841,92 @@ class _TxTreeTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: Text(
-                  '${tx.amount.toStringAsFixed(2)} ${tx.currency} · ${actor.displayName}'),
-              subtitle: Text(
-                  '${tx.type} · ${tx.date}${isParent ? "" : " · split"}'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: (menuCatColor ?? menuAmountColor)
+                        .withValues(alpha: 0.15),
+                    child: Icon(
+                      menuCatIcon?.icon ??
+                          (isExpense ? Icons.remove : Icons.add),
+                      color: menuCatColor ?? menuAmountColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tx.description ?? '—',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            _MemberAvatar(member: actor, radius: 8),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                '${actor.displayName} · ${tx.date}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (tx.note != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            tx.note!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${isExpense ? '−' : '+'}${_fmtCurrency(tx.amount, tx.currency)}',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: menuAmountColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
             ),
             const Divider(height: 1),
-            if (canMark)
+            if (iMarked && !isLocked)
               ListTile(
-                leading: Icon(iMarked
-                    ? Icons.check_circle
-                    : Icons.radio_button_unchecked),
-                title: Text(
-                    iMarked ? 'Unmark resolved' : 'Mark resolved on board'),
-                subtitle: const Text(
-                    'Local flag — does not create personal entries'),
+                leading: const Icon(Icons.radio_button_unchecked),
+                title: const Text('Unmark'),
                 onTap: () async {
                   Navigator.pop(sheetCtx);
-                  await _toggleMark(context, tx, !iMarked);
+                  await _toggleMark(context, tx, false);
                 },
               ),
             if (canResolve)
@@ -547,13 +937,11 @@ class _TxTreeTile extends StatelessWidget {
                     const Text('Create a personal transaction or debt entry'),
                 onTap: () async {
                   Navigator.pop(sheetCtx);
-                  await _showResolveSheet(
-                    context,
-                    tx: tx,
-                    isParent: isParent,
-                    parent: parent,
-                    parentActor: parentActor,
-                  );
+                  await _showResolveSheet(context,
+                      tx: tx,
+                      isParent: isParent,
+                      parent: parent,
+                      parentActor: parentActor);
                 },
               ),
             if (canDelete)
@@ -581,11 +969,7 @@ class _TxTreeTile extends StatelessWidget {
   }) {
     final my = myMemberId;
     if (my == null) return false;
-    if (isParent) {
-      // Resolve a parent row only if I'm the actor (the one who paid).
-      return tx.transactionMemberId == my;
-    }
-    // Child: I can resolve if I'm the debtor OR the parent's actor (creditor).
+    if (isParent) return tx.transactionMemberId == my;
     final isDebtor = tx.transactionMemberId == my;
     final isCreditor = parentActor != null && parentActor.id == my;
     return isDebtor || isCreditor;
@@ -594,8 +978,9 @@ class _TxTreeTile extends StatelessWidget {
   Future<void> _toggleMark(
       BuildContext context, ProjectTransaction tx, bool marked) async {
     try {
-      await context.read<ProjectsRepository>().toggleMark(
-          projectId, tx.id, marked);
+      await context
+          .read<ProjectsRepository>()
+          .toggleMark(projectId, tx.id, marked);
       await onChanged();
     } on ApiException catch (e) {
       if (!context.mounted) return;
@@ -644,8 +1029,6 @@ class _TxTreeTile extends StatelessWidget {
   }) async {
     final myId = myMemberId!;
     final actor = parentActor ?? memberLookup(tx.transactionMemberId);
-    // Counterparty for debt mode: parent's actor if I'm the debtor on a
-    // child; child's debtor if I'm the creditor on a child.
     final counterparty = isParent
         ? null
         : tx.transactionMemberId == myId
@@ -658,8 +1041,7 @@ class _TxTreeTile extends StatelessWidget {
       builder: (_) => _ResolveSheet(
         tx: tx,
         isParent: isParent,
-        parentChildrenTotal:
-            isParent ? _parentChildrenTotal(tx) : 0,
+        parentChildrenTotal: isParent ? _parentChildrenTotal(tx) : 0,
         myMemberId: myId,
         counterparty: counterparty,
         onDone: onChanged,
@@ -668,8 +1050,6 @@ class _TxTreeTile extends StatelessWidget {
   }
 
   double _parentChildrenTotal(ProjectTransaction parent) {
-    // The tree is in a parent context only; recompute from passed-in tree
-    // (the caller has it). For this widget we already have it via [tree].
     if (tree.parent.id != parent.id) return 0;
     return tree.childrenTotal;
   }
@@ -681,35 +1061,135 @@ class _ChildTile extends StatelessWidget {
     required this.parent,
     required this.debtor,
     required this.creditor,
+    required this.myMemberId,
+    required this.projectId,
+    required this.isLocked,
     required this.iMarked,
-    required this.onTap,
+    required this.onChanged,
   });
   final ProjectTransaction child;
   final ProjectTransaction parent;
   final ProjectMember debtor;
   final ProjectMember creditor;
+  final String? myMemberId;
+  final String projectId;
+  final bool isLocked;
   final bool iMarked;
-  final VoidCallback onTap;
+  final Future<void> Function() onChanged;
+
+  bool _canResolve() {
+    final my = myMemberId;
+    if (my == null) return false;
+    return debtor.id == my || creditor.id == my;
+  }
+
+  Future<void> _toggleMark(BuildContext context, bool marked) async {
+    try {
+      await context
+          .read<ProjectsRepository>()
+          .toggleMark(projectId, child.id, marked);
+      await onChanged();
+    } on ApiException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  Future<void> _onCheckTap(BuildContext context) async {
+    if (_canResolve() && myMemberId != null) {
+      final myId = myMemberId!;
+      final isDebtor = debtor.id == myId;
+      final counterparty = isDebtor ? creditor : debtor;
+      final resolved = await showModalBottomSheet<bool?>(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => _ResolveSheet(
+          tx: child,
+          isParent: false,
+          parentChildrenTotal: 0,
+          myMemberId: myId,
+          counterparty: counterparty,
+          onDone: () async {},
+        ),
+      );
+      if (resolved == true && context.mounted) {
+        await _toggleMark(context, true);
+      }
+    } else {
+      await _toggleMark(context, true);
+    }
+  }
+
+  Future<void> _onTickTap(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: Text(
+                  '${_fmtCurrency(child.amount, child.currency)} · ${debtor.displayName}'),
+              subtitle: Text('owes ${creditor.displayName}'),
+            ),
+            const Divider(height: 1),
+            if (!isLocked)
+              ListTile(
+                leading: const Icon(Icons.radio_button_unchecked),
+                title: const Text('Unmark'),
+                onTap: () async {
+                  Navigator.pop(sheetCtx);
+                  await _toggleMark(context, false);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      leading: const Icon(Icons.subdirectory_arrow_right, size: 18),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '${debtor.displayName} owes ${creditor.displayName} '
-              '${child.amount.toStringAsFixed(2)}',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+    final scheme = Theme.of(context).colorScheme;
+    return Opacity(
+      opacity: iMarked ? 0.5 : 1.0,
+      child: InkWell(
+        onTap: () => iMarked ? _onTickTap(context) : _onCheckTap(context),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+          child: Row(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    iMarked ? _onTickTap(context) : _onCheckTap(context),
+                child: Icon(
+                  iMarked ? Icons.check_circle : Icons.radio_button_unchecked,
+                  size: 20,
+                  color: iMarked ? Colors.green : scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _MemberAvatar(member: debtor, radius: 10),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  debtor.displayName,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              Text(
+                _fmtCurrency(child.amount, child.currency),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
           ),
-          if (iMarked)
-            const Icon(Icons.check_circle, size: 16, color: Colors.green),
-        ],
+        ),
       ),
-      onTap: onTap,
     );
   }
 }
@@ -815,7 +1295,7 @@ class _ResolveSheetState extends State<_ResolveSheet> {
             );
       }
       if (!mounted) return;
-      Navigator.pop(context);
+      Navigator.pop(context, true);
       await widget.onDone();
     } on ApiException catch (e) {
       _error = e.message;
@@ -861,14 +1341,13 @@ class _ResolveSheetState extends State<_ResolveSheet> {
               onChanged: (v) => setState(() => _useFullAmount = !v),
               title: const Text('Use post-split share only'),
               subtitle: Text(
-                'Full ${widget.tx.amount.toStringAsFixed(2)} · '
-                'post-split ${(widget.tx.amount - widget.parentChildrenTotal).toStringAsFixed(2)}',
+                'Full ${_fmtCurrency(widget.tx.amount, widget.tx.currency)} · '
+                'post-split ${_fmtCurrency(widget.tx.amount - widget.parentChildrenTotal, widget.tx.currency)}',
               ),
             ),
             const SizedBox(height: 8),
           ],
-          Text(
-              'Amount: ${_amount.toStringAsFixed(2)} ${widget.tx.currency}'),
+          Text('Amount: ${_fmtCurrency(_amount, widget.tx.currency)}'),
           const SizedBox(height: 12),
           if (_mode == _ResolveMode.asTransaction)
             DropdownButtonFormField<String>(
@@ -916,31 +1395,34 @@ class _MembersList extends StatelessWidget {
     required this.members,
     required this.projectId,
     required this.isOwner,
+    required this.canAddMember,
+    required this.onAddMember,
     required this.onChanged,
   });
   final List<ProjectMember> members;
   final String projectId;
   final bool isOwner;
+  final bool canAddMember;
+  final Future<void> Function() onAddMember;
   final Future<void> Function() onChanged;
 
   @override
   Widget build(BuildContext context) {
-    // The "add member" affordance moved up to the scaffold-level FAB
-    // stack so it's visible alongside "add transaction" on every tab.
-    // This list is just the roster.
+    final count = members.length + (canAddMember ? 1 : 0);
     return ListView.separated(
-      itemCount: members.length,
+      itemCount: count,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, i) {
+        if (canAddMember && i == members.length) {
+          return ListTile(
+            leading: const Icon(Icons.person_add_outlined),
+            title: const Text('Add Member'),
+            onTap: () => onAddMember(),
+          );
+        }
         final m = members[i];
         return ListTile(
-          leading: CircleAvatar(
-            child: Text(
-              m.displayName.isNotEmpty
-                  ? m.displayName[0].toUpperCase()
-                  : '?',
-            ),
-          ),
+          leading: _MemberAvatar(member: m, radius: 20),
           title: Text(m.displayName),
           subtitle: Text(
               '${m.role.wire} · ${m.status.wire}${m.isLinked ? ' · linked' : ''}'),
@@ -957,49 +1439,6 @@ class _MembersList extends StatelessWidget {
               : null,
         );
       },
-    );
-  }
-}
-
-// ─── Summary tab ─────────────────────────────────────────────────────────────
-
-class _SummaryView extends StatelessWidget {
-  const _SummaryView({required this.summary});
-  final ProjectSummary? summary;
-
-  @override
-  Widget build(BuildContext context) {
-    if (summary == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    final s = summary!;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _row(context, 'Transactions', s.transactionCount.toString()),
-        _row(context, 'Members', s.memberCount.toString()),
-        _row(context, 'Total expense', s.totalExpense.toStringAsFixed(2)),
-        _row(context, 'Total income', s.totalIncome.toStringAsFixed(2)),
-      ],
-    );
-  }
-
-  Widget _row(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child:
-                Text(label, style: Theme.of(context).textTheme.bodyLarge),
-          ),
-          Text(value,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
-        ],
-      ),
     );
   }
 }
@@ -1208,7 +1647,7 @@ class _SpentLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        title: Text('${line.amount.toStringAsFixed(2)} $currency · ${line.label}'),
+        title: Text('${_fmtCurrency(line.amount, currency)} · ${line.label}'),
         subtitle:
             Text(line.isParent ? 'Parent · post-split share' : 'Split debtor share'),
         trailing: FilledButton.tonal(
@@ -1301,8 +1740,8 @@ class _NetDebtLine extends StatelessWidget {
       child: ListTile(
         title: Text(
           iOwe
-              ? 'I owe ${debt.counterparty.displayName} ${debt.amount.toStringAsFixed(2)} $currency'
-              : '${debt.counterparty.displayName} owes me ${debt.amount.toStringAsFixed(2)} $currency',
+              ? 'I owe ${debt.counterparty.displayName} ${_fmtCurrency(debt.amount, currency)}'
+              : '${debt.counterparty.displayName} owes me ${_fmtCurrency(debt.amount, currency)}',
         ),
         trailing: FilledButton.tonal(
           onPressed: () => _resolve(context),
@@ -1352,4 +1791,411 @@ class _NetDebtLine extends StatelessWidget {
           .showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
+}
+
+// ─── Report tab ──────────────────────────────────────────────────────────────
+
+class _MemberReport {
+  _MemberReport(this.member);
+  final ProjectMember member;
+  double paid = 0;
+  double owes = 0;
+  double get net => paid - owes;
+}
+
+class _CategoryReport {
+  _CategoryReport({
+    required this.name,
+    required this.iconId,
+    required this.colorId,
+  });
+  final String name;
+  final String? iconId;
+  final String? colorId;
+  double total = 0;
+  int count = 0;
+}
+
+class _ReportTab extends StatelessWidget {
+  const _ReportTab({
+    required this.trees,
+    required this.members,
+    required this.summary,
+    required this.currency,
+  });
+  final List<ProjectTxTree> trees;
+  final List<ProjectMember> members;
+  final ProjectSummary? summary;
+  final String currency;
+
+  List<_MemberReport> _buildReports() {
+    final map = <String, _MemberReport>{};
+    for (final m in members) {
+      if (m.status != MemberStatus.left) map[m.id] = _MemberReport(m);
+    }
+    for (final t in trees) {
+      final parent = t.parent;
+      if (parent.type == 'expense') {
+        map[parent.transactionMemberId]?.paid += parent.amount;
+      }
+      for (final c in t.children) {
+        map[c.transactionMemberId]?.owes += c.amount;
+      }
+    }
+    return map.values.toList();
+  }
+
+  List<_CategoryReport> _buildCategoryReports() {
+    // Key = "name|iconId|colorId" — same name+different icon = different category.
+    final map = <String, _CategoryReport>{};
+    for (final t in trees) {
+      final parent = t.parent;
+      if (parent.isParent && parent.categoryName != null) {
+        final key =
+            '${parent.categoryName}|${parent.categoryIconId}|${parent.categoryColorId}';
+        final r = map.putIfAbsent(
+          key,
+          () => _CategoryReport(
+            name: parent.categoryName!,
+            iconId: parent.categoryIconId,
+            colorId: parent.categoryColorId,
+          ),
+        );
+        r.total += parent.amount;
+        r.count++;
+      }
+    }
+    final list = map.values.toList()
+      ..sort((a, b) => b.total.compareTo(a.total));
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = summary;
+    final scheme = Theme.of(context).colorScheme;
+    final reports = _buildReports();
+    final catReports = _buildCategoryReports();
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StatCard(
+                label: 'Expense',
+                value: s != null ? _fmtCurrency(s.totalExpense, currency) : '—',
+                valueColor: scheme.error,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _StatCard(
+                label: 'Income',
+                value: s != null ? _fmtCurrency(s.totalIncome, currency) : '—',
+                valueColor: Colors.green,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _StatCard(
+                label: 'Net',
+                value: s != null
+                    ? _fmtCurrency(
+                        (s.totalIncome - s.totalExpense).abs(), currency)
+                    : '—',
+                valueColor: s != null && s.totalIncome >= s.totalExpense
+                    ? Colors.green
+                    : scheme.error,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text('Per member', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        for (final r in reports)
+          Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  _MemberAvatar(member: r.member, radius: 18),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          r.member.displayName,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 10,
+                          children: [
+                            _ReportChip(
+                              label: 'Paid',
+                              value: _fmtCurrency(r.paid, currency),
+                              color: Colors.green,
+                            ),
+                            _ReportChip(
+                              label: 'Owes',
+                              value: _fmtCurrency(r.owes, currency),
+                              color: scheme.error,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Net',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                      Text(
+                        _fmtCurrency(r.net.abs(), currency),
+                        style:
+                            Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: r.net >= 0 ? Colors.green : scheme.error,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                      if (r.net != 0)
+                        Text(
+                          r.net >= 0 ? 'to receive' : 'to pay',
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (catReports.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Text('By category', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          for (final c in catReports)
+            Builder(builder: (context) {
+              final iconPreset = c.iconId != null
+                  ? CategoryIconPreset.byId(c.iconId!)
+                  : null;
+              final catColor = c.colorId != null
+                  ? CategoryColor.byId(c.colorId!).color
+                  : scheme.onSurfaceVariant;
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: catColor.withValues(alpha: 0.18),
+                    child: Icon(
+                      iconPreset?.icon ?? Icons.category_outlined,
+                      color: catColor,
+                    ),
+                  ),
+                  title: Text(c.name),
+                  subtitle: Text('${c.count} transaction${c.count == 1 ? '' : 's'}'),
+                  trailing: Text(
+                    _fmtCurrency(c.total, currency),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+              );
+            }),
+        ],
+      ],
+    );
+  }
+}
+
+class _ReportChip extends StatelessWidget {
+  const _ReportChip(
+      {required this.label, required this.value, required this.color});
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return RichText(
+      text: TextSpan(
+        style: Theme.of(context).textTheme.bodySmall,
+        children: [
+          TextSpan(
+              text: '$label ',
+              style: TextStyle(color: scheme.onSurfaceVariant)),
+          TextSpan(
+              text: value,
+              style:
+                  TextStyle(color: color, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Members screen ───────────────────────────────────────────────────────────
+
+class _ProjectMembersScreen extends StatefulWidget {
+  const _ProjectMembersScreen({
+    required this.projectId,
+    required this.isOwner,
+  });
+  final String projectId;
+  final bool isOwner;
+
+  @override
+  State<_ProjectMembersScreen> createState() =>
+      _ProjectMembersScreenState();
+}
+
+class _ProjectMembersScreenState extends State<_ProjectMembersScreen> {
+  List<ProjectMember> _members = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final ms = await context
+          .read<ProjectsRepository>()
+          .listMembers(widget.projectId);
+      if (!mounted) return;
+      setState(() {
+        _members = ms;
+        _loading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _onAddMember() async {
+    final added =
+        await showAddMemberSheet(context, projectId: widget.projectId);
+    if (added == true) await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Members')),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text(_error!))
+              : _MembersList(
+                  members: _members,
+                  projectId: widget.projectId,
+                  isOwner: widget.isOwner,
+                  canAddMember: widget.isOwner,
+                  onAddMember: _onAddMember,
+                  onChanged: _load,
+                ),
+    );
+  }
+}
+
+// ─── Member avatar ────────────────────────────────────────────────────────────
+
+/// Shows the member's avatar. Linked member with avatarUrl → NetworkImage.
+/// Any other member → deterministic colored initial from their member id.
+class _MemberAvatar extends StatelessWidget {
+  const _MemberAvatar({required this.member, this.radius = 16});
+  final ProjectMember member;
+  final double radius;
+
+  static const _palette = <Color>[
+    Color(0xFF64B5F6),
+    Color(0xFFAED581),
+    Color(0xFFFFB74D),
+    Color(0xFFBA68C8),
+    Color(0xFF4DD0E1),
+    Color(0xFFF06292),
+    Color(0xFF9575CD),
+    Color(0xFFFFD54F),
+    Color(0xFFA1887F),
+    Color(0xFF4FC3F7),
+    Color(0xFF7986CB),
+    Color(0xFFE57373),
+  ];
+
+  Color get _bgColor {
+    final idx = member.id.hashCode.abs() % _palette.length;
+    return _palette[idx];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final url = member.avatarUrl;
+    if (url != null && url.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundImage: NetworkImage(url),
+      );
+    }
+    final initial = member.displayName.isNotEmpty
+        ? member.displayName[0].toUpperCase()
+        : '?';
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: _bgColor.withValues(alpha: 0.28),
+      child: Text(
+        initial,
+        style: TextStyle(
+          fontSize: radius * 0.75,
+          color: _bgColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/// Formats [amount] with thousands separators and currency symbol.
+/// THB → `฿1,234.00`; other currencies → `USD 1,234.00`.
+String _fmtCurrency(double amount, String currency) {
+  final fixed = amount.toStringAsFixed(2);
+  final dot = fixed.indexOf('.');
+  final intPart = fixed.substring(0, dot);
+  final decPart = fixed.substring(dot);
+  final buf = StringBuffer();
+  for (int i = 0; i < intPart.length; i++) {
+    if (i > 0 && (intPart.length - i) % 3 == 0) buf.write(',');
+    buf.write(intPart[i]);
+  }
+  final sym = currency == 'THB' ? '฿' : '$currency ';
+  return '$sym${buf.toString()}$decPart';
 }

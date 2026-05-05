@@ -42,6 +42,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       context.read<AccountsCubit>().loadIfNeeded();
       context.read<TransactionsCubit>().loadIfNeeded();
+      context.read<CategoriesCubit>().loadIfNeeded();
     });
   }
 
@@ -406,7 +407,12 @@ class _RecentRow extends StatelessWidget {
     final cubit = context.watch<CategoriesCubit>();
     final cat = tx.category != null ? cubit.byId(tx.category!.id) : null;
     final iconData = cat?.icon.icon ?? _iconForType(tx.type);
-    final iconColor = cat?.color.color ?? scheme.onSurfaceVariant;
+    final fallbackColor = switch (tx.type) {
+      TransactionType.expense => scheme.error,
+      TransactionType.income => Colors.green.shade400,
+      _ => scheme.onSurfaceVariant,
+    };
+    final iconColor = cat?.color.color ?? fallbackColor;
 
     return InkWell(
       onTap: () => context.push('/transactions/${tx.id}'),
@@ -457,8 +463,8 @@ class _RecentRow extends StatelessWidget {
 
 IconData _iconForType(TransactionType t) {
   return switch (t) {
-    TransactionType.expense => Icons.south,
-    TransactionType.income => Icons.north,
+    TransactionType.expense => Icons.remove,
+    TransactionType.income => Icons.add,
     TransactionType.transfer => Icons.swap_horiz,
   };
 }

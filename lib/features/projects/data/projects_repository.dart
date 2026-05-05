@@ -41,6 +41,8 @@ class ProjectsRepository {
     String? description,
     String? startDate,
     String? endDate,
+    String? iconId,
+    String? colorId,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
@@ -51,6 +53,8 @@ class ProjectsRepository {
           'description': ?description,
           'start_date': ?startDate,
           'end_date': ?endDate,
+          'icon_id': ?iconId,
+          'color_id': ?colorId,
         },
       );
       return Project.fromJson(res.data!);
@@ -66,6 +70,8 @@ class ProjectsRepository {
     String? startDate,
     String? endDate,
     ProjectStatus? status,
+    String? iconId,
+    String? colorId,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -77,6 +83,8 @@ class ProjectsRepository {
           'start_date': ?startDate,
           'end_date': ?endDate,
           'status': ?status?.wire,
+          'icon_id': ?iconId,
+          'color_id': ?colorId,
         },
       );
       return Project.fromJson(res.data!);
@@ -213,7 +221,11 @@ class ProjectsRepository {
     required double amount,
     required String currency,
     required String date,
+    String? description,
     String? note,
+    String? categoryName,
+    String? categoryIconId,
+    String? categoryColorId,
     List<ProjectSplitInput> splits = const [],
   }) async {
     try {
@@ -225,7 +237,11 @@ class ProjectsRepository {
           'amount': amount,
           'currency': currency,
           'date': date,
+          'description': ?description,
           'note': ?note,
+          'category_name': ?categoryName,
+          'category_icon_id': ?categoryIconId,
+          'category_color_id': ?categoryColorId,
           if (splits.isNotEmpty)
             'splits': splits.map((s) => s.toJson()).toList(),
         },
@@ -243,7 +259,11 @@ class ProjectsRepository {
     String ptId, {
     double? amount,
     String? date,
+    String? description,
     String? note,
+    String? categoryName,
+    String? categoryIconId,
+    String? categoryColorId,
     List<ProjectSplitInput>? splits,
   }) async {
     try {
@@ -252,7 +272,11 @@ class ProjectsRepository {
         data: <String, dynamic>{
           'amount': ?amount,
           'date': ?date,
+          'description': ?description,
           'note': ?note,
+          'category_name': ?categoryName,
+          'category_icon_id': ?categoryIconId,
+          'category_color_id': ?categoryColorId,
           if (splits != null) 'splits': splits.map((s) => s.toJson()).toList(),
         },
       );

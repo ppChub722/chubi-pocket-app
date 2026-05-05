@@ -93,6 +93,8 @@ class Project extends Equatable {
     this.startDate,
     this.endDate,
     this.membersCount = 0,
+    this.iconId,
+    this.colorId,
   });
 
   final String id;
@@ -104,6 +106,8 @@ class Project extends Equatable {
   final String? endDate;
   final ProjectStatus status;
   final int membersCount;
+  final String? iconId;
+  final String? colorId;
 
   bool get isActive => status == ProjectStatus.active;
   bool get isLocked =>
@@ -122,6 +126,8 @@ class Project extends Equatable {
       endDate: json['end_date'] as String?,
       status: ProjectStatusWire.parse(json['status'] as String?),
       membersCount: (json['members_count'] as num?)?.toInt() ?? 0,
+      iconId: json['icon_id'] as String?,
+      colorId: json['color_id'] as String?,
     );
   }
 
@@ -136,6 +142,8 @@ class Project extends Equatable {
         endDate,
         status,
         membersCount,
+        iconId,
+        colorId,
       ];
 }
 
@@ -152,6 +160,7 @@ class ProjectMember extends Equatable {
     required this.role,
     required this.status,
     this.userId,
+    this.avatarUrl,
   });
 
   final String id;
@@ -160,6 +169,7 @@ class ProjectMember extends Equatable {
   final String displayName;
   final MemberRole role;
   final MemberStatus status;
+  final String? avatarUrl;
 
   bool get isLinked => userId != null;
   bool get isAdHoc => userId == null;
@@ -173,11 +183,13 @@ class ProjectMember extends Equatable {
       displayName: json['display_name'] as String,
       role: MemberRoleWire.parse(json['role'] as String?),
       status: MemberStatusWire.parse(json['status'] as String?),
+      avatarUrl: json['avatar_url'] as String?,
     );
   }
 
   @override
-  List<Object?> get props => [id, projectId, userId, displayName, role, status];
+  List<Object?> get props =>
+      [id, projectId, userId, displayName, role, status, avatarUrl];
 }
 
 class ProjectTransaction extends Equatable {
@@ -192,7 +204,11 @@ class ProjectTransaction extends Equatable {
     required this.date,
     required this.marks,
     this.parentProjectTransactionId,
+    this.description,
     this.note,
+    this.categoryName,
+    this.categoryIconId,
+    this.categoryColorId,
   });
 
   final String id;
@@ -209,11 +225,13 @@ class ProjectTransaction extends Equatable {
   final double amount;
   final String currency;
   final String date;
+  final String? description;
   final String? note;
+  final String? categoryName;
+  final String? categoryIconId;
+  final String? categoryColorId;
 
   /// project_member ids who have flagged this row resolved on the board.
-  /// Independent of personal-book resolve — toggling the mark does NOT
-  /// create or delete personal entries.
   final List<String> marks;
 
   bool get isParent => parentProjectTransactionId == null;
@@ -233,7 +251,11 @@ class ProjectTransaction extends Equatable {
       amount: (json['amount'] as num).toDouble(),
       currency: json['currency'] as String,
       date: json['date'] as String,
+      description: json['description'] as String?,
       note: json['note'] as String?,
+      categoryName: json['category_name'] as String?,
+      categoryIconId: json['category_icon_id'] as String?,
+      categoryColorId: json['category_color_id'] as String?,
       marks: ((json['marks'] as List?) ?? const [])
           .map((e) => e as String)
           .toList(growable: false),
@@ -251,7 +273,11 @@ class ProjectTransaction extends Equatable {
         amount,
         currency,
         date,
+        description,
         note,
+        categoryName,
+        categoryIconId,
+        categoryColorId,
         marks,
       ];
 }

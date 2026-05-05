@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../categories/domain/category_icon_preset.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 
@@ -94,8 +95,23 @@ class _ProjectRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final iconPreset = project.iconId != null
+        ? CategoryIconPreset.byId(project.iconId!)
+        : null;
+    final iconColor = project.colorId != null
+        ? CategoryColor.byId(project.colorId!).color
+        : null;
+
     return ListTile(
-      leading: const Icon(Icons.folder_shared_outlined),
+      leading: CircleAvatar(
+        backgroundColor:
+            iconColor?.withValues(alpha: 0.18) ?? scheme.surfaceContainerHighest,
+        child: Icon(
+          iconPreset?.icon ?? Icons.folder_shared_outlined,
+          color: iconColor ?? scheme.onSurfaceVariant,
+        ),
+      ),
       title: Text(project.name),
       subtitle: Text(
           '${project.membersCount} member${project.membersCount == 1 ? '' : 's'} · ${project.status.wire}'),
