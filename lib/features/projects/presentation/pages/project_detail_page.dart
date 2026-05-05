@@ -7,6 +7,8 @@ import '../../../../core/network/api_exception.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../categories/domain/category_icon_preset.dart';
+import '../../../categories/domain/category_type.dart';
+import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/personal_debt.dart';
 import '../../../transactions/data/transactions_repository.dart';
@@ -15,6 +17,7 @@ import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 import '../widgets/add_member_sheet.dart';
+import 'project_transaction_edit_page.dart';
 
 /// `/projects/:id` — detail view. Tabs: Transactions, Members, Summary, and
 /// (when status ∈ {completed, archived}) Resolve.
@@ -179,6 +182,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                           projectName: p?.name ?? '',
                           projectType: p?.type,
                           projectDescription: p?.description,
+                          projectIconId: p?.iconId,
+                          projectColorId: p?.colorId,
                           isOwner: _isOwner,
                           onAddMember: _onAddMemberPressed,
                           onMembersTap: _onMembersTap,
@@ -350,7 +355,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
 // ─── Transactions dashboard tab ──────────────────────────────────────────────
 
-class _ProjectDashboard extends StatelessWidget {
+enum _TxSort { time, amount, member, description, category }
+
+class _ProjectDashboard extends StatefulWidget {
   const _ProjectDashboard({
     required this.trees,
     required this.summary,
@@ -367,6 +374,8 @@ class _ProjectDashboard extends StatelessWidget {
     required this.currency,
     this.projectType,
     this.projectDescription,
+    this.projectIconId,
+    this.projectColorId,
   });
   final List<ProjectTxTree> trees;
   final ProjectSummary? summary;
@@ -379,22 +388,78 @@ class _ProjectDashboard extends StatelessWidget {
   final String projectName;
   final String? projectType;
   final String? projectDescription;
+  final String? projectIconId;
+  final String? projectColorId;
   final bool isOwner;
   final Future<void> Function() onAddMember;
   final Future<void> Function() onMembersTap;
   final String currency;
 
   @override
+  State<_ProjectDashboard> createState() => _ProjectDashboardState();
+}
+
+class _ProjectDashboardState extends State<_ProjectDashboard> {
+  String? _filterType; // null = all, 'expense', 'income'
+  bool _filterMine = false;
+  _TxSort _sortBy = _TxSort.time;
+
+  List<ProjectTxTree> _filteredSorted() {
+    var list = widget.trees.where((t) {
+      if (_filterType != null && t.parent.type != _filterType) return false;
+      if (_filterMine) {
+        final my = widget.myMemberId;
+        if (my == null) return false;
+        final involved = t.parent.transactionMemberId == my ||
+            t.children.any((c) => c.transactionMemberId == my);
+        if (!involved) return false;
+      }
+      return true;
+    }).toList();
+
+    list.sort((a, b) {
+      switch (_sortBy) {
+        case _TxSort.time:
+          return b.parent.date.compareTo(a.parent.date);
+        case _TxSort.amount:
+          return b.parent.amount.compareTo(a.parent.amount);
+        case _TxSort.member:
+          return widget
+              .memberLookup(a.parent.transactionMemberId)
+              .displayName
+              .compareTo(widget
+                  .memberLookup(b.parent.transactionMemberId)
+                  .displayName);
+        case _TxSort.description:
+          return (a.parent.description ?? '')
+              .compareTo(b.parent.description ?? '');
+        case _TxSort.category:
+          return (a.parent.categoryName ?? '')
+              .compareTo(b.parent.categoryName ?? '');
+      }
+    });
+    return list;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final s = summary;
+    final s = widget.summary;
     final scheme = Theme.of(context).colorScheme;
     final activeMembers =
-        members.where((m) => m.status != MemberStatus.left).toList();
+        widget.members.where((m) => m.status != MemberStatus.left).toList();
     final visibleCount = activeMembers.length.clamp(0, 6);
     final overflow = activeMembers.length - 5;
+    final displayTrees = _filteredSorted();
+
+    final projIconPreset = widget.projectIconId != null
+        ? CategoryIconPreset.byId(widget.projectIconId!)
+        : null;
+    final projColor = widget.projectColorId != null
+        ? CategoryColor.byId(widget.projectColorId!).color
+        : null;
 
     return RefreshIndicator(
-      onRefresh: onChanged,
+      onRefresh: widget.onChanged,
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -403,17 +468,38 @@ class _ProjectDashboard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    projectName,
-                    style: Theme.of(context).textTheme.titleLarge,
+                  // Project name + icon
+                  Row(
+                    children: [
+                      if (projIconPreset != null) ...[
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: (projColor ?? scheme.primary)
+                              .withValues(alpha: 0.18),
+                          child: Icon(
+                            projIconPreset.icon,
+                            color: projColor ?? scheme.primary,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      Expanded(
+                        child: Text(
+                          widget.projectName,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                    ],
                   ),
                   Builder(builder: (_) {
                     final parts = [
-                      if (projectType != null && projectType!.isNotEmpty)
-                        projectType!,
-                      if (projectDescription != null &&
-                          projectDescription!.isNotEmpty)
-                        projectDescription!,
+                      if (widget.projectType != null &&
+                          widget.projectType!.isNotEmpty)
+                        widget.projectType!,
+                      if (widget.projectDescription != null &&
+                          widget.projectDescription!.isNotEmpty)
+                        widget.projectDescription!,
                     ];
                     if (parts.isEmpty) return const SizedBox.shrink();
                     return Padding(
@@ -433,7 +519,7 @@ class _ProjectDashboard extends StatelessWidget {
                         child: _StatCard(
                           label: 'Expense',
                           value: s != null
-                              ? _fmtCurrency(s.totalExpense, currency)
+                              ? _fmtCurrency(s.totalExpense, widget.currency)
                               : '—',
                           valueColor: scheme.error,
                         ),
@@ -443,7 +529,7 @@ class _ProjectDashboard extends StatelessWidget {
                         child: _StatCard(
                           label: 'Income',
                           value: s != null
-                              ? _fmtCurrency(s.totalIncome, currency)
+                              ? _fmtCurrency(s.totalIncome, widget.currency)
                               : '—',
                           valueColor: Colors.green,
                         ),
@@ -455,7 +541,7 @@ class _ProjectDashboard extends StatelessWidget {
                     children: [
                       GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: () => onMembersTap(),
+                        onTap: () => widget.onMembersTap(),
                         child: Text(
                           'Members',
                           style:
@@ -465,9 +551,9 @@ class _ProjectDashboard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      if (isOwner)
+                      if (widget.isOwner)
                         GestureDetector(
-                          onTap: () => onAddMember(),
+                          onTap: () => widget.onAddMember(),
                           child: Padding(
                             padding: const EdgeInsets.all(4),
                             child: Icon(Icons.person_add_alt_1,
@@ -480,7 +566,7 @@ class _ProjectDashboard extends StatelessWidget {
                   if (activeMembers.isNotEmpty)
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () => onMembersTap(),
+                      onTap: () => widget.onMembersTap(),
                       child: Row(
                         children: [
                           for (int i = 0; i < visibleCount; i++) ...[
@@ -516,8 +602,99 @@ class _ProjectDashboard extends StatelessWidget {
               ),
             ),
           ),
+          // ── Filter + sort bar ──────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    FilterChip(
+                      label: const Text('All'),
+                      selected: _filterType == null,
+                      onSelected: (_) =>
+                          setState(() => _filterType = null),
+                    ),
+                    const SizedBox(width: 6),
+                    FilterChip(
+                      label: const Text('Expense'),
+                      selected: _filterType == 'expense',
+                      onSelected: (_) => setState(() =>
+                          _filterType =
+                              _filterType == 'expense' ? null : 'expense'),
+                    ),
+                    const SizedBox(width: 6),
+                    FilterChip(
+                      label: const Text('Income'),
+                      selected: _filterType == 'income',
+                      onSelected: (_) => setState(() =>
+                          _filterType =
+                              _filterType == 'income' ? null : 'income'),
+                    ),
+                    const SizedBox(width: 6),
+                    FilterChip(
+                      label: const Text('Only me'),
+                      selected: _filterMine,
+                      onSelected: (v) => setState(() => _filterMine = v),
+                    ),
+                    const SizedBox(width: 12),
+                    const VerticalDivider(width: 1, indent: 4, endIndent: 4),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<_TxSort>(
+                      tooltip: 'Sort',
+                      initialValue: _sortBy,
+                      onSelected: (v) => setState(() => _sortBy = v),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                            value: _TxSort.time, child: Text('Sort by time')),
+                        PopupMenuItem(
+                            value: _TxSort.amount,
+                            child: Text('Sort by amount')),
+                        PopupMenuItem(
+                            value: _TxSort.member,
+                            child: Text('Sort by member')),
+                        PopupMenuItem(
+                            value: _TxSort.description,
+                            child: Text('Sort by description')),
+                        PopupMenuItem(
+                            value: _TxSort.category,
+                            child: Text('Sort by category')),
+                      ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.sort,
+                              size: 16,
+                              color: _sortBy != _TxSort.time
+                                  ? scheme.primary
+                                  : scheme.onSurfaceVariant),
+                          const SizedBox(width: 4),
+                          Text(
+                            switch (_sortBy) {
+                              _TxSort.time => 'Time',
+                              _TxSort.amount => 'Amount',
+                              _TxSort.member => 'Member',
+                              _TxSort.description => 'Description',
+                              _TxSort.category => 'Category',
+                            },
+                            style:
+                                Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      color: _sortBy != _TxSort.time
+                                          ? scheme.primary
+                                          : scheme.onSurfaceVariant,
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const SliverToBoxAdapter(child: Divider(height: 1)),
-          if (trees.isEmpty)
+          if (displayTrees.isEmpty)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 80),
@@ -530,17 +707,18 @@ class _ProjectDashboard extends StatelessWidget {
                 (context, i) => Column(
                   children: [
                     _TxTreeTile(
-                      tree: trees[i],
-                      memberLookup: memberLookup,
-                      myMemberId: myMemberId,
-                      projectId: projectId,
-                      isLocked: isLocked,
-                      onChanged: onChanged,
+                      tree: displayTrees[i],
+                      members: widget.members,
+                      memberLookup: widget.memberLookup,
+                      myMemberId: widget.myMemberId,
+                      projectId: widget.projectId,
+                      isLocked: widget.isLocked,
+                      onChanged: widget.onChanged,
                     ),
                     const Divider(height: 1),
                   ],
                 ),
-                childCount: trees.length,
+                childCount: displayTrees.length,
               ),
             ),
         ],
@@ -588,6 +766,7 @@ class _StatCard extends StatelessWidget {
 class _TxTreeTile extends StatelessWidget {
   const _TxTreeTile({
     required this.tree,
+    required this.members,
     required this.memberLookup,
     required this.myMemberId,
     required this.projectId,
@@ -595,6 +774,7 @@ class _TxTreeTile extends StatelessWidget {
     required this.onChanged,
   });
   final ProjectTxTree tree;
+  final List<ProjectMember> members;
   final ProjectMember Function(String memberId) memberLookup;
   final String? myMemberId;
   final String projectId;
@@ -946,6 +1126,25 @@ class _TxTreeTile extends StatelessWidget {
               ),
             if (canDelete)
               ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Edit transaction'),
+                onTap: () async {
+                  Navigator.pop(sheetCtx);
+                  final updated = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProjectTransactionEditPage(
+                        projectId: projectId,
+                        tree: tree,
+                        members: members,
+                      ),
+                    ),
+                  );
+                  if (updated == true && context.mounted) await onChanged();
+                },
+              ),
+            if (canDelete)
+              ListTile(
                 leading:
                     const Icon(Icons.delete_outline, color: Colors.redAccent),
                 title: const Text('Delete row',
@@ -1224,6 +1423,7 @@ enum _ResolveMode { asTransaction, asDebt }
 class _ResolveSheetState extends State<_ResolveSheet> {
   _ResolveMode _mode = _ResolveMode.asTransaction;
   String? _accountId;
+  String? _categoryId;
   bool _useFullAmount = true; // parent-only: full vs post-split
   bool _saving = false;
   String? _error;
@@ -1235,6 +1435,7 @@ class _ResolveSheetState extends State<_ResolveSheet> {
     if (accountsCubit.state.accounts.isEmpty) {
       accountsCubit.load();
     }
+    context.read<CategoriesCubit>().loadIfNeeded();
   }
 
   double get _amount {
@@ -1282,6 +1483,7 @@ class _ResolveSheetState extends State<_ResolveSheet> {
               amount: _amount,
               date: widget.tx.date,
               note: widget.tx.note,
+              categoryId: _categoryId,
               sourceProjectTransactionId: widget.tx.id,
             );
       } else {
@@ -1307,6 +1509,13 @@ class _ResolveSheetState extends State<_ResolveSheet> {
   @override
   Widget build(BuildContext context) {
     final accounts = context.watch<AccountsCubit>().state.accounts;
+    final allCategories =
+        context.watch<CategoriesCubit>().state.categories;
+    final matchType = _txType == TransactionType.expense
+        ? CategoryType.expense
+        : CategoryType.income;
+    final categories =
+        allCategories.where((c) => c.type == matchType).toList();
     final canPickDebt = !widget.isParent;
     return Padding(
       padding: EdgeInsets.only(
@@ -1349,7 +1558,7 @@ class _ResolveSheetState extends State<_ResolveSheet> {
           ],
           Text('Amount: ${_fmtCurrency(_amount, widget.tx.currency)}'),
           const SizedBox(height: 12),
-          if (_mode == _ResolveMode.asTransaction)
+          if (_mode == _ResolveMode.asTransaction) ...[
             DropdownButtonFormField<String>(
               initialValue: _accountId,
               decoration:
@@ -1359,8 +1568,24 @@ class _ResolveSheetState extends State<_ResolveSheet> {
                       DropdownMenuItem(value: a.id, child: Text(a.name)))
                   .toList(),
               onChanged: (v) => setState(() => _accountId = v),
-            )
-          else
+            ),
+            if (categories.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: categories.any((c) => c.id == _categoryId)
+                    ? _categoryId
+                    : null,
+                decoration:
+                    const InputDecoration(labelText: 'Category (optional)'),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('— none —')),
+                  for (final c in categories)
+                    DropdownMenuItem(value: c.id, child: Text(c.name)),
+                ],
+                onChanged: (v) => setState(() => _categoryId = v),
+              ),
+            ],
+          ] else
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.handshake_outlined),

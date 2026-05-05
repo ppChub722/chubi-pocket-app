@@ -116,7 +116,12 @@ class _ProjectRow extends StatelessWidget {
       subtitle: Text(
           '${project.membersCount} member${project.membersCount == 1 ? '' : 's'} · ${project.status.wire}'),
       trailing: project.isLocked ? const Icon(Icons.lock_outline) : null,
-      onTap: () => context.push('/projects/${project.id}'),
+      onTap: () async {
+        await context.push('/projects/${project.id}');
+        if (context.mounted) {
+          context.read<ProjectsCubit>().load();
+        }
+      },
     );
   }
 }
