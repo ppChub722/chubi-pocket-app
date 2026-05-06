@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../data/projects_repository.dart';
 import '../cubit/projects_cubit.dart';
 
@@ -56,8 +56,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   Future<void> _pickIcon() async {
     final result = await showIconMakerSheet(
       context: context,
-      iconIds: IconRegistry.categoryIconIds,
-      style: IconMakerStyle.background,
+      type: IconType.project,
       initial: _iconCode,
     );
     if (!mounted || result == null) return;
@@ -106,7 +105,6 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(_isEdit ? 'Edit project' : 'New project')),
       body: Form(
@@ -135,11 +133,10 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: IconCodeWidget(
-                iconCode: _iconCode,
+              leading: IconDisplay(
+                type: IconType.project,
                 size: 40,
-                fallbackIcon: Icons.folder_shared_outlined,
-                fallbackColor: scheme.onSurfaceVariant,
+                iconCode: _iconCode,
               ),
               title: Text(_iconCode != null ? 'Project icon set' : 'Project icon'),
               subtitle: Text(_iconCode != null

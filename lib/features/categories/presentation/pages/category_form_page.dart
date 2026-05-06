@@ -7,7 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
@@ -304,8 +304,7 @@ class _CategoryFormPageState extends State<CategoryFormPage> {
 
     final result = await showIconMakerSheet(
       context: context,
-      iconIds: IconRegistry.categoryIconIds,
-      style: IconMakerStyle.background,
+      type: IconType.category,
       initial: displayIconCode,
       iconSectionLabel: l.categoryFormIconLabel,
       colorSectionLabel: l.categoryFormColorLabel,

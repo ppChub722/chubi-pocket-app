@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/domain/account.dart';
@@ -54,6 +55,7 @@ class _AccountPickerBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
     final visible = excludeId == null
         ? accounts
         : accounts.where((a) => a.id != excludeId).toList();
@@ -91,7 +93,8 @@ class _AccountPickerBody extends StatelessWidget {
                   final isSelected = a.id == selected?.id;
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: a.iconCode?.resolvedBgColor ?? Colors.grey,
+                      backgroundColor:
+                          a.iconCode?.bgColorFor(palette) ?? scheme.outline,
                       child: Icon(IconRegistry.get(a.iconCode?.icon, fallback: Icons.account_balance_wallet_outlined), color: Colors.white, size: 20),
                     ),
                     title: Text(a.name),

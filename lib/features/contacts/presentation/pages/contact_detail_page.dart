@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
@@ -89,11 +90,10 @@ class _ContactBody extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         Center(
-          child: CircleAvatar(
-            radius: 36,
-            child: Text(contact.effectiveName.isNotEmpty
-                ? contact.effectiveName[0].toUpperCase()
-                : '?'),
+          child: UserAvatar(
+            displayName: contact.effectiveName,
+            iconCode: contact.effectiveIconCode,
+            size: 72,
           ),
         ),
         const SizedBox(height: 16),

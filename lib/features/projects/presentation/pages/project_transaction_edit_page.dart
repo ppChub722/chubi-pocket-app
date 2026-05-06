@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 
@@ -100,8 +102,7 @@ class _ProjectTransactionEditPageState
   Future<void> _pickCategoryIcon() async {
     final result = await showIconMakerSheet(
       context: context,
-      iconIds: IconRegistry.categoryIconIds,
-      style: IconMakerStyle.background,
+      type: IconType.projectTransaction,
       initial: _categoryIconCode,
     );
     if (!mounted || result == null) return;
@@ -166,7 +167,8 @@ class _ProjectTransactionEditPageState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final catBg = _categoryIconCode?.resolvedBgColor;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final catBg = _categoryIconCode?.bgColorFor(palette);
     final catIcon = IconRegistry.get(
       _categoryIconCode?.icon,
       fallback: Icons.category_outlined,

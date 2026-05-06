@@ -14,7 +14,9 @@ import '../../../transactions/domain/transactions_summary.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../cubit/accounts_cubit.dart';
 
 /// Account detail — Phase 0 mock implementation.
@@ -254,32 +256,38 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final accent =
+        account.iconCode?.accentColorFor(palette) ?? palette.primary;
     return Card(
       clipBehavior: Clip.antiAlias,
       color: scheme.surfaceContainer,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: account.iconCode?.accentColor ?? Colors.grey, width: 1.5),
+        side: BorderSide(color: accent, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: account.iconCode?.resolvedBgColor ?? Colors.grey,
-                shape: BoxShape.circle,
+            // Tap the icon to jump straight to the edit form (where the
+            // IconMaker picker is wired). Same destination as the overflow
+            // menu's "Edit" item.
+            InkWell(
+              onTap: () => context.push('/accounts/${account.id}/edit'),
+              borderRadius: BorderRadius.circular(28),
+              child: IconDisplay(
+                type: IconType.account,
+                size: 56,
+                iconCode: account.iconCode,
               ),
-              child: Icon(IconRegistry.get(account.iconCode?.icon, fallback: Icons.account_balance_wallet_outlined), size: 30, color: Colors.white),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
               CurrencyFormatter.format(account.balance),
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: account.iconCode?.accentColor ?? Colors.grey,
+                    color: accent,
                     fontWeight: FontWeight.w700,
                   ),
             ),
@@ -298,8 +306,7 @@ class _Header extends StatelessWidget {
                   value: account.creditUtilization,
                   minHeight: 6,
                   backgroundColor: scheme.surfaceContainerHighest,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(account.iconCode?.accentColor ?? Colors.grey),
+                  valueColor: AlwaysStoppedAnimation<Color>(accent),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),

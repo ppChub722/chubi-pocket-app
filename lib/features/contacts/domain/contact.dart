@@ -15,6 +15,7 @@ class Contact extends Equatable {
     this.notes,
     this.iconCode,
     this.linkedUserId,
+    this.linkedUserIconCode,
     this.lastUsedAt,
   });
 
@@ -26,12 +27,20 @@ class Contact extends Equatable {
   final String? notes;
   final IconCode? iconCode;
   final String? linkedUserId;
+  /// Snapshot of the linked user's profile icon at read time (server-projected
+  /// from `users.icon_code` when `linked_user_id` is set). Null when the
+  /// contact isn't linked or the linked user hasn't set one.
+  final IconCode? linkedUserIconCode;
   final ContactStatus status;
   final DateTime? lastUsedAt;
 
   bool get isLinked => linkedUserId != null;
   bool get isArchived => status == ContactStatus.archived;
   String get effectiveName => displayName;
+
+  /// Display precedence per spec §4.4: linked user's icon wins over the
+  /// contact's own icon. (avatar_url was dropped in migration 33.)
+  IconCode? get effectiveIconCode => linkedUserIconCode ?? iconCode;
 
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
@@ -45,6 +54,10 @@ class Contact extends Equatable {
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
       linkedUserId: json['linked_user_id'] as String?,
+      linkedUserIconCode: json['linked_user_icon_code'] != null
+          ? IconCode.fromJson(
+              json['linked_user_icon_code'] as Map<String, dynamic>)
+          : null,
       status: (json['status'] as String?) == 'archived'
           ? ContactStatus.archived
           : ContactStatus.active,
@@ -61,6 +74,7 @@ class Contact extends Equatable {
     String? notes,
     IconCode? iconCode,
     String? linkedUserId,
+    IconCode? linkedUserIconCode,
     ContactStatus? status,
     DateTime? lastUsedAt,
     bool clearLinkedUserId = false,
@@ -75,6 +89,9 @@ class Contact extends Equatable {
       iconCode: iconCode ?? this.iconCode,
       linkedUserId:
           clearLinkedUserId ? null : (linkedUserId ?? this.linkedUserId),
+      linkedUserIconCode: clearLinkedUserId
+          ? null
+          : (linkedUserIconCode ?? this.linkedUserIconCode),
       status: status ?? this.status,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
     );
@@ -90,6 +107,7 @@ class Contact extends Equatable {
         notes,
         iconCode,
         linkedUserId,
+        linkedUserIconCode,
         status,
         lastUsedAt,
       ];

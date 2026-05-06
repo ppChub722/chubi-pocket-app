@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../icon_maker/icon_code.dart';
-import '../icon_maker/icon_code_widget.dart';
+import '../icon_maker/icon_display.dart';
+import '../icon_maker/icon_type.dart';
 
 /// Circular avatar.
 ///
@@ -39,10 +40,10 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (iconCode != null) {
-      return IconCodeWidget(
-        iconCode: iconCode,
+      return IconDisplay(
+        type: IconType.userProfile,
         size: size,
-        fallbackIcon: Icons.person_outline,
+        iconCode: iconCode,
       );
     }
     final initials = _initialsOf(displayName);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../shared/widgets/user_avatar.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 
@@ -95,12 +96,9 @@ class _ContactRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: CircleAvatar(
-        child: Text(
-          contact.effectiveName.isNotEmpty
-              ? contact.effectiveName[0].toUpperCase()
-              : '?',
-        ),
+      leading: UserAvatar(
+        displayName: contact.effectiveName,
+        iconCode: contact.effectiveIconCode,
       ),
       title: Text(contact.effectiveName),
       subtitle: Text([

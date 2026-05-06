@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../domain/tag.dart';
@@ -27,7 +28,8 @@ class TagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final color = tag.iconCode?.accentColor ?? const Color(0xFF64B5F6);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final color = tag.iconCode?.accentColorFor(palette) ?? palette.primary;
     final scheme = Theme.of(context).colorScheme;
     final usageLabel = l.tagsUsageCount(tag.usageCount);
     final iconData = IconRegistry.get(tag.iconCode?.icon, fallback: Icons.label_outline);

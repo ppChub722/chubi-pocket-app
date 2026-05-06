@@ -14,7 +14,8 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/reorder_action_bar.dart';
 import '../../../../shared/widgets/reorder_drop_line.dart';
-import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/reorder_mode_tilt.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
@@ -1011,10 +1012,10 @@ class _IconCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final circle = IconCodeWidget(
-      iconCode: category.iconCode,
+    final circle = IconDisplay(
+      type: IconType.category,
       size: 36,
-      fallbackIcon: Icons.category_outlined,
+      iconCode: category.iconCode,
     );
     if (!reorderMode) return circle;
     // Reorder mode visual cue is shared across reorderable surfaces.
@@ -1083,10 +1084,10 @@ class _DragProxy extends StatelessWidget {
               horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
           child: Row(
             children: [
-              IconCodeWidget(
-                iconCode: category.iconCode,
+              IconDisplay(
+                type: IconType.category,
                 size: 36,
-                fallbackIcon: Icons.category_outlined,
+                iconCode: category.iconCode,
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(

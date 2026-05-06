@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/domain/account.dart';
@@ -674,6 +675,7 @@ class _AccountTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
     return Material(
       color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
       borderRadius: BorderRadius.circular(8),
@@ -688,7 +690,8 @@ class _AccountTile extends StatelessWidget {
               if (account != null)
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: account!.iconCode?.resolvedBgColor ?? Colors.grey,
+                  backgroundColor:
+                      account!.iconCode?.bgColorFor(palette) ?? scheme.outline,
                   child: Icon(IconRegistry.get(account!.iconCode?.icon, fallback: Icons.account_balance_wallet_outlined), color: Colors.white, size: 14),
                 )
               else
@@ -737,6 +740,7 @@ class _CategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
     return Material(
       color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
       borderRadius: BorderRadius.circular(8),
@@ -751,7 +755,8 @@ class _CategoryTile extends StatelessWidget {
               if (category != null)
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: category!.iconCode?.resolvedBgColor ?? Colors.grey,
+                  backgroundColor:
+                      category!.iconCode?.bgColorFor(palette) ?? scheme.outline,
                   child: Icon(IconRegistry.get(category!.iconCode?.icon, fallback: Icons.category_outlined), color: Colors.white, size: 14),
                 )
               else
@@ -890,6 +895,7 @@ class _TagChipsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
     return BlocBuilder<TagsCubit, TagsState>(
       builder: (context, state) {
         final tags = state.tags;
@@ -933,7 +939,7 @@ class _TagChipsRow extends StatelessWidget {
                         avatar: Icon(IconRegistry.get(t.iconCode?.icon, fallback: Icons.label_outline), size: 16),
                         selected: selectedIds.contains(t.id),
                         onSelected: (_) => onToggle(t.id),
-                        selectedColor: (t.iconCode?.accentColor ?? Colors.grey).withValues(alpha: 0.35),
+                        selectedColor: (t.iconCode?.accentColorFor(palette) ?? palette.primary).withValues(alpha: 0.35),
                       ),
                   ],
                 ),

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 /// Maps every stable icon ID to its [IconData].
 ///
 /// IDs are persisted server-side in `icon_code.icon` — never rename them.
-/// When two presets used the same ID with different [IconData], the
-/// majority-wins rule applies (or outlined variant for consistency).
+/// Per-domain icon lists have moved to `packs/base/pack_*.dart`.
+/// When adding a new icon: add the ID here in [_all] and reference it in the
+/// relevant pack file.
 class IconRegistry {
   IconRegistry._();
 
@@ -12,117 +13,6 @@ class IconRegistry {
     if (id == null) return fallback;
     return _all[id] ?? fallback;
   }
-
-  // ── Per-domain lists of pickable IDs ──────────────────────────────────────
-
-  static const List<String> accountIconIds = [
-    'wallet',
-    'cash',
-    'bank',
-    'savings',
-    'card',
-    'contactless_card',
-    'e_wallet',
-    'gift_card',
-    'travel',
-    'shopping',
-    'business',
-    'loan',
-  ];
-
-  static const List<String> categoryIconIds = [
-    // Food & Drinks
-    'restaurant',
-    'shopping_basket',
-    'delivery_dining',
-    'convenience_store',
-    'restaurant_menu',
-    // Transportation
-    'directions_car',
-    'local_gas_station',
-    'local_parking',
-    'directions_bus',
-    'local_taxi',
-    'car_repair',
-    'policy',
-    // Shopping
-    'shopping_bag',
-    'checkroom',
-    'headphones',
-    'tv',
-    'face_retouching',
-    'cleaning_services',
-    'palette',
-    // Bills
-    'receipt_long',
-    'home',
-    'wifi',
-    // Services
-    'handshake',
-    'subscriptions',
-    'spa',
-    'fitness_center',
-    // Health
-    'local_hospital',
-    'medical_services',
-    'visibility',
-    // Entertainment
-    'movie',
-    'sports_esports',
-    'theaters',
-    'nightlife',
-    'flight',
-    // Investments
-    'trending_up',
-    'savings',
-    'casino',
-    // Debt
-    'credit_card',
-    'schedule',
-    // Other
-    'more_horiz',
-    'tune',
-    'volunteer_activism',
-    'category',
-    // Income
-    'payments',
-    'work',
-    'storefront',
-    'swap_horiz',
-    'redeem',
-  ];
-
-  static const List<String> userIconIds = [
-    'person',
-    'man',
-    'woman',
-    'face_smile',
-    'bakery_dining',
-    'fitness_center',
-    'work',
-    'star',
-  ];
-
-  static const List<String> tagIconIds = [
-    'label',
-    'flag',
-    'star',
-    'favorite',
-    'bolt',
-    'swap_horiz',
-    'card_giftcard',
-    'subscriptions',
-    'flight',
-    'work_outline',
-    'schedule',
-    'local_offer',
-    'sell',
-    'emoji_events',
-    'redeem',
-    'savings',
-  ];
-
-  // ── Full map ───────────────────────────────────────────────────────────────
 
   static const Map<String, IconData> _all = {
     // accounts
@@ -224,6 +114,20 @@ class IconRegistry {
     'local_offer': Icons.local_offer_outlined,
     'sell': Icons.sell_outlined,
     'emoji_events': Icons.emoji_events_outlined,
+
+    // projects
+    'folder': Icons.folder_outlined,
+    'folder_open': Icons.folder_open,
+    'groups': Icons.groups,
+    'campaign': Icons.campaign,
+
+    // contacts
+    'contact_page': Icons.contact_page_outlined,
+    'apartment': Icons.apartment,
+    'badge': Icons.badge,
+
+    // project members
+    'engineering': Icons.engineering,
 
     // system (not pickable — used by seed categories)
     'system_transfer': Icons.swap_vert,

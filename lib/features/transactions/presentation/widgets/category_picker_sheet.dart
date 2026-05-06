@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
@@ -203,6 +204,7 @@ class _CategoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -216,7 +218,8 @@ class _CategoryRow extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: category.iconCode?.resolvedBgColor ?? Colors.grey,
+              backgroundColor:
+                  category.iconCode?.bgColorFor(palette) ?? scheme.outline,
               child: Icon(IconRegistry.get(category.iconCode?.icon, fallback: Icons.category_outlined), color: Colors.white, size: 16),
             ),
             const SizedBox(width: AppSpacing.md),

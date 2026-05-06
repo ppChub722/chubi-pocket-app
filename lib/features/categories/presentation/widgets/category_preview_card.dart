@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/editable_circle.dart';
 import '../../domain/category.dart';
 
@@ -24,7 +26,9 @@ class CategoryPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final accent = category.iconCode?.accentColor ?? const Color(0xFF64B5F6);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final accent =
+        category.iconCode?.accentColorFor(palette) ?? palette.primary;
     return Card(
       clipBehavior: Clip.antiAlias,
       color: scheme.surfaceContainer,
@@ -39,10 +43,10 @@ class CategoryPreviewCard extends StatelessWidget {
             EditableCircle(
               size: 44,
               onTap: onIconTap,
-              child: IconCodeWidget(
-                iconCode: category.iconCode,
+              child: IconDisplay(
+                type: IconType.category,
                 size: 44,
-                fallbackIcon: Icons.category_outlined,
+                iconCode: category.iconCode,
               ),
             ),
             const SizedBox(width: AppSpacing.md),

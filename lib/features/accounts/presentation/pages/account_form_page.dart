@@ -8,7 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
@@ -394,8 +394,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   Future<void> _openIconMaker(BuildContext context, AppLocalizations l) async {
     final result = await showIconMakerSheet(
       context: context,
-      iconIds: IconRegistry.accountIconIds,
-      style: IconMakerStyle.background,
+      type: IconType.account,
       initial: _iconCode,
       iconSectionLabel: l.accountFormIconLabel,
       colorSectionLabel: l.accountFormColorLabel,

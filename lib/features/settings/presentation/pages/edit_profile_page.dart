@@ -7,7 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/editable_circle.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../../shared/widgets/user_profile_preview.dart';
@@ -114,8 +114,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         : _displayNameCtrl.text.trim();
     final result = await showIconMakerSheet(
       context: context,
-      iconIds: IconRegistry.userIconIds,
-      style: IconMakerStyle.background,
+      type: IconType.userProfile,
       initial: _iconCode,
       iconSectionLabel: l.avatarPickerStyleLabel,
       colorSectionLabel: l.avatarPickerColorLabel,

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/empty_view.dart';
@@ -340,10 +341,13 @@ class _FilterBar extends StatelessWidget {
         onPressed: onPickCategory,
       );
     }
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final scheme = Theme.of(context).colorScheme;
     return InputChip(
       avatar: CircleAvatar(
         radius: 12,
-        backgroundColor: categoryFilter!.iconCode?.resolvedBgColor ?? Colors.grey,
+        backgroundColor:
+            categoryFilter!.iconCode?.bgColorFor(palette) ?? scheme.outline,
         child: Icon(
           IconRegistry.get(categoryFilter!.iconCode?.icon, fallback: Icons.category_outlined),
           color: Colors.white,
@@ -478,6 +482,7 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
     final signed = tx.signedAmount;
     final color = signed > 0 ? Colors.green.shade400 : scheme.error;
     final sign = signed > 0 ? '+' : (signed < 0 ? '−' : '');
@@ -492,7 +497,7 @@ class _Row extends StatelessWidget {
       TransactionType.income => Colors.green.shade400,
       _ => scheme.onSurfaceVariant,
     };
-    final iconColor = cat?.iconCode?.accentColor ?? fallbackColor;
+    final iconColor = cat?.iconCode?.accentColorFor(palette) ?? fallbackColor;
 
     return InkWell(
       onTap: () => context.push('/transactions/${tx.id}'),

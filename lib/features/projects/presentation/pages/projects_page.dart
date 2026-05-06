@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 
@@ -96,10 +97,10 @@ class _ProjectRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: IconCodeWidget(
-        iconCode: project.iconCode,
+      leading: IconDisplay(
+        type: IconType.project,
         size: 40,
-        fallbackIcon: Icons.folder_shared_outlined,
+        iconCode: project.iconCode,
       ),
       title: Text(project.name),
       subtitle: Text(

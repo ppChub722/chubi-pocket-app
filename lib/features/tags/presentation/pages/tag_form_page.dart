@@ -7,7 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
 import '../widgets/tag_chip.dart';
@@ -140,8 +140,7 @@ class _TagFormPageState extends State<TagFormPage> {
   Future<void> _openIconMaker(BuildContext context, AppLocalizations l) async {
     final result = await showIconMakerSheet(
       context: context,
-      iconIds: IconRegistry.tagIconIds,
-      style: IconMakerStyle.iconColor,
+      type: IconType.tag,
       initial: _iconCode,
       iconSectionLabel: l.tagFormIconLabel,
       colorSectionLabel: l.tagFormColorLabel,

@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import 'color_token.dart';
+
 /// Unified icon descriptor stored as JSONB on the server.
 ///
 /// Shape mirrors the BE `icon_code` column:
@@ -27,17 +30,37 @@ class IconCode extends Equatable {
   final List<String> borderColors;
 
   Color? get resolvedBgColor =>
-      bgColors.isNotEmpty ? _hexToColor(bgColors.first) : null;
+      bgColors.isNotEmpty ? hexToColor(bgColors.first) : null;
 
   Color? get resolvedIconColor =>
-      iconColors.isNotEmpty ? _hexToColor(iconColors.first) : null;
+      iconColors.isNotEmpty ? hexToColor(iconColors.first) : null;
 
   /// The accent used for card borders, balance text, and chip tints.
   /// Falls back to brand blue when neither colour slot is set.
+  ///
+  /// **Hex-only.** Theme-token specs (`@presetThemeColor1`, …) cannot be
+  /// resolved without a palette and will fall back to brand blue. Callers
+  /// that may receive token-bearing codes should use [accentColorFor].
   Color get accentColor =>
       resolvedBgColor ?? resolvedIconColor ?? const Color(0xFF64B5F6);
 
-  static Color _hexToColor(String hex) {
+  /// Theme-aware accent. Resolves the first non-empty colour slot through
+  /// [palette] so `@presetTheme*` tokens follow the active theme.
+  /// Used by card borders, balance text, etc. on screens that read from
+  /// saved icon codes which may now contain tokens.
+  Color accentColorFor(AppColors palette) {
+    if (bgColors.isNotEmpty) return resolveColor(bgColors.first, palette);
+    if (iconColors.isNotEmpty) return resolveColor(iconColors.first, palette);
+    return palette.primary;
+  }
+
+  /// Theme-aware background colour. Token-aware replacement for
+  /// [resolvedBgColor]. Returns `null` when no bg slot is set so callers
+  /// can fall through to their own neutral default.
+  Color? bgColorFor(AppColors palette) =>
+      bgColors.isNotEmpty ? resolveColor(bgColors.first, palette) : null;
+
+  static Color hexToColor(String hex) {
     final cleaned = hex.replaceFirst('#', '');
     final value = int.tryParse(cleaned, radix: 16);
     if (value == null) return const Color(0xFF64B5F6);

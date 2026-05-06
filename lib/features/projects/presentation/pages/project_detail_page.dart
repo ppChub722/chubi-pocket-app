@@ -4,10 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
@@ -464,10 +466,10 @@ class _ProjectDashboardState extends State<_ProjectDashboard> {
                   Row(
                     children: [
                       if (widget.projectIconCode != null) ...[
-                        IconCodeWidget(
-                          iconCode: widget.projectIconCode,
+                        IconDisplay(
+                          type: IconType.project,
                           size: 36,
-                          fallbackIcon: Icons.folder_shared_outlined,
+                          iconCode: widget.projectIconCode,
                         ),
                         const SizedBox(width: 10),
                       ],
@@ -780,7 +782,8 @@ class _TxTreeTile extends StatelessWidget {
         isExpense ? Theme.of(context).colorScheme.error : Colors.green;
     final sign = isExpense ? '−' : '+';
     final formattedAmount = '$sign${_fmtCurrency(parent.amount, parent.currency)}';
-    final catBg = parent.categoryIconCode?.resolvedBgColor;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final catBg = parent.categoryIconCode?.bgColorFor(palette);
     final catIcon = IconRegistry.get(parent.categoryIconCode?.icon,
         fallback: isExpense ? Icons.remove : Icons.add);
 
@@ -989,7 +992,8 @@ class _TxTreeTile extends StatelessWidget {
     final isExpense = tx.type == 'expense';
     final canResolve = _canResolve(tx,
         isParent: isParent, parent: parent, parentActor: parentActor);
-    final menuCatBg = tx.categoryIconCode?.resolvedBgColor;
+    final menuPalette = Theme.of(context).extension<AppColors>()!;
+    final menuCatBg = tx.categoryIconCode?.bgColorFor(menuPalette);
     final menuCatIcon = IconRegistry.get(tx.categoryIconCode?.icon,
         fallback: isExpense ? Icons.remove : Icons.add);
     final menuAmountColor =
@@ -1820,10 +1824,10 @@ class _MemberAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (member.iconCode != null) {
-      return IconCodeWidget(
-        iconCode: member.iconCode,
+      return IconDisplay(
+        type: IconType.projectMember,
         size: radius * 2,
-        fallbackIcon: Icons.person_outline,
+        iconCode: member.iconCode,
       );
     }
     final initial = member.displayName.isNotEmpty

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_code_widget.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/editable_circle.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
@@ -29,7 +31,9 @@ class AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final accent = account.iconCode?.accentColor ?? const Color(0xFF64B5F6);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final accent =
+        account.iconCode?.accentColorFor(palette) ?? palette.primary;
     return Card(
       clipBehavior: Clip.antiAlias,
       color: scheme.surfaceContainer,
@@ -58,7 +62,9 @@ class _HorizontalLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final accent = account.iconCode?.accentColor ?? const Color(0xFF64B5F6);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final accent =
+        account.iconCode?.accentColorFor(palette) ?? palette.primary;
     final desc = account.description?.trim();
     final note = account.note?.trim();
     final hasDesc = desc != null && desc.isNotEmpty;
@@ -145,7 +151,9 @@ class _VerticalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = account.iconCode?.accentColor ?? const Color(0xFF64B5F6);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final accent =
+        account.iconCode?.accentColorFor(palette) ?? palette.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -201,10 +209,10 @@ class _IconCircle extends StatelessWidget {
     return EditableCircle(
       size: size,
       onTap: onTap,
-      child: IconCodeWidget(
-        iconCode: account.iconCode,
+      child: IconDisplay(
+        type: IconType.account,
         size: size,
-        fallbackIcon: Icons.account_balance_wallet,
+        iconCode: account.iconCode,
       ),
     );
   }
