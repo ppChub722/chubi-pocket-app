@@ -18,12 +18,12 @@ import '../../l10n/gen/app_localizations.dart';
 ///    Categories, Tags.
 /// 2. **People & Money flow** — collaboration / IOU tracking.
 ///    Contacts, Projects, Debts.
-/// 3. **Notifications** — alerts about shared state.
-/// 4. **Planning** — forward-looking allocations & schedules.
+/// 3. **Planning** — forward-looking allocations & schedules.
 ///    Budgets, Saving goals, Scheduled.
 ///
-/// Profile / Settings / Logout intentionally do NOT live here — they
-/// live behind the avatar tap in the top bar (`/settings`).
+/// Notifications: reachable from the bell in the top bar, intentionally
+/// not duplicated here. Profile / Settings / Logout: behind the avatar
+/// tap in the top bar (`/settings`).
 class MoreMenuSheet extends StatelessWidget {
   const MoreMenuSheet({super.key});
 
@@ -77,28 +77,23 @@ class MoreMenuSheet extends StatelessWidget {
               route: '/personal-debts',
             ),
             const Divider(height: 1),
-            // Group 3 — Notifications.
-            _MoreItem(
-              icon: Icons.notifications_outlined,
-              title: l.moreNotifications,
-              route: '/notifications',
-            ),
-            const Divider(height: 1),
-            // Group 4 — Planning (forward-looking).
+            // Group 3 — Planning (forward-looking).
+            // (Notifications entry removed — inbox is reachable from the
+            // bell in the top bar; no need to surface it twice.)
             _MoreItem(
               icon: Icons.savings_outlined,
               title: l.moreBudgets,
-              comingSoonMessage: l.moreComingInPhase1c,
+              route: '/budgets',
             ),
             _MoreItem(
               icon: Icons.flag_outlined,
               title: l.moreSavingGoals,
-              comingSoonMessage: l.moreComingInPhase1c,
+              route: '/saving-goals',
             ),
             _MoreItem(
               icon: Icons.schedule_outlined,
               title: l.moreScheduled,
-              comingSoonMessage: l.moreComingInPhase1c,
+              route: '/scheduled-transactions',
             ),
           ],
         ),

@@ -14,6 +14,8 @@ import '../core/theme/theme_registry.dart';
 import '../features/accounts/data/accounts_repository.dart';
 import '../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../features/auth/data/auth_repository.dart';
+import '../features/budgets/data/budgets_repository.dart';
+import '../features/budgets/presentation/cubit/budgets_cubit.dart';
 import '../features/auth/presentation/cubit/auth_cubit.dart';
 import '../features/categories/data/categories_repository.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
@@ -25,6 +27,10 @@ import '../features/personal_debts/data/personal_debts_repository.dart';
 import '../features/personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../features/projects/data/projects_repository.dart';
 import '../features/projects/presentation/cubit/projects_cubit.dart';
+import '../features/saving_goals/data/saving_goals_repository.dart';
+import '../features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
+import '../features/scheduled_transactions/data/scheduled_transactions_repository.dart';
+import '../features/scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
 import '../features/tags/data/tags_repository.dart';
 import '../features/tags/presentation/cubit/tags_cubit.dart';
 import '../features/transactions/data/transactions_repository.dart';
@@ -62,6 +68,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final ContactsRepository _contactsRepository;
   late final PersonalDebtsRepository _personalDebtsRepository;
   late final ProjectsRepository _projectsRepository;
+  late final SavingGoalsRepository _savingGoalsRepository;
+  late final BudgetsRepository _budgetsRepository;
+  late final ScheduledTransactionsRepository _scheduledTransactionsRepository;
   late final AuthCubit _authCubit;
   late final GoRouter _router;
 
@@ -80,6 +89,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _contactsRepository = ContactsRepository(client: _apiClient);
     _personalDebtsRepository = PersonalDebtsRepository(client: _apiClient);
     _projectsRepository = ProjectsRepository(client: _apiClient);
+    _savingGoalsRepository = SavingGoalsRepository(client: _apiClient);
+    _budgetsRepository = BudgetsRepository(client: _apiClient);
+    _scheduledTransactionsRepository =
+        ScheduledTransactionsRepository(client: _apiClient);
     _authCubit = AuthCubit(
       repository: _authRepository,
       tokenStorage: _tokenStorage,
@@ -121,6 +134,12 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             value: _personalDebtsRepository),
         RepositoryProvider<ProjectsRepository>.value(
             value: _projectsRepository),
+        RepositoryProvider<SavingGoalsRepository>.value(
+            value: _savingGoalsRepository),
+        RepositoryProvider<BudgetsRepository>.value(
+            value: _budgetsRepository),
+        RepositoryProvider<ScheduledTransactionsRepository>.value(
+            value: _scheduledTransactionsRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -167,6 +186,18 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           ),
           BlocProvider<ProjectsCubit>(
             create: (_) => ProjectsCubit(repository: _projectsRepository),
+          ),
+          BlocProvider<SavingGoalsCubit>(
+            create: (_) =>
+                SavingGoalsCubit(repository: _savingGoalsRepository),
+          ),
+          BlocProvider<BudgetsCubit>(
+            create: (_) => BudgetsCubit(repository: _budgetsRepository),
+          ),
+          BlocProvider<ScheduledTransactionsCubit>(
+            create: (_) => ScheduledTransactionsCubit(
+              repository: _scheduledTransactionsRepository,
+            ),
           ),
         ],
         child: Builder(
@@ -267,6 +298,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     ctx.read<ContactsCubit>().clear();
     ctx.read<PersonalDebtsCubit>().clear();
     ctx.read<ProjectsCubit>().clear();
+    ctx.read<SavingGoalsCubit>().clear();
+    ctx.read<BudgetsCubit>().clear();
+    ctx.read<ScheduledTransactionsCubit>().clear();
     ctx.read<UnreadBadgeCubit>().clear();
   }
 }

@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../domain/notification.dart';
 
-/// One inbox row. Type-aware: link-request types render Accept/Reject
-/// inline; informational types route via [AppNotification.deepLink] when
-/// tapped.
+/// One inbox row.
+///
+/// - `contact_link_request`, **pending** → renders inline Accept /
+///   Reject buttons. Row-body tap is a no-op for pending link-requests
+///   so accidental taps don't accept (the buttons are the action).
+/// - `contact_link_request`, **actioned** (= accepted) → no buttons.
+///   Tapping the row routes to the linked contact / link-existing edit
+///   / link-create form (parent page owns the routing).
+/// - Other types → tap = mark read + follow [AppNotification.deepLink].
+///
+/// Overflow: Mark-as-read (when unread) + Dismiss (when not yet
+/// dismissed).
 class NotificationTile extends StatelessWidget {
   const NotificationTile({
     required this.notification,
     required this.onMarkRead,
     required this.onDismiss,
+    required this.onTap,
     required this.onAccept,
     required this.onReject,
     super.key,
@@ -19,6 +28,10 @@ class NotificationTile extends StatelessWidget {
   final AppNotification notification;
   final ValueChanged<String> onMarkRead;
   final ValueChanged<String> onDismiss;
+  final ValueChanged<AppNotification> onTap;
+
+  /// Inline-button handlers — only invoked for pending
+  /// `contact_link_request` rows. Ignored otherwise.
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
@@ -26,16 +39,15 @@ class NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final n = notification;
     final theme = Theme.of(context);
-    final isLinkRequest = n.type == NotificationType.contactLinkRequest ||
-        n.type == NotificationType.projectInvite;
-    final actionable = isLinkRequest && !n.isTerminal;
+    final isLinkRequest = n.type == NotificationType.contactLinkRequest;
+    final showInlineActions = isLinkRequest && n.actionedAt == null;
 
     return Material(
       color: n.isUnread
           ? theme.colorScheme.primaryContainer.withValues(alpha: 0.18)
           : theme.colorScheme.surface,
       child: InkWell(
-        onTap: () => _onTap(context),
+        onTap: () => onTap(n),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
@@ -68,7 +80,7 @@ class NotificationTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                    if (actionable)
+                    if (showInlineActions)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Row(
@@ -105,17 +117,19 @@ class NotificationTile extends StatelessWidget {
                       onDismiss(n.id);
                   }
                 },
+                // Dismiss is universal (idempotent on already-dismissed
+                // rows). Mark-as-read only when the row is still unread —
+                // hiding it for already-read rows keeps the menu honest.
                 itemBuilder: (context) => [
                   if (n.isUnread)
                     const PopupMenuItem(
                       value: 'read',
                       child: Text('Mark as read'),
                     ),
-                  if (!n.isTerminal)
-                    const PopupMenuItem(
-                      value: 'dismiss',
-                      child: Text('Dismiss'),
-                    ),
+                  const PopupMenuItem(
+                    value: 'dismiss',
+                    child: Text('Dismiss'),
+                  ),
                 ],
               ),
             ],
@@ -123,14 +137,6 @@ class NotificationTile extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _onTap(BuildContext context) {
-    if (notification.isUnread) onMarkRead(notification.id);
-    final link = notification.deepLink;
-    if (link != null && link.isNotEmpty) {
-      context.push(link);
-    }
   }
 
   IconData _iconFor(NotificationType t) {

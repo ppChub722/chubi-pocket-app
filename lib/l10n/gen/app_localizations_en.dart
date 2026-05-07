@@ -1174,4 +1174,554 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountAdjustBalanceSuccess => 'Balance adjusted';
+
+  @override
+  String get savingGoalsTitle => 'Saving goals';
+
+  @override
+  String get savingGoalsAddNew => 'Add saving goal';
+
+  @override
+  String get savingGoalsEmptyTitle => 'No saving goals yet';
+
+  @override
+  String get savingGoalsEmptyMessage =>
+      'Set a target on top of an account and track your progress as the balance grows.';
+
+  @override
+  String savingGoalProgressLine(String current, String target) {
+    return '$current of $target';
+  }
+
+  @override
+  String get savingGoalCompletedLabel => 'Goal reached';
+
+  @override
+  String get savingGoalFormTitle => 'New saving goal';
+
+  @override
+  String get savingGoalFormTitleEdit => 'Edit saving goal';
+
+  @override
+  String get savingGoalFormSave => 'Create goal';
+
+  @override
+  String get savingGoalFormSaveEdit => 'Save changes';
+
+  @override
+  String get savingGoalFormIconLabel => 'Icon';
+
+  @override
+  String get savingGoalFormNameLabel => 'Goal name';
+
+  @override
+  String get savingGoalFormNameRequired => 'Required';
+
+  @override
+  String get savingGoalFormLinkedAccountLabel => 'Linked account';
+
+  @override
+  String get savingGoalFormLinkedAccountHelper =>
+      'Progress = account balance × allocation %';
+
+  @override
+  String get savingGoalFormLinkedAccountLockedHelper =>
+      'Linked account can\'t be changed. Delete and recreate to switch accounts.';
+
+  @override
+  String get savingGoalFormAccountRequired => 'Pick a linked account';
+
+  @override
+  String get savingGoalFormTargetLabel => 'Target amount';
+
+  @override
+  String get savingGoalFormTargetInvalid => 'Enter a positive amount';
+
+  @override
+  String get savingGoalFormAllocationLabel => 'Allocation';
+
+  @override
+  String get savingGoalFormAllocationHelper =>
+      'Leave blank to let the server suggest a default. Total per account ≤ 100%.';
+
+  @override
+  String get savingGoalFormAllocationInvalid => 'Must be between 0 and 100';
+
+  @override
+  String get savingGoalFormDeadlineLabel => 'Deadline';
+
+  @override
+  String get savingGoalFormDeadlinePlaceholder => 'Optional';
+
+  @override
+  String get savingGoalFormNoteLabel => 'Note';
+
+  @override
+  String get savingGoalDetailNotFound => 'Goal not found';
+
+  @override
+  String get savingGoalDetailNotFoundMessage =>
+      'This saving goal may have been deleted or archived.';
+
+  @override
+  String get savingGoalDetailEdit => 'Edit';
+
+  @override
+  String get savingGoalDetailArchive => 'Archive';
+
+  @override
+  String get savingGoalDetailDelete => 'Delete';
+
+  @override
+  String savingGoalDetailOfTarget(String target) {
+    return 'of $target';
+  }
+
+  @override
+  String get savingGoalDetailAllocation => 'Allocation';
+
+  @override
+  String get savingGoalDetailRemaining => 'Remaining';
+
+  @override
+  String get savingGoalDetailDeadline => 'Deadline';
+
+  @override
+  String get savingGoalDetailDaysRemaining => 'Days remaining';
+
+  @override
+  String savingGoalDetailDaysValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get savingGoalDetailRequiredMonthly => 'Suggested monthly';
+
+  @override
+  String get savingGoalArchiveConfirmTitle => 'Archive this goal?';
+
+  @override
+  String get savingGoalArchiveConfirmBody =>
+      'Archiving frees its allocation slot on the linked account. You can restore it later if capacity is available.';
+
+  @override
+  String get savingGoalArchiveConfirmAction => 'Archive';
+
+  @override
+  String get savingGoalDeleteConfirmTitle => 'Delete this goal?';
+
+  @override
+  String get savingGoalDeleteConfirmBody =>
+      'This permanently removes the goal. The linked account and its transactions are unaffected.';
+
+  @override
+  String get savingGoalDeleteConfirmAction => 'Delete';
+
+  @override
+  String get budgetsTitle => 'Budgets';
+
+  @override
+  String get budgetsAddNew => 'Add budget';
+
+  @override
+  String get budgetsEmptyTitle => 'No budgets yet';
+
+  @override
+  String get budgetsEmptyMessage =>
+      'Set a per-category limit and we\'ll track your spending against it each period.';
+
+  @override
+  String get budgetPeriodWeekly => 'Weekly';
+
+  @override
+  String get budgetPeriodMonthly => 'Monthly';
+
+  @override
+  String get budgetPeriodYearly => 'Yearly';
+
+  @override
+  String budgetSpentLine(String spent, String limit) {
+    return '$spent of $limit';
+  }
+
+  @override
+  String get budgetFormTitle => 'New budget';
+
+  @override
+  String get budgetFormTitleEdit => 'Edit budget';
+
+  @override
+  String get budgetFormSave => 'Create budget';
+
+  @override
+  String get budgetFormSaveEdit => 'Save changes';
+
+  @override
+  String get budgetFormCategoryLabel => 'Category';
+
+  @override
+  String get budgetFormCategoryPlaceholder => 'Pick a category';
+
+  @override
+  String get budgetFormCategoryHelper =>
+      'Only expense categories. Picking a parent tracks all its sub-categories.';
+
+  @override
+  String get budgetFormCategoryLockedHelper =>
+      'Category can\'t be changed. Delete and recreate to switch categories.';
+
+  @override
+  String get budgetFormCategoryRequired => 'Pick a category';
+
+  @override
+  String get budgetFormDescriptionLabel => 'Description';
+
+  @override
+  String get budgetFormDescriptionHelper =>
+      'Optional. Shown as the budget\'s title; falls back to the category name when blank.';
+
+  @override
+  String get budgetFormDescriptionTooLong => 'Max 200 characters';
+
+  @override
+  String get budgetFormAmountLabel => 'Limit per period';
+
+  @override
+  String get budgetFormAmountInvalid => 'Enter a positive amount';
+
+  @override
+  String get budgetFormPeriodLabel => 'Period';
+
+  @override
+  String get budgetFormNoteLabel => 'Note';
+
+  @override
+  String get budgetFormNoteHelper =>
+      'Optional. Longer free-form note shown on the detail page.';
+
+  @override
+  String get budgetDetailNotFound => 'Budget not found';
+
+  @override
+  String get budgetDetailNotFoundMessage =>
+      'This budget may have been deleted or archived.';
+
+  @override
+  String get budgetDetailFallbackTitle => 'Budget';
+
+  @override
+  String get budgetDetailEdit => 'Edit';
+
+  @override
+  String get budgetDetailArchive => 'Archive';
+
+  @override
+  String get budgetDetailDelete => 'Delete';
+
+  @override
+  String budgetDetailOfLimit(String limit) {
+    return 'of $limit';
+  }
+
+  @override
+  String budgetDetailRemainingLine(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String budgetDetailPeriodRange(String start, String end) {
+    return '$start – $end';
+  }
+
+  @override
+  String get budgetDetailOverLimitWarning =>
+      'You\'ve gone over the limit for this period.';
+
+  @override
+  String get budgetDetailBreakdownTitle => 'Spend by category';
+
+  @override
+  String get budgetArchiveConfirmTitle => 'Archive this budget?';
+
+  @override
+  String get budgetArchiveConfirmBody =>
+      'Archiving hides the budget from your active list. You can restore it later.';
+
+  @override
+  String get budgetArchiveConfirmAction => 'Archive';
+
+  @override
+  String get budgetDeleteConfirmTitle => 'Delete this budget?';
+
+  @override
+  String get budgetDeleteConfirmBody =>
+      'This permanently removes the budget. Your transactions are unaffected.';
+
+  @override
+  String get budgetDeleteConfirmAction => 'Delete';
+
+  @override
+  String get scheduledTitle => 'Scheduled transactions';
+
+  @override
+  String get scheduledAddNew => 'Add scheduled';
+
+  @override
+  String get scheduledEmptyTitle => 'No scheduled transactions';
+
+  @override
+  String get scheduledEmptyMessage =>
+      'Set up subscriptions, installments, or loans and we\'ll generate the transactions for you.';
+
+  @override
+  String get scheduledVariantRecurring => 'Recurring';
+
+  @override
+  String get scheduledVariantInstallment => 'Installment';
+
+  @override
+  String get scheduledVariantLoan => 'Loan';
+
+  @override
+  String get scheduledTypeExpense => 'Expense';
+
+  @override
+  String get scheduledTypeIncome => 'Income';
+
+  @override
+  String get scheduledCycleDaily => 'Daily';
+
+  @override
+  String get scheduledCycleWeekly => 'Weekly';
+
+  @override
+  String get scheduledCycleMonthly => 'Monthly';
+
+  @override
+  String get scheduledCycleYearly => 'Yearly';
+
+  @override
+  String get scheduledStatusActive => 'Active';
+
+  @override
+  String get scheduledStatusPaused => 'Paused';
+
+  @override
+  String get scheduledStatusCompleted => 'Completed';
+
+  @override
+  String get scheduledStatusCancelled => 'Cancelled';
+
+  @override
+  String scheduledNextDue(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String scheduledInstallmentsLeft(int remaining, int total) {
+    return '$remaining/$total left';
+  }
+
+  @override
+  String get scheduledFormTitle => 'New scheduled';
+
+  @override
+  String get scheduledFormTitleEdit => 'Edit scheduled';
+
+  @override
+  String get scheduledFormSave => 'Create';
+
+  @override
+  String get scheduledFormSaveEdit => 'Save changes';
+
+  @override
+  String get scheduledFormIconLabel => 'Icon';
+
+  @override
+  String get scheduledFormVariantLabel => 'Type';
+
+  @override
+  String get scheduledFormTypeLabel => 'Direction';
+
+  @override
+  String get scheduledFormNameLabel => 'Name';
+
+  @override
+  String get scheduledFormNameRequired => 'Required';
+
+  @override
+  String get scheduledFormAmountLabel => 'Amount per cycle';
+
+  @override
+  String get scheduledFormPaymentLabel => 'Payment per cycle';
+
+  @override
+  String get scheduledFormAmountInvalid => 'Enter a positive amount';
+
+  @override
+  String get scheduledFormAccountLabel => 'Account';
+
+  @override
+  String get scheduledFormAccountRequired => 'Pick an account';
+
+  @override
+  String get scheduledFormCategoryLabel => 'Category';
+
+  @override
+  String get scheduledFormCategoryRequired => 'Pick a category';
+
+  @override
+  String get scheduledFormCycleLabel => 'Cycle';
+
+  @override
+  String get scheduledFormNextBillingLabel => 'Next billing date';
+
+  @override
+  String get scheduledFormInstallmentSection => 'Installment details';
+
+  @override
+  String get scheduledFormTotalAmountLabel => 'Total amount';
+
+  @override
+  String get scheduledFormTotalAmountHelper =>
+      'Sum of all installments + down payment.';
+
+  @override
+  String get scheduledFormTotalAmountHelperLoan =>
+      'Lifetime total: principal + interest combined.';
+
+  @override
+  String get scheduledFormDownPaymentLabel => 'Down payment';
+
+  @override
+  String get scheduledFormTotalInstallmentsLabel => 'Total installments';
+
+  @override
+  String get scheduledFormRemainingInstallmentsLabel => 'Remaining';
+
+  @override
+  String get scheduledFormInstallmentsInvalid => 'Enter a valid count';
+
+  @override
+  String get scheduledFormRemainingExceeds => 'Cannot exceed total';
+
+  @override
+  String get scheduledFormInterestRateLabel => 'Interest rate (APR)';
+
+  @override
+  String get scheduledFormInterestInvalid => 'Must be between 0 and 99.99';
+
+  @override
+  String get scheduledFormNoteLabel => 'Note';
+
+  @override
+  String get scheduledDetailNotFound => 'Schedule not found';
+
+  @override
+  String get scheduledDetailNotFoundMessage =>
+      'This scheduled entry may have been deleted or cancelled.';
+
+  @override
+  String get scheduledDetailEdit => 'Edit';
+
+  @override
+  String get scheduledDetailPause => 'Pause';
+
+  @override
+  String get scheduledDetailResume => 'Resume';
+
+  @override
+  String get scheduledDetailCancel => 'Cancel';
+
+  @override
+  String get scheduledDetailDelete => 'Delete';
+
+  @override
+  String scheduledDetailNextDue(String date) {
+    return 'Next due $date';
+  }
+
+  @override
+  String get scheduledDetailAccount => 'Account';
+
+  @override
+  String get scheduledDetailCategory => 'Category';
+
+  @override
+  String get scheduledDetailCycle => 'Cycle';
+
+  @override
+  String get scheduledDetailTotalAmount => 'Total amount';
+
+  @override
+  String get scheduledDetailDownPayment => 'Down payment';
+
+  @override
+  String get scheduledDetailInstallments => 'Installments';
+
+  @override
+  String get scheduledDetailInterestRate => 'Interest rate';
+
+  @override
+  String get scheduledDetailNote => 'Note';
+
+  @override
+  String get scheduledGenerateNowTitle => 'Generate now';
+
+  @override
+  String get scheduledGenerateNowBody =>
+      'Manually create the next transaction and advance the schedule. Phase 1c only — Phase 3 adds an automatic scheduler.';
+
+  @override
+  String get scheduledGenerateNowAction => 'Generate';
+
+  @override
+  String get scheduledGenerateNowSuccess => 'Transaction generated';
+
+  @override
+  String get scheduledGenerateNowViewTransaction => 'View';
+
+  @override
+  String get scheduledDetailHistoryTitle => 'Generated transactions';
+
+  @override
+  String get scheduledDetailHistoryEmpty =>
+      'No transactions have been generated yet.';
+
+  @override
+  String scheduledDetailHistoryTotal(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get scheduledCancelConfirmTitle => 'Cancel this schedule?';
+
+  @override
+  String get scheduledCancelConfirmBody =>
+      'Cancelling is final — you\'ll need to create a new entry to schedule again.';
+
+  @override
+  String get scheduledCancelConfirmAction => 'Cancel schedule';
+
+  @override
+  String get scheduledDeleteConfirmTitle => 'Delete this schedule?';
+
+  @override
+  String get scheduledDeleteConfirmBody =>
+      'Past generated transactions stay; only the schedule is removed.';
+
+  @override
+  String get scheduledDeleteConfirmAction => 'Delete';
 }

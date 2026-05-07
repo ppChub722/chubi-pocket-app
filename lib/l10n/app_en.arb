@@ -441,5 +441,250 @@
   "transactionsListDateYesterday": "Yesterday",
 
   "accountAdjustBalanceViewTransaction": "View",
-  "accountAdjustBalanceSuccess": "Balance adjusted"
+  "accountAdjustBalanceSuccess": "Balance adjusted",
+
+  "savingGoalsTitle": "Saving goals",
+  "savingGoalsAddNew": "Add saving goal",
+  "savingGoalsEmptyTitle": "No saving goals yet",
+  "savingGoalsEmptyMessage": "Set a target on top of an account and track your progress as the balance grows.",
+
+  "savingGoalProgressLine": "{current} of {target}",
+  "@savingGoalProgressLine": {
+    "placeholders": {
+      "current": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "savingGoalCompletedLabel": "Goal reached",
+
+  "savingGoalFormTitle": "New saving goal",
+  "savingGoalFormTitleEdit": "Edit saving goal",
+  "savingGoalFormSave": "Create goal",
+  "savingGoalFormSaveEdit": "Save changes",
+  "savingGoalFormIconLabel": "Icon",
+  "savingGoalFormNameLabel": "Goal name",
+  "savingGoalFormNameRequired": "Required",
+  "savingGoalFormLinkedAccountLabel": "Linked account",
+  "savingGoalFormLinkedAccountHelper": "Progress = account balance × allocation %",
+  "savingGoalFormLinkedAccountLockedHelper": "Linked account can't be changed. Delete and recreate to switch accounts.",
+  "savingGoalFormAccountRequired": "Pick a linked account",
+  "savingGoalFormTargetLabel": "Target amount",
+  "savingGoalFormTargetInvalid": "Enter a positive amount",
+  "savingGoalFormAllocationLabel": "Allocation",
+  "savingGoalFormAllocationHelper": "Leave blank to let the server suggest a default. Total per account ≤ 100%.",
+  "savingGoalFormAllocationInvalid": "Must be between 0 and 100",
+  "savingGoalFormDeadlineLabel": "Deadline",
+  "savingGoalFormDeadlinePlaceholder": "Optional",
+  "savingGoalFormNoteLabel": "Note",
+
+  "savingGoalDetailNotFound": "Goal not found",
+  "savingGoalDetailNotFoundMessage": "This saving goal may have been deleted or archived.",
+  "savingGoalDetailEdit": "Edit",
+  "savingGoalDetailArchive": "Archive",
+  "savingGoalDetailDelete": "Delete",
+  "savingGoalDetailOfTarget": "of {target}",
+  "@savingGoalDetailOfTarget": {
+    "placeholders": {
+      "target": { "type": "String" }
+    }
+  },
+  "savingGoalDetailAllocation": "Allocation",
+  "savingGoalDetailRemaining": "Remaining",
+  "savingGoalDetailDeadline": "Deadline",
+  "savingGoalDetailDaysRemaining": "Days remaining",
+  "savingGoalDetailDaysValue": "{count, plural, =1{1 day} other{{count} days}}",
+  "@savingGoalDetailDaysValue": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "savingGoalDetailRequiredMonthly": "Suggested monthly",
+
+  "savingGoalArchiveConfirmTitle": "Archive this goal?",
+  "savingGoalArchiveConfirmBody": "Archiving frees its allocation slot on the linked account. You can restore it later if capacity is available.",
+  "savingGoalArchiveConfirmAction": "Archive",
+  "savingGoalDeleteConfirmTitle": "Delete this goal?",
+  "savingGoalDeleteConfirmBody": "This permanently removes the goal. The linked account and its transactions are unaffected.",
+  "savingGoalDeleteConfirmAction": "Delete",
+
+  "budgetsTitle": "Budgets",
+  "budgetsAddNew": "Add budget",
+  "budgetsEmptyTitle": "No budgets yet",
+  "budgetsEmptyMessage": "Set a per-category limit and we'll track your spending against it each period.",
+
+  "budgetPeriodWeekly": "Weekly",
+  "budgetPeriodMonthly": "Monthly",
+  "budgetPeriodYearly": "Yearly",
+
+  "budgetSpentLine": "{spent} of {limit}",
+  "@budgetSpentLine": {
+    "placeholders": {
+      "spent": { "type": "String" },
+      "limit": { "type": "String" }
+    }
+  },
+
+  "budgetFormTitle": "New budget",
+  "budgetFormTitleEdit": "Edit budget",
+  "budgetFormSave": "Create budget",
+  "budgetFormSaveEdit": "Save changes",
+  "budgetFormCategoryLabel": "Category",
+  "budgetFormCategoryPlaceholder": "Pick a category",
+  "budgetFormCategoryHelper": "Only expense categories. Picking a parent tracks all its sub-categories.",
+  "budgetFormCategoryLockedHelper": "Category can't be changed. Delete and recreate to switch categories.",
+  "budgetFormCategoryRequired": "Pick a category",
+  "budgetFormDescriptionLabel": "Description",
+  "budgetFormDescriptionHelper": "Optional. Shown as the budget's title; falls back to the category name when blank.",
+  "budgetFormDescriptionTooLong": "Max 200 characters",
+  "budgetFormAmountLabel": "Limit per period",
+  "budgetFormAmountInvalid": "Enter a positive amount",
+  "budgetFormPeriodLabel": "Period",
+  "budgetFormNoteLabel": "Note",
+  "budgetFormNoteHelper": "Optional. Longer free-form note shown on the detail page.",
+
+  "budgetDetailNotFound": "Budget not found",
+  "budgetDetailNotFoundMessage": "This budget may have been deleted or archived.",
+  "budgetDetailFallbackTitle": "Budget",
+  "budgetDetailEdit": "Edit",
+  "budgetDetailArchive": "Archive",
+  "budgetDetailDelete": "Delete",
+  "budgetDetailOfLimit": "of {limit}",
+  "@budgetDetailOfLimit": {
+    "placeholders": {
+      "limit": { "type": "String" }
+    }
+  },
+  "budgetDetailRemainingLine": "{amount} left",
+  "@budgetDetailRemainingLine": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "budgetDetailPeriodRange": "{start} – {end}",
+  "@budgetDetailPeriodRange": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" }
+    }
+  },
+  "budgetDetailOverLimitWarning": "You've gone over the limit for this period.",
+  "budgetDetailBreakdownTitle": "Spend by category",
+
+  "budgetArchiveConfirmTitle": "Archive this budget?",
+  "budgetArchiveConfirmBody": "Archiving hides the budget from your active list. You can restore it later.",
+  "budgetArchiveConfirmAction": "Archive",
+  "budgetDeleteConfirmTitle": "Delete this budget?",
+  "budgetDeleteConfirmBody": "This permanently removes the budget. Your transactions are unaffected.",
+  "budgetDeleteConfirmAction": "Delete",
+
+  "scheduledTitle": "Scheduled transactions",
+  "scheduledAddNew": "Add scheduled",
+  "scheduledEmptyTitle": "No scheduled transactions",
+  "scheduledEmptyMessage": "Set up subscriptions, installments, or loans and we'll generate the transactions for you.",
+
+  "scheduledVariantRecurring": "Recurring",
+  "scheduledVariantInstallment": "Installment",
+  "scheduledVariantLoan": "Loan",
+
+  "scheduledTypeExpense": "Expense",
+  "scheduledTypeIncome": "Income",
+
+  "scheduledCycleDaily": "Daily",
+  "scheduledCycleWeekly": "Weekly",
+  "scheduledCycleMonthly": "Monthly",
+  "scheduledCycleYearly": "Yearly",
+
+  "scheduledStatusActive": "Active",
+  "scheduledStatusPaused": "Paused",
+  "scheduledStatusCompleted": "Completed",
+  "scheduledStatusCancelled": "Cancelled",
+
+  "scheduledNextDue": "Due {date}",
+  "@scheduledNextDue": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "scheduledInstallmentsLeft": "{remaining}/{total} left",
+  "@scheduledInstallmentsLeft": {
+    "placeholders": {
+      "remaining": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "scheduledFormTitle": "New scheduled",
+  "scheduledFormTitleEdit": "Edit scheduled",
+  "scheduledFormSave": "Create",
+  "scheduledFormSaveEdit": "Save changes",
+  "scheduledFormIconLabel": "Icon",
+  "scheduledFormVariantLabel": "Type",
+  "scheduledFormTypeLabel": "Direction",
+  "scheduledFormNameLabel": "Name",
+  "scheduledFormNameRequired": "Required",
+  "scheduledFormAmountLabel": "Amount per cycle",
+  "scheduledFormPaymentLabel": "Payment per cycle",
+  "scheduledFormAmountInvalid": "Enter a positive amount",
+  "scheduledFormAccountLabel": "Account",
+  "scheduledFormAccountRequired": "Pick an account",
+  "scheduledFormCategoryLabel": "Category",
+  "scheduledFormCategoryRequired": "Pick a category",
+  "scheduledFormCycleLabel": "Cycle",
+  "scheduledFormNextBillingLabel": "Next billing date",
+  "scheduledFormInstallmentSection": "Installment details",
+  "scheduledFormTotalAmountLabel": "Total amount",
+  "scheduledFormTotalAmountHelper": "Sum of all installments + down payment.",
+  "scheduledFormTotalAmountHelperLoan": "Lifetime total: principal + interest combined.",
+  "scheduledFormDownPaymentLabel": "Down payment",
+  "scheduledFormTotalInstallmentsLabel": "Total installments",
+  "scheduledFormRemainingInstallmentsLabel": "Remaining",
+  "scheduledFormInstallmentsInvalid": "Enter a valid count",
+  "scheduledFormRemainingExceeds": "Cannot exceed total",
+  "scheduledFormInterestRateLabel": "Interest rate (APR)",
+  "scheduledFormInterestInvalid": "Must be between 0 and 99.99",
+  "scheduledFormNoteLabel": "Note",
+
+  "scheduledDetailNotFound": "Schedule not found",
+  "scheduledDetailNotFoundMessage": "This scheduled entry may have been deleted or cancelled.",
+  "scheduledDetailEdit": "Edit",
+  "scheduledDetailPause": "Pause",
+  "scheduledDetailResume": "Resume",
+  "scheduledDetailCancel": "Cancel",
+  "scheduledDetailDelete": "Delete",
+  "scheduledDetailNextDue": "Next due {date}",
+  "@scheduledDetailNextDue": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "scheduledDetailAccount": "Account",
+  "scheduledDetailCategory": "Category",
+  "scheduledDetailCycle": "Cycle",
+  "scheduledDetailTotalAmount": "Total amount",
+  "scheduledDetailDownPayment": "Down payment",
+  "scheduledDetailInstallments": "Installments",
+  "scheduledDetailInterestRate": "Interest rate",
+  "scheduledDetailNote": "Note",
+
+  "scheduledGenerateNowTitle": "Generate now",
+  "scheduledGenerateNowBody": "Manually create the next transaction and advance the schedule. Phase 1c only — Phase 3 adds an automatic scheduler.",
+  "scheduledGenerateNowAction": "Generate",
+  "scheduledGenerateNowSuccess": "Transaction generated",
+  "scheduledGenerateNowViewTransaction": "View",
+
+  "scheduledDetailHistoryTitle": "Generated transactions",
+  "scheduledDetailHistoryEmpty": "No transactions have been generated yet.",
+  "scheduledDetailHistoryTotal": "{count, plural, =1{1 transaction} other{{count} transactions}}",
+  "@scheduledDetailHistoryTotal": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "scheduledCancelConfirmTitle": "Cancel this schedule?",
+  "scheduledCancelConfirmBody": "Cancelling is final — you'll need to create a new entry to schedule again.",
+  "scheduledCancelConfirmAction": "Cancel schedule",
+  "scheduledDeleteConfirmTitle": "Delete this schedule?",
+  "scheduledDeleteConfirmBody": "Past generated transactions stay; only the schedule is removed.",
+  "scheduledDeleteConfirmAction": "Delete"
 }

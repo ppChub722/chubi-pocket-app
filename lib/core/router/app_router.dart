@@ -27,11 +27,20 @@ import '../../features/projects/presentation/pages/project_detail_page.dart';
 import '../../features/projects/presentation/pages/project_form_page.dart';
 import '../../features/projects/presentation/pages/project_transaction_form_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
+import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.dart';
+import '../../features/saving_goals/presentation/pages/saving_goal_form_page.dart';
+import '../../features/saving_goals/presentation/pages/saving_goals_list_page.dart';
+import '../../features/scheduled_transactions/presentation/pages/scheduled_transaction_detail_page.dart';
+import '../../features/scheduled_transactions/presentation/pages/scheduled_transaction_form_page.dart';
+import '../../features/scheduled_transactions/presentation/pages/scheduled_transactions_list_page.dart';
 import '../../features/tags/presentation/pages/tag_form_page.dart';
 import '../../features/tags/presentation/pages/tags_page.dart';
 import '../../features/transactions/presentation/pages/transaction_detail_page.dart';
 import '../../features/transactions/presentation/pages/transaction_form_page.dart';
 import '../../features/transactions/presentation/pages/transactions_list_page.dart';
+import '../../features/budgets/presentation/pages/budget_detail_page.dart';
+import '../../features/budgets/presentation/pages/budget_form_page.dart';
+import '../../features/budgets/presentation/pages/budgets_list_page.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -178,7 +187,21 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
       GoRoute(
         path: '/contacts/new',
         name: 'contact-new',
-        builder: (context, state) => const ContactFormPage(),
+        // `extra` carries the link-request payload when the inbox tap
+        // handler routes here for an unmatched sender. Plain "new
+        // contact" navigations pass nothing and the form runs in its
+        // default create mode.
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is Map) {
+            return ContactFormPage(
+              linkRequestId: extra['linkRequestId'] as String?,
+              lockedDisplayName: extra['lockedDisplayName'] as String?,
+              lockedEmail: extra['lockedEmail'] as String?,
+            );
+          }
+          return const ContactFormPage();
+        },
       ),
       GoRoute(
         path: '/contacts/:id',
@@ -189,8 +212,92 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
       GoRoute(
         path: '/contacts/:id/edit',
         name: 'contact-edit',
+        // `extra` (when present) carries the link-existing flow data:
+        //   { linkRequestId } — caller has an unlinked email-match
+        //   contact and tapped a post-accept notification row to wire
+        //   the link. Plain edit navigations pass nothing.
+        builder: (context, state) {
+          final extra = state.extra;
+          final id = state.pathParameters['id'];
+          if (extra is Map) {
+            return ContactFormPage(
+              editingId: id,
+              linkRequestId: extra['linkRequestId'] as String?,
+            );
+          }
+          return ContactFormPage(editingId: id);
+        },
+      ),
+      // Budgets (Phase 1c)
+      GoRoute(
+        path: '/budgets',
+        name: 'budgets',
+        builder: (context, state) => const BudgetsListPage(),
+      ),
+      GoRoute(
+        path: '/budgets/new',
+        name: 'budget-new',
+        builder: (context, state) => const BudgetFormPage(),
+      ),
+      GoRoute(
+        path: '/budgets/:id',
+        name: 'budget-detail',
         builder: (context, state) =>
-            ContactFormPage(editingId: state.pathParameters['id']),
+            BudgetDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/budgets/:id/edit',
+        name: 'budget-edit',
+        builder: (context, state) =>
+            BudgetFormPage(editingId: state.pathParameters['id']),
+      ),
+      // Scheduled transactions (Phase 1c)
+      GoRoute(
+        path: '/scheduled-transactions',
+        name: 'scheduled-transactions',
+        builder: (context, state) => const ScheduledTransactionsListPage(),
+      ),
+      GoRoute(
+        path: '/scheduled-transactions/new',
+        name: 'scheduled-transaction-new',
+        builder: (context, state) => const ScheduledTransactionFormPage(),
+      ),
+      GoRoute(
+        path: '/scheduled-transactions/:id',
+        name: 'scheduled-transaction-detail',
+        builder: (context, state) => ScheduledTransactionDetailPage(
+          id: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/scheduled-transactions/:id/edit',
+        name: 'scheduled-transaction-edit',
+        builder: (context, state) => ScheduledTransactionFormPage(
+          editingId: state.pathParameters['id'],
+        ),
+      ),
+      // Saving goals (Phase 1c)
+      GoRoute(
+        path: '/saving-goals',
+        name: 'saving-goals',
+        builder: (context, state) => const SavingGoalsListPage(),
+      ),
+      GoRoute(
+        path: '/saving-goals/new',
+        name: 'saving-goal-new',
+        builder: (context, state) => const SavingGoalFormPage(),
+      ),
+      GoRoute(
+        path: '/saving-goals/:id',
+        name: 'saving-goal-detail',
+        builder: (context, state) =>
+            SavingGoalDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/saving-goals/:id/edit',
+        name: 'saving-goal-edit',
+        builder: (context, state) =>
+            SavingGoalFormPage(editingId: state.pathParameters['id']),
       ),
       // Personal debts (bidirectional — replaces splits)
       GoRoute(

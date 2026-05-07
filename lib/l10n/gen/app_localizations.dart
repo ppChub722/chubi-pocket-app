@@ -2275,6 +2275,990 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Balance adjusted'**
   String get accountAdjustBalanceSuccess;
+
+  /// No description provided for @savingGoalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving goals'**
+  String get savingGoalsTitle;
+
+  /// No description provided for @savingGoalsAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add saving goal'**
+  String get savingGoalsAddNew;
+
+  /// No description provided for @savingGoalsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No saving goals yet'**
+  String get savingGoalsEmptyTitle;
+
+  /// No description provided for @savingGoalsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a target on top of an account and track your progress as the balance grows.'**
+  String get savingGoalsEmptyMessage;
+
+  /// No description provided for @savingGoalProgressLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {target}'**
+  String savingGoalProgressLine(String current, String target);
+
+  /// No description provided for @savingGoalCompletedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal reached'**
+  String get savingGoalCompletedLabel;
+
+  /// No description provided for @savingGoalFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New saving goal'**
+  String get savingGoalFormTitle;
+
+  /// No description provided for @savingGoalFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit saving goal'**
+  String get savingGoalFormTitleEdit;
+
+  /// No description provided for @savingGoalFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Create goal'**
+  String get savingGoalFormSave;
+
+  /// No description provided for @savingGoalFormSaveEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get savingGoalFormSaveEdit;
+
+  /// No description provided for @savingGoalFormIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get savingGoalFormIconLabel;
+
+  /// No description provided for @savingGoalFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal name'**
+  String get savingGoalFormNameLabel;
+
+  /// No description provided for @savingGoalFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get savingGoalFormNameRequired;
+
+  /// No description provided for @savingGoalFormLinkedAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked account'**
+  String get savingGoalFormLinkedAccountLabel;
+
+  /// No description provided for @savingGoalFormLinkedAccountHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress = account balance × allocation %'**
+  String get savingGoalFormLinkedAccountHelper;
+
+  /// No description provided for @savingGoalFormLinkedAccountLockedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked account can\'t be changed. Delete and recreate to switch accounts.'**
+  String get savingGoalFormLinkedAccountLockedHelper;
+
+  /// No description provided for @savingGoalFormAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a linked account'**
+  String get savingGoalFormAccountRequired;
+
+  /// No description provided for @savingGoalFormTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target amount'**
+  String get savingGoalFormTargetLabel;
+
+  /// No description provided for @savingGoalFormTargetInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount'**
+  String get savingGoalFormTargetInvalid;
+
+  /// No description provided for @savingGoalFormAllocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get savingGoalFormAllocationLabel;
+
+  /// No description provided for @savingGoalFormAllocationHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to let the server suggest a default. Total per account ≤ 100%.'**
+  String get savingGoalFormAllocationHelper;
+
+  /// No description provided for @savingGoalFormAllocationInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be between 0 and 100'**
+  String get savingGoalFormAllocationInvalid;
+
+  /// No description provided for @savingGoalFormDeadlineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Deadline'**
+  String get savingGoalFormDeadlineLabel;
+
+  /// No description provided for @savingGoalFormDeadlinePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get savingGoalFormDeadlinePlaceholder;
+
+  /// No description provided for @savingGoalFormNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get savingGoalFormNoteLabel;
+
+  /// No description provided for @savingGoalDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal not found'**
+  String get savingGoalDetailNotFound;
+
+  /// No description provided for @savingGoalDetailNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This saving goal may have been deleted or archived.'**
+  String get savingGoalDetailNotFoundMessage;
+
+  /// No description provided for @savingGoalDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get savingGoalDetailEdit;
+
+  /// No description provided for @savingGoalDetailArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get savingGoalDetailArchive;
+
+  /// No description provided for @savingGoalDetailDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get savingGoalDetailDelete;
+
+  /// No description provided for @savingGoalDetailOfTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'of {target}'**
+  String savingGoalDetailOfTarget(String target);
+
+  /// No description provided for @savingGoalDetailAllocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation'**
+  String get savingGoalDetailAllocation;
+
+  /// No description provided for @savingGoalDetailRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get savingGoalDetailRemaining;
+
+  /// No description provided for @savingGoalDetailDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Deadline'**
+  String get savingGoalDetailDeadline;
+
+  /// No description provided for @savingGoalDetailDaysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Days remaining'**
+  String get savingGoalDetailDaysRemaining;
+
+  /// No description provided for @savingGoalDetailDaysValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String savingGoalDetailDaysValue(int count);
+
+  /// No description provided for @savingGoalDetailRequiredMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested monthly'**
+  String get savingGoalDetailRequiredMonthly;
+
+  /// No description provided for @savingGoalArchiveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this goal?'**
+  String get savingGoalArchiveConfirmTitle;
+
+  /// No description provided for @savingGoalArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Archiving frees its allocation slot on the linked account. You can restore it later if capacity is available.'**
+  String get savingGoalArchiveConfirmBody;
+
+  /// No description provided for @savingGoalArchiveConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get savingGoalArchiveConfirmAction;
+
+  /// No description provided for @savingGoalDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this goal?'**
+  String get savingGoalDeleteConfirmTitle;
+
+  /// No description provided for @savingGoalDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes the goal. The linked account and its transactions are unaffected.'**
+  String get savingGoalDeleteConfirmBody;
+
+  /// No description provided for @savingGoalDeleteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get savingGoalDeleteConfirmAction;
+
+  /// No description provided for @budgetsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgets'**
+  String get budgetsTitle;
+
+  /// No description provided for @budgetsAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add budget'**
+  String get budgetsAddNew;
+
+  /// No description provided for @budgetsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No budgets yet'**
+  String get budgetsEmptyTitle;
+
+  /// No description provided for @budgetsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a per-category limit and we\'ll track your spending against it each period.'**
+  String get budgetsEmptyMessage;
+
+  /// No description provided for @budgetPeriodWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get budgetPeriodWeekly;
+
+  /// No description provided for @budgetPeriodMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get budgetPeriodMonthly;
+
+  /// No description provided for @budgetPeriodYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get budgetPeriodYearly;
+
+  /// No description provided for @budgetSpentLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{spent} of {limit}'**
+  String budgetSpentLine(String spent, String limit);
+
+  /// No description provided for @budgetFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New budget'**
+  String get budgetFormTitle;
+
+  /// No description provided for @budgetFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit budget'**
+  String get budgetFormTitleEdit;
+
+  /// No description provided for @budgetFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Create budget'**
+  String get budgetFormSave;
+
+  /// No description provided for @budgetFormSaveEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get budgetFormSaveEdit;
+
+  /// No description provided for @budgetFormCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get budgetFormCategoryLabel;
+
+  /// No description provided for @budgetFormCategoryPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category'**
+  String get budgetFormCategoryPlaceholder;
+
+  /// No description provided for @budgetFormCategoryHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Only expense categories. Picking a parent tracks all its sub-categories.'**
+  String get budgetFormCategoryHelper;
+
+  /// No description provided for @budgetFormCategoryLockedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Category can\'t be changed. Delete and recreate to switch categories.'**
+  String get budgetFormCategoryLockedHelper;
+
+  /// No description provided for @budgetFormCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category'**
+  String get budgetFormCategoryRequired;
+
+  /// No description provided for @budgetFormDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get budgetFormDescriptionLabel;
+
+  /// No description provided for @budgetFormDescriptionHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Shown as the budget\'s title; falls back to the category name when blank.'**
+  String get budgetFormDescriptionHelper;
+
+  /// No description provided for @budgetFormDescriptionTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Max 200 characters'**
+  String get budgetFormDescriptionTooLong;
+
+  /// No description provided for @budgetFormAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit per period'**
+  String get budgetFormAmountLabel;
+
+  /// No description provided for @budgetFormAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount'**
+  String get budgetFormAmountInvalid;
+
+  /// No description provided for @budgetFormPeriodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get budgetFormPeriodLabel;
+
+  /// No description provided for @budgetFormNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get budgetFormNoteLabel;
+
+  /// No description provided for @budgetFormNoteHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Longer free-form note shown on the detail page.'**
+  String get budgetFormNoteHelper;
+
+  /// No description provided for @budgetDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget not found'**
+  String get budgetDetailNotFound;
+
+  /// No description provided for @budgetDetailNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This budget may have been deleted or archived.'**
+  String get budgetDetailNotFoundMessage;
+
+  /// No description provided for @budgetDetailFallbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get budgetDetailFallbackTitle;
+
+  /// No description provided for @budgetDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get budgetDetailEdit;
+
+  /// No description provided for @budgetDetailArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get budgetDetailArchive;
+
+  /// No description provided for @budgetDetailDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get budgetDetailDelete;
+
+  /// No description provided for @budgetDetailOfLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'of {limit}'**
+  String budgetDetailOfLimit(String limit);
+
+  /// No description provided for @budgetDetailRemainingLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String budgetDetailRemainingLine(String amount);
+
+  /// No description provided for @budgetDetailPeriodRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} – {end}'**
+  String budgetDetailPeriodRange(String start, String end);
+
+  /// No description provided for @budgetDetailOverLimitWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve gone over the limit for this period.'**
+  String get budgetDetailOverLimitWarning;
+
+  /// No description provided for @budgetDetailBreakdownTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spend by category'**
+  String get budgetDetailBreakdownTitle;
+
+  /// No description provided for @budgetArchiveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this budget?'**
+  String get budgetArchiveConfirmTitle;
+
+  /// No description provided for @budgetArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Archiving hides the budget from your active list. You can restore it later.'**
+  String get budgetArchiveConfirmBody;
+
+  /// No description provided for @budgetArchiveConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get budgetArchiveConfirmAction;
+
+  /// No description provided for @budgetDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this budget?'**
+  String get budgetDeleteConfirmTitle;
+
+  /// No description provided for @budgetDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes the budget. Your transactions are unaffected.'**
+  String get budgetDeleteConfirmBody;
+
+  /// No description provided for @budgetDeleteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get budgetDeleteConfirmAction;
+
+  /// No description provided for @scheduledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled transactions'**
+  String get scheduledTitle;
+
+  /// No description provided for @scheduledAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add scheduled'**
+  String get scheduledAddNew;
+
+  /// No description provided for @scheduledEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled transactions'**
+  String get scheduledEmptyTitle;
+
+  /// No description provided for @scheduledEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up subscriptions, installments, or loans and we\'ll generate the transactions for you.'**
+  String get scheduledEmptyMessage;
+
+  /// No description provided for @scheduledVariantRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get scheduledVariantRecurring;
+
+  /// No description provided for @scheduledVariantInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment'**
+  String get scheduledVariantInstallment;
+
+  /// No description provided for @scheduledVariantLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Loan'**
+  String get scheduledVariantLoan;
+
+  /// No description provided for @scheduledTypeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get scheduledTypeExpense;
+
+  /// No description provided for @scheduledTypeIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get scheduledTypeIncome;
+
+  /// No description provided for @scheduledCycleDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get scheduledCycleDaily;
+
+  /// No description provided for @scheduledCycleWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get scheduledCycleWeekly;
+
+  /// No description provided for @scheduledCycleMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get scheduledCycleMonthly;
+
+  /// No description provided for @scheduledCycleYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get scheduledCycleYearly;
+
+  /// No description provided for @scheduledStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get scheduledStatusActive;
+
+  /// No description provided for @scheduledStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get scheduledStatusPaused;
+
+  /// No description provided for @scheduledStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get scheduledStatusCompleted;
+
+  /// No description provided for @scheduledStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get scheduledStatusCancelled;
+
+  /// No description provided for @scheduledNextDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String scheduledNextDue(String date);
+
+  /// No description provided for @scheduledInstallmentsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{remaining}/{total} left'**
+  String scheduledInstallmentsLeft(int remaining, int total);
+
+  /// No description provided for @scheduledFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New scheduled'**
+  String get scheduledFormTitle;
+
+  /// No description provided for @scheduledFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit scheduled'**
+  String get scheduledFormTitleEdit;
+
+  /// No description provided for @scheduledFormSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get scheduledFormSave;
+
+  /// No description provided for @scheduledFormSaveEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get scheduledFormSaveEdit;
+
+  /// No description provided for @scheduledFormIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get scheduledFormIconLabel;
+
+  /// No description provided for @scheduledFormVariantLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get scheduledFormVariantLabel;
+
+  /// No description provided for @scheduledFormTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Direction'**
+  String get scheduledFormTypeLabel;
+
+  /// No description provided for @scheduledFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get scheduledFormNameLabel;
+
+  /// No description provided for @scheduledFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get scheduledFormNameRequired;
+
+  /// No description provided for @scheduledFormAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount per cycle'**
+  String get scheduledFormAmountLabel;
+
+  /// No description provided for @scheduledFormPaymentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment per cycle'**
+  String get scheduledFormPaymentLabel;
+
+  /// No description provided for @scheduledFormAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount'**
+  String get scheduledFormAmountInvalid;
+
+  /// No description provided for @scheduledFormAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get scheduledFormAccountLabel;
+
+  /// No description provided for @scheduledFormAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick an account'**
+  String get scheduledFormAccountRequired;
+
+  /// No description provided for @scheduledFormCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get scheduledFormCategoryLabel;
+
+  /// No description provided for @scheduledFormCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category'**
+  String get scheduledFormCategoryRequired;
+
+  /// No description provided for @scheduledFormCycleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle'**
+  String get scheduledFormCycleLabel;
+
+  /// No description provided for @scheduledFormNextBillingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next billing date'**
+  String get scheduledFormNextBillingLabel;
+
+  /// No description provided for @scheduledFormInstallmentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment details'**
+  String get scheduledFormInstallmentSection;
+
+  /// No description provided for @scheduledFormTotalAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total amount'**
+  String get scheduledFormTotalAmountLabel;
+
+  /// No description provided for @scheduledFormTotalAmountHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Sum of all installments + down payment.'**
+  String get scheduledFormTotalAmountHelper;
+
+  /// No description provided for @scheduledFormTotalAmountHelperLoan.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime total: principal + interest combined.'**
+  String get scheduledFormTotalAmountHelperLoan;
+
+  /// No description provided for @scheduledFormDownPaymentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Down payment'**
+  String get scheduledFormDownPaymentLabel;
+
+  /// No description provided for @scheduledFormTotalInstallmentsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total installments'**
+  String get scheduledFormTotalInstallmentsLabel;
+
+  /// No description provided for @scheduledFormRemainingInstallmentsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get scheduledFormRemainingInstallmentsLabel;
+
+  /// No description provided for @scheduledFormInstallmentsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid count'**
+  String get scheduledFormInstallmentsInvalid;
+
+  /// No description provided for @scheduledFormRemainingExceeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot exceed total'**
+  String get scheduledFormRemainingExceeds;
+
+  /// No description provided for @scheduledFormInterestRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest rate (APR)'**
+  String get scheduledFormInterestRateLabel;
+
+  /// No description provided for @scheduledFormInterestInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be between 0 and 99.99'**
+  String get scheduledFormInterestInvalid;
+
+  /// No description provided for @scheduledFormNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get scheduledFormNoteLabel;
+
+  /// No description provided for @scheduledDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule not found'**
+  String get scheduledDetailNotFound;
+
+  /// No description provided for @scheduledDetailNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This scheduled entry may have been deleted or cancelled.'**
+  String get scheduledDetailNotFoundMessage;
+
+  /// No description provided for @scheduledDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get scheduledDetailEdit;
+
+  /// No description provided for @scheduledDetailPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get scheduledDetailPause;
+
+  /// No description provided for @scheduledDetailResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get scheduledDetailResume;
+
+  /// No description provided for @scheduledDetailCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get scheduledDetailCancel;
+
+  /// No description provided for @scheduledDetailDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get scheduledDetailDelete;
+
+  /// No description provided for @scheduledDetailNextDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Next due {date}'**
+  String scheduledDetailNextDue(String date);
+
+  /// No description provided for @scheduledDetailAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get scheduledDetailAccount;
+
+  /// No description provided for @scheduledDetailCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get scheduledDetailCategory;
+
+  /// No description provided for @scheduledDetailCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle'**
+  String get scheduledDetailCycle;
+
+  /// No description provided for @scheduledDetailTotalAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total amount'**
+  String get scheduledDetailTotalAmount;
+
+  /// No description provided for @scheduledDetailDownPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Down payment'**
+  String get scheduledDetailDownPayment;
+
+  /// No description provided for @scheduledDetailInstallments.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments'**
+  String get scheduledDetailInstallments;
+
+  /// No description provided for @scheduledDetailInterestRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest rate'**
+  String get scheduledDetailInterestRate;
+
+  /// No description provided for @scheduledDetailNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get scheduledDetailNote;
+
+  /// No description provided for @scheduledGenerateNowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate now'**
+  String get scheduledGenerateNowTitle;
+
+  /// No description provided for @scheduledGenerateNowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Manually create the next transaction and advance the schedule. Phase 1c only — Phase 3 adds an automatic scheduler.'**
+  String get scheduledGenerateNowBody;
+
+  /// No description provided for @scheduledGenerateNowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get scheduledGenerateNowAction;
+
+  /// No description provided for @scheduledGenerateNowSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction generated'**
+  String get scheduledGenerateNowSuccess;
+
+  /// No description provided for @scheduledGenerateNowViewTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get scheduledGenerateNowViewTransaction;
+
+  /// No description provided for @scheduledDetailHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated transactions'**
+  String get scheduledDetailHistoryTitle;
+
+  /// No description provided for @scheduledDetailHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions have been generated yet.'**
+  String get scheduledDetailHistoryEmpty;
+
+  /// No description provided for @scheduledDetailHistoryTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transaction} other{{count} transactions}}'**
+  String scheduledDetailHistoryTotal(int count);
+
+  /// No description provided for @scheduledCancelConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this schedule?'**
+  String get scheduledCancelConfirmTitle;
+
+  /// No description provided for @scheduledCancelConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling is final — you\'ll need to create a new entry to schedule again.'**
+  String get scheduledCancelConfirmBody;
+
+  /// No description provided for @scheduledCancelConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel schedule'**
+  String get scheduledCancelConfirmAction;
+
+  /// No description provided for @scheduledDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this schedule?'**
+  String get scheduledDeleteConfirmTitle;
+
+  /// No description provided for @scheduledDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Past generated transactions stay; only the schedule is removed.'**
+  String get scheduledDeleteConfirmBody;
+
+  /// No description provided for @scheduledDeleteConfirmAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get scheduledDeleteConfirmAction;
 }
 
 class _AppLocalizationsDelegate

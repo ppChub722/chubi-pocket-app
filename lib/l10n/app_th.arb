@@ -411,5 +411,250 @@
   "transactionsListDateYesterday": "เมื่อวาน",
 
   "accountAdjustBalanceViewTransaction": "ดู",
-  "accountAdjustBalanceSuccess": "ปรับยอดเรียบร้อย"
+  "accountAdjustBalanceSuccess": "ปรับยอดเรียบร้อย",
+
+  "savingGoalsTitle": "เป้าหมายการออม",
+  "savingGoalsAddNew": "เพิ่มเป้าหมาย",
+  "savingGoalsEmptyTitle": "ยังไม่มีเป้าหมาย",
+  "savingGoalsEmptyMessage": "ตั้งเป้าหมายซ้อนบนบัญชีของคุณ แล้วดูความคืบหน้าตามยอดเงิน",
+
+  "savingGoalProgressLine": "{current} จาก {target}",
+  "@savingGoalProgressLine": {
+    "placeholders": {
+      "current": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
+  "savingGoalCompletedLabel": "ถึงเป้าแล้ว",
+
+  "savingGoalFormTitle": "เป้าหมายใหม่",
+  "savingGoalFormTitleEdit": "แก้ไขเป้าหมาย",
+  "savingGoalFormSave": "สร้างเป้าหมาย",
+  "savingGoalFormSaveEdit": "บันทึก",
+  "savingGoalFormIconLabel": "ไอคอน",
+  "savingGoalFormNameLabel": "ชื่อเป้าหมาย",
+  "savingGoalFormNameRequired": "จำเป็น",
+  "savingGoalFormLinkedAccountLabel": "บัญชีที่เชื่อม",
+  "savingGoalFormLinkedAccountHelper": "ความคืบหน้า = ยอดบัญชี × % การจัดสรร",
+  "savingGoalFormLinkedAccountLockedHelper": "เปลี่ยนบัญชีที่เชื่อมไม่ได้ ต้องลบแล้วสร้างใหม่",
+  "savingGoalFormAccountRequired": "เลือกบัญชีที่เชื่อม",
+  "savingGoalFormTargetLabel": "ยอดเป้าหมาย",
+  "savingGoalFormTargetInvalid": "ใส่จำนวนที่มากกว่าศูนย์",
+  "savingGoalFormAllocationLabel": "การจัดสรร",
+  "savingGoalFormAllocationHelper": "เว้นว่างเพื่อให้ระบบแนะนำ รวมทุกเป้าต่อบัญชีต้องไม่เกิน 100%",
+  "savingGoalFormAllocationInvalid": "ต้องอยู่ระหว่าง 0 ถึง 100",
+  "savingGoalFormDeadlineLabel": "วันที่ครบกำหนด",
+  "savingGoalFormDeadlinePlaceholder": "ไม่ระบุ",
+  "savingGoalFormNoteLabel": "หมายเหตุ",
+
+  "savingGoalDetailNotFound": "ไม่พบเป้าหมาย",
+  "savingGoalDetailNotFoundMessage": "เป้าหมายนี้อาจถูกลบหรือเก็บถาวรแล้ว",
+  "savingGoalDetailEdit": "แก้ไข",
+  "savingGoalDetailArchive": "เก็บถาวร",
+  "savingGoalDetailDelete": "ลบ",
+  "savingGoalDetailOfTarget": "จาก {target}",
+  "@savingGoalDetailOfTarget": {
+    "placeholders": {
+      "target": { "type": "String" }
+    }
+  },
+  "savingGoalDetailAllocation": "การจัดสรร",
+  "savingGoalDetailRemaining": "คงเหลือ",
+  "savingGoalDetailDeadline": "วันที่ครบกำหนด",
+  "savingGoalDetailDaysRemaining": "วันที่เหลือ",
+  "savingGoalDetailDaysValue": "{count, plural, =1{1 วัน} other{{count} วัน}}",
+  "@savingGoalDetailDaysValue": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "savingGoalDetailRequiredMonthly": "แนะนำต่อเดือน",
+
+  "savingGoalArchiveConfirmTitle": "เก็บถาวรเป้าหมายนี้?",
+  "savingGoalArchiveConfirmBody": "การเก็บถาวรจะคืนสัดส่วนการจัดสรรให้บัญชี กู้คืนได้ภายหลังหากยังมีพื้นที่",
+  "savingGoalArchiveConfirmAction": "เก็บถาวร",
+  "savingGoalDeleteConfirmTitle": "ลบเป้าหมายนี้?",
+  "savingGoalDeleteConfirmBody": "ลบถาวร บัญชีที่เชื่อมและรายการในบัญชีไม่ได้รับผลกระทบ",
+  "savingGoalDeleteConfirmAction": "ลบ",
+
+  "budgetsTitle": "งบประมาณ",
+  "budgetsAddNew": "เพิ่มงบประมาณ",
+  "budgetsEmptyTitle": "ยังไม่มีงบประมาณ",
+  "budgetsEmptyMessage": "กำหนดเพดานต่อหมวดหมู่ ระบบจะตรวจการใช้จ่ายให้ในแต่ละรอบ",
+
+  "budgetPeriodWeekly": "รายสัปดาห์",
+  "budgetPeriodMonthly": "รายเดือน",
+  "budgetPeriodYearly": "รายปี",
+
+  "budgetSpentLine": "{spent} จาก {limit}",
+  "@budgetSpentLine": {
+    "placeholders": {
+      "spent": { "type": "String" },
+      "limit": { "type": "String" }
+    }
+  },
+
+  "budgetFormTitle": "งบประมาณใหม่",
+  "budgetFormTitleEdit": "แก้ไขงบประมาณ",
+  "budgetFormSave": "สร้างงบประมาณ",
+  "budgetFormSaveEdit": "บันทึก",
+  "budgetFormCategoryLabel": "หมวดหมู่",
+  "budgetFormCategoryPlaceholder": "เลือกหมวดหมู่",
+  "budgetFormCategoryHelper": "ใช้กับหมวดหมู่รายจ่ายเท่านั้น เลือกหมวดหลักเพื่อนับรวมหมวดย่อยทั้งหมด",
+  "budgetFormCategoryLockedHelper": "เปลี่ยนหมวดหมู่ไม่ได้ ต้องลบแล้วสร้างใหม่",
+  "budgetFormCategoryRequired": "เลือกหมวดหมู่",
+  "budgetFormDescriptionLabel": "คำอธิบาย",
+  "budgetFormDescriptionHelper": "ไม่บังคับ ใช้เป็นชื่องบประมาณ ถ้าเว้นว่างจะใช้ชื่อหมวดหมู่แทน",
+  "budgetFormDescriptionTooLong": "ไม่เกิน 200 ตัวอักษร",
+  "budgetFormAmountLabel": "เพดานต่อรอบ",
+  "budgetFormAmountInvalid": "ใส่จำนวนที่มากกว่าศูนย์",
+  "budgetFormPeriodLabel": "รอบ",
+  "budgetFormNoteLabel": "หมายเหตุ",
+  "budgetFormNoteHelper": "ไม่บังคับ ข้อความยาวที่จะแสดงในหน้ารายละเอียด",
+
+  "budgetDetailNotFound": "ไม่พบงบประมาณ",
+  "budgetDetailNotFoundMessage": "งบประมาณนี้อาจถูกลบหรือเก็บถาวรแล้ว",
+  "budgetDetailFallbackTitle": "งบประมาณ",
+  "budgetDetailEdit": "แก้ไข",
+  "budgetDetailArchive": "เก็บถาวร",
+  "budgetDetailDelete": "ลบ",
+  "budgetDetailOfLimit": "จาก {limit}",
+  "@budgetDetailOfLimit": {
+    "placeholders": {
+      "limit": { "type": "String" }
+    }
+  },
+  "budgetDetailRemainingLine": "เหลือ {amount}",
+  "@budgetDetailRemainingLine": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "budgetDetailPeriodRange": "{start} – {end}",
+  "@budgetDetailPeriodRange": {
+    "placeholders": {
+      "start": { "type": "String" },
+      "end": { "type": "String" }
+    }
+  },
+  "budgetDetailOverLimitWarning": "ใช้เกินเพดานงบประมาณรอบนี้แล้ว",
+  "budgetDetailBreakdownTitle": "การใช้จ่ายตามหมวด",
+
+  "budgetArchiveConfirmTitle": "เก็บถาวรงบประมาณนี้?",
+  "budgetArchiveConfirmBody": "การเก็บถาวรจะซ่อนงบประมาณจากรายการที่ใช้งาน กู้คืนได้ภายหลัง",
+  "budgetArchiveConfirmAction": "เก็บถาวร",
+  "budgetDeleteConfirmTitle": "ลบงบประมาณนี้?",
+  "budgetDeleteConfirmBody": "ลบถาวร รายการธุรกรรมไม่ได้รับผลกระทบ",
+  "budgetDeleteConfirmAction": "ลบ",
+
+  "scheduledTitle": "รายการตามกำหนด",
+  "scheduledAddNew": "เพิ่มรายการ",
+  "scheduledEmptyTitle": "ยังไม่มีรายการตามกำหนด",
+  "scheduledEmptyMessage": "ตั้งค่าค่าสมาชิก ผ่อนชำระ หรือเงินกู้ ระบบจะสร้างรายการให้อัตโนมัติ",
+
+  "scheduledVariantRecurring": "ประจำ",
+  "scheduledVariantInstallment": "ผ่อนชำระ",
+  "scheduledVariantLoan": "เงินกู้",
+
+  "scheduledTypeExpense": "รายจ่าย",
+  "scheduledTypeIncome": "รายรับ",
+
+  "scheduledCycleDaily": "ทุกวัน",
+  "scheduledCycleWeekly": "ทุกสัปดาห์",
+  "scheduledCycleMonthly": "ทุกเดือน",
+  "scheduledCycleYearly": "ทุกปี",
+
+  "scheduledStatusActive": "ใช้งาน",
+  "scheduledStatusPaused": "พักไว้",
+  "scheduledStatusCompleted": "จบแล้ว",
+  "scheduledStatusCancelled": "ยกเลิก",
+
+  "scheduledNextDue": "ครบกำหนด {date}",
+  "@scheduledNextDue": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "scheduledInstallmentsLeft": "เหลือ {remaining}/{total}",
+  "@scheduledInstallmentsLeft": {
+    "placeholders": {
+      "remaining": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "scheduledFormTitle": "รายการตามกำหนดใหม่",
+  "scheduledFormTitleEdit": "แก้ไขรายการ",
+  "scheduledFormSave": "สร้าง",
+  "scheduledFormSaveEdit": "บันทึก",
+  "scheduledFormIconLabel": "ไอคอน",
+  "scheduledFormVariantLabel": "ประเภท",
+  "scheduledFormTypeLabel": "ทิศทาง",
+  "scheduledFormNameLabel": "ชื่อ",
+  "scheduledFormNameRequired": "จำเป็น",
+  "scheduledFormAmountLabel": "จำนวนต่อรอบ",
+  "scheduledFormPaymentLabel": "ค่างวดต่อรอบ",
+  "scheduledFormAmountInvalid": "ใส่จำนวนที่มากกว่าศูนย์",
+  "scheduledFormAccountLabel": "บัญชี",
+  "scheduledFormAccountRequired": "เลือกบัญชี",
+  "scheduledFormCategoryLabel": "หมวดหมู่",
+  "scheduledFormCategoryRequired": "เลือกหมวดหมู่",
+  "scheduledFormCycleLabel": "รอบ",
+  "scheduledFormNextBillingLabel": "วันที่งวดถัดไป",
+  "scheduledFormInstallmentSection": "ข้อมูลการผ่อน",
+  "scheduledFormTotalAmountLabel": "ยอดรวม",
+  "scheduledFormTotalAmountHelper": "รวมทุกงวด + เงินดาวน์",
+  "scheduledFormTotalAmountHelperLoan": "ยอดรวมตลอดสัญญา รวมต้นและดอกเบี้ย",
+  "scheduledFormDownPaymentLabel": "เงินดาวน์",
+  "scheduledFormTotalInstallmentsLabel": "งวดทั้งหมด",
+  "scheduledFormRemainingInstallmentsLabel": "งวดที่เหลือ",
+  "scheduledFormInstallmentsInvalid": "จำนวนไม่ถูกต้อง",
+  "scheduledFormRemainingExceeds": "ห้ามเกินจำนวนงวดทั้งหมด",
+  "scheduledFormInterestRateLabel": "อัตราดอกเบี้ย (ต่อปี)",
+  "scheduledFormInterestInvalid": "ต้องอยู่ระหว่าง 0 ถึง 99.99",
+  "scheduledFormNoteLabel": "หมายเหตุ",
+
+  "scheduledDetailNotFound": "ไม่พบรายการ",
+  "scheduledDetailNotFoundMessage": "รายการนี้อาจถูกลบหรือยกเลิกแล้ว",
+  "scheduledDetailEdit": "แก้ไข",
+  "scheduledDetailPause": "พักไว้",
+  "scheduledDetailResume": "ใช้งานต่อ",
+  "scheduledDetailCancel": "ยกเลิก",
+  "scheduledDetailDelete": "ลบ",
+  "scheduledDetailNextDue": "งวดถัดไป {date}",
+  "@scheduledDetailNextDue": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "scheduledDetailAccount": "บัญชี",
+  "scheduledDetailCategory": "หมวดหมู่",
+  "scheduledDetailCycle": "รอบ",
+  "scheduledDetailTotalAmount": "ยอดรวม",
+  "scheduledDetailDownPayment": "เงินดาวน์",
+  "scheduledDetailInstallments": "งวด",
+  "scheduledDetailInterestRate": "อัตราดอกเบี้ย",
+  "scheduledDetailNote": "หมายเหตุ",
+
+  "scheduledGenerateNowTitle": "สร้างตอนนี้",
+  "scheduledGenerateNowBody": "สร้างรายการถัดไปและเลื่อนงวด — เฟส 1c เท่านั้น เฟส 3 จะมีระบบสร้างอัตโนมัติ",
+  "scheduledGenerateNowAction": "สร้าง",
+  "scheduledGenerateNowSuccess": "สร้างรายการแล้ว",
+  "scheduledGenerateNowViewTransaction": "ดู",
+
+  "scheduledDetailHistoryTitle": "รายการที่สร้างแล้ว",
+  "scheduledDetailHistoryEmpty": "ยังไม่มีรายการที่ระบบสร้าง",
+  "scheduledDetailHistoryTotal": "{count, plural, =1{1 รายการ} other{{count} รายการ}}",
+  "@scheduledDetailHistoryTotal": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "scheduledCancelConfirmTitle": "ยกเลิกรายการนี้?",
+  "scheduledCancelConfirmBody": "การยกเลิกถาวร ต้องสร้างใหม่หากต้องการตั้งใหม่",
+  "scheduledCancelConfirmAction": "ยกเลิก",
+  "scheduledDeleteConfirmTitle": "ลบรายการนี้?",
+  "scheduledDeleteConfirmBody": "รายการที่ระบบสร้างแล้วยังคงอยู่ ลบเฉพาะรายการตามกำหนด",
+  "scheduledDeleteConfirmAction": "ลบ"
 }

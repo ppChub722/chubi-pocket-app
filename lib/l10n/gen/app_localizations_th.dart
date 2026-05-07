@@ -1157,4 +1157,550 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountAdjustBalanceSuccess => 'ปรับยอดเรียบร้อย';
+
+  @override
+  String get savingGoalsTitle => 'เป้าหมายการออม';
+
+  @override
+  String get savingGoalsAddNew => 'เพิ่มเป้าหมาย';
+
+  @override
+  String get savingGoalsEmptyTitle => 'ยังไม่มีเป้าหมาย';
+
+  @override
+  String get savingGoalsEmptyMessage =>
+      'ตั้งเป้าหมายซ้อนบนบัญชีของคุณ แล้วดูความคืบหน้าตามยอดเงิน';
+
+  @override
+  String savingGoalProgressLine(String current, String target) {
+    return '$current จาก $target';
+  }
+
+  @override
+  String get savingGoalCompletedLabel => 'ถึงเป้าแล้ว';
+
+  @override
+  String get savingGoalFormTitle => 'เป้าหมายใหม่';
+
+  @override
+  String get savingGoalFormTitleEdit => 'แก้ไขเป้าหมาย';
+
+  @override
+  String get savingGoalFormSave => 'สร้างเป้าหมาย';
+
+  @override
+  String get savingGoalFormSaveEdit => 'บันทึก';
+
+  @override
+  String get savingGoalFormIconLabel => 'ไอคอน';
+
+  @override
+  String get savingGoalFormNameLabel => 'ชื่อเป้าหมาย';
+
+  @override
+  String get savingGoalFormNameRequired => 'จำเป็น';
+
+  @override
+  String get savingGoalFormLinkedAccountLabel => 'บัญชีที่เชื่อม';
+
+  @override
+  String get savingGoalFormLinkedAccountHelper =>
+      'ความคืบหน้า = ยอดบัญชี × % การจัดสรร';
+
+  @override
+  String get savingGoalFormLinkedAccountLockedHelper =>
+      'เปลี่ยนบัญชีที่เชื่อมไม่ได้ ต้องลบแล้วสร้างใหม่';
+
+  @override
+  String get savingGoalFormAccountRequired => 'เลือกบัญชีที่เชื่อม';
+
+  @override
+  String get savingGoalFormTargetLabel => 'ยอดเป้าหมาย';
+
+  @override
+  String get savingGoalFormTargetInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
+
+  @override
+  String get savingGoalFormAllocationLabel => 'การจัดสรร';
+
+  @override
+  String get savingGoalFormAllocationHelper =>
+      'เว้นว่างเพื่อให้ระบบแนะนำ รวมทุกเป้าต่อบัญชีต้องไม่เกิน 100%';
+
+  @override
+  String get savingGoalFormAllocationInvalid => 'ต้องอยู่ระหว่าง 0 ถึง 100';
+
+  @override
+  String get savingGoalFormDeadlineLabel => 'วันที่ครบกำหนด';
+
+  @override
+  String get savingGoalFormDeadlinePlaceholder => 'ไม่ระบุ';
+
+  @override
+  String get savingGoalFormNoteLabel => 'หมายเหตุ';
+
+  @override
+  String get savingGoalDetailNotFound => 'ไม่พบเป้าหมาย';
+
+  @override
+  String get savingGoalDetailNotFoundMessage =>
+      'เป้าหมายนี้อาจถูกลบหรือเก็บถาวรแล้ว';
+
+  @override
+  String get savingGoalDetailEdit => 'แก้ไข';
+
+  @override
+  String get savingGoalDetailArchive => 'เก็บถาวร';
+
+  @override
+  String get savingGoalDetailDelete => 'ลบ';
+
+  @override
+  String savingGoalDetailOfTarget(String target) {
+    return 'จาก $target';
+  }
+
+  @override
+  String get savingGoalDetailAllocation => 'การจัดสรร';
+
+  @override
+  String get savingGoalDetailRemaining => 'คงเหลือ';
+
+  @override
+  String get savingGoalDetailDeadline => 'วันที่ครบกำหนด';
+
+  @override
+  String get savingGoalDetailDaysRemaining => 'วันที่เหลือ';
+
+  @override
+  String savingGoalDetailDaysValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count วัน',
+      one: '1 วัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get savingGoalDetailRequiredMonthly => 'แนะนำต่อเดือน';
+
+  @override
+  String get savingGoalArchiveConfirmTitle => 'เก็บถาวรเป้าหมายนี้?';
+
+  @override
+  String get savingGoalArchiveConfirmBody =>
+      'การเก็บถาวรจะคืนสัดส่วนการจัดสรรให้บัญชี กู้คืนได้ภายหลังหากยังมีพื้นที่';
+
+  @override
+  String get savingGoalArchiveConfirmAction => 'เก็บถาวร';
+
+  @override
+  String get savingGoalDeleteConfirmTitle => 'ลบเป้าหมายนี้?';
+
+  @override
+  String get savingGoalDeleteConfirmBody =>
+      'ลบถาวร บัญชีที่เชื่อมและรายการในบัญชีไม่ได้รับผลกระทบ';
+
+  @override
+  String get savingGoalDeleteConfirmAction => 'ลบ';
+
+  @override
+  String get budgetsTitle => 'งบประมาณ';
+
+  @override
+  String get budgetsAddNew => 'เพิ่มงบประมาณ';
+
+  @override
+  String get budgetsEmptyTitle => 'ยังไม่มีงบประมาณ';
+
+  @override
+  String get budgetsEmptyMessage =>
+      'กำหนดเพดานต่อหมวดหมู่ ระบบจะตรวจการใช้จ่ายให้ในแต่ละรอบ';
+
+  @override
+  String get budgetPeriodWeekly => 'รายสัปดาห์';
+
+  @override
+  String get budgetPeriodMonthly => 'รายเดือน';
+
+  @override
+  String get budgetPeriodYearly => 'รายปี';
+
+  @override
+  String budgetSpentLine(String spent, String limit) {
+    return '$spent จาก $limit';
+  }
+
+  @override
+  String get budgetFormTitle => 'งบประมาณใหม่';
+
+  @override
+  String get budgetFormTitleEdit => 'แก้ไขงบประมาณ';
+
+  @override
+  String get budgetFormSave => 'สร้างงบประมาณ';
+
+  @override
+  String get budgetFormSaveEdit => 'บันทึก';
+
+  @override
+  String get budgetFormCategoryLabel => 'หมวดหมู่';
+
+  @override
+  String get budgetFormCategoryPlaceholder => 'เลือกหมวดหมู่';
+
+  @override
+  String get budgetFormCategoryHelper =>
+      'ใช้กับหมวดหมู่รายจ่ายเท่านั้น เลือกหมวดหลักเพื่อนับรวมหมวดย่อยทั้งหมด';
+
+  @override
+  String get budgetFormCategoryLockedHelper =>
+      'เปลี่ยนหมวดหมู่ไม่ได้ ต้องลบแล้วสร้างใหม่';
+
+  @override
+  String get budgetFormCategoryRequired => 'เลือกหมวดหมู่';
+
+  @override
+  String get budgetFormDescriptionLabel => 'คำอธิบาย';
+
+  @override
+  String get budgetFormDescriptionHelper =>
+      'ไม่บังคับ ใช้เป็นชื่องบประมาณ ถ้าเว้นว่างจะใช้ชื่อหมวดหมู่แทน';
+
+  @override
+  String get budgetFormDescriptionTooLong => 'ไม่เกิน 200 ตัวอักษร';
+
+  @override
+  String get budgetFormAmountLabel => 'เพดานต่อรอบ';
+
+  @override
+  String get budgetFormAmountInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
+
+  @override
+  String get budgetFormPeriodLabel => 'รอบ';
+
+  @override
+  String get budgetFormNoteLabel => 'หมายเหตุ';
+
+  @override
+  String get budgetFormNoteHelper =>
+      'ไม่บังคับ ข้อความยาวที่จะแสดงในหน้ารายละเอียด';
+
+  @override
+  String get budgetDetailNotFound => 'ไม่พบงบประมาณ';
+
+  @override
+  String get budgetDetailNotFoundMessage =>
+      'งบประมาณนี้อาจถูกลบหรือเก็บถาวรแล้ว';
+
+  @override
+  String get budgetDetailFallbackTitle => 'งบประมาณ';
+
+  @override
+  String get budgetDetailEdit => 'แก้ไข';
+
+  @override
+  String get budgetDetailArchive => 'เก็บถาวร';
+
+  @override
+  String get budgetDetailDelete => 'ลบ';
+
+  @override
+  String budgetDetailOfLimit(String limit) {
+    return 'จาก $limit';
+  }
+
+  @override
+  String budgetDetailRemainingLine(String amount) {
+    return 'เหลือ $amount';
+  }
+
+  @override
+  String budgetDetailPeriodRange(String start, String end) {
+    return '$start – $end';
+  }
+
+  @override
+  String get budgetDetailOverLimitWarning => 'ใช้เกินเพดานงบประมาณรอบนี้แล้ว';
+
+  @override
+  String get budgetDetailBreakdownTitle => 'การใช้จ่ายตามหมวด';
+
+  @override
+  String get budgetArchiveConfirmTitle => 'เก็บถาวรงบประมาณนี้?';
+
+  @override
+  String get budgetArchiveConfirmBody =>
+      'การเก็บถาวรจะซ่อนงบประมาณจากรายการที่ใช้งาน กู้คืนได้ภายหลัง';
+
+  @override
+  String get budgetArchiveConfirmAction => 'เก็บถาวร';
+
+  @override
+  String get budgetDeleteConfirmTitle => 'ลบงบประมาณนี้?';
+
+  @override
+  String get budgetDeleteConfirmBody => 'ลบถาวร รายการธุรกรรมไม่ได้รับผลกระทบ';
+
+  @override
+  String get budgetDeleteConfirmAction => 'ลบ';
+
+  @override
+  String get scheduledTitle => 'รายการตามกำหนด';
+
+  @override
+  String get scheduledAddNew => 'เพิ่มรายการ';
+
+  @override
+  String get scheduledEmptyTitle => 'ยังไม่มีรายการตามกำหนด';
+
+  @override
+  String get scheduledEmptyMessage =>
+      'ตั้งค่าค่าสมาชิก ผ่อนชำระ หรือเงินกู้ ระบบจะสร้างรายการให้อัตโนมัติ';
+
+  @override
+  String get scheduledVariantRecurring => 'ประจำ';
+
+  @override
+  String get scheduledVariantInstallment => 'ผ่อนชำระ';
+
+  @override
+  String get scheduledVariantLoan => 'เงินกู้';
+
+  @override
+  String get scheduledTypeExpense => 'รายจ่าย';
+
+  @override
+  String get scheduledTypeIncome => 'รายรับ';
+
+  @override
+  String get scheduledCycleDaily => 'ทุกวัน';
+
+  @override
+  String get scheduledCycleWeekly => 'ทุกสัปดาห์';
+
+  @override
+  String get scheduledCycleMonthly => 'ทุกเดือน';
+
+  @override
+  String get scheduledCycleYearly => 'ทุกปี';
+
+  @override
+  String get scheduledStatusActive => 'ใช้งาน';
+
+  @override
+  String get scheduledStatusPaused => 'พักไว้';
+
+  @override
+  String get scheduledStatusCompleted => 'จบแล้ว';
+
+  @override
+  String get scheduledStatusCancelled => 'ยกเลิก';
+
+  @override
+  String scheduledNextDue(String date) {
+    return 'ครบกำหนด $date';
+  }
+
+  @override
+  String scheduledInstallmentsLeft(int remaining, int total) {
+    return 'เหลือ $remaining/$total';
+  }
+
+  @override
+  String get scheduledFormTitle => 'รายการตามกำหนดใหม่';
+
+  @override
+  String get scheduledFormTitleEdit => 'แก้ไขรายการ';
+
+  @override
+  String get scheduledFormSave => 'สร้าง';
+
+  @override
+  String get scheduledFormSaveEdit => 'บันทึก';
+
+  @override
+  String get scheduledFormIconLabel => 'ไอคอน';
+
+  @override
+  String get scheduledFormVariantLabel => 'ประเภท';
+
+  @override
+  String get scheduledFormTypeLabel => 'ทิศทาง';
+
+  @override
+  String get scheduledFormNameLabel => 'ชื่อ';
+
+  @override
+  String get scheduledFormNameRequired => 'จำเป็น';
+
+  @override
+  String get scheduledFormAmountLabel => 'จำนวนต่อรอบ';
+
+  @override
+  String get scheduledFormPaymentLabel => 'ค่างวดต่อรอบ';
+
+  @override
+  String get scheduledFormAmountInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
+
+  @override
+  String get scheduledFormAccountLabel => 'บัญชี';
+
+  @override
+  String get scheduledFormAccountRequired => 'เลือกบัญชี';
+
+  @override
+  String get scheduledFormCategoryLabel => 'หมวดหมู่';
+
+  @override
+  String get scheduledFormCategoryRequired => 'เลือกหมวดหมู่';
+
+  @override
+  String get scheduledFormCycleLabel => 'รอบ';
+
+  @override
+  String get scheduledFormNextBillingLabel => 'วันที่งวดถัดไป';
+
+  @override
+  String get scheduledFormInstallmentSection => 'ข้อมูลการผ่อน';
+
+  @override
+  String get scheduledFormTotalAmountLabel => 'ยอดรวม';
+
+  @override
+  String get scheduledFormTotalAmountHelper => 'รวมทุกงวด + เงินดาวน์';
+
+  @override
+  String get scheduledFormTotalAmountHelperLoan =>
+      'ยอดรวมตลอดสัญญา รวมต้นและดอกเบี้ย';
+
+  @override
+  String get scheduledFormDownPaymentLabel => 'เงินดาวน์';
+
+  @override
+  String get scheduledFormTotalInstallmentsLabel => 'งวดทั้งหมด';
+
+  @override
+  String get scheduledFormRemainingInstallmentsLabel => 'งวดที่เหลือ';
+
+  @override
+  String get scheduledFormInstallmentsInvalid => 'จำนวนไม่ถูกต้อง';
+
+  @override
+  String get scheduledFormRemainingExceeds => 'ห้ามเกินจำนวนงวดทั้งหมด';
+
+  @override
+  String get scheduledFormInterestRateLabel => 'อัตราดอกเบี้ย (ต่อปี)';
+
+  @override
+  String get scheduledFormInterestInvalid => 'ต้องอยู่ระหว่าง 0 ถึง 99.99';
+
+  @override
+  String get scheduledFormNoteLabel => 'หมายเหตุ';
+
+  @override
+  String get scheduledDetailNotFound => 'ไม่พบรายการ';
+
+  @override
+  String get scheduledDetailNotFoundMessage =>
+      'รายการนี้อาจถูกลบหรือยกเลิกแล้ว';
+
+  @override
+  String get scheduledDetailEdit => 'แก้ไข';
+
+  @override
+  String get scheduledDetailPause => 'พักไว้';
+
+  @override
+  String get scheduledDetailResume => 'ใช้งานต่อ';
+
+  @override
+  String get scheduledDetailCancel => 'ยกเลิก';
+
+  @override
+  String get scheduledDetailDelete => 'ลบ';
+
+  @override
+  String scheduledDetailNextDue(String date) {
+    return 'งวดถัดไป $date';
+  }
+
+  @override
+  String get scheduledDetailAccount => 'บัญชี';
+
+  @override
+  String get scheduledDetailCategory => 'หมวดหมู่';
+
+  @override
+  String get scheduledDetailCycle => 'รอบ';
+
+  @override
+  String get scheduledDetailTotalAmount => 'ยอดรวม';
+
+  @override
+  String get scheduledDetailDownPayment => 'เงินดาวน์';
+
+  @override
+  String get scheduledDetailInstallments => 'งวด';
+
+  @override
+  String get scheduledDetailInterestRate => 'อัตราดอกเบี้ย';
+
+  @override
+  String get scheduledDetailNote => 'หมายเหตุ';
+
+  @override
+  String get scheduledGenerateNowTitle => 'สร้างตอนนี้';
+
+  @override
+  String get scheduledGenerateNowBody =>
+      'สร้างรายการถัดไปและเลื่อนงวด — เฟส 1c เท่านั้น เฟส 3 จะมีระบบสร้างอัตโนมัติ';
+
+  @override
+  String get scheduledGenerateNowAction => 'สร้าง';
+
+  @override
+  String get scheduledGenerateNowSuccess => 'สร้างรายการแล้ว';
+
+  @override
+  String get scheduledGenerateNowViewTransaction => 'ดู';
+
+  @override
+  String get scheduledDetailHistoryTitle => 'รายการที่สร้างแล้ว';
+
+  @override
+  String get scheduledDetailHistoryEmpty => 'ยังไม่มีรายการที่ระบบสร้าง';
+
+  @override
+  String scheduledDetailHistoryTotal(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count รายการ',
+      one: '1 รายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get scheduledCancelConfirmTitle => 'ยกเลิกรายการนี้?';
+
+  @override
+  String get scheduledCancelConfirmBody =>
+      'การยกเลิกถาวร ต้องสร้างใหม่หากต้องการตั้งใหม่';
+
+  @override
+  String get scheduledCancelConfirmAction => 'ยกเลิก';
+
+  @override
+  String get scheduledDeleteConfirmTitle => 'ลบรายการนี้?';
+
+  @override
+  String get scheduledDeleteConfirmBody =>
+      'รายการที่ระบบสร้างแล้วยังคงอยู่ ลบเฉพาะรายการตามกำหนด';
+
+  @override
+  String get scheduledDeleteConfirmAction => 'ลบ';
 }

@@ -97,9 +97,20 @@ class _ContactBody extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _Field(label: 'Name', value: contact.displayName),
-        if (contact.email != null)
-          _Field(label: 'Email', value: contact.email!),
+        // Linked contacts: display the linked user's live name/email
+        // (via effective* getters) and show the link icon to make the
+        // "this is from their account" status visible.
+        _Field(
+          label: 'Name',
+          value: contact.effectiveDisplayName,
+          showLinkIcon: contact.isLinked,
+        ),
+        if (contact.effectiveEmail != null)
+          _Field(
+            label: 'Email',
+            value: contact.effectiveEmail!,
+            showLinkIcon: contact.isLinked,
+          ),
         if (contact.phone != null)
           _Field(label: 'Phone', value: contact.phone!),
         if (contact.notes != null)
@@ -197,9 +208,19 @@ class _ContactBody extends StatelessWidget {
 }
 
 class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.value});
+  const _Field({
+    required this.label,
+    required this.value,
+    this.showLinkIcon = false,
+  });
+
   final String label;
   final String value;
+
+  /// When true, prepends a chain-link icon to the value line. Used by
+  /// linked-contact rows to mark "this comes from the linked user's
+  /// account, not from B's local copy".
+  final bool showLinkIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -209,7 +230,24 @@ class _Field extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: Theme.of(context).textTheme.labelSmall),
-          Text(value, style: Theme.of(context).textTheme.bodyLarge),
+          Row(
+            children: [
+              if (showLinkIcon) ...[
+                Icon(
+                  Icons.link,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Expanded(
+                child: Text(
+                  value,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
