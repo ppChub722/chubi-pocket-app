@@ -52,9 +52,9 @@
   "authRegisterEmailTakenInline": "Already registered",
 
   "homeEmptyTitle": "Nothing to show yet",
-  "homeEmptyMessage": "Add an account from the Accounts tab, then tap the + button to log your first transaction.",
+  "homeEmptyMessage": "Add a wallet from the Wallets tab, then tap the + button to log your first transaction.",
   "homeNetWorthLabel": "Net worth",
-  "homeNetWorthAccountCount": "{count, plural, =1{1 account} other{{count} accounts}}",
+  "homeNetWorthAccountCount": "{count, plural, =1{1 wallet} other{{count} wallets}}",
   "@homeNetWorthAccountCount": {
     "placeholders": {
       "count": { "type": "int" }
@@ -66,7 +66,7 @@
 
   "navDashboard": "Dashboard",
   "navTransactions": "Transactions",
-  "navAccounts": "Accounts",
+  "navAccounts": "Wallets",
   "navAddTransaction": "Add transaction",
   "navProjects": "Projects",
   "navMore": "More",
@@ -76,10 +76,10 @@
   "addTransactionComingSoon": "Logging transactions ships in Phase 1a",
   "notificationsComingSoon": "The notifications inbox ships in Phase 1b",
 
-  "accountsPlaceholderTitle": "No accounts yet",
-  "accountsPlaceholderMessage": "Adding accounts ships in Phase 1a.",
+  "accountsPlaceholderTitle": "No wallets yet",
+  "accountsPlaceholderMessage": "Adding wallets ships in Phase 1a.",
 
-  "accountsAddNew": "Add account",
+  "accountsAddNew": "Add wallet",
   "accountTypeCash": "Cash",
   "accountTypeBank": "Bank",
   "accountTypeEWallet": "E-wallet",
@@ -90,8 +90,8 @@
     "placeholders": { "percent": { "type": "int" } }
   },
 
-  "accountDetailNotFound": "Account not found",
-  "accountDetailNotFoundMessage": "This account may have been archived or deleted.",
+  "accountDetailNotFound": "Wallet not found",
+  "accountDetailNotFoundMessage": "This wallet may have been archived or deleted.",
   "accountDetailEdit": "Edit",
   "accountDetailAdjustBalance": "Adjust balance",
   "accountDetailArchive": "Archive",
@@ -127,30 +127,30 @@
   "accountDetailTransactionsEmptyTitle": "No transactions yet",
   "accountDetailTransactionsEmptyMessage": "Logging transactions ships in Phase 1a.",
 
-  "accountFormTitle": "New account",
-  "accountFormTitleEdit": "Edit account",
+  "accountFormTitle": "New wallet",
+  "accountFormTitleEdit": "Edit wallet",
   "accountFormSaveEdit": "Save changes",
   "accountFormPreviewLabel": "Preview",
   "accountFormTypeLabel": "Type",
-  "accountFormNameLabel": "Account name",
+  "accountFormNameLabel": "Wallet name",
   "accountFormNameRequired": "Required",
   "accountFormNameTooLong": "Max 100 characters",
   "accountFormIconLabel": "Icon",
   "accountFormColorLabel": "Color",
   "accountFormUploadLogo": "Upload custom logo (Phase 2)",
   "accountFormBalanceLabel": "Opening balance",
-  "accountFormBalanceHelper": "Money already in this account on the day you start tracking.",
+  "accountFormBalanceHelper": "Money already in this wallet on the day you start tracking.",
   "accountFormCreditSection": "Credit details",
   "accountFormCreditLimitLabel": "Credit limit",
-  "accountFormCreditLimitRequired": "Required for credit accounts",
+  "accountFormCreditLimitRequired": "Required for credit wallets",
   "accountFormStatementDateLabel": "Statement date",
   "accountFormStatementDateHelper": "Day of month (1–31)",
   "accountFormPaymentDueLabel": "Payment due",
   "accountFormPaymentDueHelper": "Day of month (1–31)",
   "accountFormMinimumPaymentLabel": "Minimum payment",
   "accountFormDayInvalid": "Must be 1–31",
-  "accountFormSave": "Save account",
-  "accountFormDiscardTitle": "Discard new account?",
+  "accountFormSave": "Save wallet",
+  "accountFormDiscardTitle": "Discard new wallet?",
   "accountFormDiscardBody": "Your changes will be lost.",
   "accountFormDiscardTitleEdit": "Discard changes?",
 
@@ -163,8 +163,8 @@
   "accountAdjustBalanceNoChange": "New balance must differ from the current balance.",
   "accountAdjustBalanceConfirm": "Adjust",
 
-  "accountArchiveConfirmTitle": "Archive this account?",
-  "accountArchiveConfirmBody": "The account will be hidden from the active list. Its transactions stay intact and remain referenced.",
+  "accountArchiveConfirmTitle": "Archive this wallet?",
+  "accountArchiveConfirmBody": "The wallet will be hidden from the active list. Its transactions stay intact and remain referenced.",
   "accountArchiveConfirmAction": "Archive",
 
   "accountFormCurrencyLabel": "Currency",
@@ -172,7 +172,7 @@
   "accountFormPhase2Badge": "Phase 2",
 
   "accountFormDescriptionLabel": "Description",
-  "accountFormDescriptionHelper": "What this account is for. Visible to you only.",
+  "accountFormDescriptionHelper": "What this wallet is for. Visible to you only.",
   "accountFormDescriptionTooLong": "Max 200 characters",
   "accountFormNoteLabel": "Note",
   "accountFormNoteHelper": "Personal scratch note (e.g. \"Travel money for Japan trip\").",
@@ -379,10 +379,10 @@
   "transactionTypeIncome": "Income",
   "transactionTypeTransfer": "Transfer",
 
-  "transactionFormAccountLabel": "Account",
-  "transactionFormFromAccountLabel": "From account",
-  "transactionFormToAccountLabel": "To account",
-  "transactionFormAccountRequired": "Pick an account",
+  "transactionFormAccountLabel": "Wallet",
+  "transactionFormFromAccountLabel": "From wallet",
+  "transactionFormToAccountLabel": "To wallet",
+  "transactionFormAccountRequired": "Pick a wallet",
   "transactionFormAccountSameError": "Source and destination must differ",
   "transactionFormCategoryLabel": "Category",
   "transactionFormCategoryNone": "Uncategorized",
@@ -400,8 +400,8 @@
   "transactionFormSaveAndAddAnother": "Save & add another",
   "transactionFormSavedAddedAnother": "Saved. Add another below.",
 
-  "transactionFormAccountPickerTitle": "Pick an account",
-  "transactionFormAccountPickerEmpty": "No active accounts. Create one first.",
+  "transactionFormAccountPickerTitle": "Pick a wallet",
+  "transactionFormAccountPickerEmpty": "No active wallets. Create one first.",
 
   "transactionFormCategoryPickerTitle": "Pick a category",
   "transactionFormCategoryPickerNoneOption": "Uncategorized",
@@ -417,12 +417,12 @@
   "transactionDetailNotFoundMessage": "This transaction may have been deleted.",
   "transactionDetailDeleteConfirmTitle": "Delete this transaction?",
   "transactionDetailDeleteConfirmTitleTransfer": "Delete this transfer?",
-  "transactionDetailDeleteConfirmBody": "This will reverse the balance change on the account.",
-  "transactionDetailDeleteConfirmBodyTransfer": "Both rows of the transfer will be deleted and balances on both accounts will reverse.",
+  "transactionDetailDeleteConfirmBody": "This will reverse the balance change on the wallet.",
+  "transactionDetailDeleteConfirmBodyTransfer": "Both rows of the transfer will be deleted and balances on both wallets will reverse.",
   "transactionDetailDeleteConfirmAction": "Delete",
 
-  "transactionDetailTransferReadonlyHint": "To change accounts, delete and create a new transfer.",
-  "transactionDetailSystemRowBanner": "Auto-created — to change this, use the matching account-level action (account edit, or Adjust balance).",
+  "transactionDetailTransferReadonlyHint": "To change wallets, delete and create a new transfer.",
+  "transactionDetailSystemRowBanner": "Auto-created — to change this, use the matching wallet-level action (wallet edit, or Adjust balance).",
 
   "transactionsRangeWeek": "This week",
   "transactionsRangeMonth": "This month",
@@ -446,7 +446,7 @@
   "savingGoalsTitle": "Saving goals",
   "savingGoalsAddNew": "Add saving goal",
   "savingGoalsEmptyTitle": "No saving goals yet",
-  "savingGoalsEmptyMessage": "Set a target on top of an account and track your progress as the balance grows.",
+  "savingGoalsEmptyMessage": "Set a target on top of a wallet and track your progress as the balance grows.",
 
   "savingGoalProgressLine": "{current} of {target}",
   "@savingGoalProgressLine": {
@@ -464,14 +464,14 @@
   "savingGoalFormIconLabel": "Icon",
   "savingGoalFormNameLabel": "Goal name",
   "savingGoalFormNameRequired": "Required",
-  "savingGoalFormLinkedAccountLabel": "Linked account",
-  "savingGoalFormLinkedAccountHelper": "Progress = account balance × allocation %",
-  "savingGoalFormLinkedAccountLockedHelper": "Linked account can't be changed. Delete and recreate to switch accounts.",
-  "savingGoalFormAccountRequired": "Pick a linked account",
+  "savingGoalFormLinkedAccountLabel": "Linked wallet",
+  "savingGoalFormLinkedAccountHelper": "Progress = wallet balance × allocation %",
+  "savingGoalFormLinkedAccountLockedHelper": "Linked wallet can't be changed. Delete and recreate to switch wallets.",
+  "savingGoalFormAccountRequired": "Pick a linked wallet",
   "savingGoalFormTargetLabel": "Target amount",
   "savingGoalFormTargetInvalid": "Enter a positive amount",
   "savingGoalFormAllocationLabel": "Allocation",
-  "savingGoalFormAllocationHelper": "Leave blank to let the server suggest a default. Total per account ≤ 100%.",
+  "savingGoalFormAllocationHelper": "Leave blank to let the server suggest a default. Total per wallet ≤ 100%.",
   "savingGoalFormAllocationInvalid": "Must be between 0 and 100",
   "savingGoalFormDeadlineLabel": "Deadline",
   "savingGoalFormDeadlinePlaceholder": "Optional",
@@ -501,10 +501,10 @@
   "savingGoalDetailRequiredMonthly": "Suggested monthly",
 
   "savingGoalArchiveConfirmTitle": "Archive this goal?",
-  "savingGoalArchiveConfirmBody": "Archiving frees its allocation slot on the linked account. You can restore it later if capacity is available.",
+  "savingGoalArchiveConfirmBody": "Archiving frees its allocation slot on the linked wallet. You can restore it later if capacity is available.",
   "savingGoalArchiveConfirmAction": "Archive",
   "savingGoalDeleteConfirmTitle": "Delete this goal?",
-  "savingGoalDeleteConfirmBody": "This permanently removes the goal. The linked account and its transactions are unaffected.",
+  "savingGoalDeleteConfirmBody": "This permanently removes the goal. The linked wallet and its transactions are unaffected.",
   "savingGoalDeleteConfirmAction": "Delete",
 
   "budgetsTitle": "Budgets",
@@ -625,8 +625,8 @@
   "scheduledFormAmountLabel": "Amount per cycle",
   "scheduledFormPaymentLabel": "Payment per cycle",
   "scheduledFormAmountInvalid": "Enter a positive amount",
-  "scheduledFormAccountLabel": "Account",
-  "scheduledFormAccountRequired": "Pick an account",
+  "scheduledFormAccountLabel": "Wallet",
+  "scheduledFormAccountRequired": "Pick a wallet",
   "scheduledFormCategoryLabel": "Category",
   "scheduledFormCategoryRequired": "Pick a category",
   "scheduledFormCycleLabel": "Cycle",
@@ -657,7 +657,7 @@
       "date": { "type": "String" }
     }
   },
-  "scheduledDetailAccount": "Account",
+  "scheduledDetailAccount": "Wallet",
   "scheduledDetailCategory": "Category",
   "scheduledDetailCycle": "Cycle",
   "scheduledDetailTotalAmount": "Total amount",
@@ -686,5 +686,127 @@
   "scheduledCancelConfirmAction": "Cancel schedule",
   "scheduledDeleteConfirmTitle": "Delete this schedule?",
   "scheduledDeleteConfirmBody": "Past generated transactions stay; only the schedule is removed.",
-  "scheduledDeleteConfirmAction": "Delete"
+  "scheduledDeleteConfirmAction": "Delete",
+
+  "projectFormPlannedLabel": "Planned budget",
+  "projectFormPlannedHelper": "Optional — the total you plan to spend. Clear to turn the plan display off.",
+  "projectFormPlannedInvalid": "Enter a positive amount",
+  "projectFormPlannedClearTooltip": "Clear",
+  "projectMetaPlanned": "Budget {amount}",
+  "@projectMetaPlanned": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "projectPlannedRemainingCardLabel": "Remaining",
+  "projectPlannedLine": "Planned {planned} · {remaining} left",
+  "@projectPlannedLine": {
+    "placeholders": {
+      "planned": { "type": "String" },
+      "remaining": { "type": "String" }
+    }
+  },
+  "projectPlannedOverLine": "🔴 Over budget by {over}",
+  "@projectPlannedOverLine": {
+    "placeholders": {
+      "over": { "type": "String" }
+    }
+  },
+  "projectSummaryPlannedLabel": "Planned",
+  "projectSummarySpentLabel": "Spent (net)",
+  "projectSummaryRemainingLabel": "Left",
+  "projectSummaryOverLabel": "Over budget",
+
+  "walletsHeaderMine": "Mine {amount}",
+  "@walletsHeaderMine": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "walletsHeaderShared": "Shared {amount}",
+  "@walletsHeaderShared": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "walletSharedLabel": "Shared wallet",
+  "walletMembersTitle": "Members",
+  "walletMembersCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "@walletMembersCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "walletMembersHistoryTitle": "Past members",
+  "walletMemberRoleOwner": "Owner",
+  "walletMemberRoleMember": "Member",
+  "walletMemberPending": "Pending",
+  "walletMemberYou": "You",
+  "walletMemberJoined": "Joined {date}",
+  "@walletMemberJoined": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "walletMemberLeft": "Left {date}",
+  "@walletMemberLeft": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "walletMembersInvite": "Invite by email",
+  "walletInviteTitle": "Invite member",
+  "walletInviteEmailLabel": "Email",
+  "walletInviteEmailInvalid": "Enter a valid email address.",
+  "walletInviteSend": "Send invite",
+  "walletInviteSent": "Invite sent",
+  "walletConvertWarnTitle": "⚠️ Invite \"{name}\" to this wallet?",
+  "@walletConvertWarnTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "walletConvertWarnBody": "Wallet {wallet} will become a shared wallet:\n• {name} will see this wallet's entire history (every past entry)\n• Both of you can add, edit and delete entries\n• This wallet will automatically be removed from your personal reports (you can turn it back on in settings)",
+  "@walletConvertWarnBody": {
+    "placeholders": {
+      "wallet": { "type": "String" },
+      "name": { "type": "String" }
+    }
+  },
+  "walletLeave": "Leave wallet",
+  "walletLeaveConfirmTitle": "Leave this wallet?",
+  "walletLeaveConfirmBody": "Your entries stay on the wallet but become read-only for you. Remaining members can still manage them.",
+  "walletLeaveAction": "Leave",
+  "walletRemoveMemberAction": "Remove from wallet",
+  "walletRemoveMemberConfirmTitle": "Remove {name}?",
+  "@walletRemoveMemberConfirmTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "walletRemoveMemberConfirmBody": "Their entries stay on the wallet and become read-only for them.",
+  "walletTransferOwnershipAction": "Make owner",
+  "walletTransferOwnershipConfirmTitle": "Transfer ownership to {name}?",
+  "@walletTransferOwnershipConfirmTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "walletTransferOwnershipConfirmBody": "They will own this wallet. You stay on as a member.",
+  "walletTransferOwnershipConfirm": "Transfer",
+  "walletTransferOwnershipSuccess": "Ownership transferred",
+  "walletSettingsTitle": "Wallet settings",
+  "walletSettingsMembersSubtitlePersonal": "Invite someone to share this wallet",
+  "walletReportScopeTitle": "In my reports",
+  "walletReportScopeHelper": "Controls how this wallet's entries count in your personal summaries and budgets. The wallet page itself always shows everything.",
+  "walletReportScopeNone": "Not in reports",
+  "walletReportScopeOwn": "Only my entries",
+  "walletReportScopeAll": "Whole wallet",
+  "walletReportScopeSaved": "Report setting saved",
+
+  "transactionFormCategoryAuthorOnlyHint": "Only the author can change the category",
+  "transactionFormLockedBanner": "Read-only — you're no longer a member of this wallet, so this entry can't be changed.",
+
+  "notificationWalletInviteTitle": "{actor} invited you to wallet \"{wallet}\"",
+  "@notificationWalletInviteTitle": {
+    "placeholders": {
+      "actor": { "type": "String" },
+      "wallet": { "type": "String" }
+    }
+  },
+  "notificationAccept": "Accept",
+  "notificationReject": "Reject",
+
+  "walletErrorNotMember": "You're not a member of this wallet.",
+  "walletErrorOwnerMustTransfer": "Transfer ownership first — this wallet still has other members.",
+  "walletErrorHasMembers": "This wallet still has other members, so it can't be archived or deleted.",
+  "walletErrorCategoryAuthorOnly": "Only the entry's author can change its category.",
+  "walletErrorRowLocked": "This entry is locked — you've left this wallet.",
+  "walletErrorScopeNotAllowed": "Past members can only use \"Not in reports\" or \"Only my entries\".",
+  "walletErrorUserNotFound": "No user found with that email.",
+  "walletErrorAlreadyMember": "That user is already a member of this wallet."
 }

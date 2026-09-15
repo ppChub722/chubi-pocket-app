@@ -1,6 +1,60 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../shared/icon_maker/icon_code.dart';
 import 'transaction_type.dart';
+
+/// Denormalized author of a shared-wallet row — API §14 pinned
+/// `created_by` shape: `{ user_id, display_name, icon_code }`. Present
+/// on rows returned for shared wallets so other members can render
+/// "who logged this" without a users lookup.
+class TransactionAuthor extends Equatable {
+  const TransactionAuthor({
+    required this.userId,
+    required this.displayName,
+    this.iconCode,
+  });
+
+  final String userId;
+  final String displayName;
+  final IconCode? iconCode;
+
+  factory TransactionAuthor.fromJson(Map<String, dynamic> json) {
+    return TransactionAuthor(
+      userId: json['user_id'] as String,
+      displayName: json['display_name'] as String? ?? '',
+      iconCode: json['icon_code'] != null
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [userId, displayName, iconCode];
+}
+
+/// Read-only rendering of another member's category — API §14 pinned
+/// `category_render` shape: `{ name, icon_code }`. Categories always
+/// belong to the row's author (spec §14/2.1); other members see this
+/// denormalized snapshot instead of resolving `category_id` against
+/// their own set.
+class CategoryRender extends Equatable {
+  const CategoryRender({required this.name, this.iconCode});
+
+  final String name;
+  final IconCode? iconCode;
+
+  factory CategoryRender.fromJson(Map<String, dynamic> json) {
+    return CategoryRender(
+      name: json['name'] as String? ?? '',
+      iconCode: json['icon_code'] != null
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [name, iconCode];
+}
 
 /// Lightweight ref returned by the BE for embedded `account` /
 /// `category` pairs (spec §3.2). Avoids a JOIN in the client.
@@ -49,7 +103,7 @@ class EmbeddedTag extends Equatable {
   List<Object?> get props => [id, name, color, icon];
 }
 
-/// One transaction row. Mirror of `TransactionDetail` from
+/// One transaction row — mirror of `TransactionDetail` from
 /// [`design/spec/04-transactions.md §3.2`](../../../../../chubi-pocket-docs/design/spec/04-transactions.md)
 /// trimmed to fields the FE actually reads.
 ///
@@ -74,6 +128,10 @@ class Transaction extends Equatable {
     this.isRecurring = false,
     this.isResolve = false,
     this.accountBalanceAfter,
+    this.createdBy,
+    this.categoryRender,
+    this.isLocked = false,
+    this.canEditCategory = true,
   });
 
   final String id;
@@ -116,6 +174,20 @@ class Transaction extends Equatable {
   /// the FE update the account row's cached balance surgically without
   /// a follow-up GET. `null` on list responses.
   final double? accountBalanceAfter;
+
+  /// Shared-wallet row surface (API §14 pinned contract). All absent on
+  /// personal-wallet rows:
+  /// - [createdBy] — the row's author (any member may have logged it).
+  /// - [categoryRender] — read-only rendering of the author's category.
+  /// - [isLocked] — true for the caller's own rows after they left the
+  ///   wallet (spec §14/2.3): read-only for them, full form disabled.
+  /// - [canEditCategory] — false when the row belongs to another member
+  ///   (spec §14/2.2: only the author edits `category_id`). Defaults to
+  ///   true when the field is absent (personal rows).
+  final TransactionAuthor? createdBy;
+  final CategoryRender? categoryRender;
+  final bool isLocked;
+  final bool canEditCategory;
 
   bool get isTransferOut => type == TransactionType.transfer && _isTransferOutCategory;
   bool get isTransferIn => type == TransactionType.transfer && !_isTransferOutCategory;
@@ -166,6 +238,16 @@ class Transaction extends Equatable {
       isResolve: (json['is_resolve'] as bool?) ?? false,
       accountBalanceAfter:
           (json['account_balance_after'] as num?)?.toDouble(),
+      createdBy: json['created_by'] is Map<String, dynamic>
+          ? TransactionAuthor.fromJson(
+              json['created_by'] as Map<String, dynamic>)
+          : null,
+      categoryRender: json['category_render'] is Map<String, dynamic>
+          ? CategoryRender.fromJson(
+              json['category_render'] as Map<String, dynamic>)
+          : null,
+      isLocked: (json['is_locked'] as bool?) ?? false,
+      canEditCategory: (json['can_edit_category'] as bool?) ?? true,
     );
   }
 
@@ -185,6 +267,10 @@ class Transaction extends Equatable {
     bool? isRecurring,
     bool? isResolve,
     double? accountBalanceAfter,
+    TransactionAuthor? createdBy,
+    CategoryRender? categoryRender,
+    bool? isLocked,
+    bool? canEditCategory,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -202,6 +288,10 @@ class Transaction extends Equatable {
       isRecurring: isRecurring ?? this.isRecurring,
       isResolve: isResolve ?? this.isResolve,
       accountBalanceAfter: accountBalanceAfter ?? this.accountBalanceAfter,
+      createdBy: createdBy ?? this.createdBy,
+      categoryRender: categoryRender ?? this.categoryRender,
+      isLocked: isLocked ?? this.isLocked,
+      canEditCategory: canEditCategory ?? this.canEditCategory,
     );
   }
 
@@ -222,6 +312,10 @@ class Transaction extends Equatable {
         isRecurring,
         isResolve,
         accountBalanceAfter,
+        createdBy,
+        categoryRender,
+        isLocked,
+        canEditCategory,
       ];
 }
 

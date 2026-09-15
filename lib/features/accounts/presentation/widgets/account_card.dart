@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -7,13 +8,20 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/editable_circle.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
+import 'member_avatar_stack.dart';
 
-/// Renders one account in the grid.
+/// Renders one wallet (account) in the grid.
 ///
 /// The account's [iconCode] drives the icon background, card border, and
 /// balance text. Card surface stays neutral (`surfaceContainer`).
+///
+/// Shared wallets (spec §14, [Account.isShared]) additionally show a
+/// small chain-link badge overlaid on the icon's corner (the user's own
+/// icon/logo stays) and an avatar stack of the OTHER active members
+/// (self excluded, max 3 then "+N").
 class AccountCard extends StatelessWidget {
   const AccountCard({
     required this.account,
@@ -104,6 +112,10 @@ class _HorizontalLayout extends StatelessWidget {
                         fontStyle: FontStyle.italic,
                       ),
                 ),
+              ],
+              if (account.isShared) ...[
+                const SizedBox(height: 4),
+                _OtherMembersRow(account: account),
               ],
             ],
           ),
@@ -206,7 +218,7 @@ class _IconCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EditableCircle(
+    final icon = EditableCircle(
       size: size,
       onTap: onTap,
       child: IconDisplay(
@@ -215,6 +227,76 @@ class _IconCircle extends StatelessWidget {
         iconCode: account.iconCode,
       ),
     );
+    if (!account.isShared) return icon;
+    return SharedWalletIconBadge(size: size, child: icon);
+  }
+}
+
+/// Overlays a small chain-link badge on the bottom-right corner of a
+/// wallet icon — marks a shared wallet without replacing the user's
+/// own icon_code / logo (spec B2).
+class SharedWalletIconBadge extends StatelessWidget {
+  const SharedWalletIconBadge({
+    required this.size,
+    required this.child,
+    super.key,
+  });
+
+  final double size;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final badgeSize = (size * 0.42).clamp(14.0, 22.0);
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          child,
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Tooltip(
+              message: l.walletSharedLabel,
+              child: Container(
+                width: badgeSize,
+                height: badgeSize,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: scheme.surface, width: 1),
+                ),
+                child: Icon(
+                  Icons.link,
+                  size: badgeSize * 0.68,
+                  color: scheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Avatar stack of the wallet's OTHER active members — the viewer is
+/// excluded so the stack answers "who am I sharing this with".
+class _OtherMembersRow extends StatelessWidget {
+  const _OtherMembersRow({required this.account});
+  final Account account;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthCubit>().state;
+    final selfId = auth is AuthAuthenticated ? auth.user.id : null;
+    final others = account.otherMembers(selfId);
+    if (others.isEmpty) return const SizedBox.shrink();
+    return MemberAvatarStack(members: others, size: 18);
   }
 }
 

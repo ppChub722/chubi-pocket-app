@@ -9,6 +9,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
@@ -41,7 +42,7 @@ class TransactionFormInitial {
   final TransactionType? type;
 }
 
-/// The actual form fields. Embedded in [TransactionFormPage] (full
+/// The actual form fields — embedded in [TransactionFormPage] (full
 /// page, with Save & add another) and [showTransactionFormSheet] (modal
 /// quick-add, no Save & add another, note collapsible).
 ///
@@ -105,6 +106,20 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   bool get _isEdit => widget.initial.editingTransaction != null;
   bool get _showSplits =>
       !_isEdit && !_isTransfer && _type == TransactionType.expense;
+
+  /// Shared-wallet edit rules (spec §14/2, API §14 pinned flags):
+  /// - `is_locked` — ex-member's own row: the whole form is read-only.
+  /// - `can_edit_category=false` — another member's row: everything but
+  ///   the category is editable (the category belongs to the author's
+  ///   taxonomy).
+  bool get _lockedRow =>
+      widget.initial.editingTransaction?.isLocked ?? false;
+  bool get _canEditCategory =>
+      widget.initial.editingTransaction?.canEditCategory ?? true;
+
+  /// Public read-only signal for the parent scaffold (hides Save
+  /// buttons on locked rows).
+  bool get isReadOnly => _lockedRow;
 
   @override
   void initState() {
@@ -203,6 +218,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   /// failure or API error (snackbar already shown by the body).
   Future<bool> save({required bool keepOpen}) async {
     if (_saving) return false;
+    if (_lockedRow) return false; // read-only ex-member row (ROW_LOCKED)
     if (!(_formKey.currentState?.validate() ?? false)) return false;
     if (_account == null) return false;
     if (_isTransfer && _toAccount == null) return false;
@@ -210,7 +226,10 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     // Category required for expense/income (BE rejects with
     // VALIDATION_ERROR otherwise — mirror the rule client-side so the
     // user gets a fast feedback loop instead of a snackbar round-trip).
-    if (!_isTransfer && _category == null) {
+    // Skipped on another member's row: their category stays untouched
+    // (author-only field, spec §14/2.2) and can't resolve against our
+    // own categories cache anyway.
+    if (!_isTransfer && _category == null && _canEditCategory) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(const SnackBar(
@@ -238,14 +257,18 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
         // Category clear semantics: an explicit-null is sent only when
         // the form previously had a category and the user cleared it.
         final initial = widget.initial.editingTransaction!;
+        // Another member's row: never send category_id — only the
+        // author may change it (403 CATEGORY_AUTHOR_ONLY otherwise).
         final clearCategory = !_isTransfer &&
+            _canEditCategory &&
             initial.categoryId != null &&
             _category == null;
         result = await txCubit.updateTransaction(
           id: initial.id,
           amount: amount,
           date: dateStr,
-          categoryId: _isTransfer ? null : _category?.id,
+          categoryId:
+              (_isTransfer || !_canEditCategory) ? null : _category?.id,
           clearCategory: clearCategory,
           note: note,
           clearNote: note == null && initial.note != null,
@@ -331,9 +354,16 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
       return true;
     } on ApiException catch (e) {
       if (!mounted) return false;
+      // Shared-wallet codes (CATEGORY_AUTHOR_ONLY / ROW_LOCKED /
+      // NOT_MEMBER) get friendly copy; everything else falls back to
+      // the BE message as before.
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+        ..showSnackBar(SnackBar(
+          content: Text(
+            walletErrorMessage(AppLocalizations.of(context)!, e),
+          ),
+        ));
       return false;
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -382,6 +412,43 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Ex-member row (spec §14/2.3): the whole form is read-only,
+          // with an explanatory banner. Remaining members still edit
+          // these rows — only the departed author is locked out.
+          if (_lockedRow) ...[
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .errorContainer
+                    .withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      l.transactionFormLockedBanner,
+                      style:
+                          Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onErrorContainer,
+                              ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           if (!_isEdit) _TypeTabs(
             selected: _type,
             onChanged: (t) => setState(() {
@@ -399,7 +466,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
           _AmountField(
             controller: _amountController,
             currency: _account?.currency ?? 'THB',
-            saving: _saving,
+            saving: _saving || _lockedRow,
             label: l.transactionFormAmountLabel,
           ),
           const SizedBox(height: AppSpacing.md),
@@ -434,6 +501,17 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
             const SizedBox(height: AppSpacing.md),
             _CategoryTile(
               category: _category,
+              // Another member's row: category disabled with a hint —
+              // the author's category renders read-only from
+              // category_render (spec §14/2.2).
+              enabled: _canEditCategory && !_lockedRow,
+              displayNameOverride: _category == null
+                  ? widget
+                      .initial.editingTransaction?.categoryRender?.name
+                  : null,
+              hint: (!_canEditCategory && !_lockedRow)
+                  ? l.transactionFormCategoryAuthorOnlyHint
+                  : null,
               onTap: _pickCategory,
             ),
           ] else ...[
@@ -443,7 +521,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
           const SizedBox(height: AppSpacing.md),
           _DateTile(
             date: _date,
-            onTap: _pickDate,
+            onTap: _lockedRow ? null : _pickDate,
           ),
           const SizedBox(height: AppSpacing.md),
           if (widget.collapsibleNote && !_showNote)
@@ -458,6 +536,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
           else
             TextFormField(
               controller: _noteController,
+              enabled: !_lockedRow,
               maxLength: 500,
               maxLines: widget.collapsibleNote ? 2 : 3,
               decoration: InputDecoration(
@@ -465,9 +544,15 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
               ),
             ),
           const SizedBox(height: AppSpacing.md),
-          _TagChipsRow(
-            selectedIds: _selectedTagIds,
-            onToggle: _toggleTag,
+          IgnorePointer(
+            ignoring: _lockedRow,
+            child: Opacity(
+              opacity: _lockedRow ? 0.5 : 1,
+              child: _TagChipsRow(
+                selectedIds: _selectedTagIds,
+                onToggle: _toggleTag,
+              ),
+            ),
           ),
           if (_showSplits) ...[
             const SizedBox(height: AppSpacing.md),
@@ -731,58 +816,106 @@ class _AccountTile extends StatelessWidget {
 }
 
 class _CategoryTile extends StatelessWidget {
-  const _CategoryTile({required this.category, required this.onTap});
+  const _CategoryTile({
+    required this.category,
+    required this.onTap,
+    this.enabled = true,
+    this.hint,
+    this.displayNameOverride,
+  });
 
   final Category? category;
   final VoidCallback onTap;
+
+  /// False disables the picker (author-only category on another
+  /// member's shared-wallet row, or a fully locked row).
+  final bool enabled;
+
+  /// Small helper line under the tile (e.g. "หมวดแก้ได้เฉพาะคนจด").
+  final String? hint;
+
+  /// Read-only name shown when the category can't be resolved from the
+  /// viewer's own cache (another member's category via category_render).
+  final String? displayNameOverride;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    return Material(
-      color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-          child: Row(
-            children: [
-              if (category != null)
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor:
-                      category!.iconCode?.bgColorFor(palette) ?? scheme.outline,
-                  child: Icon(IconRegistry.get(category!.iconCode?.icon, fallback: Icons.category_outlined), color: Colors.white, size: 14),
-                )
-              else
-                Icon(Icons.category_outlined,
-                    color: scheme.onSurfaceVariant, size: 28),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l.transactionFormCategoryLabel,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            )),
-                    Text(
-                      category?.name ?? l.transactionFormCategoryNone,
-                      style: Theme.of(context).textTheme.titleSmall,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Material(
+          color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              child: Row(
+                children: [
+                  if (category != null)
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor:
+                          category!.iconCode?.bgColorFor(palette) ??
+                              scheme.outline,
+                      child: Icon(
+                          IconRegistry.get(category!.iconCode?.icon,
+                              fallback: Icons.category_outlined),
+                          color: Colors.white,
+                          size: 14),
+                    )
+                  else
+                    Icon(Icons.category_outlined,
+                        color: scheme.onSurfaceVariant, size: 28),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(l.transactionFormCategoryLabel,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                )),
+                        Text(
+                          category?.name ??
+                              displayNameOverride ??
+                              l.transactionFormCategoryNone,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  if (enabled)
+                    Icon(Icons.chevron_right,
+                        color: scheme.onSurfaceVariant)
+                  else
+                    Icon(Icons.lock_outline,
+                        size: 18, color: scheme.onSurfaceVariant),
+                ],
               ),
-              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
-            ],
+            ),
           ),
         ),
-      ),
+        if (hint != null)
+          Padding(
+            padding: const EdgeInsets.only(
+                top: AppSpacing.xs, left: AppSpacing.md),
+            child: Text(
+              hint!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -820,7 +953,7 @@ class _DateTile extends StatelessWidget {
   const _DateTile({required this.date, required this.onTap});
 
   final DateTime date;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

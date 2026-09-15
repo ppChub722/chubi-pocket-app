@@ -365,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'Add an account from the Accounts tab, then tap the + button to log your first transaction.'**
+  /// **'Add a wallet from the Wallets tab, then tap the + button to log your first transaction.'**
   String get homeEmptyMessage;
 
   /// No description provided for @homeNetWorthLabel.
@@ -377,7 +377,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNetWorthAccountCount.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 account} other{{count} accounts}}'**
+  /// **'{count, plural, =1{1 wallet} other{{count} wallets}}'**
   String homeNetWorthAccountCount(int count);
 
   /// No description provided for @homeRecentTitle.
@@ -413,7 +413,7 @@ abstract class AppLocalizations {
   /// No description provided for @navAccounts.
   ///
   /// In en, this message translates to:
-  /// **'Accounts'**
+  /// **'Wallets'**
   String get navAccounts;
 
   /// No description provided for @navAddTransaction.
@@ -461,19 +461,19 @@ abstract class AppLocalizations {
   /// No description provided for @accountsPlaceholderTitle.
   ///
   /// In en, this message translates to:
-  /// **'No accounts yet'**
+  /// **'No wallets yet'**
   String get accountsPlaceholderTitle;
 
   /// No description provided for @accountsPlaceholderMessage.
   ///
   /// In en, this message translates to:
-  /// **'Adding accounts ships in Phase 1a.'**
+  /// **'Adding wallets ships in Phase 1a.'**
   String get accountsPlaceholderMessage;
 
   /// No description provided for @accountsAddNew.
   ///
   /// In en, this message translates to:
-  /// **'Add account'**
+  /// **'Add wallet'**
   String get accountsAddNew;
 
   /// No description provided for @accountTypeCash.
@@ -515,13 +515,13 @@ abstract class AppLocalizations {
   /// No description provided for @accountDetailNotFound.
   ///
   /// In en, this message translates to:
-  /// **'Account not found'**
+  /// **'Wallet not found'**
   String get accountDetailNotFound;
 
   /// No description provided for @accountDetailNotFoundMessage.
   ///
   /// In en, this message translates to:
-  /// **'This account may have been archived or deleted.'**
+  /// **'This wallet may have been archived or deleted.'**
   String get accountDetailNotFoundMessage;
 
   /// No description provided for @accountDetailEdit.
@@ -635,13 +635,13 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormTitle.
   ///
   /// In en, this message translates to:
-  /// **'New account'**
+  /// **'New wallet'**
   String get accountFormTitle;
 
   /// No description provided for @accountFormTitleEdit.
   ///
   /// In en, this message translates to:
-  /// **'Edit account'**
+  /// **'Edit wallet'**
   String get accountFormTitleEdit;
 
   /// No description provided for @accountFormSaveEdit.
@@ -665,7 +665,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Account name'**
+  /// **'Wallet name'**
   String get accountFormNameLabel;
 
   /// No description provided for @accountFormNameRequired.
@@ -707,7 +707,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormBalanceHelper.
   ///
   /// In en, this message translates to:
-  /// **'Money already in this account on the day you start tracking.'**
+  /// **'Money already in this wallet on the day you start tracking.'**
   String get accountFormBalanceHelper;
 
   /// No description provided for @accountFormCreditSection.
@@ -725,7 +725,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormCreditLimitRequired.
   ///
   /// In en, this message translates to:
-  /// **'Required for credit accounts'**
+  /// **'Required for credit wallets'**
   String get accountFormCreditLimitRequired;
 
   /// No description provided for @accountFormStatementDateLabel.
@@ -767,13 +767,13 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormSave.
   ///
   /// In en, this message translates to:
-  /// **'Save account'**
+  /// **'Save wallet'**
   String get accountFormSave;
 
   /// No description provided for @accountFormDiscardTitle.
   ///
   /// In en, this message translates to:
-  /// **'Discard new account?'**
+  /// **'Discard new wallet?'**
   String get accountFormDiscardTitle;
 
   /// No description provided for @accountFormDiscardBody.
@@ -839,13 +839,13 @@ abstract class AppLocalizations {
   /// No description provided for @accountArchiveConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Archive this account?'**
+  /// **'Archive this wallet?'**
   String get accountArchiveConfirmTitle;
 
   /// No description provided for @accountArchiveConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'The account will be hidden from the active list. Its transactions stay intact and remain referenced.'**
+  /// **'The wallet will be hidden from the active list. Its transactions stay intact and remain referenced.'**
   String get accountArchiveConfirmBody;
 
   /// No description provided for @accountArchiveConfirmAction.
@@ -881,7 +881,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormDescriptionHelper.
   ///
   /// In en, this message translates to:
-  /// **'What this account is for. Visible to you only.'**
+  /// **'What this wallet is for. Visible to you only.'**
   String get accountFormDescriptionHelper;
 
   /// No description provided for @accountFormDescriptionTooLong.
@@ -1955,25 +1955,25 @@ abstract class AppLocalizations {
   /// No description provided for @transactionFormAccountLabel.
   ///
   /// In en, this message translates to:
-  /// **'Account'**
+  /// **'Wallet'**
   String get transactionFormAccountLabel;
 
   /// No description provided for @transactionFormFromAccountLabel.
   ///
   /// In en, this message translates to:
-  /// **'From account'**
+  /// **'From wallet'**
   String get transactionFormFromAccountLabel;
 
   /// No description provided for @transactionFormToAccountLabel.
   ///
   /// In en, this message translates to:
-  /// **'To account'**
+  /// **'To wallet'**
   String get transactionFormToAccountLabel;
 
   /// No description provided for @transactionFormAccountRequired.
   ///
   /// In en, this message translates to:
-  /// **'Pick an account'**
+  /// **'Pick a wallet'**
   String get transactionFormAccountRequired;
 
   /// No description provided for @transactionFormAccountSameError.
@@ -2075,13 +2075,13 @@ abstract class AppLocalizations {
   /// No description provided for @transactionFormAccountPickerTitle.
   ///
   /// In en, this message translates to:
-  /// **'Pick an account'**
+  /// **'Pick a wallet'**
   String get transactionFormAccountPickerTitle;
 
   /// No description provided for @transactionFormAccountPickerEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No active accounts. Create one first.'**
+  /// **'No active wallets. Create one first.'**
   String get transactionFormAccountPickerEmpty;
 
   /// No description provided for @transactionFormCategoryPickerTitle.
@@ -2159,13 +2159,13 @@ abstract class AppLocalizations {
   /// No description provided for @transactionDetailDeleteConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This will reverse the balance change on the account.'**
+  /// **'This will reverse the balance change on the wallet.'**
   String get transactionDetailDeleteConfirmBody;
 
   /// No description provided for @transactionDetailDeleteConfirmBodyTransfer.
   ///
   /// In en, this message translates to:
-  /// **'Both rows of the transfer will be deleted and balances on both accounts will reverse.'**
+  /// **'Both rows of the transfer will be deleted and balances on both wallets will reverse.'**
   String get transactionDetailDeleteConfirmBodyTransfer;
 
   /// No description provided for @transactionDetailDeleteConfirmAction.
@@ -2177,13 +2177,13 @@ abstract class AppLocalizations {
   /// No description provided for @transactionDetailTransferReadonlyHint.
   ///
   /// In en, this message translates to:
-  /// **'To change accounts, delete and create a new transfer.'**
+  /// **'To change wallets, delete and create a new transfer.'**
   String get transactionDetailTransferReadonlyHint;
 
   /// No description provided for @transactionDetailSystemRowBanner.
   ///
   /// In en, this message translates to:
-  /// **'Auto-created — to change this, use the matching account-level action (account edit, or Adjust balance).'**
+  /// **'Auto-created — to change this, use the matching wallet-level action (wallet edit, or Adjust balance).'**
   String get transactionDetailSystemRowBanner;
 
   /// No description provided for @transactionsRangeWeek.
@@ -2297,7 +2297,7 @@ abstract class AppLocalizations {
   /// No description provided for @savingGoalsEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'Set a target on top of an account and track your progress as the balance grows.'**
+  /// **'Set a target on top of a wallet and track your progress as the balance grows.'**
   String get savingGoalsEmptyMessage;
 
   /// No description provided for @savingGoalProgressLine.
@@ -2357,25 +2357,25 @@ abstract class AppLocalizations {
   /// No description provided for @savingGoalFormLinkedAccountLabel.
   ///
   /// In en, this message translates to:
-  /// **'Linked account'**
+  /// **'Linked wallet'**
   String get savingGoalFormLinkedAccountLabel;
 
   /// No description provided for @savingGoalFormLinkedAccountHelper.
   ///
   /// In en, this message translates to:
-  /// **'Progress = account balance × allocation %'**
+  /// **'Progress = wallet balance × allocation %'**
   String get savingGoalFormLinkedAccountHelper;
 
   /// No description provided for @savingGoalFormLinkedAccountLockedHelper.
   ///
   /// In en, this message translates to:
-  /// **'Linked account can\'t be changed. Delete and recreate to switch accounts.'**
+  /// **'Linked wallet can\'t be changed. Delete and recreate to switch wallets.'**
   String get savingGoalFormLinkedAccountLockedHelper;
 
   /// No description provided for @savingGoalFormAccountRequired.
   ///
   /// In en, this message translates to:
-  /// **'Pick a linked account'**
+  /// **'Pick a linked wallet'**
   String get savingGoalFormAccountRequired;
 
   /// No description provided for @savingGoalFormTargetLabel.
@@ -2399,7 +2399,7 @@ abstract class AppLocalizations {
   /// No description provided for @savingGoalFormAllocationHelper.
   ///
   /// In en, this message translates to:
-  /// **'Leave blank to let the server suggest a default. Total per account ≤ 100%.'**
+  /// **'Leave blank to let the server suggest a default. Total per wallet ≤ 100%.'**
   String get savingGoalFormAllocationHelper;
 
   /// No description provided for @savingGoalFormAllocationInvalid.
@@ -2507,7 +2507,7 @@ abstract class AppLocalizations {
   /// No description provided for @savingGoalArchiveConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'Archiving frees its allocation slot on the linked account. You can restore it later if capacity is available.'**
+  /// **'Archiving frees its allocation slot on the linked wallet. You can restore it later if capacity is available.'**
   String get savingGoalArchiveConfirmBody;
 
   /// No description provided for @savingGoalArchiveConfirmAction.
@@ -2525,7 +2525,7 @@ abstract class AppLocalizations {
   /// No description provided for @savingGoalDeleteConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This permanently removes the goal. The linked account and its transactions are unaffected.'**
+  /// **'This permanently removes the goal. The linked wallet and its transactions are unaffected.'**
   String get savingGoalDeleteConfirmBody;
 
   /// No description provided for @savingGoalDeleteConfirmAction.
@@ -2975,13 +2975,13 @@ abstract class AppLocalizations {
   /// No description provided for @scheduledFormAccountLabel.
   ///
   /// In en, this message translates to:
-  /// **'Account'**
+  /// **'Wallet'**
   String get scheduledFormAccountLabel;
 
   /// No description provided for @scheduledFormAccountRequired.
   ///
   /// In en, this message translates to:
-  /// **'Pick an account'**
+  /// **'Pick a wallet'**
   String get scheduledFormAccountRequired;
 
   /// No description provided for @scheduledFormCategoryLabel.
@@ -3131,7 +3131,7 @@ abstract class AppLocalizations {
   /// No description provided for @scheduledDetailAccount.
   ///
   /// In en, this message translates to:
-  /// **'Account'**
+  /// **'Wallet'**
   String get scheduledDetailAccount;
 
   /// No description provided for @scheduledDetailCategory.
@@ -3259,6 +3259,396 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get scheduledDeleteConfirmAction;
+
+  /// No description provided for @projectFormPlannedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned budget'**
+  String get projectFormPlannedLabel;
+
+  /// No description provided for @projectFormPlannedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — the total you plan to spend. Clear to turn the plan display off.'**
+  String get projectFormPlannedHelper;
+
+  /// No description provided for @projectFormPlannedInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a positive amount'**
+  String get projectFormPlannedInvalid;
+
+  /// No description provided for @projectFormPlannedClearTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get projectFormPlannedClearTooltip;
+
+  /// No description provided for @projectMetaPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget {amount}'**
+  String projectMetaPlanned(String amount);
+
+  /// No description provided for @projectPlannedRemainingCardLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get projectPlannedRemainingCardLabel;
+
+  /// No description provided for @projectPlannedLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned {planned} · {remaining} left'**
+  String projectPlannedLine(String planned, String remaining);
+
+  /// No description provided for @projectPlannedOverLine.
+  ///
+  /// In en, this message translates to:
+  /// **'🔴 Over budget by {over}'**
+  String projectPlannedOverLine(String over);
+
+  /// No description provided for @projectSummaryPlannedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get projectSummaryPlannedLabel;
+
+  /// No description provided for @projectSummarySpentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent (net)'**
+  String get projectSummarySpentLabel;
+
+  /// No description provided for @projectSummaryRemainingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get projectSummaryRemainingLabel;
+
+  /// No description provided for @projectSummaryOverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Over budget'**
+  String get projectSummaryOverLabel;
+
+  /// No description provided for @walletsHeaderMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine {amount}'**
+  String walletsHeaderMine(String amount);
+
+  /// No description provided for @walletsHeaderShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared {amount}'**
+  String walletsHeaderShared(String amount);
+
+  /// No description provided for @walletSharedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared wallet'**
+  String get walletSharedLabel;
+
+  /// No description provided for @walletMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get walletMembersTitle;
+
+  /// No description provided for @walletMembersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 member} other{{count} members}}'**
+  String walletMembersCount(int count);
+
+  /// No description provided for @walletMembersHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Past members'**
+  String get walletMembersHistoryTitle;
+
+  /// No description provided for @walletMemberRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get walletMemberRoleOwner;
+
+  /// No description provided for @walletMemberRoleMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get walletMemberRoleMember;
+
+  /// No description provided for @walletMemberPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get walletMemberPending;
+
+  /// No description provided for @walletMemberYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get walletMemberYou;
+
+  /// No description provided for @walletMemberJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined {date}'**
+  String walletMemberJoined(String date);
+
+  /// No description provided for @walletMemberLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left {date}'**
+  String walletMemberLeft(String date);
+
+  /// No description provided for @walletMembersInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite by email'**
+  String get walletMembersInvite;
+
+  /// No description provided for @walletInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite member'**
+  String get walletInviteTitle;
+
+  /// No description provided for @walletInviteEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get walletInviteEmailLabel;
+
+  /// No description provided for @walletInviteEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get walletInviteEmailInvalid;
+
+  /// No description provided for @walletInviteSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send invite'**
+  String get walletInviteSend;
+
+  /// No description provided for @walletInviteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite sent'**
+  String get walletInviteSent;
+
+  /// No description provided for @walletConvertWarnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ Invite \"{name}\" to this wallet?'**
+  String walletConvertWarnTitle(String name);
+
+  /// No description provided for @walletConvertWarnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet {wallet} will become a shared wallet:\n• {name} will see this wallet\'s entire history (every past entry)\n• Both of you can add, edit and delete entries\n• This wallet will automatically be removed from your personal reports (you can turn it back on in settings)'**
+  String walletConvertWarnBody(String wallet, String name);
+
+  /// No description provided for @walletLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave wallet'**
+  String get walletLeave;
+
+  /// No description provided for @walletLeaveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this wallet?'**
+  String get walletLeaveConfirmTitle;
+
+  /// No description provided for @walletLeaveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your entries stay on the wallet but become read-only for you. Remaining members can still manage them.'**
+  String get walletLeaveConfirmBody;
+
+  /// No description provided for @walletLeaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get walletLeaveAction;
+
+  /// No description provided for @walletRemoveMemberAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from wallet'**
+  String get walletRemoveMemberAction;
+
+  /// No description provided for @walletRemoveMemberConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String walletRemoveMemberConfirmTitle(String name);
+
+  /// No description provided for @walletRemoveMemberConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Their entries stay on the wallet and become read-only for them.'**
+  String get walletRemoveMemberConfirmBody;
+
+  /// No description provided for @walletTransferOwnershipAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Make owner'**
+  String get walletTransferOwnershipAction;
+
+  /// No description provided for @walletTransferOwnershipConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer ownership to {name}?'**
+  String walletTransferOwnershipConfirmTitle(String name);
+
+  /// No description provided for @walletTransferOwnershipConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They will own this wallet. You stay on as a member.'**
+  String get walletTransferOwnershipConfirmBody;
+
+  /// No description provided for @walletTransferOwnershipConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get walletTransferOwnershipConfirm;
+
+  /// No description provided for @walletTransferOwnershipSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Ownership transferred'**
+  String get walletTransferOwnershipSuccess;
+
+  /// No description provided for @walletSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet settings'**
+  String get walletSettingsTitle;
+
+  /// No description provided for @walletSettingsMembersSubtitlePersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite someone to share this wallet'**
+  String get walletSettingsMembersSubtitlePersonal;
+
+  /// No description provided for @walletReportScopeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'In my reports'**
+  String get walletReportScopeTitle;
+
+  /// No description provided for @walletReportScopeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Controls how this wallet\'s entries count in your personal summaries and budgets. The wallet page itself always shows everything.'**
+  String get walletReportScopeHelper;
+
+  /// No description provided for @walletReportScopeNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not in reports'**
+  String get walletReportScopeNone;
+
+  /// No description provided for @walletReportScopeOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'Only my entries'**
+  String get walletReportScopeOwn;
+
+  /// No description provided for @walletReportScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole wallet'**
+  String get walletReportScopeAll;
+
+  /// No description provided for @walletReportScopeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Report setting saved'**
+  String get walletReportScopeSaved;
+
+  /// No description provided for @transactionFormCategoryAuthorOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the author can change the category'**
+  String get transactionFormCategoryAuthorOnlyHint;
+
+  /// No description provided for @transactionFormLockedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only — you\'re no longer a member of this wallet, so this entry can\'t be changed.'**
+  String get transactionFormLockedBanner;
+
+  /// No description provided for @notificationWalletInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} invited you to wallet \"{wallet}\"'**
+  String notificationWalletInviteTitle(String actor, String wallet);
+
+  /// No description provided for @notificationAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get notificationAccept;
+
+  /// No description provided for @notificationReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get notificationReject;
+
+  /// No description provided for @walletErrorNotMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not a member of this wallet.'**
+  String get walletErrorNotMember;
+
+  /// No description provided for @walletErrorOwnerMustTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer ownership first — this wallet still has other members.'**
+  String get walletErrorOwnerMustTransfer;
+
+  /// No description provided for @walletErrorHasMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'This wallet still has other members, so it can\'t be archived or deleted.'**
+  String get walletErrorHasMembers;
+
+  /// No description provided for @walletErrorCategoryAuthorOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the entry\'s author can change its category.'**
+  String get walletErrorCategoryAuthorOnly;
+
+  /// No description provided for @walletErrorRowLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This entry is locked — you\'ve left this wallet.'**
+  String get walletErrorRowLocked;
+
+  /// No description provided for @walletErrorScopeNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Past members can only use \"Not in reports\" or \"Only my entries\".'**
+  String get walletErrorScopeNotAllowed;
+
+  /// No description provided for @walletErrorUserNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No user found with that email.'**
+  String get walletErrorUserNotFound;
+
+  /// No description provided for @walletErrorAlreadyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'That user is already a member of this wallet.'**
+  String get walletErrorAlreadyMember;
 }
 
 class _AppLocalizationsDelegate

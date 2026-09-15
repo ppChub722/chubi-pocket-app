@@ -17,9 +17,16 @@ import '../../domain/account_type.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
+import '../../../../shared/widgets/user_avatar.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../cubit/accounts_cubit.dart';
+import '../wallet_errors.dart';
+import '../widgets/account_card.dart' show SharedWalletIconBadge;
+import '../widgets/member_avatar_stack.dart';
+import '../widgets/wallet_settings_sheet.dart';
 
-/// Account detail — Phase 0 mock implementation.
+/// Wallet (account) detail — single adaptive page; shared wallets add
+/// the member row + per-row author avatars (spec §14).
 ///
 /// Routed at `/accounts/:id` outside the shell, so it owns its own Scaffold
 /// + AppBar with a back button. The bottom nav and the global Add-transaction
@@ -93,6 +100,15 @@ class _LoadedScaffold extends StatelessWidget {
                   Text(l.accountDetailEdit),
                 ]),
               ),
+              // Wallet settings — members + report scope (spec §14).
+              PopupMenuItem(
+                value: _OverflowAction.settings,
+                child: Row(children: [
+                  const Icon(Icons.settings_outlined),
+                  const SizedBox(width: AppSpacing.md),
+                  Text(l.walletSettingsTitle),
+                ]),
+              ),
               PopupMenuItem(
                 value: _OverflowAction.adjustBalance,
                 child: Row(children: [
@@ -157,6 +173,8 @@ class _LoadedScaffold extends StatelessWidget {
     switch (action) {
       case _OverflowAction.edit:
         context.push('/accounts/${account.id}/edit');
+      case _OverflowAction.settings:
+        await showWalletSettingsSheet(context, accountId: account.id);
       case _OverflowAction.adjustBalance:
         await _showAdjustBalanceDialog(context, l);
       case _OverflowAction.archive:
@@ -239,14 +257,16 @@ class _LoadedScaffold extends StatelessWidget {
       // cache, so the detail page would otherwise flip into "not found".
       if (router.canPop()) router.pop();
     } on ApiException catch (e) {
+      // ACCOUNT_HAS_MEMBERS (409): a still-shared wallet can't be
+      // archived — sole-membership rule, spec §14/2.5.
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+        ..showSnackBar(SnackBar(content: Text(walletErrorMessage(l, e))));
     }
   }
 }
 
-enum _OverflowAction { edit, adjustBalance, archive }
+enum _OverflowAction { edit, settings, adjustBalance, archive }
 
 class _Header extends StatelessWidget {
   const _Header({required this.account});
@@ -273,15 +293,26 @@ class _Header extends StatelessWidget {
           children: [
             // Tap the icon to jump straight to the edit form (where the
             // IconMaker picker is wired). Same destination as the overflow
-            // menu's "Edit" item.
+            // menu's "Edit" item. Shared wallets carry the chain-link
+            // badge on the icon corner (spec §14) — the user's own icon
+            // stays.
             InkWell(
               onTap: () => context.push('/accounts/${account.id}/edit'),
               borderRadius: BorderRadius.circular(28),
-              child: IconDisplay(
-                type: IconType.account,
-                size: 56,
-                iconCode: account.iconCode,
-              ),
+              child: account.isShared
+                  ? SharedWalletIconBadge(
+                      size: 56,
+                      child: IconDisplay(
+                        type: IconType.account,
+                        size: 56,
+                        iconCode: account.iconCode,
+                      ),
+                    )
+                  : IconDisplay(
+                      type: IconType.account,
+                      size: 56,
+                      iconCode: account.iconCode,
+                    ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -293,11 +324,36 @@ class _Header extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${account.currency} · ${_typeLabel(context, account.type)}',
+              account.isShared
+                  ? '${account.currency} · ${_typeLabel(context, account.type)} · ${l.walletSharedLabel}'
+                  : '${account.currency} · ${_typeLabel(context, account.type)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
             ),
+            // Member avatar row under the balance — shared wallets only
+            // (spec B3). Tap routes to the members screen.
+            if (account.isShared && account.members.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              InkWell(
+                onTap: () =>
+                    context.push('/accounts/${account.id}/members'),
+                borderRadius: BorderRadius.circular(12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MemberAvatarStack(
+                      members: account.members,
+                      size: 24,
+                      maxVisible: 5,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(Icons.chevron_right,
+                        size: 16, color: scheme.onSurfaceVariant),
+                  ],
+                ),
+              ),
+            ],
             if (account.creditUtilization != null) ...[
               const SizedBox(height: AppSpacing.lg),
               ClipRRect(
@@ -738,9 +794,16 @@ class _TransactionRow extends StatelessWidget {
     final isCredit = signed > 0;
     final color = isCredit ? Colors.green.shade400 : scheme.error;
     final sign = signed > 0 ? '+' : (signed < 0 ? '−' : '');
-    final categoryName = tx.type == TransactionType.transfer
-        ? (tx.category?.name ?? '')
-        : (tx.category?.name ?? '');
+    // Shared-wallet rows: another member's category comes denormalized
+    // via category_render (read-only rendering of the author's own
+    // taxonomy — spec §14/1.2); fall back to the embedded ref.
+    final categoryName = tx.categoryRender?.name ?? tx.category?.name ?? '';
+    // Small author avatar when the row was logged by another member
+    // (spec B3): created_by present and not the caller.
+    final auth = context.read<AuthCubit>().state;
+    final selfId = auth is AuthAuthenticated ? auth.user.id : null;
+    final author = tx.createdBy;
+    final showAuthor = author != null && author.userId != selfId;
     return InkWell(
       onTap: () => GoRouter.of(context).push('/transactions/${tx.id}'),
       child: Padding(
@@ -752,6 +815,17 @@ class _TransactionRow extends StatelessWidget {
               size: 18,
               color: scheme.onSurfaceVariant,
             ),
+            if (showAuthor) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Tooltip(
+                message: author.displayName,
+                child: UserAvatar(
+                  displayName: author.displayName,
+                  iconCode: author.iconCode,
+                  size: 20,
+                ),
+              ),
+            ],
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(

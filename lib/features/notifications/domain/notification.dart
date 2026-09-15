@@ -12,6 +12,11 @@ enum NotificationType {
   projectTxChanged('project_tx_changed'),
   projectInvite('project_invite'),
   contactLinkRequest('contact_link_request'),
+
+  /// Shared-wallet invite (spec §14/4 + §14/8.1 — notification pattern,
+  /// same as project member invites). Payload carries `account_id` +
+  /// `account_name`; pending rows render inline Accept / Reject.
+  accountInvite('account_invite'),
   unknown('unknown');
 
   const NotificationType(this.wire);
@@ -25,7 +30,7 @@ enum NotificationType {
   }
 }
 
-/// One inbox row. Payload is kept as a raw map — type-specific tiles read
+/// One inbox row; payload is kept as a raw map — type-specific tiles read
 /// the fields they care about. Audit columns aren't surfaced.
 class AppNotification extends Equatable {
   const AppNotification({

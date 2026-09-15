@@ -13,6 +13,7 @@ import '../../dev/theme_preview_screen.dart';
 import '../../features/accounts/presentation/pages/account_detail_page.dart';
 import '../../features/accounts/presentation/pages/account_form_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
+import '../../features/accounts/presentation/pages/wallet_members_page.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
 import '../../features/categories/presentation/pages/category_form_page.dart';
 import '../../features/contacts/presentation/pages/contact_detail_page.dart';
@@ -50,7 +51,7 @@ import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
-/// Returns the app's [GoRouter].
+/// Builds and returns the app's [GoRouter].
 ///
 /// Auth-aware:
 /// - While [AuthCubit] is in [AuthInitial], the shell is replaced with
@@ -343,6 +344,14 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
         name: 'account-edit',
         builder: (context, state) =>
             AccountFormPage(editingId: state.pathParameters['id']),
+      ),
+      // Shared-wallet members (spec §14) — reached from the wallet's
+      // settings sheet or the member avatar row on the detail page.
+      GoRoute(
+        path: '/accounts/:id/members',
+        name: 'account-members',
+        builder: (context, state) =>
+            WalletMembersPage(accountId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/categories',

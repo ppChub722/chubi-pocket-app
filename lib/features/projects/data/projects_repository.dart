@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../shared/icon_maker/icon_code.dart';
 import '../domain/project.dart';
 
+/// Thin Dio wrapper around `/v1/projects` (API §10).
 class ProjectsRepository {
   ProjectsRepository({required ApiClient client}) : _client = client;
   final ApiClient _client;
@@ -62,6 +63,10 @@ class ProjectsRepository {
     }
   }
 
+  /// `planned_amount` (API §10, spec §10/4.23) uses presence semantics:
+  /// pass [plannedAmount] to set the plan, set [clearPlannedAmount] to
+  /// send an explicit `null` (turns the plan display off), leave both
+  /// unset to keep the column unchanged.
   Future<Project> update(String id, {
     String? name,
     String? type,
@@ -70,6 +75,8 @@ class ProjectsRepository {
     String? endDate,
     ProjectStatus? status,
     IconCode? iconCode,
+    double? plannedAmount,
+    bool clearPlannedAmount = false,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -82,6 +89,10 @@ class ProjectsRepository {
           'end_date': ?endDate,
           'status': ?status?.wire,
           if (iconCode != null) 'icon_code': iconCode.toJson(),
+          if (plannedAmount != null)
+            'planned_amount': plannedAmount
+          else if (clearPlannedAmount)
+            'planned_amount': null,
         },
       );
       return Project.fromJson(res.data!);

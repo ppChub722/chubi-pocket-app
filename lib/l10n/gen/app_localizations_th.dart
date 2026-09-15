@@ -144,7 +144,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get homeEmptyMessage =>
-      'เพิ่มบัญชีจากแท็บบัญชี แล้วกดปุ่ม + เพื่อเริ่มบันทึกรายการ';
+      'เพิ่มกระเป๋าจากแท็บกระเป๋า แล้วกดปุ่ม + เพื่อเริ่มบันทึกรายการ';
 
   @override
   String get homeNetWorthLabel => 'ทรัพย์สินสุทธิ';
@@ -154,8 +154,8 @@ class AppLocalizationsTh extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count บัญชี',
-      one: '1 บัญชี',
+      other: '$count กระเป๋า',
+      one: '1 กระเป๋า',
     );
     return '$_temp0';
   }
@@ -176,7 +176,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get navTransactions => 'รายการ';
 
   @override
-  String get navAccounts => 'บัญชี';
+  String get navAccounts => 'กระเป๋า';
 
   @override
   String get navAddTransaction => 'เพิ่มรายการ';
@@ -200,13 +200,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notificationsComingSoon => 'กล่องแจ้งเตือนจะมาในเฟส 1b';
 
   @override
-  String get accountsPlaceholderTitle => 'ยังไม่มีบัญชี';
+  String get accountsPlaceholderTitle => 'ยังไม่มีกระเป๋า';
 
   @override
-  String get accountsPlaceholderMessage => 'การเพิ่มบัญชีจะมาในเฟส 1a';
+  String get accountsPlaceholderMessage => 'การเพิ่มกระเป๋าจะมาในเฟส 1a';
 
   @override
-  String get accountsAddNew => 'เพิ่มบัญชี';
+  String get accountsAddNew => 'เพิ่มกระเป๋า';
 
   @override
   String get accountTypeCash => 'เงินสด';
@@ -229,11 +229,11 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get accountDetailNotFound => 'ไม่พบบัญชี';
+  String get accountDetailNotFound => 'ไม่พบกระเป๋า';
 
   @override
   String get accountDetailNotFoundMessage =>
-      'บัญชีนี้อาจถูกเก็บเข้าคลังหรือลบไปแล้ว';
+      'กระเป๋านี้อาจถูกเก็บเข้าคลังหรือลบไปแล้ว';
 
   @override
   String get accountDetailEdit => 'แก้ไข';
@@ -303,10 +303,10 @@ class AppLocalizationsTh extends AppLocalizations {
       'การบันทึกรายการจะมาในเฟส 1a';
 
   @override
-  String get accountFormTitle => 'บัญชีใหม่';
+  String get accountFormTitle => 'กระเป๋าใหม่';
 
   @override
-  String get accountFormTitleEdit => 'แก้ไขบัญชี';
+  String get accountFormTitleEdit => 'แก้ไขกระเป๋า';
 
   @override
   String get accountFormSaveEdit => 'บันทึกการแก้ไข';
@@ -318,7 +318,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormTypeLabel => 'ประเภท';
 
   @override
-  String get accountFormNameLabel => 'ชื่อบัญชี';
+  String get accountFormNameLabel => 'ชื่อกระเป๋า';
 
   @override
   String get accountFormNameRequired => 'จำเป็น';
@@ -340,7 +340,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountFormBalanceHelper =>
-      'เงินที่มีอยู่ในบัญชีนี้ ณ วันที่เริ่มติดตาม';
+      'เงินที่มีอยู่ในกระเป๋านี้ ณ วันที่เริ่มติดตาม';
 
   @override
   String get accountFormCreditSection => 'รายละเอียดบัตรเครดิต';
@@ -349,7 +349,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormCreditLimitLabel => 'วงเงิน';
 
   @override
-  String get accountFormCreditLimitRequired => 'จำเป็นสำหรับบัญชีเครดิต';
+  String get accountFormCreditLimitRequired => 'จำเป็นสำหรับกระเป๋าเครดิต';
 
   @override
   String get accountFormStatementDateLabel => 'วันสรุปยอด';
@@ -370,10 +370,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormDayInvalid => 'ต้องเป็น 1–31';
 
   @override
-  String get accountFormSave => 'บันทึกบัญชี';
+  String get accountFormSave => 'บันทึกกระเป๋า';
 
   @override
-  String get accountFormDiscardTitle => 'ยกเลิกบัญชีใหม่?';
+  String get accountFormDiscardTitle => 'ยกเลิกกระเป๋าใหม่?';
 
   @override
   String get accountFormDiscardBody => 'การเปลี่ยนแปลงของคุณจะหายไป';
@@ -407,11 +407,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountAdjustBalanceConfirm => 'ปรับ';
 
   @override
-  String get accountArchiveConfirmTitle => 'เก็บบัญชีนี้?';
+  String get accountArchiveConfirmTitle => 'เก็บกระเป๋านี้?';
 
   @override
   String get accountArchiveConfirmBody =>
-      'บัญชีจะถูกซ่อนจากรายการที่ใช้งาน รายการที่มีอยู่จะยังคงอ้างถึงได้';
+      'กระเป๋าจะถูกซ่อนจากรายการที่ใช้งาน รายการที่มีอยู่จะยังคงอ้างถึงได้';
 
   @override
   String get accountArchiveConfirmAction => 'เก็บ';
@@ -990,20 +990,20 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionTypeTransfer => 'โอนเงิน';
 
   @override
-  String get transactionFormAccountLabel => 'บัญชี';
+  String get transactionFormAccountLabel => 'กระเป๋า';
 
   @override
-  String get transactionFormFromAccountLabel => 'จากบัญชี';
+  String get transactionFormFromAccountLabel => 'จากกระเป๋า';
 
   @override
-  String get transactionFormToAccountLabel => 'ไปบัญชี';
+  String get transactionFormToAccountLabel => 'ไปกระเป๋า';
 
   @override
-  String get transactionFormAccountRequired => 'เลือกบัญชี';
+  String get transactionFormAccountRequired => 'เลือกกระเป๋า';
 
   @override
   String get transactionFormAccountSameError =>
-      'บัญชีต้นทางและปลายทางต้องไม่ใช่บัญชีเดียวกัน';
+      'กระเป๋าต้นทางและปลายทางต้องไม่ใช่กระเป๋าเดียวกัน';
 
   @override
   String get transactionFormCategoryLabel => 'หมวดหมู่';
@@ -1053,11 +1053,11 @@ class AppLocalizationsTh extends AppLocalizations {
       'บันทึกแล้ว เพิ่มรายการต่อด้านล่างได้';
 
   @override
-  String get transactionFormAccountPickerTitle => 'เลือกบัญชี';
+  String get transactionFormAccountPickerTitle => 'เลือกกระเป๋า';
 
   @override
   String get transactionFormAccountPickerEmpty =>
-      'ยังไม่มีบัญชีที่ใช้งาน เพิ่มบัญชีก่อน';
+      'ยังไม่มีกระเป๋าที่ใช้งาน เพิ่มกระเป๋าก่อน';
 
   @override
   String get transactionFormCategoryPickerTitle => 'เลือกหมวดหมู่';
@@ -1096,22 +1096,22 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionDetailDeleteConfirmTitleTransfer => 'ลบการโอนนี้?';
 
   @override
-  String get transactionDetailDeleteConfirmBody => 'ระบบจะย้อนยอดที่บัญชีให้';
+  String get transactionDetailDeleteConfirmBody => 'ระบบจะย้อนยอดที่กระเป๋าให้';
 
   @override
   String get transactionDetailDeleteConfirmBodyTransfer =>
-      'ทั้งสองรายการของการโอนจะถูกลบ และยอดที่ทั้งสองบัญชีจะย้อนกลับ';
+      'ทั้งสองรายการของการโอนจะถูกลบ และยอดที่ทั้งสองกระเป๋าจะย้อนกลับ';
 
   @override
   String get transactionDetailDeleteConfirmAction => 'ลบ';
 
   @override
   String get transactionDetailTransferReadonlyHint =>
-      'หากต้องการเปลี่ยนบัญชี ให้ลบแล้วสร้างการโอนใหม่';
+      'หากต้องการเปลี่ยนกระเป๋า ให้ลบแล้วสร้างการโอนใหม่';
 
   @override
   String get transactionDetailSystemRowBanner =>
-      'ระบบสร้างให้อัตโนมัติ หากต้องการแก้ไขให้ใช้การแก้ไขบัญชี หรือปรับยอดเงิน';
+      'ระบบสร้างให้อัตโนมัติ หากต้องการแก้ไขให้ใช้การแก้ไขกระเป๋า หรือปรับยอดเงิน';
 
   @override
   String get transactionsRangeWeek => 'สัปดาห์นี้';
@@ -1169,7 +1169,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get savingGoalsEmptyMessage =>
-      'ตั้งเป้าหมายซ้อนบนบัญชีของคุณ แล้วดูความคืบหน้าตามยอดเงิน';
+      'ตั้งเป้าหมายซ้อนบนกระเป๋าของคุณ แล้วดูความคืบหน้าตามยอดเงิน';
 
   @override
   String savingGoalProgressLine(String current, String target) {
@@ -1201,18 +1201,18 @@ class AppLocalizationsTh extends AppLocalizations {
   String get savingGoalFormNameRequired => 'จำเป็น';
 
   @override
-  String get savingGoalFormLinkedAccountLabel => 'บัญชีที่เชื่อม';
+  String get savingGoalFormLinkedAccountLabel => 'กระเป๋าที่เชื่อม';
 
   @override
   String get savingGoalFormLinkedAccountHelper =>
-      'ความคืบหน้า = ยอดบัญชี × % การจัดสรร';
+      'ความคืบหน้า = ยอดกระเป๋า × % การจัดสรร';
 
   @override
   String get savingGoalFormLinkedAccountLockedHelper =>
-      'เปลี่ยนบัญชีที่เชื่อมไม่ได้ ต้องลบแล้วสร้างใหม่';
+      'เปลี่ยนกระเป๋าที่เชื่อมไม่ได้ ต้องลบแล้วสร้างใหม่';
 
   @override
-  String get savingGoalFormAccountRequired => 'เลือกบัญชีที่เชื่อม';
+  String get savingGoalFormAccountRequired => 'เลือกกระเป๋าที่เชื่อม';
 
   @override
   String get savingGoalFormTargetLabel => 'ยอดเป้าหมาย';
@@ -1225,7 +1225,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get savingGoalFormAllocationHelper =>
-      'เว้นว่างเพื่อให้ระบบแนะนำ รวมทุกเป้าต่อบัญชีต้องไม่เกิน 100%';
+      'เว้นว่างเพื่อให้ระบบแนะนำ รวมทุกเป้าต่อกระเป๋าต้องไม่เกิน 100%';
 
   @override
   String get savingGoalFormAllocationInvalid => 'ต้องอยู่ระหว่าง 0 ถึง 100';
@@ -1291,7 +1291,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get savingGoalArchiveConfirmBody =>
-      'การเก็บถาวรจะคืนสัดส่วนการจัดสรรให้บัญชี กู้คืนได้ภายหลังหากยังมีพื้นที่';
+      'การเก็บถาวรจะคืนสัดส่วนการจัดสรรให้กระเป๋า กู้คืนได้ภายหลังหากยังมีพื้นที่';
 
   @override
   String get savingGoalArchiveConfirmAction => 'เก็บถาวร';
@@ -1301,7 +1301,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get savingGoalDeleteConfirmBody =>
-      'ลบถาวร บัญชีที่เชื่อมและรายการในบัญชีไม่ได้รับผลกระทบ';
+      'ลบถาวร กระเป๋าที่เชื่อมและรายการในกระเป๋าไม่ได้รับผลกระทบ';
 
   @override
   String get savingGoalDeleteConfirmAction => 'ลบ';
@@ -1546,10 +1546,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get scheduledFormAmountInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
 
   @override
-  String get scheduledFormAccountLabel => 'บัญชี';
+  String get scheduledFormAccountLabel => 'กระเป๋า';
 
   @override
-  String get scheduledFormAccountRequired => 'เลือกบัญชี';
+  String get scheduledFormAccountRequired => 'เลือกกระเป๋า';
 
   @override
   String get scheduledFormCategoryLabel => 'หมวดหมู่';
@@ -1628,7 +1628,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get scheduledDetailAccount => 'บัญชี';
+  String get scheduledDetailAccount => 'กระเป๋า';
 
   @override
   String get scheduledDetailCategory => 'หมวดหมู่';
@@ -1703,4 +1703,243 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get scheduledDeleteConfirmAction => 'ลบ';
+
+  @override
+  String get projectFormPlannedLabel => 'ตั้งงบไว้';
+
+  @override
+  String get projectFormPlannedHelper =>
+      'ไม่บังคับ — ยอดรวมที่ตั้งใจจะใช้ ล้างค่าเพื่อปิดการแสดงแผน';
+
+  @override
+  String get projectFormPlannedInvalid => 'ใส่จำนวนที่มากกว่าศูนย์';
+
+  @override
+  String get projectFormPlannedClearTooltip => 'ล้างค่า';
+
+  @override
+  String projectMetaPlanned(String amount) {
+    return 'งบ $amount';
+  }
+
+  @override
+  String get projectPlannedRemainingCardLabel => 'คงเหลือ';
+
+  @override
+  String projectPlannedLine(String planned, String remaining) {
+    return 'ตั้งงบไว้ $planned · เหลือ $remaining';
+  }
+
+  @override
+  String projectPlannedOverLine(String over) {
+    return '🔴 เกินงบ $over';
+  }
+
+  @override
+  String get projectSummaryPlannedLabel => 'ตั้งงบไว้';
+
+  @override
+  String get projectSummarySpentLabel => 'ใช้ไปสุทธิ';
+
+  @override
+  String get projectSummaryRemainingLabel => 'เหลือ';
+
+  @override
+  String get projectSummaryOverLabel => 'เกินงบ';
+
+  @override
+  String walletsHeaderMine(String amount) {
+    return 'รวมของฉัน $amount';
+  }
+
+  @override
+  String walletsHeaderShared(String amount) {
+    return 'กองกลาง $amount';
+  }
+
+  @override
+  String get walletSharedLabel => 'กระเป๋าร่วม';
+
+  @override
+  String get walletMembersTitle => 'สมาชิก';
+
+  @override
+  String walletMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'สมาชิก $count คน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walletMembersHistoryTitle => 'สมาชิกที่ออกแล้ว';
+
+  @override
+  String get walletMemberRoleOwner => 'เจ้าของ';
+
+  @override
+  String get walletMemberRoleMember => 'สมาชิก';
+
+  @override
+  String get walletMemberPending => 'รอตอบรับ';
+
+  @override
+  String get walletMemberYou => 'คุณ';
+
+  @override
+  String walletMemberJoined(String date) {
+    return 'เข้าร่วม $date';
+  }
+
+  @override
+  String walletMemberLeft(String date) {
+    return 'ออกเมื่อ $date';
+  }
+
+  @override
+  String get walletMembersInvite => 'เชิญทางอีเมล';
+
+  @override
+  String get walletInviteTitle => 'เชิญสมาชิก';
+
+  @override
+  String get walletInviteEmailLabel => 'อีเมล';
+
+  @override
+  String get walletInviteEmailInvalid => 'กรุณากรอกอีเมลให้ถูกต้อง';
+
+  @override
+  String get walletInviteSend => 'ส่งคำเชิญ';
+
+  @override
+  String get walletInviteSent => 'ส่งคำเชิญแล้ว';
+
+  @override
+  String walletConvertWarnTitle(String name) {
+    return '⚠️ เชิญ \"$name\" เข้ากระเป๋านี้?';
+  }
+
+  @override
+  String walletConvertWarnBody(String wallet, String name) {
+    return 'กระเป๋า $wallet จะกลายเป็นกระเป๋าร่วม:\n• $nameจะเห็นรายการทั้งหมดที่ผ่านมาของกระเป๋านี้ (ย้อนหลังทุกรายการ)\n• ทั้งสองคนเพิ่ม/แก้/ลบรายการได้\n• กระเป๋านี้จะถูกเอาออกจากรายงานส่วนตัวอัตโนมัติ (เปิดกลับได้ในตั้งค่า)';
+  }
+
+  @override
+  String get walletLeave => 'ออกจากกระเป๋า';
+
+  @override
+  String get walletLeaveConfirmTitle => 'ออกจากกระเป๋านี้?';
+
+  @override
+  String get walletLeaveConfirmBody =>
+      'รายการที่คุณจดไว้จะยังอยู่ในกระเป๋า แต่คุณจะแก้ไขไม่ได้อีก สมาชิกที่เหลือยังจัดการรายการเหล่านั้นได้';
+
+  @override
+  String get walletLeaveAction => 'ออกจากกระเป๋า';
+
+  @override
+  String get walletRemoveMemberAction => 'เอาออกจากกระเป๋า';
+
+  @override
+  String walletRemoveMemberConfirmTitle(String name) {
+    return 'เอา $name ออก?';
+  }
+
+  @override
+  String get walletRemoveMemberConfirmBody =>
+      'รายการที่เขาจดไว้จะยังอยู่ในกระเป๋า และจะอ่านได้อย่างเดียวสำหรับเขา';
+
+  @override
+  String get walletTransferOwnershipAction => 'โอนความเป็นเจ้าของ';
+
+  @override
+  String walletTransferOwnershipConfirmTitle(String name) {
+    return 'โอนความเป็นเจ้าของให้ $name?';
+  }
+
+  @override
+  String get walletTransferOwnershipConfirmBody =>
+      'เขาจะเป็นเจ้าของกระเป๋านี้แทน ส่วนคุณยังเป็นสมาชิกอยู่';
+
+  @override
+  String get walletTransferOwnershipConfirm => 'โอน';
+
+  @override
+  String get walletTransferOwnershipSuccess => 'โอนความเป็นเจ้าของแล้ว';
+
+  @override
+  String get walletSettingsTitle => 'ตั้งค่ากระเป๋า';
+
+  @override
+  String get walletSettingsMembersSubtitlePersonal =>
+      'ชวนคนอื่นมาใช้กระเป๋านี้ร่วมกัน';
+
+  @override
+  String get walletReportScopeTitle => 'ในรายงานของฉัน';
+
+  @override
+  String get walletReportScopeHelper =>
+      'กำหนดว่ารายการของกระเป๋านี้จะถูกนับในสรุปและงบประมาณส่วนตัวของคุณอย่างไร หน้ากระเป๋าเองยังแสดงทุกรายการเสมอ';
+
+  @override
+  String get walletReportScopeNone => 'ไม่รวมในรายงาน';
+
+  @override
+  String get walletReportScopeOwn => 'เฉพาะที่ฉันจด';
+
+  @override
+  String get walletReportScopeAll => 'ทั้งกระเป๋า';
+
+  @override
+  String get walletReportScopeSaved => 'บันทึกการตั้งค่ารายงานแล้ว';
+
+  @override
+  String get transactionFormCategoryAuthorOnlyHint => 'หมวดแก้ได้เฉพาะคนจด';
+
+  @override
+  String get transactionFormLockedBanner =>
+      'อ่านได้อย่างเดียว — คุณออกจากกระเป๋านี้แล้ว จึงแก้ไขรายการนี้ไม่ได้';
+
+  @override
+  String notificationWalletInviteTitle(String actor, String wallet) {
+    return '$actor ชวนคุณเข้ากระเป๋า \"$wallet\"';
+  }
+
+  @override
+  String get notificationAccept => 'ตอบรับ';
+
+  @override
+  String get notificationReject => 'ปฏิเสธ';
+
+  @override
+  String get walletErrorNotMember => 'คุณไม่ได้เป็นสมาชิกของกระเป๋านี้';
+
+  @override
+  String get walletErrorOwnerMustTransfer =>
+      'ต้องโอนความเป็นเจ้าของก่อน เพราะกระเป๋านี้ยังมีสมาชิกคนอื่นอยู่';
+
+  @override
+  String get walletErrorHasMembers =>
+      'กระเป๋านี้ยังมีสมาชิกคนอื่นอยู่ จึงเก็บเข้าคลังหรือลบไม่ได้';
+
+  @override
+  String get walletErrorCategoryAuthorOnly =>
+      'หมวดของรายการนี้แก้ได้เฉพาะคนจดเท่านั้น';
+
+  @override
+  String get walletErrorRowLocked =>
+      'รายการนี้ถูกล็อก เพราะคุณออกจากกระเป๋านี้แล้ว';
+
+  @override
+  String get walletErrorScopeNotAllowed =>
+      'อดีตสมาชิกเลือกได้เฉพาะ \"ไม่รวมในรายงาน\" หรือ \"เฉพาะที่ฉันจด\"';
+
+  @override
+  String get walletErrorUserNotFound => 'ไม่พบผู้ใช้ที่ใช้อีเมลนี้';
+
+  @override
+  String get walletErrorAlreadyMember =>
+      'ผู้ใช้นี้เป็นสมาชิกของกระเป๋านี้อยู่แล้ว';
 }

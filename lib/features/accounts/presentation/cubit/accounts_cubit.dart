@@ -5,6 +5,7 @@ import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
+import '../../domain/wallet_member.dart';
 
 /// State for [AccountsCubit]. See [CategoriesState] for rationale on the
 /// single-class-with-enum-status shape.
@@ -38,7 +39,7 @@ class AccountsState extends Equatable {
 
 enum AccountsStatus { initial, loading, loaded, error }
 
-/// Accounts store backed by [AccountsRepository].
+/// The accounts store backed by [AccountsRepository].
 ///
 /// **No registration seed.** Per product decision, new users start with
 /// zero accounts — the empty-state UX prompts them to create their first.
@@ -127,6 +128,22 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
         if (a.id == outcome.account.id) outcome.account else a,
     ]));
     return outcome;
+  }
+
+  /// Update the caller's own report scope on a shared wallet
+  /// (spec §14/5). Round-trips `PUT /v1/accounts/:id/report-scope`, then
+  /// patches the cached row so the settings UI reflects immediately.
+  /// Re-throws [ApiException] (e.g. `SCOPE_NOT_ALLOWED`) for the caller
+  /// to surface.
+  Future<void> setReportScope({
+    required String accountId,
+    required WalletReportScope scope,
+  }) async {
+    await _repo.setReportScope(accountId: accountId, scope: scope);
+    emit(state.copyWith(accounts: [
+      for (final a in state.accounts)
+        if (a.id == accountId) a.copyWith(myReportScope: scope) else a,
+    ]));
   }
 
   Account? byId(String id) {

@@ -9,7 +9,7 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../cubit/transactions_cubit.dart';
 import 'transaction_form_body.dart';
 
-/// Full-page wrapper around [TransactionFormBody]. Used for:
+/// Full-page wrapper around [TransactionFormBody] — used for:
 /// - `/transactions/new` (create from More menu / FAB-on-tablet)
 /// - `/transactions/:id/edit` (edit always opens full-page)
 ///
@@ -82,6 +82,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           return _Scaffold(
             initial: TransactionFormInitial(editingTransaction: tx),
             isEdit: true,
+            // Ex-member row on a shared wallet (spec §14/2.3): whole
+            // form read-only — the body shows the explanatory banner,
+            // the scaffold drops the Save buttons.
+            readOnly: tx.isLocked,
             bodyKey: _bodyKey,
           );
         },
@@ -101,10 +105,12 @@ class _Scaffold extends StatelessWidget {
     required this.initial,
     required this.isEdit,
     required this.bodyKey,
+    this.readOnly = false,
   });
 
   final TransactionFormInitial initial;
   final bool isEdit;
+  final bool readOnly;
   final GlobalKey<TransactionFormBodyState> bodyKey;
 
   @override
@@ -146,7 +152,9 @@ class _Scaffold extends StatelessWidget {
             },
           ),
         ),
-        bottomNavigationBar: SafeArea(
+        bottomNavigationBar: readOnly
+            ? null
+            : SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(

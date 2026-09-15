@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../domain/notification.dart';
 
-/// One inbox row.
+/// One notification inbox row.
 ///
 /// - `contact_link_request`, **pending** → renders inline Accept /
 ///   Reject buttons. Row-body tap is a no-op for pending link-requests
@@ -10,6 +11,8 @@ import '../../domain/notification.dart';
 /// - `contact_link_request`, **actioned** (= accepted) → no buttons.
 ///   Tapping the row routes to the linked contact / link-existing edit
 ///   / link-create form (parent page owns the routing).
+/// - `account_invite` (shared-wallet invite, spec §14) → same inline
+///   Accept / Reject pattern while pending.
 /// - Other types → tap = mark read + follow [AppNotification.deepLink].
 ///
 /// Overflow: Mark-as-read (when unread) + Dismiss (when not yet
@@ -31,7 +34,7 @@ class NotificationTile extends StatelessWidget {
   final ValueChanged<AppNotification> onTap;
 
   /// Inline-button handlers — only invoked for pending
-  /// `contact_link_request` rows. Ignored otherwise.
+  /// `contact_link_request` / `account_invite` rows. Ignored otherwise.
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
@@ -39,8 +42,10 @@ class NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final n = notification;
     final theme = Theme.of(context);
-    final isLinkRequest = n.type == NotificationType.contactLinkRequest;
-    final showInlineActions = isLinkRequest && n.actionedAt == null;
+    final hasInlineActions =
+        n.type == NotificationType.contactLinkRequest ||
+            n.type == NotificationType.accountInvite;
+    final showInlineActions = hasInlineActions && n.actionedAt == null;
 
     return Material(
       color: n.isUnread
@@ -64,7 +69,7 @@ class NotificationTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _title(n),
+                      _title(context, n),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight:
                             n.isUnread ? FontWeight.w600 : FontWeight.w400,
@@ -90,7 +95,8 @@ class NotificationTile extends StatelessWidget {
                               style: FilledButton.styleFrom(
                                 visualDensity: VisualDensity.compact,
                               ),
-                              child: const Text('Accept'),
+                              child: Text(AppLocalizations.of(context)!
+                                  .notificationAccept),
                             ),
                             const SizedBox(width: 8),
                             OutlinedButton(
@@ -98,7 +104,8 @@ class NotificationTile extends StatelessWidget {
                               style: OutlinedButton.styleFrom(
                                 visualDensity: VisualDensity.compact,
                               ),
-                              child: const Text('Reject'),
+                              child: Text(AppLocalizations.of(context)!
+                                  .notificationReject),
                             ),
                           ],
                         ),
@@ -151,12 +158,14 @@ class NotificationTile extends StatelessWidget {
       case NotificationType.projectInvite:
       case NotificationType.contactLinkRequest:
         return Icons.person_add_alt_1_outlined;
+      case NotificationType.accountInvite:
+        return Icons.account_balance_wallet_outlined;
       case NotificationType.unknown:
         return Icons.notifications_outlined;
     }
   }
 
-  String _title(AppNotification n) {
+  String _title(BuildContext context, AppNotification n) {
     final actor = n.actorDisplayName ?? 'Someone';
     switch (n.type) {
       case NotificationType.splitCreated:
@@ -174,6 +183,10 @@ class NotificationTile extends StatelessWidget {
         return '$actor invited you to $projectName';
       case NotificationType.contactLinkRequest:
         return '$actor wants to link as a contact';
+      case NotificationType.accountInvite:
+        final walletName = n.payload['account_name'] as String? ?? '';
+        return AppLocalizations.of(context)!
+            .notificationWalletInviteTitle(actor, walletName);
       case NotificationType.unknown:
         return 'Notification';
     }

@@ -2,9 +2,11 @@ import 'package:equatable/equatable.dart';
 
 import '../../../shared/icon_maker/icon_code.dart';
 import 'account_type.dart';
+import 'wallet_member.dart';
 
-/// One account — a place money lives. Cash wallet, bank account, e-wallet,
-/// credit card, or pay-later service.
+/// One account — a place where money lives. Cash wallet, bank account, e-wallet,
+/// credit card, or pay-later service. User-facing surfaces call this a
+/// **wallet** (spec §14 naming rule); code and API keep `account`.
 class Account extends Equatable {
   const Account({
     required this.id,
@@ -19,6 +21,9 @@ class Account extends Equatable {
     this.statementDate,
     this.paymentDueDate,
     this.minimumPayment,
+    this.members = const [],
+    this.myReportScope,
+    this.isShared = false,
   });
 
   final String id;
@@ -34,6 +39,18 @@ class Account extends Equatable {
   final int? statementDate;
   final int? paymentDueDate;
   final double? minimumPayment;
+
+  /// Shared-wallet surface (API §14 pinned contract on `GET /v1/accounts`):
+  /// active members (always including the caller), the caller's own
+  /// report scope, and `is_shared` = active member count > 1.
+  final List<WalletMember> members;
+  final WalletReportScope? myReportScope;
+  final bool isShared;
+
+  /// Active members other than [selfUserId] — for the "other members"
+  /// avatar stack on cards / detail (spec B2: exclude self).
+  List<WalletMember> otherMembers(String? selfUserId) =>
+      members.where((m) => m.userId != selfUserId).toList();
 
   double? get creditUtilization {
     if (!type.isCredit) return null;
@@ -54,6 +71,9 @@ class Account extends Equatable {
     int? statementDate,
     int? paymentDueDate,
     double? minimumPayment,
+    List<WalletMember>? members,
+    WalletReportScope? myReportScope,
+    bool? isShared,
   }) {
     return Account(
       id: id ?? this.id,
@@ -68,6 +88,9 @@ class Account extends Equatable {
       statementDate: statementDate ?? this.statementDate,
       paymentDueDate: paymentDueDate ?? this.paymentDueDate,
       minimumPayment: minimumPayment ?? this.minimumPayment,
+      members: members ?? this.members,
+      myReportScope: myReportScope ?? this.myReportScope,
+      isShared: isShared ?? this.isShared,
     );
   }
 
@@ -87,6 +110,16 @@ class Account extends Equatable {
       statementDate: json['statement_date'] as int?,
       paymentDueDate: json['payment_due_date'] as int?,
       minimumPayment: (json['minimum_payment'] as num?)?.toDouble(),
+      members: json['members'] is List
+          ? (json['members'] as List)
+              .cast<Map<String, dynamic>>()
+              .map(WalletMember.fromJson)
+              .toList()
+          : const [],
+      myReportScope: json['my_report_scope'] != null
+          ? WalletReportScopeWire.parse(json['my_report_scope'] as String)
+          : null,
+      isShared: (json['is_shared'] as bool?) ?? false,
     );
   }
 
@@ -139,5 +172,8 @@ class Account extends Equatable {
         statementDate,
         paymentDueDate,
         minimumPayment,
+        members,
+        myReportScope,
+        isShared,
       ];
 }

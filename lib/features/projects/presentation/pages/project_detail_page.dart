@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
@@ -23,7 +24,7 @@ import '../cubit/projects_cubit.dart';
 import '../widgets/add_member_sheet.dart';
 import 'project_transaction_edit_page.dart';
 
-/// `/projects/:id` — detail view. Tabs: Transactions, Members, Summary, and
+/// `/projects/:id` — the detail view. Tabs: Transactions, Members, Summary, and
 /// (when status ∈ {completed, archived}) Resolve.
 class ProjectDetailPage extends StatefulWidget {
   const ProjectDetailPage({required this.id, super.key});
@@ -481,8 +482,13 @@ class _ProjectDashboardState extends State<_ProjectDashboard> {
                       ),
                     ],
                   ),
-                  Builder(builder: (_) {
+                  Builder(builder: (context) {
+                    final l = AppLocalizations.of(context)!;
                     final parts = [
+                      // Plan first: "งบ ฿30,000 | trip" (spec §10/4.23).
+                      if (s != null && s.hasPlan)
+                        l.projectMetaPlanned(_fmtCurrency(
+                            s.plannedAmount ?? 0, widget.currency)),
                       if (widget.projectType != null &&
                           widget.projectType!.isNotEmpty)
                         widget.projectType!,
@@ -523,6 +529,25 @@ class _ProjectDashboardState extends State<_ProjectDashboard> {
                           valueColor: Colors.green,
                         ),
                       ),
+                      // Plan-vs-actual (spec §10/4.23) as a third card —
+                      // two lines only: "คงเหลือ" + remaining. Green
+                      // normally, red once below zero. The plan amount
+                      // itself lives on the meta line ("งบ X | trip").
+                      // Hidden when planned_amount is NULL.
+                      if (s != null && s.hasPlan) ...[
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _StatCard(
+                            label: AppLocalizations.of(context)!
+                                .projectPlannedRemainingCardLabel,
+                            value: _fmtCurrency(
+                                s.remaining ?? 0, widget.currency),
+                            valueColor: (s.remaining ?? 0) < 0
+                                ? scheme.error
+                                : Colors.green,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -716,6 +741,12 @@ class _ProjectDashboardState extends State<_ProjectDashboard> {
   }
 }
 
+/// Plan-vs-actual line + thin progress bar (spec §10/4.23).
+///
+/// Normal: "ตั้งงบไว้ ฿30,000 · เหลือ ฿18,000" with a primary-colored
+/// bar at spent/planned. Over: "🔴 เกินงบ ฿3,500" with a full red bar —
+/// the label flips, the sign never shows (remaining may be negative on
+/// the wire; the user never sees a raw negative).
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.label,
@@ -1704,15 +1735,97 @@ class _ReportTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.bar_chart_outlined, size: 48),
-          SizedBox(height: 12),
-          Text('Coming soon in Phase 2'),
-        ],
-      ),
+    final l = AppLocalizations.of(context)!;
+    final s = summary;
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Plan-vs-actual row (spec §10/4.23) — the three numbers in one
+        // row; hidden entirely when no plan is set.
+        if (s != null && s.hasPlan)
+          Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _PlannedStat(
+                      label: l.projectSummaryPlannedLabel,
+                      value: _fmtCurrency(s.plannedAmount ?? 0, currency),
+                    ),
+                  ),
+                  Expanded(
+                    child: _PlannedStat(
+                      label: l.projectSummarySpentLabel,
+                      value: _fmtCurrency(s.spentNet ?? 0, currency),
+                    ),
+                  ),
+                  Expanded(
+                    child: _PlannedStat(
+                      label: s.isOverPlan
+                          ? l.projectSummaryOverLabel
+                          : l.projectSummaryRemainingLabel,
+                      value: _fmtCurrency(
+                        (s.remaining ?? 0).abs(),
+                        currency,
+                      ),
+                      valueColor: s.isOverPlan
+                          ? Theme.of(context).colorScheme.error
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.bar_chart_outlined, size: 48),
+              SizedBox(height: 12),
+              Text('Coming soon in Phase 2'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlannedStat extends StatelessWidget {
+  const _PlannedStat({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: valueColor ?? scheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
     );
   }
 }

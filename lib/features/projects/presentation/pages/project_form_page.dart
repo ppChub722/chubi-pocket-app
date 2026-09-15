@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
@@ -10,7 +12,7 @@ import '../../../../shared/icon_maker/icon_type.dart';
 import '../../data/projects_repository.dart';
 import '../cubit/projects_cubit.dart';
 
-/// `/projects/new` and `/projects/:id/edit`.
+/// `/projects/new` and `/projects/:id/edit` (planned_amount per §10/4.23).
 class ProjectFormPage extends StatefulWidget {
   const ProjectFormPage({this.editingId, super.key});
   final String? editingId;
@@ -24,8 +26,14 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   final _name = TextEditingController();
   final _type = TextEditingController();
   final _description = TextEditingController();
+  final _planned = TextEditingController();
 
   IconCode? _iconCode;
+
+  /// The plan value loaded on edit — needed to distinguish "clear to
+  /// null" (was set, now blank → explicit null) from "leave alone"
+  /// (spec §10/4.23).
+  double? _initialPlanned;
 
   bool _saving = false;
   String? _error;
@@ -47,6 +55,10 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
         _type.text = p.type ?? '';
         _description.text = p.description ?? '';
         _iconCode = p.iconCode;
+        _initialPlanned = p.plannedAmount;
+        _planned.text = p.plannedAmount != null
+            ? _formatPlanned(p.plannedAmount!)
+            : '';
       });
     } on ApiException catch (e) {
       _error = e.message;
@@ -69,6 +81,17 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
     });
   }
 
+  /// Whole-number plans render without the trailing ".0" so the user
+  /// edits "30000", not "30000.0".
+  static String _formatPlanned(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
+  double? get _plannedValue {
+    final t = _planned.text.trim();
+    if (t.isEmpty) return null;
+    return double.tryParse(t);
+  }
+
   Future<void> _submit() async {
     if (!(_form.currentState?.validate() ?? false)) return;
     setState(() {
@@ -77,6 +100,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
     });
     try {
       final cubit = context.read<ProjectsCubit>();
+      final planned = _plannedValue;
       if (_isEdit) {
         await cubit.update(
           widget.editingId!,
@@ -84,15 +108,25 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
           description:
               _description.text.trim().isEmpty ? null : _description.text.trim(),
           iconCode: _iconCode,
+          plannedAmount: planned,
+          // Explicit-null clear only when the plan existed and the user
+          // blanked the field (spec §10/4.23: NULL = plan display off).
+          clearPlannedAmount: planned == null && _initialPlanned != null,
         );
       } else {
-        await cubit.create(
+        final created = await cubit.create(
           name: _name.text.trim(),
           type: _type.text.trim().isEmpty ? null : _type.text.trim(),
           description:
               _description.text.trim().isEmpty ? null : _description.text.trim(),
           iconCode: _iconCode,
         );
+        // planned_amount is pinned on PUT only (API §10) — the create
+        // endpoint's field list doesn't include it, so a fresh plan is
+        // applied via a follow-up update (creator is the owner).
+        if (planned != null) {
+          await cubit.update(created.id, plannedAmount: planned);
+        }
       }
       if (!mounted) return;
       context.pop();
@@ -129,6 +163,42 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
               controller: _description,
               decoration: const InputDecoration(labelText: 'Description'),
               maxLines: 3,
+            ),
+            const SizedBox(height: 12),
+            // Planned budget — spec §10/4.23 "ตั้งงบไว้". Optional; the
+            // suffix clear button blanks the field, which on save turns
+            // the plan display off (explicit null).
+            TextFormField(
+              controller: _planned,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!
+                    .projectFormPlannedLabel,
+                helperText: AppLocalizations.of(context)!
+                    .projectFormPlannedHelper,
+                helperMaxLines: 2,
+                prefixText: '฿ ',
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  tooltip: AppLocalizations.of(context)!
+                      .projectFormPlannedClearTooltip,
+                  onPressed: () => setState(() => _planned.clear()),
+                ),
+              ),
+              validator: (v) {
+                final t = (v ?? '').trim();
+                if (t.isEmpty) return null; // optional
+                final n = double.tryParse(t);
+                if (n == null || n <= 0) {
+                  return AppLocalizations.of(context)!
+                      .projectFormPlannedInvalid;
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -168,6 +238,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
     _name.dispose();
     _type.dispose();
     _description.dispose();
+    _planned.dispose();
     super.dispose();
   }
 }

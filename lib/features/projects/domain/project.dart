@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../shared/icon_maker/icon_code.dart';
 
+/// Project lifecycle states.
 enum ProjectStatus { active, completed, cancelled, archived }
 
 extension ProjectStatusWire on ProjectStatus {
@@ -96,6 +97,7 @@ class Project extends Equatable {
     this.endDate,
     this.membersCount = 0,
     this.iconCode,
+    this.plannedAmount,
   });
 
   final String id;
@@ -108,6 +110,11 @@ class Project extends Equatable {
   final ProjectStatus status;
   final int membersCount;
   final IconCode? iconCode;
+
+  /// Spec §10/4.23 — one nullable plan-vs-actual total ("ตั้งงบไว้").
+  /// NULL = the plan UI is hidden entirely. Display-only, never a
+  /// constraint.
+  final double? plannedAmount;
 
   bool get isActive => status == ProjectStatus.active;
   bool get isLocked =>
@@ -129,6 +136,7 @@ class Project extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      plannedAmount: (json['planned_amount'] as num?)?.toDouble(),
     );
   }
 
@@ -144,6 +152,7 @@ class Project extends Equatable {
         status,
         membersCount,
         iconCode,
+        plannedAmount,
       ];
 }
 
@@ -341,6 +350,9 @@ class ProjectSummary extends Equatable {
     required this.totalIncome,
     required this.transactionCount,
     required this.memberCount,
+    this.plannedAmount,
+    this.spentNet,
+    this.remaining,
   });
 
   final String projectId;
@@ -349,6 +361,17 @@ class ProjectSummary extends Equatable {
   final int transactionCount;
   final int memberCount;
 
+  /// Plan-vs-actual trio (API §10 summary): present only when the
+  /// project's `planned_amount` is set — all three omitted when NULL.
+  /// `remaining` may be negative — the FE flips the label ("เกินงบ X"),
+  /// never shows a raw negative (spec §10/4.23).
+  final double? plannedAmount;
+  final double? spentNet;
+  final double? remaining;
+
+  bool get hasPlan => plannedAmount != null;
+  bool get isOverPlan => (remaining ?? 0) < 0;
+
   factory ProjectSummary.fromJson(Map<String, dynamic> json) {
     return ProjectSummary(
       projectId: json['project_id'] as String,
@@ -356,10 +379,21 @@ class ProjectSummary extends Equatable {
       totalIncome: (json['total_income'] as num?)?.toDouble() ?? 0,
       transactionCount: (json['transaction_count'] as num?)?.toInt() ?? 0,
       memberCount: (json['member_count'] as num?)?.toInt() ?? 0,
+      plannedAmount: (json['planned_amount'] as num?)?.toDouble(),
+      spentNet: (json['spent_net'] as num?)?.toDouble(),
+      remaining: (json['remaining'] as num?)?.toDouble(),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [projectId, totalExpense, totalIncome, transactionCount, memberCount];
+  List<Object?> get props => [
+        projectId,
+        totalExpense,
+        totalIncome,
+        transactionCount,
+        memberCount,
+        plannedAmount,
+        spentNet,
+        remaining,
+      ];
 }

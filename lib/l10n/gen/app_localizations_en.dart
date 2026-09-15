@@ -145,7 +145,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeEmptyMessage =>
-      'Add an account from the Accounts tab, then tap the + button to log your first transaction.';
+      'Add a wallet from the Wallets tab, then tap the + button to log your first transaction.';
 
   @override
   String get homeNetWorthLabel => 'Net worth';
@@ -155,8 +155,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count accounts',
-      one: '1 account',
+      other: '$count wallets',
+      one: '1 wallet',
     );
     return '$_temp0';
   }
@@ -177,7 +177,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navTransactions => 'Transactions';
 
   @override
-  String get navAccounts => 'Accounts';
+  String get navAccounts => 'Wallets';
 
   @override
   String get navAddTransaction => 'Add transaction';
@@ -203,13 +203,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'The notifications inbox ships in Phase 1b';
 
   @override
-  String get accountsPlaceholderTitle => 'No accounts yet';
+  String get accountsPlaceholderTitle => 'No wallets yet';
 
   @override
-  String get accountsPlaceholderMessage => 'Adding accounts ships in Phase 1a.';
+  String get accountsPlaceholderMessage => 'Adding wallets ships in Phase 1a.';
 
   @override
-  String get accountsAddNew => 'Add account';
+  String get accountsAddNew => 'Add wallet';
 
   @override
   String get accountTypeCash => 'Cash';
@@ -232,11 +232,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accountDetailNotFound => 'Account not found';
+  String get accountDetailNotFound => 'Wallet not found';
 
   @override
   String get accountDetailNotFoundMessage =>
-      'This account may have been archived or deleted.';
+      'This wallet may have been archived or deleted.';
 
   @override
   String get accountDetailEdit => 'Edit';
@@ -307,10 +307,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Logging transactions ships in Phase 1a.';
 
   @override
-  String get accountFormTitle => 'New account';
+  String get accountFormTitle => 'New wallet';
 
   @override
-  String get accountFormTitleEdit => 'Edit account';
+  String get accountFormTitleEdit => 'Edit wallet';
 
   @override
   String get accountFormSaveEdit => 'Save changes';
@@ -322,7 +322,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormTypeLabel => 'Type';
 
   @override
-  String get accountFormNameLabel => 'Account name';
+  String get accountFormNameLabel => 'Wallet name';
 
   @override
   String get accountFormNameRequired => 'Required';
@@ -344,7 +344,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormBalanceHelper =>
-      'Money already in this account on the day you start tracking.';
+      'Money already in this wallet on the day you start tracking.';
 
   @override
   String get accountFormCreditSection => 'Credit details';
@@ -353,7 +353,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormCreditLimitLabel => 'Credit limit';
 
   @override
-  String get accountFormCreditLimitRequired => 'Required for credit accounts';
+  String get accountFormCreditLimitRequired => 'Required for credit wallets';
 
   @override
   String get accountFormStatementDateLabel => 'Statement date';
@@ -374,10 +374,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormDayInvalid => 'Must be 1–31';
 
   @override
-  String get accountFormSave => 'Save account';
+  String get accountFormSave => 'Save wallet';
 
   @override
-  String get accountFormDiscardTitle => 'Discard new account?';
+  String get accountFormDiscardTitle => 'Discard new wallet?';
 
   @override
   String get accountFormDiscardBody => 'Your changes will be lost.';
@@ -412,11 +412,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountAdjustBalanceConfirm => 'Adjust';
 
   @override
-  String get accountArchiveConfirmTitle => 'Archive this account?';
+  String get accountArchiveConfirmTitle => 'Archive this wallet?';
 
   @override
   String get accountArchiveConfirmBody =>
-      'The account will be hidden from the active list. Its transactions stay intact and remain referenced.';
+      'The wallet will be hidden from the active list. Its transactions stay intact and remain referenced.';
 
   @override
   String get accountArchiveConfirmAction => 'Archive';
@@ -435,7 +435,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormDescriptionHelper =>
-      'What this account is for. Visible to you only.';
+      'What this wallet is for. Visible to you only.';
 
   @override
   String get accountFormDescriptionTooLong => 'Max 200 characters';
@@ -1002,16 +1002,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionTypeTransfer => 'Transfer';
 
   @override
-  String get transactionFormAccountLabel => 'Account';
+  String get transactionFormAccountLabel => 'Wallet';
 
   @override
-  String get transactionFormFromAccountLabel => 'From account';
+  String get transactionFormFromAccountLabel => 'From wallet';
 
   @override
-  String get transactionFormToAccountLabel => 'To account';
+  String get transactionFormToAccountLabel => 'To wallet';
 
   @override
-  String get transactionFormAccountRequired => 'Pick an account';
+  String get transactionFormAccountRequired => 'Pick a wallet';
 
   @override
   String get transactionFormAccountSameError =>
@@ -1065,11 +1065,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionFormSavedAddedAnother => 'Saved. Add another below.';
 
   @override
-  String get transactionFormAccountPickerTitle => 'Pick an account';
+  String get transactionFormAccountPickerTitle => 'Pick a wallet';
 
   @override
   String get transactionFormAccountPickerEmpty =>
-      'No active accounts. Create one first.';
+      'No active wallets. Create one first.';
 
   @override
   String get transactionFormCategoryPickerTitle => 'Pick a category';
@@ -1112,22 +1112,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionDetailDeleteConfirmBody =>
-      'This will reverse the balance change on the account.';
+      'This will reverse the balance change on the wallet.';
 
   @override
   String get transactionDetailDeleteConfirmBodyTransfer =>
-      'Both rows of the transfer will be deleted and balances on both accounts will reverse.';
+      'Both rows of the transfer will be deleted and balances on both wallets will reverse.';
 
   @override
   String get transactionDetailDeleteConfirmAction => 'Delete';
 
   @override
   String get transactionDetailTransferReadonlyHint =>
-      'To change accounts, delete and create a new transfer.';
+      'To change wallets, delete and create a new transfer.';
 
   @override
   String get transactionDetailSystemRowBanner =>
-      'Auto-created — to change this, use the matching account-level action (account edit, or Adjust balance).';
+      'Auto-created — to change this, use the matching wallet-level action (wallet edit, or Adjust balance).';
 
   @override
   String get transactionsRangeWeek => 'This week';
@@ -1186,7 +1186,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingGoalsEmptyMessage =>
-      'Set a target on top of an account and track your progress as the balance grows.';
+      'Set a target on top of a wallet and track your progress as the balance grows.';
 
   @override
   String savingGoalProgressLine(String current, String target) {
@@ -1218,18 +1218,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savingGoalFormNameRequired => 'Required';
 
   @override
-  String get savingGoalFormLinkedAccountLabel => 'Linked account';
+  String get savingGoalFormLinkedAccountLabel => 'Linked wallet';
 
   @override
   String get savingGoalFormLinkedAccountHelper =>
-      'Progress = account balance × allocation %';
+      'Progress = wallet balance × allocation %';
 
   @override
   String get savingGoalFormLinkedAccountLockedHelper =>
-      'Linked account can\'t be changed. Delete and recreate to switch accounts.';
+      'Linked wallet can\'t be changed. Delete and recreate to switch wallets.';
 
   @override
-  String get savingGoalFormAccountRequired => 'Pick a linked account';
+  String get savingGoalFormAccountRequired => 'Pick a linked wallet';
 
   @override
   String get savingGoalFormTargetLabel => 'Target amount';
@@ -1242,7 +1242,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingGoalFormAllocationHelper =>
-      'Leave blank to let the server suggest a default. Total per account ≤ 100%.';
+      'Leave blank to let the server suggest a default. Total per wallet ≤ 100%.';
 
   @override
   String get savingGoalFormAllocationInvalid => 'Must be between 0 and 100';
@@ -1308,7 +1308,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingGoalArchiveConfirmBody =>
-      'Archiving frees its allocation slot on the linked account. You can restore it later if capacity is available.';
+      'Archiving frees its allocation slot on the linked wallet. You can restore it later if capacity is available.';
 
   @override
   String get savingGoalArchiveConfirmAction => 'Archive';
@@ -1318,7 +1318,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingGoalDeleteConfirmBody =>
-      'This permanently removes the goal. The linked account and its transactions are unaffected.';
+      'This permanently removes the goal. The linked wallet and its transactions are unaffected.';
 
   @override
   String get savingGoalDeleteConfirmAction => 'Delete';
@@ -1565,10 +1565,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledFormAmountInvalid => 'Enter a positive amount';
 
   @override
-  String get scheduledFormAccountLabel => 'Account';
+  String get scheduledFormAccountLabel => 'Wallet';
 
   @override
-  String get scheduledFormAccountRequired => 'Pick an account';
+  String get scheduledFormAccountRequired => 'Pick a wallet';
 
   @override
   String get scheduledFormCategoryLabel => 'Category';
@@ -1648,7 +1648,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get scheduledDetailAccount => 'Account';
+  String get scheduledDetailAccount => 'Wallet';
 
   @override
   String get scheduledDetailCategory => 'Category';
@@ -1724,4 +1724,245 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduledDeleteConfirmAction => 'Delete';
+
+  @override
+  String get projectFormPlannedLabel => 'Planned budget';
+
+  @override
+  String get projectFormPlannedHelper =>
+      'Optional — the total you plan to spend. Clear to turn the plan display off.';
+
+  @override
+  String get projectFormPlannedInvalid => 'Enter a positive amount';
+
+  @override
+  String get projectFormPlannedClearTooltip => 'Clear';
+
+  @override
+  String projectMetaPlanned(String amount) {
+    return 'Budget $amount';
+  }
+
+  @override
+  String get projectPlannedRemainingCardLabel => 'Remaining';
+
+  @override
+  String projectPlannedLine(String planned, String remaining) {
+    return 'Planned $planned · $remaining left';
+  }
+
+  @override
+  String projectPlannedOverLine(String over) {
+    return '🔴 Over budget by $over';
+  }
+
+  @override
+  String get projectSummaryPlannedLabel => 'Planned';
+
+  @override
+  String get projectSummarySpentLabel => 'Spent (net)';
+
+  @override
+  String get projectSummaryRemainingLabel => 'Left';
+
+  @override
+  String get projectSummaryOverLabel => 'Over budget';
+
+  @override
+  String walletsHeaderMine(String amount) {
+    return 'Mine $amount';
+  }
+
+  @override
+  String walletsHeaderShared(String amount) {
+    return 'Shared $amount';
+  }
+
+  @override
+  String get walletSharedLabel => 'Shared wallet';
+
+  @override
+  String get walletMembersTitle => 'Members';
+
+  @override
+  String walletMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walletMembersHistoryTitle => 'Past members';
+
+  @override
+  String get walletMemberRoleOwner => 'Owner';
+
+  @override
+  String get walletMemberRoleMember => 'Member';
+
+  @override
+  String get walletMemberPending => 'Pending';
+
+  @override
+  String get walletMemberYou => 'You';
+
+  @override
+  String walletMemberJoined(String date) {
+    return 'Joined $date';
+  }
+
+  @override
+  String walletMemberLeft(String date) {
+    return 'Left $date';
+  }
+
+  @override
+  String get walletMembersInvite => 'Invite by email';
+
+  @override
+  String get walletInviteTitle => 'Invite member';
+
+  @override
+  String get walletInviteEmailLabel => 'Email';
+
+  @override
+  String get walletInviteEmailInvalid => 'Enter a valid email address.';
+
+  @override
+  String get walletInviteSend => 'Send invite';
+
+  @override
+  String get walletInviteSent => 'Invite sent';
+
+  @override
+  String walletConvertWarnTitle(String name) {
+    return '⚠️ Invite \"$name\" to this wallet?';
+  }
+
+  @override
+  String walletConvertWarnBody(String wallet, String name) {
+    return 'Wallet $wallet will become a shared wallet:\n• $name will see this wallet\'s entire history (every past entry)\n• Both of you can add, edit and delete entries\n• This wallet will automatically be removed from your personal reports (you can turn it back on in settings)';
+  }
+
+  @override
+  String get walletLeave => 'Leave wallet';
+
+  @override
+  String get walletLeaveConfirmTitle => 'Leave this wallet?';
+
+  @override
+  String get walletLeaveConfirmBody =>
+      'Your entries stay on the wallet but become read-only for you. Remaining members can still manage them.';
+
+  @override
+  String get walletLeaveAction => 'Leave';
+
+  @override
+  String get walletRemoveMemberAction => 'Remove from wallet';
+
+  @override
+  String walletRemoveMemberConfirmTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get walletRemoveMemberConfirmBody =>
+      'Their entries stay on the wallet and become read-only for them.';
+
+  @override
+  String get walletTransferOwnershipAction => 'Make owner';
+
+  @override
+  String walletTransferOwnershipConfirmTitle(String name) {
+    return 'Transfer ownership to $name?';
+  }
+
+  @override
+  String get walletTransferOwnershipConfirmBody =>
+      'They will own this wallet. You stay on as a member.';
+
+  @override
+  String get walletTransferOwnershipConfirm => 'Transfer';
+
+  @override
+  String get walletTransferOwnershipSuccess => 'Ownership transferred';
+
+  @override
+  String get walletSettingsTitle => 'Wallet settings';
+
+  @override
+  String get walletSettingsMembersSubtitlePersonal =>
+      'Invite someone to share this wallet';
+
+  @override
+  String get walletReportScopeTitle => 'In my reports';
+
+  @override
+  String get walletReportScopeHelper =>
+      'Controls how this wallet\'s entries count in your personal summaries and budgets. The wallet page itself always shows everything.';
+
+  @override
+  String get walletReportScopeNone => 'Not in reports';
+
+  @override
+  String get walletReportScopeOwn => 'Only my entries';
+
+  @override
+  String get walletReportScopeAll => 'Whole wallet';
+
+  @override
+  String get walletReportScopeSaved => 'Report setting saved';
+
+  @override
+  String get transactionFormCategoryAuthorOnlyHint =>
+      'Only the author can change the category';
+
+  @override
+  String get transactionFormLockedBanner =>
+      'Read-only — you\'re no longer a member of this wallet, so this entry can\'t be changed.';
+
+  @override
+  String notificationWalletInviteTitle(String actor, String wallet) {
+    return '$actor invited you to wallet \"$wallet\"';
+  }
+
+  @override
+  String get notificationAccept => 'Accept';
+
+  @override
+  String get notificationReject => 'Reject';
+
+  @override
+  String get walletErrorNotMember => 'You\'re not a member of this wallet.';
+
+  @override
+  String get walletErrorOwnerMustTransfer =>
+      'Transfer ownership first — this wallet still has other members.';
+
+  @override
+  String get walletErrorHasMembers =>
+      'This wallet still has other members, so it can\'t be archived or deleted.';
+
+  @override
+  String get walletErrorCategoryAuthorOnly =>
+      'Only the entry\'s author can change its category.';
+
+  @override
+  String get walletErrorRowLocked =>
+      'This entry is locked — you\'ve left this wallet.';
+
+  @override
+  String get walletErrorScopeNotAllowed =>
+      'Past members can only use \"Not in reports\" or \"Only my entries\".';
+
+  @override
+  String get walletErrorUserNotFound => 'No user found with that email.';
+
+  @override
+  String get walletErrorAlreadyMember =>
+      'That user is already a member of this wallet.';
 }

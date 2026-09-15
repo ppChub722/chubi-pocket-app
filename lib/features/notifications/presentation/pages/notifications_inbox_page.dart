@@ -3,6 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../accounts/data/accounts_repository.dart';
+import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../contacts/data/contacts_repository.dart';
 import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
@@ -12,7 +16,7 @@ import '../cubit/notifications_inbox_cubit.dart';
 import '../cubit/unread_badge_cubit.dart';
 import '../widgets/notification_tile.dart';
 
-/// `/notifications` — inbox page.
+/// `/notifications` — the inbox page.
 ///
 /// Two tabs: All / Unread. Tap routes by type + state:
 ///
@@ -145,8 +149,14 @@ class _InboxScaffoldState extends State<_InboxScaffold>
                     onDismiss: (id) =>
                         ctx.read<NotificationsInboxCubit>().markDismissed(id),
                     onTap: (notif) => _onTap(ctx, notif),
-                    onAccept: (id) => _onAcceptLinkRequest(ctx, id),
-                    onReject: (id) => _onRejectLinkRequest(ctx, id),
+                    onAccept: (id) =>
+                        n.type == NotificationType.accountInvite
+                            ? _onAcceptWalletInvite(ctx, id)
+                            : _onAcceptLinkRequest(ctx, id),
+                    onReject: (id) =>
+                        n.type == NotificationType.accountInvite
+                            ? _onRejectWalletInvite(ctx, id)
+                            : _onRejectLinkRequest(ctx, id),
                   );
                 },
               ),
@@ -168,6 +178,15 @@ class _InboxScaffoldState extends State<_InboxScaffold>
         return;
       }
       await _onTapActionedLinkRequest(ctx, n);
+      return;
+    }
+    if (n.type == NotificationType.accountInvite) {
+      if (n.actionedAt == null) return; // buttons are the action
+      // Accepted wallet invite → jump to the wallet.
+      final accountId = n.payload['account_id'] as String?;
+      if (accountId != null && accountId.isNotEmpty) {
+        ctx.push('/accounts/$accountId');
+      }
       return;
     }
     // Default: informational types — mark read + follow deep link.
@@ -213,6 +232,43 @@ class _InboxScaffoldState extends State<_InboxScaffold>
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  /// Shared-wallet invite accept (spec §14/4). Joins the wallet
+  /// (membership row activates), then refreshes the inbox and the
+  /// accounts cache so the wallet appears in the list immediately.
+  Future<void> _onAcceptWalletInvite(BuildContext ctx, String id) async {
+    final l = AppLocalizations.of(ctx)!;
+    final repo = ctx.read<AccountsRepository>();
+    final accountsCubit = ctx.read<AccountsCubit>();
+    final inboxCubit = ctx.read<NotificationsInboxCubit>();
+    final messenger = ScaffoldMessenger.of(ctx);
+    try {
+      await repo.acceptInvite(id);
+      await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
+      await accountsCubit.load();
+    } on ApiException catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(walletErrorMessage(l, e))));
+    }
+  }
+
+  /// Shared-wallet invite reject — row dismissed, silent to the sender
+  /// (mirrors the contact link-request reject).
+  Future<void> _onRejectWalletInvite(BuildContext ctx, String id) async {
+    final l = AppLocalizations.of(ctx)!;
+    final repo = ctx.read<AccountsRepository>();
+    final inboxCubit = ctx.read<NotificationsInboxCubit>();
+    final messenger = ScaffoldMessenger.of(ctx);
+    try {
+      await repo.rejectInvite(id);
+      await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
+    } on ApiException catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(walletErrorMessage(l, e))));
     }
   }
 

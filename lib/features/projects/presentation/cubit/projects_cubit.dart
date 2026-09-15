@@ -42,6 +42,7 @@ class ProjectsState extends Equatable {
       [projects, status, errorMessage, statusFilter];
 }
 
+/// Projects store backed by [ProjectsRepository].
 class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   ProjectsCubit({required ProjectsRepository repository})
       : _repo = repository,
@@ -89,11 +90,16 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     return p;
   }
 
+  /// `plannedAmount` / `clearPlannedAmount` follow the repository's
+  /// presence semantics (spec §10/4.23 — set a number to enable the
+  /// plan display, explicit null to hide it).
   Future<Project> update(String id, {
     String? name,
     String? description,
     ProjectStatus? status,
     IconCode? iconCode,
+    double? plannedAmount,
+    bool clearPlannedAmount = false,
   }) async {
     final updated = await _repo.update(
       id,
@@ -101,6 +107,8 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
       description: description,
       status: status,
       iconCode: iconCode,
+      plannedAmount: plannedAmount,
+      clearPlannedAmount: clearPlannedAmount,
     );
     _replace(updated);
     return updated;
