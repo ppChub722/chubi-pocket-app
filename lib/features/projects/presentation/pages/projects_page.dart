@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../domain/project.dart';
@@ -26,13 +27,16 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Projects'),
+        // Umbrella label — the entry point names both flavors; inner
+        // copy sticks to one word per context (see design-decisions).
+        title: Text(l.navProjects),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'New project',
+            tooltip: l.projectsCreateNew,
             onPressed: () => context.push('/projects/new'),
           ),
         ],

@@ -183,7 +183,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAddTransaction => 'Add transaction';
 
   @override
-  String get navProjects => 'Projects';
+  String get navProjects => 'Projects & Events';
+
+  @override
+  String get projectsCreateNew => 'Create new';
 
   @override
   String get navMore => 'More';
@@ -493,7 +496,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreCategories => 'Categories';
 
   @override
-  String get moreProjects => 'Projects';
+  String get moreProjects => 'Projects & Events';
 
   @override
   String get moreTags => 'Tags';

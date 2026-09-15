@@ -7,23 +7,56 @@ import 'main_bottom_nav.dart';
 import 'main_top_bar.dart';
 import 'more_menu_sheet.dart';
 
-/// App chrome shared by every primary tab (Dashboard / Transactions /
-/// Accounts).
+/// App chrome shared by every authed screen.
 ///
-/// Owns the top app bar, the bottom navigation, and the centered `+`
-/// FAB. Sub-pages routed outside this shell (`/settings`,
-/// `/accounts/:id`, `/projects`, etc.) supply their own [Scaffold] +
-/// [AppBar] with a back button.
+/// Every feature route now lives inside the shell so the bottom nav is
+/// visible everywhere. Chrome adapts by depth:
+/// - **At a branch root** (`/`, `/transactions`, `/accounts`) — full
+///   chrome: top app bar + centered `+` FAB + bottom nav.
+/// - **Deeper pages** (`/accounts/:id`, `/projects`, `/settings`, ...) —
+///   bottom nav only; the page supplies its own [Scaffold] + [AppBar]
+///   with a back button, and the shell FAB stays out of the way.
 class MainShell extends StatelessWidget {
-  const MainShell({required this.navigationShell, super.key});
+  const MainShell({
+    required this.navigationShell,
+    required this.currentPath,
+    super.key,
+  });
 
   /// The branched navigation tree managed by
   /// [StatefulShellRoute.indexedStack].
   final StatefulNavigationShell navigationShell;
 
+  /// Current location path — drives the root-vs-deep chrome switch.
+  final String currentPath;
+
+  static const _branchRoots = {'/', '/transactions', '/accounts'};
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final atRoot = _branchRoots.contains(currentPath);
+
+    final bottomNav = MainBottomNav(
+      currentIndex: navigationShell.currentIndex,
+      onTabSelected: (i) => navigationShell.goBranch(
+        i,
+        // Re-tapping the active tab pops to the branch root, matching the
+        // behaviour users expect from native bottom nav.
+        initialLocation: i == navigationShell.currentIndex,
+      ),
+      onAddPressed: () => showTransactionFormSheet(context),
+      onMorePressed: () => MoreMenuSheet.show(context),
+    );
+
+    if (!atRoot) {
+      // Deep page: it brings its own app bar; keep only the bottom nav.
+      return Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: bottomNav,
+      );
+    }
+
     return Scaffold(
       appBar: MainTopBar(title: _titleFor(l, navigationShell.currentIndex)),
       body: navigationShell,
@@ -34,17 +67,7 @@ class MainShell extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: MainBottomNav(
-        currentIndex: navigationShell.currentIndex,
-        onTabSelected: (i) => navigationShell.goBranch(
-          i,
-          // Re-tapping the active tab pops to the branch root, matching the
-          // behaviour users expect from native bottom nav.
-          initialLocation: i == navigationShell.currentIndex,
-        ),
-        onAddPressed: () => showTransactionFormSheet(context),
-        onMorePressed: () => MoreMenuSheet.show(context),
-      ),
+      bottomNavigationBar: bottomNav,
     );
   }
 

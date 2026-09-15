@@ -425,8 +425,14 @@ abstract class AppLocalizations {
   /// No description provided for @navProjects.
   ///
   /// In en, this message translates to:
-  /// **'Projects'**
+  /// **'Projects & Events'**
   String get navProjects;
+
+  /// No description provided for @projectsCreateNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new'**
+  String get projectsCreateNew;
 
   /// No description provided for @navMore.
   ///
@@ -995,7 +1001,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreProjects.
   ///
   /// In en, this message translates to:
-  /// **'Projects'**
+  /// **'Projects & Events'**
   String get moreProjects;
 
   /// No description provided for @moreTags.

@@ -62,13 +62,13 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 /// - `/dev/*` is always accessible (debug hub).
 ///
 /// Top-level routing:
-/// - **Inside the shell** — `/`, `/accounts`, `/projects` (the three primary
-///   tab destinations). The shell owns the top app bar, the bottom nav, and
-///   the centered `+` FAB.
-/// - **Outside the shell** — `/auth/*`, `/settings/*`, `/dev/*`, and any
-///   future detail routes (e.g. `/accounts/:id`) that should NOT show the
-///   bottom nav. They supply their own [Scaffold] + [AppBar] with a back
-///   button.
+/// - **Inside the shell** — everything authed. Branch roots (`/`,
+///   `/transactions`, `/accounts`) get the full chrome (top bar + FAB +
+///   bottom nav); deeper routes nest under their branch so the bottom nav
+///   stays visible everywhere, while each page supplies its own [Scaffold]
+///   + [AppBar] with a back button ([MainShell] drops its top bar + FAB
+///   off-root). "More"-menu features nest under the dashboard branch.
+/// - **Outside the shell** — `/auth/*` and `/dev/*` only.
 GoRouter buildAppRouter(AuthCubit authCubit) {
   final dashboardNavigatorKey = GlobalKey<NavigatorState>();
   final transactionsNavigatorKey = GlobalKey<NavigatorState>();
@@ -101,7 +101,10 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
           return BlocBuilder<AuthCubit, AuthState>(
             builder: (context, auth) {
               if (auth is AuthInitial) return const SplashPage();
-              return MainShell(navigationShell: navigationShell);
+              return MainShell(
+                navigationShell: navigationShell,
+                currentPath: state.uri.path,
+              );
             },
           );
         },
@@ -113,6 +116,244 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 path: '/',
                 name: 'home',
                 builder: (context, state) => const HomePage(),
+                // Every "more"-menu feature nests under the dashboard
+                // branch so the bottom nav stays visible on all of them.
+                routes: [
+                  // Projects (Phase 1b.2)
+                  GoRoute(
+                    path: 'projects',
+                    name: 'projects',
+                    builder: (context, state) => const ProjectsPage(),
+                  ),
+                  GoRoute(
+                    path: 'projects/new',
+                    name: 'project-new',
+                    builder: (context, state) => const ProjectFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'projects/:id',
+                    name: 'project-detail',
+                    builder: (context, state) =>
+                        ProjectDetailPage(id: state.pathParameters['id']!),
+                  ),
+                  GoRoute(
+                    path: 'projects/:id/edit',
+                    name: 'project-edit',
+                    builder: (context, state) =>
+                        ProjectFormPage(editingId: state.pathParameters['id']),
+                  ),
+                  GoRoute(
+                    path: 'projects/:id/transactions/new',
+                    name: 'project-tx-new',
+                    builder: (context, state) => ProjectTransactionFormPage(
+                      projectId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  // Notifications (Phase 1b.2)
+                  GoRoute(
+                    path: 'notifications',
+                    name: 'notifications',
+                    builder: (context, state) =>
+                        const NotificationsInboxPage(),
+                  ),
+                  GoRoute(
+                    path: 'notifications/settings',
+                    name: 'notifications-settings',
+                    builder: (context, state) =>
+                        const NotificationSettingsPage(),
+                  ),
+                  // Contacts (Phase 1b.1)
+                  GoRoute(
+                    path: 'contacts',
+                    name: 'contacts',
+                    builder: (context, state) => const ContactsPage(),
+                  ),
+                  GoRoute(
+                    path: 'contacts/new',
+                    name: 'contact-new',
+                    // `extra` carries the link-request payload when the
+                    // inbox tap handler routes here for an unmatched
+                    // sender.
+                    builder: (context, state) {
+                      final extra = state.extra;
+                      if (extra is Map) {
+                        return ContactFormPage(
+                          linkRequestId: extra['linkRequestId'] as String?,
+                          lockedDisplayName:
+                              extra['lockedDisplayName'] as String?,
+                          lockedEmail: extra['lockedEmail'] as String?,
+                        );
+                      }
+                      return const ContactFormPage();
+                    },
+                  ),
+                  GoRoute(
+                    path: 'contacts/:id',
+                    name: 'contact-detail',
+                    builder: (context, state) =>
+                        ContactDetailPage(id: state.pathParameters['id']!),
+                  ),
+                  GoRoute(
+                    path: 'contacts/:id/edit',
+                    name: 'contact-edit',
+                    // `extra` (when present) carries the link-existing
+                    // flow data ({ linkRequestId }).
+                    builder: (context, state) {
+                      final extra = state.extra;
+                      final id = state.pathParameters['id'];
+                      if (extra is Map) {
+                        return ContactFormPage(
+                          editingId: id,
+                          linkRequestId: extra['linkRequestId'] as String?,
+                        );
+                      }
+                      return ContactFormPage(editingId: id);
+                    },
+                  ),
+                  // Budgets (Phase 1c)
+                  GoRoute(
+                    path: 'budgets',
+                    name: 'budgets',
+                    builder: (context, state) => const BudgetsListPage(),
+                  ),
+                  GoRoute(
+                    path: 'budgets/new',
+                    name: 'budget-new',
+                    builder: (context, state) => const BudgetFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'budgets/:id',
+                    name: 'budget-detail',
+                    builder: (context, state) =>
+                        BudgetDetailPage(id: state.pathParameters['id']!),
+                  ),
+                  GoRoute(
+                    path: 'budgets/:id/edit',
+                    name: 'budget-edit',
+                    builder: (context, state) =>
+                        BudgetFormPage(editingId: state.pathParameters['id']),
+                  ),
+                  // Scheduled transactions (Phase 1c)
+                  GoRoute(
+                    path: 'scheduled-transactions',
+                    name: 'scheduled-transactions',
+                    builder: (context, state) =>
+                        const ScheduledTransactionsListPage(),
+                  ),
+                  GoRoute(
+                    path: 'scheduled-transactions/new',
+                    name: 'scheduled-transaction-new',
+                    builder: (context, state) =>
+                        const ScheduledTransactionFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'scheduled-transactions/:id',
+                    name: 'scheduled-transaction-detail',
+                    builder: (context, state) =>
+                        ScheduledTransactionDetailPage(
+                      id: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'scheduled-transactions/:id/edit',
+                    name: 'scheduled-transaction-edit',
+                    builder: (context, state) =>
+                        ScheduledTransactionFormPage(
+                      editingId: state.pathParameters['id'],
+                    ),
+                  ),
+                  // Saving goals (Phase 1c)
+                  GoRoute(
+                    path: 'saving-goals',
+                    name: 'saving-goals',
+                    builder: (context, state) =>
+                        const SavingGoalsListPage(),
+                  ),
+                  GoRoute(
+                    path: 'saving-goals/new',
+                    name: 'saving-goal-new',
+                    builder: (context, state) => const SavingGoalFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'saving-goals/:id',
+                    name: 'saving-goal-detail',
+                    builder: (context, state) => SavingGoalDetailPage(
+                        id: state.pathParameters['id']!),
+                  ),
+                  GoRoute(
+                    path: 'saving-goals/:id/edit',
+                    name: 'saving-goal-edit',
+                    builder: (context, state) => SavingGoalFormPage(
+                        editingId: state.pathParameters['id']),
+                  ),
+                  // Personal debts (bidirectional)
+                  GoRoute(
+                    path: 'personal-debts',
+                    name: 'personal-debts',
+                    builder: (context, state) => const PersonalDebtsPage(),
+                  ),
+                  GoRoute(
+                    path: 'personal-debts/new',
+                    name: 'personal-debt-new',
+                    builder: (context, state) =>
+                        const PersonalDebtFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'personal-debts/:id',
+                    name: 'personal-debt-detail',
+                    builder: (context, state) => PersonalDebtDetailPage(
+                        id: state.pathParameters['id']!),
+                  ),
+                  // Categories & tags
+                  GoRoute(
+                    path: 'categories',
+                    name: 'categories',
+                    builder: (context, state) => const CategoriesPage(),
+                  ),
+                  GoRoute(
+                    path: 'categories/new',
+                    name: 'category-new',
+                    builder: (context, state) => const CategoryFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'categories/:id/edit',
+                    name: 'category-edit',
+                    builder: (context, state) => CategoryFormPage(
+                        editingId: state.pathParameters['id']),
+                  ),
+                  GoRoute(
+                    path: 'tags',
+                    name: 'tags',
+                    builder: (context, state) => const TagsPage(),
+                  ),
+                  GoRoute(
+                    path: 'tags/new',
+                    name: 'tag-new',
+                    builder: (context, state) => const TagFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'tags/:id/edit',
+                    name: 'tag-edit',
+                    builder: (context, state) =>
+                        TagFormPage(editingId: state.pathParameters['id']),
+                  ),
+                  // Settings
+                  GoRoute(
+                    path: 'settings',
+                    name: 'settings',
+                    builder: (context, state) => const SettingsPage(),
+                  ),
+                  GoRoute(
+                    path: 'settings/profile',
+                    name: 'settings-profile',
+                    builder: (context, state) => const EditProfilePage(),
+                  ),
+                  GoRoute(
+                    path: 'settings/password',
+                    name: 'settings-password',
+                    builder: (context, state) => const ChangePasswordPage(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -123,6 +364,26 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 path: '/transactions',
                 name: 'transactions',
                 builder: (context, state) => const TransactionsListPage(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    name: 'transaction-new',
+                    builder: (context, state) => const TransactionFormPage(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    name: 'transaction-detail',
+                    builder: (context, state) => TransactionDetailPage(
+                      transactionId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':id/edit',
+                    name: 'transaction-edit',
+                    builder: (context, state) => TransactionFormPage(
+                        editingId: state.pathParameters['id']),
+                  ),
+                ],
               ),
             ],
           ),
@@ -133,189 +394,38 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 path: '/accounts',
                 name: 'accounts',
                 builder: (context, state) => const AccountsPage(),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    name: 'account-new',
+                    builder: (context, state) => const AccountFormPage(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    name: 'account-detail',
+                    builder: (context, state) => AccountDetailPage(
+                      accountId: state.pathParameters['id']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: ':id/edit',
+                    name: 'account-edit',
+                    builder: (context, state) =>
+                        AccountFormPage(editingId: state.pathParameters['id']),
+                  ),
+                  // Shared-wallet members (spec §14) — reached from the
+                  // wallet's settings sheet or the member avatar row.
+                  GoRoute(
+                    path: ':id/members',
+                    name: 'account-members',
+                    builder: (context, state) => WalletMembersPage(
+                        accountId: state.pathParameters['id']!),
+                  ),
+                ],
               ),
             ],
           ),
         ],
-      ),
-      // Projects (Phase 1b.2). Outside the bottom-nav shell.
-      GoRoute(
-        path: '/projects',
-        name: 'projects',
-        builder: (context, state) => const ProjectsPage(),
-      ),
-      GoRoute(
-        path: '/projects/new',
-        name: 'project-new',
-        builder: (context, state) => const ProjectFormPage(),
-      ),
-      GoRoute(
-        path: '/projects/:id',
-        name: 'project-detail',
-        builder: (context, state) =>
-            ProjectDetailPage(id: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/projects/:id/edit',
-        name: 'project-edit',
-        builder: (context, state) =>
-            ProjectFormPage(editingId: state.pathParameters['id']),
-      ),
-      GoRoute(
-        path: '/projects/:id/transactions/new',
-        name: 'project-tx-new',
-        builder: (context, state) => ProjectTransactionFormPage(
-          projectId: state.pathParameters['id']!,
-        ),
-      ),
-      // Notifications (Phase 1b.2)
-      GoRoute(
-        path: '/notifications',
-        name: 'notifications',
-        builder: (context, state) => const NotificationsInboxPage(),
-      ),
-      GoRoute(
-        path: '/notifications/settings',
-        name: 'notifications-settings',
-        builder: (context, state) => const NotificationSettingsPage(),
-      ),
-      // Contacts (Phase 1b.1)
-      GoRoute(
-        path: '/contacts',
-        name: 'contacts',
-        builder: (context, state) => const ContactsPage(),
-      ),
-      GoRoute(
-        path: '/contacts/new',
-        name: 'contact-new',
-        // `extra` carries the link-request payload when the inbox tap
-        // handler routes here for an unmatched sender. Plain "new
-        // contact" navigations pass nothing and the form runs in its
-        // default create mode.
-        builder: (context, state) {
-          final extra = state.extra;
-          if (extra is Map) {
-            return ContactFormPage(
-              linkRequestId: extra['linkRequestId'] as String?,
-              lockedDisplayName: extra['lockedDisplayName'] as String?,
-              lockedEmail: extra['lockedEmail'] as String?,
-            );
-          }
-          return const ContactFormPage();
-        },
-      ),
-      GoRoute(
-        path: '/contacts/:id',
-        name: 'contact-detail',
-        builder: (context, state) =>
-            ContactDetailPage(id: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/contacts/:id/edit',
-        name: 'contact-edit',
-        // `extra` (when present) carries the link-existing flow data:
-        //   { linkRequestId } — caller has an unlinked email-match
-        //   contact and tapped a post-accept notification row to wire
-        //   the link. Plain edit navigations pass nothing.
-        builder: (context, state) {
-          final extra = state.extra;
-          final id = state.pathParameters['id'];
-          if (extra is Map) {
-            return ContactFormPage(
-              editingId: id,
-              linkRequestId: extra['linkRequestId'] as String?,
-            );
-          }
-          return ContactFormPage(editingId: id);
-        },
-      ),
-      // Budgets (Phase 1c)
-      GoRoute(
-        path: '/budgets',
-        name: 'budgets',
-        builder: (context, state) => const BudgetsListPage(),
-      ),
-      GoRoute(
-        path: '/budgets/new',
-        name: 'budget-new',
-        builder: (context, state) => const BudgetFormPage(),
-      ),
-      GoRoute(
-        path: '/budgets/:id',
-        name: 'budget-detail',
-        builder: (context, state) =>
-            BudgetDetailPage(id: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/budgets/:id/edit',
-        name: 'budget-edit',
-        builder: (context, state) =>
-            BudgetFormPage(editingId: state.pathParameters['id']),
-      ),
-      // Scheduled transactions (Phase 1c)
-      GoRoute(
-        path: '/scheduled-transactions',
-        name: 'scheduled-transactions',
-        builder: (context, state) => const ScheduledTransactionsListPage(),
-      ),
-      GoRoute(
-        path: '/scheduled-transactions/new',
-        name: 'scheduled-transaction-new',
-        builder: (context, state) => const ScheduledTransactionFormPage(),
-      ),
-      GoRoute(
-        path: '/scheduled-transactions/:id',
-        name: 'scheduled-transaction-detail',
-        builder: (context, state) => ScheduledTransactionDetailPage(
-          id: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/scheduled-transactions/:id/edit',
-        name: 'scheduled-transaction-edit',
-        builder: (context, state) => ScheduledTransactionFormPage(
-          editingId: state.pathParameters['id'],
-        ),
-      ),
-      // Saving goals (Phase 1c)
-      GoRoute(
-        path: '/saving-goals',
-        name: 'saving-goals',
-        builder: (context, state) => const SavingGoalsListPage(),
-      ),
-      GoRoute(
-        path: '/saving-goals/new',
-        name: 'saving-goal-new',
-        builder: (context, state) => const SavingGoalFormPage(),
-      ),
-      GoRoute(
-        path: '/saving-goals/:id',
-        name: 'saving-goal-detail',
-        builder: (context, state) =>
-            SavingGoalDetailPage(id: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/saving-goals/:id/edit',
-        name: 'saving-goal-edit',
-        builder: (context, state) =>
-            SavingGoalFormPage(editingId: state.pathParameters['id']),
-      ),
-      // Personal debts (bidirectional — replaces splits)
-      GoRoute(
-        path: '/personal-debts',
-        name: 'personal-debts',
-        builder: (context, state) => const PersonalDebtsPage(),
-      ),
-      GoRoute(
-        path: '/personal-debts/new',
-        name: 'personal-debt-new',
-        builder: (context, state) => const PersonalDebtFormPage(),
-      ),
-      GoRoute(
-        path: '/personal-debts/:id',
-        name: 'personal-debt-detail',
-        builder: (context, state) =>
-            PersonalDebtDetailPage(id: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/auth/login',
@@ -326,100 +436,6 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
         path: '/auth/register',
         name: 'auth-register',
         builder: (context, state) => const RegisterPage(),
-      ),
-      GoRoute(
-        path: '/accounts/new',
-        name: 'account-new',
-        builder: (context, state) => const AccountFormPage(),
-      ),
-      GoRoute(
-        path: '/accounts/:id',
-        name: 'account-detail',
-        builder: (context, state) => AccountDetailPage(
-          accountId: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/accounts/:id/edit',
-        name: 'account-edit',
-        builder: (context, state) =>
-            AccountFormPage(editingId: state.pathParameters['id']),
-      ),
-      // Shared-wallet members (spec §14) — reached from the wallet's
-      // settings sheet or the member avatar row on the detail page.
-      GoRoute(
-        path: '/accounts/:id/members',
-        name: 'account-members',
-        builder: (context, state) =>
-            WalletMembersPage(accountId: state.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/categories',
-        name: 'categories',
-        builder: (context, state) => const CategoriesPage(),
-      ),
-      GoRoute(
-        path: '/categories/new',
-        name: 'category-new',
-        builder: (context, state) => const CategoryFormPage(),
-      ),
-      GoRoute(
-        path: '/categories/:id/edit',
-        name: 'category-edit',
-        builder: (context, state) =>
-            CategoryFormPage(editingId: state.pathParameters['id']),
-      ),
-      GoRoute(
-        path: '/tags',
-        name: 'tags',
-        builder: (context, state) => const TagsPage(),
-      ),
-      GoRoute(
-        path: '/tags/new',
-        name: 'tag-new',
-        builder: (context, state) => const TagFormPage(),
-      ),
-      GoRoute(
-        path: '/tags/:id/edit',
-        name: 'tag-edit',
-        builder: (context, state) =>
-            TagFormPage(editingId: state.pathParameters['id']),
-      ),
-      // /transactions itself is a shell branch (bottom-nav slot 1); the
-      // create / detail / edit routes below are top-level so they
-      // present without the bottom nav.
-      GoRoute(
-        path: '/transactions/new',
-        name: 'transaction-new',
-        builder: (context, state) => const TransactionFormPage(),
-      ),
-      GoRoute(
-        path: '/transactions/:id',
-        name: 'transaction-detail',
-        builder: (context, state) => TransactionDetailPage(
-          transactionId: state.pathParameters['id']!,
-        ),
-      ),
-      GoRoute(
-        path: '/transactions/:id/edit',
-        name: 'transaction-edit',
-        builder: (context, state) =>
-            TransactionFormPage(editingId: state.pathParameters['id']),
-      ),
-      GoRoute(
-        path: '/settings',
-        name: 'settings',
-        builder: (context, state) => const SettingsPage(),
-      ),
-      GoRoute(
-        path: '/settings/profile',
-        name: 'settings-profile',
-        builder: (context, state) => const EditProfilePage(),
-      ),
-      GoRoute(
-        path: '/settings/password',
-        name: 'settings-password',
-        builder: (context, state) => const ChangePasswordPage(),
       ),
       GoRoute(
         path: '/dev',

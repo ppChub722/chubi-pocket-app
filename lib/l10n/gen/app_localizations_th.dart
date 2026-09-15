@@ -182,7 +182,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get navAddTransaction => 'เพิ่มรายการ';
 
   @override
-  String get navProjects => 'โปรเจกต์';
+  String get navProjects => 'โปรเจกต์ & อีเวนต์';
+
+  @override
+  String get projectsCreateNew => 'สร้างใหม่';
 
   @override
   String get navMore => 'เพิ่มเติม';
@@ -488,7 +491,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moreCategories => 'หมวดหมู่';
 
   @override
-  String get moreProjects => 'โปรเจกต์';
+  String get moreProjects => 'โปรเจกต์ & อีเวนต์';
 
   @override
   String get moreTags => 'แท็ก';
