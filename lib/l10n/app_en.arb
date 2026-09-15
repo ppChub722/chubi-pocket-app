@@ -809,5 +809,42 @@
   "walletErrorRowLocked": "This entry is locked — you've left this wallet.",
   "walletErrorScopeNotAllowed": "Past members can only use \"Not in reports\" or \"Only my entries\".",
   "walletErrorUserNotFound": "No user found with that email.",
-  "walletErrorAlreadyMember": "That user is already a member of this wallet."
+  "walletErrorAlreadyMember": "That user is already a member of this wallet.",
+
+  "quickCreateFabLabel": "Create event from bills",
+  "quickCreateTitle": "Create event from bills",
+  "quickCreateNewBillSection": "New bill",
+  "quickCreateOldBillsSection": "Add past bills to this event (optional)",
+  "quickCreateOldBillsHint": "Your loose bills from the last 90 days — tick any to bring them onto the event board.",
+  "quickCreateSearchHint": "Search past bills",
+  "quickCreateOldBillsEmpty": "No loose bills from the last 90 days.",
+  "quickCreateOldBillsSearchEmpty": "No bills match your search.",
+  "quickCreateOldBillsLoadMore": "Load more",
+  "quickCreateOldBillsRetry": "Retry",
+  "quickCreateSelectedCount": "{count} selected",
+  "@quickCreateSelectedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "quickCreateNameSection": "Event name",
+  "quickCreateNameLabel": "Event name",
+  "quickCreateNameRequired": "Please enter an event name",
+  "quickCreateDefaultName": "{members} · {date}",
+  "@quickCreateDefaultName": {
+    "placeholders": {
+      "members": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "quickCreateDefaultNameSolo": "Event · {date}",
+  "@quickCreateDefaultNameSolo": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "quickCreateSubmit": "Create event",
+  "quickCreateErrorTxNotFound": "Some selected bills no longer exist — refresh and try again.",
+  "quickCreateErrorTxAlreadyInProject": "Some selected bills already belong to another event — refresh and try again.",
+  "quickCreateErrorValidation": "Something's not right — check the form and try again."
 }

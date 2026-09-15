@@ -1968,4 +1968,76 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walletErrorAlreadyMember =>
       'That user is already a member of this wallet.';
+
+  @override
+  String get quickCreateFabLabel => 'Create event from bills';
+
+  @override
+  String get quickCreateTitle => 'Create event from bills';
+
+  @override
+  String get quickCreateNewBillSection => 'New bill';
+
+  @override
+  String get quickCreateOldBillsSection =>
+      'Add past bills to this event (optional)';
+
+  @override
+  String get quickCreateOldBillsHint =>
+      'Your loose bills from the last 90 days — tick any to bring them onto the event board.';
+
+  @override
+  String get quickCreateSearchHint => 'Search past bills';
+
+  @override
+  String get quickCreateOldBillsEmpty =>
+      'No loose bills from the last 90 days.';
+
+  @override
+  String get quickCreateOldBillsSearchEmpty => 'No bills match your search.';
+
+  @override
+  String get quickCreateOldBillsLoadMore => 'Load more';
+
+  @override
+  String get quickCreateOldBillsRetry => 'Retry';
+
+  @override
+  String quickCreateSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get quickCreateNameSection => 'Event name';
+
+  @override
+  String get quickCreateNameLabel => 'Event name';
+
+  @override
+  String get quickCreateNameRequired => 'Please enter an event name';
+
+  @override
+  String quickCreateDefaultName(String members, String date) {
+    return '$members · $date';
+  }
+
+  @override
+  String quickCreateDefaultNameSolo(String date) {
+    return 'Event · $date';
+  }
+
+  @override
+  String get quickCreateSubmit => 'Create event';
+
+  @override
+  String get quickCreateErrorTxNotFound =>
+      'Some selected bills no longer exist — refresh and try again.';
+
+  @override
+  String get quickCreateErrorTxAlreadyInProject =>
+      'Some selected bills already belong to another event — refresh and try again.';
+
+  @override
+  String get quickCreateErrorValidation =>
+      'Something\'s not right — check the form and try again.';
 }

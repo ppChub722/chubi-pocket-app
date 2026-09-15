@@ -3655,6 +3655,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That user is already a member of this wallet.'**
   String get walletErrorAlreadyMember;
+
+  /// No description provided for @quickCreateFabLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Create event from bills'**
+  String get quickCreateFabLabel;
+
+  /// No description provided for @quickCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create event from bills'**
+  String get quickCreateTitle;
+
+  /// No description provided for @quickCreateNewBillSection.
+  ///
+  /// In en, this message translates to:
+  /// **'New bill'**
+  String get quickCreateNewBillSection;
+
+  /// No description provided for @quickCreateOldBillsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Add past bills to this event (optional)'**
+  String get quickCreateOldBillsSection;
+
+  /// No description provided for @quickCreateOldBillsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your loose bills from the last 90 days — tick any to bring them onto the event board.'**
+  String get quickCreateOldBillsHint;
+
+  /// No description provided for @quickCreateSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search past bills'**
+  String get quickCreateSearchHint;
+
+  /// No description provided for @quickCreateOldBillsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No loose bills from the last 90 days.'**
+  String get quickCreateOldBillsEmpty;
+
+  /// No description provided for @quickCreateOldBillsSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No bills match your search.'**
+  String get quickCreateOldBillsSearchEmpty;
+
+  /// No description provided for @quickCreateOldBillsLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get quickCreateOldBillsLoadMore;
+
+  /// No description provided for @quickCreateOldBillsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get quickCreateOldBillsRetry;
+
+  /// No description provided for @quickCreateSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String quickCreateSelectedCount(int count);
+
+  /// No description provided for @quickCreateNameSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Event name'**
+  String get quickCreateNameSection;
+
+  /// No description provided for @quickCreateNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event name'**
+  String get quickCreateNameLabel;
+
+  /// No description provided for @quickCreateNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an event name'**
+  String get quickCreateNameRequired;
+
+  /// No description provided for @quickCreateDefaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'{members} · {date}'**
+  String quickCreateDefaultName(String members, String date);
+
+  /// No description provided for @quickCreateDefaultNameSolo.
+  ///
+  /// In en, this message translates to:
+  /// **'Event · {date}'**
+  String quickCreateDefaultNameSolo(String date);
+
+  /// No description provided for @quickCreateSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Create event'**
+  String get quickCreateSubmit;
+
+  /// No description provided for @quickCreateErrorTxNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Some selected bills no longer exist — refresh and try again.'**
+  String get quickCreateErrorTxNotFound;
+
+  /// No description provided for @quickCreateErrorTxAlreadyInProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Some selected bills already belong to another event — refresh and try again.'**
+  String get quickCreateErrorTxAlreadyInProject;
+
+  /// No description provided for @quickCreateErrorValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Something\'s not right — check the form and try again.'**
+  String get quickCreateErrorValidation;
 }
 
 class _AppLocalizationsDelegate

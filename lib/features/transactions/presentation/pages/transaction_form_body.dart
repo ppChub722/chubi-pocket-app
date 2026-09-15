@@ -55,6 +55,9 @@ class TransactionFormBody extends StatefulWidget {
     required this.collapsibleNote,
     required this.onSaved,
     required this.initial,
+    this.showTags = true,
+    this.allowTransfer = true,
+    this.onSplitsChanged,
     super.key,
   });
 
@@ -64,6 +67,22 @@ class TransactionFormBody extends StatefulWidget {
   /// True for modal (note hidden behind "+ Add note" expand); false
   /// for page (note always visible).
   final bool collapsibleNote;
+
+  /// Hide the tag chip row when false. The quick-create-project embed
+  /// (spec §10/4.24) turns it off: `POST /v1/projects/quick` returns no
+  /// transaction id, so tags could not be attached afterwards — showing
+  /// the row would silently drop the user's selection.
+  final bool showTags;
+
+  /// Hide the Transfer type tab when false. Quick create embeds the
+  /// form for a *bill* (expense / income) — a project board row can't
+  /// be a transfer (spec §10 — project tx type is expense | income).
+  final bool allowTransfer;
+
+  /// Fires whenever the draft split list changes (create mode only).
+  /// Quick create listens to recompute its members+date default name
+  /// (spec §10/4.24).
+  final ValueChanged<List<SplitDraft>>? onSplitsChanged;
 
   /// Called after a successful save. The parent decides whether to pop
   /// the route / sheet, show a snackbar, etc. — the body itself doesn't
@@ -144,7 +163,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _hydrateFromCubits();
-      context.read<TagsCubit>().loadIfNeeded();
+      if (widget.showTags) context.read<TagsCubit>().loadIfNeeded();
     });
   }
 
@@ -288,25 +307,8 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
           tagIds: _selectedTagIds.toList(),
         );
       } else {
-        // Filter splits: only complete rows are sent. The BE rejects the
-        // whole transaction if any row is invalid, so silently dropping
-        // half-typed rows is the friendlier behaviour.
-        List<Map<String, dynamic>>? splitsPayload;
-        if (_showSplits && _splits.any((d) => d.isComplete)) {
-          final total = _splits
-              .where((d) => d.isComplete)
-              .fold<double>(0, (a, d) => a + (d.owedAmount ?? 0));
-          if (total > amount + 0.005) {
-            messenger
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(content: Text(
-                'Splits exceed transaction amount.',
-              )));
-            return false;
-          }
-          splitsPayload =
-              _splits.where((d) => d.isComplete).map((d) => d.toJson()).toList();
-        }
+        final splitsPayload = _collectSplitsPayload(amount);
+        if (splitsPayload == _splitsExceedSentinel) return false;
         result = await txCubit.add(
           type: _type,
           accountId: _account!.id,
@@ -370,6 +372,79 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     }
   }
 
+  /// Sentinel returned by [_collectSplitsPayload] when the drafted
+  /// splits exceed the transaction amount (snackbar already shown).
+  /// Distinct from `null`, which means "no splits".
+  static final List<Map<String, dynamic>> _splitsExceedSentinel =
+      List.unmodifiable(<Map<String, dynamic>>[]);
+
+  /// Filter splits: only complete rows are sent. The BE rejects the
+  /// whole transaction if any row is invalid, so silently dropping
+  /// half-typed rows is the friendlier behaviour. Returns
+  /// [_splitsExceedSentinel] (after showing a snackbar) when the split
+  /// total exceeds [amount].
+  List<Map<String, dynamic>>? _collectSplitsPayload(double amount) {
+    if (!_showSplits || !_splits.any((d) => d.isComplete)) return null;
+    final total = _splits
+        .where((d) => d.isComplete)
+        .fold<double>(0, (a, d) => a + (d.owedAmount ?? 0));
+    if (total > amount + 0.005) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text(
+          'Splits exceed transaction amount.',
+        )));
+      return _splitsExceedSentinel;
+    }
+    return _splits
+        .where((d) => d.isComplete)
+        .map((d) => d.toJson())
+        .toList();
+  }
+
+  /// Validates the create-mode fields and collects the exact
+  /// `POST /v1/transactions` body. Returns `null` when invalid (a
+  /// snackbar is shown where the rule warrants one — same behaviour
+  /// as [save]).
+  ///
+  /// Used by the quick-create-project page (spec §10/4.24, API §10
+  /// "Quick create") to embed this form and forward the body as
+  /// `new_transaction` without duplicating the form's validation.
+  /// Not meaningful in edit mode.
+  Map<String, dynamic>? buildCreatePayload() {
+    if (!(_formKey.currentState?.validate() ?? false)) return null;
+    if (_account == null) return null;
+    if (_isTransfer && _toAccount == null) return null;
+    if (_isTransfer && _account!.id == _toAccount!.id) return null;
+    if (!_isTransfer && _category == null && _canEditCategory) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(
+          content: Text('Please pick a category'),
+        ));
+      return null;
+    }
+
+    final amount = double.tryParse(_amountController.text.trim());
+    if (amount == null || amount <= 0) return null;
+
+    final splitsPayload = _collectSplitsPayload(amount);
+    if (splitsPayload == _splitsExceedSentinel) return null;
+
+    final noteRaw = _noteController.text.trim();
+    return <String, dynamic>{
+      'type': _type.toJson(),
+      'account_id': _account!.id,
+      'amount': amount,
+      'date': _formatDate(_date),
+      if (!_isTransfer && _category != null) 'category_id': _category!.id,
+      if (noteRaw.isNotEmpty) 'note': noteRaw,
+      if (_isTransfer) 'transfer_to_account_id': _toAccount!.id,
+      if (splitsPayload != null && splitsPayload.isNotEmpty)
+        'splits': splitsPayload,
+    };
+  }
+
   void _resetForNextEntry() {
     setState(() {
       _amountController.text = '';
@@ -381,6 +456,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
       // Keep _type and _account — the user's likely entering similar
       // transactions in a row (e.g. several lunch expenses).
     });
+    widget.onSplitsChanged?.call(_splits);
   }
 
   /// True when the form has user-entered content that would be lost on
@@ -451,6 +527,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
           ],
           if (!_isEdit) _TypeTabs(
             selected: _type,
+            showTransfer: widget.allowTransfer,
             onChanged: (t) => setState(() {
               _type = t;
               // Clear category when switching to/from transfer or
@@ -543,17 +620,19 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
                 labelText: l.transactionFormNoteLabel,
               ),
             ),
-          const SizedBox(height: AppSpacing.md),
-          IgnorePointer(
-            ignoring: _lockedRow,
-            child: Opacity(
-              opacity: _lockedRow ? 0.5 : 1,
-              child: _TagChipsRow(
-                selectedIds: _selectedTagIds,
-                onToggle: _toggleTag,
+          if (widget.showTags) ...[
+            const SizedBox(height: AppSpacing.md),
+            IgnorePointer(
+              ignoring: _lockedRow,
+              child: Opacity(
+                opacity: _lockedRow ? 0.5 : 1,
+                child: _TagChipsRow(
+                  selectedIds: _selectedTagIds,
+                  onToggle: _toggleTag,
+                ),
               ),
             ),
-          ),
+          ],
           if (_showSplits) ...[
             const SizedBox(height: AppSpacing.md),
             const Divider(height: 1),
@@ -562,7 +641,10 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
               totalAmount:
                   double.tryParse(_amountController.text.trim()) ?? 0,
               drafts: _splits,
-              onChanged: (next) => setState(() => _splits = next),
+              onChanged: (next) {
+                setState(() => _splits = next);
+                widget.onSplitsChanged?.call(next);
+              },
             ),
           ],
         ],
@@ -635,16 +717,24 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
 // ── Field widgets ────────────────────────────────────────────────────
 
 class _TypeTabs extends StatelessWidget {
-  const _TypeTabs({required this.selected, required this.onChanged});
+  const _TypeTabs({
+    required this.selected,
+    required this.onChanged,
+    this.showTransfer = true,
+  });
 
   final TransactionType selected;
   final ValueChanged<TransactionType> onChanged;
+
+  /// False hides the Transfer segment — quick-create-project embed only
+  /// records bills (expense / income), see [TransactionFormBody.allowTransfer].
+  final bool showTransfer;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return SegmentedButton<TransactionType>(
-      style: ButtonStyle(
+      style: const ButtonStyle(
         visualDensity: VisualDensity.compact,
       ),
       segments: [
@@ -656,10 +746,11 @@ class _TypeTabs extends StatelessWidget {
           value: TransactionType.income,
           label: Text(l.transactionTypeIncome),
         ),
-        ButtonSegment(
-          value: TransactionType.transfer,
-          label: Text(l.transactionTypeTransfer),
-        ),
+        if (showTransfer)
+          ButtonSegment(
+            value: TransactionType.transfer,
+            label: Text(l.transactionTypeTransfer),
+          ),
       ],
       selected: {selected},
       onSelectionChanged: (s) => onChanged(s.first),

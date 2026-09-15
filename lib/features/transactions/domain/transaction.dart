@@ -123,6 +123,7 @@ class Transaction extends Equatable {
     this.category,
     this.tags = const [],
     this.note,
+    this.projectId,
     this.transferGroupId,
     this.hasSplits = false,
     this.isRecurring = false,
@@ -161,6 +162,12 @@ class Transaction extends Equatable {
   final List<EmbeddedTag> tags;
 
   final String? note;
+
+  /// Auto-managed project link (spec §04): set only on rows that mirror
+  /// a project via claim / split-resolve / quick create. `null` on bare
+  /// personal rows; the quick-create picker's eligibility filter keys on
+  /// this (spec §10/4.24: eligible = `project_id IS NULL`).
+  final String? projectId;
 
   /// Set on both rows of a transfer. Used to identify pair members.
   final String? transferGroupId;
@@ -232,6 +239,7 @@ class Transaction extends Equatable {
           : null,
       tags: tags,
       note: json['note'] as String?,
+      projectId: json['project_id'] as String?,
       transferGroupId: json['transfer_group_id'] as String?,
       hasSplits: (json['has_splits'] as bool?) ?? false,
       isRecurring: (json['is_recurring'] as bool?) ?? false,
@@ -262,6 +270,7 @@ class Transaction extends Equatable {
     EmbeddedRef? category,
     List<EmbeddedTag>? tags,
     String? note,
+    String? projectId,
     String? transferGroupId,
     bool? hasSplits,
     bool? isRecurring,
@@ -283,6 +292,7 @@ class Transaction extends Equatable {
       category: category ?? this.category,
       tags: tags ?? this.tags,
       note: note ?? this.note,
+      projectId: projectId ?? this.projectId,
       transferGroupId: transferGroupId ?? this.transferGroupId,
       hasSplits: hasSplits ?? this.hasSplits,
       isRecurring: isRecurring ?? this.isRecurring,
@@ -307,6 +317,7 @@ class Transaction extends Equatable {
         category,
         tags,
         note,
+        projectId,
         transferGroupId,
         hasSplits,
         isRecurring,

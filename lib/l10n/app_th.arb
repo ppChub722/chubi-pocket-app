@@ -727,5 +727,26 @@
   "walletErrorRowLocked": "รายการนี้ถูกล็อก เพราะคุณออกจากกระเป๋านี้แล้ว",
   "walletErrorScopeNotAllowed": "อดีตสมาชิกเลือกได้เฉพาะ \"ไม่รวมในรายงาน\" หรือ \"เฉพาะที่ฉันจด\"",
   "walletErrorUserNotFound": "ไม่พบผู้ใช้ที่ใช้อีเมลนี้",
-  "walletErrorAlreadyMember": "ผู้ใช้นี้เป็นสมาชิกของกระเป๋านี้อยู่แล้ว"
+  "walletErrorAlreadyMember": "ผู้ใช้นี้เป็นสมาชิกของกระเป๋านี้อยู่แล้ว",
+
+  "quickCreateFabLabel": "สร้างอีเวนต์จากบิล",
+  "quickCreateTitle": "สร้างอีเวนต์จากบิล",
+  "quickCreateNewBillSection": "บิลใหม่",
+  "quickCreateOldBillsSection": "รวมบิลเก่าเข้าอีเวนต์นี้ (ไม่บังคับ)",
+  "quickCreateOldBillsHint": "บิลเดี่ยว ๆ ของคุณจาก 90 วันที่ผ่านมา — ติ๊กเลือกเพื่อดึงเข้าบอร์ดอีเวนต์",
+  "quickCreateSearchHint": "ค้นหาบิลเก่า",
+  "quickCreateOldBillsEmpty": "ไม่มีบิลเดี่ยว ๆ ใน 90 วันที่ผ่านมา",
+  "quickCreateOldBillsSearchEmpty": "ไม่พบบิลที่ตรงกับคำค้นหา",
+  "quickCreateOldBillsLoadMore": "โหลดเพิ่ม",
+  "quickCreateOldBillsRetry": "ลองใหม่",
+  "quickCreateSelectedCount": "เลือกแล้ว {count} บิล",
+  "quickCreateNameSection": "ชื่ออีเวนต์",
+  "quickCreateNameLabel": "ชื่ออีเวนต์",
+  "quickCreateNameRequired": "ใส่ชื่ออีเวนต์ก่อนนะ",
+  "quickCreateDefaultName": "{members} · {date}",
+  "quickCreateDefaultNameSolo": "อีเวนต์ · {date}",
+  "quickCreateSubmit": "สร้างอีเวนต์",
+  "quickCreateErrorTxNotFound": "บางบิลที่เลือกไม่มีอยู่แล้ว ลองรีเฟรชแล้วเลือกใหม่",
+  "quickCreateErrorTxAlreadyInProject": "บางบิลที่เลือกอยู่ในอีเวนต์อื่นแล้ว ลองรีเฟรชแล้วเลือกใหม่",
+  "quickCreateErrorValidation": "ข้อมูลบางอย่างยังไม่ถูกต้อง ลองตรวจดูอีกครั้ง"
 }

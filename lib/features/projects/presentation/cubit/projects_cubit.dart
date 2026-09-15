@@ -90,6 +90,25 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     return p;
   }
 
+  /// Quick create from bills (spec §10/4.24, API §10 "Quick create"):
+  /// one atomic call — project + auto-added members + auto-claimed board
+  /// rows for the new bill and every ticked past bill. Re-throws
+  /// [ApiException] so the page can map `TX_NOT_FOUND` /
+  /// `TX_ALREADY_IN_PROJECT` / `VALIDATION_ERROR` to friendly copy.
+  Future<QuickCreateResult> quickCreate({
+    required String name,
+    required Map<String, dynamic> newTransaction,
+    List<String> transactionIds = const [],
+  }) async {
+    final result = await _repo.quickCreate(
+      name: name,
+      newTransaction: newTransaction,
+      transactionIds: transactionIds,
+    );
+    emit(state.copyWith(projects: [result.project, ...state.projects]));
+    return result;
+  }
+
   /// `plannedAmount` / `clearPlannedAmount` follow the repository's
   /// presence semantics (spec §10/4.23 — set a number to enable the
   /// plan display, explicit null to hide it).

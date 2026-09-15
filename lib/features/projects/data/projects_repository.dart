@@ -5,6 +5,17 @@ import '../../../core/network/api_exception.dart';
 import '../../../shared/icon_maker/icon_code.dart';
 import '../domain/project.dart';
 
+/// `POST /v1/projects/quick` response envelope (API §10 "Quick create"):
+/// the created project (same shape as `POST /v1/projects`) plus
+/// `linked_count` — the number of board rows created from the included
+/// bills (new + ticked).
+class QuickCreateResult {
+  const QuickCreateResult({required this.project, required this.linkedCount});
+
+  final Project project;
+  final int linkedCount;
+}
+
 /// Thin Dio wrapper around `/v1/projects` (API §10).
 class ProjectsRepository {
   ProjectsRepository({required ApiClient client}) : _client = client;
@@ -96,6 +107,44 @@ class ProjectsRepository {
         },
       );
       return Project.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `POST /v1/projects/quick` (API §10 "Quick create", spec §10/4.24) —
+  /// atomic: create project + auto-add members + board rows for every
+  /// included bill, born auto-claimed. Settled debt state is never
+  /// modified.
+  ///
+  /// Request shape is pinned — do not add fields:
+  /// - `name` — required (FE composes the members+date default, editable)
+  /// - `new_transaction` — required; the exact `POST /v1/transactions`
+  ///   body (splits[] allowed), processed through the normal personal
+  ///   transaction create path
+  /// - `transaction_ids` — optional; each must belong to the caller and
+  ///   have `project_id IS NULL`, else the whole call fails (atomic)
+  ///
+  /// Errors: `400 VALIDATION_ERROR`, `404 TX_NOT_FOUND`,
+  /// `409 TX_ALREADY_IN_PROJECT`.
+  Future<QuickCreateResult> quickCreate({
+    required String name,
+    required Map<String, dynamic> newTransaction,
+    List<String> transactionIds = const [],
+  }) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/projects/quick',
+        data: <String, dynamic>{
+          'name': name,
+          'new_transaction': newTransaction,
+          if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
+        },
+      );
+      return QuickCreateResult(
+        project: Project.fromJson(res.data!),
+        linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
+      );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

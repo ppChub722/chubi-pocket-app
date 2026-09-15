@@ -1945,4 +1945,75 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get walletErrorAlreadyMember =>
       'ผู้ใช้นี้เป็นสมาชิกของกระเป๋านี้อยู่แล้ว';
+
+  @override
+  String get quickCreateFabLabel => 'สร้างอีเวนต์จากบิล';
+
+  @override
+  String get quickCreateTitle => 'สร้างอีเวนต์จากบิล';
+
+  @override
+  String get quickCreateNewBillSection => 'บิลใหม่';
+
+  @override
+  String get quickCreateOldBillsSection =>
+      'รวมบิลเก่าเข้าอีเวนต์นี้ (ไม่บังคับ)';
+
+  @override
+  String get quickCreateOldBillsHint =>
+      'บิลเดี่ยว ๆ ของคุณจาก 90 วันที่ผ่านมา — ติ๊กเลือกเพื่อดึงเข้าบอร์ดอีเวนต์';
+
+  @override
+  String get quickCreateSearchHint => 'ค้นหาบิลเก่า';
+
+  @override
+  String get quickCreateOldBillsEmpty => 'ไม่มีบิลเดี่ยว ๆ ใน 90 วันที่ผ่านมา';
+
+  @override
+  String get quickCreateOldBillsSearchEmpty => 'ไม่พบบิลที่ตรงกับคำค้นหา';
+
+  @override
+  String get quickCreateOldBillsLoadMore => 'โหลดเพิ่ม';
+
+  @override
+  String get quickCreateOldBillsRetry => 'ลองใหม่';
+
+  @override
+  String quickCreateSelectedCount(int count) {
+    return 'เลือกแล้ว $count บิล';
+  }
+
+  @override
+  String get quickCreateNameSection => 'ชื่ออีเวนต์';
+
+  @override
+  String get quickCreateNameLabel => 'ชื่ออีเวนต์';
+
+  @override
+  String get quickCreateNameRequired => 'ใส่ชื่ออีเวนต์ก่อนนะ';
+
+  @override
+  String quickCreateDefaultName(String members, String date) {
+    return '$members · $date';
+  }
+
+  @override
+  String quickCreateDefaultNameSolo(String date) {
+    return 'อีเวนต์ · $date';
+  }
+
+  @override
+  String get quickCreateSubmit => 'สร้างอีเวนต์';
+
+  @override
+  String get quickCreateErrorTxNotFound =>
+      'บางบิลที่เลือกไม่มีอยู่แล้ว ลองรีเฟรชแล้วเลือกใหม่';
+
+  @override
+  String get quickCreateErrorTxAlreadyInProject =>
+      'บางบิลที่เลือกอยู่ในอีเวนต์อื่นแล้ว ลองรีเฟรชแล้วเลือกใหม่';
+
+  @override
+  String get quickCreateErrorValidation =>
+      'ข้อมูลบางอย่างยังไม่ถูกต้อง ลองตรวจดูอีกครั้ง';
 }
