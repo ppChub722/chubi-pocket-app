@@ -730,6 +730,8 @@
   "walletErrorAlreadyMember": "ผู้ใช้นี้เป็นสมาชิกของกระเป๋านี้อยู่แล้ว",
 
   "quickCreateToggle": "สร้างอีเวนต์จากบิลนี้...",
+  "transactionSplitWithTitle": "หารกับ...",
+  "transactionSplitShareTitle": "แบ่งให้... (เราติดเงินเขา)",
   "quickCreateOldBillsSection": "รวมบิลเก่าเข้าอีเวนต์นี้ (ไม่บังคับ)",
   "quickCreateOldBillsHint": "บิลเดี่ยว ๆ ของคุณจาก 90 วันที่ผ่านมา — ติ๊กเลือกเพื่อดึงเข้าบอร์ดอีเวนต์",
   "quickCreateSearchHint": "ค้นหาบิลเก่า",

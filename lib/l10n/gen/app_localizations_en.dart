@@ -1973,6 +1973,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickCreateToggle => 'Create an event from this bill...';
 
   @override
+  String get transactionSplitWithTitle => 'Split with…';
+
+  @override
+  String get transactionSplitShareTitle =>
+      'Share with… (I owe them their part)';
+
+  @override
   String get quickCreateOldBillsSection =>
       'Add past bills to this event (optional)';
 

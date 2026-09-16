@@ -41,19 +41,28 @@ class SplitDraft {
 }
 
 /// Collapsible splits editor. Sits inside the transaction form body for
-/// non-transfer expense transactions. Returns the current draft list via
-/// the `onChanged` callback so the parent can pass it to `cubit.add`.
+/// non-transfer transactions. Returns the current draft list via the
+/// `onChanged` callback so the parent can pass it to `cubit.add`.
+///
+/// [title] adapts the header/toggle to the debt direction the split
+/// will create (spec §12): expense → "หารกับ…" (they owe me), income →
+/// "แบ่งให้…" (I owe them).
 class SplitsSection extends StatefulWidget {
   const SplitsSection({
     required this.totalAmount,
     required this.drafts,
     required this.onChanged,
+    this.title,
     super.key,
   });
 
   /// Parent transaction's amount — used for "split equally" + validation
   /// of total ≤ tx amount.
   final double totalAmount;
+
+  /// Contextual label for the toggle + expanded header. Falls back to
+  /// the legacy "Split with…" when null.
+  final String? title;
 
   final List<SplitDraft> drafts;
   final ValueChanged<List<SplitDraft>> onChanged;
@@ -98,7 +107,7 @@ class _SplitsSectionState extends State<SplitsSection> {
         alignment: Alignment.centerLeft,
         child: TextButton.icon(
           icon: const Icon(Icons.call_split, size: 18),
-          label: const Text('Split with…'),
+          label: Text(widget.title ?? 'Split with…'),
           onPressed: () {
             setState(() {
               _expanded = true;
@@ -118,7 +127,7 @@ class _SplitsSectionState extends State<SplitsSection> {
           children: [
             Expanded(
               child: Text(
-                'Split with',
+                widget.title ?? 'Split with',
                 style: theme.textTheme.titleSmall,
               ),
             ),

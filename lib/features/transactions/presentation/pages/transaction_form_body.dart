@@ -137,8 +137,10 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
 
   bool get _isTransfer => _type == TransactionType.transfer;
   bool get _isEdit => widget.initial.editingTransaction != null;
-  bool get _showSplits =>
-      !_isEdit && !_isTransfer && _type == TransactionType.expense;
+  // Splits on both bill types (spec §12): expense = "หารกับ" (they owe
+  // me), income = "แบ่งให้" (I received money that partly belongs to
+  // them → I owe them). The BE flips the debt direction by parent type.
+  bool get _showSplits => !_isEdit && !_isTransfer;
 
   /// Shared-wallet edit rules (spec §14/2, API §14 pinned flags):
   /// - `is_locked` — ex-member's own row: the whole form is read-only.
@@ -703,6 +705,9 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
             const Divider(height: 1),
             const SizedBox(height: AppSpacing.sm),
             SplitsSection(
+              title: _type == TransactionType.income
+                  ? l.transactionSplitShareTitle
+                  : l.transactionSplitWithTitle,
               totalAmount:
                   double.tryParse(_amountController.text.trim()) ?? 0,
               drafts: _splits,

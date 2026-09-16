@@ -1950,6 +1950,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickCreateToggle => 'สร้างอีเวนต์จากบิลนี้...';
 
   @override
+  String get transactionSplitWithTitle => 'หารกับ...';
+
+  @override
+  String get transactionSplitShareTitle => 'แบ่งให้... (เราติดเงินเขา)';
+
+  @override
   String get quickCreateOldBillsSection =>
       'รวมบิลเก่าเข้าอีเวนต์นี้ (ไม่บังคับ)';
 

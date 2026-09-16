@@ -3662,6 +3662,18 @@ abstract class AppLocalizations {
   /// **'Create an event from this bill...'**
   String get quickCreateToggle;
 
+  /// No description provided for @transactionSplitWithTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with…'**
+  String get transactionSplitWithTitle;
+
+  /// No description provided for @transactionSplitShareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with… (I owe them their part)'**
+  String get transactionSplitShareTitle;
+
   /// No description provided for @quickCreateOldBillsSection.
   ///
   /// In en, this message translates to:

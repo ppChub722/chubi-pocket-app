@@ -812,6 +812,8 @@
   "walletErrorAlreadyMember": "That user is already a member of this wallet.",
 
   "quickCreateToggle": "Create an event from this bill...",
+  "transactionSplitWithTitle": "Split with…",
+  "transactionSplitShareTitle": "Share with… (I owe them their part)",
   "quickCreateOldBillsSection": "Add past bills to this event (optional)",
   "quickCreateOldBillsHint": "Your loose bills from the last 90 days — tick any to bring them onto the event board.",
   "quickCreateSearchHint": "Search past bills",
