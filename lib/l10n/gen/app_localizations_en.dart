@@ -1970,13 +1970,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'That user is already a member of this wallet.';
 
   @override
-  String get quickCreateFabLabel => 'Create event from bills';
-
-  @override
-  String get quickCreateTitle => 'Create event from bills';
-
-  @override
-  String get quickCreateNewBillSection => 'New bill';
+  String get quickCreateToggle => 'Create an event from this bill...';
 
   @override
   String get quickCreateOldBillsSection =>

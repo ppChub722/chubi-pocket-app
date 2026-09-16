@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
@@ -13,12 +16,14 @@ import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../projects/presentation/cubit/projects_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../widgets/account_picker_sheet.dart';
 import '../widgets/category_picker_sheet.dart';
+import '../widgets/event_section.dart';
 import '../widgets/splits_section.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
 
@@ -57,6 +62,7 @@ class TransactionFormBody extends StatefulWidget {
     required this.initial,
     this.showTags = true,
     this.allowTransfer = true,
+    this.enableEventSection = false,
     this.onSplitsChanged,
     super.key,
   });
@@ -84,6 +90,13 @@ class TransactionFormBody extends StatefulWidget {
   /// (spec §10/4.24).
   final ValueChanged<List<SplitDraft>>? onSplitsChanged;
 
+  /// Show the collapsible "สร้างอีเวนต์จากบิลนี้..." expander below the
+  /// splits section (create mode, non-transfer only — spec §10/4.24).
+  /// When the user arms it, [save] posts `POST /v1/projects/quick`
+  /// instead of the plain transaction create, then navigates to the new
+  /// event's page.
+  final bool enableEventSection;
+
   /// Called after a successful save. The parent decides whether to pop
   /// the route / sheet, show a snackbar, etc. — the body itself doesn't
   /// know its presentation context.
@@ -103,6 +116,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  final _eventKey = GlobalKey<EventSectionState>();
 
   late TransactionType _type;
   Account? _account;
@@ -238,6 +252,13 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   Future<bool> save({required bool keepOpen}) async {
     if (_saving) return false;
     if (_lockedRow) return false; // read-only ex-member row (ROW_LOCKED)
+    // Armed event section (spec §10/4.24): the whole form submits as
+    // POST /v1/projects/quick instead of a plain transaction create.
+    // keepOpen is ignored — the flow always navigates to the new event.
+    final event = _eventKey.currentState;
+    if (!_isEdit && event != null && event.enabled) {
+      return _saveAsEvent(event);
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return false;
     if (_account == null) return false;
     if (_isTransfer && _toAccount == null) return false;
@@ -372,6 +393,49 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     }
   }
 
+  /// Armed event flow (spec §10/4.24): validate both the form and the
+  /// event name, then post the whole thing as `POST /v1/projects/quick`
+  /// — atomic on the BE. On success the parent closes (via onSaved) and
+  /// the router lands on the new event's page.
+  Future<bool> _saveAsEvent(EventSectionState event) async {
+    // Validate both sections so the user sees every field error at once.
+    final nameOk = event.validateName();
+    final payload = buildCreatePayload();
+    if (!nameOk || payload == null) return false;
+
+    final projectsCubit = context.read<ProjectsCubit>();
+    final accountsCubit = context.read<AccountsCubit>();
+    final txCubit = context.read<TransactionsCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final l = AppLocalizations.of(context)!;
+
+    setState(() => _saving = true);
+    try {
+      final result = await projectsCubit.quickCreate(
+        name: event.name,
+        newTransaction: payload,
+        transactionIds: event.selectedTransactionIds,
+      );
+      // The BE created the new bill and re-tagged the ticked ones —
+      // refresh the caches whose rows / balances changed server-side.
+      unawaited(accountsCubit.load());
+      unawaited(txCubit.load());
+      if (!mounted) return true;
+      widget.onSaved(addedAnother: false); // parent pops the sheet/page
+      router.push('/projects/${result.project.id}');
+      return true;
+    } on ApiException catch (e) {
+      if (!mounted) return false;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(quickCreateErrorMessage(l, e))));
+      return false;
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   /// Sentinel returned by [_collectSplitsPayload] when the drafted
   /// splits exceed the transaction amount (snackbar already shown).
   /// Distinct from `null`, which means "no splits".
@@ -475,7 +539,8 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     return _amountController.text.isNotEmpty ||
         _noteController.text.isNotEmpty ||
         _category != null ||
-        _splits.isNotEmpty;
+        _splits.isNotEmpty ||
+        (_eventKey.currentState?.isDirty ?? false);
   }
 
   // ── Build ─────────────────────────────────────────────────────────
@@ -644,12 +709,34 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
               onChanged: (next) {
                 setState(() => _splits = next);
                 widget.onSplitsChanged?.call(next);
+                _eventKey.currentState?.setMemberNames(_splitNames(next));
               },
             ),
+          ],
+          // "สร้างอีเวนต์จากบิลนี้..." expander (spec §10/4.24) — create
+          // mode, non-transfer only. Flipping to Transfer unmounts it
+          // (selection resets), matching the BE's expense/income-only
+          // board rows.
+          if (!_isEdit && widget.enableEventSection && !_isTransfer) ...[
+            const SizedBox(height: AppSpacing.md),
+            const Divider(height: 1),
+            const SizedBox(height: AppSpacing.sm),
+            EventSection(key: _eventKey),
           ],
         ],
       ),
     );
+  }
+
+  /// Distinct split-counterparty names in entry order — feeds the event
+  /// section's members+date default name.
+  static List<String> _splitNames(List<SplitDraft> drafts) {
+    final names = <String>[];
+    for (final d in drafts) {
+      final n = d.personName.trim();
+      if (n.isNotEmpty && !names.contains(n)) names.add(n);
+    }
+    return names;
   }
 
   void _toggleTag(String id) {

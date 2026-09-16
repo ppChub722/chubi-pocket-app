@@ -3656,23 +3656,11 @@ abstract class AppLocalizations {
   /// **'That user is already a member of this wallet.'**
   String get walletErrorAlreadyMember;
 
-  /// No description provided for @quickCreateFabLabel.
+  /// No description provided for @quickCreateToggle.
   ///
   /// In en, this message translates to:
-  /// **'Create event from bills'**
-  String get quickCreateFabLabel;
-
-  /// No description provided for @quickCreateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create event from bills'**
-  String get quickCreateTitle;
-
-  /// No description provided for @quickCreateNewBillSection.
-  ///
-  /// In en, this message translates to:
-  /// **'New bill'**
-  String get quickCreateNewBillSection;
+  /// **'Create an event from this bill...'**
+  String get quickCreateToggle;
 
   /// No description provided for @quickCreateOldBillsSection.
   ///

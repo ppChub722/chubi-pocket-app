@@ -811,9 +811,7 @@
   "walletErrorUserNotFound": "No user found with that email.",
   "walletErrorAlreadyMember": "That user is already a member of this wallet.",
 
-  "quickCreateFabLabel": "Create event from bills",
-  "quickCreateTitle": "Create event from bills",
-  "quickCreateNewBillSection": "New bill",
+  "quickCreateToggle": "Create an event from this bill...",
   "quickCreateOldBillsSection": "Add past bills to this event (optional)",
   "quickCreateOldBillsHint": "Your loose bills from the last 90 days — tick any to bring them onto the event board.",
   "quickCreateSearchHint": "Search past bills",

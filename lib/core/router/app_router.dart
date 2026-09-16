@@ -28,7 +28,6 @@ import '../../features/projects/presentation/pages/project_detail_page.dart';
 import '../../features/projects/presentation/pages/project_form_page.dart';
 import '../../features/projects/presentation/pages/project_transaction_form_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
-import '../../features/projects/presentation/pages/quick_create_project_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goal_form_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goals_list_page.dart';
@@ -130,15 +129,6 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                     path: 'projects/new',
                     name: 'project-new',
                     builder: (context, state) => const ProjectFormPage(),
-                  ),
-                  // Quick create from bills (spec §10/4.24) — declared
-                  // before 'projects/:id' so the literal 'quick' segment
-                  // matches first.
-                  GoRoute(
-                    path: 'projects/quick',
-                    name: 'project-quick-create',
-                    builder: (context, state) =>
-                        const QuickCreateProjectPage(),
                   ),
                   GoRoute(
                     path: 'projects/:id',

@@ -146,6 +146,7 @@ class _Scaffold extends StatelessWidget {
             allowSaveAndAddAnother: !isEdit,
             collapsibleNote: false,
             initial: initial,
+            enableEventSection: !isEdit,
             onSaved: ({required addedAnother}) {
               if (addedAnother) return; // stay on page, body resets itself
               if (context.mounted) context.pop();
@@ -284,6 +285,7 @@ class _SheetWrapperState extends State<_SheetWrapper> {
               allowSaveAndAddAnother: false,
               collapsibleNote: true,
               initial: const TransactionFormInitial(),
+              enableEventSection: true,
               onSaved: ({required addedAnother}) {
                 _anySaved = true;
                 if (!mounted) return;

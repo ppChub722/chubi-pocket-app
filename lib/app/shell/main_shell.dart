@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_spacing.dart';
 import '../../features/transactions/presentation/pages/transaction_form_page.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'main_bottom_nav.dart';
@@ -58,41 +57,17 @@ class MainShell extends StatelessWidget {
       );
     }
 
-    final addFab = FloatingActionButton(
-      tooltip: l.navAddTransaction,
-      onPressed: () => showTransactionFormSheet(context),
-      shape: const CircleBorder(),
-      child: const Icon(Icons.add),
-    );
-
-    // Transactions tab root only (spec §10/4.24): quick create
-    // project-from-bills — a second, labeled FAB stacked above the main
-    // `+`. Distinct heroTag: two FABs on one route would otherwise
-    // collide.
-    final onTransactionsTab = navigationShell.currentIndex == 1;
-    final fab = onTransactionsTab
-        ? Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FloatingActionButton.extended(
-                heroTag: 'quick-create-project-fab',
-                onPressed: () => context.push('/projects/quick'),
-                icon: const Icon(Icons.receipt_long_outlined, size: 18),
-                label: Text(
-                  l.quickCreateFabLabel,
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              addFab,
-            ],
-          )
-        : addFab;
-
     return Scaffold(
       appBar: MainTopBar(title: _titleFor(l, navigationShell.currentIndex)),
       body: navigationShell,
-      floatingActionButton: fab,
+      // Quick create event-from-bills lives INSIDE the + sheet as a
+      // collapsible section (spec §10/4.24) — no second FAB.
+      floatingActionButton: FloatingActionButton(
+        tooltip: l.navAddTransaction,
+        onPressed: () => showTransactionFormSheet(context),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: bottomNav,
     );

@@ -1947,13 +1947,7 @@ class AppLocalizationsTh extends AppLocalizations {
       'ผู้ใช้นี้เป็นสมาชิกของกระเป๋านี้อยู่แล้ว';
 
   @override
-  String get quickCreateFabLabel => 'สร้างอีเวนต์จากบิล';
-
-  @override
-  String get quickCreateTitle => 'สร้างอีเวนต์จากบิล';
-
-  @override
-  String get quickCreateNewBillSection => 'บิลใหม่';
+  String get quickCreateToggle => 'สร้างอีเวนต์จากบิลนี้...';
 
   @override
   String get quickCreateOldBillsSection =>
