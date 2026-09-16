@@ -6,13 +6,21 @@ import 'package:flutter/foundation.dart';
 import '../storage/secure_token_storage.dart';
 import 'http_logger_interceptor.dart';
 
-/// Dev API base URL — picks the right host depending on the running platform.
+/// API base URL — picks the right host depending on build flags/platform.
 ///
-/// - Override via `--dart-define=API_HOST=<lan-ip>` when running on a **real**
-///   Android phone (the phone can't reach `localhost` or `10.0.2.2`).
-/// - Web / iOS sim / desktop: `localhost` reaches the host directly.
-/// - Android emulator: the host's `localhost` is reachable as `10.0.2.2`.
+/// Priority:
+/// 1. `--dart-define=API_BASE_URL=https://chubipocket-api.ppforge.dev/api/v1`
+///    — full URL, used for **production/release builds** (APK via Firebase
+///    App Distribution).
+/// 2. `--dart-define=API_HOST=<lan-ip>` — dev on a **real** Android phone
+///    (the phone can't reach `localhost` or `10.0.2.2`).
+/// 3. Platform default: Android emulator → `10.0.2.2`; web/desktop →
+///    `localhost`.
 String _devBaseUrl() {
+  const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
+  if (apiBaseUrl.isNotEmpty) {
+    return apiBaseUrl;
+  }
   const apiHost = String.fromEnvironment('API_HOST');
   if (apiHost.isNotEmpty) {
     return 'http://$apiHost:8080/api/v1';
