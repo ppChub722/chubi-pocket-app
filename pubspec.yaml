@@ -2,7 +2,10 @@ name: chubi_pocket
 description: "chubiPocket — personal finance tracker."
 publish_to: 'none'
 
-version: 1.0.0+1
+# Versioning: matches the git tag of the release line (v0.1.0). Bump the
+# +build number on every distributed build; bump the version itself only
+# when the owner says so. Shown on the splash screen.
+version: 0.1.0+2
 
 environment:
   sdk: ^3.11.4
@@ -40,6 +43,9 @@ dependencies:
   # No-op on web / iOS / desktop.
   flutter_displaymode: ^0.6.0
   path_provider: ^2.1.5
+
+  # App version at runtime — shown on the splash screen.
+  package_info_plus: ^8.1.2
 
 dev_dependencies:
   flutter_test:

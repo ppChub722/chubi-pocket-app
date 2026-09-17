@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../cubit/auth_cubit.dart';
@@ -20,10 +21,26 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   static const _minDisplay = Duration(milliseconds: 600);
 
+  /// e.g. "v0.1.0 (2)" — set once package_info resolves. Helps testers
+  /// report exactly which build they're on.
+  String _version = '';
+
   @override
   void initState() {
     super.initState();
     _kickoff();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() => _version = 'v${info.version} (${info.buildNumber})');
+      }
+    } catch (_) {
+      // Non-fatal — the splash just won't show a version.
+    }
   }
 
   Future<void> _kickoff() async {
@@ -37,27 +54,44 @@ class _SplashPageState extends State<SplashPage> {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 360),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _LogoMark(color: theme.colorScheme.primary),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'ChubiPocket',
-                  style: theme.textTheme.headlineMedium,
+        child: Stack(
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _LogoMark(color: theme.colorScheme.primary),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      'ChubiPocket',
+                      style: theme.textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    const SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: CircularProgressIndicator(strokeWidth: 3),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                const SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: CircularProgressIndicator(strokeWidth: 3),
-                ),
-              ],
+              ),
             ),
-          ),
+            // Build identifier, bottom-centered — testers quote this.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: AppSpacing.lg,
+              child: Text(
+                _version,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
