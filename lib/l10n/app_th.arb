@@ -371,6 +371,8 @@
   "transactionFormSaveAndAddAnother": "บันทึกและเพิ่มอีกรายการ",
   "transactionFormSavedAddedAnother": "บันทึกแล้ว เพิ่มรายการต่อด้านล่างได้",
 
+  "transactionFormAccountNone": "ไม่มีกระเป๋า",
+  "transactionFormMoveTransferTitle": "ย้ายกระเป๋า",
   "transactionFormAccountPickerTitle": "เลือกกระเป๋า",
   "transactionFormAccountPickerEmpty": "ยังไม่มีกระเป๋าที่ใช้งาน เพิ่มกระเป๋าก่อน",
 

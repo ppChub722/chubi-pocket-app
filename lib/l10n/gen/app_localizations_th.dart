@@ -1056,6 +1056,12 @@ class AppLocalizationsTh extends AppLocalizations {
       'บันทึกแล้ว เพิ่มรายการต่อด้านล่างได้';
 
   @override
+  String get transactionFormAccountNone => 'ไม่มีกระเป๋า';
+
+  @override
+  String get transactionFormMoveTransferTitle => 'ย้ายกระเป๋า';
+
+  @override
   String get transactionFormAccountPickerTitle => 'เลือกกระเป๋า';
 
   @override

@@ -88,6 +88,9 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
   /// auto-assigned categories the user can't pick.
   Category? _categoryFilter;
 
+  /// When true, only floating transactions (no wallet) are fetched.
+  bool _noWalletFilter = false;
+
   final _scrollController = ScrollController();
 
   @override
@@ -121,6 +124,7 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
           categoryId: _categoryFilter?.id,
           from: r.from,
           to: r.to,
+          noWallet: _noWalletFilter,
         );
   }
 
@@ -139,6 +143,11 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
   void _setRange(_RangeFilter f) {
     if (_rangeFilter == f) return;
     setState(() => _rangeFilter = f);
+    _refetch();
+  }
+
+  void _toggleNoWallet() {
+    setState(() => _noWalletFilter = !_noWalletFilter);
     _refetch();
   }
 
@@ -185,10 +194,12 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
             typeFilter: _typeFilter,
             rangeFilter: _rangeFilter,
             categoryFilter: _categoryFilter,
+            noWalletFilter: _noWalletFilter,
             onTypeChanged: _setType,
             onRangeChanged: _setRange,
             onPickCategory: _pickCategory,
             onClearCategory: _clearCategoryFilter,
+            onToggleNoWallet: _toggleNoWallet,
           ),
           Expanded(
             child: BlocBuilder<TransactionsCubit, TransactionsState>(
@@ -249,19 +260,23 @@ class _FilterBar extends StatelessWidget {
     required this.typeFilter,
     required this.rangeFilter,
     required this.categoryFilter,
+    required this.noWalletFilter,
     required this.onTypeChanged,
     required this.onRangeChanged,
     required this.onPickCategory,
     required this.onClearCategory,
+    required this.onToggleNoWallet,
   });
 
   final _TypeFilter typeFilter;
   final _RangeFilter rangeFilter;
   final Category? categoryFilter;
+  final bool noWalletFilter;
   final ValueChanged<_TypeFilter> onTypeChanged;
   final ValueChanged<_RangeFilter> onRangeChanged;
   final VoidCallback onPickCategory;
   final VoidCallback onClearCategory;
+  final VoidCallback onToggleNoWallet;
 
   /// Category filter only makes sense for expense / income.
   /// "All" — multiple types in play, category implies a type.
@@ -301,6 +316,12 @@ class _FilterBar extends StatelessWidget {
                 _rangeChip(l.transactionsRangeMonth, _RangeFilter.month),
                 _rangeChip(l.transactionsRangeYear, _RangeFilter.year),
                 _rangeChip(l.transactionsRangeAll, _RangeFilter.all),
+                FilterChip(
+                  avatar: const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                  label: Text(l.transactionFormAccountNone),
+                  selected: noWalletFilter,
+                  onSelected: (_) => onToggleNoWallet(),
+                ),
               ],
             ),
           ),
@@ -487,7 +508,8 @@ class _Row extends StatelessWidget {
     final color = signed > 0 ? Colors.green.shade400 : scheme.error;
     final sign = signed > 0 ? '+' : (signed < 0 ? '−' : '');
     final categoryName = tx.category?.name ?? '';
-    final accountName = tx.account?.name ?? '';
+    final accountName = tx.account?.name;
+    final isFloating = tx.account == null;
 
     final cubit = context.watch<CategoriesCubit>();
     final cat = tx.category != null ? cubit.byId(tx.category!.id) : null;
@@ -525,16 +547,19 @@ class _Row extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      Flexible(
-                        child: Text(
-                          accountName,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      if (isFloating)
+                        _NoWalletBadge(scheme: scheme)
+                      else
+                        Flexible(
+                          child: Text(
+                            accountName ?? '',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
                       if (tx.tags.isNotEmpty) ...[
                         const SizedBox(width: AppSpacing.sm),
                         Icon(Icons.sell_outlined,
@@ -562,6 +587,29 @@ class _Row extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NoWalletBadge extends StatelessWidget {
+  const _NoWalletBadge({required this.scheme});
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        l.transactionFormAccountNone,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
       ),
     );
   }

@@ -1068,6 +1068,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionFormSavedAddedAnother => 'Saved. Add another below.';
 
   @override
+  String get transactionFormAccountNone => 'No wallet';
+
+  @override
+  String get transactionFormMoveTransferTitle => 'Move wallets';
+
+  @override
   String get transactionFormAccountPickerTitle => 'Pick a wallet';
 
   @override

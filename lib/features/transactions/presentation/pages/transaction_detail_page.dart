@@ -243,7 +243,7 @@ class _MetaCard extends StatelessWidget {
             _Row(
               icon: Icons.account_balance_wallet_outlined,
               label: l.transactionFormAccountLabel,
-              value: tx.account?.name ?? tx.accountId,
+              value: tx.account?.name ?? tx.accountId ?? '—',
             ),
             if (tx.type != TransactionType.transfer)
               _Row(

@@ -122,6 +122,10 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   Account? _account;
   Account? _toAccount; // transfer destination
   Category? _category;
+
+  // Snapshot of account ids when entering edit mode — used to detect moves.
+  String? _initialAccountId;
+  String? _initialToAccountId;
   late DateTime _date;
   bool _showNote = false;
   bool _saving = false;
@@ -216,24 +220,25 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
         return null;
       }
 
-      setState(() {
-        _account = findAccount(i.accountId);
-        _category = findCategory(i.categoryId);
-        // Transfer to-account: identified via the paired row sharing
-        // the transfer_group_id. We don't know which row the user
-        // clicked into; if this row is the OUT side, the IN side's
-        // account is the "to". For simplicity in 1a we surface it as
-        // read-only on the form, computed best-effort.
-        if (i.transferGroupId != null) {
-          final txState = context.read<TransactionsCubit>().state;
-          for (final t in txState.transactions) {
-            if (t.id != i.id && t.transferGroupId == i.transferGroupId) {
-              _toAccount = findAccount(t.accountId);
-              break;
-            }
+      Account? toAcc;
+      if (i.transferGroupId != null) {
+        final txState = context.read<TransactionsCubit>().state;
+        for (final t in txState.transactions) {
+          if (t.id != i.id && t.transferGroupId == i.transferGroupId) {
+            toAcc = t.accountId != null ? findAccount(t.accountId!) : null;
+            break;
           }
         }
+      }
+      final fromAcc = i.accountId != null ? findAccount(i.accountId!) : null;
+      setState(() {
+        _account = fromAcc;
+        _category = findCategory(i.categoryId);
+        _toAccount = toAcc;
       });
+      // Snapshot for dirty-detection in save().
+      _initialAccountId = fromAcc?.id;
+      _initialToAccountId = toAcc?.id;
       return;
     }
 
@@ -262,7 +267,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
       return _saveAsEvent(event);
     }
     if (!(_formKey.currentState?.validate() ?? false)) return false;
-    if (_account == null) return false;
+    if (_isTransfer && _account == null) return false;
     if (_isTransfer && _toAccount == null) return false;
     if (_isTransfer && _account!.id == _toAccount!.id) return false;
     // Category required for expense/income (BE rejects with
@@ -271,15 +276,6 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     // Skipped on another member's row: their category stays untouched
     // (author-only field, spec §14/2.2) and can't resolve against our
     // own categories cache anyway.
-    if (!_isTransfer && _category == null && _canEditCategory) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(
-          content: Text('Please pick a category'),
-        ));
-      return false;
-    }
-
     final amount = double.tryParse(_amountController.text.trim());
     if (amount == null || amount <= 0) return false;
 
@@ -305,6 +301,11 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
             _canEditCategory &&
             initial.categoryId != null &&
             _category == null;
+        // Account move: compare current vs snapshot from hydration.
+        final newAccountId = _account?.id;
+        final accountChanged = newAccountId != _initialAccountId;
+        final toAccountChanged =
+            _isTransfer && _toAccount?.id != _initialToAccountId;
         result = await txCubit.updateTransaction(
           id: initial.id,
           amount: amount,
@@ -314,6 +315,9 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
           clearCategory: clearCategory,
           note: note,
           clearNote: note == null && initial.note != null,
+          accountId: accountChanged && newAccountId != null ? newAccountId : null,
+          clearAccount: accountChanged && newAccountId == null,
+          transferToAccountId: toAccountChanged ? _toAccount?.id : null,
         );
         // Reconcile tags after the row update succeeds. For transfers
         // the OUT row is the canonical "tagged" side (see [add]).
@@ -334,7 +338,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
         if (splitsPayload == _splitsExceedSentinel) return false;
         result = await txCubit.add(
           type: _type,
-          accountId: _account!.id,
+          accountId: _account?.id,
           amount: amount,
           date: dateStr,
           categoryId: _isTransfer ? null : _category?.id,
@@ -352,10 +356,11 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
       // involved (could affect 1 or 2 accounts depending on transfer).
       if (_isEdit) {
         await accountsCubit.load();
-      } else if (result.single?.accountBalanceAfter != null) {
+      } else if (result.single?.accountBalanceAfter != null &&
+          result.single!.accountId != null) {
         // Single-row create — patch one account.
         accountsCubit.patchBalance(
-          accountId: result.single!.accountId,
+          accountId: result.single!.accountId!,
           newBalance: result.single!.accountBalanceAfter!,
         );
       } else if (result.transfer != null) {
@@ -479,18 +484,9 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   /// Not meaningful in edit mode.
   Map<String, dynamic>? buildCreatePayload() {
     if (!(_formKey.currentState?.validate() ?? false)) return null;
-    if (_account == null) return null;
+    if (_isTransfer && _account == null) return null;
     if (_isTransfer && _toAccount == null) return null;
     if (_isTransfer && _account!.id == _toAccount!.id) return null;
-    if (!_isTransfer && _category == null && _canEditCategory) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(
-          content: Text('Please pick a category'),
-        ));
-      return null;
-    }
-
     final amount = double.tryParse(_amountController.text.trim());
     if (amount == null || amount <= 0) return null;
 
@@ -500,7 +496,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     final noteRaw = _noteController.text.trim();
     return <String, dynamic>{
       'type': _type.toJson(),
-      'account_id': _account!.id,
+      if (_account != null) 'account_id': _account!.id,
       'amount': amount,
       'date': _formatDate(_date),
       if (!_isTransfer && _category != null) 'category_id': _category!.id,
@@ -619,26 +615,20 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
                 ? l.transactionFormFromAccountLabel
                 : l.transactionFormAccountLabel,
             account: _account,
-            readOnly: _isEdit,
-            onTap: _isEdit ? null : _pickAccount,
+            readOnly: false,
+            onTap: (_isEdit && _isTransfer)
+                ? _pickTransferAccounts
+                : _pickAccount,
           ),
           if (_isTransfer) ...[
             const SizedBox(height: AppSpacing.sm),
             _AccountTile(
               label: l.transactionFormToAccountLabel,
               account: _toAccount,
-              readOnly: _isEdit,
-              onTap: _isEdit ? null : _pickToAccount,
-            ),
-            if (_isEdit) Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
-              child: Text(
-                l.transactionDetailTransferReadonlyHint,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color:
-                          Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
+              readOnly: false,
+              onTap: (_isEdit && _isTransfer)
+                  ? _pickTransferAccounts
+                  : _pickToAccount,
             ),
           ],
           if (!_isTransfer) ...[
@@ -757,25 +747,54 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   // ── Picker handlers ───────────────────────────────────────────────
 
   Future<void> _pickAccount() async {
-    final state = context.read<AccountsCubit>().state;
-    final picked = await showAccountPickerSheet(
+    final accsState = context.read<AccountsCubit>().state;
+    final result = await showAccountPickerSheet(
       context: context,
-      accounts: state.accounts,
+      accounts: accsState.accounts,
       selected: _account,
+      allowNone: _isEdit,
     );
-    if (picked != null && mounted) setState(() => _account = picked);
+    if (!mounted || result == null) return;
+    setState(() {
+      _account = result is AccountPickerSelected ? result.account : null;
+    });
   }
 
   Future<void> _pickToAccount() async {
-    final state = context.read<AccountsCubit>().state;
-    final picked = await showAccountPickerSheet(
+    final accsState = context.read<AccountsCubit>().state;
+    final result = await showAccountPickerSheet(
       context: context,
-      accounts: state.accounts,
+      accounts: accsState.accounts,
       selected: _toAccount,
       excludeId: _account?.id,
       title: AppLocalizations.of(context)!.transactionFormToAccountLabel,
     );
-    if (picked != null && mounted) setState(() => _toAccount = picked);
+    if (!mounted || result == null) return;
+    if (result is AccountPickerSelected) {
+      setState(() => _toAccount = result.account);
+    }
+  }
+
+  /// Transfer edit — single bottom sheet lets user pick both FROM and TO
+  /// wallets simultaneously, then confirms atomically.
+  Future<void> _pickTransferAccounts() async {
+    final accsState = context.read<AccountsCubit>().state;
+    final picked = await showModalBottomSheet<(Account?, Account?)>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _TransferMoveSheet(
+        accounts: accsState.accounts,
+        from: _account,
+        to: _toAccount,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _account = picked.$1;
+      _toAccount = picked.$2;
+    });
   }
 
   Future<void> _pickCategory() async {
@@ -975,8 +994,15 @@ class _AccountTile extends StatelessWidget {
                               color: scheme.onSurfaceVariant,
                             )),
                     Text(
-                      account?.name ?? l.transactionFormAccountRequired,
-                      style: Theme.of(context).textTheme.titleSmall,
+                      account?.name ??
+                          (readOnly
+                              ? l.transactionFormAccountNone
+                              : l.transactionFormAccountRequired),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: account == null
+                                ? scheme.onSurfaceVariant
+                                : null,
+                          ),
                     ),
                   ],
                 ),
@@ -1174,6 +1200,108 @@ class _DateTile extends StatelessWidget {
               Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Transfer move sheet ───────────────────────────────────────────────
+
+/// Bottom sheet for moving both sides of a transfer simultaneously.
+/// Returns `(newFrom, newTo)` on confirm, null on dismiss.
+class _TransferMoveSheet extends StatefulWidget {
+  const _TransferMoveSheet({
+    required this.accounts,
+    required this.from,
+    required this.to,
+  });
+
+  final List<Account> accounts;
+  final Account? from;
+  final Account? to;
+
+  @override
+  State<_TransferMoveSheet> createState() => _TransferMoveSheetState();
+}
+
+class _TransferMoveSheetState extends State<_TransferMoveSheet> {
+  late Account? _from;
+  late Account? _to;
+
+  @override
+  void initState() {
+    super.initState();
+    _from = widget.from;
+    _to = widget.to;
+  }
+
+  Future<void> _pickFrom() async {
+    final result = await showAccountPickerSheet(
+      context: context,
+      accounts: widget.accounts,
+      selected: _from,
+      excludeId: _to?.id,
+    );
+    if (!mounted || result == null) return;
+    if (result is AccountPickerSelected) setState(() => _from = result.account);
+  }
+
+  Future<void> _pickTo() async {
+    final l = AppLocalizations.of(context)!;
+    final result = await showAccountPickerSheet(
+      context: context,
+      accounts: widget.accounts,
+      selected: _to,
+      excludeId: _from?.id,
+      title: l.transactionFormToAccountLabel,
+    );
+    if (!mounted || result == null) return;
+    if (result is AccountPickerSelected) setState(() => _to = result.account);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final canConfirm = _from != null && _to != null && _from!.id != _to!.id;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.transactionFormMoveTransferTitle,
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.md),
+            _AccountTile(
+              label: l.transactionFormFromAccountLabel,
+              account: _from,
+              readOnly: false,
+              onTap: _pickFrom,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Center(
+              child: Icon(Icons.arrow_downward,
+                  color: scheme.onSurfaceVariant, size: 20),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _AccountTile(
+              label: l.transactionFormToAccountLabel,
+              account: _to,
+              readOnly: false,
+              onTap: _pickTo,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(
+              onPressed:
+                  canConfirm ? () => Navigator.of(context).pop((_from, _to)) : null,
+              child: Text(l.commonOk),
+            ),
+          ],
         ),
       ),
     );

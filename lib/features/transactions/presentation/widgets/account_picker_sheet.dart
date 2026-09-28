@@ -7,24 +7,36 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
 
+/// Result returned by [showAccountPickerSheet]. Distinct from `null`
+/// (user dismissed) — [AccountPickerCleared] means "ไม่ระบุกระเป๋า".
+sealed class AccountPickerResult {
+  const AccountPickerResult();
+}
+
+class AccountPickerSelected extends AccountPickerResult {
+  const AccountPickerSelected(this.account);
+  final Account account;
+}
+
+class AccountPickerCleared extends AccountPickerResult {
+  const AccountPickerCleared();
+}
+
 /// Modal bottom sheet for picking one of the user's active accounts.
 ///
-/// Shows all active accounts (archived/closed are hidden upstream by
-/// the caller). Tapping a row pops the sheet with the selected
-/// [Account]; tapping the close icon returns null.
-///
-/// Used by the transaction form for `account_id` and
-/// `transfer_to_account_id`. The `excludeId` parameter hides one
-/// account from the list — used for the "to" picker so the user
-/// can't pick the same account twice.
-Future<Account?> showAccountPickerSheet({
+/// When [allowNone] is true, a "ไม่ระบุกระเป๋า" row appears at the top
+/// so the user can explicitly clear the account (floating transaction).
+/// The `excludeId` parameter hides one account — used for the "to"
+/// picker so the user can't pick the same account twice.
+Future<AccountPickerResult?> showAccountPickerSheet({
   required BuildContext context,
   required List<Account> accounts,
   Account? selected,
   String? excludeId,
   String? title,
+  bool allowNone = false,
 }) {
-  return showModalBottomSheet<Account>(
+  return showModalBottomSheet<AccountPickerResult>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
@@ -34,6 +46,7 @@ Future<Account?> showAccountPickerSheet({
       selected: selected,
       excludeId: excludeId,
       title: title,
+      allowNone: allowNone,
     ),
   );
 }
@@ -44,12 +57,14 @@ class _AccountPickerBody extends StatelessWidget {
     required this.selected,
     required this.excludeId,
     required this.title,
+    required this.allowNone,
   });
 
   final List<Account> accounts;
   final Account? selected;
   final String? excludeId;
   final String? title;
+  final bool allowNone;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +88,18 @@ class _AccountPickerBody extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
-          if (visible.isEmpty)
+          if (allowNone)
+            ListTile(
+              leading:
+                  Icon(Icons.account_balance_wallet_outlined, color: scheme.onSurfaceVariant),
+              title: Text(l.transactionFormAccountNone),
+              trailing: selected == null
+                  ? Icon(Icons.check, color: scheme.primary)
+                  : null,
+              onTap: () =>
+                  Navigator.of(context).pop(const AccountPickerCleared()),
+            ),
+          if (visible.isEmpty && !allowNone)
             Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Text(
@@ -83,7 +109,7 @@ class _AccountPickerBody extends StatelessWidget {
                     ),
               ),
             )
-          else
+          else if (visible.isNotEmpty)
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
@@ -95,7 +121,11 @@ class _AccountPickerBody extends StatelessWidget {
                     leading: CircleAvatar(
                       backgroundColor:
                           a.iconCode?.bgColorFor(palette) ?? scheme.outline,
-                      child: Icon(IconRegistry.get(a.iconCode?.icon, fallback: Icons.account_balance_wallet_outlined), color: Colors.white, size: 20),
+                      child: Icon(
+                          IconRegistry.get(a.iconCode?.icon,
+                              fallback: Icons.account_balance_wallet_outlined),
+                          color: Colors.white,
+                          size: 20),
                     ),
                     title: Text(a.name),
                     subtitle: Text(
@@ -104,7 +134,8 @@ class _AccountPickerBody extends StatelessWidget {
                     trailing: isSelected
                         ? Icon(Icons.check, color: scheme.primary)
                         : null,
-                    onTap: () => Navigator.of(ctx).pop(a),
+                    onTap: () =>
+                        Navigator.of(ctx).pop(AccountPickerSelected(a)),
                   );
                 },
               ),

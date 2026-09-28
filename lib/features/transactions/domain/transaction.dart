@@ -136,7 +136,7 @@ class Transaction extends Equatable {
   });
 
   final String id;
-  final String accountId;
+  final String? accountId;
   final TransactionType type;
 
   /// Always positive — direction encoded in [type] (or in the
@@ -226,7 +226,7 @@ class Transaction extends Equatable {
         : <EmbeddedTag>[];
     return Transaction(
       id: json['id'] as String,
-      accountId: json['account_id'] as String,
+      accountId: json['account_id'] as String?,
       type: TransactionType.fromJson(json['type'] as String),
       amount: (json['amount'] as num).toDouble(),
       date: json['date'] as String,

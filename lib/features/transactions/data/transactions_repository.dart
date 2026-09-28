@@ -39,6 +39,7 @@ class TransactionsRepository {
     TransactionType? type,
     String? from,
     String? to,
+    bool noWallet = false,
     int page = 1,
     int perPage = 20,
     String sort = 'date_desc',
@@ -52,6 +53,7 @@ class TransactionsRepository {
           'type': ?type?.toJson(),
           'from': ?from,
           'to': ?to,
+          if (noWallet) 'no_wallet': 'true',
           'page': page.toString(),
           'per_page': perPage.toString(),
           'sort': sort,
@@ -91,7 +93,7 @@ class TransactionsRepository {
   /// Phase 1 (BE rejects with `TRANSFER_CURRENCY_MISMATCH` otherwise).
   Future<TransactionMutationResult> create({
     required TransactionType type,
-    required String accountId,
+    String? accountId,
     required double amount,
     required String date,
     String? categoryId,
@@ -103,7 +105,7 @@ class TransactionsRepository {
     try {
       final body = <String, dynamic>{
         'type': type.toJson(),
-        'account_id': accountId,
+        'account_id': ?accountId,
         'amount': amount,
         'date': date,
         'category_id': ?categoryId,
@@ -139,6 +141,9 @@ class TransactionsRepository {
     bool clearCategory = false,
     String? note,
     bool clearNote = false,
+    String? accountId,
+    bool clearAccount = false,
+    String? transferToAccountId,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -154,6 +159,14 @@ class TransactionsRepository {
         body['note'] = note;
       } else if (clearNote) {
         body['note'] = null;
+      }
+      if (accountId != null) {
+        body['account_id'] = accountId;
+      } else if (clearAccount) {
+        body['account_id'] = null;
+      }
+      if (transferToAccountId != null) {
+        body['transfer_to_account_id'] = transferToAccountId;
       }
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/transactions/$id',

@@ -2078,6 +2078,18 @@ abstract class AppLocalizations {
   /// **'Saved. Add another below.'**
   String get transactionFormSavedAddedAnother;
 
+  /// No description provided for @transactionFormAccountNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallet'**
+  String get transactionFormAccountNone;
+
+  /// No description provided for @transactionFormMoveTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move wallets'**
+  String get transactionFormMoveTransferTitle;
+
   /// No description provided for @transactionFormAccountPickerTitle.
   ///
   /// In en, this message translates to:

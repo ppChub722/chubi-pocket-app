@@ -401,6 +401,8 @@
   "transactionFormSaveAndAddAnother": "Save & add another",
   "transactionFormSavedAddedAnother": "Saved. Add another below.",
 
+  "transactionFormAccountNone": "No wallet",
+  "transactionFormMoveTransferTitle": "Move wallets",
   "transactionFormAccountPickerTitle": "Pick a wallet",
   "transactionFormAccountPickerEmpty": "No active wallets. Create one first.",
 

@@ -74,6 +74,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     _lastType = null;
     _lastFrom = null;
     _lastTo = null;
+    _lastNoWallet = false;
     _lastSort = 'date_desc';
     _lastPerPage = 20;
     emit(const TransactionsState());
@@ -85,6 +86,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   TransactionsType? _lastType;
   String? _lastFrom;
   String? _lastTo;
+  bool _lastNoWallet = false;
   String _lastSort = 'date_desc';
   int _lastPerPage = 20;
 
@@ -96,6 +98,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     TransactionType? type,
     String? from,
     String? to,
+    bool noWallet = false,
     String sort = 'date_desc',
     int perPage = 20,
   }) async {
@@ -104,6 +107,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     _lastType = type == null ? null : TransactionsType._(type);
     _lastFrom = from;
     _lastTo = to;
+    _lastNoWallet = noWallet;
     _lastSort = sort;
     _lastPerPage = perPage;
 
@@ -118,6 +122,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         type: type,
         from: from,
         to: to,
+        noWallet: noWallet,
         page: 1,
         perPage: perPage,
         sort: sort,
@@ -163,6 +168,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         type: _lastType?.value,
         from: _lastFrom,
         to: _lastTo,
+        noWallet: _lastNoWallet,
         page: state.page + 1,
         perPage: _lastPerPage,
         sort: _lastSort,
@@ -195,7 +201,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   /// `account_balance_after` to update the [AccountsCubit] surgically.
   Future<TransactionMutationResult> add({
     required TransactionType type,
-    required String accountId,
+    String? accountId,
     required double amount,
     required String date,
     String? categoryId,
@@ -278,6 +284,9 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     bool clearCategory = false,
     String? note,
     bool clearNote = false,
+    String? accountId,
+    bool clearAccount = false,
+    String? transferToAccountId,
   }) async {
     final result = await _repo.update(
       id: id,
@@ -287,6 +296,9 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       clearCategory: clearCategory,
       note: note,
       clearNote: clearNote,
+      accountId: accountId,
+      clearAccount: clearAccount,
+      transferToAccountId: transferToAccountId,
     );
     final patched = _patch(state.transactions, result.rows);
     emit(state.copyWith(transactions: patched));
