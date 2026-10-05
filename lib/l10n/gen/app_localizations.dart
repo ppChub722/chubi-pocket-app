@@ -152,6 +152,24 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get commonClose;
 
+  /// No description provided for @commonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// No description provided for @commonLongPressToEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press to edit'**
+  String get commonLongPressToEdit;
+
+  /// No description provided for @commonSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get commonSearch;
+
   /// No description provided for @errorNetworkTitle.
   ///
   /// In en, this message translates to:
@@ -950,6 +968,90 @@ abstract class AppLocalizations {
   /// **'Crop (Phase 2)'**
   String get iconPickerCropComingSoon;
 
+  /// No description provided for @iconMakerRoleIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get iconMakerRoleIcon;
+
+  /// No description provided for @iconMakerRoleBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get iconMakerRoleBackground;
+
+  /// No description provided for @iconMakerRoleBorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Border'**
+  String get iconMakerRoleBorder;
+
+  /// No description provided for @iconMakerColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour'**
+  String get iconMakerColor;
+
+  /// No description provided for @iconMakerColorEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing colour'**
+  String get iconMakerColorEditing;
+
+  /// No description provided for @iconMakerColorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a colour below to change the selected slot'**
+  String get iconMakerColorHint;
+
+  /// No description provided for @iconMakerRecentCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent · Custom'**
+  String get iconMakerRecentCustom;
+
+  /// No description provided for @iconMakerThemeColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get iconMakerThemeColors;
+
+  /// No description provided for @iconMakerPresetColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset'**
+  String get iconMakerPresetColors;
+
+  /// No description provided for @iconMakerHex.
+  ///
+  /// In en, this message translates to:
+  /// **'Hex'**
+  String get iconMakerHex;
+
+  /// No description provided for @iconMakerReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get iconMakerReset;
+
+  /// No description provided for @iconMakerPresetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'preset'**
+  String get iconMakerPresetLabel;
+
+  /// No description provided for @colorPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a colour'**
+  String get colorPickerTitle;
+
+  /// No description provided for @colorPickerUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use colour'**
+  String get colorPickerUse;
+
   /// No description provided for @projectsPlaceholderTitle.
   ///
   /// In en, this message translates to:
@@ -1015,6 +1117,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contacts'**
   String get moreContacts;
+
+  /// No description provided for @contactsAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New contact'**
+  String get contactsAddNew;
+
+  /// No description provided for @contactsFilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get contactsFilterActive;
+
+  /// No description provided for @contactsFilterArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get contactsFilterArchived;
+
+  /// No description provided for @contactsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get contactsFilterAll;
+
+  /// No description provided for @contactsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet'**
+  String get contactsEmptyTitle;
+
+  /// No description provided for @contactsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'People you add appear here — link them to share transactions and debts.'**
+  String get contactsEmptyMessage;
 
   /// No description provided for @moreDebts.
   ///
@@ -1193,7 +1331,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryFormParentNone.
   ///
   /// In en, this message translates to:
-  /// **'(None — top level)'**
+  /// **'None'**
   String get categoryFormParentNone;
 
   /// No description provided for @categoryFormParentDepthHint.

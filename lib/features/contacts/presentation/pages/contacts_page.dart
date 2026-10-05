@@ -2,9 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/loading_view.dart';
+import '../../../../shared/widgets/pull_to_refresh.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
+import '../widgets/contacts_list_skeleton.dart';
 
 /// `/contacts` — list of the user's contacts.
 class ContactsPage extends StatefulWidget {
@@ -25,13 +32,15 @@ class _ContactsPageState extends State<ContactsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Contacts'),
+      appBar: AppTopBar(
+        title: l.moreContacts,
+        showBack: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'New contact',
+          AppBarAction(
+            icon: Icons.add,
+            tooltip: l.contactsAddNew,
             onPressed: () => context.push('/contacts/new'),
           ),
         ],
@@ -48,18 +57,22 @@ class _ContactsPageState extends State<ContactsPage> {
         builder: (ctx, state) {
           if (state.status == ContactsStatus.loading &&
               state.contacts.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const LoadingView(skeleton: ContactsListSkeleton());
           }
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xs),
                 child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'active', label: Text('Active')),
-                    ButtonSegment(value: 'archived', label: Text('Archived')),
-                    ButtonSegment(value: 'all', label: Text('All')),
+                  segments: [
+                    ButtonSegment(
+                        value: 'active', label: Text(l.contactsFilterActive)),
+                    ButtonSegment(
+                        value: 'archived',
+                        label: Text(l.contactsFilterArchived)),
+                    ButtonSegment(
+                        value: 'all', label: Text(l.contactsFilterAll)),
                   ],
                   selected: {state.statusFilter},
                   onSelectionChanged: (v) =>
@@ -68,10 +81,17 @@ class _ContactsPageState extends State<ContactsPage> {
               ),
               Expanded(
                 child: state.contacts.isEmpty
-                    ? const Center(child: Text('No contacts yet'))
-                    : RefreshIndicator(
+                    ? EmptyView(
+                        icon: Icons.people_outline,
+                        title: l.contactsEmptyTitle,
+                        message: l.contactsEmptyMessage,
+                      )
+                    : PullToRefresh(
                         onRefresh: () => ctx.read<ContactsCubit>().load(),
                         child: ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(
+                              bottom: AppSpacing.xxl),
                           itemCount: state.contacts.length,
                           separatorBuilder: (_, _) => const Divider(height: 1),
                           itemBuilder: (context, i) {

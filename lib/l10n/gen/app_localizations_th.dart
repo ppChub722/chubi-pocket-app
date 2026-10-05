@@ -36,6 +36,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonClose => 'ปิด';
 
   @override
+  String get commonEdit => 'แก้ไข';
+
+  @override
+  String get commonLongPressToEdit => 'แตะค้างเพื่อแก้ไข';
+
+  @override
+  String get commonSearch => 'ค้นหา';
+
+  @override
   String get errorNetworkTitle => 'ไม่มีการเชื่อมต่อ';
 
   @override
@@ -467,6 +476,48 @@ class AppLocalizationsTh extends AppLocalizations {
   String get iconPickerCropComingSoon => 'ครอป (เฟส 2)';
 
   @override
+  String get iconMakerRoleIcon => 'ไอคอน';
+
+  @override
+  String get iconMakerRoleBackground => 'พื้นหลัง';
+
+  @override
+  String get iconMakerRoleBorder => 'ขอบ';
+
+  @override
+  String get iconMakerColor => 'สี';
+
+  @override
+  String get iconMakerColorEditing => 'สีที่กำลังแก้';
+
+  @override
+  String get iconMakerColorHint => 'แตะจานสีด้านล่างเพื่อเปลี่ยนช่องที่เลือก';
+
+  @override
+  String get iconMakerRecentCustom => 'ล่าสุด · กำหนดเอง';
+
+  @override
+  String get iconMakerThemeColors => 'ตามธีม';
+
+  @override
+  String get iconMakerPresetColors => 'สำเร็จรูป';
+
+  @override
+  String get iconMakerHex => 'Hex';
+
+  @override
+  String get iconMakerReset => 'คืนค่าเริ่มต้น';
+
+  @override
+  String get iconMakerPresetLabel => 'พรีเซ็ต';
+
+  @override
+  String get colorPickerTitle => 'เลือกสี';
+
+  @override
+  String get colorPickerUse => 'ใช้สีนี้';
+
+  @override
   String get projectsPlaceholderTitle => 'ยังไม่มีโปรเจกต์';
 
   @override
@@ -498,6 +549,25 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreContacts => 'ผู้ติดต่อ';
+
+  @override
+  String get contactsAddNew => 'เพิ่มผู้ติดต่อ';
+
+  @override
+  String get contactsFilterActive => 'ใช้งาน';
+
+  @override
+  String get contactsFilterArchived => 'เก็บถาวร';
+
+  @override
+  String get contactsFilterAll => 'ทั้งหมด';
+
+  @override
+  String get contactsEmptyTitle => 'ยังไม่มีผู้ติดต่อ';
+
+  @override
+  String get contactsEmptyMessage =>
+      'คนที่คุณเพิ่มจะแสดงที่นี่ — เชื่อมเพื่อแชร์รายการและหนี้สินกันได้';
 
   @override
   String get moreDebts => 'หนี้สิน';
@@ -590,7 +660,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get categoryFormParentLabel => 'หมวดหลัก';
 
   @override
-  String get categoryFormParentNone => '(ไม่มี — ระดับบนสุด)';
+  String get categoryFormParentNone => 'ไม่มี';
 
   @override
   String get categoryFormParentDepthHint => 'หมวดหมู่ซ้อนกันได้สูงสุด 3 ระดับ';

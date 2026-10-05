@@ -50,37 +50,60 @@ class IconCodeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final ic = iconCode;
-    final iconData = IconRegistry.get(ic?.icon, fallback: fallbackIcon);
 
-    // null iconCode → fallback circle
+    // null iconCode → "no data" fallback circle + fallback glyph.
     if (ic == null) {
       return Container(
         width: size,
         height: size,
         decoration: BoxDecoration(shape: BoxShape.circle, color: fallbackColor),
-        child: Icon(iconData, size: size * 0.55, color: Colors.white),
+        child: Icon(
+          IconRegistry.get(null, fallback: fallbackIcon),
+          size: size * 0.55,
+          color: Colors.white,
+        ),
       );
     }
 
+    // An explicit `icon == null` means "no icon" — render no glyph at all
+    // (the bg/border, if any, still show). This is distinct from a null code.
+    final hasIcon = ic.icon != null;
     final hasBg = ic.background != null;
     final iconColor = ic.iconColors.isNotEmpty
         ? resolveColor(ic.iconColors.first, palette)
         : (hasBg ? palette.onPrimary : fallbackColor);
 
-    // null background → icon glyph only, no circle
+    Widget glyph(double s) => hasIcon
+        ? Icon(IconRegistry.get(ic.icon, fallback: fallbackIcon),
+            size: s, color: iconColor)
+        : const SizedBox.shrink();
+
+    // null background → glyph only (no fill). A border, if set, still renders
+    // as a ring around the glyph — it doesn't depend on the bg.
     if (!hasBg) {
-      return SizedBox(
+      final border = _buildBorder(ic, palette);
+      if (border == null) {
+        return SizedBox(
+          width: size,
+          height: size,
+          child: Center(child: glyph(size * 0.7)),
+        );
+      }
+      return Container(
         width: size,
         height: size,
-        child: Icon(iconData, size: size * 0.7, color: iconColor),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(shape: BoxShape.circle, border: border),
+        child: glyph(size * 0.55),
       );
     }
 
     return Container(
       width: size,
       height: size,
+      alignment: Alignment.center,
       decoration: _buildDecoration(ic, palette),
-      child: Icon(iconData, size: size * 0.55, color: iconColor),
+      child: glyph(size * 0.55),
     );
   }
 

@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "chubiPocket · web (phone · VPS)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-browser-flag=--window-size=412,915",
+        "--dart-define=API_BASE_URL=https://chubipocket-api.ppforge.dev/api/v1"
+      ]
+    },
+    {
+      "name": "chubiPocket · web (full · VPS)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define=API_BASE_URL=https://chubipocket-api.ppforge.dev/api/v1"
+      ]
+    }
+  ]
+}

@@ -81,9 +81,10 @@ class TagsCubit extends Cubit<TagsState> with Clearable {
     }
   }
 
-  Future<void> add(Tag draft) async {
+  Future<Tag> add(Tag draft) async {
     final created = await _repo.create(draft);
     emit(state.copyWith(tags: [...state.tags, created]));
+    return created;
   }
 
   Future<void> update(Tag tag) async {

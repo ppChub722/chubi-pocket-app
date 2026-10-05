@@ -15,7 +15,7 @@ import '../../features/accounts/presentation/pages/account_form_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
 import '../../features/accounts/presentation/pages/wallet_members_page.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
-import '../../features/categories/presentation/pages/category_form_page.dart';
+import '../../features/categories/presentation/pages/category_detail_page.dart';
 import '../../features/contacts/presentation/pages/contact_detail_page.dart';
 import '../../features/contacts/presentation/pages/contact_form_page.dart';
 import '../../features/contacts/presentation/pages/contacts_page.dart';
@@ -34,7 +34,6 @@ import '../../features/saving_goals/presentation/pages/saving_goals_list_page.da
 import '../../features/scheduled_transactions/presentation/pages/scheduled_transaction_detail_page.dart';
 import '../../features/scheduled_transactions/presentation/pages/scheduled_transaction_form_page.dart';
 import '../../features/scheduled_transactions/presentation/pages/scheduled_transactions_list_page.dart';
-import '../../features/tags/presentation/pages/tag_form_page.dart';
 import '../../features/tags/presentation/pages/tags_page.dart';
 import '../../features/transactions/presentation/pages/transaction_detail_page.dart';
 import '../../features/transactions/presentation/pages/transaction_form_page.dart';
@@ -70,11 +69,13 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 ///   off-root). "More"-menu features nest under the dashboard branch.
 /// - **Outside the shell** — `/auth/*` and `/dev/*` only.
 GoRouter buildAppRouter(AuthCubit authCubit) {
+  final rootNavigatorKey = GlobalKey<NavigatorState>();
   final dashboardNavigatorKey = GlobalKey<NavigatorState>();
   final transactionsNavigatorKey = GlobalKey<NavigatorState>();
   final accountsNavigatorKey = GlobalKey<NavigatorState>();
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     debugLogDiagnostics: kDebugMode,
     refreshListenable: _StreamToListenable(authCubit.stream),
@@ -310,32 +311,30 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                     name: 'categories',
                     builder: (context, state) => const CategoriesPage(),
                   ),
+                  // Create / edit a category is a single editable-detail
+                  // surface pushed ABOVE the shell (root navigator) so it
+                  // carries no bottom nav. Normal page push (not a
+                  // fullscreen dialog) — it reads as "a new page" with a
+                  // back button. See product/phase2/inline-edit-ux.md.
                   GoRoute(
                     path: 'categories/new',
                     name: 'category-new',
-                    builder: (context, state) => const CategoryFormPage(),
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => const CategoryDetailPage(),
                   ),
                   GoRoute(
-                    path: 'categories/:id/edit',
-                    name: 'category-edit',
-                    builder: (context, state) => CategoryFormPage(
+                    path: 'categories/:id',
+                    name: 'category-detail',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => CategoryDetailPage(
                         editingId: state.pathParameters['id']),
                   ),
+                  // Tags are managed inline on one page (name + icon only),
+                  // so there's no separate create/edit route.
                   GoRoute(
                     path: 'tags',
                     name: 'tags',
                     builder: (context, state) => const TagsPage(),
-                  ),
-                  GoRoute(
-                    path: 'tags/new',
-                    name: 'tag-new',
-                    builder: (context, state) => const TagFormPage(),
-                  ),
-                  GoRoute(
-                    path: 'tags/:id/edit',
-                    name: 'tag-edit',
-                    builder: (context, state) =>
-                        TagFormPage(editingId: state.pathParameters['id']),
                   ),
                   // Settings
                   GoRoute(

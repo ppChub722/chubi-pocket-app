@@ -13,7 +13,7 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
-import '../widgets/category_picker_sheet.dart';
+import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
 
 /// Global transactions list, routed at `/transactions` (entry point: the

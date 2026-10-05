@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../categories/domain/category.dart';
-import '../../../categories/domain/category_type.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
+import '../../domain/category.dart';
+import '../../domain/category_type.dart';
 
 /// Result returned by [showCategoryPickerSheet]. Distinct from `null`
-/// (which means "user dismissed without picking") — `clear` means
-/// "user explicitly chose Uncategorized".
+/// (which means "user dismissed without picking") — `cleared` means
+/// "user explicitly chose the None option".
 sealed class CategoryPickerResult {
   const CategoryPickerResult();
 }
@@ -23,26 +23,31 @@ class CategoryPickerCleared extends CategoryPickerResult {
   const CategoryPickerCleared();
 }
 
-/// Modal bottom sheet that shows the user's category tree filtered by
-/// [type], with all levels selectable and collapsible parents.
+/// Shared category-tree picker (bottom sheet). Shows the user's tree for
+/// [type] with collapsible parents; tap a row to select it.
 ///
-/// Behavior:
-/// - **Tap a row body** → select that level (parent or leaf, both fine).
-/// - **Tap the chevron** → toggle expand/collapse, no selection change.
-/// - **"Uncategorized" first row** → clears the category (only when
-///   [allowNone] is true; transfers don't see this).
-/// - System categories are filtered out — they're auto-assigned by the
-///   server for transfers and shouldn't surface in pickers.
+/// Reusable across features via arguments:
+/// - [maxDepth] — deepest level (0-based: L1=0, L2=1, L3=2) that is shown
+///   **and** selectable. Quick-create picks any of 3 levels (`maxDepth: 2`);
+///   the category-parent picker only allows L1/L2 (`maxDepth: 1`) because a
+///   child of the picked parent must stay within 3 levels.
+/// - [excludeIds] — rows (and their whole subtree) to hide. The parent
+///   picker passes the edited category + its descendants so you can't pick
+///   yourself or create a cycle.
+/// - [allowNone] / [noneLabel] — show a "None" row (clear / top-level).
+/// - [title] — sheet heading.
 ///
-/// Default expansion: only L1 (no parent) categories show; L2/L3 are
-/// hidden until the user expands the parent. Expansion state is local
-/// to the sheet — closing and reopening resets it.
+/// System categories are always filtered out (server auto-assigns them).
 Future<CategoryPickerResult?> showCategoryPickerSheet({
   required BuildContext context,
   required List<Category> categories,
   required CategoryType type,
   Category? selected,
   bool allowNone = true,
+  String? title,
+  String? noneLabel,
+  int maxDepth = 2,
+  Set<String> excludeIds = const <String>{},
 }) {
   return showModalBottomSheet<CategoryPickerResult>(
     context: context,
@@ -54,6 +59,10 @@ Future<CategoryPickerResult?> showCategoryPickerSheet({
       type: type,
       selected: selected,
       allowNone: allowNone,
+      title: title,
+      noneLabel: noneLabel,
+      maxDepth: maxDepth,
+      excludeIds: excludeIds,
     ),
   );
 }
@@ -64,22 +73,27 @@ class _CategoryPickerBody extends StatefulWidget {
     required this.type,
     required this.selected,
     required this.allowNone,
+    required this.title,
+    required this.noneLabel,
+    required this.maxDepth,
+    required this.excludeIds,
   });
 
   final List<Category> categories;
   final CategoryType type;
   final Category? selected;
   final bool allowNone;
+  final String? title;
+  final String? noneLabel;
+  final int maxDepth;
+  final Set<String> excludeIds;
 
   @override
   State<_CategoryPickerBody> createState() => _CategoryPickerBodyState();
 }
 
 class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
-  /// Ids whose subtree is currently expanded. L1 is implicitly always
-  /// rendered — this set tracks expanded **L2 and L3 ancestors**.
-  /// Keeping it explicit rather than a per-row bool avoids stateful
-  /// widgets per row.
+  /// Ids whose subtree is currently expanded.
   final Set<String> _expanded = <String>{};
 
   @override
@@ -88,7 +102,10 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
     final scheme = Theme.of(context).colorScheme;
 
     final pool = widget.categories
-        .where((c) => !c.isSystem && c.type == widget.type)
+        .where((c) =>
+            !c.isSystem &&
+            c.type == widget.type &&
+            !widget.excludeIds.contains(c.id))
         .toList();
     final roots = pool.where((c) => c.parentId == null).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
@@ -96,6 +113,7 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
     final rows = <Widget>[];
     if (widget.allowNone) {
       rows.add(_NoneRow(
+        label: widget.noneLabel ?? l.transactionFormCategoryPickerNoneOption,
         selected: widget.selected == null,
         onTap: () => Navigator.of(context).pop(const CategoryPickerCleared()),
       ));
@@ -114,7 +132,7 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
             padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
             child: Text(
-              l.transactionFormCategoryPickerTitle,
+              widget.title ?? l.transactionFormCategoryPickerTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
@@ -149,7 +167,9 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
   }) {
     final children = pool.where((c) => c.parentId == category.id).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final hasChildren = children.isNotEmpty;
+    // Children past [maxDepth] are neither shown nor expandable.
+    final canDescend = depth < widget.maxDepth;
+    final hasChildren = children.isNotEmpty && canDescend;
     final isExpanded = _expanded.contains(category.id);
 
     out.add(_CategoryRow(
@@ -204,7 +224,6 @@ class _CategoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -216,11 +235,10 @@ class _CategoryRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor:
-                  category.iconCode?.bgColorFor(palette) ?? scheme.outline,
-              child: Icon(IconRegistry.get(category.iconCode?.icon, fallback: Icons.category_outlined), color: Colors.white, size: 16),
+            IconDisplay(
+              type: IconType.category,
+              size: 32,
+              iconCode: category.iconCode,
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -251,18 +269,22 @@ class _CategoryRow extends StatelessWidget {
 }
 
 class _NoneRow extends StatelessWidget {
-  const _NoneRow({required this.selected, required this.onTap});
+  const _NoneRow({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
+  final String label;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     return ListTile(
       leading: Icon(Icons.label_off_outlined, color: scheme.onSurfaceVariant),
-      title: Text(l.transactionFormCategoryPickerNoneOption),
+      title: Text(label),
       trailing: selected ? Icon(Icons.check, color: scheme.primary) : null,
       onTap: onTap,
     );

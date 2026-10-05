@@ -11,7 +11,7 @@ import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../transactions/presentation/widgets/category_picker_sheet.dart';
+import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../domain/budget.dart';
 import '../../domain/budget_period.dart';
 import '../../domain/budget_scope.dart';

@@ -5,14 +5,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/shell/main_bottom_nav.dart';
-import '../../../../app/shell/more_menu_sheet.dart';
-import '../../../transactions/presentation/pages/transaction_form_page.dart';
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/shell_chrome.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/loading_view.dart';
+import '../../../../shared/widgets/pull_to_refresh.dart';
 import '../../../../shared/widgets/reorder_action_bar.dart';
+import '../widgets/categories_list_skeleton.dart';
 import '../../../../shared/widgets/reorder_drop_line.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
@@ -62,12 +64,20 @@ class CategoriesPage extends StatefulWidget {
 
 class _CategoriesPageState extends State<CategoriesPage> {
   bool _reorderMode = false;
+
+  /// Which type's tree the list is showing — toggled by the top tab bar.
+  CategoryType _listType = CategoryType.expense;
   List<Category>? _staged;
   bool _dirty = false;
   bool _savingReorder = false;
 
   static const int _inModeUndoLimit = 5;
   final List<List<Category>> _inModeUndoStack = [];
+
+  /// Shell chrome controller — lets reorder mode hide the shell's bottom
+  /// nav so the [ReorderActionBar] replaces it instead of stacking under
+  /// it. Grabbed in [didChangeDependencies].
+  ShellChromeController? _shellChrome;
 
   /// Set of parent ids whose children are hidden in the list. Persists
   /// across mode switches so the user's collapse choices survive.
@@ -103,7 +113,16 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _shellChrome = ShellChrome.of(context);
+  }
+
+  @override
   void dispose() {
+    // Safety net: if we somehow leave while reorder mode is still active,
+    // restore the shell's chrome so the nav doesn't stay hidden.
+    if (_reorderMode) _shellChrome?.show();
     _hover.dispose();
     _scrollController.dispose();
     _autoScrollTimer?.cancel();
@@ -114,6 +133,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   void _enterReorder(List<Category> current) {
     HapticFeedback.lightImpact();
+    _shellChrome?.hide(); // action bar replaces the shell nav
     setState(() {
       _reorderMode = true;
       _staged = List<Category>.from(current);
@@ -123,6 +143,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 
   void _cancelReorder() {
+    _shellChrome?.show(); // restore the shell nav
     setState(() {
       _reorderMode = false;
       _staged = null;
@@ -433,6 +454,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
         final all = state.categories;
         final source = _reorderMode ? (_staged ?? all) : all;
         final users = source.where((c) => !c.isSystem).toList();
+        final typeUsers =
+            users.where((c) => c.type == _listType).toList();
         final isLoading = state.status == CategoriesStatus.loading &&
             all.isEmpty;
         return PopScope(
@@ -442,50 +465,44 @@ class _CategoriesPageState extends State<CategoriesPage> {
             if (_reorderMode) _cancelReorder();
           },
           child: Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                tooltip: _reorderMode
-                    ? l.categoriesReorderCancel
-                    : l.commonBack,
-                onPressed: () {
-                  if (_reorderMode) {
-                    _cancelReorder();
-                  } else {
-                    context.pop();
-                  }
-                },
-              ),
-              title: Text(l.categoriesTitle),
+            appBar: AppTopBar(
+              title: l.categoriesTitle,
+              showBack: true,
+              onBack: _reorderMode ? _cancelReorder : null,
               actions: _reorderMode
-                  ? const []
-                  : _buildBrowseActions(context, l),
+                  ? const <AppBarAction>[]
+                  : _browseActions(context, l),
             ),
             body: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : users.isEmpty
-                    ? EmptyView(
-                        icon: Icons.category_outlined,
-                        title: l.categoriesEmptyTitle,
-                        message: l.categoriesEmptyMessage,
-                      )
-                    : _ListBody(
-                    users: users,
-                    reorderMode: _reorderMode,
-                    collapsedIds: _collapsedIds,
-                    draggedRootId: _draggedRoot?.id,
-                    draggedDescendantIds: _draggedDescendantIds,
-                    dragsAsBlock: _dragsAsBlock,
-                    hover: _hover,
-                    scrollController: _scrollController,
-                    onLongPressEnter: () => _enterReorder(all),
-                    onToggleCollapse: _toggleCollapse,
-                    onDragStarted: _onDragStarted,
-                    onDragEnded: _onDragEnded,
-                    onPointerOverRow: _onPointerOverRow,
-                    onPointerLeftAllRows: _onPointerLeftAllRows,
-                    onCommit: _commitFromHover,
+                ? const LoadingView(skeleton: CategoriesListSkeleton())
+                : Column(
+                    children: [
+                      _TypeTabBar(
+                        selected: _listType,
+                        onChanged: (t) => setState(() => _listType = t),
+                      ),
+                      Expanded(
+                        child: typeUsers.isEmpty
+                            ? EmptyView(
+                                icon: Icons.category_outlined,
+                                title: l.categoriesEmptyTitle,
+                                message: l.categoriesEmptyMessage,
+                              )
+                            : _reorderMode
+                                ? _buildListBody(typeUsers, all)
+                                : PullToRefresh(
+                                    onRefresh: () => context
+                                        .read<CategoriesCubit>()
+                                        .load(),
+                                    child: _buildListBody(typeUsers, all),
+                                  ),
+                      ),
+                    ],
                   ),
+            // Browse mode: no bottom bar of our own — the shell's
+            // MainBottomNav shows through. Reorder mode: our action bar
+            // replaces the shell nav (we call ShellChrome.hide on entry),
+            // so it's the only bar on screen.
             bottomNavigationBar: _reorderMode
                 ? ReorderActionBar(
                     canUndo: _inModeUndoStack.isNotEmpty && !_savingReorder,
@@ -497,57 +514,46 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     onUndo: _undoLastDrag,
                     onSave: _saveReorder,
                   )
-                : MainBottomNav(
-                    currentIndex: -1,
-                    onTabSelected: (i) {
-                      switch (i) {
-                        case 0:
-                          context.go('/');
-                        case 1:
-                          context.go('/transactions');
-                        case 2:
-                          context.go('/accounts');
-                      }
-                    },
-                    onAddPressed: () => showTransactionFormSheet(context),
-                    onMorePressed: () => MoreMenuSheet.show(context),
-                  ),
-            floatingActionButton: _reorderMode
-                ? null
-                : FloatingActionButton(
-                    tooltip: l.navAddTransaction,
-                    onPressed: () => showTransactionFormSheet(context),
-                    shape: const CircleBorder(),
-                    child: const Icon(Icons.add),
-                  ),
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerDocked,
+                : null,
           ),
         );
       },
     );
   }
 
-  List<Widget> _buildBrowseActions(
-      BuildContext context, AppLocalizations l) {
+  Widget _buildListBody(List<Category> users, List<Category> all) {
+    return _ListBody(
+      users: users,
+      type: _listType,
+      reorderMode: _reorderMode,
+      collapsedIds: _collapsedIds,
+      draggedRootId: _draggedRoot?.id,
+      draggedDescendantIds: _draggedDescendantIds,
+      dragsAsBlock: _dragsAsBlock,
+      hover: _hover,
+      scrollController: _scrollController,
+      onLongPressEnter: () => _enterReorder(all),
+      onToggleCollapse: _toggleCollapse,
+      onDragStarted: _onDragStarted,
+      onDragEnded: _onDragEnded,
+      onPointerOverRow: _onPointerOverRow,
+      onPointerLeftAllRows: _onPointerLeftAllRows,
+      onCommit: _commitFromHover,
+    );
+  }
+
+  List<AppBarAction> _browseActions(BuildContext context, AppLocalizations l) {
     final cubit = context.read<CategoriesCubit>();
     return [
-      AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
-        transitionBuilder: (child, anim) =>
-            FadeTransition(opacity: anim, child: child),
-        child: cubit.canUndo
-            ? IconButton(
-                key: const ValueKey('undo'),
-                tooltip: l.categoriesUndo,
-                icon: const Icon(Icons.undo),
-                onPressed: cubit.undo,
-              )
-            : const SizedBox.shrink(key: ValueKey('no-undo')),
-      ),
-      IconButton(
+      if (cubit.canUndo)
+        AppBarAction(
+          icon: Icons.undo,
+          tooltip: l.categoriesUndo,
+          onPressed: cubit.undo,
+        ),
+      AppBarAction(
+        icon: Icons.add,
         tooltip: l.categoriesAddNew,
-        icon: const Icon(Icons.add),
         onPressed: () {
           if (!cubit.canAddMore) {
             ScaffoldMessenger.of(context)
@@ -608,6 +614,7 @@ class _HoverState {
 class _ListBody extends StatelessWidget {
   const _ListBody({
     required this.users,
+    required this.type,
     required this.reorderMode,
     required this.collapsedIds,
     required this.draggedRootId,
@@ -625,6 +632,10 @@ class _ListBody extends StatelessWidget {
   });
 
   final List<Category> users;
+
+  /// The single type this list renders (driven by the top tab bar).
+  final CategoryType type;
+
   final bool reorderMode;
 
   final Set<String> collapsedIds;
@@ -663,30 +674,18 @@ class _ListBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final expense = users
-        .where((c) => c.type == CategoryType.expense && c.parentId == null)
-        .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final income = users
-        .where((c) => c.type == CategoryType.income && c.parentId == null)
+    final roots = users
+        .where((c) => c.type == type && c.parentId == null)
         .toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
     return ListView(
       controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       children: [
-        _SectionHeader(label: l.categoriesSectionExpense),
-        if (reorderMode)
-          _TopOfSectionLine(type: CategoryType.expense, hover: hover),
-        for (final parent in expense)
-          ..._renderSubtree(parent, depth: 0),
-        const SizedBox(height: AppSpacing.lg),
-        _SectionHeader(label: l.categoriesSectionIncome),
-        if (reorderMode)
-          _TopOfSectionLine(type: CategoryType.income, hover: hover),
-        for (final c in income) ..._renderSubtree(c, depth: 0),
+        if (reorderMode) _TopOfSectionLine(type: type, hover: hover),
+        for (final parent in roots) ..._renderSubtree(parent, depth: 0),
         const SizedBox(height: 96),
       ],
     );
@@ -946,7 +945,7 @@ class _RowContent extends StatelessWidget {
         ),
         onTap: reorderMode
             ? null
-            : () => context.push('/categories/${category.id}/edit'),
+            : () => context.push('/categories/${category.id}'),
       ),
     );
   }
@@ -1108,28 +1107,64 @@ class _DragProxy extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Section header
+// Type tab bar — รายจ่าย | รายรับ, under the app bar. Filters the list to
+// one type at a time.
 // ────────────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.label});
-  final String label;
+class _TypeTabBar extends StatelessWidget {
+  const _TypeTabBar({required this.selected, required this.onChanged});
+
+  final CategoryType selected;
+  final ValueChanged<CategoryType> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.sm,
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
       ),
-      child: Text(
-        label.toUpperCase(),
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              letterSpacing: 0.5,
+      child: Row(
+        children: [
+          _tab(context, scheme, CategoryType.expense, l.categoryTypeExpense),
+          _tab(context, scheme, CategoryType.income, l.categoryTypeIncome),
+        ],
+      ),
+    );
+  }
+
+  Widget _tab(
+    BuildContext context,
+    ColorScheme scheme,
+    CategoryType t,
+    String label,
+  ) {
+    final active = t == selected;
+    return Expanded(
+      child: InkWell(
+        onTap: () => onChanged(t),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color:
+                          active ? scheme.primary : scheme.onSurfaceVariant,
+                      fontWeight:
+                          active ? FontWeight.w700 : FontWeight.w400,
+                    ),
+              ),
             ),
+            Container(
+              height: 2.5,
+              color: active ? scheme.primary : Colors.transparent,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../l10n/gen/app_localizations.dart';
 import 'main_bottom_nav.dart';
 import 'main_top_bar.dart';
 import 'more_menu_sheet.dart';
+import 'shell_chrome.dart';
 
 /// App chrome shared by every authed screen.
 ///
@@ -16,7 +17,12 @@ import 'more_menu_sheet.dart';
 /// - **Deeper pages** (`/accounts/:id`, `/projects`, `/settings`, ...) —
 ///   bottom nav only; the page supplies its own [Scaffold] + [AppBar]
 ///   with a back button, and the shell FAB stays out of the way.
-class MainShell extends StatelessWidget {
+///
+/// A page can also **take over the bottom chrome** via [ShellChrome]: when
+/// it calls [ShellChromeController.hide] (e.g. categories' reorder mode),
+/// the shell drops its bottom nav + FAB so the page's own contextual
+/// action bar replaces them instead of stacking under them.
+class MainShell extends StatefulWidget {
   const MainShell({
     required this.navigationShell,
     required this.currentPath,
@@ -30,44 +36,74 @@ class MainShell extends StatelessWidget {
   /// Current location path — drives the root-vs-deep chrome switch.
   final String currentPath;
 
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  final ShellChromeController _chrome = ShellChromeController();
+
   static const _branchRoots = {'/', '/transactions', '/accounts'};
 
   @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final atRoot = _branchRoots.contains(currentPath);
+  void dispose() {
+    _chrome.dispose();
+    super.dispose();
+  }
 
-    final bottomNav = MainBottomNav(
-      currentIndex: navigationShell.currentIndex,
-      onTabSelected: (i) => navigationShell.goBranch(
-        i,
-        // Re-tapping the active tab pops to the branch root, matching the
-        // behaviour users expect from native bottom nav.
-        initialLocation: i == navigationShell.currentIndex,
+  @override
+  Widget build(BuildContext context) {
+    return ShellChrome(
+      controller: _chrome,
+      // Only the chrome (nav + FAB) needs to rebuild when a page toggles
+      // the controller — the branch content underneath is untouched.
+      child: ListenableBuilder(
+        listenable: _chrome,
+        builder: (context, _) => _buildScaffold(context),
       ),
-      onAddPressed: () => showTransactionFormSheet(context),
-      onMorePressed: () => MoreMenuSheet.show(context),
     );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final atRoot = _branchRoots.contains(widget.currentPath);
+    final hidden = _chrome.hidden;
+
+    final bottomNav = hidden
+        ? null
+        : MainBottomNav(
+            currentIndex: widget.navigationShell.currentIndex,
+            onTabSelected: (i) => widget.navigationShell.goBranch(
+              i,
+              // Re-tapping the active tab pops to the branch root, matching
+              // the behaviour users expect from native bottom nav.
+              initialLocation: i == widget.navigationShell.currentIndex,
+            ),
+            onAddPressed: () => showTransactionFormSheet(context),
+            onMorePressed: () => MoreMenuSheet.show(context),
+          );
 
     if (!atRoot) {
       // Deep page: it brings its own app bar; keep only the bottom nav.
       return Scaffold(
-        body: navigationShell,
+        body: widget.navigationShell,
         bottomNavigationBar: bottomNav,
       );
     }
 
     return Scaffold(
-      appBar: MainTopBar(title: _titleFor(l, navigationShell.currentIndex)),
-      body: navigationShell,
+      appBar: MainTopBar(title: _titleFor(l, widget.navigationShell.currentIndex)),
+      body: widget.navigationShell,
       // Quick create event-from-bills lives INSIDE the + sheet as a
       // collapsible section (spec §10/4.24) — no second FAB.
-      floatingActionButton: FloatingActionButton(
-        tooltip: l.navAddTransaction,
-        onPressed: () => showTransactionFormSheet(context),
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: hidden
+          ? null
+          : FloatingActionButton(
+              tooltip: l.navAddTransaction,
+              onPressed: () => showTransactionFormSheet(context),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: bottomNav,
     );
@@ -85,5 +121,4 @@ class MainShell extends StatelessWidget {
         return l.appName;
     }
   }
-
 }

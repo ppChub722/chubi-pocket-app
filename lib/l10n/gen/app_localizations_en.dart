@@ -36,6 +36,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClose => 'Close';
 
   @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String get commonLongPressToEdit => 'Long-press to edit';
+
+  @override
+  String get commonSearch => 'Search';
+
+  @override
   String get errorNetworkTitle => 'No connection';
 
   @override
@@ -472,6 +481,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iconPickerCropComingSoon => 'Crop (Phase 2)';
 
   @override
+  String get iconMakerRoleIcon => 'Icon';
+
+  @override
+  String get iconMakerRoleBackground => 'Background';
+
+  @override
+  String get iconMakerRoleBorder => 'Border';
+
+  @override
+  String get iconMakerColor => 'Colour';
+
+  @override
+  String get iconMakerColorEditing => 'Editing colour';
+
+  @override
+  String get iconMakerColorHint =>
+      'Tap a colour below to change the selected slot';
+
+  @override
+  String get iconMakerRecentCustom => 'Recent · Custom';
+
+  @override
+  String get iconMakerThemeColors => 'Theme';
+
+  @override
+  String get iconMakerPresetColors => 'Preset';
+
+  @override
+  String get iconMakerHex => 'Hex';
+
+  @override
+  String get iconMakerReset => 'Reset to default';
+
+  @override
+  String get iconMakerPresetLabel => 'preset';
+
+  @override
+  String get colorPickerTitle => 'Pick a colour';
+
+  @override
+  String get colorPickerUse => 'Use colour';
+
+  @override
   String get projectsPlaceholderTitle => 'No projects yet';
 
   @override
@@ -503,6 +555,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreContacts => 'Contacts';
+
+  @override
+  String get contactsAddNew => 'New contact';
+
+  @override
+  String get contactsFilterActive => 'Active';
+
+  @override
+  String get contactsFilterArchived => 'Archived';
+
+  @override
+  String get contactsFilterAll => 'All';
+
+  @override
+  String get contactsEmptyTitle => 'No contacts yet';
+
+  @override
+  String get contactsEmptyMessage =>
+      'People you add appear here — link them to share transactions and debts.';
 
   @override
   String get moreDebts => 'Debts';
@@ -596,7 +667,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryFormParentLabel => 'Parent';
 
   @override
-  String get categoryFormParentNone => '(None — top level)';
+  String get categoryFormParentNone => 'None';
 
   @override
   String get categoryFormParentDepthHint =>
