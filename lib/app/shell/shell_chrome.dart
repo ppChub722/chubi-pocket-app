@@ -29,6 +29,46 @@ class ShellChromeController extends ChangeNotifier {
   }
 }
 
+/// Hides the shell's bottom nav + FAB for as long as [child] is on screen —
+/// wrap whole-page forms with it (app rule: forms are edit mode). Pages
+/// with an in-place edit mode toggle the controller themselves instead.
+class ShellChromeHider extends StatefulWidget {
+  const ShellChromeHider({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  State<ShellChromeHider> createState() => _ShellChromeHiderState();
+}
+
+class _ShellChromeHiderState extends State<ShellChromeHider> {
+  ShellChromeController? _controller;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_controller != null) return;
+    final element =
+        context.getElementForInheritedWidgetOfExactType<ShellChrome>();
+    final controller = (element?.widget as ShellChrome?)?.notifier;
+    if (controller == null) return; // outside the shell (overlay, tests)
+    _controller = controller;
+    // Defer: hiding notifies the shell, which must not rebuild mid-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) controller.hide();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.show();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
 /// Provides the shell's [ShellChromeController] to descendant pages.
 class ShellChrome extends InheritedNotifier<ShellChromeController> {
   const ShellChrome({

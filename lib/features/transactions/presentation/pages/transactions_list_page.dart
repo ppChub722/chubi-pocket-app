@@ -180,14 +180,9 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    // Tab root: the shell renders the AppTopBar ("รายการ"), so no app bar
+    // here (it used to stack a second "← รายการทั้งหมด" bar under it).
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        title: Text(l.transactionsListTitle),
-      ),
       body: Column(
         children: [
           _FilterBar(

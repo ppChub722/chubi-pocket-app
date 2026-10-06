@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/shell_chrome.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -1147,10 +1148,12 @@ class _TxTreeTile extends StatelessWidget {
                   final updated = await Navigator.push<bool>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ProjectTransactionEditPage(
-                        projectId: projectId,
-                        tree: tree,
-                        members: members,
+                      builder: (_) => ShellChromeHider(
+                        child: ProjectTransactionEditPage(
+                          projectId: projectId,
+                          tree: tree,
+                          members: members,
+                        ),
                       ),
                     ),
                   );

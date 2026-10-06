@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/secret_tap.dart';
 import '../cubit/auth_cubit.dart';
 
 /// Login form. Generic 401 message on bad credentials (no field-level reveal —
@@ -41,7 +42,13 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(l.authLoginTitle)),
+      appBar: AppBar(
+        // Hidden dev entrance: tap the title 5× → /dev (works logged out).
+        title: SecretTapDetector(
+          onUnlock: () => context.push('/dev'),
+          child: Text(l.authLoginTitle),
+        ),
+      ),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final isSubmitting = state is AuthLoading;

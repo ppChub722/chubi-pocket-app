@@ -14,6 +14,13 @@ class DevHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = <_DevEntry>[
       _DevEntry(
+        title: 'Widget gallery',
+        subtitle:
+            'Shared UI kit — buttons, inputs, chips, sheets, detail rows, edit mode',
+        route: '/dev/widgets',
+        icon: Icons.widgets_outlined,
+      ),
+      _DevEntry(
         title: 'Theme preview',
         subtitle: 'Theme registry, locale, font, color swatches, formatters',
         route: '/dev/theme-preview',

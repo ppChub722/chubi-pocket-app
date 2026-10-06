@@ -10,6 +10,9 @@ import 'icon_code_widget.dart';
 import 'icon_type.dart';
 import 'packs/icon_pack.dart';
 import 'packs/pack_registry.dart';
+import 'icon_shape.dart';
+import '../widgets/dashed_rect_border.dart';
+import '../widgets/ui.dart';
 
 /// Return type from [showIconMakerSheet].
 sealed class IconMakerResult {
@@ -37,22 +40,33 @@ Future<IconMakerResult?> showIconMakerSheet({
   IconCode? initial,
   Widget? previewSubtitle,
   Widget Function(IconCode)? previewBuilder,
+  // Sheet heading — name the thing ("ไอคอนกระเป๋า") or the bulk job
+  // ("เปลี่ยนสี 3 แท็ก"). Defaults to the localized "ไอคอน".
+  String? title,
   // Kept for call-site compatibility; not used in the new tap-to-focus UI.
   String? iconSectionLabel,
   String? colorSectionLabel,
   String? useThisLabel,
+  // Non-null enables "ใช้ไอคอนเริ่มต้นของแอป" in the ⋯ menu (returns
+  // [IconMakerRemoved]). The menu shows the localized label.
   String? removeLabel,
   bool showColorSection = true,
   // Granular section visibility. Defaults keep the full editor (no change
   // for existing callers). Set these for single-attribute pickers, e.g.
   // bulk recolour (showIconPicker: false) or bulk re-icon (showColorPicker:
   // false), and hide bg/border for icon-tint types like tags.
+  // Layer visibility — which of the three elements (icon / background /
+  // border) the user can edit. Any non-empty combination works; hidden
+  // layers keep their current value in the result. See [IconMakerLayers].
+  bool showIcon = true,
   bool showBackground = true,
   bool showBorder = true,
   bool showIconPicker = true,
   bool showColorPicker = true,
   List<String> grantedPackIds = const [],
 }) {
+  assert(showIcon || showBackground || showBorder,
+      'showIconMakerSheet needs at least one editable layer.');
   final packs = PackRegistry.packs(type: type, grantedPackIds: grantedPackIds);
   final isWide = MediaQuery.sizeOf(context).width >= 600;
   final body = _Sheet(
@@ -61,8 +75,10 @@ Future<IconMakerResult?> showIconMakerSheet({
     initial: initial,
     previewBuilder: previewBuilder,
     previewSubtitle: previewSubtitle,
+    title: title,
     useThisLabel: useThisLabel,
     removeLabel: removeLabel,
+    showIcon: showIcon,
     showBackground: showBackground,
     showBorder: showBorder,
     showIconPicker: showIconPicker,
@@ -76,18 +92,51 @@ Future<IconMakerResult?> showIconMakerSheet({
         insetPadding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680),
-          child: body,
+          constraints: const BoxConstraints(maxWidth: 680, maxHeight: 720),
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.lg),
+            child: body,
+          ),
         ),
       ),
     );
   }
+  // Fixed height (not content-sized) so switching tabs / layers never makes
+  // the sheet jump. Root navigator → it covers the shell's nav + FAB.
   return showModalBottomSheet<IconMakerResult>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => body,
+    useSafeArea: true,
+    useRootNavigator: true,
+    builder: (ctx) => SizedBox(
+      height: MediaQuery.sizeOf(ctx).height * 0.88,
+      child: body,
+    ),
   );
+}
+
+/// The seven layer combinations of [showIconMakerSheet] — pass
+/// `layers.icon / .background / .border` as `showIcon / showBackground /
+/// showBorder`.
+enum IconMakerLayers {
+  all(icon: true, background: true, border: true),
+  iconBackground(icon: true, background: true, border: false),
+  iconBorder(icon: true, background: false, border: true),
+  backgroundBorder(icon: false, background: true, border: true),
+  iconOnly(icon: true, background: false, border: false),
+  backgroundOnly(icon: false, background: true, border: false),
+  borderOnly(icon: false, background: false, border: true);
+
+  const IconMakerLayers({
+    required this.icon,
+    required this.background,
+    required this.border,
+  });
+
+  final bool icon;
+  final bool background;
+  final bool border;
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -103,6 +152,7 @@ class _Snapshot {
     required this.bgColors,
     required this.borderId,
     required this.borderColors,
+    required this.shape,
   });
 
   final String? iconId;
@@ -111,7 +161,11 @@ class _Snapshot {
   final List<String> bgColors;
   final String? borderId;
   final List<String> borderColors;
+  final String? shape;
 }
+
+/// The two pickers inside the sheet.
+enum _Tab { style, color }
 
 // ─── Sheet widget ─────────────────────────────────────────────────────────────
 
@@ -124,6 +178,8 @@ class _Sheet extends StatefulWidget {
     required this.previewSubtitle,
     required this.useThisLabel,
     required this.removeLabel,
+    this.title,
+    this.showIcon = true,
     this.showBackground = true,
     this.showBorder = true,
     this.showIconPicker = true,
@@ -137,6 +193,8 @@ class _Sheet extends StatefulWidget {
   final Widget? previewSubtitle;
   final String? useThisLabel;
   final String? removeLabel;
+  final String? title;
+  final bool showIcon;
   final bool showBackground;
   final bool showBorder;
   final bool showIconPicker;
@@ -144,7 +202,18 @@ class _Sheet extends StatefulWidget {
 
   /// True only in the full editor (every section visible).
   bool get isFull =>
-      showBackground && showBorder && showIconPicker && showColorPicker;
+      showIcon &&
+      showBackground &&
+      showBorder &&
+      showIconPicker &&
+      showColorPicker;
+
+  /// Editable layers, in display order.
+  List<_Role> get roles => [
+        if (showIcon) _Role.icon,
+        if (showBackground) _Role.background,
+        if (showBorder) _Role.border,
+      ];
 
   @override
   State<_Sheet> createState() => _SheetState();
@@ -158,6 +227,21 @@ class _SheetState extends State<_Sheet> {
   late List<String> _bgColors;
   String? _borderId;
   late List<String> _borderColors;
+  String? _shape; // IconShape name; null = circle
+
+  // Last non-null asset per layer — "ไม่มี" hides a layer but remembers it,
+  // so picking a shape with no background brings the old one back.
+  final Map<_Role, String> _lastIds = {};
+
+  // UI state
+  _Tab _tab = _Tab.style;
+  String _query = '';
+  String? _packFilter; // null = all packs
+  bool _compactPreview = false;
+  final ScrollController _scroll = ScrollController();
+  final TextEditingController _hexCtl = TextEditingController();
+  final FocusNode _hexFocus = FocusNode();
+  bool _hexInvalid = false;
 
   // Picker focus state
   _Role? _focusedRole;   // which element the colour picker edits
@@ -284,6 +368,7 @@ class _SheetState extends State<_Sheet> {
       bgColors: List.of(_bgColors),
       borderId: _borderId,
       borderColors: List.of(_borderColors),
+      shape: _shape,
     ));
     if (_undoStack.length > _undoLimit) _undoStack.removeAt(0);
   }
@@ -299,6 +384,7 @@ class _SheetState extends State<_Sheet> {
       _bgColors = s.bgColors;
       _borderId = s.borderId;
       _borderColors = s.borderColors;
+      _shape = s.shape;
     });
   }
 
@@ -309,6 +395,7 @@ class _SheetState extends State<_Sheet> {
         bgColors: _effectiveColors(_Role.background),
         border: _borderId,
         borderColors: _effectiveColors(_Role.border),
+        shape: _shape,
       );
 
   // ── Initialisation ───────────────────────────────────────────────────────
@@ -317,10 +404,24 @@ class _SheetState extends State<_Sheet> {
   void initState() {
     super.initState();
     _init(widget.initial);
-    // Both picker halves are shown side by side, so always start focused on
-    // the icon role — the split picker then shows its assets + colors at once.
-    _focusedRole = _Role.icon;
+    // Both picker halves are shown side by side, so start focused on the
+    // first editable layer — the split picker then shows its assets + colors.
+    _focusedRole = widget.roles.first;
     _focusedSlotIndex = 0;
+    if (!widget.showIconPicker) _tab = _Tab.color;
+    // Short screens: once the picker scrolls, the preview shrinks to one size.
+    _scroll.addListener(() {
+      final compact = _scroll.offset > 24;
+      if (compact != _compactPreview) setState(() => _compactPreview = compact);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    _hexCtl.dispose();
+    _hexFocus.dispose();
+    super.dispose();
   }
 
   void _init(IconCode? ic) {
@@ -333,6 +434,7 @@ class _SheetState extends State<_Sheet> {
     _iconId = ic == null ? firstIconId : ic.icon;
     _bgId = ic == null ? allBgs.firstOrNull?.id : ic.background;
     _borderId = ic?.border;
+    _shape = ic?.shape;
 
     // Right = chosen colours, by slot index. Start from the saved code only;
     // any slot left empty renders with the asset's own default (see
@@ -352,31 +454,24 @@ class _SheetState extends State<_Sheet> {
     });
   }
 
-  void _openColorPicker(_Role role, int slotIndex) {
-    setState(() {
-      _focusedRole = role;
-      _focusedSlotIndex = slotIndex;
-    });
-  }
-
   /// Selecting an asset only changes which asset is used — it never touches
   /// the role's colour array. The chosen colours stay put; any slot the new
   /// asset adds beyond them falls back to that asset's default at render time
-  /// (see [_reflectColors]). Clearing to "none" ([newId] == null) drops the
-  /// colours since there's nothing to colour.
+  /// (see [_reflectColors]). "ไม่มี" ([newId] == null) hides the layer but
+  /// keeps its colours (and [_lastIds] remembers the asset), so picking any
+  /// asset again brings the previous look back.
   void _selectAsset(_Role role, String? newId) {
     _pushSnapshot();
     setState(() {
+      final prev = _assetId(role);
+      if (newId == null && prev != null) _lastIds[role] = prev;
       switch (role) {
         case _Role.icon:
           _iconId = newId;
-          if (newId == null) _iconColors = [];
         case _Role.background:
           _bgId = newId;
-          if (newId == null) _bgColors = [];
         case _Role.border:
           _borderId = newId;
-          if (newId == null) _borderColors = [];
       }
       // Keep the focused slot in range for the new asset.
       final slots = _effectiveColors(role).length;
@@ -403,7 +498,7 @@ class _SheetState extends State<_Sheet> {
       if (isCustom) {
         _recentColors.remove(spec);
         _recentColors.insert(0, spec);
-        if (_recentColors.length > 6) _recentColors.removeLast();
+        if (_recentColors.length > 5) _recentColors.removeLast();
       }
     });
   }
@@ -428,482 +523,284 @@ class _SheetState extends State<_Sheet> {
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
+  //
+  // Layout (product/phase2/ux-overhaul-plan.md §3.5, mockup v7):
+  //   header (title + ⋯) · preview 72/40/24 · layer switcher (≥2 layers)
+  //   · tabs รูปแบบ|สี (only when both pickers allowed) · scrolling body
+  //   · ModeActionBar (ยกเลิก · ↶ · ใช้รูปนี้)
+
+  _Role get _role => _focusedRole ?? widget.roles.first;
+
+  String? _assetId(_Role role) => switch (role) {
+        _Role.icon => _iconId,
+        _Role.background => _bgId,
+        _Role.border => _borderId,
+      };
+
+  /// Which picker is showing — forced when the caller allows only one.
+  _Tab get _activeTab => !widget.showIconPicker
+      ? _Tab.color
+      : (!widget.showColorPicker ? _Tab.style : _tab);
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final showTabs = widget.showIconPicker && widget.showColorPicker;
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.lg,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildLivePreview(context),
-            const SizedBox(height: AppSpacing.md),
-            _buildEditorStrip(context),
-            const SizedBox(height: AppSpacing.md),
-            const Divider(height: 1),
-            const SizedBox(height: AppSpacing.md),
-            _buildPickerSection(context),
-            const SizedBox(height: AppSpacing.md),
-            _buildActions(context, l),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLivePreview(BuildContext context) {
-    final code = _current;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.previewBuilder != null)
-          widget.previewBuilder!(code)
-        else
-          Center(child: IconCodeWidget(iconCode: code, size: 80)),
-        if (widget.previewSubtitle != null) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Center(child: widget.previewSubtitle!),
-        ],
-      ],
-    );
-  }
-
-  /// The three role editors (icon / background / border) laid out horizontally
-  /// as cards, so it reads at a glance which element you're editing. Only the
-  /// roles enabled for this sheet are shown.
-  Widget _buildEditorStrip(BuildContext context) {
-    final roles = <_Role>[
-      _Role.icon,
-      if (widget.showBackground) _Role.background,
-      if (widget.showBorder) _Role.border,
-    ];
-    // IntrinsicHeight gives the Row a bounded cross-axis extent so the cards
-    // can stretch to equal height — plain stretch inside the vertically
-    // scrolling sheet would have an unbounded height and assert.
-    return IntrinsicHeight(
-      child: Row(
+      top: false,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (int i = 0; i < roles.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.sm),
-            Expanded(child: _buildEditorCard(context, roles[i])),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEditorCard(BuildContext context, _Role role) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final isActive = _focusedRole == role;
-    final label = _roleLabel(AppLocalizations.of(context)!, role);
-
-    final VoidCallback? onTap = widget.showIconPicker
-        ? () => _openAssetPicker(role)
-        : (widget.showColorPicker ? () => _openColorPicker(role, 0) : null);
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-        decoration: BoxDecoration(
-          color: isActive
-              ? scheme.primaryContainer.withValues(alpha: 0.35)
-              : scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isActive ? scheme.primary : scheme.outlineVariant,
-            width: isActive ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildEditorMiniPreview(role, 48),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: textTheme.labelMedium?.copyWith(
-                color: isActive ? scheme.primary : scheme.onSurfaceVariant,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          _buildHeader(context, l),
+          _buildPreview(context),
+          if (widget.roles.length > 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: _buildLayerSwitcher(context, l),
+            ),
+          if (showTabs)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+              child: AppTabBar<_Tab>(
+                selected: _tab,
+                onChanged: (t) => setState(() => _tab = t),
+                tabs: [
+                  AppTab(value: _Tab.style, label: l.iconMakerTabStyle),
+                  AppTab(value: _Tab.color, label: l.iconMakerTabColor),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditorMiniPreview(_Role role, double size) {
-    final code = _current;
-    switch (role) {
-      case _Role.icon:
-        if (code.icon == null) return _NullCircle(size: size);
-        return SizedBox(
-          width: size,
-          height: size,
-          child: Center(
-            child: IconCodeWidget(
-              iconCode: IconCode(icon: code.icon, iconColors: code.iconColors),
-              size: size * 0.7,
-              fallbackColor: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        );
-      case _Role.background:
-        if (code.background == null) return _NullCircle(size: size);
-        return SizedBox(
-          width: size,
-          height: size,
-          child: _BgPreview(iconCode: code, size: size),
-        );
-      case _Role.border:
-        if (code.border == null || code.borderColors.isEmpty) {
-          return _NullCircle(size: size);
-        }
-        return SizedBox(
-          width: size,
-          height: size,
-          child: _BorderPreview(iconCode: code, size: size),
-        );
-    }
-  }
-
-  // ── Picker section ────────────────────────────────────────────────────────
-
-  /// Split picker: left = asset (icon/bg/border designs), right = colors for
-  /// the focused role. The colour tray on the right slides open/closed as the
-  /// selected item gains/loses editable colour slots; the asset side fills the
-  /// freed space. In single-attribute modes only the relevant half is shown.
-  Widget _buildPickerSection(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final role = _focusedRole ?? _Role.icon;
-    final showAsset = widget.showIconPicker;
-    // The colour tray only makes sense when the current item exposes editable
-    // colour slots — a fixed/preset asset (or "none") collapses it.
-    final hasColor =
-        widget.showColorPicker && _effectiveColors(role).isNotEmpty;
-
-    // Colour-only mode (no asset side).
-    if (!showAsset) {
-      return hasColor
-          ? _buildColorPicker(context, role, columns: 4)
-          : const SizedBox.shrink();
-    }
-    // Asset-only sheet (colours never editable) — plain full-width grid.
-    if (!widget.showColorPicker) {
-      return _buildAssetPicker(context, role, columns: 6);
-    }
-
-    // Fixed 50/50 split. When the current item has no editable colours the
-    // right tray is simply hidden — its layout slot stays, so the asset side
-    // doesn't reflow (no slide, no column change).
-    return SizedBox(
-      height: 300,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
           Expanded(
             child: SingleChildScrollView(
-              child: _buildAssetPicker(context, role, columns: 3),
+              controller: _scroll,
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+              child: _activeTab == _Tab.style
+                  ? _buildStyleTab(context, l)
+                  : _buildColorTab(context, l),
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Container(width: 1, color: scheme.outlineVariant),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: hasColor
-                ? SingleChildScrollView(
-                    child: _buildColorPicker(context, role, columns: 4),
-                  )
-                : const SizedBox.shrink(),
+          const Divider(height: 1),
+          ModeActionBar(
+            canSave: true,
+            canUndo: _undoStack.isNotEmpty,
+            undoTooltip: l.commonUndo,
+            cancelLabel: l.commonCancel,
+            saveLabel: widget.useThisLabel ?? l.iconPickerUseThis,
+            onCancel: () => Navigator.of(context).pop<IconMakerResult>(null),
+            onUndo: _undo,
+            onSave: () => Navigator.of(context)
+                .pop<IconMakerResult>(IconMakerSelected(_current)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildColorPicker(BuildContext context, _Role role,
-      {required int columns}) {
-    final scheme = Theme.of(context).colorScheme;
-    final l = AppLocalizations.of(context)!;
-    // Effective colours = chosen, padded to the asset's slot count with its
-    // defaults. This drives the slot selector + ✓ marks.
-    final colors = _effectiveColors(role);
-    final total = colors.length;
-    // Clamp — role may have fewer slots than the last focused one.
-    final slot = _focusedSlotIndex.clamp(0, total > 0 ? total - 1 : 0);
+  // ── Header + preview ─────────────────────────────────────────────────────
 
-    Widget cell(String? spec, {bool themeBadge = false}) {
-      if (spec == null) return const SizedBox.shrink();
-      return Center(
-        child: _ColorCircle(
-          spec: spec,
-          size: 42,
-          isSelected: _isCurrentSlotSpec(colors, spec),
-          showThemeBadge: themeBadge,
-          onTap: () => _applyColor(spec, isCustom: false),
-        ),
+  Widget _buildHeader(BuildContext context, AppLocalizations l) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl, 0, AppSpacing.sm, AppSpacing.xs),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              widget.title ?? l.iconMakerTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_horiz),
+            onSelected: (v) async {
+              if (v == 'reset') {
+                final ok = await showConfirmDialog(
+                  context,
+                  title: l.iconMakerResetConfirmTitle,
+                  message: l.iconMakerResetConfirmBody,
+                  confirmLabel: l.iconMakerReset,
+                  destructive: true,
+                );
+                if (ok && mounted) _resetToDefault();
+              } else if (v == 'default' && context.mounted) {
+                Navigator.of(context)
+                    .pop<IconMakerResult>(const IconMakerRemoved());
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'reset',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.restart_alt),
+                  title: Text(l.iconMakerReset),
+                ),
+              ),
+              if (widget.removeLabel != null)
+                PopupMenuItem(
+                  value: 'default',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.hide_image_outlined),
+                    title: Text(l.iconMakerUseDefault),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreview(BuildContext context) {
+    final code = _current;
+    final Widget main;
+    if (widget.previewBuilder != null) {
+      main = widget.previewBuilder!(code);
+    } else {
+      // 72 header · 40 list row · 24 chip — collapses to one size once the
+      // picker scrolls (short screens).
+      final sizes = _compactPreview ? const [44.0] : const [72.0, 40.0, 24.0];
+      main = Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (var i = 0; i < sizes.length; i++) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.xl),
+            IconCodeWidget(iconCode: code, size: sizes[i]),
+          ],
+        ],
       );
     }
-
-    // Faint outlined circle for an as-yet-unused recent slot.
-    Widget emptySlot() => Center(
-          child: Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: scheme.outlineVariant.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-        );
-
-    Widget sectionLabel(String text) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.xs, top: 2),
-          child: Text(
-            text,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: scheme.outline),
-          ),
-        );
-
-    // A grid of swatches laid out in rows of [columns] — plain Column/Row so
-    // it nests cleanly inside the scroll view (no GridView measuring quirks).
-    Widget grid(List<String> specs, {bool themeBadge = false}) {
-      final rows = <Widget>[];
-      for (var i = 0; i < specs.length; i += columns) {
-        final end = (i + columns) < specs.length ? i + columns : specs.length;
-        final rowSpecs = specs.sublist(i, end);
-        rows.add(Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Row(
-            children: [
-              for (var j = 0; j < columns; j++) ...[
-                if (j > 0) const SizedBox(width: 6),
-                Expanded(
-                  child: j < rowSpecs.length
-                      ? cell(rowSpecs[j], themeBadge: themeBadge)
-                      : const SizedBox.shrink(),
-                ),
-              ],
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 180),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            main,
+            if (widget.previewSubtitle != null && !_compactPreview) ...[
+              const SizedBox(height: AppSpacing.xs),
+              widget.previewSubtitle!,
             ],
-          ),
-        ));
-      }
-      return Column(mainAxisSize: MainAxisSize.min, children: rows);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // The colour currently being edited — centred, with a clear divider
-        // separating it from the palette of choices below.
-        if (total >= 1) ...[
-          Center(
-            child: Text(
-              total > 1 ? l.iconMakerColorEditing : l.iconMakerColor,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.outline,
-                  ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Center(
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.xs,
-              children: [
-                for (int i = 0; i < total; i++)
-                  _SlotSwatch(
-                    spec: colors[i],
-                    isFocused: slot == i,
-                    size: 40,
-                    onTap: () => setState(() => _focusedSlotIndex = i),
-                  ),
-              ],
-            ),
-          ),
-          if (total > 1) ...[
-            const SizedBox(height: 2),
-            Center(
-              child: Text(
-                l.iconMakerColorHint,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: scheme.outline),
-              ),
-            ),
           ],
-          const SizedBox(height: AppSpacing.sm),
-          Divider(height: 1, color: scheme.outlineVariant),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-        sectionLabel(l.iconMakerRecentCustom),
-        // Top row: two most-recent custom colours + a custom-hex button that
-        // spans the last two of the four columns.
-        SizedBox(
-          height: 48,
-          child: Row(
-            children: [
-              Expanded(
-                child: _recentColors.isNotEmpty
-                    ? cell(_recentColors[0])
-                    : emptySlot(),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _recentColors.length > 1
-                    ? cell(_recentColors[1])
-                    : emptySlot(),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                flex: 2,
-                child: InkWell(
-                  onTap: _pickCustomHex,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: scheme.outlineVariant),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.colorize_outlined,
-                            size: 16, color: scheme.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Text(l.iconMakerHex,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(color: scheme.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        sectionLabel(l.iconMakerThemeColors),
-        grid(_themeRowSpecs, themeBadge: true),
-        const SizedBox(height: AppSpacing.xs),
-        sectionLabel(l.iconMakerPresetColors),
-        grid(_commonRowSpecs),
-      ],
-    );
-  }
-
-  Widget _buildAssetPicker(BuildContext context, _Role role,
-      {required int columns}) {
-    final label = _roleLabel(AppLocalizations.of(context)!, role);
-    // Every element — icon included — can be set to "none".
-    const canBeNull = true;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        for (int pi = 0; pi < widget.packs.length; pi++) ...[
-          if (pi > 0) ...[
-            const SizedBox(height: AppSpacing.sm),
-            _PackDivider(packId: widget.packs[pi].id),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-          _buildPackTiles(
-              context, role, widget.packs[pi], pi == 0 && canBeNull, columns),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildPackTiles(BuildContext context, _Role role, IconPack pack,
-      bool withNull, int crossAxisCount) {
-    final code = _current;
-    final items = switch (role) {
-      _Role.icon => pack.icons,
-      _Role.background => pack.backgrounds,
-      _Role.border => pack.borders,
-    };
-
-    final currentId = switch (role) {
-      _Role.icon => _iconId,
-      _Role.background => _bgId,
-      _Role.border => _borderId,
-    };
-
-    // Build tile list: optional null tile first, then pack items
-    final children = <Widget>[
-      if (withNull)
-        _AssetTile(
-          preview: _NullCircle(size: 44),
-          dots: const [],
-          isSelected: currentId == null,
-          onTap: () => _selectAsset(role, null),
-          isNull: true,
-        ),
-      for (final item in items)
-        _AssetTile(
-          preview: _buildTilePreview(role, item, code, 44),
-          dots: _reflectColors(role, item),
-          isSelected: currentId == item.id,
-          onTap: () => _selectAsset(role, item.id),
-          isNull: false,
-        ),
-    ];
-
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: AppSpacing.sm,
-        mainAxisSpacing: AppSpacing.xs,
-        // Fixed row height (not width-derived) so wide cells don't balloon
-        // into tall empty tiles — enough for the 44 preview + its selection
-        // ring/padding + the dots/label row below.
-        mainAxisExtent: 74,
       ),
-      children: children,
     );
   }
 
-  /// A neutral tile background guaranteed to contrast with [fg], so a glyph
-  /// tinted the same as (or near) the sheet surface never disappears while
-  /// browsing. Picks whichever of a dark/light neutral has the higher WCAG
-  /// contrast ratio against the icon colour. Picker tiles only — the live
-  /// preview at the top always shows the real composition.
+  // ── Layer switcher ────────────────────────────────────────────────────────
+
+  Widget _buildLayerSwitcher(BuildContext context, AppLocalizations l) {
+    final scheme = Theme.of(context).colorScheme;
+    final roles = widget.roles;
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < roles.length; i++) ...[
+            if (i > 0) const SizedBox(width: 3),
+            Expanded(child: _layerSegment(context, l, roles[i])),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _layerSegment(BuildContext context, AppLocalizations l, _Role role) {
+    final scheme = Theme.of(context).colorScheme;
+    final active = _role == role;
+    final off = _assetId(role) == null;
+    return Material(
+      color: active ? scheme.primary.withValues(alpha: 0.12) : Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(11),
+        side: active
+            ? BorderSide(color: scheme.primary, width: 1.5)
+            : BorderSide.none,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _openAssetPicker(role),
+        child: SizedBox(
+          height: 44,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: off
+                    ? Icon(Icons.block, size: 18, color: scheme.onSurfaceVariant)
+                    : _layerMini(role, 20),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Flexible(
+                child: Text(
+                  _roleLabel(l, role),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: active ? scheme.primary : null,
+                        fontWeight: active ? FontWeight.w600 : null,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tiny render of one layer alone (layer switcher dots).
+  Widget _layerMini(_Role role, double size) {
+    final code = _current;
+    return switch (role) {
+      _Role.icon => _onContrast(
+          IconCode(icon: code.icon, iconColors: code.iconColors), size),
+      _Role.background => IconCodeWidget(
+          iconCode: IconCode(
+              background: code.background,
+              bgColors: code.bgColors,
+              shape: code.shape),
+          size: size),
+      _Role.border => IconCodeWidget(
+          iconCode: IconCode(
+              border: code.border,
+              borderColors: code.borderColors,
+              shape: code.shape),
+          size: size),
+    };
+  }
+
+  /// A glyph-only code on an auto-contrast disc, so an icon tinted like the
+  /// sheet surface (e.g. white "on icon") never disappears in a tile.
+  Widget _onContrast(IconCode glyph, double size) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final fg = glyph.iconColors.isNotEmpty
+        ? resolveColor(glyph.iconColors.first, palette)
+        : Theme.of(context).colorScheme.primary;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration:
+          BoxDecoration(shape: BoxShape.circle, color: _contrastTileBg(fg)),
+      child: IconCodeWidget(iconCode: glyph, size: size * 0.66),
+    );
+  }
+
+  /// A neutral tile background guaranteed to contrast with [fg] (WCAG ratio).
   Color _contrastTileBg(Color fg) {
     const dark = Color(0xFF1F2430);
     const light = Color(0xFFEFF2F7);
@@ -918,92 +815,403 @@ class _SheetState extends State<_Sheet> {
     return ratio(fg, dark) >= ratio(fg, light) ? dark : light;
   }
 
-  Widget _buildTilePreview(
-      _Role role, IconPackItem item, IconCode current, double size) {
-    switch (role) {
-      case _Role.icon:
-        // Show the glyph alone on an auto-contrast disc — the tile is for
-        // choosing the shape, not previewing the final background/border.
-        final palette = Theme.of(context).extension<AppColors>()!;
-        final fg = current.iconColors.isNotEmpty
-            ? resolveColor(current.iconColors.first, palette)
-            : Theme.of(context).colorScheme.primary;
-        final glyphCode =
-            IconCode(icon: item.id, iconColors: current.iconColors);
-        return Container(
-          width: size,
-          height: size,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _contrastTileBg(fg),
-          ),
-          child: IconCodeWidget(iconCode: glyphCode, size: size * 0.62),
-        );
+  // ── Style tab ─────────────────────────────────────────────────────────────
 
-      case _Role.background:
-        // Reflect the currently-selected colour on every tile, keeping the
-        // item's own slot count.
-        final previewCode = current.copyWith(
-          background: item.id,
-          bgColors: _reflectColors(_Role.background, item),
-        );
-        return _BgPreview(iconCode: previewCode, size: size);
+  Widget _section(String text) => Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+      );
 
-      case _Role.border:
-        final previewCode = current.copyWith(
-          border: item.id,
-          borderColors: _reflectColors(_Role.border, item),
-        );
-        return _BorderPreview(iconCode: previewCode, size: size);
+  Widget _buildStyleTab(BuildContext context, AppLocalizations l) {
+    final role = _role;
+    final children = <Widget>[];
+
+    if (role == _Role.icon) {
+      children.add(AppSearchBar(
+        padding: EdgeInsets.zero,
+        hint: l.iconMakerSearchHint,
+        onChanged: (q) => setState(() => _query = q),
+      ));
     }
+    // Pack chips only when there's more than one pack (base + DLC).
+    if (widget.packs.length > 1) {
+      children.add(Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
+        child: Wrap(
+          spacing: AppSpacing.sm,
+          children: [
+            ChoiceChip(
+              label: Text(l.transactionsRangeAll),
+              selected: _packFilter == null,
+              onSelected: (_) => setState(() => _packFilter = null),
+            ),
+            for (final p in widget.packs)
+              ChoiceChip(
+                label: Text(p.id),
+                selected: _packFilter == p.id,
+                onSelected: (_) => setState(() => _packFilter = p.id),
+              ),
+          ],
+        ),
+      ));
+    }
+
+    if (role == _Role.background) {
+      // Background = shape × pattern.
+      children.add(_section(l.iconMakerShape));
+      children.add(_grid([
+        for (final s in IconShape.values)
+          _StyleTile(
+            selected: IconShape.fromId(_shape) == s,
+            preview: IconCodeWidget(
+              iconCode: _current.copyWith(shape: s.name),
+              size: 40,
+            ),
+            label: s.label(l),
+            onTap: () => _selectShape(s),
+          ),
+      ], withLabels: true));
+      children.add(_section(l.iconMakerPattern));
+    } else {
+      children.add(const SizedBox(height: AppSpacing.md));
+    }
+
+    final q = _query.trim().toLowerCase();
+    final filtering = role == _Role.icon && q.isNotEmpty;
+    final items = [
+      for (final p in widget.packs)
+        if (_packFilter == null || p.id == _packFilter)
+          ...switch (role) {
+            _Role.icon => p.icons,
+            _Role.background => p.backgrounds,
+            _Role.border => p.borders,
+          },
+    ].where((i) => !filtering || i.id.toLowerCase().contains(q)).toList();
+
+    if (items.isEmpty && filtering) {
+      children.add(Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+        child: Text(
+          l.iconMakerNoMatch(_query.trim()),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+      ));
+    } else {
+      final currentId = _assetId(role);
+      children.add(_grid([
+        // "ไม่มี" first — hides the layer, remembers its look.
+        if (!filtering && _packFilter == null)
+          _StyleTile(
+            selected: currentId == null,
+            preview: Icon(Icons.block,
+                size: 28, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            dots: const [],
+            onTap: () => _selectAsset(role, null),
+          ),
+        for (final item in items)
+          _StyleTile(
+            selected: currentId == item.id,
+            preview: _tilePreview(role, item),
+            dots: _reflectColors(role, item),
+            onTap: () => _selectAsset(role, item.id),
+          ),
+      ]));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: children,
+    );
+  }
+
+  /// Picking a shape with no background brings back the last one (or the
+  /// first available) — a shape alone has nothing to show.
+  void _selectShape(IconShape s) {
+    _pushSnapshot();
+    setState(() {
+      _shape = s == IconShape.circle ? null : s.name;
+      _bgId ??= _lastIds[_Role.background] ??
+          _allItems(_Role.background).firstOrNull?.id;
+    });
+  }
+
+  /// Tile = the whole icon with this item swapped in, in the colours the user
+  /// has chosen, so they see the result before tapping.
+  Widget _tilePreview(_Role role, IconPackItem item) {
+    final colors = _reflectColors(role, item);
+    final code = switch (role) {
+      _Role.icon => _current.copyWith(icon: item.id, iconColors: colors),
+      _Role.background =>
+        _current.copyWith(background: item.id, bgColors: colors),
+      _Role.border => _current.copyWith(border: item.id, borderColors: colors),
+    };
+    if (code.background == null && role == _Role.icon) {
+      return _onContrast(code, 40);
+    }
+    return IconCodeWidget(iconCode: code, size: 40);
+  }
+
+  /// 6-column grid; row height follows the column width.
+  Widget _grid(List<Widget> tiles, {bool withLabels = false}) {
+    return LayoutBuilder(builder: (context, c) {
+      const cols = 6;
+      const gap = 6.0;
+      final w = (c.maxWidth - gap * (cols - 1)) / cols;
+      return GridView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: cols,
+          crossAxisSpacing: gap,
+          mainAxisSpacing: gap,
+          mainAxisExtent: w + (withLabels ? 18 : 12),
+        ),
+        children: tiles,
+      );
+    });
+  }
+
+  // ── Colour tab ────────────────────────────────────────────────────────────
+
+  String _hexOf(String spec) {
+    final c = resolveColor(spec, Theme.of(context).extension<AppColors>()!);
+    return '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+  }
+
+  Widget _buildColorTab(BuildContext context, AppLocalizations l) {
+    final role = _role;
+    final colors = _effectiveColors(role);
+    final off = _assetId(role) == null;
+    final editable = !off && colors.isNotEmpty;
+    final slot = editable ? _focusedSlotIndex.clamp(0, colors.length - 1) : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildSlotRow(context, l, role, colors, off, slot),
+        LockedInEdit(
+          locked: !editable,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _section(l.iconMakerThemeColors),
+              _swatchRow([
+                for (final s in _themeRowSpecs) _swatch(s, colors),
+              ]),
+              _section(l.iconMakerCommonColors),
+              _swatchRow([
+                for (final s in _commonRowSpecs) _swatch(s, colors),
+              ]),
+              _section(l.iconMakerCustomColors),
+              _swatchRow([
+                _pickerButton(l),
+                for (var i = 0; i < 5; i++)
+                  i < _recentColors.length
+                      ? _swatch(_recentColors[i], colors)
+                      : const _EmptySwatch(),
+              ]),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Top row: the current art's colour slots (tap = choose which to edit,
+  /// hex under each) | hex field for the focused slot + reset-to-default.
+  Widget _buildSlotRow(BuildContext context, AppLocalizations l, _Role role,
+      List<String> colors, bool off, int slot) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final Widget content;
+    if (off || colors.isEmpty) {
+      content = Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        child: Text(
+          off ? l.iconMakerLayerOff(_roleLabel(l, role)) : l.iconMakerNotRecolorable,
+          style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+      );
+    } else {
+      final current = _hexOf(colors[slot]);
+      if (!_hexFocus.hasFocus) {
+        _hexCtl.text = current;
+        _hexInvalid = false;
+      }
+      final item = _findItem(role, _assetId(role)!);
+      final def = (item != null && slot < item.colors.length)
+          ? item.colors[slot]
+          : null;
+      content = Row(
+        children: [
+          for (var i = 0; i < colors.length; i++) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.md),
+            InkWell(
+              onTap: () => setState(() => _focusedSlotIndex = i),
+              borderRadius: BorderRadius.circular(12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SelectableFrame(
+                    selected: i == slot,
+                    radius: 18,
+                    gap: 2,
+                    child: _Dot(spec: colors[i], size: 36),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _hexOf(colors[i]),
+                    style: textTheme.labelSmall?.copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      color: i == slot ? scheme.primary : scheme.onSurfaceVariant,
+                      fontWeight: i == slot ? FontWeight.w600 : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const Spacer(),
+          SizedBox(
+            width: 104,
+            child: TextField(
+              controller: _hexCtl,
+              focusNode: _hexFocus,
+              maxLength: 7,
+              textCapitalization: TextCapitalization.characters,
+              style: textTheme.bodyMedium
+                  ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+              decoration: InputDecoration(
+                isDense: true,
+                counterText: '',
+                filled: true,
+                fillColor: scheme.surface,
+                hintText: '#RRGGBB',
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm, vertical: 10),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                      color: _hexInvalid ? scheme.error : scheme.outlineVariant),
+                ),
+              ),
+              onChanged: (_) {
+                if (_hexInvalid) setState(() => _hexInvalid = false);
+              },
+              onSubmitted: (_) => _commitHex(current),
+              onTapOutside: (_) {
+                if (_hexFocus.hasFocus) {
+                  _commitHex(current);
+                  _hexFocus.unfocus();
+                }
+              },
+            ),
+          ),
+          IconButton(
+            tooltip: l.iconMakerResetSlot,
+            onPressed: def == null || _hexOf(def) == current
+                ? null
+                : () => _applyColor(def, isCustom: false),
+            icon: const Icon(Icons.restart_alt),
+          ),
+        ],
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: content,
+    );
+  }
+
+  /// Applies a typed/pasted hex to the focused slot (also lands in Recent).
+  void _commitHex(String current) {
+    final raw = _hexCtl.text.trim().toUpperCase();
+    final v = raw.startsWith('#') ? raw : '#$raw';
+    if (!RegExp(r'^#[0-9A-F]{6}$').hasMatch(v)) {
+      setState(() => _hexInvalid = true);
+      return;
+    }
+    if (v == current) return;
+    _applyColor(v, isCustom: true);
+  }
+
+  Widget _swatchRow(List<Widget> cells) => Row(
+        children: [
+          for (var i = 0; i < cells.length; i++) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.sm),
+            Expanded(child: AspectRatio(aspectRatio: 1, child: cells[i])),
+          ],
+        ],
+      );
+
+  Widget _swatch(String spec, List<String> colors) {
+    return LayoutBuilder(builder: (context, c) {
+      final d = c.maxWidth;
+      return InkResponse(
+        onTap: () => _applyColor(spec, isCustom: false),
+        radius: d / 2,
+        child: SelectableFrame(
+          selected: _isCurrentSlotSpec(colors, spec),
+          radius: d / 2,
+          gap: 2,
+          child: _Dot(spec: spec, size: double.infinity),
+        ),
+      );
+    });
+  }
+
+  Widget _pickerButton(AppLocalizations l) {
+    final scheme = Theme.of(context).colorScheme;
+    return LayoutBuilder(builder: (context, c) {
+      final d = c.maxWidth;
+      return Tooltip(
+        message: l.iconMakerPickColor,
+        child: InkResponse(
+          onTap: _pickCustomHex,
+          radius: d / 2,
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: DashedRectBorder(
+              color: scheme.primary,
+              borderRadius: Radius.circular(d / 2),
+              child: Center(
+                child: Icon(Icons.colorize_outlined,
+                    size: d * 0.4, color: scheme.primary),
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
   /// Reset every element back to the type's defaults (first icon + its default
-  /// colours, default background, no border). Undoable via the snapshot stack.
+  /// colours, default background, no border, circle). Undoable.
   void _resetToDefault() {
     _pushSnapshot();
     setState(() {
       _init(null);
-      _focusedRole = _Role.icon;
+      _focusedRole = widget.roles.first;
       _focusedSlotIndex = 0;
     });
-  }
-
-  Widget _buildActions(BuildContext context, AppLocalizations l) {
-    return Row(
-      children: [
-        // Undo — visible only when there's something to undo (cap _undoLimit).
-        if (_undoStack.isNotEmpty)
-          IconButton(
-            tooltip: 'Undo (${_undoStack.length})',
-            onPressed: _undo,
-            icon: const Icon(Icons.undo),
-          ),
-        IconButton(
-          tooltip: l.iconMakerReset,
-          onPressed: _resetToDefault,
-          icon: const Icon(Icons.restart_alt),
-        ),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => Navigator.of(context).pop<IconMakerResult>(null),
-            child: Text(l.commonCancel),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: FilledButton(
-            onPressed: () => Navigator.of(context)
-                .pop<IconMakerResult>(IconMakerSelected(_current)),
-            child: Text(widget.useThisLabel ?? l.iconPickerUseThis),
-          ),
-        ),
-      ],
-    );
   }
 }
 
@@ -1047,339 +1255,123 @@ Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
 
 // ─── Small helper widgets ─────────────────────────────────────────────────────
 
-class _SlotSwatch extends StatelessWidget {
-  const _SlotSwatch({
-    required this.spec,
-    required this.isFocused,
-    required this.onTap,
-    this.size = 24,
-  });
+/// A filled colour circle with a hairline outline (light colours on light
+/// surfaces stay visible).
+class _Dot extends StatelessWidget {
+  const _Dot({required this.spec, required this.size});
 
   final String spec;
-  final bool isFocused;
-  final VoidCallback onTap;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: resolveColor(spec, palette),
-          // Focus marked by a primary ring — border grows inward so the
-          // overall size never changes.
-          border: Border.all(
-            color: isFocused ? scheme.primary : scheme.outlineVariant,
-            width: isFocused ? 2.5 : 1,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ColorCircle extends StatelessWidget {
-  const _ColorCircle({
-    required this.spec,
-    required this.isSelected,
-    required this.onTap,
-    this.showThemeBadge = false,
-    this.size = 36,
-  });
-
-  final String spec;
-  final bool isSelected;
-  final bool showThemeBadge;
-  final VoidCallback onTap;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final color = resolveColor(spec, palette);
-    // Pick a contrasting check colour: white on dark fills, black on light.
-    final checkColor = color.computeLuminance() > 0.6 ? Colors.black54 : Colors.white;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color,
-              border: Border.all(
-                color: isSelected ? scheme.onSurface : scheme.outlineVariant,
-                width: isSelected ? 2.5 : 1,
-              ),
-            ),
-            child: isSelected
-                ? Icon(Icons.check, size: size * 0.44, color: checkColor)
-                : null,
-          ),
-          if (showThemeBadge)
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                width: 15,
-                height: 15,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: scheme.surface,
-                  border: Border.all(color: scheme.outlineVariant, width: 0.5),
-                ),
-                child: Icon(
-                  Icons.palette_outlined,
-                  size: 9,
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NullCircle extends StatelessWidget {
-  const _NullCircle({required this.size});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
+        color: resolveColor(spec, palette),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          width: 1.5,
-        ),
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      ),
-      child: Center(
-        child: Text(
-          '∅',
-          style: TextStyle(
-            fontSize: size * 0.35,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-        ),
+            color: Theme.of(context).colorScheme.outlineVariant, width: 0.5),
       ),
     );
   }
 }
 
-class _AssetTile extends StatelessWidget {
-  const _AssetTile({
+/// Placeholder for a not-yet-used "เลือกเอง" (recent) slot.
+class _EmptySwatch extends StatelessWidget {
+  const _EmptySwatch();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, c) {
+      return Padding(
+        padding: const EdgeInsets.all(4),
+        child: DashedRectBorder(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          borderRadius: Radius.circular(c.maxWidth / 2),
+          child: const SizedBox.expand(),
+        ),
+      );
+    });
+  }
+}
+
+/// One style-grid cell: ring-highlighted when selected, colour-slot dots
+/// (or a caption) underneath. No dots = colours can't be changed.
+class _StyleTile extends StatelessWidget {
+  const _StyleTile({
+    required this.selected,
     required this.preview,
-    required this.dots,
-    required this.isSelected,
     required this.onTap,
-    required this.isNull,
+    this.dots,
+    this.label,
   });
 
+  final bool selected;
   final Widget preview;
-  final List<String> dots;
-  final bool isSelected;
   final VoidCallback onTap;
-  final bool isNull;
+  final List<String>? dots;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            // Always reserve the ring + padding (transparent when unselected)
-            // so selecting a tile never changes its footprint.
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? scheme.primary : Colors.transparent,
-                width: 2.5,
-              ),
+    return Column(
+      children: [
+        Expanded(
+          child: Material(
+            color: selected
+                ? scheme.primary.withValues(alpha: 0.12)
+                : Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: selected
+                  ? BorderSide(color: scheme.primary, width: 2)
+                  : BorderSide.none,
             ),
-            padding: const EdgeInsets.all(2),
-            child: preview,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: Center(child: FittedBox(child: preview)),
+            ),
           ),
-          const SizedBox(height: 4),
-          if (dots.isEmpty && !isNull)
-            Text(
-              AppLocalizations.of(context)!.iconMakerPresetLabel,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.outline,
-                    fontSize: 9,
-                  ),
-            )
-          else if (!isNull)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: dots.map((spec) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 1.5),
-                  child: Container(
-                    width: 8,
-                    height: 8,
+        ),
+        const SizedBox(height: 3),
+        if (label != null)
+          Text(
+            label!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          )
+        else
+          SizedBox(
+            height: 7,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final spec in dots ?? const <String>[])
+                  Container(
+                    width: 7,
+                    height: 7,
+                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: resolveColor(spec, palette),
-                      border: Border.all(
-                        color: scheme.outlineVariant,
-                        width: 0.5,
-                      ),
+                      border:
+                          Border.all(color: scheme.outlineVariant, width: 0.5),
                     ),
                   ),
-                );
-              }).toList(),
-            )
-          else
-            const SizedBox(height: 10),
-        ],
-      ),
-    );
-  }
-}
-
-class _PackDivider extends StatelessWidget {
-  const _PackDivider({required this.packId});
-  final String packId;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Divider()),
-        const SizedBox(width: AppSpacing.sm),
-        Text(
-          packId,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        const Expanded(child: Divider()),
+              ],
+            ),
+          ),
       ],
-    );
-  }
-}
-
-// ─── Background preview ───────────────────────────────────────────────────────
-
-class _BgPreview extends StatelessWidget {
-  const _BgPreview({required this.iconCode, required this.size});
-  final IconCode iconCode;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return Container(
-      width: size,
-      height: size,
-      decoration: _decoration(palette),
-    );
-  }
-
-  BoxDecoration _decoration(AppColors palette) {
-    final colors = iconCode.bgColors;
-    Color c(int i) => resolveColor(colors[i], palette);
-
-    return switch (iconCode.background) {
-      'superGradientA' when colors.length >= 2 => BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [c(0), c(1)],
-          ),
-        ),
-      'radialGlow' when colors.length >= 2 => BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            center: const Alignment(-0.4, -0.4),
-            radius: 1.2,
-            colors: [c(0), c(1)],
-          ),
-        ),
-      'stripedPatternDi' when colors.length >= 3 => BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [c(0), c(0), c(1), c(1), c(2), c(2)],
-            stops: const [0.0, 0.33, 0.33, 0.66, 0.66, 1.0],
-          ),
-        ),
-      'rainbow' => const BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: SweepGradient(
-            colors: [
-              Color(0xFFEF4444),
-              Color(0xFFF59E0B),
-              Color(0xFFFCD34D),
-              Color(0xFF22C55E),
-              Color(0xFF3B82F6),
-              Color(0xFF6366F1),
-              Color(0xFFA855F7),
-              Color(0xFFEF4444),
-            ],
-          ),
-        ),
-      'snowflake' => const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Color(0xFFDBEAFE),
-        ),
-      'wreath' || 'starburst' => const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Color(0xFF15803D),
-        ),
-      _ => BoxDecoration(
-          shape: BoxShape.circle,
-          color: colors.isNotEmpty ? c(0) : palette.primary,
-        ),
-    };
-  }
-}
-
-// ─── Border preview ───────────────────────────────────────────────────────────
-
-class _BorderPreview extends StatelessWidget {
-  const _BorderPreview({required this.iconCode, required this.size});
-  final IconCode iconCode;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    if (iconCode.border == null || iconCode.borderColors.isEmpty) {
-      return SizedBox(width: size, height: size);
-    }
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final color = resolveColor(iconCode.borderColors.first, palette);
-    final width = iconCode.border == 'thick' ? 4.0 : 2.0;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: color, width: width),
-      ),
     );
   }
 }

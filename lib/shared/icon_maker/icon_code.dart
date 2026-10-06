@@ -7,7 +7,10 @@ import 'color_token.dart';
 /// Unified icon descriptor stored as JSONB on the server.
 ///
 /// Shape mirrors the BE `icon_code` column:
-///   {icon, iconColors, background, bgColors, border, borderColors}
+///   {icon, iconColors, background, bgColors, border, borderColors, shape}
+///
+/// [shape] is the background outline ([IconShape] name); `null` = circle,
+/// so codes saved before shapes existed render unchanged.
 ///
 /// Two display styles exist in the app:
 /// - background (accounts, categories, projects): solid bg + white icon
@@ -20,6 +23,7 @@ class IconCode extends Equatable {
     this.bgColors = const [],
     this.border,
     this.borderColors = const [],
+    this.shape,
   });
 
   final String? icon;
@@ -28,6 +32,7 @@ class IconCode extends Equatable {
   final List<String> bgColors;
   final String? border;
   final List<String> borderColors;
+  final String? shape;
 
   Color? get resolvedBgColor =>
       bgColors.isNotEmpty ? hexToColor(bgColors.first) : null;
@@ -80,6 +85,7 @@ class IconCode extends Equatable {
       bgColors: strs(json['bgColors']),
       border: json['border'] as String?,
       borderColors: strs(json['borderColors']),
+      shape: json['shape'] as String?,
     );
   }
 
@@ -90,6 +96,8 @@ class IconCode extends Equatable {
         'bgColors': bgColors,
         'border': border,
         'borderColors': borderColors,
+        // Omitted for circles so untouched codes stay byte-identical.
+        if (shape != null) 'shape': shape,
       };
 
   IconCode copyWith({
@@ -99,6 +107,7 @@ class IconCode extends Equatable {
     List<String>? bgColors,
     String? border,
     List<String>? borderColors,
+    String? shape,
   }) {
     return IconCode(
       icon: icon ?? this.icon,
@@ -107,10 +116,11 @@ class IconCode extends Equatable {
       bgColors: bgColors ?? this.bgColors,
       border: border ?? this.border,
       borderColors: borderColors ?? this.borderColors,
+      shape: shape ?? this.shape,
     );
   }
 
   @override
   List<Object?> get props =>
-      [icon, iconColors, background, bgColors, border, borderColors];
+      [icon, iconColors, background, bgColors, border, borderColors, shape];
 }

@@ -7,6 +7,7 @@ import '../../features/auth/domain/user.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../shared/widgets/buttons/app_icon_button.dart';
 import '../../shared/widgets/user_avatar.dart';
 
 /// A local (page-specific) action for [AppTopBar], rendered as an icon chip
@@ -17,12 +18,20 @@ class AppBarAction {
     required this.onPressed,
     this.tooltip,
     this.badgeCount = 0,
+    this.destructive = false,
+    this.enabled = true,
   });
 
   final IconData icon;
   final VoidCallback onPressed;
   final String? tooltip;
   final int badgeCount;
+
+  /// Red icon (🗑). Callers still confirm via `showConfirmDialog`.
+  final bool destructive;
+
+  /// false → dimmed and untappable (e.g. bulk actions with nothing selected).
+  final bool enabled;
 }
 
 /// Universal top bar — the top-chrome counterpart to `MainBottomNav`.
@@ -37,6 +46,13 @@ class AppBarAction {
 /// - **Right**: page-specific [actions], then the always-present
 ///   notification + profile chips.
 ///
+/// Modes:
+/// - **[editing]** (edit / reorder mode, forms): back chip becomes ✕
+///   (= cancel) and the universal chips are hidden — only the page's own
+///   edit actions remain.
+/// - **[showUniversal] false** (overlay layer: settings, notifications):
+///   hides 🔔 👤 since the layer was opened from them.
+///
 /// Implements [PreferredSizeWidget] so it drops straight into
 /// `Scaffold.appBar`.
 class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
@@ -45,6 +61,8 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBack = false,
     this.onBack,
     this.actions = const <AppBarAction>[],
+    this.editing = false,
+    this.showUniversal = true,
     super.key,
   });
 
@@ -56,6 +74,14 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// Page-specific action chips, shown left of the universal chips.
   final List<AppBarAction> actions;
+
+  /// Edit-mode chrome: ✕ instead of ←, no universal chips.
+  final bool editing;
+
+  /// Whether to show the 🔔 / 👤 chips (ignored while [editing]).
+  final bool showUniversal;
+
+  bool get _universal => showUniversal && !editing;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -71,16 +97,19 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       titleSpacing: AppSpacing.md,
       title: _LeftGroup(
-        showBack: showBack,
+        showBack: showBack || editing,
+        backIcon: editing ? Icons.close : Icons.arrow_back,
         title: title,
         onBack: onBack ?? () => _defaultBack(context),
       ),
       actions: [
         for (final a in actions) _actionChip(context, a),
+        if (!_universal)
+          const SizedBox(width: AppSpacing.md)
         // Separate the page-local actions from the universal ones. Only a
         // left margin here — the next chip brings its own left padding, so
         // the divider sits evenly between the two groups.
-        if (actions.isNotEmpty)
+        else if (actions.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(left: AppSpacing.sm),
             child: Container(
@@ -90,6 +119,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         // Universal: notification inbox.
+        if (_universal)
         BlocBuilder<UnreadBadgeCubit, int>(
           builder: (context, unread) => _actionChip(
             context,
@@ -103,6 +133,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         // Universal: profile — the full avatar (no chip border), with a
         // matching shadow.
+        if (_universal)
         BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {
             final user = _userOf(state);
@@ -148,38 +179,17 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     if (context.canPop()) context.pop();
   }
 
-  /// A circular action chip — matching the left group's bg + grey border +
-  /// small shadow — with an optional badge.
+  /// A circular action chip ([AppIconButton]) with left spacing.
   Widget _actionChip(BuildContext context, AppBarAction a) {
-    final scheme = Theme.of(context).colorScheme;
-    final icon = Icon(a.icon, size: 22);
-    final visual = a.badgeCount > 0
-        ? Badge(
-            label: Text(a.badgeCount > 99 ? '99+' : '${a.badgeCount}'),
-            child: icon,
-          )
-        : icon;
-    Widget chip = Material(
-      color: scheme.surfaceContainerHigh,
-      elevation: 1.5,
-      shadowColor: scheme.shadow.withValues(alpha: 0.2),
-      shape: CircleBorder(side: BorderSide(color: scheme.outlineVariant)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: a.onPressed,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(child: visual),
-        ),
-      ),
-    );
-    if (a.tooltip != null) {
-      chip = Tooltip(message: a.tooltip!, child: chip);
-    }
     return Padding(
       padding: const EdgeInsets.only(left: AppSpacing.sm),
-      child: chip,
+      child: AppIconButton(
+        icon: a.icon,
+        tooltip: a.tooltip,
+        badgeCount: a.badgeCount,
+        destructive: a.destructive,
+        onPressed: a.enabled ? a.onPressed : null,
+      ),
     );
   }
 }
@@ -191,11 +201,13 @@ class _LeftGroup extends StatelessWidget {
     required this.showBack,
     required this.title,
     required this.onBack,
+    this.backIcon = Icons.arrow_back,
   });
 
   final bool showBack;
   final String? title;
   final VoidCallback onBack;
+  final IconData backIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -218,14 +230,14 @@ class _LeftGroup extends StatelessWidget {
             if (showBack) ...[
               InkWell(
                 onTap: onBack,
-                child: const Padding(
-                  padding: EdgeInsets.fromLTRB(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
                     AppSpacing.sm,
                     AppSpacing.sm,
                     AppSpacing.sm,
                   ),
-                  child: Icon(Icons.arrow_back, size: 20),
+                  child: Icon(backIcon, size: 20),
                 ),
               ),
               Container(width: 1, height: 20, color: scheme.outlineVariant),

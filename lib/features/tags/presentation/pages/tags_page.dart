@@ -590,6 +590,7 @@ class _TagsPageState extends State<TagsPage> {
         appBar: AppTopBar(
           title: l.tagsTitle,
           showBack: true,
+          editing: _editMode,
           onBack: _editMode ? _cancel : null,
           actions: _editMode
               ? const <AppBarAction>[]

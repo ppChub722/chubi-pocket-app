@@ -170,6 +170,48 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get commonSearch;
 
+  /// No description provided for @commonToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get commonToday;
+
+  /// No description provided for @commonYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get commonYesterday;
+
+  /// No description provided for @commonInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get commonInvite;
+
+  /// No description provided for @commonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get commonClear;
+
+  /// No description provided for @commonUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get commonUndo;
+
+  /// No description provided for @commonShowAmounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Show amounts'**
+  String get commonShowAmounts;
+
+  /// No description provided for @commonHideAmounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide amounts'**
+  String get commonHideAmounts;
+
   /// No description provided for @errorNetworkTitle.
   ///
   /// In en, this message translates to:
@@ -1040,6 +1082,150 @@ abstract class AppLocalizations {
   /// **'preset'**
   String get iconMakerPresetLabel;
 
+  /// No description provided for @iconMakerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get iconMakerTitle;
+
+  /// No description provided for @iconMakerTabStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Style'**
+  String get iconMakerTabStyle;
+
+  /// No description provided for @iconMakerTabColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get iconMakerTabColor;
+
+  /// No description provided for @iconMakerShape.
+  ///
+  /// In en, this message translates to:
+  /// **'Shape'**
+  String get iconMakerShape;
+
+  /// No description provided for @iconMakerPattern.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern'**
+  String get iconMakerPattern;
+
+  /// No description provided for @iconMakerNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get iconMakerNone;
+
+  /// No description provided for @iconMakerCommonColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Common'**
+  String get iconMakerCommonColors;
+
+  /// No description provided for @iconMakerCustomColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get iconMakerCustomColors;
+
+  /// No description provided for @iconMakerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search icons, e.g. car, home'**
+  String get iconMakerSearchHint;
+
+  /// No description provided for @iconMakerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No icons match \"{query}\"'**
+  String iconMakerNoMatch(String query);
+
+  /// No description provided for @iconMakerLayerOff.
+  ///
+  /// In en, this message translates to:
+  /// **'{layer}: none — pick a style first'**
+  String iconMakerLayerOff(String layer);
+
+  /// No description provided for @iconMakerNotRecolorable.
+  ///
+  /// In en, this message translates to:
+  /// **'This style has fixed colors'**
+  String get iconMakerNotRecolorable;
+
+  /// No description provided for @iconMakerResetSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset this color'**
+  String get iconMakerResetSlot;
+
+  /// No description provided for @iconMakerPickColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a color'**
+  String get iconMakerPickColor;
+
+  /// No description provided for @iconMakerHexInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use #RRGGBB'**
+  String get iconMakerHexInvalid;
+
+  /// No description provided for @iconMakerResetConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset icon?'**
+  String get iconMakerResetConfirmTitle;
+
+  /// No description provided for @iconMakerResetConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon, colors, background and border go back to the defaults. You can undo it.'**
+  String get iconMakerResetConfirmBody;
+
+  /// No description provided for @iconMakerUseDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the app\'s default icon'**
+  String get iconMakerUseDefault;
+
+  /// No description provided for @iconShapeCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Circle'**
+  String get iconShapeCircle;
+
+  /// No description provided for @iconShapeSquircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Squircle'**
+  String get iconShapeSquircle;
+
+  /// No description provided for @iconShapeRounded.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounded'**
+  String get iconShapeRounded;
+
+  /// No description provided for @iconShapeSquare.
+  ///
+  /// In en, this message translates to:
+  /// **'Square'**
+  String get iconShapeSquare;
+
+  /// No description provided for @iconShapeLeaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaf'**
+  String get iconShapeLeaf;
+
+  /// No description provided for @iconShapeDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop'**
+  String get iconShapeDrop;
+
   /// No description provided for @colorPickerTitle.
   ///
   /// In en, this message translates to:
@@ -1189,6 +1375,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Soon'**
   String get moreComingSoonBadge;
+
+  /// No description provided for @moreGroupLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get moreGroupLibrary;
+
+  /// No description provided for @moreGroupPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People & shared money'**
+  String get moreGroupPeople;
+
+  /// No description provided for @moreGroupPlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning'**
+  String get moreGroupPlanning;
+
+  /// No description provided for @moreCategoriesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Group income & spending'**
+  String get moreCategoriesDesc;
+
+  /// No description provided for @moreTagsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Labels for quick search'**
+  String get moreTagsDesc;
+
+  /// No description provided for @moreContactsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'People you split bills with'**
+  String get moreContactsDesc;
+
+  /// No description provided for @moreProjectsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Trips & shared budgets'**
+  String get moreProjectsDesc;
+
+  /// No description provided for @moreDebtsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Who owes whom'**
+  String get moreDebtsDesc;
+
+  /// No description provided for @moreBudgetsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending limits'**
+  String get moreBudgetsDesc;
+
+  /// No description provided for @moreSavingGoalsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Save towards a target'**
+  String get moreSavingGoalsDesc;
+
+  /// No description provided for @moreScheduledDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring & upcoming bills'**
+  String get moreScheduledDesc;
 
   /// No description provided for @moreComingInPhase1a.
   ///

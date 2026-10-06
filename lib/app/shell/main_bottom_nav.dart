@@ -8,17 +8,18 @@ import '../../l10n/gen/app_localizations.dart';
 ///
 /// `[Dashboard] [Transactions] [+ Add (FAB)] [Accounts] [☰ More]`
 ///
-/// Three of the five are tab destinations (Dashboard=0 / Transactions=1 /
-/// Accounts=2) and switch the [StatefulNavigationShell] branch on tap.
-/// The center `+` opens the QuickAdd transaction modal. `☰ More` opens
-/// the [MoreMenuSheet] without changing the active branch — Projects /
-/// Categories / Tags / etc. live there.
+/// Four of the five are tab destinations (Dashboard=0 / Transactions=1 /
+/// Accounts=2 / More=3) and switch the [StatefulNavigationShell] branch on
+/// tap. The center `+` opens the QuickAdd transaction modal. More is a
+/// real tab whose root is the card hub (`/more`) — Projects / Categories /
+/// Tags / etc. stack inside it.
 class MainBottomNav extends StatelessWidget {
   const MainBottomNav({
     required this.currentIndex,
     required this.onTabSelected,
     required this.onAddPressed,
     required this.onMorePressed,
+    this.moreSelected = false,
     super.key,
   });
 
@@ -26,6 +27,10 @@ class MainBottomNav extends StatelessWidget {
   /// (Dashboard=0, Transactions=1, Accounts=2). `+` and `More` are
   /// actions, not branches, so they never drive this value.
   final int currentIndex;
+
+  /// True on a "More"-menu page (contacts, categories, …): the More slot
+  /// lights up instead of the branch the page happens to be stacked on.
+  final bool moreSelected;
 
   /// Called with the target branch index (0, 1, or 2).
   final ValueChanged<int> onTabSelected;
@@ -47,14 +52,14 @@ class MainBottomNav extends StatelessWidget {
             icon: Icons.dashboard_outlined,
             iconSelected: Icons.dashboard,
             label: l.navDashboard,
-            selected: currentIndex == 0,
+            selected: !moreSelected && currentIndex == 0,
             onTap: () => onTabSelected(0),
           ),
           _NavItem(
             icon: Icons.list_alt_outlined,
             iconSelected: Icons.list_alt,
             label: l.navTransactions,
-            selected: currentIndex == 1,
+            selected: !moreSelected && currentIndex == 1,
             onTap: () => onTabSelected(1),
           ),
           // Spacer for the docked FAB (the actual `+` button is rendered by
@@ -64,14 +69,14 @@ class MainBottomNav extends StatelessWidget {
             icon: Icons.account_balance_wallet_outlined,
             iconSelected: Icons.account_balance_wallet,
             label: l.navAccounts,
-            selected: currentIndex == 2,
+            selected: !moreSelected && currentIndex == 2,
             onTap: () => onTabSelected(2),
           ),
           _NavItem(
             icon: Icons.more_horiz,
             iconSelected: Icons.more_horiz,
             label: l.navMore,
-            selected: false,
+            selected: moreSelected,
             onTap: onMorePressed,
           ),
         ],

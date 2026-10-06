@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import 'color_token.dart';
 import 'icon_code.dart';
 import 'icon_registry.dart';
+import 'icon_shape.dart';
 
 /// Controls which visual layers [IconCodeWidget] renders.
 ///
@@ -65,6 +66,9 @@ class IconCodeWidget extends StatelessWidget {
       );
     }
 
+    // Background + border follow the code's shape (null = circle).
+    final radius = IconShape.fromId(ic.shape).radius(size);
+
     // An explicit `icon == null` means "no icon" — render no glyph at all
     // (the bg/border, if any, still show). This is distinct from a null code.
     final hasIcon = ic.icon != null;
@@ -93,7 +97,7 @@ class IconCodeWidget extends StatelessWidget {
         width: size,
         height: size,
         alignment: Alignment.center,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: border),
+        decoration: BoxDecoration(borderRadius: radius, border: border),
         child: glyph(size * 0.55),
       );
     }
@@ -102,19 +106,20 @@ class IconCodeWidget extends StatelessWidget {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: _buildDecoration(ic, palette),
+      decoration: _buildDecoration(ic, palette, radius),
       child: glyph(size * 0.55),
     );
   }
 
-  BoxDecoration _buildDecoration(IconCode ic, AppColors palette) {
+  BoxDecoration _buildDecoration(
+      IconCode ic, AppColors palette, BorderRadius radius) {
     final border = _buildBorder(ic, palette);
     final colors = ic.bgColors;
     Color c(int i) => resolveColor(colors[i], palette);
 
     return switch (ic.background) {
       'superGradientA' when colors.length >= 2 => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -123,7 +128,7 @@ class IconCodeWidget extends StatelessWidget {
           border: border,
         ),
       'radialGlow' when colors.length >= 2 => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           gradient: RadialGradient(
             center: const Alignment(-0.4, -0.4),
             radius: 1.2,
@@ -132,7 +137,7 @@ class IconCodeWidget extends StatelessWidget {
           border: border,
         ),
       'stripedPatternDi' when colors.length >= 3 => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -142,7 +147,7 @@ class IconCodeWidget extends StatelessWidget {
           border: border,
         ),
       'rainbow' => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           gradient: const SweepGradient(
             colors: [
               Color(0xFFEF4444),
@@ -160,23 +165,23 @@ class IconCodeWidget extends StatelessWidget {
       // Preset backgrounds — no user-controlled colors.
       // True textures (patterns, illustrations) are deferred; placeholder color used for now.
       'snowflake' => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           color: const Color(0xFFDBEAFE),
           border: border,
         ),
       'wreath' => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           color: const Color(0xFF15803D),
           border: border,
         ),
       'starburst' => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           color: const Color(0xFF15803D),
           border: border,
         ),
       // 'solid' or any unrecognised id → use bgColors[0]
       _ => BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: radius,
           color: colors.isNotEmpty ? c(0) : fallbackColor,
           border: border,
         ),

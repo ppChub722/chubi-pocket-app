@@ -38,6 +38,7 @@ import '../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../features/users/data/users_repository.dart';
 import '../features/preferences/presentation/cubit/font_id_cubit.dart';
 import '../features/preferences/presentation/cubit/locale_cubit.dart';
+import '../features/preferences/presentation/cubit/money_visibility_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_id_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -155,6 +156,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           ),
           BlocProvider<LocaleCubit>(
             create: (_) => LocaleCubit(widget.prefs),
+          ),
+          BlocProvider<MoneyVisibilityCubit>(
+            create: (_) => MoneyVisibilityCubit(widget.prefs),
           ),
           BlocProvider<FontIdCubit>(
             create: (ctx) => FontIdCubit(widget.prefs, ctx.read<LocaleCubit>()),

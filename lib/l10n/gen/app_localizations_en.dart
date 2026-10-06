@@ -45,6 +45,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSearch => 'Search';
 
   @override
+  String get commonToday => 'Today';
+
+  @override
+  String get commonYesterday => 'Yesterday';
+
+  @override
+  String get commonInvite => 'Invite';
+
+  @override
+  String get commonClear => 'Clear';
+
+  @override
+  String get commonUndo => 'Undo';
+
+  @override
+  String get commonShowAmounts => 'Show amounts';
+
+  @override
+  String get commonHideAmounts => 'Hide amounts';
+
+  @override
   String get errorNetworkTitle => 'No connection';
 
   @override
@@ -518,6 +539,83 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iconMakerPresetLabel => 'preset';
 
   @override
+  String get iconMakerTitle => 'Icon';
+
+  @override
+  String get iconMakerTabStyle => 'Style';
+
+  @override
+  String get iconMakerTabColor => 'Color';
+
+  @override
+  String get iconMakerShape => 'Shape';
+
+  @override
+  String get iconMakerPattern => 'Pattern';
+
+  @override
+  String get iconMakerNone => 'None';
+
+  @override
+  String get iconMakerCommonColors => 'Common';
+
+  @override
+  String get iconMakerCustomColors => 'Custom';
+
+  @override
+  String get iconMakerSearchHint => 'Search icons, e.g. car, home';
+
+  @override
+  String iconMakerNoMatch(String query) {
+    return 'No icons match \"$query\"';
+  }
+
+  @override
+  String iconMakerLayerOff(String layer) {
+    return '$layer: none — pick a style first';
+  }
+
+  @override
+  String get iconMakerNotRecolorable => 'This style has fixed colors';
+
+  @override
+  String get iconMakerResetSlot => 'Reset this color';
+
+  @override
+  String get iconMakerPickColor => 'Pick a color';
+
+  @override
+  String get iconMakerHexInvalid => 'Use #RRGGBB';
+
+  @override
+  String get iconMakerResetConfirmTitle => 'Reset icon?';
+
+  @override
+  String get iconMakerResetConfirmBody =>
+      'Icon, colors, background and border go back to the defaults. You can undo it.';
+
+  @override
+  String get iconMakerUseDefault => 'Use the app\'s default icon';
+
+  @override
+  String get iconShapeCircle => 'Circle';
+
+  @override
+  String get iconShapeSquircle => 'Squircle';
+
+  @override
+  String get iconShapeRounded => 'Rounded';
+
+  @override
+  String get iconShapeSquare => 'Square';
+
+  @override
+  String get iconShapeLeaf => 'Leaf';
+
+  @override
+  String get iconShapeDrop => 'Drop';
+
+  @override
   String get colorPickerTitle => 'Pick a colour';
 
   @override
@@ -592,6 +690,39 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreComingSoonBadge => 'Soon';
+
+  @override
+  String get moreGroupLibrary => 'Library';
+
+  @override
+  String get moreGroupPeople => 'People & shared money';
+
+  @override
+  String get moreGroupPlanning => 'Planning';
+
+  @override
+  String get moreCategoriesDesc => 'Group income & spending';
+
+  @override
+  String get moreTagsDesc => 'Labels for quick search';
+
+  @override
+  String get moreContactsDesc => 'People you split bills with';
+
+  @override
+  String get moreProjectsDesc => 'Trips & shared budgets';
+
+  @override
+  String get moreDebtsDesc => 'Who owes whom';
+
+  @override
+  String get moreBudgetsDesc => 'Spending limits';
+
+  @override
+  String get moreSavingGoalsDesc => 'Save towards a target';
+
+  @override
+  String get moreScheduledDesc => 'Recurring & upcoming bills';
 
   @override
   String get moreComingInPhase1a => 'Ships in Phase 1a';

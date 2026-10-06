@@ -6,9 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/main_bottom_nav.dart';
-import '../../../../app/shell/more_menu_sheet.dart';
-import '../../../transactions/presentation/pages/transaction_form_page.dart';
+import '../../../../app/shell/shell_chrome.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,7 +16,7 @@ import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/editable_circle.dart';
-import '../../../../shared/widgets/reorder_action_bar.dart';
+import '../../../../shared/widgets/mode_action_bar.dart';
 import '../../../../shared/widgets/type_indicator.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
@@ -118,8 +116,30 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     _syncControllers();
   }
 
+  // Shell chrome: edit mode takes over the bottom of the screen (action bar
+  // replaces the shell's nav + FAB). Synced after each build so every path
+  // that flips `_editMode` (enter, cancel, save, create) is covered.
+  ShellChromeController? _shellChrome;
+  bool? _chromeHiddenFor;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _shellChrome = ShellChrome.of(context);
+  }
+
+  void _syncShellChrome() {
+    if (_chromeHiddenFor == _editMode) return;
+    _chromeHiddenFor = _editMode;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _editMode ? _shellChrome?.hide() : _shellChrome?.show();
+    });
+  }
+
   @override
   void dispose() {
+    _shellChrome?.show();
     _debounce?.cancel();
     _nameController.dispose();
     _descriptionController.dispose();
@@ -470,6 +490,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       );
     }
 
+    _syncShellChrome();
     return PopScope(
       canPop: !_editMode && !_saving,
       onPopInvokedWithResult: (didPop, _) {
@@ -480,6 +501,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
         appBar: AppTopBar(
           title: _titleFor(l),
           showBack: true,
+          editing: _editMode,
           onBack: _handleBack,
           actions: _editMode
               ? const <AppBarAction>[]
@@ -500,35 +522,21 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
             );
           },
         ),
+        // View mode: the shell's bottom nav + FAB show through. Edit mode:
+        // the shell hides them (ShellChrome) and this action bar takes over.
         bottomNavigationBar: _editMode
-            ? ReorderActionBar(
+            ? ModeActionBar(
                 canUndo: _canUndo && !_saving,
                 canSave: _dirty && !_saving,
+                saving: _saving,
                 cancelLabel: l.commonCancel,
                 saveLabel: l.commonSave,
                 undoTooltip: l.categoriesUndo,
-                onCancel: _saving ? () {} : _cancel,
+                onCancel: _cancel,
                 onUndo: _undo,
                 onSave: _save,
               )
-            // View mode: the universal bottom nav (this page sits above the
-            // shell, so it brings its own). Edit mode replaces it with the
-            // action bar above.
-            : MainBottomNav(
-                currentIndex: -1,
-                onTabSelected: (i) {
-                  switch (i) {
-                    case 0:
-                      context.go('/');
-                    case 1:
-                      context.go('/transactions');
-                    case 2:
-                      context.go('/accounts');
-                  }
-                },
-                onAddPressed: () => showTransactionFormSheet(context),
-                onMorePressed: () => MoreMenuSheet.show(context),
-              ),
+            : null,
       ),
     );
   }

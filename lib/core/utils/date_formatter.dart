@@ -17,4 +17,29 @@ class DateFormatter {
 
   static String time(DateTime date, {String locale = 'en_US'}) =>
       DateFormat.jm(locale).format(date);
+
+  /// Human date for lists and headers: [today] / [yesterday] labels, then
+  /// "17 ก.ย." within the current year, "17 ก.ย. 2025" otherwise.
+  /// Pass localized labels (`l.commonToday`, `l.commonYesterday`).
+  static String friendly(
+    DateTime date, {
+    required String today,
+    required String yesterday,
+    String locale = 'th',
+    DateTime? now,
+  }) {
+    final n = now ?? DateTime.now();
+    final d = DateTime(date.year, date.month, date.day);
+    final t = DateTime(n.year, n.month, n.day);
+    final diff = t.difference(d).inDays;
+    if (diff == 0) return today;
+    if (diff == 1) return yesterday;
+    return d.year == t.year
+        ? DateFormat.MMMd(locale).format(d)
+        : DateFormat.yMMMd(locale).format(d);
+  }
+
+  /// Parses an API `YYYY-MM-DD` date string; null when malformed.
+  static DateTime? parseDay(String? ymd) =>
+      ymd == null ? null : DateTime.tryParse(ymd);
 }

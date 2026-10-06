@@ -45,6 +45,27 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonSearch => 'ค้นหา';
 
   @override
+  String get commonToday => 'วันนี้';
+
+  @override
+  String get commonYesterday => 'เมื่อวาน';
+
+  @override
+  String get commonInvite => 'เชิญ';
+
+  @override
+  String get commonClear => 'ล้าง';
+
+  @override
+  String get commonUndo => 'เลิกทำ';
+
+  @override
+  String get commonShowAmounts => 'แสดงยอดเงิน';
+
+  @override
+  String get commonHideAmounts => 'ซ่อนยอดเงิน';
+
+  @override
   String get errorNetworkTitle => 'ไม่มีการเชื่อมต่อ';
 
   @override
@@ -512,6 +533,83 @@ class AppLocalizationsTh extends AppLocalizations {
   String get iconMakerPresetLabel => 'พรีเซ็ต';
 
   @override
+  String get iconMakerTitle => 'ไอคอน';
+
+  @override
+  String get iconMakerTabStyle => 'รูปแบบ';
+
+  @override
+  String get iconMakerTabColor => 'สี';
+
+  @override
+  String get iconMakerShape => 'ทรง';
+
+  @override
+  String get iconMakerPattern => 'ลาย';
+
+  @override
+  String get iconMakerNone => 'ไม่มี';
+
+  @override
+  String get iconMakerCommonColors => 'สีทั่วไป';
+
+  @override
+  String get iconMakerCustomColors => 'เลือกเอง';
+
+  @override
+  String get iconMakerSearchHint => 'ค้นหาไอคอน เช่น car, home';
+
+  @override
+  String iconMakerNoMatch(String query) {
+    return 'ไม่พบไอคอน \"$query\"';
+  }
+
+  @override
+  String iconMakerLayerOff(String layer) {
+    return '$layer: ไม่มี — เลือกแบบในแท็บรูปแบบก่อน';
+  }
+
+  @override
+  String get iconMakerNotRecolorable => 'แบบนี้เปลี่ยนสีไม่ได้';
+
+  @override
+  String get iconMakerResetSlot => 'คืนสีตั้งต้นของช่องนี้';
+
+  @override
+  String get iconMakerPickColor => 'เลือกสีเอง';
+
+  @override
+  String get iconMakerHexInvalid => 'ใช้รูปแบบ #RRGGBB';
+
+  @override
+  String get iconMakerResetConfirmTitle => 'รีเซ็ตไอคอน?';
+
+  @override
+  String get iconMakerResetConfirmBody =>
+      'ไอคอน สี พื้น และขอบ จะกลับเป็นค่าเริ่มต้น กดเลิกทำได้ภายหลัง';
+
+  @override
+  String get iconMakerUseDefault => 'ใช้ไอคอนเริ่มต้นของแอป';
+
+  @override
+  String get iconShapeCircle => 'วงกลม';
+
+  @override
+  String get iconShapeSquircle => 'มนมาก';
+
+  @override
+  String get iconShapeRounded => 'มน';
+
+  @override
+  String get iconShapeSquare => 'เหลี่ยม';
+
+  @override
+  String get iconShapeLeaf => 'ใบไม้';
+
+  @override
+  String get iconShapeDrop => 'หยดน้ำ';
+
+  @override
   String get colorPickerTitle => 'เลือกสี';
 
   @override
@@ -586,6 +684,39 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreComingSoonBadge => 'เร็ว ๆ นี้';
+
+  @override
+  String get moreGroupLibrary => 'คลังข้อมูล';
+
+  @override
+  String get moreGroupPeople => 'คนและเงินร่วม';
+
+  @override
+  String get moreGroupPlanning => 'วางแผน';
+
+  @override
+  String get moreCategoriesDesc => 'จัดกลุ่มรายรับ-รายจ่าย';
+
+  @override
+  String get moreTagsDesc => 'ติดป้ายให้ค้นง่าย';
+
+  @override
+  String get moreContactsDesc => 'คนที่หารบิลด้วย';
+
+  @override
+  String get moreProjectsDesc => 'ทริปและงบร่วมกัน';
+
+  @override
+  String get moreDebtsDesc => 'ใครติดใครเท่าไร';
+
+  @override
+  String get moreBudgetsDesc => 'ตั้งเพดานการใช้จ่าย';
+
+  @override
+  String get moreSavingGoalsDesc => 'เก็บเงินให้ถึงเป้า';
+
+  @override
+  String get moreScheduledDesc => 'บิลประจำและที่จะถึง';
 
   @override
   String get moreComingInPhase1a => 'จะมาในเฟส 1a';

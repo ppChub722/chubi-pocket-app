@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/overlay_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/data/accounts_repository.dart';
@@ -185,7 +186,7 @@ class _InboxScaffoldState extends State<_InboxScaffold>
       // Accepted wallet invite → jump to the wallet.
       final accountId = n.payload['account_id'] as String?;
       if (accountId != null && accountId.isNotEmpty) {
-        ctx.push('/accounts/$accountId');
+        pushFromOverlay(ctx, '/accounts/$accountId');
       }
       return;
     }
@@ -195,7 +196,7 @@ class _InboxScaffoldState extends State<_InboxScaffold>
     }
     final link = n.deepLink;
     if (link != null && link.isNotEmpty) {
-      ctx.push(link);
+      pushFromOverlay(ctx, link);
     }
   }
 
@@ -285,6 +286,13 @@ class _InboxScaffoldState extends State<_InboxScaffold>
     final repo = ctx.read<ContactsRepository>();
     final messenger = ScaffoldMessenger.of(ctx);
     final router = GoRouter.of(ctx);
+    final rootNav = Navigator.of(ctx, rootNavigator: true);
+    // Contacts live in the tab layer; close this overlay first (captured
+    // up front because ctx may be gone after the awaits below).
+    void open(String location, {Object? extra}) {
+      rootNav.popUntil((r) => r.isFirst);
+      router.push(location, extra: extra);
+    }
 
     // 1. Linked-contact match — navigate.
     final linked = _firstWhere(
@@ -292,7 +300,7 @@ class _InboxScaffoldState extends State<_InboxScaffold>
       (c) => c.linkedUserId == senderUserId,
     );
     if (linked != null) {
-      router.push('/contacts/${linked.id}');
+      open('/contacts/${linked.id}');
       return;
     }
 
@@ -325,14 +333,14 @@ class _InboxScaffoldState extends State<_InboxScaffold>
     }
     if (!ctx.mounted) return;
     if (emailMatch != null) {
-      router.push('/contacts/${emailMatch.id}/edit', extra: <String, String?>{
+      open('/contacts/${emailMatch.id}/edit', extra: <String, String?>{
         'linkRequestId': n.id,
       });
       return;
     }
 
     // 3. No match — create form in link-create mode with locked prefill.
-    router.push('/contacts/new', extra: <String, String?>{
+    open('/contacts/new', extra: <String, String?>{
       'linkRequestId': n.id,
       'lockedDisplayName': senderName,
       'lockedEmail': senderEmail,

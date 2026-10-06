@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../accounts/presentation/widgets/account_card.dart';
 
 /// Result returned by [showAccountPickerSheet]. Distinct from `null`
 /// (user dismissed) — [AccountPickerCleared] means "ไม่ระบุกระเป๋า".
@@ -22,12 +22,12 @@ class AccountPickerCleared extends AccountPickerResult {
   const AccountPickerCleared();
 }
 
-/// Modal bottom sheet for picking one of the user's active accounts.
+/// Bottom sheet for picking one of the user's active accounts — the same
+/// 2-column card grid as the accounts page (real [AccountCard]s), with the
+/// current pick ring-highlighted ([SelectableFrame]).
 ///
-/// When [allowNone] is true, a "ไม่ระบุกระเป๋า" row appears at the top
-/// so the user can explicitly clear the account (floating transaction).
-/// The `excludeId` parameter hides one account — used for the "to"
-/// picker so the user can't pick the same account twice.
+/// [allowNone] adds a "ไม่ระบุกระเป๋า" tile first (floating transaction).
+/// [excludeId] hides one account (the "to" side of a transfer).
 Future<AccountPickerResult?> showAccountPickerSheet({
   required BuildContext context,
   required List<Account> accounts,
@@ -70,78 +70,100 @@ class _AccountPickerBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
     final visible = excludeId == null
         ? accounts
         : accounts.where((a) => a.id != excludeId).toList();
-    return SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
-            child: Text(
-              title ?? l.transactionFormAccountPickerTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+    final tiles = <Widget>[
+      if (allowNone)
+        SelectableFrame(
+          selected: selected == null,
+          child: _NoneTile(
+            label: l.transactionFormAccountNone,
+            onTap: () =>
+                Navigator.of(context).pop(const AccountPickerCleared()),
           ),
-          if (allowNone)
-            ListTile(
-              leading:
-                  Icon(Icons.account_balance_wallet_outlined, color: scheme.onSurfaceVariant),
-              title: Text(l.transactionFormAccountNone),
-              trailing: selected == null
-                  ? Icon(Icons.check, color: scheme.primary)
-                  : null,
-              onTap: () =>
-                  Navigator.of(context).pop(const AccountPickerCleared()),
-            ),
-          if (visible.isEmpty && !allowNone)
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Text(
-                l.transactionFormAccountPickerEmpty,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        ),
+      for (final a in visible)
+        SelectableFrame(
+          selected: a.id == selected?.id,
+          child: AccountCard(
+            account: a,
+            horizontal: false,
+            onTap: () => Navigator.of(context).pop(AccountPickerSelected(a)),
+          ),
+        ),
+    ];
+
+    return AppSheetScaffold(
+      title: title ?? l.transactionFormAccountPickerTitle,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+        child: tiles.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.all(AppSpacing.sm),
+                child: Text(
+                  l.transactionFormAccountPickerEmpty,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              )
+            : GridView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: AppSpacing.xs,
+                  crossAxisSpacing: AppSpacing.xs,
+                  // Fixed height: vertical AccountCard (icon · name · type ·
+                  // balance + optional credit bar) + the selection ring.
+                  mainAxisExtent: 156,
+                ),
+                children: tiles,
+              ),
+      ),
+    );
+  }
+}
+
+/// "ไม่ระบุกระเป๋า" — same footprint as an account card, quiet styling.
+class _NoneTile extends StatelessWidget {
+  const _NoneTile({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      color: scheme.surfaceContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.money_off_outlined,
+                  size: 32, color: scheme.onSurfaceVariant),
+              const Spacer(),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
               ),
-            )
-          else if (visible.isNotEmpty)
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: visible.length,
-                itemBuilder: (ctx, i) {
-                  final a = visible[i];
-                  final isSelected = a.id == selected?.id;
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor:
-                          a.iconCode?.bgColorFor(palette) ?? scheme.outline,
-                      child: Icon(
-                          IconRegistry.get(a.iconCode?.icon,
-                              fallback: Icons.account_balance_wallet_outlined),
-                          color: Colors.white,
-                          size: 20),
-                    ),
-                    title: Text(a.name),
-                    subtitle: Text(
-                      '${CurrencyFormatter.format(a.balance)} · ${a.currency}',
-                    ),
-                    trailing: isSelected
-                        ? Icon(Icons.check, color: scheme.primary)
-                        : null,
-                    onTap: () =>
-                        Navigator.of(ctx).pop(AccountPickerSelected(a)),
-                  );
-                },
-              ),
-            ),
-          const SizedBox(height: AppSpacing.md),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/fonts/font_registry.dart';
 import '../../../../core/theme/theme_registry.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/secret_tap.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
@@ -51,11 +52,7 @@ class SettingsPage extends StatelessWidget {
               const Divider(height: 0),
               const _FontPicker(),
               _SectionHeader(l.settingsSectionAbout),
-              ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: Text(l.settingsAppVersion),
-                subtitle: Text(l.settingsAppVersionValue),
-              ),
+              const _VersionTile(),
               const SizedBox(height: AppSpacing.xl),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -176,6 +173,35 @@ class _ProfileCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// App version row. Hidden dev entrance: 5 quick taps open `/dev`
+/// (widget gallery, logs, theme preview) — the only way to reach the dev
+/// hub on a phone.
+class _VersionTile extends StatefulWidget {
+  const _VersionTile();
+
+  @override
+  State<_VersionTile> createState() => _VersionTileState();
+}
+
+class _VersionTileState extends State<_VersionTile> {
+  final _counter = TapUnlockCounter();
+
+  void _onTap() {
+    if (_counter.register()) context.push('/dev');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    return ListTile(
+      leading: const Icon(Icons.info_outline),
+      title: Text(l.settingsAppVersion),
+      subtitle: Text(l.settingsAppVersionValue),
+      onTap: _onTap,
     );
   }
 }

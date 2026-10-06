@@ -466,8 +466,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
           },
           child: Scaffold(
             appBar: AppTopBar(
-              title: l.categoriesTitle,
+              title: _reorderMode ? l.categoriesReorderEnter : l.categoriesTitle,
               showBack: true,
+              editing: _reorderMode,
               onBack: _reorderMode ? _cancelReorder : null,
               actions: _reorderMode
                   ? const <AppBarAction>[]

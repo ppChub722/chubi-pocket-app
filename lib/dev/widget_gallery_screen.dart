@@ -1,0 +1,1536 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../app/shell/app_top_bar.dart';
+import '../core/constants/app_spacing.dart';
+import '../core/theme/app_colors.dart';
+import '../core/utils/date_formatter.dart';
+import '../features/accounts/domain/account.dart';
+import '../features/accounts/domain/account_type.dart';
+import '../features/categories/domain/category.dart';
+import '../features/categories/domain/category_type.dart';
+import '../features/categories/presentation/cubit/categories_cubit.dart';
+import '../features/categories/presentation/widgets/category_picker_sheet.dart';
+import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
+import '../features/transactions/presentation/widgets/account_picker_sheet.dart';
+import '../shared/icon_maker/icon_code.dart';
+import '../shared/icon_maker/icon_display.dart';
+import '../shared/icon_maker/icon_code_widget.dart';
+import '../shared/icon_maker/icon_maker_sheet.dart';
+import '../shared/icon_maker/icon_shape.dart';
+import '../l10n/gen/app_localizations.dart';
+import '../shared/icon_maker/icon_type.dart';
+import '../shared/widgets/ui.dart';
+
+/// `/dev/widgets` — live catalogue of the shared UI kit
+/// (`shared/widgets/ui.dart`). Every widget is interactive so behaviour
+/// (loading, disabled, edit mode, sheets, privacy) can be poked at on a
+/// real device. Dev-only strings are hard-coded on purpose.
+class WidgetGalleryScreen extends StatefulWidget {
+  const WidgetGalleryScreen({super.key});
+
+  @override
+  State<WidgetGalleryScreen> createState() => _WidgetGalleryScreenState();
+}
+
+enum _Section { buttons, inputs, chips, layout, feedback, data, icons, edit }
+
+class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
+  _Section _section = _Section.buttons;
+  bool _editing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final editTab = _section == _Section.edit;
+    return Scaffold(
+      appBar: AppTopBar(
+        title: editTab && _editing ? 'แก้ไขตัวอย่าง' : 'Widget gallery',
+        showBack: true,
+        editing: editTab && _editing,
+        onBack: editTab && _editing
+            ? () => setState(() => _editing = false)
+            : null,
+        actions: editTab && _editing
+            ? [
+                AppBarAction(
+                  icon: Icons.delete_outline,
+                  tooltip: 'ลบ',
+                  destructive: true,
+                  onPressed: () => _confirmDelete(context),
+                ),
+              ]
+            : [
+                AppBarAction(
+                  icon: Icons.brightness_6_outlined,
+                  tooltip: 'สลับธีม',
+                  onPressed: () => context.read<ThemeModeCubit>().toggle(),
+                ),
+                if (editTab)
+                  AppBarAction(
+                    icon: Icons.edit_outlined,
+                    tooltip: 'แก้ไข',
+                    onPressed: () => setState(() => _editing = true),
+                  ),
+              ],
+      ),
+      body: Column(
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: 8 * 96,
+              child: AppTabBar<_Section>(
+                selected: _section,
+                onChanged: (s) => setState(() {
+                  _section = s;
+                  _editing = false;
+                }),
+                tabs: const [
+                  AppTab(value: _Section.buttons, label: 'ปุ่ม'),
+                  AppTab(value: _Section.inputs, label: 'ช่องกรอก'),
+                  AppTab(value: _Section.chips, label: 'Chip'),
+                  AppTab(value: _Section.layout, label: 'Layout'),
+                  AppTab(value: _Section.feedback, label: 'Feedback'),
+                  AppTab(value: _Section.data, label: 'ข้อมูล'),
+                  AppTab(value: _Section.icons, label: 'Icon maker'),
+                  AppTab(value: _Section.edit, label: 'โหมดแก้ไข'),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: switch (_section) {
+              _Section.buttons => const _ButtonsDemo(),
+              _Section.inputs => const _InputsDemo(),
+              _Section.chips => const _ChipsDemo(),
+              _Section.layout => const _LayoutDemo(),
+              _Section.feedback => const _FeedbackDemo(),
+              _Section.data => const _DataDemo(),
+              _Section.icons => const _IconMakerDemo(),
+              _Section.edit => _EditModeDemo(
+                  editing: _editing,
+                  onEnterEdit: () => setState(() => _editing = true),
+                ),
+            },
+          ),
+        ],
+      ),
+      bottomNavigationBar: editTab && _editing
+          ? ModeActionBar(
+              canSave: true,
+              canUndo: true,
+              undoTooltip: 'เลิกทำ',
+              cancelLabel: 'ยกเลิก',
+              saveLabel: 'บันทึก',
+              onCancel: () => setState(() => _editing = false),
+              onUndo: () => showAppSnackBar(context, 'Undo'),
+              onSave: () {
+                setState(() => _editing = false);
+                showAppSnackBar(context, 'บันทึกแล้ว', tone: Tone.success);
+              },
+            )
+          : null,
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final ok = await showConfirmDialog(
+      context,
+      title: 'ลบรายการนี้?',
+      message: 'การลบไม่สามารถย้อนกลับได้',
+      confirmLabel: 'ลบ',
+      destructive: true,
+    );
+    if (!context.mounted) return;
+    if (ok) {
+      setState(() => _editing = false);
+      showAppSnackBar(context, 'ลบแล้ว', tone: Tone.danger);
+    }
+  }
+}
+
+// ── Shared demo chrome ─────────────────────────────────────────────────
+
+/// Labelled block in the gallery: title + caption (widget name) + content.
+class _Demo extends StatelessWidget {
+  const _Demo({required this.title, required this.name, required this.child});
+
+  final String title;
+  final String name;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            name,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.primary,
+                  fontFamily: 'monospace',
+                ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _Gap extends StatelessWidget {
+  const _Gap();
+  @override
+  Widget build(BuildContext context) => const SizedBox(height: AppSpacing.sm);
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────
+
+class _ButtonsDemo extends StatefulWidget {
+  const _ButtonsDemo();
+  @override
+  State<_ButtonsDemo> createState() => _ButtonsDemoState();
+}
+
+class _ButtonsDemoState extends State<_ButtonsDemo> {
+  bool _loading = false;
+  bool _disabled = false;
+
+  Future<void> _fakeLoad() async {
+    setState(() => _loading = true);
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    VoidCallback? tap(String what) =>
+        _disabled ? null : () => showAppSnackBar(context, 'กด $what');
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+      children: [
+        SwitchListTile(
+          title: const Text('ปิดการใช้งานทุกปุ่ม'),
+          value: _disabled,
+          onChanged: (v) => setState(() => _disabled = v),
+        ),
+        _Demo(
+          title: 'ปุ่มทุกแบบ',
+          name: 'AppButton(variant: …)',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              AppButton(label: 'Primary', onPressed: tap('primary')),
+              AppButton(
+                  label: 'Tonal',
+                  variant: AppButtonVariant.tonal,
+                  onPressed: tap('tonal')),
+              AppButton(
+                  label: 'Outlined',
+                  variant: AppButtonVariant.outlined,
+                  onPressed: tap('outlined')),
+              AppButton(
+                  label: 'Text',
+                  variant: AppButtonVariant.text,
+                  onPressed: tap('text')),
+              AppButton(
+                  label: 'ลบ',
+                  icon: Icons.delete_outline,
+                  variant: AppButtonVariant.destructive,
+                  onPressed: tap('destructive')),
+              AppButton(
+                  label: 'ออกจากระบบ',
+                  icon: Icons.logout,
+                  variant: AppButtonVariant.destructiveOutlined,
+                  onPressed: tap('destructiveOutlined')),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'ขนาดใหญ่ เต็มความกว้าง + loading',
+          name: 'AppButton(size: large, expand: true, loading: …)',
+          child: Column(
+            children: [
+              AppButton(
+                label: 'กดเพื่อโหลด 2 วินาที',
+                icon: Icons.save_outlined,
+                size: AppButtonSize.large,
+                expand: true,
+                loading: _loading,
+                onPressed: _disabled ? null : _fakeLoad,
+              ),
+              const _Gap(),
+              AppButton(
+                label: 'ยกเลิก',
+                variant: AppButtonVariant.outlined,
+                size: AppButtonSize.large,
+                expand: true,
+                onPressed: tap('cancel'),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'ปุ่มไอคอนวงกลม',
+          name: 'AppIconButton',
+          child: Row(
+            children: [
+              AppIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'แก้ไข',
+                  onPressed: tap('edit')),
+              const SizedBox(width: AppSpacing.sm),
+              AppIconButton(
+                  icon: Icons.notifications_outlined,
+                  badgeCount: 3,
+                  onPressed: tap('bell')),
+              const SizedBox(width: AppSpacing.sm),
+              AppIconButton(
+                  icon: Icons.delete_outline,
+                  destructive: true,
+                  onPressed: tap('delete')),
+              const SizedBox(width: AppSpacing.sm),
+              const AppIconButton(icon: Icons.palette_outlined, onPressed: null),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'ปุ่มเพิ่มแบบเส้นประ',
+          name: 'AddTile(variant: card | row | circle)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AddTile(label: 'เพิ่มกระเป๋า', onTap: tap('add card')),
+              const _Gap(),
+              AddTile(
+                label: 'เพิ่มการหาร',
+                variant: AddTileVariant.row,
+                onTap: tap('add row'),
+              ),
+              const _Gap(),
+              AddTile(
+                label: 'เชิญ',
+                variant: AddTileVariant.circle,
+                onTap: tap('invite'),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'ทางเข้าลับ (แตะ 5 ครั้งภายใน 2 วินาที)',
+          name: 'SecretTapDetector · TapUnlockCounter',
+          child: SecretTapDetector(
+            onUnlock: () =>
+                showAppSnackBar(context, 'ปลดล็อกแล้ว', tone: Tone.success),
+            child: Container(
+              height: 56,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text('แตะตรงนี้เร็วๆ 5 ครั้ง'),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Inputs ─────────────────────────────────────────────────────────────
+
+class _InputsDemo extends StatefulWidget {
+  const _InputsDemo();
+  @override
+  State<_InputsDemo> createState() => _InputsDemoState();
+}
+
+enum _Dir { iOwe, owedToMe }
+
+class _InputsDemoState extends State<_InputsDemo> {
+  final _amount = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  String _query = '';
+  Account? _account;
+  Category? _category;
+  DateTime _date = DateTime.now();
+  _Dir _dir = _Dir.owedToMe;
+
+  static const _sampleAccounts = [
+    Account(
+      id: 'a1',
+      name: 'โดราเอมอน',
+      type: AccountType.bank,
+      balance: 1999818,
+      currency: 'THB',
+    ),
+    Account(
+      id: 'a2',
+      name: 'เงินสด',
+      type: AccountType.cash,
+      balance: 3250,
+      currency: 'THB',
+    ),
+    Account(
+      id: 'a3',
+      name: 'TrueMoney',
+      type: AccountType.eWallet,
+      balance: 480.5,
+      currency: 'THB',
+    ),
+    Account(
+      id: 'a4',
+      name: 'KTC',
+      type: AccountType.creditCard,
+      balance: -3200,
+      currency: 'THB',
+      creditLimit: 50000,
+    ),
+  ];
+
+  Future<void> _pickAccount() async {
+    final r = await showAccountPickerSheet(
+      context: context,
+      accounts: _sampleAccounts,
+      selected: _account,
+      allowNone: true,
+    );
+    if (r == null) return;
+    setState(() => _account = switch (r) {
+          AccountPickerSelected(:final account) => account,
+          AccountPickerCleared() => null,
+        });
+  }
+
+  Future<void> _pickCategory() async {
+    final cubit = context.read<CategoriesCubit>();
+    await cubit.loadIfNeeded();
+    if (!mounted) return;
+    final cats = cubit.state.categories;
+    if (cats.isEmpty) {
+      showAppSnackBar(context, 'ยังไม่มีหมวดหมู่ — ต้องล็อกอินก่อน',
+          tone: Tone.warning);
+      return;
+    }
+    final r = await showCategoryPickerSheet(
+      context: context,
+      categories: cats,
+      type: CategoryType.expense,
+      selected: _category,
+    );
+    if (r == null) return;
+    setState(() => _category = switch (r) {
+          CategoryPickerSelected(:final category) => category,
+          CategoryPickerCleared() => null,
+        });
+  }
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+        children: [
+          _Demo(
+            title: 'ช่องค้นหา',
+            name: 'AppSearchBar',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppSearchBar(
+                  padding: EdgeInsets.zero,
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+                const _Gap(),
+                Text('คำค้น: "$_query"'),
+              ],
+            ),
+          ),
+          _Demo(
+            title: 'เลือกทิศทาง (การ์ดใหญ่)',
+            name: 'SelectCardGroup',
+            child: SelectCardGroup<_Dir>(
+              selected: _dir,
+              onChanged: (v) => setState(() => _dir = v),
+              options: [
+                SelectCardOption(
+                  value: _Dir.iOwe,
+                  label: 'ฉันติดเขา',
+                  icon: Icons.call_made,
+                  color: palette.expense,
+                ),
+                SelectCardOption(
+                  value: _Dir.owedToMe,
+                  label: 'เขาติดฉัน',
+                  icon: Icons.call_received,
+                  color: palette.income,
+                ),
+              ],
+            ),
+          ),
+          _Demo(
+            title: 'ช่องจำนวนเงิน + ปุ่มลัด',
+            name: 'AmountField(quickFills: …)',
+            child: AmountField(
+              controller: _amount,
+              accent: _dir == _Dir.iOwe ? palette.expense : palette.income,
+              quickFills: const [
+                AmountQuickFill(label: 'ทั้งหมด ฿500', amount: 500),
+                AmountQuickFill(label: 'ครึ่งหนึ่ง', amount: 250),
+              ],
+              validator: (v) {
+                final n = AmountField.parse(v);
+                if (n == null || n <= 0) return 'กรอกจำนวนเงินที่มากกว่า 0';
+                return null;
+              },
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Text('ค่าที่อ่านได้: AmountField.parse → '
+                '${AmountField.parse(_amount.text)}'),
+          ),
+          _Demo(
+            title: 'Tile เลือกค่า',
+            name: 'PickerTile',
+            child: Column(
+              children: [
+                PickerTile(
+                  label: 'กระเป๋า · showAccountPickerSheet',
+                  value: _account?.name,
+                  placeholder: 'ไม่ระบุกระเป๋า',
+                  leading: _account == null
+                      ? const Icon(Icons.account_balance_wallet_outlined)
+                      : IconDisplay(
+                          type: IconType.account,
+                          size: 28,
+                          iconCode: _account!.iconCode),
+                  trailing:
+                      _account == null ? null : MoneyText(_account!.balance),
+                  onTap: _pickAccount,
+                ),
+                const _Gap(),
+                PickerTile(
+                  label: 'หมวดหมู่ · showCategoryPickerSheet',
+                  value: _category?.name,
+                  placeholder: 'เลือกหมวดหมู่',
+                  errorText: _category == null ? 'กรุณาเลือกหมวดหมู่' : null,
+                  leading: _category == null
+                      ? const Icon(Icons.category_outlined)
+                      : IconDisplay(
+                          type: IconType.category,
+                          size: 28,
+                          iconCode: _category!.iconCode),
+                  onTap: _pickCategory,
+                ),
+                const _Gap(),
+                PickerTile(
+                  label: 'วันที่',
+                  value: DateFormatter.friendly(_date,
+                      today: 'วันนี้', yesterday: 'เมื่อวาน'),
+                  leading: const Icon(Icons.calendar_today_outlined),
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: context,
+                      initialDate: _date,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (d != null) setState(() => _date = d);
+                  },
+                ),
+                const _Gap(),
+                const PickerTile(
+                  label: 'หมวดหมู่ (อ่านอย่างเดียว)',
+                  value: 'Opening Balance',
+                  leading: Icon(Icons.lock_outline),
+                  readOnly: true,
+                  onTap: null,
+                ),
+              ],
+            ),
+          ),
+          const _Demo(
+            title: 'ช่องข้อความมาตรฐาน',
+            name: 'AppTextField(obscurable: …)',
+            child: Column(
+              children: [
+                AppTextField(
+                  label: 'อีเมล',
+                  helper: 'ใช้เป็นรหัสบัญชีของคุณ',
+                  prefixIcon: Icons.mail_outline,
+                ),
+                _Gap(),
+                AppTextField(label: 'รหัสผ่าน', obscurable: true),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: AppButton(
+              label: 'ทดสอบ validate ฟอร์ม',
+              variant: AppButtonVariant.tonal,
+              expand: true,
+              onPressed: () => _formKey.currentState?.validate(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Chips ──────────────────────────────────────────────────────────────
+
+class _ChipsDemo extends StatefulWidget {
+  const _ChipsDemo();
+  @override
+  State<_ChipsDemo> createState() => _ChipsDemoState();
+}
+
+enum _Sort { name, usage, color }
+
+class _ChipsDemoState extends State<_ChipsDemo> {
+  final Set<int> _colors = {};
+  Set<String> _icons = {};
+  String? _status;
+  _Sort _sort = _Sort.name;
+  String _projectStatus = 'active';
+
+  static const _swatches = [
+    Color(0xFFE57373),
+    Color(0xFFF06292),
+    Color(0xFFBA68C8),
+    Color(0xFF7986CB),
+    Color(0xFF4FC3F7),
+    Color(0xFF4DB6AC),
+    Color(0xFFAED581),
+    Color(0xFFFFD54F),
+    Color(0xFFFFB74D),
+  ];
+
+  static const _statusLabels = {
+    'active': ('ใช้งาน', Tone.success),
+    'completed': ('เสร็จสิ้น', Tone.info),
+    'cancelled': ('ยกเลิก', Tone.danger),
+    'archived': ('เก็บถาวร', Tone.neutral),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final current = _statusLabels[_projectStatus]!;
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+      children: [
+        _Demo(
+          title: 'แถวตัวกรอง + เรียงลำดับ (popover)',
+          name: 'FilterBar · FilterDropdownChip · PopoverAnchor · '
+              'MultiOptionMenuAnchor · OptionMenuAnchor · SortChip',
+          child: FilterBar(
+            chips: [
+              // Colour — custom popover content (swatch grid, multi).
+              PopoverAnchor(
+                builder: (context, toggle) => FilterDropdownChip(
+                  label: 'สี',
+                  icon: Icons.palette_outlined,
+                  count: _colors.length,
+                  onTap: toggle,
+                ),
+                contentBuilder: (context, close) => ColorSwatchGrid(
+                  colors: _swatches,
+                  selected: _colors,
+                  onToggle: (i) => setState(() =>
+                      _colors.contains(i) ? _colors.remove(i) : _colors.add(i)),
+                  onClear: () => setState(_colors.clear),
+                ),
+              ),
+              // Icon — multi-select checkbox popover.
+              MultiOptionMenuAnchor<String>(
+                selected: _icons,
+                onChanged: (v) => setState(() => _icons = v),
+                options: const [
+                  SheetOption(
+                      value: 'sell',
+                      label: 'ป้าย',
+                      leading: Icon(Icons.sell_outlined, size: 18)),
+                  SheetOption(
+                      value: 'work',
+                      label: 'งาน',
+                      leading: Icon(Icons.work_outline, size: 18)),
+                  SheetOption(
+                      value: 'swap',
+                      label: 'โอน',
+                      leading: Icon(Icons.swap_horiz, size: 18)),
+                ],
+                builder: (context, toggle) => FilterDropdownChip(
+                  label: 'ไอคอน',
+                  icon: Icons.category_outlined,
+                  count: _icons.length,
+                  onTap: toggle,
+                ),
+              ),
+              // Status — single-select popover.
+              OptionMenuAnchor<String?>(
+                selected: _status,
+                onSelected: (v) => setState(() => _status = v),
+                options: const [
+                  SheetOption(value: null, label: 'ทั้งหมด'),
+                  SheetOption(value: 'ค้างอยู่', label: 'ค้างอยู่'),
+                  SheetOption(value: 'คืนครบ', label: 'คืนครบ'),
+                  SheetOption(value: 'ยกเลิก', label: 'ยกเลิก'),
+                ],
+                builder: (context, toggle) => FilterDropdownChip(
+                  label: 'สถานะ',
+                  valueLabel: _status,
+                  onTap: toggle,
+                ),
+              ),
+              const FilterDropdownChip(label: 'ปิดอยู่', onTap: null),
+            ],
+            trailing: SortChip<_Sort>(
+              selected: _sort,
+              onSelected: (s) => setState(() => _sort = s),
+              options: const [
+                SortOption(_Sort.name, 'ชื่อ'),
+                SortOption(_Sort.usage, 'ใช้บ่อย'),
+                SortOption(_Sort.color, 'สี'),
+              ],
+            ),
+          ),
+        ),
+        const _Gap(),
+        _Demo(
+          title: 'Pill สถานะ (กดเพื่อเปลี่ยน — popover)',
+          name: 'OptionMenuAnchor + StatusPill(onTap)',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: OptionMenuAnchor<String>(
+              selected: _projectStatus,
+              onSelected: (v) => setState(() => _projectStatus = v),
+              options: [
+                for (final e in _statusLabels.entries)
+                  SheetOption(
+                    value: e.key,
+                    label: e.value.$1,
+                    leading: _Dot(color: e.value.$2.color(context)),
+                  ),
+              ],
+              builder: (context, toggle) => StatusPill(
+                label: current.$1,
+                tone: current.$2,
+                onTap: toggle,
+              ),
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'รายการยาว/ต้องค้นหา → bottom sheet',
+          name: 'showOptionSheet(searchable: true)',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FilterDropdownChip(
+              label: 'สกุลเงิน',
+              icon: Icons.currency_exchange,
+              onTap: () => showOptionSheet<String>(
+                context,
+                title: 'สกุลเงิน',
+                searchable: true,
+                options: const [
+                  SheetOption(value: 'THB', label: 'THB', subtitle: 'บาทไทย'),
+                  SheetOption(
+                      value: 'USD', label: 'USD', subtitle: 'ดอลลาร์สหรัฐ'),
+                  SheetOption(value: 'JPY', label: 'JPY', subtitle: 'เยน'),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const _Demo(
+          title: 'Pill ทุก tone',
+          name: 'StatusPill(tone: …)',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              StatusPill(label: 'neutral'),
+              StatusPill(label: 'primary', tone: Tone.primary),
+              StatusPill(label: 'success', tone: Tone.success),
+              StatusPill(label: 'warning', tone: Tone.warning),
+              StatusPill(label: 'danger', tone: Tone.danger),
+              StatusPill(label: 'info', tone: Tone.info),
+              StatusPill(label: 'รายรับ', tone: Tone.income, icon: Icons.add),
+              StatusPill(
+                  label: 'รายจ่าย', tone: Tone.expense, icon: Icons.remove),
+              StatusPill(label: 'dense', tone: Tone.primary, dense: true),
+            ],
+          ),
+        ),
+        const _Demo(
+          title: 'Badge เล็ก',
+          name: 'AppBadge',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              AppBadge(label: 'ไม่มีกระเป๋า'),
+              AppBadge(label: 'เจ้าของ', tone: Tone.primary),
+              AppBadge(label: 'รอตอบรับ', tone: Tone.warning),
+              AppBadge(label: '3', icon: Icons.sell_outlined),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot({required this.color});
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      );
+}
+
+// ── Layout ─────────────────────────────────────────────────────────────
+
+class _LayoutDemo extends StatelessWidget {
+  const _LayoutDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+      children: [
+        _Demo(
+          title: 'Header card',
+          name: 'HeaderCard(leading, title, subtitle, trailing, footer)',
+          child: HeaderCard(
+            accent: palette.income,
+            leading: const UserAvatar(displayName: 'Aom Chan', size: 44),
+            title: const Text('Aom ติดคุณ'),
+            subtitle: const Text('2 รายการค้างอยู่'),
+            trailing:
+                const StatusPill(label: 'ค้างอยู่', tone: Tone.warning),
+            footer: const ProgressRow(
+              value: 0.6,
+              label: 'คืนแล้ว ฿300 จาก ฿500',
+              trailing: '60%',
+            ),
+          ),
+        ),
+        const _Demo(
+          title: 'กรอบเลือก (แตะเพื่อเลือก)',
+          name: 'SelectableFrame',
+          child: _SelectableDemo(),
+        ),
+        _Demo(
+          title: 'หัวข้อ section',
+          name: 'SectionHeader(count, actionLabel)',
+          child: SectionHeader(
+            title: 'รายการล่าสุด',
+            count: 12,
+            actionLabel: 'ดูทั้งหมด',
+            padding: EdgeInsets.zero,
+            onAction: () => showAppSnackBar(context, 'ดูทั้งหมด'),
+          ),
+        ),
+        _Demo(
+          title: 'แถวรายละเอียด',
+          name: 'SectionCard · DetailRow · DetailStacked · RowDivider',
+          child: Card(
+            child: SectionCard(
+              title: 'การรับเงิน',
+              children: [
+                DetailRow(
+                  label: 'บันทึกรับเงินอัตโนมัติ',
+                  helper: 'เมื่อมีคนแจ้งว่าจ่ายแล้ว',
+                  trailing: Switch(value: true, onChanged: (_) {}),
+                ),
+                const RowDivider(),
+                DetailRow(
+                  label: 'กระเป๋าที่รับเงิน',
+                  leading: const Icon(Icons.account_balance_wallet_outlined),
+                  trailing: const Text('โดราเอมอน'),
+                  showChevron: true,
+                  onTap: () => showAppSnackBar(context, 'เปิดตัวเลือก'),
+                ),
+                const RowDivider(),
+                const DetailRow(
+                  label: 'ชื่อผู้ใช้',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [Text('@ppond '), Icon(Icons.lock_outline, size: 16)],
+                  ),
+                ),
+                const RowDivider(),
+                const DetailStacked(
+                  label: 'บันทึก',
+                  child: Text('ข้อความยาวจะอยู่ใต้ label เต็มความกว้าง'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'ล็อกในโหมดแก้ไข',
+          name: 'LockedInEdit(locked: true)',
+          child: LockedInEdit(
+            locked: true,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: SummaryStats(stats: _sampleStats),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SelectableDemo extends StatefulWidget {
+  const _SelectableDemo();
+  @override
+  State<_SelectableDemo> createState() => _SelectableDemoState();
+}
+
+class _SelectableDemoState extends State<_SelectableDemo> {
+  int _picked = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['รายเดือน', 'รายสัปดาห์', 'รายปี'];
+    return Row(
+      children: [
+        for (var i = 0; i < labels.length; i++) ...[
+          if (i > 0) const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: SelectableFrame(
+              selected: _picked == i,
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => setState(() => _picked = i),
+                  child: SizedBox(
+                    height: 64,
+                    child: Center(child: Text(labels[i])),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+const _sampleStats = [
+  SummaryStat(label: 'รายรับ', amount: 3000, tone: MoneyTone.income),
+  SummaryStat(label: 'รายจ่าย', amount: 12400, tone: MoneyTone.expense),
+  SummaryStat(label: 'สุทธิ', amount: -9400, tone: MoneyTone.signed),
+];
+
+// ── Feedback ───────────────────────────────────────────────────────────
+
+class _FeedbackDemo extends StatefulWidget {
+  const _FeedbackDemo();
+  @override
+  State<_FeedbackDemo> createState() => _FeedbackDemoState();
+}
+
+class _FeedbackDemoState extends State<_FeedbackDemo> {
+  double _progress = 0.45;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+      children: [
+        _Demo(
+          title: 'Dialog ยืนยัน',
+          name: 'showConfirmDialog(destructive: …)',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              AppButton(
+                label: 'ยืนยันปกติ',
+                variant: AppButtonVariant.outlined,
+                onPressed: () async {
+                  final ok = await showConfirmDialog(context,
+                      title: 'เปลี่ยนเป็นเสร็จสิ้น?',
+                      message: 'จะเพิ่มรายการไม่ได้อีก',
+                      confirmLabel: 'ยืนยัน');
+                  if (context.mounted) showAppSnackBar(context, 'ผล: $ok');
+                },
+              ),
+              AppButton(
+                label: 'ยืนยันลบ',
+                variant: AppButtonVariant.destructiveOutlined,
+                onPressed: () async {
+                  final ok = await showConfirmDialog(context,
+                      title: 'ลบผู้ติดต่อ?',
+                      message: 'การลบไม่สามารถย้อนกลับได้',
+                      confirmLabel: 'ลบ',
+                      destructive: true);
+                  if (context.mounted) showAppSnackBar(context, 'ผล: $ok');
+                },
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'Snackbar ทุก tone',
+          name: 'showAppSnackBar(tone: …)',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final t in [
+                Tone.neutral,
+                Tone.success,
+                Tone.danger,
+                Tone.warning,
+                Tone.info
+              ])
+                AppButton(
+                  label: t.name,
+                  variant: AppButtonVariant.tonal,
+                  onPressed: () => showAppSnackBar(
+                    context,
+                    'ข้อความแบบ ${t.name}',
+                    tone: t,
+                    actionLabel: 'เลิกทำ',
+                    onAction: () {},
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'แถบความคืบหน้า (ลากเพื่อลอง เกิน 100% = แดง)',
+          name: 'ProgressRow',
+          child: Column(
+            children: [
+              ProgressRow(
+                value: _progress,
+                label: 'ใช้ไป ฿${(_progress * 20000).round()} / ฿20,000',
+                trailing: '${(_progress * 100).round()}%',
+              ),
+              Slider(
+                value: _progress,
+                max: 1.3,
+                onChanged: (v) => setState(() => _progress = v),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'Bottom sheet มาตรฐาน',
+          name: 'showAppSheet(title, footer)',
+          child: AppButton(
+            label: 'เปิด sheet',
+            variant: AppButtonVariant.outlined,
+            onPressed: () => showAppSheet<void>(
+              context,
+              title: 'รับเงินคืนจาก Aom',
+              builder: (ctx) => const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Text('เนื้อหา sheet — ฟอร์ม, รายการ, ฯลฯ'),
+              ),
+              footer: Builder(
+                builder: (ctx) => AppButton(
+                  label: 'ยืนยัน',
+                  size: AppButtonSize.large,
+                  expand: true,
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ),
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'Option sheet ค้นหาได้',
+          name: 'showOptionSheet(searchable: true)',
+          child: AppButton(
+            label: 'เลือกสกุลเงิน',
+            variant: AppButtonVariant.outlined,
+            onPressed: () async {
+              final v = await showOptionSheet<String>(
+                context,
+                title: 'สกุลเงิน',
+                searchable: true,
+                selected: 'THB',
+                options: const [
+                  SheetOption(value: 'THB', label: 'THB', subtitle: 'บาทไทย'),
+                  SheetOption(
+                      value: 'USD', label: 'USD', subtitle: 'ดอลลาร์สหรัฐ'),
+                  SheetOption(value: 'JPY', label: 'JPY', subtitle: 'เยน'),
+                  SheetOption(value: 'EUR', label: 'EUR', subtitle: 'ยูโร'),
+                ],
+              );
+              if (context.mounted && v != null) {
+                showAppSnackBar(context, 'เลือก $v');
+              }
+            },
+          ),
+        ),
+        const _Demo(
+          title: 'Empty state + AddTile เป็น CTA',
+          name: 'EmptyView(cta: AddTile)',
+          child: SizedBox(
+            height: 320,
+            child: EmptyView(
+              icon: Icons.people_outline,
+              title: 'ยังไม่มีผู้ติดต่อ',
+              message: 'คนที่คุณเพิ่มจะแสดงที่นี่',
+              cta: AddTile(label: 'เพิ่มผู้ติดต่อคนแรก', onTap: null),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Data display ───────────────────────────────────────────────────────
+
+class _DataDemo extends StatelessWidget {
+  const _DataDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final textTheme = Theme.of(context).textTheme;
+    const members = [
+      PersonRef(name: 'ppOnd', caption: 'คุณ', isOwner: true),
+      PersonRef(name: 'Aom Chan'),
+      PersonRef(name: 'Bank', caption: 'รอตอบรับ', pending: true),
+      PersonRef(name: 'Cat'),
+      PersonRef(name: 'Dao'),
+    ];
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+      children: [
+        _Demo(
+          title: 'ยอดเงิน + ปุ่มซ่อนยอด 👁 (ใช้ทั้งแอป)',
+          name: 'MoneyText · MoneyVisibilityToggle',
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    MoneyText(1999818,
+                        style: textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const MoneyText(2000, tone: MoneyTone.income),
+                    const MoneyText(182, tone: MoneyTone.expense),
+                    const MoneyText(-540, tone: MoneyTone.signed),
+                  ],
+                ),
+              ),
+              const MoneyVisibilityToggle(size: 28),
+            ],
+          ),
+        ),
+        const _Demo(
+          title: 'ตัวเลขสรุป',
+          name: 'SummaryStats(compact: false | true)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SummaryStats(stats: _sampleStats),
+              _Gap(),
+              SummaryStats(stats: _sampleStats, compact: true),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'แถวเงิน + หัวข้อกลุ่มวันที่',
+          name: 'DateGroupHeader · MoneyListTile · IconBubble',
+          child: Card(
+            child: Column(
+              children: [
+                const DateGroupHeader(label: 'วันนี้', total: -540),
+                MoneyListTile(
+                  leading: IconBubble(
+                      icon: Icons.delivery_dining, color: palette.warning),
+                  title: 'Food Delivery',
+                  subtitle: const Row(
+                    children: [
+                      Flexible(child: Text('อาหาร · โดราเอมอน ')),
+                      Icon(Icons.sell_outlined),
+                      Text(' 2'),
+                    ],
+                  ),
+                  amount: -182,
+                  onTap: () {},
+                ),
+                MoneyListTile(
+                  leading: IconBubble(icon: Icons.restaurant, color: palette.info),
+                  title: 'ข้าวซอย',
+                  subtitle: const Row(children: [
+                    AppBadge(label: 'ไม่มีกระเป๋า'),
+                  ]),
+                  amount: -358,
+                  amountCaption: 'หาร 3',
+                  onTap: () {},
+                ),
+                const DateGroupHeader(label: 'เมื่อวาน', total: 2000000),
+                MoneyListTile(
+                  leading: IconBubble(icon: Icons.flag_outlined, color: palette.income),
+                  title: 'Opening Balance',
+                  subtitle: const Text('โดราเอมอน'),
+                  amount: 2000000,
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'แถวสมาชิก + ปุ่มเชิญ',
+          name: 'MemberStrip(onInvite)',
+          child: MemberStrip(
+            members: members,
+            onMemberTap: (i) =>
+                showAppSnackBar(context, 'แตะ ${members[i].name}'),
+            onInvite: () => showAppSnackBar(context, 'เชิญสมาชิก'),
+          ),
+        ),
+        const _Demo(
+          title: 'Avatar ซ้อน',
+          name: 'AvatarStack(maxVisible: 3)',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AvatarStack(people: members, maxVisible: 3, size: 32),
+          ),
+        ),
+        _Demo(
+          title: 'Avatar + badge มุม (notification)',
+          name: 'CornerBadge · UserAvatar',
+          child: Row(
+            children: [
+              CornerBadge(
+                badge: IconBubble(
+                    icon: Icons.receipt_long_outlined,
+                    color: palette.primary,
+                    size: 20),
+                child: const UserAvatar(displayName: 'Aom Chan', size: 44),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              const EditableCircle(
+                size: 44,
+                onTap: _noop,
+                child: UserAvatar(displayName: 'ppOnd', size: 44),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+void _noop() {}
+
+// ── Icon maker ─────────────────────────────────────────────────────────
+
+/// One way of opening `showIconMakerSheet` — a mode demo or a real call
+/// site copied 1:1 from the page that uses it.
+class _MakerPreset {
+  const _MakerPreset({
+    required this.label,
+    required this.note,
+    required this.type,
+    this.layers = IconMakerLayers.all,
+    this.iconPicker = true,
+    this.colorPicker = true,
+    this.colorSection = true,
+    this.removable = false,
+    this.useThisLabel,
+  });
+
+  final String label;
+
+  /// Flags (modes) or source file (real call sites).
+  final String note;
+  final IconType type;
+  final IconMakerLayers layers;
+  final bool iconPicker;
+  final bool colorPicker;
+  final bool colorSection;
+  final bool removable;
+  final String? useThisLabel;
+}
+
+/// Every layer combination + edit-scope variant, opened directly.
+const _modePresets = [
+  _MakerPreset(label: 'ไอคอน + พื้น + ขอบ', note: 'ค่าเริ่มต้น', type: IconType.category),
+  _MakerPreset(label: 'ไอคอน + พื้น', note: 'showBorder: false', type: IconType.category, layers: IconMakerLayers.iconBackground),
+  _MakerPreset(label: 'ไอคอน + ขอบ', note: 'showBackground: false', type: IconType.category, layers: IconMakerLayers.iconBorder),
+  _MakerPreset(label: 'พื้น + ขอบ', note: 'showIcon: false', type: IconType.category, layers: IconMakerLayers.backgroundBorder),
+  _MakerPreset(label: 'ไอคอนอย่างเดียว', note: 'showBackground/showBorder: false', type: IconType.category, layers: IconMakerLayers.iconOnly),
+  _MakerPreset(label: 'พื้นอย่างเดียว', note: 'showIcon/showBorder: false', type: IconType.category, layers: IconMakerLayers.backgroundOnly),
+  _MakerPreset(label: 'ขอบอย่างเดียว', note: 'showIcon/showBackground: false', type: IconType.category, layers: IconMakerLayers.borderOnly),
+  _MakerPreset(label: 'รูปแบบอย่างเดียว (ไม่แก้สี)', note: 'showColorPicker: false', type: IconType.category, colorPicker: false),
+  _MakerPreset(label: 'สีอย่างเดียว (ไม่แก้รูปแบบ)', note: 'showIconPicker: false', type: IconType.category, iconPicker: false),
+  _MakerPreset(label: 'มีปุ่มลบไอคอน', note: 'removeLabel', type: IconType.category, removable: true),
+];
+
+/// The real call sites — same type + flags as the page that opens it.
+const _usagePresets = [
+  _MakerPreset(label: 'กระเป๋า', note: 'account_form_page · saving_goal_form_page', type: IconType.account),
+  _MakerPreset(label: 'หมวดหมู่', note: 'category_detail_page (หมวดลูกล็อกสีตามหมวดแม่)', type: IconType.category),
+  _MakerPreset(label: 'หมวดหมู่ย่อย (สีล็อก)', note: 'category_detail_page · showColorSection: false', type: IconType.category, colorSection: false),
+  _MakerPreset(label: 'รายการตั้งเวลา', note: 'scheduled_transaction_form_page', type: IconType.category),
+  _MakerPreset(label: 'โปรเจกต์', note: 'project_form_page', type: IconType.project),
+  _MakerPreset(label: 'รายการในโปรเจกต์', note: 'project_transaction_form/edit_page', type: IconType.projectTransaction),
+  _MakerPreset(label: 'โปรไฟล์', note: 'edit_profile_page · useThis + remove', type: IconType.userProfile, removable: true, useThisLabel: 'ใช้รูปนี้'),
+  _MakerPreset(label: 'แท็ก (แก้ทีละอัน)', note: 'tags_page · ไอคอน+สี ไม่มีพื้น/ขอบ', type: IconType.tag, layers: IconMakerLayers.iconOnly),
+  _MakerPreset(label: 'แท็ก · เปลี่ยนสีหลายอัน', note: 'tags_page bulk · showIconPicker: false', type: IconType.tag, layers: IconMakerLayers.iconOnly, iconPicker: false),
+  _MakerPreset(label: 'แท็ก · เปลี่ยนไอคอนหลายอัน', note: 'tags_page bulk · showColorPicker: false', type: IconType.tag, layers: IconMakerLayers.iconOnly, colorPicker: false),
+  _MakerPreset(label: 'ผู้ติดต่อ (แผน)', note: 'contact detail ใหม่ · pack_contact', type: IconType.contact),
+];
+
+class _IconMakerDemo extends StatefulWidget {
+  const _IconMakerDemo();
+  @override
+  State<_IconMakerDemo> createState() => _IconMakerDemoState();
+}
+
+class _IconMakerDemoState extends State<_IconMakerDemo> {
+  final Map<_MakerPreset, IconCode?> _results = {};
+
+  Future<void> _open(_MakerPreset p) async {
+    final r = await showIconMakerSheet(
+      context: context,
+      type: p.type,
+      initial: _results[p],
+      showIcon: p.layers.icon,
+      showBackground: p.layers.background,
+      showBorder: p.layers.border,
+      showIconPicker: p.iconPicker,
+      showColorPicker: p.colorPicker,
+      showColorSection: p.colorSection,
+      useThisLabel: p.useThisLabel,
+      removeLabel: p.removable ? 'ลบไอคอน' : null,
+    );
+    if (!mounted || r == null) return;
+    setState(() => _results[p] = switch (r) {
+          IconMakerSelected(:final iconCode) => iconCode,
+          IconMakerRemoved() => null,
+        });
+  }
+
+  Widget _rows(List<_MakerPreset> presets) {
+    return Card(
+      child: SectionCard(
+        children: [
+          for (var i = 0; i < presets.length; i++) ...[
+            if (i > 0) const RowDivider(),
+            DetailRow(
+              label: presets[i].label,
+              helper: presets[i].note,
+              leading: IconDisplay(
+                type: presets[i].type,
+                size: 40,
+                iconCode: _results[presets[i]],
+              ),
+              showChevron: true,
+              onTap: () => _open(presets[i]),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+      children: [
+        _Demo(
+          title: 'ทรงพื้นหลังทั้งหมด (ขอบเปลี่ยนตามทรง)',
+          name: 'IconShape · IconCode(shape:) · IconCodeWidget',
+          child: Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final s in IconShape.values)
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconCodeWidget(
+                      size: 48,
+                      iconCode: IconCode(
+                        icon: 'shopping_basket',
+                        background: 'solid',
+                        bgColors: const ['#00BFA6'],
+                        border: 'thick',
+                        borderColors: const ['#0E7C7B'],
+                        shape: s.name,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(s.label(AppLocalizations.of(context)!),
+                        style: Theme.of(context).textTheme.labelSmall),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'ทุกโหมด (แตะเพื่อเปิด)',
+          name: 'showIconMakerSheet(showIcon / showBackground / showBorder · '
+              'showIconPicker / showColorPicker · removeLabel)',
+          child: _rows(_modePresets),
+        ),
+        _Demo(
+          title: 'ตามที่ใช้จริงในแอป',
+          name: 'ค่าเดียวกับหน้าที่เรียกใช้',
+          child: _rows(_usagePresets),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Edit mode ──────────────────────────────────────────────────────────
+
+class _EditModeDemo extends StatefulWidget {
+  const _EditModeDemo({required this.editing, required this.onEnterEdit});
+
+  final bool editing;
+  final VoidCallback onEnterEdit;
+
+  @override
+  State<_EditModeDemo> createState() => _EditModeDemoState();
+}
+
+class _EditModeDemoState extends State<_EditModeDemo> {
+  final _name = TextEditingController(text: 'Aom Chan');
+  final _email = TextEditingController(text: 'aom@example.com');
+  final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final editing = widget.editing;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
+      children: [
+        Text(
+          editing
+              ? 'โหมดแก้ไข: top bar เป็น ✕ · ไม่มี 🔔👤 · ส่วนที่แก้ไม่ได้จาง · แถบล่างเป็น ยกเลิก/↶/บันทึก'
+              : 'โหมดดู: กด ✏️ บน top bar หรือกดค้างที่ช่องข้อความเพื่อเข้าโหมดแก้ไข',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        HeaderCard(
+          leading: EditableCircle(
+            size: 44,
+            onTap: editing ? () => showAppSnackBar(context, 'เปิด icon maker') : null,
+            child: const UserAvatar(displayName: 'Aom Chan', size: 44),
+          ),
+          title: InlineTitleField(
+            editing: editing,
+            controller: _name,
+            onEnterEdit: widget.onEnterEdit,
+            hint: 'ชื่อ',
+          ),
+          subtitle: const Text('เชื่อมบัญชีแล้ว 🔗'),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        SectionCard(
+          children: [
+            DetailStacked(
+              label: 'อีเมล',
+              child: InlineField(
+                editing: editing,
+                controller: _email,
+                onEnterEdit: widget.onEnterEdit,
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ),
+            const RowDivider(),
+            DetailStacked(
+              label: 'บันทึก',
+              child: InlineField(
+                editing: editing,
+                controller: _note,
+                maxLines: 3,
+                onEnterEdit: widget.onEnterEdit,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        LockedInEdit(
+          locked: editing,
+          child: SectionCard(
+            title: 'การดำเนินการ',
+            children: [
+              DetailRow(
+                label: 'เชื่อมกับบัญชีผู้ใช้',
+                leading: const Icon(Icons.link),
+                trailing: AppButton(
+                  label: 'ส่งคำขอ',
+                  variant: AppButtonVariant.text,
+                  onPressed: () => showAppSnackBar(context, 'ส่งคำขอแล้ว'),
+                ),
+              ),
+              const RowDivider(),
+              DetailRow(
+                label: 'หนี้กับคนนี้',
+                leading: const Icon(Icons.account_balance_outlined),
+                trailing: const MoneyText(1500, tone: MoneyTone.income),
+                showChevron: true,
+                onTap: () => showAppSnackBar(context, 'ไปหน้าหนี้'),
+              ),
+              const RowDivider(),
+              DetailRow(
+                label: 'เก็บถาวร',
+                leading: const Icon(Icons.archive_outlined),
+                onTap: () => showAppSnackBar(context, 'เก็บถาวร'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
