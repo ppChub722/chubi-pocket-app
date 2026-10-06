@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -10,6 +11,7 @@ import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../domain/saving_goal.dart';
@@ -60,7 +62,7 @@ class _SavingGoalFormPageState extends State<SavingGoalFormPage> {
       if (existing != null) {
         _initial = existing;
         _nameController.text = existing.name;
-        _targetController.text = existing.targetAmount.toString();
+        _targetController.text = AmountField.format(existing.targetAmount);
         _allocationController.text = existing.allocationPct.toString();
         _noteController.text = existing.note ?? '';
         _linkedAccountId = existing.linkedAccountId;
@@ -90,36 +92,30 @@ class _SavingGoalFormPageState extends State<SavingGoalFormPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final title = widget.isEdit ? l.savingGoalFormTitleEdit : l.savingGoalFormTitle;
     if (widget.isEdit && _initial == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l.savingGoalFormTitleEdit)),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Text(
-              l.savingGoalDetailNotFoundMessage,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        appBar: AppTopBar(title: title, showBack: true),
+        body: EmptyView(
+          icon: AppIcons.empty,
+          title: l.savingGoalDetailNotFound,
+          message: l.savingGoalDetailNotFoundMessage,
         ),
       );
     }
-
+    // A form = edit mode (§1.4): ✕ + ยกเลิก · บันทึก, nav hidden by route.
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEdit
-            ? l.savingGoalFormTitleEdit
-            : l.savingGoalFormTitle),
+      appBar: AppTopBar(
+        title: title,
+        showBack: true,
+        editing: true,
+        onBack: () => context.pop(),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.huge,
-          ),
+              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.huge),
           children: [
             _IconPickerTile(
               iconCode: _iconCode,
@@ -127,18 +123,13 @@ class _SavingGoalFormPageState extends State<SavingGoalFormPage> {
               onTap: () => _openIconMaker(context, l),
             ),
             const SizedBox(height: AppSpacing.lg),
-            TextFormField(
+            AppTextField(
               controller: _nameController,
+              label: l.savingGoalFormNameLabel,
               maxLength: 100,
-              decoration: InputDecoration(
-                labelText: l.savingGoalFormNameLabel,
-              ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return l.savingGoalFormNameRequired;
-                }
-                return null;
-              },
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? l.savingGoalFormNameRequired
+                  : null,
             ),
             const SizedBox(height: AppSpacing.md),
             _AccountPicker(
@@ -146,45 +137,28 @@ class _SavingGoalFormPageState extends State<SavingGoalFormPage> {
               enabled: !widget.isEdit,
               onChanged: (id) => setState(() => _linkedAccountId = id),
             ),
-            const SizedBox(height: AppSpacing.md),
-            TextFormField(
+            const SizedBox(height: AppSpacing.lg),
+            AmountField(
               controller: _targetController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              decoration: InputDecoration(
-                labelText: l.savingGoalFormTargetLabel,
-                prefixText: '฿ ',
-              ),
+              label: l.savingGoalFormTargetLabel,
               validator: (v) {
-                final n = double.tryParse(v ?? '');
-                if (n == null || n <= 0) return l.savingGoalFormTargetInvalid;
-                return null;
+                final n = AmountField.parse(v);
+                return (n == null || n <= 0) ? l.savingGoalFormTargetInvalid : null;
               },
             ),
-            const SizedBox(height: AppSpacing.md),
-            TextFormField(
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
               controller: _allocationController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              decoration: InputDecoration(
-                labelText: l.savingGoalFormAllocationLabel,
-                helperText: l.savingGoalFormAllocationHelper,
-                helperMaxLines: 2,
-                suffixText: '%',
-              ),
+              label: l.savingGoalFormAllocationLabel,
+              helper: l.savingGoalFormAllocationHelper,
+              suffix: const Text('%'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               validator: (v) {
                 if (v == null || v.isEmpty) return null; // optional
                 final n = double.tryParse(v);
-                if (n == null || n <= 0 || n > 100) {
-                  return l.savingGoalFormAllocationInvalid;
-                }
-                return null;
+                return (n == null || n <= 0 || n > 100)
+                    ? l.savingGoalFormAllocationInvalid
+                    : null;
               },
             ),
             const SizedBox(height: AppSpacing.md),
@@ -194,30 +168,24 @@ class _SavingGoalFormPageState extends State<SavingGoalFormPage> {
               onClear: () => setState(() => _deadline = null),
             ),
             const SizedBox(height: AppSpacing.md),
-            TextFormField(
+            AppTextField(
               controller: _noteController,
+              label: l.savingGoalFormNoteLabel,
               maxLength: 200,
               maxLines: 2,
-              decoration: InputDecoration(
-                labelText: l.savingGoalFormNoteLabel,
-              ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: FilledButton(
-            onPressed: _save,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: Text(widget.isEdit
-                ? l.savingGoalFormSaveEdit
-                : l.savingGoalFormSave),
-          ),
-        ),
+      bottomNavigationBar: ModeActionBar(
+        canUndo: false,
+        canSave: true,
+        cancelLabel: l.commonCancel,
+        saveLabel: widget.isEdit ? l.savingGoalFormSaveEdit : l.savingGoalFormSave,
+        undoTooltip: l.commonUndo,
+        onCancel: () => context.pop(),
+        onUndo: () {},
+        onSave: _save,
       ),
     );
   }
@@ -259,7 +227,7 @@ class _SavingGoalFormPageState extends State<SavingGoalFormPage> {
         final updated = SavingGoal(
           id: _initial!.id,
           name: _nameController.text.trim(),
-          targetAmount: double.parse(_targetController.text.trim()),
+          targetAmount: AmountField.parse(_targetController.text)!,
           linkedAccountId: _initial!.linkedAccountId,
           allocationPct:
               allocation > 0 ? allocation : _initial!.allocationPct,
@@ -274,7 +242,7 @@ class _SavingGoalFormPageState extends State<SavingGoalFormPage> {
         final draft = SavingGoal(
           id: 'draft',
           name: _nameController.text.trim(),
-          targetAmount: double.parse(_targetController.text.trim()),
+          targetAmount: AmountField.parse(_targetController.text)!,
           linkedAccountId: _linkedAccountId!,
           allocationPct: allocation,
           currency: 'THB',

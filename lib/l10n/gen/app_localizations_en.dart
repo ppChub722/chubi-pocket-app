@@ -60,6 +60,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonUndo => 'Undo';
 
   @override
+  String get commonDiscard => 'Discard';
+
+  @override
+  String get commonDiscardTitle => 'Discard changes?';
+
+  @override
+  String get commonDiscardBody => 'Your edits will be lost.';
+
+  @override
+  String get commonCurrency => 'Currency';
+
+  @override
+  String get currencyNameTHB => 'Thai baht';
+
+  @override
+  String get currencyNameUSD => 'US dollar';
+
+  @override
+  String get currencyNameEUR => 'Euro';
+
+  @override
+  String get currencyNameGBP => 'British pound';
+
+  @override
+  String get currencyNameJPY => 'Japanese yen';
+
+  @override
+  String get contactPickerTitle => 'Who?';
+
+  @override
+  String get contactPickerSearchHint => 'Search contacts or type a name';
+
+  @override
+  String contactPickerUseName(String name) {
+    return 'Use \"$name\"';
+  }
+
+  @override
+  String get contactPickerUseNameHint => 'Not saved as a contact';
+
+  @override
+  String get contactPickerEmpty => 'No contacts yet — type a name above';
+
+  @override
   String get commonShowAmounts => 'Show amounts';
 
   @override
@@ -674,6 +718,1232 @@ class AppLocalizationsEn extends AppLocalizations {
       'People you add appear here — link them to share transactions and debts.';
 
   @override
+  String get contactsSearchHint => 'Search name, email or phone';
+
+  @override
+  String get contactsStatusLabel => 'Status';
+
+  @override
+  String get contactsNoMatch => 'No matching contacts';
+
+  @override
+  String get contactTitleNew => 'New contact';
+
+  @override
+  String get contactTitleEdit => 'Edit contact';
+
+  @override
+  String get contactNotFound => 'Contact not found';
+
+  @override
+  String get contactNameLabel => 'Name';
+
+  @override
+  String get contactNameRequired => 'Name is required';
+
+  @override
+  String get contactNameTooLong => 'Up to 100 characters';
+
+  @override
+  String get contactEmailLabel => 'Email';
+
+  @override
+  String get contactEmailInvalid => 'Invalid email';
+
+  @override
+  String get contactPhoneLabel => 'Phone';
+
+  @override
+  String get contactNotesLabel => 'Notes';
+
+  @override
+  String get contactLinkedBadge => 'Linked to an app account';
+
+  @override
+  String get contactLinkedLockedHint =>
+      'Name and email come from their account';
+
+  @override
+  String get contactArchivedBadge => 'Archived';
+
+  @override
+  String get contactSectionActions => 'Manage';
+
+  @override
+  String get contactLinkTitle => 'Link account';
+
+  @override
+  String get contactLinkLinked =>
+      'Linked — name, email and icon follow their account';
+
+  @override
+  String get contactLinkRequest => 'Send link request';
+
+  @override
+  String get contactLinkRequestHint =>
+      'If this email belongs to a user, they\'ll get a request';
+
+  @override
+  String get contactLinkNeedsEmail => 'Add an email to send a link request';
+
+  @override
+  String get contactLinkRequested => 'Link request sent';
+
+  @override
+  String get contactUnlink => 'Unlink';
+
+  @override
+  String contactUnlinkTitle(String name) {
+    return 'Unlink $name?';
+  }
+
+  @override
+  String get contactUnlinkBody =>
+      'The contact goes back to the name and email you saved.';
+
+  @override
+  String get contactUnlinked => 'Unlinked';
+
+  @override
+  String get contactWireTitle => 'Match names in splits';
+
+  @override
+  String contactWireHint(int names, int splits) {
+    return '$names names · $splits splits not linked to a contact';
+  }
+
+  @override
+  String get contactWireNone => 'No unlinked names';
+
+  @override
+  String contactWireSheetTitle(String name) {
+    return 'Link names to $name';
+  }
+
+  @override
+  String get contactWireSheetBody =>
+      'Pick the typed names in your splits that are this person — their debts get linked to this contact.';
+
+  @override
+  String get contactWireSearch => 'Search names';
+
+  @override
+  String contactWireCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count splits',
+      one: '1 split',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contactWireSave(int count) {
+    return 'Link $count';
+  }
+
+  @override
+  String contactWireDone(int count, String name) {
+    return 'Linked $count splits to $name';
+  }
+
+  @override
+  String get contactArchive => 'Archive';
+
+  @override
+  String get contactArchiveHint => 'Hidden from pickers; history stays';
+
+  @override
+  String get contactRestore => 'Restore';
+
+  @override
+  String get contactDebts => 'Debts with this person';
+
+  @override
+  String contactDeleteTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String get contactDeleteBody =>
+      'Splits and debts that mention this person keep their name as text.';
+
+  @override
+  String contactDeleted(String name) {
+    return 'Deleted $name';
+  }
+
+  @override
+  String get contactLinkCreateTitle => 'Add linked contact';
+
+  @override
+  String get contactLinkExistingTitle => 'Link contact';
+
+  @override
+  String get contactLinkSave => 'Link & save';
+
+  @override
+  String contactLinkBannerNew(String name) {
+    return 'Saving creates a new contact linked to $name.';
+  }
+
+  @override
+  String contactLinkBannerExisting(String name) {
+    return 'Saving links this contact to $name.';
+  }
+
+  @override
+  String get debtsNet => 'Net';
+
+  @override
+  String get debtsOwedToMe => 'Owe you';
+
+  @override
+  String get debtsIOwe => 'You owe';
+
+  @override
+  String get debtsEven => 'Settled up';
+
+  @override
+  String get debtsSearchHint => 'Search name';
+
+  @override
+  String get debtsStatusLabel => 'Status';
+
+  @override
+  String get debtsStatusOpen => 'Outstanding';
+
+  @override
+  String get debtsStatusAll => 'All';
+
+  @override
+  String debtsOpenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count outstanding',
+      one: '1 outstanding',
+      zero: 'Nothing outstanding',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get debtsEmptyTitle => 'No debts yet';
+
+  @override
+  String get debtsEmptyMessage =>
+      'Record who owes you or whom you owe — or split a bill from a transaction.';
+
+  @override
+  String get debtsNoMatch => 'No matching people';
+
+  @override
+  String get debtsAddNew => 'Record a debt';
+
+  @override
+  String debtsPersonHistory(int count) {
+    return 'History ($count)';
+  }
+
+  @override
+  String get debtsPersonAdd => 'Record a debt with this person';
+
+  @override
+  String get debtsPersonLinkContact => 'Link to a contact';
+
+  @override
+  String get debtsPersonLinkContactHint =>
+      'Merge this name\'s debts into a contact';
+
+  @override
+  String debtsPersonLinked(int count, String name) {
+    return 'Linked $count debts to $name';
+  }
+
+  @override
+  String get debtsPersonOpenContact => 'View contact';
+
+  @override
+  String debtTheyOweYou(String name) {
+    return '$name owes you';
+  }
+
+  @override
+  String debtYouOwe(String name) {
+    return 'You owe $name';
+  }
+
+  @override
+  String get debtStatusSettled => 'Paid back';
+
+  @override
+  String get debtStatusCancelled => 'Cancelled';
+
+  @override
+  String get debtOutstanding => 'Outstanding';
+
+  @override
+  String debtProgress(String paid, String total) {
+    return 'Paid back $paid of $total';
+  }
+
+  @override
+  String get debtReceive => 'Receive payment';
+
+  @override
+  String get debtPay => 'Pay back';
+
+  @override
+  String get debtAmount => 'Full amount';
+
+  @override
+  String get debtSettled => 'Paid back';
+
+  @override
+  String get debtSource => 'From';
+
+  @override
+  String get debtSourceManual => 'Recorded manually';
+
+  @override
+  String get debtSourceTransaction => 'Bill split';
+
+  @override
+  String get debtSourceProject => 'Project';
+
+  @override
+  String get debtNote => 'Note';
+
+  @override
+  String get debtCreatedAt => 'Created';
+
+  @override
+  String get debtCounterparty => 'With';
+
+  @override
+  String get debtCounterpartyPlaceholder => 'Pick a contact or type a name';
+
+  @override
+  String get debtCounterpartyRequired => 'Pick or type a name';
+
+  @override
+  String get debtCancel => 'Cancel this debt';
+
+  @override
+  String get debtCancelTitle => 'Cancel this debt?';
+
+  @override
+  String get debtCancelBody =>
+      'No money moves. Use it when you forgive the debt or recorded it by mistake.';
+
+  @override
+  String get debtCancelled => 'Debt cancelled';
+
+  @override
+  String get debtDeleteTitle => 'Delete this debt?';
+
+  @override
+  String get debtDeleteBody => 'Deleted for good — this can\'t be undone.';
+
+  @override
+  String get debtDeleted => 'Debt deleted';
+
+  @override
+  String get debtNotFound => 'Debt not found';
+
+  @override
+  String get debtNewTitle => 'Record a debt';
+
+  @override
+  String get debtEditTitle => 'Edit debt';
+
+  @override
+  String get debtDirectionOwedToMe => 'They owe me';
+
+  @override
+  String get debtDirectionOwedToMeDesc => 'I lent money or paid for them';
+
+  @override
+  String get debtDirectionIOwe => 'I owe them';
+
+  @override
+  String get debtDirectionIOweDesc => 'I borrowed or they paid for me';
+
+  @override
+  String get debtAmountRequired => 'Enter an amount above 0';
+
+  @override
+  String debtAmountBelowSettled(String amount) {
+    return 'Can\'t be less than what\'s been paid back ($amount)';
+  }
+
+  @override
+  String debtSettleTitleReceive(String name) {
+    return 'Receive from $name';
+  }
+
+  @override
+  String debtSettleTitlePay(String name) {
+    return 'Pay back $name';
+  }
+
+  @override
+  String get debtSettleAll => 'All';
+
+  @override
+  String get debtSettleHalf => 'Half';
+
+  @override
+  String debtSettleOver(String amount) {
+    return 'More than outstanding ($amount)';
+  }
+
+  @override
+  String get debtSettleRecordTx => 'Record as a transaction';
+
+  @override
+  String get debtSettleRecordTxHint =>
+      'Adds income/expense and updates the wallet balance';
+
+  @override
+  String get debtSettleNoTxHint =>
+      'Only lowers the outstanding amount — no transaction';
+
+  @override
+  String get debtSettleAccount => 'Wallet';
+
+  @override
+  String get debtSettleAccountRequired => 'Pick a wallet';
+
+  @override
+  String get debtSettleDate => 'Date';
+
+  @override
+  String get debtSettleConfirm => 'Confirm';
+
+  @override
+  String get debtSettleDone => 'Payment recorded';
+
+  @override
+  String get projectStatusActive => 'In progress';
+
+  @override
+  String get projectStatusCompleted => 'Completed';
+
+  @override
+  String get projectStatusCancelled => 'Cancelled';
+
+  @override
+  String get projectStatusArchived => 'Archived';
+
+  @override
+  String get projectsStatusAll => 'All';
+
+  @override
+  String get projectsStatusLabel => 'Status';
+
+  @override
+  String get projectsSearchHint => 'Search projects';
+
+  @override
+  String get projectsSortRecent => 'Recent';
+
+  @override
+  String get projectsSortName => 'Name';
+
+  @override
+  String get projectsEmptyTitle => 'No projects yet';
+
+  @override
+  String get projectsEmptyMessage =>
+      'Keep a trip or a job\'s spending in one place, then settle up with friends at the end.';
+
+  @override
+  String get projectsNoMatch => 'No matching projects';
+
+  @override
+  String projectsMembersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get projectTabDashboard => 'Dashboard';
+
+  @override
+  String get projectTabTransactions => 'Transactions';
+
+  @override
+  String get projectTabResolve => 'Settle up';
+
+  @override
+  String get projectAddTransaction => 'Add transaction';
+
+  @override
+  String get projectNewTitle => 'New project';
+
+  @override
+  String get projectEditTitle => 'Edit project';
+
+  @override
+  String get projectNameLabel => 'Project name';
+
+  @override
+  String get projectNameRequired => 'Name is required';
+
+  @override
+  String get projectTypeLabel => 'Type';
+
+  @override
+  String get projectTypeHint => 'e.g. trip, freelance';
+
+  @override
+  String get projectDescriptionLabel => 'Description';
+
+  @override
+  String get projectIconLabel => 'Project icon';
+
+  @override
+  String get projectStatusChangeTitle => 'Change status';
+
+  @override
+  String projectStatusLockTitle(String status) {
+    return 'Change to $status?';
+  }
+
+  @override
+  String get projectStatusLockBody =>
+      'The project gets locked: no adding or editing transactions until it is reopened.';
+
+  @override
+  String projectStatusChanged(String status) {
+    return 'Status changed to $status';
+  }
+
+  @override
+  String get projectLockedCompleted => 'Completed: no new transactions';
+
+  @override
+  String get projectLockedCancelled =>
+      'Cancelled: transactions cannot be added, edited or deleted';
+
+  @override
+  String get projectLockedArchived => 'Archived: read only';
+
+  @override
+  String projectDeleteTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String get projectDeleteBody =>
+      'Only projects without transactions can be deleted. If it has some, archive it instead.';
+
+  @override
+  String get projectDeleted => 'Project deleted';
+
+  @override
+  String get projectDashTotalExpense => 'Total spent';
+
+  @override
+  String get projectDashTotalIncome => 'Total income';
+
+  @override
+  String get projectDashMembers => 'Members';
+
+  @override
+  String get projectDashWhoPaid => 'Who paid';
+
+  @override
+  String get projectDashTopCategories => 'Top categories';
+
+  @override
+  String get projectDashRecent => 'Recent';
+
+  @override
+  String get projectDashSeeAll => 'See all';
+
+  @override
+  String projectDashTxCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+      zero: 'No transactions',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get projectTxSearchHint => 'Search transactions';
+
+  @override
+  String get projectTxTypeLabel => 'Type';
+
+  @override
+  String get projectTxTypeAll => 'All';
+
+  @override
+  String get projectTxTypeExpense => 'Expense';
+
+  @override
+  String get projectTxTypeIncome => 'Income';
+
+  @override
+  String get projectTxOnlyMine => 'Only me';
+
+  @override
+  String get projectTxSortTime => 'Date';
+
+  @override
+  String get projectTxSortAmount => 'Amount';
+
+  @override
+  String get projectTxSortMember => 'Who paid';
+
+  @override
+  String get projectTxSortCategory => 'Category';
+
+  @override
+  String get projectTxEmpty => 'No transactions in this project yet';
+
+  @override
+  String get projectTxNoMatch => 'No matching transactions';
+
+  @override
+  String projectTxOwes(String name) {
+    return 'owes $name';
+  }
+
+  @override
+  String get projectTxUnmark => 'Unmark';
+
+  @override
+  String get projectTxResolve => 'Record in my book';
+
+  @override
+  String get projectTxResolveHint =>
+      'Create a transaction or a debt in your own book';
+
+  @override
+  String get projectTxEdit => 'Edit transaction';
+
+  @override
+  String get projectTxDelete => 'Delete transaction';
+
+  @override
+  String get projectTxDeleteTitle => 'Delete this transaction?';
+
+  @override
+  String get projectTxDeleteBody => 'Its splits are deleted too.';
+
+  @override
+  String get projectTxDeleted => 'Transaction deleted';
+
+  @override
+  String get projectResolveAsTx => 'As transaction';
+
+  @override
+  String get projectResolveAsDebt => 'As debt';
+
+  @override
+  String get projectResolveShareOnly => 'Only my share';
+
+  @override
+  String projectResolveShareHint(String full, String share) {
+    return 'Full $full · my share $share';
+  }
+
+  @override
+  String get projectResolveAmount => 'Amount';
+
+  @override
+  String get projectResolveCategory => 'Category (optional)';
+
+  @override
+  String get projectResolveCategoryNone => 'No category';
+
+  @override
+  String get projectResolveDebtHint =>
+      'The person comes from the project member';
+
+  @override
+  String get projectResolveConfirm => 'Record';
+
+  @override
+  String get projectResolveDone => 'Recorded in your book';
+
+  @override
+  String get projectResolveComingSoon =>
+      'A settle-up summary is on the way. For now, tick rows in the Transactions tab.';
+
+  @override
+  String get projectMembersTitle => 'Members';
+
+  @override
+  String get projectMembersPending => 'Waiting to accept';
+
+  @override
+  String get projectMembersLeft => 'Left';
+
+  @override
+  String get projectRoleOwner => 'Owner';
+
+  @override
+  String get projectRoleMember => 'Member';
+
+  @override
+  String get projectMemberLinked => 'Has an app account';
+
+  @override
+  String get projectMemberAdHoc => 'No app account';
+
+  @override
+  String get projectMembersInvite => 'Invite member';
+
+  @override
+  String get projectLeave => 'Leave project';
+
+  @override
+  String projectLeaveTitle(String name) {
+    return 'Leave $name?';
+  }
+
+  @override
+  String get projectLeaveBody =>
+      'You will not see this project again unless you are invited back.';
+
+  @override
+  String get projectLeft => 'You left the project';
+
+  @override
+  String get projectMemberRemove => 'Remove from project';
+
+  @override
+  String projectMemberRemoveTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get projectMemberRemoved => 'Removed';
+
+  @override
+  String get projectMemberTransfer => 'Make owner';
+
+  @override
+  String projectMemberTransferTitle(String name) {
+    return 'Make $name the owner?';
+  }
+
+  @override
+  String projectMemberTransferBody(String name) {
+    return '$name becomes the owner; you become a regular member.';
+  }
+
+  @override
+  String get projectMemberTransferred => 'Ownership transferred';
+
+  @override
+  String get projectMemberTransferNeedsAccount =>
+      'Only members with an app account can own a project';
+
+  @override
+  String get projectAddMemberName => 'Name';
+
+  @override
+  String get projectAddMemberNameRequired => 'Name is required';
+
+  @override
+  String get projectAddMemberEmail => 'Email (optional)';
+
+  @override
+  String get projectAddMemberEmailHint =>
+      'Add an email to invite an app user; leave it empty for someone without an account';
+
+  @override
+  String get projectAddMemberFromContacts => 'Pick from contacts';
+
+  @override
+  String get projectAddMemberSubmit => 'Add';
+
+  @override
+  String projectAddMemberAdded(String name) {
+    return 'Added $name';
+  }
+
+  @override
+  String get projectTxNewTitle => 'Add project transaction';
+
+  @override
+  String get projectTxEditTitle => 'Edit transaction';
+
+  @override
+  String get projectTxPaidBy => 'Paid by';
+
+  @override
+  String get projectTxReceivedBy => 'Received by';
+
+  @override
+  String get projectTxDescription => 'Description';
+
+  @override
+  String get projectTxDescriptionRequired => 'Description is required';
+
+  @override
+  String get projectTxDate => 'Date';
+
+  @override
+  String get projectTxNote => 'Note';
+
+  @override
+  String get projectTxCategory => 'Category';
+
+  @override
+  String get projectTxCategoryRequired => 'Name the category and pick an icon';
+
+  @override
+  String get projectTxCategoryName => 'Category name';
+
+  @override
+  String get projectTxSplits => 'Split with';
+
+  @override
+  String get projectTxSplitsHint =>
+      'How much each person owes the payer; the payer keeps the rest';
+
+  @override
+  String get projectTxAddSplit => 'Add a split';
+
+  @override
+  String get projectTxSplitEqual => 'Split equally';
+
+  @override
+  String projectTxSplitsOver(String sum) {
+    return 'Splits ($sum) are more than the total';
+  }
+
+  @override
+  String projectTxPayerKeeps(String amount) {
+    return 'Payer\'s own share $amount';
+  }
+
+  @override
+  String get projectTxAmountRequired => 'Enter an amount above 0';
+
+  @override
+  String get settingsThemeMint => 'Mint';
+
+  @override
+  String get settingsThemeSweet => 'Sweet';
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsNotificationsHint =>
+      'What you get and what happens automatically';
+
+  @override
+  String get settingsDefaultCurrencyHint =>
+      'Used when you create wallets and debts';
+
+  @override
+  String get settingsCurrencySaved => 'Default currency updated';
+
+  @override
+  String get settingsFontSample => 'Sample ภาษาไทย 123';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsTabAll => 'All';
+
+  @override
+  String get notificationsTabUnread => 'Unread';
+
+  @override
+  String get notificationsMarkAllRead => 'Mark all as read';
+
+  @override
+  String get notificationsSettingsTooltip => 'Notification settings';
+
+  @override
+  String get notificationsEmptyTitle => 'You are all caught up';
+
+  @override
+  String get notificationsEmptyMessage =>
+      'Activity from people you share with shows up here';
+
+  @override
+  String get notificationsEmptyUnread => 'Nothing unread';
+
+  @override
+  String get notificationsSomeone => 'Someone';
+
+  @override
+  String notifSplitCreated(String actor) {
+    return '$actor split a bill with you';
+  }
+
+  @override
+  String notifSplitPaid(String actor) {
+    return '$actor paid back their share';
+  }
+
+  @override
+  String notifSplitReceived(String actor) {
+    return '$actor confirmed your payment';
+  }
+
+  @override
+  String notifProjectTxForYou(String actor) {
+    return '$actor recorded a project transaction for you';
+  }
+
+  @override
+  String notifProjectTxChanged(String actor) {
+    return '$actor edited a project transaction';
+  }
+
+  @override
+  String notifProjectInvite(String actor, String project) {
+    return '$actor invited you to $project';
+  }
+
+  @override
+  String notifContactLink(String actor) {
+    return '$actor wants to link as contacts';
+  }
+
+  @override
+  String get notifUnknown => 'Notification';
+
+  @override
+  String get notifAccepted => 'Accepted · tap to open';
+
+  @override
+  String get notifRejectTitle => 'Decline this request?';
+
+  @override
+  String get notifRejectBody => 'They will not be told that you declined.';
+
+  @override
+  String get notifHidden => 'Hidden';
+
+  @override
+  String get notifSettingsTitle => 'Notification settings';
+
+  @override
+  String get notifSettingsReceive => 'Notifications you get';
+
+  @override
+  String get notifSettingsReceiveHint =>
+      'Turn off what you do not need. Invites and requests always come through because they need an answer.';
+
+  @override
+  String get notifGroupSplits => 'Bill splits';
+
+  @override
+  String get notifGroupProjects => 'Projects';
+
+  @override
+  String get notifGroupRequests => 'Invites and requests';
+
+  @override
+  String get notifGroupPayments => 'Payments';
+
+  @override
+  String get notifTypeSplitCreated => 'Someone splits a bill with me';
+
+  @override
+  String get notifTypeSplitPaid => 'Someone pays back their share';
+
+  @override
+  String get notifTypeSplitReceived => 'Someone confirms my payment';
+
+  @override
+  String get notifTypeProjectTxForYou =>
+      'A project transaction is recorded for me';
+
+  @override
+  String get notifTypeProjectTxChanged => 'A project transaction is edited';
+
+  @override
+  String get notifTypeAlwaysOn => 'Always on';
+
+  @override
+  String get notifSettingsAuto => 'Automatic actions';
+
+  @override
+  String get notifSettingsAutoPending =>
+      'Saved now; starts working once the server supports it';
+
+  @override
+  String get notifAutoNotifySplit => 'Tell linked contacts when I split a bill';
+
+  @override
+  String get notifAutoAddDebt => 'Track bills split with me as debts';
+
+  @override
+  String get notifAutoRecordPayment => 'Record payments people send me';
+
+  @override
+  String get notifDefaultAccount => 'Receiving wallet';
+
+  @override
+  String get notifDefaultAccountNone => 'Not set';
+
+  @override
+  String get notifAutoResolveProject =>
+      'Record my own project transactions in my book';
+
+  @override
+  String get notifSettingsSaveFailed => 'Could not save, changed back';
+
+  @override
+  String get profileUsernameLocked => 'Username cannot be changed';
+
+  @override
+  String get homeUpcoming => 'Coming up (7 days)';
+
+  @override
+  String homeUpcomingInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'In $days days',
+      one: 'Tomorrow',
+      zero: 'Today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeByCategory => 'Spending by category (this month)';
+
+  @override
+  String homeBudgetLine(String spent, String amount) {
+    return '$spent of $amount';
+  }
+
+  @override
+  String homeGoalLine(String current, String target) {
+    return '$current of $target';
+  }
+
+  @override
+  String get homeNoTxYet => 'No transactions yet';
+
+  @override
+  String get homeAddFirstTx => 'Add your first transaction';
+
+  @override
+  String get transactionsFilterType => 'Type';
+
+  @override
+  String get transactionsFilterRange => 'Period';
+
+  @override
+  String get transactionsFilterAccount => 'Wallet';
+
+  @override
+  String get transactionsFilterCategory => 'Category';
+
+  @override
+  String get transactionsSortNewest => 'Newest';
+
+  @override
+  String get transactionsSortOldest => 'Oldest';
+
+  @override
+  String get transactionsSortAmountHigh => 'Largest';
+
+  @override
+  String get transactionsSortAmountLow => 'Smallest';
+
+  @override
+  String get transactionsNoMatch => 'No transactions match these filters';
+
+  @override
+  String get transactionsClearFilters => 'Clear filters';
+
+  @override
+  String get txDetailDate => 'Date';
+
+  @override
+  String get txDetailAccount => 'Wallet';
+
+  @override
+  String get txDetailCategory => 'Category';
+
+  @override
+  String get txDetailTags => 'Tags';
+
+  @override
+  String get txDetailNote => 'Note';
+
+  @override
+  String get txDetailSplits => 'Split';
+
+  @override
+  String get txDetailHasSplits => 'Split with others';
+
+  @override
+  String get txDetailRecordedBy => 'Recorded by';
+
+  @override
+  String get txDetailSource => 'From';
+
+  @override
+  String get txDetailSourceDebt => 'Debt payment';
+
+  @override
+  String get txDetailSourceProject => 'Project';
+
+  @override
+  String get txDetailSystemLocked =>
+      'System transaction: cannot be edited or deleted';
+
+  @override
+  String get txDetailTransferTo => 'To';
+
+  @override
+  String get txDetailBalanceAfter => 'Balance after';
+
+  @override
+  String get txDeleteTitle => 'Delete this transaction?';
+
+  @override
+  String get txDeleteBody => 'The wallet balance is adjusted back.';
+
+  @override
+  String get txDeleted => 'Transaction deleted';
+
+  @override
+  String get txSplitAdd => 'Split with others';
+
+  @override
+  String get txSplitWith => 'Split with';
+
+  @override
+  String get txSplitEqually => 'Split equally';
+
+  @override
+  String get txSplitCollapse => 'Remove split';
+
+  @override
+  String get txSplitAddPerson => 'Add person';
+
+  @override
+  String txSplitRemaining(String amount) {
+    return 'Your share $amount';
+  }
+
+  @override
+  String get txSplitWiredContact => 'Linked to a contact';
+
+  @override
+  String get txSplitName => 'Name';
+
+  @override
+  String get txSplitOwes => 'Owes';
+
+  @override
+  String get txSplitRemove => 'Remove';
+
+  @override
+  String get authTagline =>
+      'Track income and spending, split bills with friends';
+
+  @override
+  String get authOr => 'or';
+
+  @override
+  String get authContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get authComingSoon => 'Coming soon';
+
+  @override
+  String get authRegisterSectionAccount => 'Sign-in details';
+
+  @override
+  String get authRegisterSectionProfile => 'About you';
+
+  @override
+  String get authRegisterUsernameHint => 'a-z 0-9 _ -, 3 to 50 characters';
+
+  @override
+  String get authRegisterPasswordHint => 'At least 8 characters';
+
+  @override
+  String get authRegisterEmailHint =>
+      'Lets friends link their account with yours';
+
+  @override
+  String get authLanguage => 'Language';
+
+  @override
+  String get accountsTotalMine => 'Mine';
+
+  @override
+  String get accountsTotalShared => 'Shared pot';
+
+  @override
+  String accountsArchivedLink(int count) {
+    return 'Archived wallets ($count)';
+  }
+
+  @override
+  String get accountsArchivedTitle => 'Archived wallets';
+
+  @override
+  String get accountsArchivedEmpty => 'No archived wallets';
+
+  @override
+  String get accountRestore => 'Restore';
+
+  @override
+  String accountRestored(String name) {
+    return 'Restored $name';
+  }
+
+  @override
+  String get accountDetailSeeAll => 'See all';
+
+  @override
+  String get accountDetailDescription => 'Description';
+
+  @override
+  String get accountDetailNote => 'Note';
+
+  @override
+  String get accountDetailMembers => 'Members';
+
+  @override
+  String get accountArchiveHasMembers =>
+      'A wallet with other members cannot be archived. Remove them first.';
+
+  @override
+  String get accountArchived => 'Wallet archived';
+
+  @override
+  String get txSplitOver => 'Splits are more than the transaction amount';
+
+  @override
+  String get txSplitFreeText =>
+      'Typed name: pick a contact from the suggestions to link it';
+
+  @override
   String get moreDebts => 'Debts';
 
   @override
@@ -850,6 +2120,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoriesAddNew => 'Add category';
 
   @override
+  String get categoriesSearchHint => 'Search categories';
+
+  @override
+  String get categoriesSearchNoMatch => 'No matching categories';
+
+  @override
+  String get categoryDelete => 'Delete category';
+
+  @override
+  String categoryDeleteTitle(String name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get categoryDeleteBody => 'Subcategories move up under the parent.';
+
+  @override
+  String categoryDeleteTxImpact(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions',
+      one: '1 transaction',
+    );
+    return '$_temp0 will become uncategorised.';
+  }
+
+  @override
+  String categoryDeleteBudgetImpact(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count budgets',
+      one: '1 budget',
+    );
+    return '$_temp0 for this category will be deleted.';
+  }
+
+  @override
+  String categoryDeletedResult(String name) {
+    return 'Deleted \"$name\"';
+  }
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
   String get categoriesReorderEnter => 'Reorder';
 
   @override
@@ -888,6 +2205,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagsAddNew => 'Add tag';
+
+  @override
+  String get tagsSearchHint => 'Search tags';
+
+  @override
+  String get tagsNoMatch => 'No matching tags';
+
+  @override
+  String get tagsSortUsage => 'Most used';
+
+  @override
+  String get tagsSelectAll => 'Select all shown';
+
+  @override
+  String get tagsBulkColor => 'Change colour';
+
+  @override
+  String get tagsBulkIcon => 'Change icon';
+
+  @override
+  String get tagsDeleteSelected => 'Delete selected';
+
+  @override
+  String get tagsFiltersClearedForError =>
+      'Filters cleared to show a tag that needs fixing';
 
   @override
   String tagsUsageCount(int count) {
@@ -981,7 +2323,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppVersion => 'App version';
 
   @override
-  String get settingsAppVersionValue => 'Phase 0 (1.0.0+1)';
+  String get settingsAppVersionValue => '1.0.0 (1)';
 
   @override
   String get settingsLogout => 'Log out';
@@ -1928,6 +3270,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduledDeleteConfirmTitle => 'Delete this schedule?';
+
+  @override
+  String get scheduledStatusChangeTitle => 'Change status';
 
   @override
   String get scheduledDeleteConfirmBody =>

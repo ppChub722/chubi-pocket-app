@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -53,13 +54,13 @@ class _AppSearchBarState extends State<AppSearchBar> {
           decoration: InputDecoration(
             isDense: true,
             hintText: widget.hint ?? AppLocalizations.of(context)!.commonSearch,
-            prefixIcon: const Icon(Icons.search),
+            prefixIcon: const Icon(AppIcons.search),
             suffixIcon: value.text.isEmpty
                 ? null
                 : IconButton(
                     tooltip: MaterialLocalizations.of(context)
                         .deleteButtonTooltip,
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(AppIcons.close),
                     onPressed: () {
                       _controller.clear();
                       widget.onChanged('');

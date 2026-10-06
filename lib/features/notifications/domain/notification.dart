@@ -143,6 +143,7 @@ class NotificationSettings extends Equatable {
     required this.autoRecordReceivedPayment,
     required this.autoResolveOwnInProjects,
     this.defaultAccountId,
+    this.mutedTypes = const {},
   });
 
   final String userId;
@@ -151,6 +152,11 @@ class NotificationSettings extends Equatable {
   final bool autoRecordReceivedPayment;
   final bool autoResolveOwnInProjects;
   final String? defaultAccountId;
+
+  /// Types the user turned off (contract §5 — BE pending; absent = none).
+  final Set<String> mutedTypes;
+
+  bool isMuted(NotificationType t) => mutedTypes.contains(t.wire);
 
   factory NotificationSettings.fromJson(Map<String, dynamic> json) {
     return NotificationSettings(
@@ -165,6 +171,9 @@ class NotificationSettings extends Equatable {
       autoResolveOwnInProjects:
           json['auto_resolve_own_in_projects'] as bool? ?? false,
       defaultAccountId: json['default_account_id'] as String?,
+      mutedTypes: {
+        ...((json['muted_types'] as List?) ?? const []).cast<String>(),
+      },
     );
   }
 
@@ -174,6 +183,7 @@ class NotificationSettings extends Equatable {
     bool? autoRecordReceivedPayment,
     bool? autoResolveOwnInProjects,
     String? defaultAccountId,
+    Set<String>? mutedTypes,
   }) {
     return NotificationSettings(
       userId: userId,
@@ -187,6 +197,7 @@ class NotificationSettings extends Equatable {
       autoResolveOwnInProjects:
           autoResolveOwnInProjects ?? this.autoResolveOwnInProjects,
       defaultAccountId: defaultAccountId ?? this.defaultAccountId,
+      mutedTypes: mutedTypes ?? this.mutedTypes,
     );
   }
 
@@ -198,5 +209,6 @@ class NotificationSettings extends Equatable {
         autoRecordReceivedPayment,
         autoResolveOwnInProjects,
         defaultAccountId,
+        mutedTypes,
       ];
 }

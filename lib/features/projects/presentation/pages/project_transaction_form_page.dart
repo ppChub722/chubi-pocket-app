@@ -1,67 +1,104 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/currencies.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/edit_mode/edit_mode_mixin.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../data/projects_repository.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../domain/project.dart';
+import '../widgets/project_common.dart';
+import '../widgets/project_tx_tiles.dart';
 
-/// `/projects/:id/transactions/new` — record a project_transaction.
+/// One form for adding (`/projects/:id/transactions/new`) and editing (pushed
+/// with [editing]) a project row (§12c). A form is edit mode: nav hidden,
+/// ยกเลิก · ↶ · บันทึก. On edit the type and payer are fixed (the API
+/// doesn't change them). Pops `true` after saving.
 class ProjectTransactionFormPage extends StatefulWidget {
-  const ProjectTransactionFormPage({required this.projectId, super.key});
+  const ProjectTransactionFormPage({
+    required this.projectId,
+    this.editing,
+    super.key,
+  });
+
   final String projectId;
+  final ProjectTxTree? editing;
+
+  bool get isEdit => editing != null;
 
   @override
   State<ProjectTransactionFormPage> createState() =>
       _ProjectTransactionFormPageState();
 }
 
-class _SplitEntry {
-  _SplitEntry() : amountCtrl = TextEditingController();
-  String? memberId;
-  final TextEditingController amountCtrl;
-}
-
-class _CategoryDraft {
-  _CategoryDraft({required this.name, required this.iconCode});
-  final String name;
-  final IconCode iconCode;
-}
+enum _Field { amount, description, note, category }
 
 class _ProjectTransactionFormPageState
-    extends State<ProjectTransactionFormPage> {
-  final _form = GlobalKey<FormState>();
-  final _description = TextEditingController();
-  final _amount = TextEditingController();
-  final _currency = TextEditingController(text: 'THB');
-  final _date = TextEditingController(
-      text: DateTime.now().toIso8601String().substring(0, 10));
-  final _note = TextEditingController();
-  final _categoryName = TextEditingController();
+    extends State<ProjectTransactionFormPage>
+    with EditModeMixin<ProjectTransactionFormPage, _TxDraft> {
+  final _formKey = GlobalKey<FormState>();
+  final _ctrl = {for (final f in _Field.values) f: TextEditingController()};
+  final Map<int, TextEditingController> _splitCtrl = {};
+  int _splitSeq = 0;
 
-  String _type = 'expense';
-  String? _memberId;
   List<ProjectMember> _members = const [];
-  List<_CategoryDraft> _pastCategories = const [];
-
-  _CategoryDraft? _selectedCategory;
-
-  final List<_SplitEntry> _splitEntries = [];
-
+  List<(String, IconCode)> _pastCategories = const [];
+  String _currency = 'THB';
   bool _loading = true;
-  bool _saving = false;
-  String? _error;
+  String? _formError;
 
   @override
   void initState() {
     super.initState();
+    final e = widget.editing;
+    if (e != null) {
+      final p = e.parent;
+      _currency = p.currency;
+      initDraft(
+        _TxDraft(
+          type: p.type,
+          memberId: p.transactionMemberId,
+          amount: AmountField.format(p.amount),
+          date: p.date,
+          description: p.description ?? '',
+          note: p.note ?? '',
+          categoryName: p.categoryName ?? '',
+          categoryIconCode: p.categoryIconCode,
+          splits: [
+            for (final c in e.children)
+              _Split(_splitSeq++, c.transactionMemberId, AmountField.format(c.amount)),
+          ],
+        ),
+        editing: true,
+      );
+    } else {
+      initDraft(_TxDraft(date: _ymd(DateTime.now())), editing: true);
+    }
+    onDraftRestored();
     _loadData();
   }
+
+  @override
+  void dispose() {
+    for (final c in [..._ctrl.values, ..._splitCtrl.values]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  static String _ymd(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   Future<void> _loadData() async {
     try {
@@ -71,392 +108,583 @@ class _ProjectTransactionFormPageState
         repo.listTransactions(widget.projectId, perPage: 100),
       ]);
       if (!mounted) return;
-      final ms = results[0] as List<ProjectMember>;
+      final members = (results[0] as List<ProjectMember>)
+          .where((m) => m.status != MemberStatus.left)
+          .toList();
       final txs = results[1] as List<ProjectTransaction>;
-
-      final seen = <String, _CategoryDraft>{};
-      for (final tx in txs) {
-        if (tx.categoryName != null && tx.categoryIconCode != null) {
-          final key = '${tx.categoryName}|${tx.categoryIconCode!.icon}';
-          seen.putIfAbsent(
-            key,
-            () => _CategoryDraft(
-              name: tx.categoryName!,
-              iconCode: tx.categoryIconCode!,
-            ),
-          );
+      final seen = <String, (String, IconCode)>{};
+      for (final t in txs) {
+        if (t.categoryName != null && t.categoryIconCode != null) {
+          seen.putIfAbsent('${t.categoryName}|${t.categoryIconCode!.icon}',
+              () => (t.categoryName!, t.categoryIconCode!));
         }
       }
-
       setState(() {
-        _members = ms.where((m) => m.status != MemberStatus.left).toList();
-        _memberId = _members.firstOrNull?.id;
+        _members = members;
         _pastCategories = seen.values.toList();
+        if (!widget.isEdit && txs.isNotEmpty) _currency = txs.first.currency;
         _loading = false;
       });
+      // Default payer = me (else the first member) — part of the baseline,
+      // not an undo step.
+      if (!widget.isEdit && working.memberId == null && members.isNotEmpty) {
+        final auth = context.read<AuthCubit>().state;
+        final uid = auth is AuthAuthenticated ? auth.user.id : null;
+        final me = members.where((m) => m.userId != null && m.userId == uid);
+        initDraft(working.copyWith(memberId: (me.firstOrNull ?? members.first).id),
+            editing: true);
+        setState(() {});
+      }
     } on ApiException catch (e) {
-      _error = e.message;
-      if (mounted) setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() => _loading = false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
     }
+  }
+
+  // ── EditModeMixin hooks ─────────────────────────────────────────────
+
+  @override
+  bool get leaveOnCancel => true;
+
+  @override
+  void leavePage() => Navigator.of(context).pop(false);
+
+  @override
+  void onDraftRestored() {
+    void sync(TextEditingController c, String v) {
+      if (c.text != v) c.text = v;
+    }
+
+    sync(_ctrl[_Field.amount]!, working.amount);
+    sync(_ctrl[_Field.description]!, working.description);
+    sync(_ctrl[_Field.note]!, working.note);
+    sync(_ctrl[_Field.category]!, working.categoryName);
+    for (final s in working.splits) {
+      sync(_splitCtrl.putIfAbsent(s.key, TextEditingController.new), s.amount);
+    }
+  }
+
+  ProjectMember? _member(String? id) =>
+      _members.where((m) => m.id == id).firstOrNull;
+
+  // ── Splits ──────────────────────────────────────────────────────────
+
+  void _addSplit() {
+    final used = {working.memberId, ...working.splits.map((s) => s.memberId)};
+    final next = _members.where((m) => !used.contains(m.id)).firstOrNull;
+    final s = _Split(_splitSeq++, next?.id, '');
+    _splitCtrl[s.key] = TextEditingController();
+    applyChange(working.copyWith(splits: [...working.splits, s]));
+  }
+
+  void _removeSplit(_Split s) => applyChange(working.copyWith(
+      splits: working.splits.where((e) => e.key != s.key).toList()));
+
+  void _setSplit(_Split s, {String? memberId, String? amount}) {
+    List<_Split> replaced(_Split Function(_Split) f) =>
+        [for (final e in working.splits) e.key == s.key ? f(e) : e];
+    if (amount != null) {
+      // Typing — grouped into one undo step per field burst.
+      applyTextChange('split${s.key}',
+          working.copyWith(splits: replaced((e) => _Split(e.key, e.memberId, amount))));
+    } else {
+      applyChange(working.copyWith(
+          splits: replaced((e) => _Split(e.key, memberId, e.amount))));
+    }
+  }
+
+  /// Everyone else gets total / headcount (payer included in the count).
+  void _splitEqually() {
+    final total = AmountField.parse(working.amount) ?? 0;
+    final others = _members.where((m) => m.id != working.memberId).toList();
+    if (total <= 0 || others.isEmpty) return;
+    final share = (total / (others.length + 1) * 100).floorToDouble() / 100;
+    final splits = [
+      for (final m in others) _Split(_splitSeq++, m.id, AmountField.format(share)),
+    ];
+    for (final s in splits) {
+      _splitCtrl[s.key] = TextEditingController(text: s.amount);
+    }
+    applyChange(working.copyWith(splits: splits));
+  }
+
+  double get _splitSum => working.splits
+      .fold(0, (a, s) => a + (AmountField.parse(s.amount) ?? 0));
+
+  // ── Pickers ─────────────────────────────────────────────────────────
+
+  Future<void> _pickPayer() async {
+    final l = AppLocalizations.of(context)!;
+    final id = await showOptionSheet<String>(
+      context,
+      title: working.type == 'income' ? l.projectTxReceivedBy : l.projectTxPaidBy,
+      selected: working.memberId,
+      options: [
+        for (final m in _members)
+          SheetOption(
+            value: m.id,
+            label: m.displayName,
+            leading: ProjectMemberAvatar(member: m, size: 28),
+          ),
+      ],
+    );
+    if (id == null || !mounted) return;
+    // The payer can't also owe themself.
+    applyChange(working.copyWith(
+      memberId: id,
+      splits: working.splits.where((s) => s.memberId != id).toList(),
+    ));
+  }
+
+  Future<void> _pickDate() async {
+    final d = await showDatePicker(
+      context: context,
+      initialDate: DateTime.tryParse(working.date) ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (d != null) applyChange(working.copyWith(date: _ymd(d)));
   }
 
   Future<void> _pickCategoryIcon() async {
-    final result = await showIconMakerSheet(
+    final l = AppLocalizations.of(context)!;
+    final r = await showIconMakerSheet(
       context: context,
       type: IconType.projectTransaction,
-      initial: _selectedCategory?.iconCode,
+      title: l.projectTxCategory,
+      initial: working.categoryIconCode,
     );
-    if (!mounted || result == null) return;
-    if (result is IconMakerSelected) {
-      setState(() {
-        final name = _categoryName.text.trim().isNotEmpty
-            ? _categoryName.text.trim()
-            : (_selectedCategory?.name ?? '');
-        _selectedCategory = _CategoryDraft(
-          name: name,
-          iconCode: result.iconCode,
-        );
-        if (name.isNotEmpty) _categoryName.text = name;
-      });
+    if (r is IconMakerSelected) {
+      applyChange(working.copyWith(categoryIconCode: r.iconCode));
     }
   }
 
-  void _selectPastCategory(_CategoryDraft cat) {
-    setState(() {
-      _selectedCategory = cat;
-      _categoryName.text = cat.name;
-    });
-  }
+  // ── Save ────────────────────────────────────────────────────────────
 
-  List<ProjectSplitInput> _collectSplits() {
-    final out = <ProjectSplitInput>[];
-    for (final entry in _splitEntries) {
-      final id = entry.memberId;
-      final raw = entry.amountCtrl.text.trim();
-      if (id == null || raw.isEmpty) continue;
-      final n = double.tryParse(raw);
-      if (n == null || n <= 0) continue;
-      out.add(ProjectSplitInput(memberId: id, amount: n));
+  Future<void> _save() async {
+    commitTextSession();
+    final l = AppLocalizations.of(context)!;
+    final formOk = _formKey.currentState?.validate() ?? false;
+    final w = working;
+    final amount = AmountField.parse(w.amount) ?? 0;
+    String? err;
+    if (w.categoryName.trim().isEmpty || w.categoryIconCode == null) {
+      err = l.projectTxCategoryRequired;
+    } else if (_splitSum > amount + 0.005) {
+      err = l.projectTxSplitsOver(
+          moneyString(context, _splitSum, symbol: Currencies.symbolOf(_currency)));
     }
-    return out;
-  }
+    setState(() => _formError = err);
+    if (!formOk || err != null || w.memberId == null) return;
 
-  Future<void> _submit() async {
-    if (!(_form.currentState?.validate() ?? false)) return;
-    if (_memberId == null) {
-      setState(() => _error = 'Pick a member');
-      return;
-    }
-    final catName = _categoryName.text.trim();
-    if (catName.isEmpty || _selectedCategory == null) {
-      setState(() => _error = 'Pick a category with icon & color');
-      return;
-    }
-    final amount = double.parse(_amount.text);
-    final splits = _collectSplits();
-    final splitSum = splits.fold<double>(0, (acc, s) => acc + s.amount);
-    if (splitSum > amount + 0.005) {
-      setState(() =>
-          _error = 'Sum of splits ($splitSum) exceeds total ($amount)');
-      return;
-    }
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
+    final splits = [
+      for (final s in w.splits)
+        if (s.memberId != null && (AmountField.parse(s.amount) ?? 0) > 0)
+          ProjectSplitInput(memberId: s.memberId!, amount: AmountField.parse(s.amount)!),
+    ];
+    final repo = context.read<ProjectsRepository>();
+    FocusScope.of(context).unfocus();
+    setSaving(true);
     try {
-      await context.read<ProjectsRepository>().createTransaction(
-            widget.projectId,
-            transactionMemberId: _memberId!,
-            type: _type,
-            amount: amount,
-            currency: _currency.text.trim().toUpperCase(),
-            date: _date.text,
-            description: _description.text.trim().isEmpty
-                ? null
-                : _description.text.trim(),
-            note: _note.text.trim().isEmpty ? null : _note.text.trim(),
-            categoryName: catName,
-            categoryIconCode: _selectedCategory!.iconCode,
-            splits: splits,
-          );
+      if (widget.isEdit) {
+        await repo.updateTransaction(
+          widget.projectId,
+          widget.editing!.parent.id,
+          amount: amount,
+          date: w.date,
+          description: w.description.trim(),
+          note: w.note.trim(),
+          categoryName: w.categoryName.trim(),
+          categoryIconCode: w.categoryIconCode,
+          splits: splits,
+        );
+      } else {
+        await repo.createTransaction(
+          widget.projectId,
+          transactionMemberId: w.memberId!,
+          type: w.type,
+          amount: amount,
+          currency: _currency,
+          date: w.date,
+          description: w.description.trim(),
+          note: w.note.trim().isEmpty ? null : w.note.trim(),
+          categoryName: w.categoryName.trim(),
+          categoryIconCode: w.categoryIconCode,
+          splits: splits,
+        );
+      }
       if (!mounted) return;
-      context.pop();
+      HapticFeedback.mediumImpact();
+      commitSaved(w);
+      Navigator.of(context).pop(true);
     } on ApiException catch (e) {
-      _error = e.message;
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
     }
   }
+
+  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context)!;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final catBg = _selectedCategory?.iconCode.bgColorFor(palette);
-    final catIcon = IconRegistry.get(
-      _selectedCategory?.iconCode.icon,
-      fallback: Icons.category_outlined,
-    );
+    final scheme = Theme.of(context).colorScheme;
+    final w = working;
+    final symbol = Currencies.symbolOf(_currency);
+    final isExpense = w.type == 'expense';
+    final payer = _member(w.memberId);
+    final total = AmountField.parse(w.amount) ?? 0;
+    final others = _members.where((m) => m.id != w.memberId).toList();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('New project transaction')),
+    return editScope(Scaffold(
+      appBar: AppTopBar(
+        title: widget.isEdit ? l.projectTxEditTitle : l.projectTxNewTitle,
+        showBack: true,
+        editing: true,
+        onBack: handleBack,
+      ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingView()
           : Form(
-              key: _form,
+              key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.huge),
                 children: [
-                  SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'expense', label: Text('Expense')),
-                      ButtonSegment(value: 'income', label: Text('Income')),
-                    ],
-                    selected: {_type},
-                    onSelectionChanged: (v) => setState(() => _type = v.first),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _memberId,
-                    decoration:
-                        const InputDecoration(labelText: 'Actor (member) *'),
-                    items: _members
-                        .map((m) => DropdownMenuItem(
-                              value: m.id,
-                              child: Text(m.displayName),
-                            ))
-                        .toList(),
-                    onChanged: (v) => setState(() {
-                      _memberId = v;
-                      _splitEntries.removeWhere((e) {
-                        if (e.memberId == v) {
-                          e.amountCtrl.dispose();
-                          return true;
-                        }
-                        return false;
-                      });
-                    }),
-                    validator: (v) => v == null ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _amount,
-                    decoration: const InputDecoration(labelText: 'Amount *'),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                  if (!widget.isEdit) ...[
+                    SelectCardGroup<String>(
+                      selected: w.type,
+                      onChanged: (t) => applyChange(w.copyWith(type: t)),
+                      options: [
+                        SelectCardOption(
+                          value: 'expense',
+                          label: l.projectTxTypeExpense,
+                          icon: AppIcons.expense,
+                          color: palette.expense,
+                        ),
+                        SelectCardOption(
+                          value: 'income',
+                          label: l.projectTxTypeIncome,
+                          icon: AppIcons.income,
+                          color: palette.income,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                  AmountField(
+                    controller: _ctrl[_Field.amount]!,
+                    autofocus: !widget.isEdit,
+                    currencySymbol: symbol,
+                    accent: isExpense ? palette.expense : palette.income,
+                    onChanged: (v) =>
+                        applyTextChange(_Field.amount, working.copyWith(amount: v)),
                     validator: (v) {
-                      final n = double.tryParse(v ?? '');
-                      if (n == null || n <= 0) return 'Enter a positive amount';
-                      return null;
+                      final n = AmountField.parse(v);
+                      return (n == null || n <= 0) ? l.projectTxAmountRequired : null;
                     },
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _currency,
-                    decoration: const InputDecoration(labelText: 'Currency *'),
-                    maxLength: 3,
+                  const SizedBox(height: AppSpacing.lg),
+                  PickerTile(
+                    label: isExpense ? l.projectTxPaidBy : l.projectTxReceivedBy,
+                    value: payer?.displayName,
+                    leading: payer == null
+                        ? const Icon(AppIcons.member)
+                        : ProjectMemberAvatar(member: payer, size: 24),
+                    readOnly: widget.isEdit,
+                    onTap: widget.isEdit ? null : _pickPayer,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _date,
-                    decoration: const InputDecoration(
-                      labelText: 'Date *',
-                      hintText: 'YYYY-MM-DD',
-                    ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppTextField(
+                    controller: _ctrl[_Field.description]!,
+                    label: l.projectTxDescription,
+                    prefixIcon: AppIcons.note,
+                    maxLength: 200,
+                    onChanged: (v) => applyTextChange(
+                        _Field.description, working.copyWith(description: v)),
+                    validator: (v) => (v?.trim().isEmpty ?? true)
+                        ? l.projectTxDescriptionRequired
+                        : null,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _description,
-                    decoration:
-                        const InputDecoration(labelText: 'Description *'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  const SizedBox(height: AppSpacing.sm),
+                  PickerTile(
+                    label: l.projectTxDate,
+                    value: projectTxDateLabel(context, w.date),
+                    leading: const Icon(AppIcons.date),
+                    onTap: _pickDate,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _note,
-                    decoration: const InputDecoration(labelText: 'Note'),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Category *',
-                      style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 8),
+                  SectionHeader(title: l.projectTxCategory),
                   if (_pastCategories.isNotEmpty) ...[
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final cat in _pastCategories)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Builder(builder: (context) {
-                                final bg = cat.iconCode.bgColorFor(palette);
-                                final ic = IconRegistry.get(cat.iconCode.icon,
-                                    fallback: Icons.category_outlined);
-                                final selected =
-                                    _selectedCategory?.name == cat.name &&
-                                        _selectedCategory?.iconCode ==
-                                            cat.iconCode;
-                                return GestureDetector(
-                                  onTap: () => _selectPastCategory(cat),
-                                  child: Chip(
-                                    avatar: CircleAvatar(
-                                      backgroundColor:
-                                          (bg ?? scheme.primary).withValues(alpha: 0.18),
-                                      child: Icon(ic,
-                                          size: 14,
-                                          color: bg ?? scheme.primary),
-                                    ),
-                                    label: Text(cat.name),
-                                    backgroundColor: selected
-                                        ? (bg ?? scheme.primary)
-                                            .withValues(alpha: 0.18)
-                                        : null,
-                                    side: selected
-                                        ? BorderSide(
-                                            color: bg ?? scheme.primary)
-                                        : null,
-                                  ),
-                                );
-                              }),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        for (final (name, code) in _pastCategories)
+                          ChoiceChip(
+                            avatar: Icon(
+                              IconRegistry.get(code.icon,
+                                  fallback: AppIcons.category),
+                              size: 16,
+                              color: code.accentColorFor(palette),
                             ),
-                        ],
-                      ),
+                            label: Text(name),
+                            selected: w.categoryName == name &&
+                                w.categoryIconCode == code,
+                            showCheckmark: false,
+                            onSelected: (_) => applyChange(w.copyWith(
+                                categoryName: name, categoryIconCode: code)),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                   ],
                   Row(
                     children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _categoryName,
-                          decoration: const InputDecoration(
-                            labelText: 'Category name',
-                            hintText: 'e.g. Meals, Accommodation',
-                          ),
-                          onChanged: (v) {
-                            if (_selectedCategory != null) {
-                              setState(() {
-                                _selectedCategory = _CategoryDraft(
-                                  name: v.trim(),
-                                  iconCode: _selectedCategory!.iconCode,
-                                );
-                              });
-                            }
-                          },
+                      EditableCircle(
+                        size: 44,
+                        onTap: _pickCategoryIcon,
+                        child: IconBubble(
+                          icon: IconRegistry.get(w.categoryIconCode?.icon,
+                              fallback: AppIcons.iconPicker),
+                          color: w.categoryIconCode?.accentColorFor(palette) ??
+                              scheme.onSurfaceVariant,
+                          size: 44,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _pickCategoryIcon,
-                        child: CircleAvatar(
-                          radius: 22,
-                          backgroundColor: catBg?.withValues(alpha: 0.18) ??
-                              scheme.surfaceContainerHighest,
-                          child: Icon(
-                            catIcon,
-                            color: catBg ?? scheme.onSurfaceVariant,
-                            size: 20,
-                          ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: AppTextField(
+                          controller: _ctrl[_Field.category]!,
+                          label: l.projectTxCategoryName,
+                          maxLength: 50,
+                          onChanged: (v) => applyTextChange(_Field.category,
+                              working.copyWith(categoryName: v)),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  if (_memberId != null && _members.length > 1) ...[
-                    Text(
-                      'Splits (optional)',
-                      style: Theme.of(context).textTheme.titleMedium,
+                  if (others.isNotEmpty) ...[
+                    SectionHeader(
+                      title: l.projectTxSplits,
+                      actionLabel: total > 0 ? l.projectTxSplitEqual : null,
+                      onAction: total > 0 ? _splitEqually : null,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Add shares each member owes the actor. '
-                      'Sum must be ≤ total; actor keeps the remainder.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    for (int i = 0; i < _splitEntries.length; i++)
+                    Text(l.projectTxSplitsHint,
+                        style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    for (final s in w.splits)
+                      _SplitRow(
+                        split: s,
+                        members: others,
+                        controller: _splitCtrl.putIfAbsent(
+                            s.key, () => TextEditingController(text: s.amount)),
+                        symbol: symbol,
+                        onMember: (id) => _setSplit(s, memberId: id),
+                        onAmount: (v) => _setSplit(s, amount: v),
+                        onRemove: () => _removeSplit(s),
+                      ),
+                    if (w.splits.length < others.length)
+                      AddTile(
+                        label: l.projectTxAddSplit,
+                        variant: AddTileVariant.row,
+                        onTap: _addSplit,
+                      ),
+                    if (w.splits.isNotEmpty && total > 0)
                       Padding(
-                        key: ValueKey(i),
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _splitEntries[i].memberId,
-                                hint: const Text('Member'),
-                                decoration:
-                                    const InputDecoration(isDense: true),
-                                items: _members
-                                    .where((m) => m.id != _memberId)
-                                    .map((m) => DropdownMenuItem(
-                                          value: m.id,
-                                          child: Text(m.displayName),
-                                        ))
-                                    .toList(),
-                                onChanged: (v) => setState(
-                                    () => _splitEntries[i].memberId = v),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: 96,
-                              child: TextFormField(
-                                controller: _splitEntries[i].amountCtrl,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
-                                decoration: const InputDecoration(
-                                  hintText: 'Amount',
-                                  isDense: true,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline,
-                                  size: 20),
-                              onPressed: () => setState(() {
-                                _splitEntries[i].amountCtrl.dispose();
-                                _splitEntries.removeAt(i);
-                              }),
-                            ),
-                          ],
+                        padding: const EdgeInsets.only(top: AppSpacing.sm),
+                        child: Text(
+                          l.projectTxPayerKeeps(moneyString(
+                              context, (total - _splitSum).clamp(0, total),
+                              symbol: symbol)),
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
-                    TextButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add split'),
-                      onPressed: () =>
-                          setState(() => _splitEntries.add(_SplitEntry())),
-                    ),
                   ],
-                  const SizedBox(height: 16),
-                  if (_error != null)
-                    Text(_error!,
-                        style: const TextStyle(color: Colors.redAccent)),
-                  FilledButton(
-                    onPressed: _saving ? null : _submit,
-                    child: const Text('Create'),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: _ctrl[_Field.note]!,
+                    label: l.projectTxNote,
+                    maxLines: 2,
+                    maxLength: 500,
+                    onChanged: (v) =>
+                        applyTextChange(_Field.note, working.copyWith(note: v)),
                   ),
+                  if (_formError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                      child: Text(_formError!,
+                          style: TextStyle(color: scheme.error)),
+                    ),
                 ],
               ),
             ),
+      bottomNavigationBar: editActionBar(onSave: _save),
+    ));
+  }
+}
+
+class _SplitRow extends StatelessWidget {
+  const _SplitRow({
+    required this.split,
+    required this.members,
+    required this.controller,
+    required this.symbol,
+    required this.onMember,
+    required this.onAmount,
+    required this.onRemove,
+  });
+
+  final _Split split;
+  final List<ProjectMember> members;
+  final TextEditingController controller;
+  final String symbol;
+  final ValueChanged<String> onMember;
+  final ValueChanged<String> onAmount;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final member = members.where((m) => m.id == split.memberId).firstOrNull;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          Expanded(
+            child: OptionMenuAnchor<String>(
+              selected: split.memberId,
+              onSelected: onMember,
+              options: [
+                for (final m in members)
+                  SheetOption(
+                    value: m.id,
+                    label: m.displayName,
+                    leading: ProjectMemberAvatar(member: m, size: 24),
+                  ),
+              ],
+              builder: (context, toggle) => PickerTile(
+                label: AppLocalizations.of(context)!.projectRoleMember,
+                value: member?.displayName,
+                leading: member == null
+                    ? const Icon(AppIcons.member)
+                    : ProjectMemberAvatar(member: member, size: 24),
+                onTap: toggle,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          SizedBox(
+            width: 112,
+            child: AppTextField(
+              controller: controller,
+              hint: '0',
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              prefixIcon: null,
+              onChanged: onAmount,
+            ),
+          ),
+          AppIconButton(
+            icon: AppIcons.clear,
+            tooltip: AppLocalizations.of(context)!.commonDelete,
+            onPressed: onRemove,
+          ),
+        ],
+      ),
     );
+  }
+}
+
+class _Split {
+  const _Split(this.key, this.memberId, this.amount);
+
+  /// Stable per row (controller map key).
+  final int key;
+  final String? memberId;
+
+  /// Text as typed.
+  final String amount;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _Split &&
+      other.key == key &&
+      other.memberId == memberId &&
+      other.amount == amount;
+
+  @override
+  int get hashCode => Object.hash(key, memberId, amount);
+}
+
+class _TxDraft {
+  const _TxDraft({
+    this.type = 'expense',
+    this.memberId,
+    this.amount = '',
+    this.date = '',
+    this.description = '',
+    this.note = '',
+    this.categoryName = '',
+    this.categoryIconCode,
+    this.splits = const [],
+  });
+
+  final String type;
+  final String? memberId;
+  final String amount;
+  final String date;
+  final String description;
+  final String note;
+  final String categoryName;
+  final IconCode? categoryIconCode;
+  final List<_Split> splits;
+
+  _TxDraft copyWith({
+    String? type,
+    String? memberId,
+    String? amount,
+    String? date,
+    String? description,
+    String? note,
+    String? categoryName,
+    IconCode? categoryIconCode,
+    List<_Split>? splits,
+  }) =>
+      _TxDraft(
+        type: type ?? this.type,
+        memberId: memberId ?? this.memberId,
+        amount: amount ?? this.amount,
+        date: date ?? this.date,
+        description: description ?? this.description,
+        note: note ?? this.note,
+        categoryName: categoryName ?? this.categoryName,
+        categoryIconCode: categoryIconCode ?? this.categoryIconCode,
+        splits: splits ?? this.splits,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is _TxDraft &&
+      other.type == type &&
+      other.memberId == memberId &&
+      other.amount == amount &&
+      other.date == date &&
+      other.description == description &&
+      other.note == note &&
+      other.categoryName == categoryName &&
+      other.categoryIconCode == categoryIconCode &&
+      _listEq(other.splits, splits);
+
+  static bool _listEq(List<_Split> a, List<_Split> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
-  void dispose() {
-    _description.dispose();
-    _amount.dispose();
-    _currency.dispose();
-    _date.dispose();
-    _note.dispose();
-    _categoryName.dispose();
-    for (final e in _splitEntries) {
-      e.amountCtrl.dispose();
-    }
-    super.dispose();
-  }
+  int get hashCode => Object.hash(type, memberId, amount, date, description,
+      note, categoryName, categoryIconCode, Object.hashAll(splits));
 }

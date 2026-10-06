@@ -83,5 +83,6 @@ flutter:
   # When the first avatar PNG is added (see assets/avatars/README.md),
   # uncomment the line below to register the folder. Leave it commented
   # while the folder has no PNGs — Flutter rejects empty asset entries.
-  # assets:
-  #   - assets/avatars/
+  assets:
+    - assets/icon/  # logo on the login / register brand header
+    # - assets/avatars/

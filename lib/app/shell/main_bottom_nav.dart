@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../l10n/gen/app_localizations.dart';
 
@@ -49,15 +50,15 @@ class MainBottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _NavItem(
-            icon: Icons.dashboard_outlined,
-            iconSelected: Icons.dashboard,
+            icon: AppIcons.dashboard,
+            iconSelected: AppIcons.dashboardActive,
             label: l.navDashboard,
             selected: !moreSelected && currentIndex == 0,
             onTap: () => onTabSelected(0),
           ),
           _NavItem(
-            icon: Icons.list_alt_outlined,
-            iconSelected: Icons.list_alt,
+            icon: AppIcons.transactions,
+            iconSelected: AppIcons.transactionsActive,
             label: l.navTransactions,
             selected: !moreSelected && currentIndex == 1,
             onTap: () => onTabSelected(1),
@@ -66,15 +67,15 @@ class MainBottomNav extends StatelessWidget {
           // the [Scaffold.floatingActionButton] above this bar).
           const SizedBox(width: 56),
           _NavItem(
-            icon: Icons.account_balance_wallet_outlined,
-            iconSelected: Icons.account_balance_wallet,
+            icon: AppIcons.wallet,
+            iconSelected: AppIcons.walletActive,
             label: l.navAccounts,
             selected: !moreSelected && currentIndex == 2,
             onTap: () => onTabSelected(2),
           ),
           _NavItem(
-            icon: Icons.more_horiz,
-            iconSelected: Icons.more_horiz,
+            icon: AppIcons.more,
+            iconSelected: AppIcons.more,
             label: l.navMore,
             selected: moreSelected,
             onTap: onMorePressed,

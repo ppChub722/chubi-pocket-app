@@ -17,6 +17,7 @@ class TransactionsSummary extends Equatable {
     required this.transactionCount,
     this.currency,
     this.accountId,
+    this.groups = const [],
   });
 
   /// Range bounds, `YYYY-MM-DD`. Echoed back from the request.
@@ -32,6 +33,9 @@ class TransactionsSummary extends Equatable {
   /// the global summary.
   final String? currency;
   final String? accountId;
+
+  /// `group_by=…` buckets (global summary only).
+  final List<SummaryGroup> groups;
 
   factory TransactionsSummary.fromAccountJson(Map<String, dynamic> json) {
     return TransactionsSummary(
@@ -55,6 +59,10 @@ class TransactionsSummary extends Equatable {
       net: (json['net'] as num).toDouble(),
       transactionCount: (json['transaction_count'] as int?) ?? 0,
       currency: json['currency'] as String?,
+      groups: [
+        for (final g in (json['groups'] as List?) ?? const [])
+          SummaryGroup.fromJson(g as Map<String, dynamic>),
+      ],
     );
   }
 
@@ -68,5 +76,41 @@ class TransactionsSummary extends Equatable {
         transactionCount,
         currency,
         accountId,
+        groups,
       ];
+}
+
+/// One `group_by` bucket. `income` / `expense` are the typed split from
+/// contract §2 (null until the BE sends them); [total] is the old mixed sum.
+class SummaryGroup extends Equatable {
+  const SummaryGroup({
+    required this.key,
+    required this.name,
+    required this.total,
+    required this.count,
+    this.income,
+    this.expense,
+  });
+
+  final String key;
+  final String name;
+  final double total;
+  final int count;
+  final double? income;
+  final double? expense;
+
+  /// Spending in this bucket — the typed figure when present.
+  double get spent => expense ?? total;
+
+  factory SummaryGroup.fromJson(Map<String, dynamic> json) => SummaryGroup(
+        key: json['key'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        total: (json['total'] as num?)?.toDouble() ?? 0,
+        count: (json['count'] as num?)?.toInt() ?? 0,
+        income: (json['income'] as num?)?.toDouble(),
+        expense: (json['expense'] as num?)?.toDouble(),
+      );
+
+  @override
+  List<Object?> get props => [key, name, total, count, income, expense];
 }

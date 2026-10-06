@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/currencies.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -26,6 +26,7 @@ import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../widgets/event_section.dart';
 import '../widgets/splits_section.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/widgets/ui.dart';
 
 /// Initial values for [TransactionFormBody], used when editing or when
 /// the caller wants to pre-fill specific fields (e.g. tap an account
@@ -276,7 +277,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     // Skipped on another member's row: their category stays untouched
     // (author-only field, spec §14/2.2) and can't resolve against our
     // own categories cache anyway.
-    final amount = double.tryParse(_amountController.text.trim());
+    final amount = AmountField.parse(_amountController.text);
     if (amount == null || amount <= 0) return false;
 
     final noteRaw = _noteController.text.trim();
@@ -487,7 +488,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     if (_isTransfer && _account == null) return null;
     if (_isTransfer && _toAccount == null) return null;
     if (_isTransfer && _account!.id == _toAccount!.id) return null;
-    final amount = double.tryParse(_amountController.text.trim());
+    final amount = AmountField.parse(_amountController.text);
     if (amount == null || amount <= 0) return null;
 
     final splitsPayload = _collectSplitsPayload(amount);
@@ -699,7 +700,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
                   ? l.transactionSplitShareTitle
                   : l.transactionSplitWithTitle,
               totalAmount:
-                  double.tryParse(_amountController.text.trim()) ?? 0,
+                  AmountField.parse(_amountController.text) ?? 0,
               drafts: _splits,
               onChanged: (next) {
                 setState(() => _splits = next);
@@ -915,33 +916,20 @@ class _AmountField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return TextFormField(
+    return AmountField(
       controller: controller,
+      label: label,
+      currencySymbol: Currencies.symbolOf(currency),
       enabled: !saving,
       autofocus: true,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-      ],
-      decoration: InputDecoration(
-        labelText: label,
-        prefixText: _currencyPrefix(currency),
-      ),
       validator: (v) {
-        final t = (v ?? '').trim();
-        if (t.isEmpty) return l.transactionFormAmountRequired;
-        final n = double.tryParse(t);
+        if ((v ?? '').trim().isEmpty) return l.transactionFormAmountRequired;
+        final n = AmountField.parse(v);
         if (n == null) return l.transactionFormAmountInvalid;
         if (n <= 0) return l.transactionFormAmountTooSmall;
         return null;
       },
     );
-  }
-
-  String _currencyPrefix(String c) {
-    // Phase 1 is THB only; the prefix is purely cosmetic.
-    if (c == 'THB') return '฿ ';
-    return '$c ';
   }
 }
 
@@ -1316,14 +1304,7 @@ String _formatDate(DateTime d) {
   return '${d.year}-$m-$day';
 }
 
-String _formatAmountInput(double amount) {
-  // Prefer integer rendering for whole-baht amounts so the user sees
-  // "1500" not "1500.0" when editing — fewer keystrokes to fix.
-  if (amount == amount.roundToDouble()) {
-    return amount.toStringAsFixed(0);
-  }
-  return amount.toStringAsFixed(2);
-}
+String _formatAmountInput(double amount) => AmountField.format(amount);
 
 /// Multi-select chip wrap for tags. Reads the user's tag list from
 /// [TagsCubit]; tap a chip to toggle. New users start with no tags;

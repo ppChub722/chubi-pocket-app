@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -153,7 +154,7 @@ class PopoverClearItem extends StatelessWidget {
       children: [
         const Divider(height: AppSpacing.sm),
         MenuItemButton(
-          leadingIcon: const Icon(Icons.clear, size: 18),
+          leadingIcon: const Icon(AppIcons.clear, size: 18),
           onPressed: onPressed,
           child: Text(label ?? AppLocalizations.of(context)!.commonClear),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import 'tone.dart';
 
@@ -63,7 +64,7 @@ class StatusPill extends StatelessWidget {
           Text(label, style: textStyle),
           if (onTap != null) ...[
             const SizedBox(width: 2),
-            Icon(Icons.expand_more, size: dense ? 14 : 18, color: color),
+            Icon(AppIcons.expand, size: dense ? 14 : 18, color: color),
           ],
         ],
       ),

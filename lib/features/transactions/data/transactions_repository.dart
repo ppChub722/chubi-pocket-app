@@ -245,6 +245,7 @@ class TransactionsRepository {
     required String to,
     String? accountId,
     TransactionType? type,
+    String? groupBy,
   }) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
@@ -254,6 +255,7 @@ class TransactionsRepository {
           'to': to,
           'account_id': ?accountId,
           'type': ?type?.toJson(),
+          'group_by': ?groupBy,
         },
       );
       return TransactionsSummary.fromGlobalJson(res.data!);

@@ -2,41 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/empty_view.dart';
-import '../../../transactions/data/transactions_repository.dart';
-import '../../../transactions/domain/transaction.dart';
-import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/domain/transactions_summary.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
-import '../../domain/account.dart';
-import '../../domain/account_type.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/user_avatar.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../transactions/presentation/cubit/transactions_cubit.dart';
+import '../../../transactions/presentation/widgets/period_summary_card.dart';
+import '../../../transactions/presentation/widgets/transaction_tile.dart';
+import '../../domain/account.dart';
+import '../../domain/account_type.dart';
+import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
-import '../wallet_errors.dart';
 import '../widgets/account_card.dart' show SharedWalletIconBadge;
-import '../widgets/member_avatar_stack.dart';
 import '../widgets/wallet_settings_sheet.dart';
 
-/// Wallet (account) detail — single adaptive page; shared wallets add
-/// the member row + per-row author avatars (spec §14).
-///
-/// Routed at `/accounts/:id` outside the shell, so it owns its own Scaffold
-/// + AppBar with a back button. The bottom nav and the global Add-transaction
-/// FAB do NOT show here.
-///
-/// What's real now: header (icon + name + balance + type), credit-only
-/// utilization bar + available-credit row, billing card, summary card with
-/// zero values, transactions empty-state, overflow menu (Edit / Adjust
-/// balance / Archive). Edit / Adjust / Archive each show "Coming in Phase
-/// 1a" snackbars — the underlying flows ship with the real backend in P1a.
+/// `/accounts/:id` (§10): header (icon · name · type · balance, credit
+/// utilization, "ปรับยอด"), members (shared) + wallet settings, info rows
+/// (description, note, billing), period summary, the latest rows →
+/// "ดูทั้งหมด ›". ✏️ (owner only — the BE checks) opens the edit form,
+/// where archive lives.
 class AccountDetailPage extends StatelessWidget {
   const AccountDetailPage({required this.accountId, super.key});
 
@@ -44,153 +35,65 @@ class AccountDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return BlocBuilder<AccountsCubit, AccountsState>(
       builder: (context, state) {
-        // While the cold-start fetch is in flight and the cache is empty,
-        // show a spinner instead of the "not found" empty-state — the user
-        // navigated here from a list, so the account *should* exist.
-        if (state.accounts.isEmpty &&
-            state.status == AccountsStatus.loading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
         final account = context.read<AccountsCubit>().byId(accountId);
-        if (account == null) return _NotFoundScaffold();
-        return _LoadedScaffold(account: account);
+        if (account != null) return _Loaded(account: account);
+        return Scaffold(
+          appBar: AppTopBar(title: l.navAccounts, showBack: true),
+          body: state.status == AccountsStatus.loading
+              ? const LoadingView()
+              : EmptyView(
+                  icon: AppIcons.empty,
+                  title: l.accountDetailNotFound,
+                  message: l.accountDetailNotFoundMessage,
+                ),
+        );
       },
     );
   }
 }
 
-class _NotFoundScaffold extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppBar(),
-      body: EmptyView(
-        icon: Icons.find_in_page_outlined,
-        title: l.accountDetailNotFound,
-        message: l.accountDetailNotFoundMessage,
-      ),
-    );
-  }
-}
-
-class _LoadedScaffold extends StatelessWidget {
-  const _LoadedScaffold({required this.account});
+class _Loaded extends StatefulWidget {
+  const _Loaded({required this.account});
   final Account account;
 
   @override
-  Widget build(BuildContext context) {
+  State<_Loaded> createState() => _LoadedState();
+}
+
+class _LoadedState extends State<_Loaded> {
+  Account get account => widget.account;
+
+  @override
+  void initState() {
+    super.initState();
+    // The global list is shared — scope it to this wallet for the preview.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TransactionsCubit>().load(accountId: account.id);
+      }
+    });
+  }
+
+  bool _isOwner(BuildContext context) {
+    if (!account.isShared) return true;
+    final auth = context.read<AuthCubit>().state;
+    final uid = auth is AuthAuthenticated ? auth.user.id : null;
+    return account.members
+        .any((m) => m.userId == uid && m.isActive && m.role == WalletRole.owner);
+  }
+
+  Future<void> _adjustBalance() async {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(account.name),
-        actions: [
-          PopupMenuButton<_OverflowAction>(
-            onSelected: (action) => _onMenuAction(context, l, action),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: _OverflowAction.edit,
-                child: Row(children: [
-                  const Icon(Icons.edit_outlined),
-                  const SizedBox(width: AppSpacing.md),
-                  Text(l.accountDetailEdit),
-                ]),
-              ),
-              // Wallet settings — members + report scope (spec §14).
-              PopupMenuItem(
-                value: _OverflowAction.settings,
-                child: Row(children: [
-                  const Icon(Icons.settings_outlined),
-                  const SizedBox(width: AppSpacing.md),
-                  Text(l.walletSettingsTitle),
-                ]),
-              ),
-              PopupMenuItem(
-                value: _OverflowAction.adjustBalance,
-                child: Row(children: [
-                  const Icon(Icons.tune_outlined),
-                  const SizedBox(width: AppSpacing.md),
-                  Text(l.accountDetailAdjustBalance),
-                ]),
-              ),
-              PopupMenuItem(
-                value: _OverflowAction.archive,
-                child: Row(children: [
-                  const Icon(Icons.archive_outlined),
-                  const SizedBox(width: AppSpacing.md),
-                  Text(l.accountDetailArchive),
-                ]),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        children: [
-          _Header(account: account),
-          if (account.description != null &&
-              account.description!.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.lg),
-            _MetaCard(
-              icon: Icons.info_outline,
-              text: account.description!,
-            ),
-          ],
-          if (account.note != null && account.note!.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.lg),
-            _MetaCard(
-              icon: Icons.sticky_note_2_outlined,
-              text: account.note!,
-            ),
-          ],
-          const SizedBox(height: AppSpacing.lg),
-          _LiveSummaryCard(accountId: account.id),
-          if (account.type.isCredit) ...[
-            const SizedBox(height: AppSpacing.lg),
-            _BillingCard(account: account),
-          ],
-          const SizedBox(height: AppSpacing.lg),
-          _LiveTransactionsSection(accountId: account.id),
-          const SizedBox(height: AppSpacing.huge),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _onMenuAction(
-    BuildContext context,
-    AppLocalizations l,
-    _OverflowAction action,
-  ) async {
-    switch (action) {
-      case _OverflowAction.edit:
-        context.push('/accounts/${account.id}/edit');
-      case _OverflowAction.settings:
-        await showWalletSettingsSheet(context, accountId: account.id);
-      case _OverflowAction.adjustBalance:
-        await _showAdjustBalanceDialog(context, l);
-      case _OverflowAction.archive:
-        await _confirmArchive(context, l);
-    }
-  }
-
-  Future<void> _showAdjustBalanceDialog(
-      BuildContext context, AppLocalizations l) async {
     final result = await showDialog<_AdjustBalanceResult>(
       context: context,
       builder: (_) => _AdjustBalanceDialog(account: account),
     );
-    if (result == null || !context.mounted) return;
+    if (result == null || !mounted) return;
     final cubit = context.read<AccountsCubit>();
-    final messenger = ScaffoldMessenger.of(context);
+    final txCubit = context.read<TransactionsCubit>();
     final router = GoRouter.of(context);
     try {
       final outcome = await cubit.adjustBalance(
@@ -198,692 +101,211 @@ class _LoadedScaffold extends StatelessWidget {
         newBalance: result.newBalance,
         note: result.note,
       );
-      // Refresh the account-detail's transactions section so the new
-      // Adjustment row shows up immediately. The cubit already patched
-      // the account row's balance via the response.
-      if (context.mounted) {
-        await context
-            .read<TransactionsCubit>()
-            .load(accountId: account.id);
-      }
-      if (!context.mounted) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(l.accountAdjustBalanceSuccess),
-          action: SnackBarAction(
-            label: l.accountAdjustBalanceViewTransaction,
-            onPressed: () => router.push(
-              '/transactions/${outcome.adjustmentTransactionId}',
-            ),
-          ),
-        ));
+      await txCubit.load(accountId: account.id);
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        l.accountAdjustBalanceSuccess,
+        tone: Tone.success,
+        actionLabel: l.accountAdjustBalanceViewTransaction,
+        onAction: () =>
+            router.push('/transactions/${outcome.adjustmentTransactionId}'),
+      );
     } on ApiException catch (e) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
     }
   }
-
-  Future<void> _confirmArchive(
-      BuildContext context, AppLocalizations l) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.accountArchiveConfirmTitle),
-        content: Text(l.accountArchiveConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(l.accountArchiveConfirmAction),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    final cubit = context.read<AccountsCubit>();
-    final messenger = ScaffoldMessenger.of(context);
-    final router = GoRouter.of(context);
-    try {
-      await cubit.remove(account.id);
-      // Pop back to the list — the account is no longer in the active
-      // cache, so the detail page would otherwise flip into "not found".
-      if (router.canPop()) router.pop();
-    } on ApiException catch (e) {
-      // ACCOUNT_HAS_MEMBERS (409): a still-shared wallet can't be
-      // archived — sole-membership rule, spec §14/2.5.
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(walletErrorMessage(l, e))));
-    }
-  }
-}
-
-enum _OverflowAction { edit, settings, adjustBalance, archive }
-
-class _Header extends StatelessWidget {
-  const _Header({required this.account});
-  final Account account;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final accent =
-        account.iconCode?.accentColorFor(palette) ?? palette.primary;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      color: scheme.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: accent, width: 1.5),
+    final a = account;
+    final hasDesc = a.description?.trim().isNotEmpty ?? false;
+    final hasNote = a.note?.trim().isNotEmpty ?? false;
+    final hasBilling = a.type.isCredit &&
+        (a.statementDate != null ||
+            a.paymentDueDate != null ||
+            a.minimumPayment != null);
+    final rows = context.select<TransactionsCubit, List>(
+        (c) => c.forAccount(a.id).take(5).toList());
+
+    return Scaffold(
+      appBar: AppTopBar(
+        title: a.name,
+        showBack: true,
+        actions: [
+          if (_isOwner(context))
+            AppBarAction(
+              icon: AppIcons.edit,
+              tooltip: l.accountDetailEdit,
+              onPressed: () => context.push('/accounts/${a.id}/edit'),
+            ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: PullToRefresh(
+        onRefresh: () async {
+          await Future.wait([
+            context.read<AccountsCubit>().load(),
+            context.read<TransactionsCubit>().load(accountId: a.id),
+          ]);
+        },
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
           children: [
-            // Tap the icon to jump straight to the edit form (where the
-            // IconMaker picker is wired). Same destination as the overflow
-            // menu's "Edit" item. Shared wallets carry the chain-link
-            // badge on the icon corner (spec §14) — the user's own icon
-            // stays.
-            InkWell(
-              onTap: () => context.push('/accounts/${account.id}/edit'),
-              borderRadius: BorderRadius.circular(28),
-              child: account.isShared
-                  ? SharedWalletIconBadge(
-                      size: 56,
-                      child: IconDisplay(
-                        type: IconType.account,
-                        size: 56,
-                        iconCode: account.iconCode,
-                      ),
-                    )
-                  : IconDisplay(
-                      type: IconType.account,
-                      size: 56,
-                      iconCode: account.iconCode,
+            _Header(account: a, onAdjust: _adjustBalance),
+            const SizedBox(height: AppSpacing.lg),
+            SectionCard(
+              children: [
+                if (a.isShared && a.members.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    child: MemberStrip(
+                      members: [
+                        for (final m in a.members.where((m) => m.isActive || m.pending))
+                          PersonRef(
+                            name: m.displayName,
+                            iconCode: m.iconCode,
+                            isOwner: m.role == WalletRole.owner,
+                            pending: m.pending,
+                          ),
+                      ],
+                      avatarSize: 40,
+                      onMemberTap: (_) =>
+                          context.push('/accounts/${a.id}/members'),
                     ),
+                  ),
+                  const RowDivider(),
+                ],
+                DetailRow(
+                  leading: const Icon(AppIcons.settings),
+                  label: l.walletSettingsTitle,
+                  showChevron: true,
+                  onTap: () =>
+                      showWalletSettingsSheet(context, accountId: a.id),
+                ),
+                if (hasDesc) ...[
+                  const RowDivider(),
+                  DetailStacked(
+                      label: l.accountDetailDescription,
+                      child: Text(a.description!.trim())),
+                ],
+                if (hasNote) ...[
+                  const RowDivider(),
+                  DetailStacked(
+                      label: l.accountDetailNote, child: Text(a.note!.trim())),
+                ],
+                if (hasBilling) ...[
+                  const RowDivider(),
+                  if (a.statementDate != null)
+                    DetailRow(
+                      leading: const Icon(AppIcons.date),
+                      label: l.accountDetailStatementDate,
+                      trailing: Text(l.accountDetailDayOfMonth(a.statementDate!)),
+                    ),
+                  if (a.paymentDueDate != null)
+                    DetailRow(
+                      leading: const Icon(AppIcons.scheduled),
+                      label: l.accountDetailPaymentDue,
+                      trailing: Text(l.accountDetailDayOfMonth(a.paymentDueDate!)),
+                    ),
+                  if (a.minimumPayment != null)
+                    DetailRow(
+                      leading: const Icon(AppIcons.cash),
+                      label: l.accountDetailMinimumPayment,
+                      trailing: MoneyText(a.minimumPayment!),
+                    ),
+                ],
+              ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text(
-              CurrencyFormatter.format(account.balance),
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: accent,
-                    fontWeight: FontWeight.w700,
-                  ),
+            PeriodSummaryCard(accountId: a.id),
+            SectionHeader(
+              title: l.accountDetailTransactionsTitle,
+              actionLabel: rows.isEmpty ? null : l.accountDetailSeeAll,
+              onAction: () => context.push('/accounts/${a.id}/transactions'),
             ),
-            const SizedBox(height: 4),
-            Text(
-              account.isShared
-                  ? '${account.currency} · ${_typeLabel(context, account.type)} · ${l.walletSharedLabel}'
-                  : '${account.currency} · ${_typeLabel(context, account.type)}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-            ),
-            // Member avatar row under the balance — shared wallets only
-            // (spec B3). Tap routes to the members screen.
-            if (account.isShared && account.members.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.md),
-              InkWell(
-                onTap: () =>
-                    context.push('/accounts/${account.id}/members'),
-                borderRadius: BorderRadius.circular(12),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    MemberAvatarStack(
-                      members: account.members,
-                      size: 24,
-                      maxVisible: 5,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Icon(Icons.chevron_right,
-                        size: 16, color: scheme.onSurfaceVariant),
-                  ],
-                ),
-              ),
-            ],
-            if (account.creditUtilization != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: account.creditUtilization,
-                  minHeight: 6,
-                  backgroundColor: scheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(accent),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                l.accountDetailCreditAvailable(
-                  CurrencyFormatter.format(
-                    (account.creditLimit ?? 0) - account.balance.abs(),
-                  ),
-                  CurrencyFormatter.format(account.creditLimit ?? 0),
-                ),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Renders a small text card with a leading icon. Used for both the
-/// description (info icon) and note (sticky-note icon) blocks above the
-/// summary card. Each only appears when the underlying string is set.
-class _MetaCard extends StatelessWidget {
-  const _MetaCard({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 20, color: scheme.onSurfaceVariant),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Range chips drive the per-account summary.
-enum _SummaryRange { week, month, year, all }
-
-extension on _SummaryRange {
-  /// Returns `(from, to)` as `YYYY-MM-DD` strings, or `(null, null)` for
-  /// `all` (which sends no date params; the BE summarizes everything).
-  ({String? from, String? to}) toRange(DateTime now) {
-    String fmt(DateTime d) {
-      final m = d.month.toString().padLeft(2, '0');
-      final day = d.day.toString().padLeft(2, '0');
-      return '${d.year}-$m-$day';
-    }
-    final today = DateTime(now.year, now.month, now.day);
-    switch (this) {
-      case _SummaryRange.week:
-        // Mon..Sun. weekday: Mon=1..Sun=7.
-        final monday = today.subtract(Duration(days: today.weekday - 1));
-        final sunday = monday.add(const Duration(days: 6));
-        return (from: fmt(monday), to: fmt(sunday));
-      case _SummaryRange.month:
-        final first = DateTime(now.year, now.month, 1);
-        final last = DateTime(now.year, now.month + 1, 0);
-        return (from: fmt(first), to: fmt(last));
-      case _SummaryRange.year:
-        return (
-          from: fmt(DateTime(now.year, 1, 1)),
-          to: fmt(DateTime(now.year, 12, 31)),
-        );
-      case _SummaryRange.all:
-        return (from: null, to: null);
-    }
-  }
-}
-
-/// Live summary card — range chips + per-account totals from
-/// `GET /v1/accounts/:id/summary`. Range defaults to "this month".
-/// Per spec §03/§2.7 the per-account summary counts transfers — that's
-/// intentional, transfers move the balance.
-class _LiveSummaryCard extends StatefulWidget {
-  const _LiveSummaryCard({required this.accountId});
-  final String accountId;
-
-  @override
-  State<_LiveSummaryCard> createState() => _LiveSummaryCardState();
-}
-
-class _LiveSummaryCardState extends State<_LiveSummaryCard> {
-  _SummaryRange _range = _SummaryRange.month;
-  late Future<TransactionsSummary> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = _fetch();
-  }
-
-  Future<TransactionsSummary> _fetch() {
-    final repo = context.read<TransactionsRepository>();
-    final r = _range.toRange(DateTime.now());
-    return repo.summaryForAccount(
-      accountId: widget.accountId,
-      from: r.from,
-      to: r.to,
-    );
-  }
-
-  void _setRange(_SummaryRange r) {
-    if (r == _range) return;
-    setState(() {
-      _range = r;
-      _future = _fetch();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l.accountDetailSummaryTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.sm,
-              children: [
-                _rangeChip(l.transactionsRangeWeek, _SummaryRange.week),
-                _rangeChip(l.transactionsRangeMonth, _SummaryRange.month),
-                _rangeChip(l.transactionsRangeYear, _SummaryRange.year),
-                _rangeChip(l.transactionsRangeAll, _SummaryRange.all),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            FutureBuilder<TransactionsSummary>(
-              future: _future,
-              builder: (context, snap) {
-                if (snap.connectionState != ConnectionState.done) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                if (snap.hasError) {
-                  return Text(
-                    snap.error.toString(),
-                    style: TextStyle(color: scheme.error),
-                  );
-                }
-                final s = snap.data!;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            Card(
+              margin: EdgeInsets.zero,
+              clipBehavior: Clip.antiAlias,
+              child: rows.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Text(l.transactionsEmptyAccountMessage,
+                          textAlign: TextAlign.center),
+                    )
+                  : Column(
                       children: [
-                        Expanded(
-                          child: _SummaryStat(
-                            label: l.accountDetailSummaryIncome,
-                            amount: s.totalIncome,
-                          ),
-                        ),
-                        Expanded(
-                          child: _SummaryStat(
-                            label: l.accountDetailSummaryExpense,
-                            amount: s.totalExpense,
-                          ),
-                        ),
-                        Expanded(
-                          child: _SummaryStat(
-                            label: l.accountDetailSummaryNet,
-                            amount: s.net,
-                          ),
-                        ),
+                        for (final t in rows)
+                          TransactionTile(
+                              transaction: t, showAccount: false, showDate: true),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      l.accountDetailSummaryTransactions(s.transactionCount),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                    ),
-                  ],
-                );
-              },
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _rangeChip(String label, _SummaryRange r) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: _range == r,
-      onSelected: (_) => _setRange(r),
-    );
-  }
 }
 
-class _SummaryStat extends StatelessWidget {
-  const _SummaryStat({required this.label, required this.amount});
-  final String label;
-  final double amount;
+class _Header extends StatelessWidget {
+  const _Header({required this.account, required this.onAdjust});
 
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          CurrencyFormatter.format(amount),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: scheme.onSurface,
-              ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BillingCard extends StatelessWidget {
-  const _BillingCard({required this.account});
   final Account account;
+  final VoidCallback onAdjust;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l.accountDetailBillingTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            if (account.statementDate != null)
-              _BillingRow(
-                icon: Icons.event_note_outlined,
-                label: l.accountDetailStatementDate,
-                value:
-                    l.accountDetailDayOfMonth(account.statementDate!),
-              ),
-            if (account.paymentDueDate != null)
-              _BillingRow(
-                icon: Icons.event_available_outlined,
-                label: l.accountDetailPaymentDue,
-                value:
-                    l.accountDetailDayOfMonth(account.paymentDueDate!),
-              ),
-            if (account.minimumPayment != null)
-              _BillingRow(
-                icon: Icons.payments_outlined,
-                label: l.accountDetailMinimumPayment,
-                value: CurrencyFormatter.format(account.minimumPayment!),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BillingRow extends StatelessWidget {
-  const _BillingRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final a = account;
+    final accent = a.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final icon = IconDisplay(type: IconType.account, size: 52, iconCode: a.iconCode);
+    return HeaderCard(
+      accent: accent,
+      leading: a.isShared ? SharedWalletIconBadge(size: 52, child: icon) : icon,
+      title: Text(a.name),
+      subtitle: Text([
+        _typeLabel(context, a.type),
+        a.currency,
+        if (a.isShared) l.walletSharedLabel,
+      ].join(' · ')),
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(icon, size: 20, color: scheme.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+          Row(
+            children: [
+              Expanded(
+                child: MoneyText(
+                  a.balance,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800, color: accent),
                 ),
+              ),
+              AppButton(
+                label: l.accountDetailAdjustBalance,
+                icon: AppIcons.reset,
+                variant: AppButtonVariant.tonal,
+                onPressed: onAdjust,
+              ),
+            ],
           ),
+          if (a.creditUtilization != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            ProgressRow(
+              value: a.creditUtilization!,
+              color: accent,
+              label: l.accountDetailCreditAvailable(
+                moneyString(context, (a.creditLimit ?? 0) - a.balance.abs()),
+                moneyString(context, a.creditLimit ?? 0),
+              ),
+            ),
+          ],
         ],
       ),
     );
-  }
-}
-
-/// Live transactions section — top N transactions for this account
-/// pulled from the global [TransactionsCubit] cache. Phase 1a renders
-/// up to 20 rows; pagination / "View all" deferred to the dedicated
-/// transactions list page (P1b).
-class _LiveTransactionsSection extends StatefulWidget {
-  const _LiveTransactionsSection({required this.accountId});
-  final String accountId;
-
-  @override
-  State<_LiveTransactionsSection> createState() =>
-      _LiveTransactionsSectionState();
-}
-
-class _LiveTransactionsSectionState extends State<_LiveTransactionsSection> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      // Load filtered to this account so the cubit's hasMore / pagination
-      // tracks the right slice. The detail page is the only consumer
-      // that scopes by account, so a load() (not loadIfNeeded) is the
-      // safe call — cache may have been loaded for a different account.
-      context.read<TransactionsCubit>().load(accountId: widget.accountId);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l.accountDetailTransactionsTitle,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            BlocBuilder<TransactionsCubit, TransactionsState>(
-              builder: (context, state) {
-                final isLoading = state.status == TransactionsStatus.loading &&
-                    state.transactions.isEmpty;
-                if (isLoading) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                final rows = context
-                    .read<TransactionsCubit>()
-                    .forAccount(widget.accountId);
-                if (rows.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.md),
-                    child: EmptyView(
-                      icon: Icons.receipt_long_outlined,
-                      title: l.transactionsEmptyAccountTitle,
-                      message: l.transactionsEmptyAccountMessage,
-                    ),
-                  );
-                }
-                return Column(
-                  children: [
-                    for (final tx in rows)
-                      _TransactionRow(tx: tx),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TransactionRow extends StatelessWidget {
-  const _TransactionRow({required this.tx});
-  final Transaction tx;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final signed = tx.signedAmount;
-    final isCredit = signed > 0;
-    final color = isCredit ? Colors.green.shade400 : scheme.error;
-    final sign = signed > 0 ? '+' : (signed < 0 ? '−' : '');
-    // Shared-wallet rows: another member's category comes denormalized
-    // via category_render (read-only rendering of the author's own
-    // taxonomy — spec §14/1.2); fall back to the embedded ref.
-    final categoryName = tx.categoryRender?.name ?? tx.category?.name ?? '';
-    // Small author avatar when the row was logged by another member
-    // (spec B3): created_by present and not the caller.
-    final auth = context.read<AuthCubit>().state;
-    final selfId = auth is AuthAuthenticated ? auth.user.id : null;
-    final author = tx.createdBy;
-    final showAuthor = author != null && author.userId != selfId;
-    return InkWell(
-      onTap: () => GoRouter.of(context).push('/transactions/${tx.id}'),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-        child: Row(
-          children: [
-            Icon(
-              _iconForType(tx.type),
-              size: 18,
-              color: scheme.onSurfaceVariant,
-            ),
-            if (showAuthor) ...[
-              const SizedBox(width: AppSpacing.sm),
-              Tooltip(
-                message: author.displayName,
-                child: UserAvatar(
-                  displayName: author.displayName,
-                  iconCode: author.iconCode,
-                  size: 20,
-                ),
-              ),
-            ],
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    categoryName.isNotEmpty
-                        ? categoryName
-                        : (tx.note ?? '—'),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        tx.date,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      ),
-                      if (tx.tags.isNotEmpty) ...[
-                        const SizedBox(width: AppSpacing.sm),
-                        Icon(Icons.sell_outlined,
-                            size: 12, color: scheme.onSurfaceVariant),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${tx.tags.length}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              '$sign${CurrencyFormatter.format(tx.amount)}',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _iconForType(TransactionType t) {
-    return switch (t) {
-      TransactionType.expense => Icons.south,
-      TransactionType.income => Icons.north,
-      TransactionType.transfer => Icons.swap_horiz,
-    };
   }
 }
 

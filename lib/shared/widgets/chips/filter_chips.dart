@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../menus/option_menu.dart';
 import '../sheets/option_sheet.dart';
@@ -76,7 +77,7 @@ class FilterDropdownChip extends StatelessWidget {
                           fontWeight: isActive ? FontWeight.w600 : null,
                         ),
                   ),
-                  Icon(Icons.arrow_drop_down, size: 20, color: fg),
+                  Icon(AppIcons.dropdown, size: 20, color: fg),
                 ],
               ),
             ),
@@ -130,11 +131,11 @@ class SortChip<T> extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.sort, size: 18, color: scheme.onSurfaceVariant),
+                Icon(AppIcons.sort, size: 18, color: scheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.xs),
                 Text(current.label,
                     style: Theme.of(context).textTheme.labelLarge),
-                Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
+                Icon(AppIcons.dropdown, color: scheme.onSurfaceVariant),
               ],
             ),
           ),
@@ -177,6 +178,62 @@ class FilterBar extends StatelessWidget {
             trailing!,
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Chip-sized action button — same stadium shape/height as
+/// [FilterDropdownChip] so it can sit in the same row. Used by selection
+/// bars ("[◉ 3] [🎨 สี] [⬡ ไอคอน] [🗑 ลบ]"): bulk actions live under the
+/// search, next to the selection, not in the top bar.
+class ActionPill extends StatelessWidget {
+  const ActionPill({
+    required this.label,
+    required this.onTap,
+    this.icon,
+    this.destructive = false,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final IconData? icon;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = destructive ? scheme.error : scheme.primary;
+    return Opacity(
+      opacity: onTap != null ? 1 : 0.4,
+      child: Material(
+        color: fg.withValues(alpha: 0.10),
+        shape: StadiumBorder(side: BorderSide(color: fg.withValues(alpha: 0.5))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 36),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 16, color: fg),
+                    const SizedBox(width: AppSpacing.xs),
+                  ],
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: fg, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

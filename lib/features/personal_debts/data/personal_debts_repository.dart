@@ -100,6 +100,20 @@ class PersonalDebtsRepository {
     }
   }
 
+  /// Every debt (all pages; the API caps a page at 100).
+  Future<List<PersonalDebt>> listAll({String status = 'all'}) async {
+    final out = <PersonalDebt>[];
+    var page = 1;
+    while (true) {
+      final p = await list(status: status, page: page, perPage: 100);
+      out.addAll(p.debts);
+      if (!p.hasMore) return out;
+      page++;
+    }
+  }
+
+  /// [clearContact] sends an explicit `counterparty_contact_id: null`
+  /// (switching to a typed name) — contract §7.
   Future<PersonalDebt> update(String id, {
     double? amount,
     double? settledAmount,
@@ -107,6 +121,7 @@ class PersonalDebtsRepository {
     DebtStatus? status,
     String? counterpartyPersonName,
     String? counterpartyContactId,
+    bool clearContact = false,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -117,7 +132,10 @@ class PersonalDebtsRepository {
           'note': ?note,
           'status': ?status?.wire,
           'counterparty_person_name': ?counterpartyPersonName,
-          'counterparty_contact_id': ?counterpartyContactId,
+          if (clearContact)
+            'counterparty_contact_id': null
+          else
+            'counterparty_contact_id': ?counterpartyContactId,
         },
       );
       return PersonalDebt.fromJson(res.data!);

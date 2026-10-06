@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../app/shell/app_top_bar.dart';
+import '../app/shell/top_bar_crumbs.dart';
+import '../core/constants/app_icons.dart';
 import '../core/constants/app_spacing.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/date_formatter.dart';
@@ -12,7 +14,12 @@ import '../features/categories/domain/category_type.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
 import '../features/categories/presentation/widgets/category_picker_sheet.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
+import '../features/contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../features/transactions/presentation/widgets/account_picker_sheet.dart';
+import '../features/transactions/domain/transaction.dart';
+import '../features/transactions/domain/transaction_type.dart';
+import '../features/transactions/presentation/widgets/period_summary_card.dart';
+import '../features/transactions/presentation/widgets/transaction_tile.dart';
 import '../shared/icon_maker/icon_code.dart';
 import '../shared/icon_maker/icon_display.dart';
 import '../shared/icon_maker/icon_code_widget.dart';
@@ -33,7 +40,7 @@ class WidgetGalleryScreen extends StatefulWidget {
   State<WidgetGalleryScreen> createState() => _WidgetGalleryScreenState();
 }
 
-enum _Section { buttons, inputs, chips, layout, feedback, data, icons, edit }
+enum _Section { buttons, inputs, chips, layout, feedback, data, domain, appIcons, icons, edit }
 
 class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
   _Section _section = _Section.buttons;
@@ -78,7 +85,7 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width: 8 * 96,
+              width: 10 * 96,
               child: AppTabBar<_Section>(
                 selected: _section,
                 onChanged: (s) => setState(() {
@@ -92,6 +99,8 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
                   AppTab(value: _Section.layout, label: 'Layout'),
                   AppTab(value: _Section.feedback, label: 'Feedback'),
                   AppTab(value: _Section.data, label: 'ข้อมูล'),
+                  AppTab(value: _Section.domain, label: 'โดเมน'),
+                  AppTab(value: _Section.appIcons, label: 'ไอคอน'),
                   AppTab(value: _Section.icons, label: 'Icon maker'),
                   AppTab(value: _Section.edit, label: 'โหมดแก้ไข'),
                 ],
@@ -106,6 +115,8 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
               _Section.layout => const _LayoutDemo(),
               _Section.feedback => const _FeedbackDemo(),
               _Section.data => const _DataDemo(),
+              _Section.domain => const _DomainDemo(),
+              _Section.appIcons => const _AppIconsDemo(),
               _Section.icons => const _IconMakerDemo(),
               _Section.edit => _EditModeDemo(
                   editing: _editing,
@@ -364,6 +375,7 @@ class _InputsDemoState extends State<_InputsDemo> {
   Category? _category;
   DateTime _date = DateTime.now();
   _Dir _dir = _Dir.owedToMe;
+  final Set<int> _checks = {1};
 
   static const _sampleAccounts = [
     Account(
@@ -464,6 +476,29 @@ class _InputsDemoState extends State<_InputsDemo> {
             ),
           ),
           _Demo(
+            title: 'เลือกหลายรายการ (วงกลม · แถวบน = เลือกทั้งหมด)',
+            name: 'SelectCheck',
+            child: Row(
+              children: [
+                SelectCheck(
+                  value: _checks.isEmpty
+                      ? false
+                      : (_checks.length == 3 ? true : null),
+                  onTap: () => setState(() => _checks.length == 3
+                      ? _checks.clear()
+                      : _checks.addAll([0, 1, 2])),
+                ),
+                const SizedBox(width: AppSpacing.lg),
+                for (var i = 0; i < 3; i++)
+                  SelectCheck(
+                    value: _checks.contains(i),
+                    onTap: () => setState(() =>
+                        _checks.contains(i) ? _checks.remove(i) : _checks.add(i)),
+                  ),
+              ],
+            ),
+          ),
+          _Demo(
             title: 'เลือกทิศทาง (การ์ดใหญ่)',
             name: 'SelectCardGroup',
             child: SelectCardGroup<_Dir>(
@@ -534,7 +569,7 @@ class _InputsDemoState extends State<_InputsDemo> {
                   placeholder: 'เลือกหมวดหมู่',
                   errorText: _category == null ? 'กรุณาเลือกหมวดหมู่' : null,
                   leading: _category == null
-                      ? const Icon(Icons.category_outlined)
+                      ? const Icon(AppIcons.category)
                       : IconDisplay(
                           type: IconType.category,
                           size: 28,
@@ -682,7 +717,7 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 ],
                 builder: (context, toggle) => FilterDropdownChip(
                   label: 'ไอคอน',
-                  icon: Icons.category_outlined,
+                  icon: AppIcons.iconPicker,
                   count: _icons.length,
                   onTap: toggle,
                 ),
@@ -763,6 +798,32 @@ class _ChipsDemoState extends State<_ChipsDemo> {
             ),
           ),
         ),
+        _Demo(
+          title: 'แถบการเลือก (แทนตัวกรองเมื่อเลือก ≥1)',
+          name: 'SelectCheck + ActionPill',
+          child: Row(
+            children: [
+              const SelectCheck(value: true, onTap: null),
+              Text('3', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(width: AppSpacing.sm),
+              ActionPill(
+                  icon: AppIcons.colorPicker,
+                  label: 'สี',
+                  onTap: () => showAppSnackBar(context, 'เปลี่ยนสี')),
+              const SizedBox(width: AppSpacing.sm),
+              ActionPill(
+                  icon: AppIcons.iconPicker,
+                  label: 'ไอคอน',
+                  onTap: () => showAppSnackBar(context, 'เปลี่ยนไอคอน')),
+              const SizedBox(width: AppSpacing.sm),
+              ActionPill(
+                  icon: AppIcons.delete,
+                  label: 'ลบ',
+                  destructive: true,
+                  onTap: () => showAppSnackBar(context, 'ลบ')),
+            ],
+          ),
+        ),
         const _Demo(
           title: 'Pill ทุก tone',
           name: 'StatusPill(tone: …)',
@@ -823,6 +884,37 @@ class _LayoutDemo extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
+        const _Demo(
+          title: 'Top bar breadcrumb (หน้าแม่ › หน้านี้)',
+          name: 'AppTopBar(parent: TopBarCrumb(…)) · ค่าเริ่มต้นหาจาก route',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: kToolbarHeight,
+                child: AppTopBar(
+                  title: 'ทริปญี่ปุ่น',
+                  showBack: true,
+                  showUniversal: false,
+                  parent: TopBarCrumb(
+                      label: 'โปรเจกต์ & อีเวนต์',
+                      path: '/projects',
+                      routeName: 'projects'),
+                ),
+              ),
+              SizedBox(
+                height: kToolbarHeight,
+                child: AppTopBar(
+                  title: 'ชื่อยาวมากจนต้องตัดด้วยจุดสามจุดตรงท้าย',
+                  showBack: true,
+                  editing: true,
+                  parent: TopBarCrumb(
+                      label: 'ผู้ติดต่อ', path: '/contacts', routeName: 'contacts'),
+                ),
+              ),
+            ],
+          ),
+        ),
         _Demo(
           title: 'Header card',
           name: 'HeaderCard(leading, title, subtitle, trailing, footer)',
@@ -970,6 +1062,25 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
     return ListView(
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
+        _Demo(
+          title: 'แถบข้อความในหน้า (เหนือฟอร์ม)',
+          name: 'MessageBanner(tone, onClose)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              MessageBanner(
+                message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+                onClose: () => showAppSnackBar(context, 'ปิด'),
+              ),
+              const _Gap(),
+              const MessageBanner(
+                  message: 'ไม่มีการเชื่อมต่อ', tone: Tone.warning),
+              const _Gap(),
+              const MessageBanner(
+                  message: 'ยังไม่ได้ยืนยันอีเมล', tone: Tone.info),
+            ],
+          ),
+        ),
         _Demo(
           title: 'Dialog ยืนยัน',
           name: 'showConfirmDialog(destructive: …)',
@@ -1258,6 +1369,73 @@ class _DataDemo extends StatelessWidget {
 
 void _noop() {}
 
+// ── App icons ──────────────────────────────────────────────────────────
+
+/// Every `AppIcons` entry with its semantic name — the single place to see
+/// (and change) which glyph means what.
+class _AppIconsDemo extends StatefulWidget {
+  const _AppIconsDemo();
+  @override
+  State<_AppIconsDemo> createState() => _AppIconsDemoState();
+}
+
+class _AppIconsDemoState extends State<_AppIconsDemo> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final q = _query.trim().toLowerCase();
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+      children: [
+        AppSearchBar(
+          hint: 'ค้นหาชื่อไอคอน เช่น debt, edit',
+          onChanged: (v) => setState(() => _query = v),
+        ),
+        for (final group in AppIcons.catalog.entries)
+          if (group.value.keys.any((k) => k.toLowerCase().contains(q)))
+            _Demo(
+              title: group.key,
+              name: 'AppIcons.*',
+              child: Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final e in group.value.entries)
+                    if (e.key.toLowerCase().contains(q))
+                      Container(
+                        width: 96,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.sm),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: scheme.outlineVariant),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(e.value, size: 28),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              e.key,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(fontFamily: 'monospace'),
+                            ),
+                          ],
+                        ),
+                      ),
+                ],
+              ),
+            ),
+      ],
+    );
+  }
+}
+
 // ── Icon maker ─────────────────────────────────────────────────────────
 
 /// One way of opening `showIconMakerSheet` — a mode demo or a real call
@@ -1528,6 +1706,132 @@ class _EditModeDemoState extends State<_EditModeDemo> {
                 onTap: () => showAppSnackBar(context, 'เก็บถาวร'),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Domain widgets ─────────────────────────────────────────────────────
+
+class _DomainDemo extends StatefulWidget {
+  const _DomainDemo();
+
+  @override
+  State<_DomainDemo> createState() => _DomainDemoState();
+}
+
+class _DomainDemoState extends State<_DomainDemo> {
+  String _currency = 'THB';
+  String _picked = '—';
+  String? _pickedId;
+
+  static const _txs = [
+    Transaction(
+      id: 'demo-1',
+      accountId: 'a1',
+      type: TransactionType.expense,
+      amount: 185,
+      date: '2026-10-06',
+      account: EmbeddedRef(id: 'a1', name: 'KBank'),
+      category: EmbeddedRef(id: 'c-food', name: 'อาหาร'),
+      note: 'ข้าวมันไก่',
+      tags: [EmbeddedTag(id: 't1', name: 'งาน'), EmbeddedTag(id: 't2', name: 'กิน')],
+    ),
+    Transaction(
+      id: 'demo-2',
+      accountId: 'a2',
+      type: TransactionType.income,
+      amount: 42000,
+      date: '2026-10-05',
+      account: EmbeddedRef(id: 'a2', name: 'เงินเดือน'),
+      category: EmbeddedRef(id: 'c-salary', name: 'เงินเดือน'),
+    ),
+    Transaction(
+      id: 'demo-3',
+      accountId: null,
+      type: TransactionType.expense,
+      amount: 1240,
+      date: '2026-09-28',
+      note: 'หารค่าหมูกระทะ',
+      hasSplits: true,
+    ),
+    Transaction(
+      id: 'demo-4',
+      accountId: 'a1',
+      type: TransactionType.transfer,
+      amount: 5000,
+      date: '2026-09-27',
+      account: EmbeddedRef(id: 'a1', name: 'KBank'),
+    ),
+  ];
+
+  Future<void> _pickContact() async {
+    final r = await showContactPickerSheet(context,
+        selectedContactId: _pickedId);
+    if (r == null || !mounted) return;
+    setState(() {
+      switch (r) {
+        case ContactPicked(:final contact):
+          _picked = 'contact: ${contact.effectiveName}';
+          _pickedId = contact.id;
+        case ContactNameTyped(:final name):
+          _picked = 'ชื่อพิมพ์เอง: $name';
+          _pickedId = null;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
+      children: [
+        _Demo(
+          title: 'สกุลเงิน',
+          name: 'CurrencyTile',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CurrencyTile(
+                value: _currency,
+                onChanged: (c) => setState(() => _currency = c),
+              ),
+              const _Gap(),
+              CurrencyTile(value: _currency, onChanged: null, label: 'อ่านอย่างเดียว'),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'แถวรายการ (ข้อมูลตัวอย่าง — แตะไม่เปิด)',
+          name: 'TransactionTile',
+          child: Card(
+            child: Column(
+              children: [
+                for (final (i, tx) in _txs.indexed)
+                  TransactionTile(
+                    transaction: tx,
+                    showDate: i.isEven,
+                    onTap: () => showAppSnackBar(context, 'tap ${tx.id}'),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const _Demo(
+          title: 'สรุปช่วงเวลา (ข้อมูลจริง — ทุกบัญชี)',
+          name: 'PeriodSummaryCard',
+          child: PeriodSummaryCard(),
+        ),
+        _Demo(
+          title: 'เลือกผู้ติดต่อ (ข้อมูลจริง)',
+          name: 'showContactPickerSheet',
+          child: PickerTile(
+            label: 'กับใคร',
+            value: _picked,
+            leading: const Icon(AppIcons.contact),
+            onTap: _pickContact,
           ),
         ),
       ],

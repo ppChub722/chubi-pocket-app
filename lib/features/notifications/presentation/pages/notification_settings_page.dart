@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
+import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../data/notifications_repository.dart';
+import '../../domain/notification.dart';
 import '../cubit/notification_settings_cubit.dart';
 
-/// `/notifications/settings` — per-user notification preferences. Spec
-/// §13.1, §13.4.7.
+/// `/notifications/settings` (§7): what you get (per type; invites and
+/// requests always on) and what happens automatically (bill splits ·
+/// payments + receiving wallet · projects). Switches save immediately and
+/// flip back on failure.
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({super.key});
 
@@ -25,67 +35,142 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Notification settings')),
+      appBar: AppTopBar(
+          title: l.notifSettingsTitle, showBack: true, showUniversal: false),
       body: BlocConsumer<NotificationSettingsCubit, SettingsState>(
-        listenWhen: (a, b) => a.errorMessage != b.errorMessage,
-        listener: (ctx, state) {
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
-          }
-        },
+        listenWhen: (a, b) =>
+            a.errorMessage != b.errorMessage && b.errorMessage != null,
+        listener: (ctx, _) =>
+            showAppSnackBar(ctx, l.notifSettingsSaveFailed, tone: Tone.danger),
         builder: (ctx, state) {
-          if (state.settings == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final s = state.settings!;
+          final s = state.settings;
+          if (s == null) return const LoadingView();
+          final cubit = ctx.read<NotificationSettingsCubit>();
+
+          Widget muteSwitch(NotificationType t, String label) => SwitchListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                title: Text(label),
+                value: !s.isMuted(t),
+                onChanged: (on) => cubit.update(
+                  mutedTypes: on
+                      ? (s.mutedTypes.toSet()..remove(t.wire))
+                      : {...s.mutedTypes, t.wire},
+                ),
+              );
+
+          Widget autoSwitch(String label, bool value, ValueChanged<bool> set) =>
+              SwitchListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                title: Text(label),
+                value: value,
+                onChanged: set,
+              );
+
+          Widget groupTitle(String t) => Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                child: Text(t,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              );
+
+          final accounts = ctx.watch<AccountsCubit>().state.accounts;
+          final receiving =
+              accounts.where((a) => a.id == s.defaultAccountId).firstOrNull;
+
           return ListView(
+            padding: const EdgeInsets.only(bottom: AppSpacing.huge),
             children: [
-              SwitchListTile(
-                title: const Text('Auto-notify linked split contacts'),
-                subtitle: const Text(
-                  'When you split a bill with a linked contact, send them a notification.',
-                ),
-                value: s.autoNotifyLinkedSplitContacts,
-                onChanged: (v) => ctx
-                    .read<NotificationSettingsCubit>()
-                    .update(autoNotifyLinkedSplitContacts: v),
+              SectionCard(
+                title: l.notifSettingsReceive,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: Text(l.notifSettingsReceiveHint,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ),
+                  groupTitle(l.notifGroupSplits),
+                  muteSwitch(NotificationType.splitCreated, l.notifTypeSplitCreated),
+                  muteSwitch(NotificationType.splitPaid, l.notifTypeSplitPaid),
+                  muteSwitch(NotificationType.splitReceived, l.notifTypeSplitReceived),
+                  groupTitle(l.notifGroupProjects),
+                  muteSwitch(NotificationType.projectTxRecordedForYou,
+                      l.notifTypeProjectTxForYou),
+                  muteSwitch(NotificationType.projectTxChanged,
+                      l.notifTypeProjectTxChanged),
+                  groupTitle(l.notifGroupRequests),
+                  DetailRow(
+                    label: l.notifGroupRequests,
+                    trailing: AppBadge(label: l.notifTypeAlwaysOn, icon: AppIcons.lock),
+                  ),
+                ],
               ),
-              SwitchListTile(
-                title:
-                    const Text('Auto-add to debt on split notification'),
-                subtitle: const Text(
-                  'When someone splits a bill with you, automatically track it as a debt.',
-                ),
-                value: s.autoAddToPersonalDebtOnSplitNotification,
-                onChanged: (v) => ctx
-                    .read<NotificationSettingsCubit>()
-                    .update(autoAddToPersonalDebtOnSplitNotification: v),
+              SectionCard(
+                title: l.notifSettingsAuto,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: Row(
+                      children: [
+                        AppBadge(label: l.moreComingSoonBadge, tone: Tone.info),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(l.notifSettingsAutoPending,
+                              style: Theme.of(context).textTheme.bodySmall),
+                        ),
+                      ],
+                    ),
+                  ),
+                  groupTitle(l.notifGroupSplits),
+                  autoSwitch(
+                    l.notifAutoNotifySplit,
+                    s.autoNotifyLinkedSplitContacts,
+                    (v) => cubit.update(autoNotifyLinkedSplitContacts: v),
+                  ),
+                  autoSwitch(
+                    l.notifAutoAddDebt,
+                    s.autoAddToPersonalDebtOnSplitNotification,
+                    (v) => cubit.update(autoAddToPersonalDebtOnSplitNotification: v),
+                  ),
+                  groupTitle(l.notifGroupPayments),
+                  autoSwitch(
+                    l.notifAutoRecordPayment,
+                    s.autoRecordReceivedPayment,
+                    (v) => cubit.update(autoRecordReceivedPayment: v),
+                  ),
+                  LockedInEdit(
+                    // The wallet only matters while auto-record is on.
+                    locked: !s.autoRecordReceivedPayment,
+                    child: DetailRow(
+                      leading: const Icon(AppIcons.bank),
+                      label: l.notifDefaultAccount,
+                      trailing: Text(receiving?.name ?? l.notifDefaultAccountNone),
+                      showChevron: true,
+                      onTap: () async {
+                        final r = await showAccountPickerSheet(
+                          context: ctx,
+                          accounts: accounts,
+                          selected: receiving,
+                          title: l.notifDefaultAccount,
+                        );
+                        if (r is AccountPickerSelected) {
+                          cubit.update(defaultAccountId: r.account.id);
+                        }
+                      },
+                    ),
+                  ),
+                  groupTitle(l.notifGroupProjects),
+                  autoSwitch(
+                    l.notifAutoResolveProject,
+                    s.autoResolveOwnInProjects,
+                    (v) => cubit.update(autoResolveOwnInProjects: v),
+                  ),
+                ],
               ),
-              SwitchListTile(
-                title: const Text('Auto-record received payment'),
-                subtitle: const Text(
-                  'When someone says they paid you, automatically create your receipt.',
-                ),
-                value: s.autoRecordReceivedPayment,
-                onChanged: (v) => ctx
-                    .read<NotificationSettingsCubit>()
-                    .update(autoRecordReceivedPayment: v),
-              ),
-              SwitchListTile(
-                title: const Text('Auto-resolve own project transactions'),
-                subtitle: const Text(
-                  'When you save a project transaction you are involved in, skip the resolve modal.',
-                ),
-                value: s.autoResolveOwnInProjects,
-                onChanged: (v) => ctx
-                    .read<NotificationSettingsCubit>()
-                    .update(autoResolveOwnInProjects: v),
-              ),
-              if (state.status == SettingsStatus.saving)
-                const LinearProgressIndicator(),
             ],
           );
         },

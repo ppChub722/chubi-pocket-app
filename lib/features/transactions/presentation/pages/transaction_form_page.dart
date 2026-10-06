@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../cubit/transactions_cubit.dart';
@@ -67,7 +70,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               );
             }
             return Scaffold(
-              appBar: AppBar(title: Text(l.transactionFormTitleEdit)),
+              appBar: AppTopBar(
+                  title: l.transactionFormTitleEdit, showBack: true),
               body: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
@@ -100,6 +104,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   }
 }
 
+/// The full-page form chrome. A form is edit mode (§1.4): ✕ (asks before
+/// discarding) + ยกเลิก · บันทึก, nav hidden (route wraps ShellChromeHider).
+/// "บันทึกแล้วเพิ่มต่อ" (create only) sits at the end of the form.
 class _Scaffold extends StatelessWidget {
   const _Scaffold({
     required this.initial,
@@ -113,111 +120,83 @@ class _Scaffold extends StatelessWidget {
   final bool readOnly;
   final GlobalKey<TransactionFormBodyState> bodyKey;
 
+  Future<void> _leave(BuildContext context) async {
+    final dirty = bodyKey.currentState?.isDirty ?? false;
+    if (dirty) {
+      final l = AppLocalizations.of(context)!;
+      final ok = await showConfirmDialog(
+        context,
+        title: isEdit
+            ? l.transactionFormDiscardTitleEdit
+            : l.transactionFormDiscardTitle,
+        message: l.transactionFormDiscardBody,
+        confirmLabel: l.commonDiscard,
+        destructive: true,
+      );
+      if (!ok) return;
+    }
+    if (context.mounted) context.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        final state = bodyKey.currentState;
-        if (state == null || !state.isDirty) {
-          if (context.mounted) context.pop();
-          return;
-        }
-        final ok = await _confirmDiscard(context, l, isEdit);
-        if (ok && context.mounted) context.pop();
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leave(context);
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            isEdit ? l.transactionFormTitleEdit : l.transactionFormTitleNew,
-          ),
+        appBar: AppTopBar(
+          title: isEdit ? l.transactionFormTitleEdit : l.transactionFormTitleNew,
+          showBack: true,
+          editing: true,
+          onBack: () => _leave(context),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.huge,
-          ),
-          child: TransactionFormBody(
-            key: bodyKey,
-            allowSaveAndAddAnother: !isEdit,
-            collapsibleNote: false,
-            initial: initial,
-            enableEventSection: !isEdit,
-            onSaved: ({required addedAnother}) {
-              if (addedAnother) return; // stay on page, body resets itself
-              if (context.mounted) context.pop();
-            },
+              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.huge),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TransactionFormBody(
+                key: bodyKey,
+                allowSaveAndAddAnother: !isEdit,
+                collapsibleNote: false,
+                initial: initial,
+                enableEventSection: !isEdit,
+                onSaved: ({required addedAnother}) {
+                  if (addedAnother) return; // body resets itself
+                  if (context.mounted) context.pop();
+                },
+              ),
+              if (!isEdit && !readOnly) ...[
+                const SizedBox(height: AppSpacing.lg),
+                AppButton(
+                  label: l.transactionFormSaveAndAddAnother,
+                  icon: AppIcons.add,
+                  variant: AppButtonVariant.tonal,
+                  expand: true,
+                  onPressed: () => bodyKey.currentState?.save(keepOpen: true),
+                ),
+              ],
+            ],
           ),
         ),
         bottomNavigationBar: readOnly
             ? null
-            : SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => bodyKey.currentState?.save(keepOpen: false),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    child: Text(l.transactionFormSave),
-                  ),
-                ),
-                if (!isEdit) ...[
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () =>
-                          bodyKey.currentState?.save(keepOpen: true),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                      ),
-                      child: Text(
-                        l.transactionFormSaveAndAddAnother,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
+            : ModeActionBar(
+                canUndo: false,
+                canSave: true,
+                cancelLabel: l.commonCancel,
+                saveLabel: l.transactionFormSave,
+                undoTooltip: l.commonUndo,
+                onCancel: () => _leave(context),
+                onUndo: () {},
+                onSave: () => bodyKey.currentState?.save(keepOpen: false),
+              ),
       ),
     );
-  }
-
-  Future<bool> _confirmDiscard(
-      BuildContext context, AppLocalizations l, bool isEdit) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(isEdit
-            ? l.transactionFormDiscardTitleEdit
-            : l.transactionFormDiscardTitle),
-        content: Text(l.transactionFormDiscardBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(l.commonRemove),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
   }
 }
 

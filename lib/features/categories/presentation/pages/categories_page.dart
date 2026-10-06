@@ -10,10 +10,8 @@ import '../../../../app/shell/shell_chrome.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/empty_view.dart';
-import '../../../../shared/widgets/loading_view.dart';
-import '../../../../shared/widgets/pull_to_refresh.dart';
-import '../../../../shared/widgets/reorder_action_bar.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../widgets/categories_list_skeleton.dart';
 import '../../../../shared/widgets/reorder_drop_line.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
@@ -102,6 +100,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
   Timer? _autoScrollTimer;
   double _autoScrollSpeed = 0;
 
+  /// Browse-mode search. Non-empty → the tree shows only matches plus
+  /// their ancestors (auto-expanded) and long-press reorder is off.
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
@@ -110,6 +112,24 @@ class _CategoriesPageState extends State<CategoriesPage> {
       if (!mounted) return;
       context.read<CategoriesCubit>().loadIfNeeded();
     });
+  }
+
+
+  /// Ids to show while searching: every match plus all its ancestors, so
+  /// results keep their place in the tree. Null = not searching.
+  Set<String>? _visibleIds(List<Category> users) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return null;
+    final byId = {for (final c in users) c.id: c};
+    final visible = <String>{};
+    for (final c in users) {
+      if (!c.name.toLowerCase().contains(q)) continue;
+      Category? cursor = c;
+      while (cursor != null && visible.add(cursor.id)) {
+        cursor = cursor.parentId == null ? null : byId[cursor.parentId];
+      }
+    }
+    return visible;
   }
 
   @override
@@ -458,6 +478,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
             users.where((c) => c.type == _listType).toList();
         final isLoading = state.status == CategoriesStatus.loading &&
             all.isEmpty;
+        final visible = _reorderMode ? null : _visibleIds(typeUsers);
         return PopScope(
           canPop: !_reorderMode,
           onPopInvokedWithResult: (didPop, _) {
@@ -472,42 +493,49 @@ class _CategoriesPageState extends State<CategoriesPage> {
               onBack: _reorderMode ? _cancelReorder : null,
               actions: _reorderMode
                   ? const <AppBarAction>[]
-                  : _browseActions(context, l),
+                  : [
+                      AppBarAction(
+                        icon: AppIcons.add,
+                        tooltip: l.categoriesAddNew,
+                        onPressed: () => _add(l),
+                      ),
+                    ],
             ),
             body: isLoading
                 ? const LoadingView(skeleton: CategoriesListSkeleton())
                 : Column(
                     children: [
-                      _TypeTabBar(
+                      AppTabBar<CategoryType>(
                         selected: _listType,
                         onChanged: (t) => setState(() => _listType = t),
+                        tabs: [
+                          AppTab(
+                              value: CategoryType.expense,
+                              label: l.categoryTypeExpense),
+                          AppTab(
+                              value: CategoryType.income,
+                              label: l.categoryTypeIncome),
+                        ],
                       ),
+                      // Hidden (not just disabled) in reorder mode so the
+                      // tree can't be filtered mid-drag.
+                      if (!_reorderMode && typeUsers.isNotEmpty)
+                        AppSearchBar(
+                          hint: l.categoriesSearchHint,
+                          onChanged: (v) => setState(() => _query = v),
+                        ),
                       Expanded(
-                        child: typeUsers.isEmpty
-                            ? EmptyView(
-                                icon: Icons.category_outlined,
-                                title: l.categoriesEmptyTitle,
-                                message: l.categoriesEmptyMessage,
-                              )
-                            : _reorderMode
-                                ? _buildListBody(typeUsers, all)
-                                : PullToRefresh(
-                                    onRefresh: () => context
-                                        .read<CategoriesCubit>()
-                                        .load(),
-                                    child: _buildListBody(typeUsers, all),
-                                  ),
+                        child: _listOrEmpty(l, typeUsers, all, visible),
                       ),
                     ],
                   ),
-            // Browse mode: no bottom bar of our own — the shell's
-            // MainBottomNav shows through. Reorder mode: our action bar
-            // replaces the shell nav (we call ShellChrome.hide on entry),
-            // so it's the only bar on screen.
+            // Browse: the shell's nav shows through. Reorder: this bar
+            // replaces it (ShellChrome.hide on entry).
             bottomNavigationBar: _reorderMode
-                ? ReorderActionBar(
+                ? ModeActionBar(
                     canUndo: _inModeUndoStack.isNotEmpty && !_savingReorder,
                     canSave: _dirty && !_savingReorder,
+                    saving: _savingReorder,
                     cancelLabel: l.categoriesReorderCancel,
                     saveLabel: l.categoriesReorderSave,
                     undoTooltip: l.categoriesUndo,
@@ -522,11 +550,31 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
-  Widget _buildListBody(List<Category> users, List<Category> all) {
-    return _ListBody(
-      users: users,
+  Widget _listOrEmpty(
+    AppLocalizations l,
+    List<Category> typeUsers,
+    List<Category> all,
+    Set<String>? visible,
+  ) {
+    if (typeUsers.isEmpty) {
+      return EmptyView(
+        icon: AppIcons.category,
+        title: l.categoriesEmptyTitle,
+        message: l.categoriesEmptyMessage,
+      );
+    }
+    if (visible != null && visible.isEmpty) {
+      return EmptyView(
+        icon: AppIcons.search,
+        title: l.categoriesSearchNoMatch,
+        message: '',
+      );
+    }
+    final body = _ListBody(
+      users: typeUsers,
       type: _listType,
       reorderMode: _reorderMode,
+      visibleIds: visible,
       collapsedIds: _collapsedIds,
       draggedRootId: _draggedRoot?.id,
       draggedDescendantIds: _draggedDescendantIds,
@@ -541,34 +589,20 @@ class _CategoriesPageState extends State<CategoriesPage> {
       onPointerLeftAllRows: _onPointerLeftAllRows,
       onCommit: _commitFromHover,
     );
+    if (_reorderMode) return body;
+    return PullToRefresh(
+      onRefresh: () => context.read<CategoriesCubit>().load(),
+      child: body,
+    );
   }
 
-  List<AppBarAction> _browseActions(BuildContext context, AppLocalizations l) {
-    final cubit = context.read<CategoriesCubit>();
-    return [
-      if (cubit.canUndo)
-        AppBarAction(
-          icon: Icons.undo,
-          tooltip: l.categoriesUndo,
-          onPressed: cubit.undo,
-        ),
-      AppBarAction(
-        icon: Icons.add,
-        tooltip: l.categoriesAddNew,
-        onPressed: () {
-          if (!cubit.canAddMore) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                  SnackBar(content: Text(l.categoriesLimitReached)));
-            return;
-          }
-          context.push('/categories/new');
-        },
-      ),
-    ];
+  void _add(AppLocalizations l) {
+    if (!context.read<CategoriesCubit>().canAddMore) {
+      showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
+      return;
+    }
+    context.push('/categories/new');
   }
-
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -617,6 +651,7 @@ class _ListBody extends StatelessWidget {
     required this.users,
     required this.type,
     required this.reorderMode,
+    required this.visibleIds,
     required this.collapsedIds,
     required this.draggedRootId,
     required this.draggedDescendantIds,
@@ -638,6 +673,9 @@ class _ListBody extends StatelessWidget {
   final CategoryType type;
 
   final bool reorderMode;
+
+  /// Search result ids (matches + ancestors); null = show everything.
+  final Set<String>? visibleIds;
 
   final Set<String> collapsedIds;
 
@@ -686,7 +724,9 @@ class _ListBody extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       children: [
         if (reorderMode) _TopOfSectionLine(type: type, hover: hover),
-        for (final parent in roots) ..._renderSubtree(parent, depth: 0),
+        for (final parent in roots)
+          if (visibleIds?.contains(parent.id) ?? true)
+            ..._renderSubtree(parent, depth: 0),
         const SizedBox(height: 96),
       ],
     );
@@ -695,7 +735,9 @@ class _ListBody extends StatelessWidget {
   List<Widget> _renderSubtree(Category category, {required int depth}) {
     final children = users.where((c) => c.parentId == category.id).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final isCollapsed = collapsedIds.contains(category.id);
+    // Searching forces matches + ancestors open.
+    final isCollapsed =
+        visibleIds == null && collapsedIds.contains(category.id);
     // Fade rules:
     // - The dragged root always fades (it's the row being moved).
     // - Descendants fade only when the parent is collapsed at drag
@@ -724,6 +766,7 @@ class _ListBody extends StatelessWidget {
             hasChildren: children.isNotEmpty,
             isCollapsed: isCollapsed,
             hover: hover,
+            dragEnabled: reorderMode || visibleIds == null,
             onLongPressEnter: onLongPressEnter,
             onToggleCollapse: onToggleCollapse,
             onDragStarted: onDragStarted,
@@ -736,7 +779,8 @@ class _ListBody extends StatelessWidget {
       ),
       if (!isCollapsed)
         for (final c in children)
-          ..._renderSubtree(c, depth: depth + 1),
+          if (visibleIds?.contains(c.id) ?? true)
+            ..._renderSubtree(c, depth: depth + 1),
     ];
   }
 }
@@ -750,6 +794,7 @@ class _Row extends StatelessWidget {
     required this.category,
     required this.depth,
     required this.reorderMode,
+    required this.dragEnabled,
     required this.hasChildren,
     required this.isCollapsed,
     required this.hover,
@@ -765,6 +810,9 @@ class _Row extends StatelessWidget {
   final Category category;
   final int depth;
   final bool reorderMode;
+
+  /// False while searching — rows are plain taps, no long-press reorder.
+  final bool dragEnabled;
   final bool hasChildren;
   final bool isCollapsed;
   final ValueNotifier<_HoverState> hover;
@@ -807,6 +855,7 @@ class _Row extends StatelessWidget {
     // short-circuit when [reorderMode] is false. Keeping the structural
     // shape stable across mode transitions avoids gesture-recognizer
     // resets mid-press.
+    if (!dragEnabled) return body;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -978,7 +1027,7 @@ class _RowTrailing extends StatelessWidget {
         icon: AnimatedRotation(
           turns: isCollapsed ? 0 : 0.25,
           duration: const Duration(milliseconds: 160),
-          child: const Icon(Icons.chevron_right),
+          child: const Icon(AppIcons.chevronRight),
         ),
         onPressed: onToggleCollapse,
       );
@@ -988,12 +1037,12 @@ class _RowTrailing extends StatelessWidget {
         icon: AnimatedRotation(
           turns: isCollapsed ? 0 : 0.25,
           duration: const Duration(milliseconds: 160),
-          child: const Icon(Icons.chevron_right),
+          child: const Icon(AppIcons.chevronRight),
         ),
         onPressed: onToggleCollapse,
       );
     }
-    return const Icon(Icons.chevron_right);
+    return const Icon(AppIcons.chevronRight);
   }
 }
 
@@ -1098,73 +1147,9 @@ class _DragProxy extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
-              const Icon(Icons.drag_handle),
+              const Icon(AppIcons.reorder),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Type tab bar — รายจ่าย | รายรับ, under the app bar. Filters the list to
-// one type at a time.
-// ────────────────────────────────────────────────────────────────────
-
-class _TypeTabBar extends StatelessWidget {
-  const _TypeTabBar({required this.selected, required this.onChanged});
-
-  final CategoryType selected;
-  final ValueChanged<CategoryType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-      ),
-      child: Row(
-        children: [
-          _tab(context, scheme, CategoryType.expense, l.categoryTypeExpense),
-          _tab(context, scheme, CategoryType.income, l.categoryTypeIncome),
-        ],
-      ),
-    );
-  }
-
-  Widget _tab(
-    BuildContext context,
-    ColorScheme scheme,
-    CategoryType t,
-    String label,
-  ) {
-    final active = t == selected;
-    return Expanded(
-      child: InkWell(
-        onTap: () => onChanged(t),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color:
-                          active ? scheme.primary : scheme.onSurfaceVariant,
-                      fontWeight:
-                          active ? FontWeight.w700 : FontWeight.w400,
-                    ),
-              ),
-            ),
-            Container(
-              height: 2.5,
-              color: active ? scheme.primary : Colors.transparent,
-            ),
-          ],
         ),
       ),
     );

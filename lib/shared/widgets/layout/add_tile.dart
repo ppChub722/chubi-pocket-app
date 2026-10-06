@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../dashed_rect_border.dart';
@@ -24,7 +25,7 @@ class AddTile extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.variant = AddTileVariant.card,
-    this.icon = Icons.add,
+    this.icon = AppIcons.add,
     this.circleSize = 48,
     super.key,
   });

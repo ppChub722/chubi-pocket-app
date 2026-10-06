@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/overlay_nav.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/utils/date_formatter.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../accounts/data/accounts_repository.dart';
@@ -54,116 +59,143 @@ class _InboxScaffold extends StatefulWidget {
   State<_InboxScaffold> createState() => _InboxScaffoldState();
 }
 
-class _InboxScaffoldState extends State<_InboxScaffold>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class _InboxScaffoldState extends State<_InboxScaffold> {
+  bool _unreadOnly = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 2, vsync: this)
-      ..addListener(_onTabChange);
-  }
-
-  void _onTabChange() {
-    if (!_tabs.indexIsChanging) return;
-    final unreadOnly = _tabs.index == 1;
+  void _setTab(bool unreadOnly) {
+    if (unreadOnly == _unreadOnly) return;
+    setState(() => _unreadOnly = unreadOnly);
     context.read<NotificationsInboxCubit>().load(unreadOnly: unreadOnly);
   }
 
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
+  String _dayLabel(BuildContext context, DateTime d) {
+    final l = AppLocalizations.of(context)!;
+    return DateFormatter.friendly(d,
+        today: l.commonToday,
+        yesterday: l.commonYesterday,
+        locale: Localizations.localeOf(context).languageCode);
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        bottom: TabBar(
-          controller: _tabs,
-          tabs: const [Tab(text: 'All'), Tab(text: 'Unread')],
-        ),
+      appBar: AppTopBar(
+        title: l.notificationsTitle,
+        showBack: true,
+        showUniversal: false,
         actions: [
-          IconButton(
-            tooltip: 'Mark all as read',
-            icon: const Icon(Icons.done_all),
+          AppBarAction(
+            icon: AppIcons.markAllRead,
+            tooltip: l.notificationsMarkAllRead,
             onPressed: () =>
                 context.read<NotificationsInboxCubit>().markReadAll(),
           ),
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
+          AppBarAction(
+            icon: AppIcons.settings,
+            tooltip: l.notificationsSettingsTooltip,
             onPressed: () => context.push('/notifications/settings'),
           ),
         ],
       ),
-      body: BlocConsumer<NotificationsInboxCubit, InboxState>(
-        listenWhen: (a, b) =>
-            a.unreadCount != b.unreadCount ||
-            a.errorMessage != b.errorMessage,
-        listener: (ctx, state) {
-          ctx.read<UnreadBadgeCubit>().refresh();
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(ctx)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(content: Text(state.errorMessage!)));
-          }
-        },
-        builder: (ctx, state) {
-          if (state.status == InboxStatus.loading &&
-              state.notifications.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          // Hide-forever rule applies only to **dismissed** rows.
-          // Actioned link-request rows stay so B can re-tap to navigate
-          // to the linked contact / link-existing edit / link-create.
-          final visible = state.notifications
-              .where((n) => n.dismissedAt == null)
-              .toList();
-          if (visible.isEmpty) {
-            return const Center(child: Text('No notifications'));
-          }
-          return RefreshIndicator(
-            onRefresh: () => ctx
-                .read<NotificationsInboxCubit>()
-                .load(unreadOnly: state.filterUnreadOnly),
-            child: NotificationListenerWidget(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: visible.length + (state.hasMore ? 1 : 0),
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, i) {
-                  if (i >= visible.length) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  final n = visible[i];
-                  return NotificationTile(
-                    notification: n,
-                    onMarkRead: (id) =>
-                        ctx.read<NotificationsInboxCubit>().markRead(id),
-                    onDismiss: (id) =>
-                        ctx.read<NotificationsInboxCubit>().markDismissed(id),
-                    onTap: (notif) => _onTap(ctx, notif),
-                    onAccept: (id) =>
-                        n.type == NotificationType.accountInvite
-                            ? _onAcceptWalletInvite(ctx, id)
-                            : _onAcceptLinkRequest(ctx, id),
-                    onReject: (id) =>
-                        n.type == NotificationType.accountInvite
-                            ? _onRejectWalletInvite(ctx, id)
-                            : _onRejectLinkRequest(ctx, id),
+      body: Column(
+        children: [
+          AppTabBar<bool>(
+            selected: _unreadOnly,
+            onChanged: _setTab,
+            tabs: [
+              AppTab(value: false, label: l.notificationsTabAll),
+              AppTab(value: true, label: l.notificationsTabUnread),
+            ],
+          ),
+          Expanded(
+            child: BlocConsumer<NotificationsInboxCubit, InboxState>(
+              listenWhen: (a, b) =>
+                  a.unreadCount != b.unreadCount ||
+                  a.errorMessage != b.errorMessage,
+              listener: (ctx, state) {
+                ctx.read<UnreadBadgeCubit>().refresh();
+                if (state.errorMessage != null) {
+                  showAppSnackBar(ctx, state.errorMessage!, tone: Tone.danger);
+                }
+              },
+              builder: (ctx, state) {
+                if (state.status == InboxStatus.loading &&
+                    state.notifications.isEmpty) {
+                  return ListView(children: [
+                    for (var i = 0; i < 6; i++) const SkeletonListTile(),
+                  ]);
+                }
+                // Dismissed rows are hidden for good; actioned requests
+                // stay so the post-accept flow is still reachable.
+                final visible = state.notifications
+                    .where((n) => n.dismissedAt == null)
+                    .toList();
+                if (visible.isEmpty) {
+                  return EmptyView(
+                    icon: AppIcons.notifications,
+                    title: _unreadOnly
+                        ? l.notificationsEmptyUnread
+                        : l.notificationsEmptyTitle,
+                    message: _unreadOnly ? '' : l.notificationsEmptyMessage,
                   );
-                },
-              ),
+                }
+                final rows = <Widget>[];
+                String? lastDay;
+                for (final n in visible) {
+                  final local = n.createdAt.toLocal();
+                  final day = '${local.year}-${local.month}-${local.day}';
+                  if (day != lastDay) {
+                    lastDay = day;
+                    rows.add(DateGroupHeader(label: _dayLabel(ctx, local)));
+                  }
+                  rows.add(Dismissible(
+                    key: ValueKey('notif_${n.id}'),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: AppSpacing.xl),
+                      color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                      child: const Icon(AppIcons.hidden),
+                    ),
+                    onDismissed: (_) {
+                      ctx.read<NotificationsInboxCubit>().markDismissed(n.id);
+                      showAppSnackBar(ctx, l.notifHidden);
+                    },
+                    child: NotificationTile(
+                      notification: n,
+                      onTap: (notif) => _onTap(ctx, notif),
+                      onAccept: (id) => n.type == NotificationType.accountInvite
+                          ? _onAcceptWalletInvite(ctx, id)
+                          : _onAcceptLinkRequest(ctx, id),
+                      onReject: (id) => n.type == NotificationType.accountInvite
+                          ? _onRejectWalletInvite(ctx, id)
+                          : _onRejectLinkRequest(ctx, id),
+                    ),
+                  ));
+                }
+                if (state.hasMore) {
+                  rows.add(const Padding(
+                    padding: EdgeInsets.all(AppSpacing.lg),
+                    child: Center(child: CircularProgressIndicator()),
+                  ));
+                }
+                return PullToRefresh(
+                  onRefresh: () => ctx
+                      .read<NotificationsInboxCubit>()
+                      .load(unreadOnly: _unreadOnly),
+                  child: NotificationListenerWidget(
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
+                      children: rows,
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

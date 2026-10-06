@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
@@ -183,86 +188,78 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final title = _isLinkCreate
-        ? 'Add linked contact'
+        ? l.contactLinkCreateTitle
         : _isLinkExisting
-            ? 'Link contact'
+            ? l.contactLinkExistingTitle
             : _isEditExisting
-                ? 'Edit contact'
-                : 'New contact';
-    final saveLabel = _isLinkFlow
-        ? 'Link & save'
-        : _isEditExisting
-            ? 'Save'
-            : 'Create';
+                ? l.contactTitleEdit
+                : l.contactTitleNew;
+    final saveLabel = _isLinkFlow ? l.contactLinkSave : l.commonSave;
+    final lockedHelper = _displayFieldsLocked ? l.contactLinkedLockedHint : null;
+    final lockedIcon =
+        _displayFieldsLocked ? AppIcons.link : null;
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppTopBar(title: title, showBack: true, editing: true),
       body: _loading && _isEditExisting && _existing == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const LoadingView()
           : Form(
               key: _form,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 children: [
                   if (_isLinkFlow)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: _LinkBanner(
                         senderName: _name.text,
                         isExisting: _isLinkExisting,
                       ),
                     ),
-                  TextFormField(
+                  AppTextField(
                     controller: _name,
+                    label: l.contactNameLabel,
                     readOnly: _displayFieldsLocked,
-                    decoration: InputDecoration(
-                      labelText: 'Name *',
-                      // Chain icon visually marks "this field is linked"
-                      // — same hint as the helper text but at-a-glance.
-                      prefixIcon: _displayFieldsLocked
-                          ? const Icon(Icons.link, size: 20)
-                          : null,
-                      helperText: _displayFieldsLocked
-                          ? 'Linked from this user\'s account'
-                          : null,
-                    ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    prefixIcon: lockedIcon,
+                    helper: lockedHelper,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? l.contactNameRequired
+                        : null,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
                     controller: _email,
+                    label: l.contactEmailLabel,
                     readOnly: _displayFieldsLocked,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: _displayFieldsLocked
-                          ? const Icon(Icons.link, size: 20)
-                          : null,
-                      helperText: _displayFieldsLocked
-                          ? 'Linked from this user\'s account'
-                          : null,
-                    ),
+                    prefixIcon: lockedIcon,
+                    helper: lockedHelper,
                     keyboardType: TextInputType.emailAddress,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
                     controller: _phone,
-                    decoration: const InputDecoration(labelText: 'Phone'),
+                    label: l.contactPhoneLabel,
                     keyboardType: TextInputType.phone,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
                     controller: _notes,
-                    decoration: const InputDecoration(labelText: 'Notes'),
+                    label: l.contactNotesLabel,
                     maxLines: 3,
                   ),
-                  const SizedBox(height: 16),
-                  if (_error != null)
+                  if (_error != null) ...[
+                    const SizedBox(height: AppSpacing.md),
                     Text(_error!,
-                        style: const TextStyle(color: Colors.redAccent)),
-                  FilledButton(
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error)),
+                  ],
+                  const SizedBox(height: AppSpacing.lg),
+                  AppButton(
+                    label: saveLabel,
+                    expand: true,
+                    loading: _loading,
                     onPressed: _loading ? null : _submit,
-                    child: Text(saveLabel),
                   ),
                 ],
               ),
@@ -287,27 +284,24 @@ class _LinkBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final body = isExisting
-        ? (senderName.isEmpty
-            ? 'Saving will link this contact to the sender of the request.'
-            : 'Saving will link this contact to $senderName.')
-        : (senderName.isEmpty
-            ? 'Saving will create a new linked contact.'
-            : 'Saving will create a new contact linked to $senderName.');
+    final name = senderName.isEmpty ? '…' : senderName;
     return Container(
       decoration: BoxDecoration(
         color: scheme.primaryContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
       ),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
-          Icon(Icons.link, color: scheme.primary, size: 20),
-          const SizedBox(width: 8),
+          Icon(AppIcons.link, color: scheme.primary, size: 20),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              body,
+              isExisting
+                  ? l.contactLinkBannerExisting(name)
+                  : l.contactLinkBannerNew(name),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

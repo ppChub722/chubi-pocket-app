@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../features/preferences/presentation/cubit/money_visibility_cubit.dart';
@@ -78,6 +79,13 @@ class MoneyText extends StatelessWidget {
   }
 }
 
+/// An amount as plain text for captions / sentences ("คืนแล้ว ฿300 จาก
+/// ฿500") — honours the 👁 privacy toggle like [MoneyText].
+String moneyString(BuildContext context, num amount, {String symbol = '฿'}) =>
+    isMoneyHidden(context)
+        ? '$symbol••••'
+        : CurrencyFormatter.format(amount, symbol: symbol);
+
 /// True when the privacy toggle is on. Safe when no
 /// [MoneyVisibilityCubit] is provided (tests, dev previews) → visible.
 bool isMoneyHidden(BuildContext context) {
@@ -103,7 +111,7 @@ class MoneyVisibilityToggle extends StatelessWidget {
       iconSize: size,
       visualDensity: VisualDensity.compact,
       icon: Icon(
-        hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+        hidden ? AppIcons.hidden : AppIcons.visible,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       onPressed: () => context.read<MoneyVisibilityCubit>().toggle(),

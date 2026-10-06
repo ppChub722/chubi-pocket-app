@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_radius.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/currencies.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
+import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../domain/personal_debt.dart';
 import '../cubit/personal_debts_cubit.dart';
+import '../widgets/debt_widgets.dart';
 
-/// `/personal-debts` — main screen.
-///
-/// Two views (tabs): People (aggregated, default) / Items (flat list).
+/// `/personal-debts` — one page, by person (§11): summary (net + ติดคุณ /
+/// คุณติด, tap a box to filter), search, status, then one row per person →
+/// their page.
 class PersonalDebtsPage extends StatefulWidget {
   const PersonalDebtsPage({super.key});
 
@@ -15,71 +25,137 @@ class PersonalDebtsPage extends StatefulWidget {
   State<PersonalDebtsPage> createState() => _PersonalDebtsPageState();
 }
 
-class _PersonalDebtsPageState extends State<PersonalDebtsPage>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+enum _Status { open, all }
+
+class _PersonalDebtsPageState extends State<PersonalDebtsPage> {
+  String _query = '';
+  _Status _status = _Status.open;
+
+  /// Summary-box filter: owedToMe = net > 0, iOwe = net < 0.
+  DebtDirection? _dir;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PersonalDebtsCubit>().loadPeople();
-      context.read<PersonalDebtsCubit>().loadList();
+      if (!mounted) return;
+      context.read<PersonalDebtsCubit>().load();
+      final contacts = context.read<ContactsCubit>();
+      if (contacts.state.contacts.isEmpty) contacts.load();
     });
   }
 
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
+  List<DebtPerson> _filter(List<DebtPerson> all) {
+    final q = _query.trim().toLowerCase();
+    return all.where((p) {
+      if (_status == _Status.open && p.openCount == 0) return false;
+      if (_dir == DebtDirection.owedToMe && p.net <= 0) return false;
+      if (_dir == DebtDirection.iOwe && p.net >= 0) return false;
+      return q.isEmpty || p.displayName.toLowerCase().contains(q);
+    }).toList();
   }
+
+  void _openPerson(DebtPerson p) => context.push(Uri(
+        path: '/personal-debts/person',
+        queryParameters: {
+          'contact': ?p.contactId,
+          'name': p.displayName,
+        },
+      ).toString());
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Personal debts'),
+      appBar: AppTopBar(
+        title: l.moreDebts,
+        showBack: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'New debt',
+          AppBarAction(
+            icon: AppIcons.addDebt,
+            tooltip: l.debtsAddNew,
             onPressed: () => context.push('/personal-debts/new'),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabs,
-          tabs: const [Tab(text: 'People'), Tab(text: 'Items')],
-        ),
       ),
       body: BlocConsumer<PersonalDebtsCubit, PersonalDebtsState>(
-        listenWhen: (a, b) => a.errorMessage != b.errorMessage,
-        listener: (ctx, state) {
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(ctx)
-                .showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+        listenWhen: (a, b) =>
+            a.errorMessage != b.errorMessage && b.errorMessage != null,
+        listener: (ctx, s) =>
+            showAppSnackBar(ctx, s.errorMessage!, tone: Tone.danger),
+        builder: (context, state) {
+          if (state.status == PersonalDebtsStatus.loading &&
+              state.debts.isEmpty) {
+            return ListView(
+              children: [
+                for (var i = 0; i < 6; i++) const SkeletonListTile(),
+              ],
+            );
           }
-        },
-        builder: (ctx, state) {
-          return TabBarView(
-            controller: _tabs,
-            children: [
-              _PeopleView(
-                state: state,
-                onPersonTap: (p) {
-                  // Set the counterparty filter on cubit + switch to Items.
-                  // Items view filters client-side via state.filteredDebts.
-                  context.read<PersonalDebtsCubit>().setCounterpartyFilter(
-                        CounterpartyFilter(
-                          contactId: p.contactId,
-                          displayName: p.displayName,
-                        ),
-                      );
-                  _tabs.animateTo(1);
-                },
+          if (state.debts.isEmpty) {
+            return EmptyView(
+              icon: AppIcons.debt,
+              title: l.debtsEmptyTitle,
+              message: l.debtsEmptyMessage,
+              cta: AddTile(
+                label: l.debtsAddNew,
+                onTap: () => context.push('/personal-debts/new'),
               ),
-              _ItemsView(state: state),
-            ],
+            );
+          }
+          final people = state.people;
+          final shown = _filter(people);
+          final owed = people.fold<double>(0, (a, p) => a + p.owedToMeOpen);
+          final owe = people.fold<double>(0, (a, p) => a + p.iOweOpen);
+          final symbol = Currencies.symbolOf(
+              people.isEmpty ? 'THB' : people.first.currency);
+          return PullToRefresh(
+            onRefresh: () => context.read<PersonalDebtsCubit>().load(),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 96),
+              children: [
+                _Summary(
+                  owedToMe: owed,
+                  iOwe: owe,
+                  symbol: symbol,
+                  selected: _dir,
+                  onSelect: (d) => setState(() => _dir = _dir == d ? null : d),
+                ),
+                AppSearchBar(
+                  hint: l.debtsSearchHint,
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+                FilterBar(chips: [
+                  OptionMenuAnchor<_Status>(
+                    selected: _status,
+                    onSelected: (s) => setState(() => _status = s),
+                    options: [
+                      SheetOption(value: _Status.open, label: l.debtsStatusOpen),
+                      SheetOption(value: _Status.all, label: l.debtsStatusAll),
+                    ],
+                    builder: (context, toggle) => FilterDropdownChip(
+                      label: l.debtsStatusLabel,
+                      valueLabel: _status == _Status.open
+                          ? l.debtsStatusOpen
+                          : l.debtsStatusAll,
+                      active: _status != _Status.open,
+                      onTap: toggle,
+                    ),
+                  ),
+                ]),
+                if (shown.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.xxl),
+                    child: Text(l.debtsNoMatch, textAlign: TextAlign.center),
+                  )
+                else
+                  for (final (i, p) in shown.indexed) ...[
+                    if (i > 0) const RowDivider(),
+                    _PersonRow(person: p, onTap: () => _openPerson(p)),
+                  ],
+              ],
+            ),
           );
         },
       ),
@@ -87,88 +163,95 @@ class _PersonalDebtsPageState extends State<PersonalDebtsPage>
   }
 }
 
-class _PeopleView extends StatelessWidget {
-  const _PeopleView({required this.state, required this.onPersonTap});
-  final PersonalDebtsState state;
-  final ValueChanged<PersonRow> onPersonTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final people = state.people;
-    if (people == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return RefreshIndicator(
-      onRefresh: () => context.read<PersonalDebtsCubit>().loadPeople(),
-      child: ListView(
-        children: [
-          _Totals(
-            owedToMe: people.totalOwedToMe,
-            iOwe: people.totalIOwe,
-            netPosition: people.netPosition,
-          ),
-          if (people.data.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: Text('No outstanding debts')),
-            )
-          else
-            ...people.data.map((p) => _PersonRowTile(
-                  person: p,
-                  onTap: () => onPersonTap(p),
-                )),
-        ],
-      ),
-    );
-  }
-}
-
-class _Totals extends StatelessWidget {
-  const _Totals({
+class _Summary extends StatelessWidget {
+  const _Summary({
     required this.owedToMe,
     required this.iOwe,
-    required this.netPosition,
+    required this.symbol,
+    required this.selected,
+    required this.onSelect,
   });
+
   final double owedToMe;
   final double iOwe;
-  final double netPosition;
+  final String symbol;
+  final DebtDirection? selected;
+  final ValueChanged<DebtDirection> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context)!;
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    Widget box(DebtDirection d, String label, double amount, Color color) {
+      return Expanded(
+        child: SelectableFrame(
+          selected: selected == d,
+          color: color,
+          radius: AppRadius.md,
+          child: Material(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              onTap: () => onSelect(d),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: textTheme.labelMedium
+                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                    const SizedBox(height: AppSpacing.xs),
+                    MoneyText(
+                      amount,
+                      symbol: symbol,
+                      style: textTheme.titleMedium
+                          ?.copyWith(color: color, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xs),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(
-                  child: _Col(
-                    label: 'Owed to me',
-                    value: owedToMe.toStringAsFixed(2),
-                    color: Colors.green,
-                  ),
-                ),
-                Expanded(
-                  child: _Col(
-                    label: 'I owe',
-                    value: iOwe.toStringAsFixed(2),
-                    color: Colors.redAccent,
-                  ),
-                ),
+                Text(l.debtsNet,
+                    style: textTheme.labelLarge
+                        ?.copyWith(color: scheme.onSurfaceVariant)),
+                const Spacer(),
+                const MoneyVisibilityToggle(),
               ],
             ),
-            const Divider(height: 24),
-            Text('Net position', style: theme.textTheme.labelSmall),
-            Text(
-              netPosition.toStringAsFixed(2),
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: netPosition >= 0 ? Colors.green : Colors.redAccent,
-                fontWeight: FontWeight.w700,
-              ),
+            MoneyText(
+              owedToMe - iOwe,
+              symbol: symbol,
+              tone: MoneyTone.signed,
+              style: textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                box(DebtDirection.owedToMe, l.debtsOwedToMe, owedToMe,
+                    palette.income),
+                const SizedBox(width: AppSpacing.sm),
+                box(DebtDirection.iOwe, l.debtsIOwe, iOwe, palette.expense),
+              ],
             ),
           ],
         ),
@@ -177,171 +260,58 @@ class _Totals extends StatelessWidget {
   }
 }
 
-class _Col extends StatelessWidget {
-  const _Col({required this.label, required this.value, required this.color});
-  final String label;
-  final String value;
-  final Color color;
+class _PersonRow extends StatelessWidget {
+  const _PersonRow({required this.person, required this.onTap});
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
-        Text(value,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(color: color)),
-      ],
-    );
-  }
-}
-
-class _PersonRowTile extends StatelessWidget {
-  const _PersonRowTile({required this.person, required this.onTap});
-  final PersonRow person;
+  final DebtPerson person;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = person.theyOweMeNet
-        ? Colors.green
-        : person.iOweThemNet
-            ? Colors.redAccent
-            : theme.colorScheme.onSurface;
-    final label = person.theyOweMeNet
-        ? 'owes you'
-        : person.iOweThemNet
-            ? 'you owe'
-            : 'even';
-
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final p = person;
+    final even = p.net.abs() < 0.005;
     return ListTile(
-      leading: CircleAvatar(
-        child: Text(
-          person.displayName.isNotEmpty
-              ? person.displayName[0].toUpperCase()
-              : '?',
-        ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      leading: DebtAvatar(contactId: p.contactId, name: p.displayName),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(p.displayName,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          if (p.contactId != null) ...[
+            const SizedBox(width: AppSpacing.xs),
+            Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
+          ],
+        ],
       ),
-      title: Text(person.displayName),
-      subtitle: Text(
-        '${person.openCount} open · ${person.theyOweMeNet ? '+' : person.iOweThemNet ? '-' : ''}'
-        '${person.netPosition.abs().toStringAsFixed(2)}',
-      ),
+      subtitle: Text(l.debtsOpenCount(p.openCount)),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          if (!even)
+            MoneyText(
+              p.net.abs(),
+              symbol: Currencies.symbolOf(p.currency),
+              tone: p.net > 0 ? MoneyTone.income : MoneyTone.expense,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
           Text(
-            person.netPosition.abs().toStringAsFixed(2),
-            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+            even ? l.debtsEven : (p.net > 0 ? l.debtsOwedToMe : l.debtsIOwe),
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          Text(label, style: theme.textTheme.labelSmall),
         ],
       ),
       onTap: onTap,
-    );
-  }
-}
-
-class _ItemsView extends StatelessWidget {
-  const _ItemsView({required this.state});
-  final PersonalDebtsState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final filtered = state.filteredDebts;
-    return RefreshIndicator(
-      onRefresh: () => context.read<PersonalDebtsCubit>().loadList(),
-      child: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'all', label: Text('All')),
-                ButtonSegment(value: 'i_owe', label: Text('I owe')),
-                ButtonSegment(
-                    value: 'owed_to_me', label: Text('Owed to me')),
-              ],
-              selected: {
-                state.directionFilter == DebtDirection.iOwe
-                    ? 'i_owe'
-                    : state.directionFilter == DebtDirection.owedToMe
-                        ? 'owed_to_me'
-                        : 'all'
-              },
-              onSelectionChanged: (v) {
-                final cubit = context.read<PersonalDebtsCubit>();
-                final picked = v.first;
-                if (picked == 'all') {
-                  cubit.loadList(clearDirection: true);
-                } else if (picked == 'i_owe') {
-                  cubit.loadList(directionFilter: DebtDirection.iOwe);
-                } else {
-                  cubit.loadList(directionFilter: DebtDirection.owedToMe);
-                }
-              },
-            ),
-          ),
-          if (state.counterpartyFilter case final cf?)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: InputChip(
-                  avatar: const Icon(Icons.person, size: 18),
-                  label: Text('Filter: ${cf.displayName}'),
-                  onDeleted: () => context
-                      .read<PersonalDebtsCubit>()
-                      .setCounterpartyFilter(null),
-                ),
-              ),
-            ),
-          if (state.status == PersonalDebtsStatus.loading && state.debts.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (filtered.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: Text('No items')),
-            )
-          else
-            ...filtered.map((d) => _DebtRow(debt: d)),
-        ],
-      ),
-    );
-  }
-}
-
-class _DebtRow extends StatelessWidget {
-  const _DebtRow({required this.debt});
-  final PersonalDebt debt;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = debt.isOwedToMe ? Colors.green : Colors.redAccent;
-    final dirLabel = debt.isOwedToMe ? 'owes you' : 'you owe';
-    return ListTile(
-      title: Text(debt.counterpartyPersonName),
-      subtitle: Text(
-        '$dirLabel · ${debt.outstanding.toStringAsFixed(2)} ${debt.currency} outstanding',
-      ),
-      trailing: Chip(
-        label: Text(debt.status.wire),
-        backgroundColor:
-            color.withValues(alpha: debt.isOpen ? 0.15 : 0.05),
-        side: BorderSide(color: color),
-        visualDensity: VisualDensity.compact,
-        labelStyle: theme.textTheme.labelSmall,
-      ),
-      onTap: () => context.push('/personal-debts/${debt.id}'),
     );
   }
 }

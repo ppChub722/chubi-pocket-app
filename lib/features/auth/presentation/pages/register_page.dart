@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../cubit/auth_cubit.dart';
+import '../widgets/auth_widgets.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,8 +19,8 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  static const _currencies = ['THB', 'USD', 'EUR', 'GBP', 'JPY'];
   static final _usernameRegex = RegExp(r'^[a-z0-9_-]{3,50}$');
+  static final _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   final _formKey = GlobalKey<FormState>();
   final _usernameCtrl = TextEditingController();
@@ -24,8 +29,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   String _currency = 'THB';
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -48,163 +51,182 @@ class _RegisterPageState extends State<RegisterPage> {
         );
   }
 
+  void _toLogin() =>
+      context.canPop() ? context.pop() : context.go('/auth/login');
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.authRegisterTitle),
+      appBar: AppTopBar(
+        title: l.authRegisterTitle,
+        showBack: true,
+        showUniversal: false,
+        showParent: false,
+        onBack: _toLogin,
       ),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final isSubmitting = state is AuthLoading;
           final failure = state is AuthFailure ? state : null;
           return SafeArea(
+            top: false,
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg,
+                    AppSpacing.md, AppSpacing.lg, AppSpacing.xl),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
-                  child: Form(
-                    key: _formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (failure != null) ...[
-                          _ErrorBanner(message: _bannerMessageFor(l, failure)),
+                  child: AutofillGroup(
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const AuthBrandHeader(compact: true),
+                          const SizedBox(height: AppSpacing.lg),
+                          if (failure != null) ...[
+                            MessageBanner(
+                              message: _bannerMessageFor(l, failure),
+                              onClose: () => context
+                                  .read<AuthCubit>()
+                                  .acknowledgeFailure(),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                          ],
+                          SectionCard(
+                            title: l.authRegisterSectionAccount,
+                            children: [
+                              AppTextField(
+                                controller: _usernameCtrl,
+                                enabled: !isSubmitting,
+                                label: l.authRegisterUsernameLabel,
+                                helper: l.authRegisterUsernameHint,
+                                prefixIcon: AppIcons.profile,
+                                errorText:
+                                    _fieldErrorFor(l, 'username', failure),
+                                autofillHints: const [
+                                  AutofillHints.newUsername
+                                ],
+                                inputFormatters: [_lowercase],
+                                textInputAction: TextInputAction.next,
+                                validator: (v) {
+                                  final s = v?.trim() ?? '';
+                                  if (s.isEmpty) return l.commonRequired;
+                                  if (!_usernameRegex.hasMatch(s)) {
+                                    return l.authRegisterUsernameInvalid;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              AppTextField(
+                                controller: _passwordCtrl,
+                                enabled: !isSubmitting,
+                                label: l.authRegisterPasswordLabel,
+                                helper: l.authRegisterPasswordHint,
+                                prefixIcon: AppIcons.lock,
+                                obscurable: true,
+                                autofillHints: const [
+                                  AutofillHints.newPassword
+                                ],
+                                textInputAction: TextInputAction.next,
+                                validator: (v) {
+                                  if (v == null || v.length < 8) {
+                                    return l.authRegisterPasswordTooShort;
+                                  }
+                                  if (v.length > 128) {
+                                    return l.authRegisterPasswordTooLong;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              AppTextField(
+                                controller: _confirmCtrl,
+                                enabled: !isSubmitting,
+                                label: l.authRegisterConfirmLabel,
+                                prefixIcon: AppIcons.lock,
+                                obscurable: true,
+                                textInputAction: TextInputAction.next,
+                                validator: (v) => v != _passwordCtrl.text
+                                    ? l.authRegisterConfirmMismatch
+                                    : null,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          SectionCard(
+                            title: l.authRegisterSectionProfile,
+                            children: [
+                              AppTextField(
+                                controller: _displayNameCtrl,
+                                enabled: !isSubmitting,
+                                label: l.authRegisterDisplayNameLabel,
+                                prefixIcon: AppIcons.profile,
+                                autofillHints: const [AutofillHints.name],
+                                textInputAction: TextInputAction.next,
+                                validator: (v) {
+                                  final s = v?.trim() ?? '';
+                                  if (s.isEmpty) return l.commonRequired;
+                                  if (s.length > 100) {
+                                    return l.authRegisterDisplayNameTooLong;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              AppTextField(
+                                controller: _emailCtrl,
+                                enabled: !isSubmitting,
+                                label: l.authRegisterEmailLabel,
+                                helper: l.authRegisterEmailHint,
+                                prefixIcon: Icons.mail_outline,
+                                keyboardType: TextInputType.emailAddress,
+                                autofillHints: const [AutofillHints.email],
+                                errorText: _fieldErrorFor(l, 'email', failure),
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (_) => _submit(),
+                                validator: (v) {
+                                  final s = v?.trim() ?? '';
+                                  if (s.isEmpty) return null;
+                                  return _emailRegex.hasMatch(s)
+                                      ? null
+                                      : l.editProfileEmailInvalid;
+                                },
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              CurrencyTile(
+                                value: _currency,
+                                label: l.authRegisterCurrencyLabel,
+                                onChanged: isSubmitting
+                                    ? null
+                                    : (c) => setState(() => _currency = c),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          AppButton(
+                            label: l.authRegisterSubmit,
+                            onPressed: isSubmitting ? null : _submit,
+                            loading: isSubmitting,
+                            size: AppButtonSize.large,
+                            expand: true,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          const AuthOrDivider(),
+                          const SizedBox(height: AppSpacing.lg),
+                          // TODO(google-sign-in): same flow as login — the
+                          // BE creates the account on first sign-in.
+                          const GoogleSignInButton(),
                           const SizedBox(height: AppSpacing.md),
+                          TextButton(
+                            onPressed: isSubmitting ? null : _toLogin,
+                            child: Text(l.authRegisterGoToLogin),
+                          ),
                         ],
-                        TextFormField(
-                          controller: _usernameCtrl,
-                          enabled: !isSubmitting,
-                          textInputAction: TextInputAction.next,
-                          decoration: InputDecoration(
-                            labelText: l.authRegisterUsernameLabel,
-                            errorText: _fieldErrorFor(l, 'username', failure),
-                          ),
-                          validator: (v) {
-                            final s = v?.trim() ?? '';
-                            if (s.isEmpty) return l.commonRequired;
-                            if (!_usernameRegex.hasMatch(s)) {
-                              return l.authRegisterUsernameInvalid;
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _displayNameCtrl,
-                          enabled: !isSubmitting,
-                          textInputAction: TextInputAction.next,
-                          decoration: InputDecoration(
-                            labelText: l.authRegisterDisplayNameLabel,
-                          ),
-                          validator: (v) {
-                            final s = v?.trim() ?? '';
-                            if (s.isEmpty) return l.commonRequired;
-                            if (s.length > 100) {
-                              return l.authRegisterDisplayNameTooLong;
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _emailCtrl,
-                          enabled: !isSubmitting,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          decoration: InputDecoration(
-                            labelText: l.authRegisterEmailLabel,
-                            errorText: _fieldErrorFor(l, 'email', failure),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _passwordCtrl,
-                          enabled: !isSubmitting,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.next,
-                          decoration: InputDecoration(
-                            labelText: l.authRegisterPasswordLabel,
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined),
-                              onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                          validator: (v) {
-                            if (v == null || v.length < 8) {
-                              return l.authRegisterPasswordTooShort;
-                            }
-                            if (v.length > 128) {
-                              return l.authRegisterPasswordTooLong;
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _confirmCtrl,
-                          enabled: !isSubmitting,
-                          obscureText: _obscureConfirm,
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _submit(),
-                          decoration: InputDecoration(
-                            labelText: l.authRegisterConfirmLabel,
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscureConfirm
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined),
-                              onPressed: () => setState(
-                                  () => _obscureConfirm = !_obscureConfirm),
-                            ),
-                          ),
-                          validator: (v) {
-                            if (v != _passwordCtrl.text) {
-                              return l.authRegisterConfirmMismatch;
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        DropdownButtonFormField<String>(
-                          initialValue: _currency,
-                          decoration: InputDecoration(
-                              labelText: l.authRegisterCurrencyLabel),
-                          items: _currencies
-                              .map((c) =>
-                                  DropdownMenuItem(value: c, child: Text(c)))
-                              .toList(),
-                          onChanged: isSubmitting
-                              ? null
-                              : (v) => setState(() => _currency = v ?? 'THB'),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        FilledButton(
-                          onPressed: isSubmitting ? null : _submit,
-                          child: isSubmitting
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                )
-                              : Text(l.authRegisterSubmit),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        TextButton(
-                          onPressed: isSubmitting
-                              ? null
-                              : () => context.canPop()
-                                  ? context.pop()
-                                  : context.go('/auth/login'),
-                          child: Text(l.authRegisterGoToLogin),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -215,6 +237,10 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
+
+  static final _lowercase = TextInputFormatter.withFunction(
+      (oldValue, newValue) =>
+          newValue.copyWith(text: newValue.text.toLowerCase()));
 
   /// Top-banner message — used for non-field-specific failures.
   String _bannerMessageFor(AppLocalizations l, AuthFailure failure) {
@@ -242,39 +268,5 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     final detailMsg = (failure.error.details?[field] as String?);
     return detailMsg;
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: scheme.onErrorContainer),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(color: scheme.onErrorContainer),
-            ),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            icon: Icon(Icons.close, color: scheme.onErrorContainer),
-            onPressed: () => context.read<AuthCubit>().acknowledgeFailure(),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../features/transactions/presentation/pages/transaction_form_page.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'app_top_bar.dart';
@@ -99,7 +100,7 @@ class _MainShellState extends State<MainShell> {
             tooltip: l.navAddTransaction,
             onPressed: () => showTransactionFormSheet(context),
             shape: const CircleBorder(),
-            child: const Icon(Icons.add),
+            child: const Icon(AppIcons.add),
           );
 
     return Scaffold(

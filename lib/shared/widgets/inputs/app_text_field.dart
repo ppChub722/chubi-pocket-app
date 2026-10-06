@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../../core/constants/app_icons.dart';
 
 /// Standard form text field (auth, settings dialogs, sheets). Uses the
 /// theme's filled input decoration; adds a show/hide toggle when
@@ -25,6 +28,9 @@ class AppTextField extends StatefulWidget {
     this.autofocus = false,
     this.obscurable = false,
     this.focusNode,
+    this.autofillHints,
+    this.errorText,
+    this.inputFormatters,
     super.key,
   });
 
@@ -46,6 +52,11 @@ class AppTextField extends StatefulWidget {
   final bool autofocus;
   final bool obscurable;
   final FocusNode? focusNode;
+  final Iterable<String>? autofillHints;
+
+  /// Server-side error for this field (e.g. "username taken").
+  final String? errorText;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -68,6 +79,8 @@ class _AppTextFieldState extends State<AppTextField> {
       maxLines: w.obscurable ? 1 : w.maxLines,
       maxLength: w.maxLength,
       obscureText: _obscured,
+      autofillHints: w.autofillHints,
+      inputFormatters: w.inputFormatters,
       validator: w.validator,
       onChanged: w.onChanged,
       onFieldSubmitted: w.onSubmitted,
@@ -76,12 +89,14 @@ class _AppTextFieldState extends State<AppTextField> {
         hintText: w.hint,
         helperText: w.helper,
         helperMaxLines: 3,
+        errorText: w.errorText,
+        errorMaxLines: 3,
         prefixIcon: w.prefixIcon == null ? null : Icon(w.prefixIcon),
         suffixIcon: w.obscurable
             ? IconButton(
                 icon: Icon(_obscured
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined),
+                    ? AppIcons.visible
+                    : AppIcons.hidden),
                 onPressed: () => setState(() => _obscured = !_obscured),
               )
             : w.suffix,

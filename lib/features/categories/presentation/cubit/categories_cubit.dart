@@ -181,17 +181,17 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
     ));
   }
 
-  /// Hard-delete or archive (server picks based on transaction count).
-  /// Either way the local list drops the row — archived rows are
-  /// hidden from the default list filter, and the management page
-  /// doesn't show them either.
+  /// Real delete (see [CategoriesRepository.delete]). Reloads afterwards
+  /// because the server also re-parents the row's children.
   Future<void> remove(String id) async {
     await _repo.delete(id);
-    _pushUndo();
-    emit(state.copyWith(
-      categories: state.categories.where((c) => c.id != id).toList(),
-    ));
+    _undoStack.clear(); // local undo can't bring back a server delete
+    await load();
   }
+
+  /// Transactions / budgets a delete of [id] would affect.
+  Future<({int transactions, int budgets})> usage(String id) =>
+      _repo.usage(id);
 
   /// Saves the user's drag-and-drop reorder by sending the staged tree
   /// to `PATCH /v1/categories/reorder`. Server returns the user's full

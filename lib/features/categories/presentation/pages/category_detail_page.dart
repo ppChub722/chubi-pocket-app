@@ -1,23 +1,21 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/shell_chrome.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/edit_mode/edit_mode_mixin.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/editable_circle.dart';
-import '../../../../shared/widgets/mode_action_bar.dart';
 import '../../../../shared/widgets/type_indicator.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
@@ -26,30 +24,15 @@ import '../cubit/categories_cubit.dart';
 import '../widgets/category_picker_sheet.dart';
 import '../widgets/category_preview_card.dart';
 
-/// Editable-detail surface for a single category — one screen with two
-/// modes, per the Phase 2 inline-edit UX model
-/// (`product/phase2/inline-edit-ux.md`). Replaces the old `CategoryFormPage`
-/// + `/:id/edit` route.
+/// One screen, two modes (view ⇄ edit) for a single category — the
+/// reference detail page for the whole app (`ux-overhaul-plan.md` §1.5).
 ///
-/// **One constant layout, two modes.** Every field is the *same* widget in
-/// both modes — only its chrome changes, so nothing ever reflows:
-/// - **view mode**: borderless, read-only text.
-/// - **edit mode**: bordered, editable.
-///
-/// Text fields are edited inline; the icon opens the icon maker (a modal).
-/// Discrete controls — the **type** chips (create only) and the
-/// **include-in-report** switch — are live even in view mode: tapping one
-/// applies the change *and* auto-enters edit mode (so the Cancel · Undo ·
-/// Save bar appears). Tapping a read-only text field also enters edit mode
-/// and focuses it.
-///
-/// Pushed **above the shell** (root navigator, full-screen dialog) → no
-/// bottom nav; the AppBar auto-shows a close (✕).
-///
-/// **Undo** is snapshot-based: discrete controls = one step each; text
-/// fields coalesce a burst into one step closed by a 0.5 s pause (or any
-/// other action); undo mid-typing reverts the current burst; unlimited
-/// history; undoing back to the original auto-cancels (create → pops).
+/// Every field is the same widget in both modes (only its border and
+/// editability change), so nothing reflows. Discrete controls (type chips
+/// on create, the report switch, parent picker) stay live in view mode and
+/// enter edit mode on use; long-pressing a text field or the icon enters
+/// edit mode on it. Lifecycle (undo, discard, nav hiding) is
+/// [EditModeMixin].
 class CategoryDetailPage extends StatefulWidget {
   const CategoryDetailPage({this.editingId, super.key});
 
@@ -61,10 +44,11 @@ class CategoryDetailPage extends StatefulWidget {
   State<CategoryDetailPage> createState() => _CategoryDetailPageState();
 }
 
-/// Which text field an open typing session belongs to.
+/// Which text field a typing burst belongs to (undo grouping).
 enum _TextField { name, description, note }
 
-class _CategoryDetailPageState extends State<CategoryDetailPage> {
+class _CategoryDetailPageState extends State<CategoryDetailPage>
+    with EditModeMixin<CategoryDetailPage, _CategoryDraft> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -73,74 +57,28 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
   final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  /// The persisted category (edit mode only) — kept so Save can
-  /// `copyWith` onto it, preserving id / sortOrder / isSystem.
+  /// The persisted category (edit only) — Save `copyWith`s onto it to keep
+  /// id / sortOrder / isSystem.
   Category? _persisted;
   bool _notFound = false;
-
-  bool _editMode = false;
-  bool _saving = false;
-
-  /// Saved/baseline values; `_working` is what the user is editing.
-  late _CategoryDraft _original;
-  late _CategoryDraft _working;
-
-  /// Undo history — snapshots of the state *before* each committed change.
-  final List<_CategoryDraft> _undoStack = [];
-
-  /// Open text-typing session: snapshot of state at the start of the
-  /// current burst, plus which field it's for. Null when no session.
-  _CategoryDraft? _sessionStart;
-  _TextField? _sessionField;
-  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     if (widget.isCreate) {
-      _original = const _CategoryDraft();
-      _working = _original;
-      _editMode = true; // create opens straight into edit mode
+      initDraft(const _CategoryDraft(), editing: true);
     } else {
-      final existing = context.read<CategoriesCubit>().byId(widget.editingId!);
-      if (existing == null) {
-        _notFound = true;
-        _original = const _CategoryDraft();
-        _working = _original;
-      } else {
-        _persisted = existing;
-        _original = _CategoryDraft.fromCategory(existing);
-        _working = _original;
-      }
+      _persisted = context.read<CategoriesCubit>().byId(widget.editingId!);
+      _notFound = _persisted == null;
+      initDraft(_persisted == null
+          ? const _CategoryDraft()
+          : _CategoryDraft.fromCategory(_persisted!));
     }
-    _syncControllers();
-  }
-
-  // Shell chrome: edit mode takes over the bottom of the screen (action bar
-  // replaces the shell's nav + FAB). Synced after each build so every path
-  // that flips `_editMode` (enter, cancel, save, create) is covered.
-  ShellChromeController? _shellChrome;
-  bool? _chromeHiddenFor;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _shellChrome = ShellChrome.of(context);
-  }
-
-  void _syncShellChrome() {
-    if (_chromeHiddenFor == _editMode) return;
-    _chromeHiddenFor = _editMode;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _editMode ? _shellChrome?.hide() : _shellChrome?.show();
-    });
+    onDraftRestored();
   }
 
   @override
   void dispose() {
-    _shellChrome?.show();
-    _debounce?.cancel();
     _nameController.dispose();
     _descriptionController.dispose();
     _noteController.dispose();
@@ -150,292 +88,188 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     super.dispose();
   }
 
-  bool get _dirty => _working != _original;
-  bool get _canUndo => _sessionStart != null || _undoStack.isNotEmpty;
+  // ── EditModeMixin hooks ─────────────────────────────────────────────
 
-  // ── Edit-mode entry ─────────────────────────────────────────────────
+  @override
+  bool get leaveOnCancel => widget.isCreate;
 
-  void _enterEditMode() {
-    if (_editMode) return;
-    HapticFeedback.lightImpact();
-    setState(() => _editMode = true);
+  @override
+  void leavePage() {
+    if (context.canPop()) context.pop();
   }
 
-  /// Long-pressing a read-only text field enters edit mode and focuses it.
-  void _enterEditModeAndFocus(FocusNode node) {
-    if (!_editMode) {
-      HapticFeedback.lightImpact();
-      setState(() => _editMode = true);
+  @override
+  void onDraftRestored() {
+    void sync(TextEditingController c, String v) {
+      if (c.text != v) c.text = v;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) node.requestFocus();
-    });
+
+    sync(_nameController, working.name);
+    sync(_descriptionController, working.description);
+    sync(_noteController, working.note);
   }
 
-  /// Long-pressing the icon enters edit mode and opens the icon maker.
+  void _onText(_TextField field, String v) => applyTextChange(
+        field,
+        switch (field) {
+          _TextField.name => working.copyWith(name: v),
+          _TextField.description => working.copyWith(description: v),
+          _TextField.note => working.copyWith(note: v),
+        },
+      );
+
   void _enterEditThenOpenMaker() {
-    _enterEditMode();
+    enterEdit();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _openIconMaker();
     });
   }
 
-  /// Cancel = revert everything. Edit → back to view mode (stay). Create →
-  /// nothing to view, so leave the page.
-  void _cancel() {
-    if (widget.isCreate) {
-      _leavePage();
-      return;
-    }
-    _debounce?.cancel();
-    _debounce = null;
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _working = _original;
-      _undoStack.clear();
-      _sessionStart = null;
-      _sessionField = null;
-      _editMode = false;
-      _saving = false;
-      _syncControllers();
-    });
-  }
-
-  void _leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  /// Top back / system back. In edit mode it acts like Cancel but asks a
-  /// discard confirm first (spec item 10); in view mode it leaves the page.
-  Future<void> _handleBack() async {
-    if (_saving) return;
-    if (_editMode) {
-      if (_dirty) {
-        final l = AppLocalizations.of(context)!;
-        final ok = await _confirmDiscard(context, l);
-        if (!ok) return;
-      }
-      _cancel();
-    } else {
-      _leavePage();
-    }
-  }
-
-  // ── Undo ────────────────────────────────────────────────────────────
-
-  /// Close any open text session into a single undo step. Called by the
-  /// debounce timer and before every non-text action.
-  void _commitTextSession() {
-    _debounce?.cancel();
-    _debounce = null;
-    final start = _sessionStart;
-    _sessionStart = null;
-    _sessionField = null;
-    if (start != null && start != _working) {
-      _undoStack.add(start);
-    }
-  }
-
-  void _onTextChanged(_TextField field, String value) {
-    if (_sessionStart == null) {
-      _sessionStart = _working;
-      _sessionField = field;
-    } else if (_sessionField != field) {
-      // Moved to a different text field → cut the previous burst first.
-      _commitTextSession();
-      _sessionStart = _working;
-      _sessionField = field;
-    }
-    setState(() => _working = _withText(field, value));
-    _debounce?.cancel();
-    _debounce = Timer(
-      const Duration(milliseconds: 500),
-      () => setState(_commitTextSession),
-    );
-  }
-
-  /// Apply a discrete (non-text) change as exactly one undo step. Also
-  /// auto-enters edit mode — switches / chips / icon are live in view mode.
-  void _applyDiscrete(_CategoryDraft next) {
-    _commitTextSession();
-    setState(() {
-      _editMode = true;
-      _undoStack.add(_working);
-      _working = next;
-    });
-    HapticFeedback.selectionClick();
-  }
-
-  void _undo() {
-    HapticFeedback.selectionClick();
-    if (_sessionStart != null) {
-      // Mid-typing: revert the current burst to where it started.
-      final start = _sessionStart!;
-      _debounce?.cancel();
-      _debounce = null;
-      _sessionStart = null;
-      _sessionField = null;
-      setState(() {
-        _working = start;
-        _syncControllers();
-      });
-    } else if (_undoStack.isNotEmpty) {
-      setState(() {
-        _working = _undoStack.removeLast();
-        _syncControllers();
-      });
-    }
-    // Undone back to the original → auto-cancel + leave edit mode.
-    if (_sessionStart == null && _undoStack.isEmpty && !_dirty) {
-      _cancel();
-    }
-  }
-
-  // ── Save ────────────────────────────────────────────────────────────
+  // ── Save / delete ───────────────────────────────────────────────────
 
   Future<void> _save() async {
-    _commitTextSession();
+    commitTextSession();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final cubit = context.read<CategoriesCubit>();
-    final messenger = ScaffoldMessenger.of(context);
     final l = AppLocalizations.of(context)!;
-
     if (widget.isCreate && !cubit.canAddMore) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l.categoriesLimitReached)));
+      showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
       return;
     }
 
-    final description = _working.description.trim();
-    final note = _working.note.trim();
-
+    final w = working;
+    final description = w.description.trim();
+    final note = w.note.trim();
     FocusScope.of(context).unfocus();
-    setState(() => _saving = true);
+    setSaving(true);
     try {
       if (widget.isCreate) {
         await cubit.add(Category(
           id: 'draft',
-          name: _working.name.trim(),
-          type: _working.type,
-          iconCode: _working.iconCode,
-          parentId: _working.parentId,
+          name: w.name.trim(),
+          type: w.type,
+          iconCode: w.iconCode,
+          parentId: w.parentId,
           description: description.isEmpty ? null : description,
           note: note.isEmpty ? null : note,
-          includeInReport: _working.includeInReport,
+          includeInReport: w.includeInReport,
         ));
       } else {
-        await cubit.update(_persisted!.copyWith(
-          name: _working.name.trim(),
-          parentId: _working.parentId,
-          clearParent: _working.parentId == null,
-          iconCode: _working.iconCode,
+        final next = _persisted!.copyWith(
+          name: w.name.trim(),
+          parentId: w.parentId,
+          clearParent: w.parentId == null,
+          iconCode: w.iconCode,
           description: description.isEmpty ? null : description,
           note: note.isEmpty ? null : note,
-          includeInReport: _working.includeInReport,
-        ));
+          includeInReport: w.includeInReport,
+        );
+        await cubit.update(next);
+        _persisted = next;
       }
     } on CategoryLimitExceeded {
       if (!mounted) return;
-      setState(() => _saving = false);
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l.categoriesLimitReached)));
+      setSaving(false);
+      showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
       return;
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _saving = false);
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      setSaving(false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
       return;
     }
     if (!mounted) return;
     HapticFeedback.mediumImpact();
-
     if (widget.isCreate) {
-      _leavePage();
+      leavePage();
       return;
     }
-    // Edit: re-baseline to the just-saved values, drop to view mode.
-    _persisted = _persisted!.copyWith(
-      name: _working.name.trim(),
-      parentId: _working.parentId,
-      clearParent: _working.parentId == null,
-      iconCode: _working.iconCode,
-      description: description.isEmpty ? null : description,
-      note: note.isEmpty ? null : note,
-      includeInReport: _working.includeInReport,
+    commitSaved(working.trimmed());
+  }
+
+  /// Always a real delete. The confirm spells out the fallout (fetched
+  /// fresh): children move up, transactions become uncategorised, budgets
+  /// on this category are deleted with it.
+  Future<void> _delete() async {
+    final l = AppLocalizations.of(context)!;
+    final c = _persisted!;
+    final cubit = context.read<CategoriesCubit>();
+    setSaving(true);
+    final ({int transactions, int budgets}) usage;
+    try {
+      usage = await cubit.usage(c.id);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
+      return;
+    }
+    if (!mounted) return;
+    setSaving(false);
+    final ok = await showConfirmDialog(
+      context,
+      title: l.categoryDeleteTitle(c.name),
+      message: [
+        l.categoryDeleteBody,
+        if (usage.transactions > 0) l.categoryDeleteTxImpact(usage.transactions),
+        if (usage.budgets > 0) l.categoryDeleteBudgetImpact(usage.budgets),
+      ].join('\n'),
+      confirmLabel: l.commonDelete,
+      destructive: true,
     );
-    setState(() {
-      _original = _working;
-      _undoStack.clear();
-      _editMode = false;
-      _saving = false;
-    });
-  }
-
-  // ── Working-state helpers ───────────────────────────────────────────
-
-  _CategoryDraft _withText(_TextField field, String value) {
-    switch (field) {
-      case _TextField.name:
-        return _working.copyWith(name: value);
-      case _TextField.description:
-        return _working.copyWith(description: value);
-      case _TextField.note:
-        return _working.copyWith(note: value);
+    if (!ok || !mounted) return;
+    setSaving(true);
+    try {
+      await cubit.remove(c.id);
+      if (!mounted) return;
+      showAppSnackBar(context, l.categoryDeletedResult(c.name),
+          tone: Tone.success);
+      // Pop without the discard prompt — the row is gone.
+      commitSaved(working);
+      leavePage();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
     }
   }
 
-  void _syncControllers() {
-    if (_nameController.text != _working.name) {
-      _nameController.text = _working.name;
-    }
-    if (_descriptionController.text != _working.description) {
-      _descriptionController.text = _working.description;
-    }
-    if (_noteController.text != _working.note) {
-      _noteController.text = _working.note;
-    }
-  }
+  // ── Derived display ─────────────────────────────────────────────────
 
-  Category _previewCategory() {
-    return Category(
-      id: _persisted?.id ?? 'preview',
-      name: _working.name,
-      type: _working.type,
-      iconCode: _resolvedDisplayIconCode(),
-      parentId: _working.parentId,
-      includeInReport: _working.includeInReport,
-    );
-  }
+  Category _previewCategory() => Category(
+        id: _persisted?.id ?? 'preview',
+        name: working.name,
+        type: working.type,
+        iconCode: _resolvedDisplayIconCode(),
+        parentId: working.parentId,
+        includeInReport: working.includeInReport,
+      );
 
-  /// IconCode the icon should show. L1 uses its own; L2/L3 inherit the
-  /// colour from the L1 ancestor (matches the list's colour inheritance).
+  /// L1 shows its own colours; L2/L3 inherit the L1 ancestor's (as the
+  /// list does).
   IconCode? _resolvedDisplayIconCode() {
-    if (_working.parentId == null) return _working.iconCode;
+    if (working.parentId == null) return working.iconCode;
     final all = context.read<CategoriesCubit>().state.categories;
-    String? cursor = _working.parentId;
+    String? cursor = working.parentId;
     while (cursor != null) {
       final parent = all.firstWhere(
         (c) => c.id == cursor,
-        orElse: () => Category(id: cursor!, name: '', type: _working.type),
+        orElse: () => Category(id: cursor!, name: '', type: working.type),
       );
       if (parent.parentId == null) return parent.iconCode;
       cursor = parent.parentId;
     }
-    return _working.iconCode;
+    return working.iconCode;
   }
 
-  bool get _isColorEditable => _working.parentId == null;
+  bool get _isColorEditable => working.parentId == null;
 
   String? _parentBreadcrumb(List<Category> all) {
-    if (_working.parentId == null) return null;
+    if (working.parentId == null) return null;
     final parent = all.firstWhere(
-      (c) => c.id == _working.parentId,
-      orElse: () => _previewCategory(),
+      (c) => c.id == working.parentId,
+      orElse: _previewCategory,
     );
     final ancestors = CategoryTree.breadcrumb(parent, all);
     return ancestors.isEmpty ? parent.name : '$ancestors › ${parent.name}';
@@ -445,12 +279,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     final l = AppLocalizations.of(context)!;
     final all = context.read<CategoriesCubit>().state.categories;
     final breadcrumb = _parentBreadcrumb(all);
-    final displayIconCode = _resolvedDisplayIconCode();
-
     final result = await showIconMakerSheet(
       context: context,
       type: IconType.category,
-      initial: displayIconCode,
+      initial: _resolvedDisplayIconCode(),
+      title: l.categoryFormIconLabel,
       iconSectionLabel: l.categoryFormIconLabel,
       colorSectionLabel: l.categoryFormColorLabel,
       showColorSection: _isColorEditable,
@@ -459,16 +292,42 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
         parentPath: breadcrumb,
       ),
     );
+    if (!mounted || result is! IconMakerSelected) return;
+    if (_isColorEditable) {
+      applyChange(working.copyWith(iconCode: result.iconCode));
+    } else {
+      // L2/L3: keep own colours, take only the glyph.
+      final next = (working.iconCode ?? const IconCode())
+          .copyWith(icon: result.iconCode.icon);
+      applyChange(working.copyWith(iconCode: next));
+    }
+  }
+
+  Future<void> _openParentPicker(List<Category> all) async {
+    final l = AppLocalizations.of(context)!;
+    final cubit = context.read<CategoriesCubit>();
+    final selectedParent =
+        working.parentId == null ? null : cubit.byId(working.parentId!);
+    // Can't parent into yourself or your own subtree (would cycle).
+    final exclude = _persisted == null
+        ? const <String>{}
+        : CategoryReorderLogic.subtreeIds(_persisted!.id, all).toSet();
+    final result = await showCategoryPickerSheet(
+      context: context,
+      categories: all,
+      type: working.type,
+      selected: selectedParent,
+      allowNone: true,
+      noneLabel: l.categoryFormParentNone,
+      title: l.categoryFormParentLabel,
+      maxDepth: 1, // L1 + L2 only — a child of this stays within 3 levels
+      excludeIds: exclude,
+    );
     if (!mounted || result == null) return;
-    if (result is IconMakerSelected) {
-      if (_isColorEditable) {
-        _applyDiscrete(_working.copyWith(iconCode: result.iconCode));
-      } else {
-        // L2/L3: keep own bgColors, update only the glyph.
-        final next = (_working.iconCode ?? const IconCode())
-            .copyWith(icon: result.iconCode.icon);
-        _applyDiscrete(_working.copyWith(iconCode: next));
-      }
+    if (result is CategoryPickerSelected) {
+      applyChange(working.copyWith(parentId: result.category.id));
+    } else if (result is CategoryPickerCleared) {
+      applyChange(working.copyWith(clearParent: true));
     }
   }
 
@@ -480,157 +339,142 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
 
     if (_notFound) {
       return Scaffold(
-        appBar: AppTopBar(title: l.categoryFormTitleEdit, showBack: true),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Text(l.categoriesEmptyTitle, textAlign: TextAlign.center),
-          ),
+        appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
+        body: EmptyView(
+          icon: AppIcons.category,
+          title: l.categoriesEmptyTitle,
+          message: l.categoriesEmptyMessage,
         ),
       );
     }
 
-    _syncShellChrome();
-    return PopScope(
-      canPop: !_editMode && !_saving,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        _handleBack();
-      },
-      child: Scaffold(
-        appBar: AppTopBar(
-          title: _titleFor(l),
-          showBack: true,
-          editing: _editMode,
-          onBack: _handleBack,
-          actions: _editMode
-              ? const <AppBarAction>[]
-              : [
+    final canDelete = !widget.isCreate && !(_persisted?.isSystem ?? true);
+    return editScope(Scaffold(
+      appBar: AppTopBar(
+        title: _title(l),
+        showBack: true,
+        editing: isEditing,
+        onBack: handleBack,
+        actions: isEditing
+            ? [
+                if (canDelete)
                   AppBarAction(
-                    icon: Icons.edit_outlined,
-                    tooltip: l.commonEdit,
-                    onPressed: _enterEditMode,
+                    icon: AppIcons.delete,
+                    tooltip: l.categoryDelete,
+                    destructive: true,
+                    enabled: !isSaving,
+                    onPressed: _delete,
                   ),
-                ],
-        ),
-        body: BlocBuilder<CategoriesCubit, CategoriesState>(
-          builder: (context, state) {
-            final all = state.categories;
-            return Form(
-              key: _formKey,
-              child: _buildBody(l, all, _editMode),
-            );
-          },
-        ),
-        // View mode: the shell's bottom nav + FAB show through. Edit mode:
-        // the shell hides them (ShellChrome) and this action bar takes over.
-        bottomNavigationBar: _editMode
-            ? ModeActionBar(
-                canUndo: _canUndo && !_saving,
-                canSave: _dirty && !_saving,
-                saving: _saving,
-                cancelLabel: l.commonCancel,
-                saveLabel: l.commonSave,
-                undoTooltip: l.categoriesUndo,
-                onCancel: _cancel,
-                onUndo: _undo,
-                onSave: _save,
-              )
-            : null,
+              ]
+            : [
+                AppBarAction(
+                  icon: AppIcons.edit,
+                  tooltip: l.commonEdit,
+                  onPressed: enterEdit,
+                ),
+              ],
       ),
-    );
+      body: BlocBuilder<CategoriesCubit, CategoriesState>(
+        builder: (context, state) => Form(
+          key: _formKey,
+          child: _body(l, state.categories),
+        ),
+      ),
+      bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+    ));
   }
 
-  String _titleFor(AppLocalizations l) {
+  String _title(AppLocalizations l) {
     if (widget.isCreate) return l.categoryFormTitleNew;
-    if (_editMode) return l.categoryFormTitleEdit;
-    return _working.name.isEmpty ? l.categoriesTitle : _working.name;
+    if (isEditing) return l.categoryFormTitleEdit;
+    return working.name.isEmpty ? l.categoriesTitle : working.name;
   }
 
-  /// One layout for both modes — a grouped card of aligned rows (label left,
-  /// value right; long text full-width under its label). Fields keep the
-  /// same box in view + edit, only toggling border + editability.
-  Widget _buildBody(AppLocalizations l, List<Category> all, bool editing) {
+  Widget _body(AppLocalizations l, List<Category> all) {
+    final editing = isEditing;
+    final preview = _previewCategory();
+    final breadcrumb = _parentBreadcrumb(all);
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.huge,
-      ),
+          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
       children: [
-        // Header card (icon + name + breadcrumb). View mode: long-press
-        // the icon → edit + maker, long-press the name → edit + focus.
-        // Edit mode: tap the icon → maker, name is an inline field.
-        _HeaderCard(
-          category: _previewCategory(),
-          parentPath: _parentBreadcrumb(all),
+        _Header(
+          category: preview,
+          parentPath: breadcrumb,
           editing: editing,
-          nameController: _nameController,
-          nameFocus: _nameFocus,
+          nameField: InlineTitleField(
+            editing: editing,
+            controller: _nameController,
+            focusNode: _nameFocus,
+            hint: l.categoryFormNameLabel,
+            onEnterEdit: () => enterEdit(focus: _nameFocus),
+            onChanged: (v) => _onText(_TextField.name, v),
+            validator: (v) => _validateName(v, all),
+          ),
           onIconTap: _openIconMaker,
           onIconLongPress: _enterEditThenOpenMaker,
-          onNameLongPress: () => _enterEditModeAndFocus(_nameFocus),
-          onNameChanged: (v) => _onTextChanged(_TextField.name, v),
-          nameValidator: (v) => _validateName(v, all),
         ),
         const SizedBox(height: AppSpacing.lg),
-        _SectionCard(
+        SectionCard(
           children: [
-            // Type — immutable on an existing category (spec §3.4);
-            // selectable only while creating.
-            _DetailRow(
+            // Type is immutable once created (spec §3.4).
+            DetailRow(
               label: l.categoryFormTypeLabel,
-              helper:
-                  widget.isCreate ? null : l.categoryFormTypeImmutableHelper,
-              trailing: _typeTrailing(l),
+              helper: widget.isCreate ? null : l.categoryFormTypeImmutableHelper,
+              trailing: _typeTrailing(),
             ),
-            const _RowDivider(),
-            _DetailRow(
+            const RowDivider(),
+            DetailRow(
               label: l.categoryFormParentLabel,
-              trailing: _parentTrailing(l, all),
+              trailing: _ParentBox(
+                breadcrumb: breadcrumb,
+                iconCode: working.parentId == null
+                    ? null
+                    : context
+                        .read<CategoriesCubit>()
+                        .byId(working.parentId!)
+                        ?.iconCode,
+                noneLabel: l.categoryFormParentNone,
+                onTap: () => _openParentPicker(all),
+              ),
             ),
-            const _RowDivider(),
-            _DetailStacked(
+            const RowDivider(),
+            DetailStacked(
               label: l.categoryFormDescriptionLabel,
-              child: _InlineField(
+              child: InlineField(
                 editing: editing,
                 controller: _descriptionController,
                 focusNode: _descriptionFocus,
                 maxLines: 3,
-                onEnterEdit: () =>
-                    _enterEditModeAndFocus(_descriptionFocus),
-                onChanged: (v) => _onTextChanged(_TextField.description, v),
+                onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+                onChanged: (v) => _onText(_TextField.description, v),
                 validator: (v) => (v != null && v.length > 200)
                     ? l.categoryFormDescriptionTooLong
                     : null,
               ),
             ),
-            const _RowDivider(),
-            _DetailStacked(
+            const RowDivider(),
+            DetailStacked(
               label: l.categoryFormNoteLabel,
-              child: _InlineField(
+              child: InlineField(
                 editing: editing,
                 controller: _noteController,
                 focusNode: _noteFocus,
                 maxLines: 2,
-                onEnterEdit: () => _enterEditModeAndFocus(_noteFocus),
-                onChanged: (v) => _onTextChanged(_TextField.note, v),
-                validator: (v) => (v != null && v.length > 200)
-                    ? l.categoryFormNoteTooLong
-                    : null,
+                onEnterEdit: () => enterEdit(focus: _noteFocus),
+                onChanged: (v) => _onText(_TextField.note, v),
+                validator: (v) =>
+                    (v != null && v.length > 200) ? l.categoryFormNoteTooLong : null,
               ),
             ),
-            const _RowDivider(),
-            // Include-in-report — live switch in both modes: toggling
-            // auto-enters edit mode.
-            _DetailRow(
+            const RowDivider(),
+            DetailRow(
               label: l.categoryFormIncludeInReportLabel,
               helper: l.categoryFormIncludeInReportHelper,
               trailing: Switch(
-                value: _working.includeInReport,
+                value: working.includeInReport,
                 onChanged: (v) =>
-                    _applyDiscrete(_working.copyWith(includeInReport: v)),
+                    applyChange(working.copyWith(includeInReport: v)),
               ),
             ),
           ],
@@ -646,8 +490,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     if (name.length > 100) return l.categoryFormNameTooLong;
     if (CategoryTree.hasSiblingWithName(
       name: name,
-      parentId: _working.parentId,
-      type: _working.type,
+      parentId: working.parentId,
+      type: working.type,
       all: all,
       excludeId: _persisted?.id,
     )) {
@@ -656,449 +500,89 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
     return null;
   }
 
-  Widget _typeTrailing(AppLocalizations l) {
-    final isIncome = _working.type == CategoryType.income;
-    if (widget.isCreate) {
-      // Selectable: two pills; the unselected one is dimmed.
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _TypePill(
-            isIncome: false,
-            selected: !isIncome,
-            onTap: () => _applyDiscrete(
-              _working.copyWith(type: CategoryType.expense, clearParent: true),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          _TypePill(
-            isIncome: true,
-            selected: isIncome,
-            onTap: () => _applyDiscrete(
-              _working.copyWith(type: CategoryType.income, clearParent: true),
-            ),
-          ),
-        ],
-      );
-    }
-    // Existing: read-only indicator (type is immutable).
-    return TypeIndicator(isIncome: isIncome);
-  }
-
-  Widget _parentTrailing(AppLocalizations l, List<Category> all) {
-    final cat = _working.parentId == null
-        ? null
-        : context.read<CategoriesCubit>().byId(_working.parentId!);
-    return _ParentBox(
-      breadcrumb: _parentBreadcrumb(all),
-      iconCode: cat?.iconCode,
-      isNone: _working.parentId == null,
-      noneLabel: l.categoryFormParentNone,
-      onTap: () => _openParentPicker(all),
-    );
-  }
-
-  Future<void> _openParentPicker(List<Category> all) async {
-    final l = AppLocalizations.of(context)!;
-    final cubit = context.read<CategoriesCubit>();
-    final selectedParent =
-        _working.parentId == null ? null : cubit.byId(_working.parentId!);
-    // Can't parent into yourself or your own subtree (would cycle).
-    final exclude = _persisted == null
-        ? const <String>{}
-        : CategoryReorderLogic.subtreeIds(_persisted!.id, all).toSet();
-    final result = await showCategoryPickerSheet(
-      context: context,
-      categories: all,
-      type: _working.type,
-      selected: selectedParent,
-      allowNone: true,
-      noneLabel: l.categoryFormParentNone,
-      title: l.categoryFormParentLabel,
-      maxDepth: 1, // L1 + L2 only — a child of this stays within 3 levels
-      excludeIds: exclude,
-    );
-    if (!mounted || result == null) return;
-    if (result is CategoryPickerSelected) {
-      _applyDiscrete(_working.copyWith(parentId: result.category.id));
-    } else if (result is CategoryPickerCleared) {
-      _applyDiscrete(_working.copyWith(clearParent: true));
-    }
-  }
-
-  Future<bool> _confirmDiscard(BuildContext context, AppLocalizations l) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.categoryFormDiscardTitle),
-        content: Text(l.categoryFormDiscardBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(l.commonRemove),
-          ),
-        ],
-      ),
-    );
-    return ok ?? false;
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Field border — same shape always; only the colour changes between
-// modes so the box keeps its exact size (no reflow view↔edit).
-// ────────────────────────────────────────────────────────────────────
-
-UnderlineInputBorder _underlineBorder(Color color) =>
-    UnderlineInputBorder(borderSide: BorderSide(color: color));
-
-OutlineInputBorder _fieldBorder(Color color) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: BorderSide(color: color),
-    );
-
-/// A text field that reads as plain text in view mode (transparent
-/// underline, read-only) and as an editable field in edit mode — same
-/// metrics either way, so the row never shifts. The label is supplied by
-/// the enclosing [_DetailStacked] row.
-class _InlineField extends StatelessWidget {
-  const _InlineField({
-    required this.editing,
-    required this.controller,
-    required this.focusNode,
-    required this.onEnterEdit,
-    required this.onChanged,
-    this.validator,
-    this.maxLines = 1,
-  });
-
-  final bool editing;
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final VoidCallback onEnterEdit;
-  final ValueChanged<String> onChanged;
-  final FormFieldValidator<String>? validator;
-  final int maxLines;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final field = TextFormField(
-      controller: controller,
-      focusNode: focusNode,
-      readOnly: !editing,
-      maxLines: maxLines,
-      maxLength: 200,
-      style: Theme.of(context).textTheme.bodyLarge,
-      onChanged: onChanged,
-      validator: validator,
-      decoration: InputDecoration(
-        // Empty + view mode → a friendly "long-press to edit" hint instead
-        // of a blank line (spec item 9).
-        hintText: editing
-            ? null
-            : AppLocalizations.of(context)!.commonLongPressToEdit,
-        hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
-        filled: false,
-        isDense: true,
-        counterText: '',
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        enabledBorder:
-            _fieldBorder(editing ? scheme.outline : Colors.transparent),
-        focusedBorder: _fieldBorder(scheme.primary),
-        border: _fieldBorder(editing ? scheme.outline : Colors.transparent),
-      ),
-    );
-    if (editing) return field;
-    // View mode: block field interaction; long-press enters edit + focus.
-    return GestureDetector(
-      onLongPress: onEnterEdit,
-      behavior: HitTestBehavior.opaque,
-      child: AbsorbPointer(child: field),
-    );
-  }
-}
-
-/// Groups the detail rows with hairline dividers — no outer frame, the
-/// fields just sit tidily on the page, separated by lines.
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children,
-    );
-  }
-}
-
-/// A row: label (left) + value/control (right), with an optional helper
-/// line under it.
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({
-    required this.label,
-    required this.trailing,
-    this.helper,
-  });
-
-  final String label;
-  final Widget trailing;
-  final String? helper;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
-      ),
-      // Value is vertically centred against the whole label+helper block.
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: scheme.onSurface,
-                      ),
-                ),
-                if (helper != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    helper!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Flexible(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: trailing,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A row for long values: label on top, value full-width below.
-class _DetailStacked extends StatelessWidget {
-  const _DetailStacked({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: scheme.onSurface,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-/// Hairline divider between detail rows.
-class _RowDivider extends StatelessWidget {
-  const _RowDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      indent: AppSpacing.lg,
-      endIndent: AppSpacing.lg,
-      color: Theme.of(context).colorScheme.outlineVariant,
+  Widget _typeTrailing() {
+    final isIncome = working.type == CategoryType.income;
+    if (!widget.isCreate) return TypeIndicator(isIncome: isIncome);
+    Widget pill(CategoryType t) => _TypePill(
+          isIncome: t == CategoryType.income,
+          selected: working.type == t,
+          onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
+        );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        pill(CategoryType.expense),
+        const SizedBox(width: AppSpacing.sm),
+        pill(CategoryType.income),
+      ],
     );
   }
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Header card (icon + name + breadcrumb) — the original bordered-card
-// look. Name shows as text in view mode and becomes an inline field in
-// edit mode; the icon opens the maker. View-mode long-press on the icon
-// or name enters edit mode.
+// Header — kit HeaderCard with the category's accent border. View mode:
+// long-press the icon → edit + maker. Edit mode: tap the icon → maker.
 // ────────────────────────────────────────────────────────────────────
 
-class _HeaderCard extends StatelessWidget {
-  const _HeaderCard({
+class _Header extends StatelessWidget {
+  const _Header({
     required this.category,
     required this.parentPath,
     required this.editing,
-    required this.nameController,
-    required this.nameFocus,
+    required this.nameField,
     required this.onIconTap,
     required this.onIconLongPress,
-    required this.onNameLongPress,
-    required this.onNameChanged,
-    required this.nameValidator,
   });
 
   final Category category;
   final String? parentPath;
   final bool editing;
-  final TextEditingController nameController;
-  final FocusNode nameFocus;
+  final Widget nameField;
   final VoidCallback onIconTap;
   final VoidCallback onIconLongPress;
-  final VoidCallback onNameLongPress;
-  final ValueChanged<String> onNameChanged;
-  final FormFieldValidator<String> nameValidator;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent =
-        category.iconCode?.accentColorFor(palette) ?? palette.primary;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      color: scheme.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: accent, width: 1.5),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
-          children: [
-            // EditableCircle keeps a constant 44×44 footprint whether or
-            // not onTap is set, so the name column never shifts. View mode:
-            // long-press → edit + maker. Edit mode: tap → maker (pencil).
-            GestureDetector(
-              onLongPress: editing ? null : onIconLongPress,
-              child: EditableCircle(
-                size: 44,
-                onTap: editing ? onIconTap : null,
-                child: IconDisplay(
-                  type: IconType.category,
-                  size: 44,
-                  iconCode: category.iconCode,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Same field widget in both modes → identical height, so
-                  // the card never grows when entering edit. View mode just
-                  // hides the underline + blocks input (long-press enters).
-                  Builder(builder: (context) {
-                    final nameField = TextFormField(
-                      controller: nameController,
-                      focusNode: nameFocus,
-                      readOnly: !editing,
-                      maxLength: 100,
-                      style: Theme.of(context).textTheme.titleMedium,
-                      decoration: InputDecoration(
-                        filled: false,
-                        isDense: true,
-                        counterText: '',
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 4),
-                        hintText: l.categoryFormNameLabel,
-                        enabledBorder: _underlineBorder(
-                            editing ? scheme.outline : Colors.transparent),
-                        focusedBorder: _underlineBorder(scheme.primary),
-                        border: _underlineBorder(
-                            editing ? scheme.outline : Colors.transparent),
-                      ),
-                      onChanged: onNameChanged,
-                      validator: nameValidator,
-                    );
-                    if (editing) return nameField;
-                    return GestureDetector(
-                      onLongPress: onNameLongPress,
-                      behavior: HitTestBehavior.opaque,
-                      child: AbsorbPointer(child: nameField),
-                    );
-                  }),
-                  if (parentPath != null && parentPath!.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      parentPath!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
-                    ),
-                  ],
-                  if (!category.includeInReport) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      l.categoryHiddenFromReport,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+    final hasPath = parentPath != null && parentPath!.isNotEmpty;
+    return HeaderCard(
+      accent: category.iconCode?.accentColorFor(palette) ?? palette.primary,
+      // EditableCircle keeps a constant footprint with or without onTap,
+      // so the name column never shifts between modes.
+      leading: GestureDetector(
+        onLongPress: editing ? null : onIconLongPress,
+        child: EditableCircle(
+          size: 44,
+          onTap: editing ? onIconTap : null,
+          child: IconDisplay(
+            type: IconType.category,
+            size: 44,
+            iconCode: category.iconCode,
+          ),
         ),
       ),
+      title: nameField,
+      subtitle: hasPath || !category.includeInReport
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasPath)
+                  Text(parentPath!,
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                if (!category.includeInReport)
+                  Text(
+                    l.categoryHiddenFromReport,
+                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  ),
+              ],
+            )
+          : null,
     );
   }
 }
 
-// ────────────────────────────────────────────────────────────────────
-// Type + parent controls.
-// ────────────────────────────────────────────────────────────────────
-
-/// Tappable income/expense choice (create mode). The unselected one dims;
-/// the selected one shows at full strength.
+/// Income/expense choice while creating; the unselected one dims.
 class _TypePill extends StatelessWidget {
   const _TypePill({
     required this.isIncome,
@@ -1123,34 +607,30 @@ class _TypePill extends StatelessWidget {
   }
 }
 
-/// Chip showing the current parent (icon + breadcrumb) or the "none"
-/// label; tapping opens the shared category picker.
+/// Current parent (icon + breadcrumb) or "none"; opens the category picker.
 class _ParentBox extends StatelessWidget {
   const _ParentBox({
     required this.breadcrumb,
     required this.iconCode,
-    required this.isNone,
     required this.noneLabel,
     required this.onTap,
   });
 
   final String? breadcrumb;
   final IconCode? iconCode;
-  final bool isNone;
   final String noneLabel;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isNone = breadcrumb == null;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
+            horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
           border: Border.all(color: scheme.outline),
           borderRadius: BorderRadius.circular(10),
@@ -1159,23 +639,19 @@ class _ParentBox extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!isNone && iconCode != null) ...[
-              IconDisplay(
-                type: IconType.category,
-                size: 20,
-                iconCode: iconCode,
-              ),
+              IconDisplay(type: IconType.category, size: 20, iconCode: iconCode),
               const SizedBox(width: AppSpacing.sm),
             ],
             Flexible(
               child: Text(
-                isNone ? noneLabel : (breadcrumb ?? noneLabel),
+                breadcrumb ?? noneLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
             const SizedBox(width: AppSpacing.xs),
-            Icon(Icons.unfold_more, size: 18, color: scheme.onSurfaceVariant),
+            Icon(AppIcons.dropdown, size: 20, color: scheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -1216,6 +692,13 @@ class _CategoryDraft {
         includeInReport: c.includeInReport,
       );
 
+  /// What the server stores (text trimmed) — the post-save baseline.
+  _CategoryDraft trimmed() => copyWith(
+        name: name.trim(),
+        description: description.trim(),
+        note: note.trim(),
+      );
+
   _CategoryDraft copyWith({
     String? name,
     CategoryType? type,
@@ -1250,12 +733,5 @@ class _CategoryDraft {
 
   @override
   int get hashCode => Object.hash(
-        name,
-        type,
-        parentId,
-        iconCode,
-        description,
-        note,
-        includeInReport,
-      );
+      name, type, parentId, iconCode, description, note, includeInReport);
 }

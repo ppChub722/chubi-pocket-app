@@ -73,6 +73,19 @@ class AccountsRepository {
     }
   }
 
+  /// Un-archive — `PUT /v1/accounts/:id` with `status: active`.
+  Future<Account> restore(String id) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/accounts/$id',
+        data: const {'status': 'active'},
+      );
+      return Account.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   /// `POST /v1/accounts/:id/adjust-balance` — spec §2.5. Server creates
   /// an Adjustment transaction whose delta brings the account's cached
   /// balance to [newBalance]. Returns both the updated account and the

@@ -60,6 +60,50 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonUndo => 'เลิกทำ';
 
   @override
+  String get commonDiscard => 'ทิ้ง';
+
+  @override
+  String get commonDiscardTitle => 'ทิ้งการแก้ไข?';
+
+  @override
+  String get commonDiscardBody => 'การแก้ไขที่ยังไม่บันทึกจะหายไป';
+
+  @override
+  String get commonCurrency => 'สกุลเงิน';
+
+  @override
+  String get currencyNameTHB => 'บาท';
+
+  @override
+  String get currencyNameUSD => 'ดอลลาร์สหรัฐ';
+
+  @override
+  String get currencyNameEUR => 'ยูโร';
+
+  @override
+  String get currencyNameGBP => 'ปอนด์สเตอร์ลิง';
+
+  @override
+  String get currencyNameJPY => 'เยน';
+
+  @override
+  String get contactPickerTitle => 'กับใคร';
+
+  @override
+  String get contactPickerSearchHint => 'ค้นหาผู้ติดต่อ หรือพิมพ์ชื่อ';
+
+  @override
+  String contactPickerUseName(String name) {
+    return 'ใช้ชื่อ \"$name\"';
+  }
+
+  @override
+  String get contactPickerUseNameHint => 'ไม่บันทึกเป็นผู้ติดต่อ';
+
+  @override
+  String get contactPickerEmpty => 'ยังไม่มีผู้ติดต่อ — พิมพ์ชื่อด้านบนได้เลย';
+
+  @override
   String get commonShowAmounts => 'แสดงยอดเงิน';
 
   @override
@@ -668,6 +712,1209 @@ class AppLocalizationsTh extends AppLocalizations {
       'คนที่คุณเพิ่มจะแสดงที่นี่ — เชื่อมเพื่อแชร์รายการและหนี้สินกันได้';
 
   @override
+  String get contactsSearchHint => 'ค้นหาชื่อ อีเมล หรือเบอร์';
+
+  @override
+  String get contactsStatusLabel => 'สถานะ';
+
+  @override
+  String get contactsNoMatch => 'ไม่พบผู้ติดต่อที่ค้นหา';
+
+  @override
+  String get contactTitleNew => 'ผู้ติดต่อใหม่';
+
+  @override
+  String get contactTitleEdit => 'แก้ไขผู้ติดต่อ';
+
+  @override
+  String get contactNotFound => 'ไม่พบผู้ติดต่อ';
+
+  @override
+  String get contactNameLabel => 'ชื่อ';
+
+  @override
+  String get contactNameRequired => 'ต้องใส่ชื่อ';
+
+  @override
+  String get contactNameTooLong => 'ไม่เกิน 100 ตัวอักษร';
+
+  @override
+  String get contactEmailLabel => 'อีเมล';
+
+  @override
+  String get contactEmailInvalid => 'อีเมลไม่ถูกต้อง';
+
+  @override
+  String get contactPhoneLabel => 'เบอร์โทร';
+
+  @override
+  String get contactNotesLabel => 'บันทึก';
+
+  @override
+  String get contactLinkedBadge => 'เชื่อมกับบัญชีผู้ใช้';
+
+  @override
+  String get contactLinkedLockedHint => 'ชื่อและอีเมลมาจากบัญชีของเขา';
+
+  @override
+  String get contactArchivedBadge => 'เก็บถาวร';
+
+  @override
+  String get contactSectionActions => 'การจัดการ';
+
+  @override
+  String get contactLinkTitle => 'เชื่อมบัญชี';
+
+  @override
+  String get contactLinkLinked =>
+      'เชื่อมแล้ว — ชื่อ อีเมล และไอคอนตามบัญชีของเขา';
+
+  @override
+  String get contactLinkRequest => 'ส่งคำขอเชื่อม';
+
+  @override
+  String get contactLinkRequestHint =>
+      'ถ้าอีเมลนี้เป็นของผู้ใช้ในแอป เขาจะได้รับคำขอ';
+
+  @override
+  String get contactLinkNeedsEmail => 'ใส่อีเมลก่อนเพื่อส่งคำขอเชื่อม';
+
+  @override
+  String get contactLinkRequested => 'ส่งคำขอเชื่อมแล้ว';
+
+  @override
+  String get contactUnlink => 'ยกเลิกการเชื่อม';
+
+  @override
+  String contactUnlinkTitle(String name) {
+    return 'ยกเลิกการเชื่อมกับ $name?';
+  }
+
+  @override
+  String get contactUnlinkBody =>
+      'ผู้ติดต่อจะกลับไปใช้ชื่อและอีเมลที่คุณบันทึกไว้เอง';
+
+  @override
+  String get contactUnlinked => 'ยกเลิกการเชื่อมแล้ว';
+
+  @override
+  String get contactWireTitle => 'จับคู่ชื่อในรายการหาร';
+
+  @override
+  String contactWireHint(int names, int splits) {
+    return '$names ชื่อ · $splits รายการ ที่ยังไม่ผูกผู้ติดต่อ';
+  }
+
+  @override
+  String get contactWireNone => 'ไม่มีชื่อที่ยังไม่ผูก';
+
+  @override
+  String contactWireSheetTitle(String name) {
+    return 'ผูกชื่อกับ $name';
+  }
+
+  @override
+  String get contactWireSheetBody =>
+      'เลือกชื่อที่พิมพ์ไว้ในรายการหารที่เป็นคนนี้ — หนี้ที่ใช้ชื่อนั้นจะผูกกับผู้ติดต่อนี้';
+
+  @override
+  String get contactWireSearch => 'ค้นหาชื่อ';
+
+  @override
+  String contactWireCount(int count) {
+    return '$count รายการ';
+  }
+
+  @override
+  String contactWireSave(int count) {
+    return 'ผูก $count ชื่อ';
+  }
+
+  @override
+  String contactWireDone(int count, String name) {
+    return 'ผูก $count รายการกับ $name แล้ว';
+  }
+
+  @override
+  String get contactArchive => 'เก็บถาวร';
+
+  @override
+  String get contactArchiveHint => 'ซ่อนจากตัวเลือก ข้อมูลเดิมยังอยู่';
+
+  @override
+  String get contactRestore => 'กู้คืน';
+
+  @override
+  String get contactDebts => 'หนี้กับคนนี้';
+
+  @override
+  String contactDeleteTitle(String name) {
+    return 'ลบ $name?';
+  }
+
+  @override
+  String get contactDeleteBody =>
+      'รายการหารและหนี้ที่อ้างถึงคนนี้จะเก็บชื่อไว้เป็นข้อความแทน';
+
+  @override
+  String contactDeleted(String name) {
+    return 'ลบ $name แล้ว';
+  }
+
+  @override
+  String get contactLinkCreateTitle => 'เพิ่มผู้ติดต่อที่เชื่อมบัญชี';
+
+  @override
+  String get contactLinkExistingTitle => 'เชื่อมผู้ติดต่อ';
+
+  @override
+  String get contactLinkSave => 'เชื่อมและบันทึก';
+
+  @override
+  String contactLinkBannerNew(String name) {
+    return 'บันทึกแล้วจะสร้างผู้ติดต่อใหม่ที่เชื่อมกับ $name';
+  }
+
+  @override
+  String contactLinkBannerExisting(String name) {
+    return 'บันทึกแล้วจะเชื่อมผู้ติดต่อนี้กับ $name';
+  }
+
+  @override
+  String get debtsNet => 'สุทธิ';
+
+  @override
+  String get debtsOwedToMe => 'ติดคุณ';
+
+  @override
+  String get debtsIOwe => 'คุณติด';
+
+  @override
+  String get debtsEven => 'เคลียร์แล้ว';
+
+  @override
+  String get debtsSearchHint => 'ค้นหาชื่อ';
+
+  @override
+  String get debtsStatusLabel => 'สถานะ';
+
+  @override
+  String get debtsStatusOpen => 'ค้างอยู่';
+
+  @override
+  String get debtsStatusAll => 'ทั้งหมด';
+
+  @override
+  String debtsOpenCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ค้าง $count รายการ',
+      zero: 'ไม่มีค้าง',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get debtsEmptyTitle => 'ยังไม่มีหนี้';
+
+  @override
+  String get debtsEmptyMessage =>
+      'บันทึกว่าใครติดเงินคุณ หรือคุณติดเงินใคร — หรือหารบิลจากรายการ';
+
+  @override
+  String get debtsNoMatch => 'ไม่พบคนที่ค้นหา';
+
+  @override
+  String get debtsAddNew => 'บันทึกหนี้';
+
+  @override
+  String debtsPersonHistory(int count) {
+    return 'ประวัติ ($count)';
+  }
+
+  @override
+  String get debtsPersonAdd => 'บันทึกหนี้กับคนนี้';
+
+  @override
+  String get debtsPersonLinkContact => 'ผูกกับผู้ติดต่อ';
+
+  @override
+  String get debtsPersonLinkContactHint => 'รวมหนี้ของชื่อนี้เข้ากับผู้ติดต่อ';
+
+  @override
+  String debtsPersonLinked(int count, String name) {
+    return 'ผูก $count รายการกับ $name แล้ว';
+  }
+
+  @override
+  String get debtsPersonOpenContact => 'ดูผู้ติดต่อ';
+
+  @override
+  String debtTheyOweYou(String name) {
+    return '$name ติดคุณ';
+  }
+
+  @override
+  String debtYouOwe(String name) {
+    return 'คุณติด $name';
+  }
+
+  @override
+  String get debtStatusSettled => 'คืนครบแล้ว';
+
+  @override
+  String get debtStatusCancelled => 'ยกเลิก';
+
+  @override
+  String get debtOutstanding => 'คงค้าง';
+
+  @override
+  String debtProgress(String paid, String total) {
+    return 'คืนแล้ว $paid จาก $total';
+  }
+
+  @override
+  String get debtReceive => 'รับเงินคืน';
+
+  @override
+  String get debtPay => 'จ่ายคืน';
+
+  @override
+  String get debtAmount => 'ยอดเต็ม';
+
+  @override
+  String get debtSettled => 'คืนแล้ว';
+
+  @override
+  String get debtSource => 'ที่มา';
+
+  @override
+  String get debtSourceManual => 'บันทึกเอง';
+
+  @override
+  String get debtSourceTransaction => 'หารบิลจากรายการ';
+
+  @override
+  String get debtSourceProject => 'โปรเจกต์';
+
+  @override
+  String get debtNote => 'บันทึก';
+
+  @override
+  String get debtCreatedAt => 'วันที่สร้าง';
+
+  @override
+  String get debtCounterparty => 'กับใคร';
+
+  @override
+  String get debtCounterpartyPlaceholder => 'เลือกผู้ติดต่อ หรือพิมพ์ชื่อ';
+
+  @override
+  String get debtCounterpartyRequired => 'เลือกหรือพิมพ์ชื่อ';
+
+  @override
+  String get debtCancel => 'ยกเลิกหนี้นี้';
+
+  @override
+  String get debtCancelTitle => 'ยกเลิกหนี้นี้?';
+
+  @override
+  String get debtCancelBody =>
+      'ไม่มีเงินเคลื่อนไหว ใช้ตอนยกหนี้ให้ หรือบันทึกผิด';
+
+  @override
+  String get debtCancelled => 'ยกเลิกหนี้แล้ว';
+
+  @override
+  String get debtDeleteTitle => 'ลบหนี้นี้?';
+
+  @override
+  String get debtDeleteBody => 'ลบถาวร ย้อนกลับไม่ได้';
+
+  @override
+  String get debtDeleted => 'ลบหนี้แล้ว';
+
+  @override
+  String get debtNotFound => 'ไม่พบหนี้นี้';
+
+  @override
+  String get debtNewTitle => 'บันทึกหนี้';
+
+  @override
+  String get debtEditTitle => 'แก้ไขหนี้';
+
+  @override
+  String get debtDirectionOwedToMe => 'เขาติดฉัน';
+
+  @override
+  String get debtDirectionOwedToMeDesc => 'ฉันให้ยืม หรือออกเงินแทนเขา';
+
+  @override
+  String get debtDirectionIOwe => 'ฉันติดเขา';
+
+  @override
+  String get debtDirectionIOweDesc => 'ฉันยืมมา หรือเขาออกให้ก่อน';
+
+  @override
+  String get debtAmountRequired => 'ใส่ยอดมากกว่า 0';
+
+  @override
+  String debtAmountBelowSettled(String amount) {
+    return 'ต้องไม่น้อยกว่ายอดที่คืนแล้ว ($amount)';
+  }
+
+  @override
+  String debtSettleTitleReceive(String name) {
+    return 'รับเงินคืนจาก $name';
+  }
+
+  @override
+  String debtSettleTitlePay(String name) {
+    return 'จ่ายคืน $name';
+  }
+
+  @override
+  String get debtSettleAll => 'ทั้งหมด';
+
+  @override
+  String get debtSettleHalf => 'ครึ่งหนึ่ง';
+
+  @override
+  String debtSettleOver(String amount) {
+    return 'เกินยอดคงค้าง ($amount)';
+  }
+
+  @override
+  String get debtSettleRecordTx => 'บันทึกเป็นรายการในกระเป๋า';
+
+  @override
+  String get debtSettleRecordTxHint => 'สร้างรายรับ/รายจ่าย และปรับยอดกระเป๋า';
+
+  @override
+  String get debtSettleNoTxHint => 'ลดยอดคงค้างอย่างเดียว ไม่สร้างรายการ';
+
+  @override
+  String get debtSettleAccount => 'กระเป๋า';
+
+  @override
+  String get debtSettleAccountRequired => 'เลือกกระเป๋า';
+
+  @override
+  String get debtSettleDate => 'วันที่';
+
+  @override
+  String get debtSettleConfirm => 'ยืนยัน';
+
+  @override
+  String get debtSettleDone => 'บันทึกการคืนเงินแล้ว';
+
+  @override
+  String get projectStatusActive => 'กำลังดำเนินการ';
+
+  @override
+  String get projectStatusCompleted => 'เสร็จสิ้น';
+
+  @override
+  String get projectStatusCancelled => 'ยกเลิก';
+
+  @override
+  String get projectStatusArchived => 'เก็บถาวร';
+
+  @override
+  String get projectsStatusAll => 'ทั้งหมด';
+
+  @override
+  String get projectsStatusLabel => 'สถานะ';
+
+  @override
+  String get projectsSearchHint => 'ค้นหาโปรเจกต์';
+
+  @override
+  String get projectsSortRecent => 'ล่าสุด';
+
+  @override
+  String get projectsSortName => 'ชื่อ';
+
+  @override
+  String get projectsEmptyTitle => 'ยังไม่มีโปรเจกต์';
+
+  @override
+  String get projectsEmptyMessage =>
+      'รวมรายจ่ายของทริปหรืองานไว้ที่เดียว แล้วเคลียร์ยอดกับเพื่อนตอนจบ';
+
+  @override
+  String get projectsNoMatch => 'ไม่พบโปรเจกต์ที่ค้นหา';
+
+  @override
+  String projectsMembersCount(int count) {
+    return '$count สมาชิก';
+  }
+
+  @override
+  String get projectTabDashboard => 'แดชบอร์ด';
+
+  @override
+  String get projectTabTransactions => 'รายการ';
+
+  @override
+  String get projectTabResolve => 'เคลียร์ยอด';
+
+  @override
+  String get projectAddTransaction => 'เพิ่มรายการ';
+
+  @override
+  String get projectNewTitle => 'โปรเจกต์ใหม่';
+
+  @override
+  String get projectEditTitle => 'แก้ไขโปรเจกต์';
+
+  @override
+  String get projectNameLabel => 'ชื่อโปรเจกต์';
+
+  @override
+  String get projectNameRequired => 'ต้องใส่ชื่อ';
+
+  @override
+  String get projectTypeLabel => 'ประเภท';
+
+  @override
+  String get projectTypeHint => 'เช่น ทริป งานฟรีแลนซ์';
+
+  @override
+  String get projectDescriptionLabel => 'รายละเอียด';
+
+  @override
+  String get projectIconLabel => 'ไอคอนโปรเจกต์';
+
+  @override
+  String get projectStatusChangeTitle => 'เปลี่ยนสถานะ';
+
+  @override
+  String projectStatusLockTitle(String status) {
+    return 'เปลี่ยนเป็น $status?';
+  }
+
+  @override
+  String get projectStatusLockBody =>
+      'โปรเจกต์จะถูกล็อก — เพิ่มหรือแก้รายการไม่ได้จนกว่าจะเปิดอีกครั้ง';
+
+  @override
+  String projectStatusChanged(String status) {
+    return 'เปลี่ยนสถานะเป็น $status แล้ว';
+  }
+
+  @override
+  String get projectLockedCompleted => 'เสร็จสิ้นแล้ว — เพิ่มรายการไม่ได้';
+
+  @override
+  String get projectLockedCancelled =>
+      'ยกเลิกแล้ว — เพิ่ม แก้ หรือลบรายการไม่ได้';
+
+  @override
+  String get projectLockedArchived => 'เก็บถาวรแล้ว — อ่านอย่างเดียว';
+
+  @override
+  String projectDeleteTitle(String name) {
+    return 'ลบ $name?';
+  }
+
+  @override
+  String get projectDeleteBody =>
+      'ลบได้เฉพาะโปรเจกต์ที่ยังไม่มีรายการ · ถ้ามีรายการแล้ว ให้เปลี่ยนสถานะเป็นเก็บถาวรแทน';
+
+  @override
+  String get projectDeleted => 'ลบโปรเจกต์แล้ว';
+
+  @override
+  String get projectDashTotalExpense => 'รายจ่ายรวม';
+
+  @override
+  String get projectDashTotalIncome => 'รายรับรวม';
+
+  @override
+  String get projectDashMembers => 'สมาชิก';
+
+  @override
+  String get projectDashWhoPaid => 'ใครจ่ายเท่าไร';
+
+  @override
+  String get projectDashTopCategories => 'หมวดที่ใช้มากสุด';
+
+  @override
+  String get projectDashRecent => 'ล่าสุด';
+
+  @override
+  String get projectDashSeeAll => 'ดูทั้งหมด';
+
+  @override
+  String projectDashTxCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count รายการ',
+      zero: 'ยังไม่มีรายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get projectTxSearchHint => 'ค้นหารายการ';
+
+  @override
+  String get projectTxTypeLabel => 'ประเภท';
+
+  @override
+  String get projectTxTypeAll => 'ทั้งหมด';
+
+  @override
+  String get projectTxTypeExpense => 'รายจ่าย';
+
+  @override
+  String get projectTxTypeIncome => 'รายรับ';
+
+  @override
+  String get projectTxOnlyMine => 'เฉพาะฉัน';
+
+  @override
+  String get projectTxSortTime => 'วันที่';
+
+  @override
+  String get projectTxSortAmount => 'ยอด';
+
+  @override
+  String get projectTxSortMember => 'คนจ่าย';
+
+  @override
+  String get projectTxSortCategory => 'หมวด';
+
+  @override
+  String get projectTxEmpty => 'ยังไม่มีรายการในโปรเจกต์';
+
+  @override
+  String get projectTxNoMatch => 'ไม่พบรายการที่ค้นหา';
+
+  @override
+  String projectTxOwes(String name) {
+    return 'ติด $name';
+  }
+
+  @override
+  String get projectTxUnmark => 'ยกเลิกการติ๊ก';
+
+  @override
+  String get projectTxResolve => 'ลงบัญชีส่วนตัว';
+
+  @override
+  String get projectTxResolveHint => 'สร้างรายการหรือหนี้ในบัญชีของคุณ';
+
+  @override
+  String get projectTxEdit => 'แก้ไขรายการ';
+
+  @override
+  String get projectTxDelete => 'ลบรายการ';
+
+  @override
+  String get projectTxDeleteTitle => 'ลบรายการนี้?';
+
+  @override
+  String get projectTxDeleteBody => 'ยอดหารที่ผูกกับรายการนี้จะถูกลบด้วย';
+
+  @override
+  String get projectTxDeleted => 'ลบรายการแล้ว';
+
+  @override
+  String get projectResolveAsTx => 'เป็นรายการ';
+
+  @override
+  String get projectResolveAsDebt => 'เป็นหนี้';
+
+  @override
+  String get projectResolveShareOnly => 'ใช้เฉพาะส่วนของฉัน';
+
+  @override
+  String projectResolveShareHint(String full, String share) {
+    return 'เต็ม $full · ส่วนของฉัน $share';
+  }
+
+  @override
+  String get projectResolveAmount => 'ยอด';
+
+  @override
+  String get projectResolveCategory => 'หมวดหมู่ (ไม่บังคับ)';
+
+  @override
+  String get projectResolveCategoryNone => 'ไม่ระบุหมวด';
+
+  @override
+  String get projectResolveDebtHint => 'ชื่อคนมาจากสมาชิกในโปรเจกต์';
+
+  @override
+  String get projectResolveConfirm => 'ลงบัญชี';
+
+  @override
+  String get projectResolveDone => 'ลงบัญชีแล้ว';
+
+  @override
+  String get projectResolveComingSoon =>
+      'หน้าสรุปการเคลียร์ยอดกำลังมา — ตอนนี้ติ๊กเคลียร์ได้จากแท็บรายการ';
+
+  @override
+  String get projectMembersTitle => 'สมาชิก';
+
+  @override
+  String get projectMembersPending => 'รอตอบรับ';
+
+  @override
+  String get projectMembersLeft => 'ออกแล้ว';
+
+  @override
+  String get projectRoleOwner => 'เจ้าของ';
+
+  @override
+  String get projectRoleMember => 'สมาชิก';
+
+  @override
+  String get projectMemberLinked => 'มีบัญชีในแอป';
+
+  @override
+  String get projectMemberAdHoc => 'ไม่มีบัญชีในแอป';
+
+  @override
+  String get projectMembersInvite => 'เชิญสมาชิก';
+
+  @override
+  String get projectLeave => 'ออกจากโปรเจกต์';
+
+  @override
+  String projectLeaveTitle(String name) {
+    return 'ออกจาก $name?';
+  }
+
+  @override
+  String get projectLeaveBody =>
+      'คุณจะไม่เห็นโปรเจกต์นี้อีก จนกว่าจะได้รับเชิญใหม่';
+
+  @override
+  String get projectLeft => 'ออกจากโปรเจกต์แล้ว';
+
+  @override
+  String get projectMemberRemove => 'นำออกจากโปรเจกต์';
+
+  @override
+  String projectMemberRemoveTitle(String name) {
+    return 'นำ $name ออก?';
+  }
+
+  @override
+  String get projectMemberRemoved => 'นำออกแล้ว';
+
+  @override
+  String get projectMemberTransfer => 'โอนความเป็นเจ้าของ';
+
+  @override
+  String projectMemberTransferTitle(String name) {
+    return 'โอนให้ $name?';
+  }
+
+  @override
+  String projectMemberTransferBody(String name) {
+    return '$name จะเป็นเจ้าของ คุณจะเป็นสมาชิกธรรมดา';
+  }
+
+  @override
+  String get projectMemberTransferred => 'โอนความเป็นเจ้าของแล้ว';
+
+  @override
+  String get projectMemberTransferNeedsAccount =>
+      'โอนได้เฉพาะสมาชิกที่มีบัญชีในแอป';
+
+  @override
+  String get projectAddMemberName => 'ชื่อ';
+
+  @override
+  String get projectAddMemberNameRequired => 'ต้องใส่ชื่อ';
+
+  @override
+  String get projectAddMemberEmail => 'อีเมล (ไม่บังคับ)';
+
+  @override
+  String get projectAddMemberEmailHint =>
+      'ใส่อีเมลเพื่อเชิญผู้ใช้ในแอป · เว้นว่าง = สมาชิกที่ไม่มีบัญชี';
+
+  @override
+  String get projectAddMemberFromContacts => 'เลือกจากผู้ติดต่อ';
+
+  @override
+  String get projectAddMemberSubmit => 'เพิ่ม';
+
+  @override
+  String projectAddMemberAdded(String name) {
+    return 'เพิ่ม $name แล้ว';
+  }
+
+  @override
+  String get projectTxNewTitle => 'เพิ่มรายการโปรเจกต์';
+
+  @override
+  String get projectTxEditTitle => 'แก้ไขรายการ';
+
+  @override
+  String get projectTxPaidBy => 'ใครจ่าย';
+
+  @override
+  String get projectTxReceivedBy => 'ใครรับ';
+
+  @override
+  String get projectTxDescription => 'รายละเอียด';
+
+  @override
+  String get projectTxDescriptionRequired => 'ต้องใส่รายละเอียด';
+
+  @override
+  String get projectTxDate => 'วันที่';
+
+  @override
+  String get projectTxNote => 'บันทึก';
+
+  @override
+  String get projectTxCategory => 'หมวด';
+
+  @override
+  String get projectTxCategoryRequired => 'ตั้งชื่อหมวดและเลือกไอคอน';
+
+  @override
+  String get projectTxCategoryName => 'ชื่อหมวด';
+
+  @override
+  String get projectTxSplits => 'หารกับ';
+
+  @override
+  String get projectTxSplitsHint =>
+      'แต่ละคนติดคนจ่ายเท่าไร · คนจ่ายรับส่วนที่เหลือ';
+
+  @override
+  String get projectTxAddSplit => 'เพิ่มการหาร';
+
+  @override
+  String get projectTxSplitEqual => 'หารเท่ากัน';
+
+  @override
+  String projectTxSplitsOver(String sum) {
+    return 'ยอดหารรวม ($sum) เกินยอดรวม';
+  }
+
+  @override
+  String projectTxPayerKeeps(String amount) {
+    return 'ส่วนของคนจ่าย $amount';
+  }
+
+  @override
+  String get projectTxAmountRequired => 'ใส่ยอดมากกว่า 0';
+
+  @override
+  String get settingsThemeMint => 'มิ้นต์';
+
+  @override
+  String get settingsThemeSweet => 'สวีท';
+
+  @override
+  String get settingsNotifications => 'การแจ้งเตือน';
+
+  @override
+  String get settingsNotificationsHint =>
+      'เรื่องที่อยากรับ และสิ่งที่ทำให้อัตโนมัติ';
+
+  @override
+  String get settingsDefaultCurrencyHint =>
+      'ใช้เป็นค่าเริ่มต้นตอนสร้างกระเป๋าและหนี้';
+
+  @override
+  String get settingsCurrencySaved => 'เปลี่ยนสกุลเงินเริ่มต้นแล้ว';
+
+  @override
+  String get settingsFontSample => 'ตัวอย่าง ภาษาไทย ABC 123';
+
+  @override
+  String get notificationsTitle => 'การแจ้งเตือน';
+
+  @override
+  String get notificationsTabAll => 'ทั้งหมด';
+
+  @override
+  String get notificationsTabUnread => 'ยังไม่อ่าน';
+
+  @override
+  String get notificationsMarkAllRead => 'อ่านทั้งหมดแล้ว';
+
+  @override
+  String get notificationsSettingsTooltip => 'ตั้งค่าการแจ้งเตือน';
+
+  @override
+  String get notificationsEmptyTitle => 'ไม่มีการแจ้งเตือน';
+
+  @override
+  String get notificationsEmptyMessage =>
+      'ความเคลื่อนไหวจากคนที่ใช้ร่วมกันจะแสดงที่นี่';
+
+  @override
+  String get notificationsEmptyUnread => 'ไม่มีที่ยังไม่อ่าน';
+
+  @override
+  String get notificationsSomeone => 'มีคน';
+
+  @override
+  String notifSplitCreated(String actor) {
+    return '$actor หารบิลกับคุณ';
+  }
+
+  @override
+  String notifSplitPaid(String actor) {
+    return '$actor จ่ายส่วนของเขาแล้ว';
+  }
+
+  @override
+  String notifSplitReceived(String actor) {
+    return '$actor ยืนยันว่าได้รับเงินแล้ว';
+  }
+
+  @override
+  String notifProjectTxForYou(String actor) {
+    return '$actor บันทึกรายการโปรเจกต์ให้คุณ';
+  }
+
+  @override
+  String notifProjectTxChanged(String actor) {
+    return '$actor แก้ไขรายการในโปรเจกต์';
+  }
+
+  @override
+  String notifProjectInvite(String actor, String project) {
+    return '$actor ชวนคุณเข้าโปรเจกต์ $project';
+  }
+
+  @override
+  String notifContactLink(String actor) {
+    return '$actor ขอเชื่อมเป็นผู้ติดต่อ';
+  }
+
+  @override
+  String get notifUnknown => 'การแจ้งเตือน';
+
+  @override
+  String get notifAccepted => 'ตอบรับแล้ว · แตะเพื่อเปิด';
+
+  @override
+  String get notifRejectTitle => 'ปฏิเสธคำขอนี้?';
+
+  @override
+  String get notifRejectBody => 'อีกฝ่ายจะไม่ได้รับแจ้งว่าคุณปฏิเสธ';
+
+  @override
+  String get notifHidden => 'ซ่อนแล้ว';
+
+  @override
+  String get notifSettingsTitle => 'ตั้งค่าการแจ้งเตือน';
+
+  @override
+  String get notifSettingsReceive => 'การแจ้งเตือนที่ได้รับ';
+
+  @override
+  String get notifSettingsReceiveHint =>
+      'ปิดเรื่องที่ไม่อยากรับ · คำเชิญและคำขอปิดไม่ได้ เพราะต้องตอบ';
+
+  @override
+  String get notifGroupSplits => 'การหารบิล';
+
+  @override
+  String get notifGroupProjects => 'โปรเจกต์';
+
+  @override
+  String get notifGroupRequests => 'คำเชิญและคำขอ';
+
+  @override
+  String get notifGroupPayments => 'การรับเงิน';
+
+  @override
+  String get notifTypeSplitCreated => 'มีคนหารบิลกับฉัน';
+
+  @override
+  String get notifTypeSplitPaid => 'มีคนจ่ายส่วนของเขาคืน';
+
+  @override
+  String get notifTypeSplitReceived => 'มีคนยืนยันว่าได้รับเงินจากฉัน';
+
+  @override
+  String get notifTypeProjectTxForYou => 'มีคนบันทึกรายการโปรเจกต์ให้ฉัน';
+
+  @override
+  String get notifTypeProjectTxChanged => 'มีการแก้ไขรายการในโปรเจกต์';
+
+  @override
+  String get notifTypeAlwaysOn => 'เปิดตลอด';
+
+  @override
+  String get notifSettingsAuto => 'การทำงานอัตโนมัติ';
+
+  @override
+  String get notifSettingsAutoPending =>
+      'บันทึกได้แล้ว · จะเริ่มทำงานเมื่อเซิร์ฟเวอร์รองรับ';
+
+  @override
+  String get notifAutoNotifySplit =>
+      'แจ้งผู้ติดต่อที่เชื่อมบัญชีเมื่อฉันหารบิล';
+
+  @override
+  String get notifAutoAddDebt => 'บันทึกเป็นหนี้อัตโนมัติเมื่อมีคนหารบิลกับฉัน';
+
+  @override
+  String get notifAutoRecordPayment => 'บันทึกเงินที่มีคนจ่ายคืนอัตโนมัติ';
+
+  @override
+  String get notifDefaultAccount => 'กระเป๋าที่รับเงิน';
+
+  @override
+  String get notifDefaultAccountNone => 'ยังไม่ได้เลือก';
+
+  @override
+  String get notifAutoResolveProject =>
+      'ลงบัญชีรายการโปรเจกต์ของฉันเองอัตโนมัติ';
+
+  @override
+  String get notifSettingsSaveFailed => 'บันทึกไม่ได้ — เปลี่ยนกลับแล้ว';
+
+  @override
+  String get profileUsernameLocked => 'เปลี่ยนชื่อผู้ใช้ไม่ได้';
+
+  @override
+  String get homeUpcoming => 'ที่จะถึงใน 7 วัน';
+
+  @override
+  String homeUpcomingInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'อีก $days วัน',
+      one: 'พรุ่งนี้',
+      zero: 'วันนี้',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeByCategory => 'ใช้จ่ายตามหมวด (เดือนนี้)';
+
+  @override
+  String homeBudgetLine(String spent, String amount) {
+    return '$spent จาก $amount';
+  }
+
+  @override
+  String homeGoalLine(String current, String target) {
+    return '$current จาก $target';
+  }
+
+  @override
+  String get homeNoTxYet => 'ยังไม่มีรายการ';
+
+  @override
+  String get homeAddFirstTx => 'เพิ่มรายการแรก';
+
+  @override
+  String get transactionsFilterType => 'ประเภท';
+
+  @override
+  String get transactionsFilterRange => 'ช่วงเวลา';
+
+  @override
+  String get transactionsFilterAccount => 'กระเป๋า';
+
+  @override
+  String get transactionsFilterCategory => 'หมวด';
+
+  @override
+  String get transactionsSortNewest => 'ล่าสุด';
+
+  @override
+  String get transactionsSortOldest => 'เก่าสุด';
+
+  @override
+  String get transactionsSortAmountHigh => 'ยอดมากสุด';
+
+  @override
+  String get transactionsSortAmountLow => 'ยอดน้อยสุด';
+
+  @override
+  String get transactionsNoMatch => 'ไม่มีรายการตามตัวกรองนี้';
+
+  @override
+  String get transactionsClearFilters => 'ล้างตัวกรอง';
+
+  @override
+  String get txDetailDate => 'วันที่';
+
+  @override
+  String get txDetailAccount => 'กระเป๋า';
+
+  @override
+  String get txDetailCategory => 'หมวด';
+
+  @override
+  String get txDetailTags => 'แท็ก';
+
+  @override
+  String get txDetailNote => 'บันทึก';
+
+  @override
+  String get txDetailSplits => 'การหาร';
+
+  @override
+  String get txDetailHasSplits => 'มีการหารกับคนอื่น';
+
+  @override
+  String get txDetailRecordedBy => 'ผู้บันทึก';
+
+  @override
+  String get txDetailSource => 'ที่มา';
+
+  @override
+  String get txDetailSourceDebt => 'การคืนหนี้';
+
+  @override
+  String get txDetailSourceProject => 'โปรเจกต์';
+
+  @override
+  String get txDetailSystemLocked => 'รายการระบบ — แก้หรือลบไม่ได้';
+
+  @override
+  String get txDetailTransferTo => 'ไปที่';
+
+  @override
+  String get txDetailBalanceAfter => 'ยอดคงเหลือหลังรายการ';
+
+  @override
+  String get txDeleteTitle => 'ลบรายการนี้?';
+
+  @override
+  String get txDeleteBody => 'ยอดในกระเป๋าจะถูกปรับกลับ';
+
+  @override
+  String get txDeleted => 'ลบรายการแล้ว';
+
+  @override
+  String get txSplitAdd => 'เพิ่มการหาร';
+
+  @override
+  String get txSplitWith => 'หารกับ';
+
+  @override
+  String get txSplitEqually => 'หารเท่ากัน';
+
+  @override
+  String get txSplitCollapse => 'ยกเลิกการหาร';
+
+  @override
+  String get txSplitAddPerson => 'เพิ่มคน';
+
+  @override
+  String txSplitRemaining(String amount) {
+    return 'ส่วนของคุณ $amount';
+  }
+
+  @override
+  String get txSplitWiredContact => 'ผูกกับผู้ติดต่อแล้ว';
+
+  @override
+  String get txSplitName => 'ชื่อ';
+
+  @override
+  String get txSplitOwes => 'ติด';
+
+  @override
+  String get txSplitRemove => 'นำออก';
+
+  @override
+  String get authTagline => 'จดรายรับรายจ่าย หารบิลกับเพื่อน';
+
+  @override
+  String get authOr => 'หรือ';
+
+  @override
+  String get authContinueWithGoogle => 'ดำเนินการต่อด้วย Google';
+
+  @override
+  String get authComingSoon => 'เร็ว ๆ นี้';
+
+  @override
+  String get authRegisterSectionAccount => 'บัญชีสำหรับเข้าสู่ระบบ';
+
+  @override
+  String get authRegisterSectionProfile => 'เกี่ยวกับคุณ';
+
+  @override
+  String get authRegisterUsernameHint => 'a-z 0-9 _ - · 3–50 ตัว';
+
+  @override
+  String get authRegisterPasswordHint => 'อย่างน้อย 8 ตัวอักษร';
+
+  @override
+  String get authRegisterEmailHint => 'ใช้ให้เพื่อนเชื่อมบัญชีกับคุณได้';
+
+  @override
+  String get authLanguage => 'ภาษา';
+
+  @override
+  String get accountsTotalMine => 'ของฉัน';
+
+  @override
+  String get accountsTotalShared => 'กองกลาง';
+
+  @override
+  String accountsArchivedLink(int count) {
+    return 'กระเป๋าที่เก็บถาวร ($count)';
+  }
+
+  @override
+  String get accountsArchivedTitle => 'กระเป๋าที่เก็บถาวร';
+
+  @override
+  String get accountsArchivedEmpty => 'ไม่มีกระเป๋าที่เก็บถาวร';
+
+  @override
+  String get accountRestore => 'กู้คืน';
+
+  @override
+  String accountRestored(String name) {
+    return 'กู้คืน $name แล้ว';
+  }
+
+  @override
+  String get accountDetailSeeAll => 'ดูทั้งหมด';
+
+  @override
+  String get accountDetailDescription => 'คำอธิบาย';
+
+  @override
+  String get accountDetailNote => 'บันทึก';
+
+  @override
+  String get accountDetailMembers => 'สมาชิก';
+
+  @override
+  String get accountArchiveHasMembers =>
+      'กระเป๋าที่ยังมีสมาชิกอื่นเก็บถาวรไม่ได้ — นำสมาชิกออกก่อน';
+
+  @override
+  String get accountArchived => 'เก็บกระเป๋าแล้ว';
+
+  @override
+  String get txSplitOver => 'ยอดหารรวมเกินยอดรายการ';
+
+  @override
+  String get txSplitFreeText =>
+      'พิมพ์ชื่อเอง — เลือกจากรายชื่อที่แนะนำเพื่อผูกผู้ติดต่อ';
+
+  @override
   String get moreDebts => 'หนี้สิน';
 
   @override
@@ -841,6 +2088,41 @@ class AppLocalizationsTh extends AppLocalizations {
   String get categoriesAddNew => 'เพิ่มหมวดหมู่';
 
   @override
+  String get categoriesSearchHint => 'ค้นหาหมวดหมู่';
+
+  @override
+  String get categoriesSearchNoMatch => 'ไม่พบหมวดที่ค้นหา';
+
+  @override
+  String get categoryDelete => 'ลบหมวดหมู่';
+
+  @override
+  String categoryDeleteTitle(String name) {
+    return 'ลบ \"$name\"?';
+  }
+
+  @override
+  String get categoryDeleteBody => 'หมวดย่อยจะย้ายขึ้นไปอยู่ใต้หมวดแม่';
+
+  @override
+  String categoryDeleteTxImpact(int count) {
+    return 'รายการ $count รายการจะกลายเป็น ไม่มีหมวด';
+  }
+
+  @override
+  String categoryDeleteBudgetImpact(int count) {
+    return 'งบประมาณของหมวดนี้ $count รายการจะถูกลบด้วย';
+  }
+
+  @override
+  String categoryDeletedResult(String name) {
+    return 'ลบ \"$name\" แล้ว';
+  }
+
+  @override
+  String get commonDelete => 'ลบ';
+
+  @override
   String get categoriesReorderEnter => 'จัดลำดับ';
 
   @override
@@ -878,6 +2160,30 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get tagsAddNew => 'เพิ่มแท็ก';
+
+  @override
+  String get tagsSearchHint => 'ค้นหาแท็ก';
+
+  @override
+  String get tagsNoMatch => 'ไม่พบแท็กที่ค้นหา';
+
+  @override
+  String get tagsSortUsage => 'ใช้บ่อย';
+
+  @override
+  String get tagsSelectAll => 'เลือกทั้งหมดที่แสดง';
+
+  @override
+  String get tagsBulkColor => 'เปลี่ยนสี';
+
+  @override
+  String get tagsBulkIcon => 'เปลี่ยนไอคอน';
+
+  @override
+  String get tagsDeleteSelected => 'ลบที่เลือก';
+
+  @override
+  String get tagsFiltersClearedForError => 'ล้างตัวกรองเพื่อแสดงแท็กที่ต้องแก้';
 
   @override
   String tagsUsageCount(int count) {
@@ -970,7 +2276,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsAppVersion => 'เวอร์ชันแอป';
 
   @override
-  String get settingsAppVersionValue => 'เฟส 0 (1.0.0+1)';
+  String get settingsAppVersionValue => '1.0.0 (1)';
 
   @override
   String get settingsLogout => 'ออกจากระบบ';
@@ -1906,6 +3212,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get scheduledDeleteConfirmTitle => 'ลบรายการนี้?';
+
+  @override
+  String get scheduledStatusChangeTitle => 'เปลี่ยนสถานะ';
 
   @override
   String get scheduledDeleteConfirmBody =>

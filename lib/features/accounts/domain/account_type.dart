@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
+
 /// The five account types from
 /// [`design/spec/03-accounts.md §3.1`](../../../../../chubi-pocket-docs/design/spec/03-accounts.md).
 ///
@@ -17,15 +19,15 @@ enum AccountType {
   IconData get icon {
     switch (this) {
       case AccountType.cash:
-        return Icons.payments_outlined;
+        return AppIcons.cash;
       case AccountType.bank:
-        return Icons.account_balance_outlined;
+        return AppIcons.bank;
       case AccountType.eWallet:
-        return Icons.qr_code_2_outlined;
+        return AppIcons.eWallet;
       case AccountType.creditCard:
-        return Icons.credit_card_outlined;
+        return AppIcons.creditCard;
       case AccountType.payLater:
-        return Icons.access_time_outlined;
+        return AppIcons.payLater;
     }
   }
 

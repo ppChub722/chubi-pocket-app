@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/network/api_exception.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -64,7 +65,7 @@ class ErrorView extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
                 FilledButton.icon(
                   onPressed: onRetry,
-                  icon: const Icon(Icons.refresh),
+                  icon: const Icon(AppIcons.refresh),
                   label: Text(l.commonRetry),
                 ),
               ],
@@ -89,9 +90,9 @@ _ErrorVariant _variantFor(ApiException e) {
 
 extension _ErrorVariantIcon on _ErrorVariant {
   IconData get icon => switch (this) {
-        _ErrorVariant.network => Icons.wifi_off_outlined,
-        _ErrorVariant.server => Icons.cloud_off_outlined,
-        _ErrorVariant.unknown => Icons.error_outline,
+        _ErrorVariant.network => AppIcons.offline,
+        _ErrorVariant.server => AppIcons.serverDown,
+        _ErrorVariant.unknown => AppIcons.error,
       };
 }
 

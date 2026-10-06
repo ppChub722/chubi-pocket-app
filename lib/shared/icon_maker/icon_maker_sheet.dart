@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -615,7 +616,7 @@ class _SheetState extends State<_Sheet> {
             ),
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_horiz),
+            icon: const Icon(AppIcons.more),
             onSelected: (v) async {
               if (v == 'reset') {
                 final ok = await showConfirmDialog(
@@ -636,7 +637,7 @@ class _SheetState extends State<_Sheet> {
                 value: 'reset',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.restart_alt),
+                  leading: const Icon(AppIcons.reset),
                   title: Text(l.iconMakerReset),
                 ),
               ),
@@ -645,7 +646,7 @@ class _SheetState extends State<_Sheet> {
                   value: 'default',
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.hide_image_outlined),
+                    leading: const Icon(AppIcons.useDefaultIcon),
                     title: Text(l.iconMakerUseDefault),
                   ),
                 ),
@@ -740,7 +741,7 @@ class _SheetState extends State<_Sheet> {
                 width: 20,
                 height: 20,
                 child: off
-                    ? Icon(Icons.block, size: 18, color: scheme.onSurfaceVariant)
+                    ? Icon(AppIcons.none, size: 18, color: scheme.onSurfaceVariant)
                     : _layerMini(role, 20),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -911,7 +912,7 @@ class _SheetState extends State<_Sheet> {
         if (!filtering && _packFilter == null)
           _StyleTile(
             selected: currentId == null,
-            preview: Icon(Icons.block,
+            preview: Icon(AppIcons.none,
                 size: 28, color: Theme.of(context).colorScheme.onSurfaceVariant),
             dots: const [],
             onTap: () => _selectAsset(role, null),
@@ -1123,7 +1124,7 @@ class _SheetState extends State<_Sheet> {
             onPressed: def == null || _hexOf(def) == current
                 ? null
                 : () => _applyColor(def, isCustom: false),
-            icon: const Icon(Icons.restart_alt),
+            icon: const Icon(AppIcons.reset),
           ),
         ],
       );
@@ -1191,7 +1192,7 @@ class _SheetState extends State<_Sheet> {
               color: scheme.primary,
               borderRadius: Radius.circular(d / 2),
               child: Center(
-                child: Icon(Icons.colorize_outlined,
+                child: Icon(AppIcons.eyedropper,
                     size: d * 0.4, color: scheme.primary),
               ),
             ),

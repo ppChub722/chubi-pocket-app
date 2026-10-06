@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../icon_maker/icon_code.dart';
 import '../icon_maker/icon_display.dart';
 import '../icon_maker/icon_type.dart';
@@ -52,7 +53,7 @@ class UserAvatar extends StatelessWidget {
         radius: size / 2,
         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: Icon(
-          Icons.person_outline,
+          AppIcons.profile,
           size: size * 0.5,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),

@@ -3,242 +3,230 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/edit_mode/edit_mode_mixin.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
-import '../../data/projects_repository.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../cubit/projects_cubit.dart';
 
-/// `/projects/new` and `/projects/:id/edit` (planned_amount per §10/4.23).
+/// `/projects/new` — create a project (edit happens in place on the detail
+/// page, §12b). A form is edit mode: nav hidden, ยกเลิก · ↶ · บันทึก.
 class ProjectFormPage extends StatefulWidget {
-  const ProjectFormPage({this.editingId, super.key});
-  final String? editingId;
+  const ProjectFormPage({super.key});
 
   @override
   State<ProjectFormPage> createState() => _ProjectFormPageState();
 }
 
-class _ProjectFormPageState extends State<ProjectFormPage> {
-  final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _type = TextEditingController();
-  final _description = TextEditingController();
-  final _planned = TextEditingController();
+enum _Field { name, type, description, planned }
 
-  IconCode? _iconCode;
-
-  /// The plan value loaded on edit — needed to distinguish "clear to
-  /// null" (was set, now blank → explicit null) from "leave alone"
-  /// (spec §10/4.23).
-  double? _initialPlanned;
-
-  bool _saving = false;
-  String? _error;
-
-  bool get _isEdit => widget.editingId != null;
+class _ProjectFormPageState extends State<ProjectFormPage>
+    with EditModeMixin<ProjectFormPage, _NewProject> {
+  final _formKey = GlobalKey<FormState>();
+  final _ctrl = {for (final f in _Field.values) f: TextEditingController()};
 
   @override
   void initState() {
     super.initState();
-    if (_isEdit) _loadExisting();
+    initDraft(const _NewProject(), editing: true);
   }
 
-  Future<void> _loadExisting() async {
-    try {
-      final p = await context.read<ProjectsRepository>().get(widget.editingId!);
-      if (!mounted) return;
-      setState(() {
-        _name.text = p.name;
-        _type.text = p.type ?? '';
-        _description.text = p.description ?? '';
-        _iconCode = p.iconCode;
-        _initialPlanned = p.plannedAmount;
-        _planned.text = p.plannedAmount != null
-            ? _formatPlanned(p.plannedAmount!)
-            : '';
-      });
-    } on ApiException catch (e) {
-      _error = e.message;
+  @override
+  void dispose() {
+    for (final c in _ctrl.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  bool get leaveOnCancel => true;
+
+  @override
+  void leavePage() {
+    if (context.canPop()) context.pop();
+  }
+
+  @override
+  void onDraftRestored() {
+    for (final f in _Field.values) {
+      final v = working.text(f);
+      if (_ctrl[f]!.text != v) _ctrl[f]!.text = v;
     }
   }
 
   Future<void> _pickIcon() async {
-    final result = await showIconMakerSheet(
+    final l = AppLocalizations.of(context)!;
+    final r = await showIconMakerSheet(
       context: context,
       type: IconType.project,
-      initial: _iconCode,
+      title: l.projectIconLabel,
+      initial: working.iconCode,
     );
-    if (!mounted || result == null) return;
-    setState(() {
-      if (result is IconMakerSelected) {
-        _iconCode = result.iconCode;
-      } else if (result is IconMakerRemoved) {
-        _iconCode = null;
-      }
-    });
+    if (r is IconMakerSelected) applyChange(working.copyWith(iconCode: r.iconCode));
   }
 
-  /// Whole-number plans render without the trailing ".0" so the user
-  /// edits "30000", not "30000.0".
-  static String _formatPlanned(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
-
-  double? get _plannedValue {
-    final t = _planned.text.trim();
-    if (t.isEmpty) return null;
-    return double.tryParse(t);
-  }
-
-  Future<void> _submit() async {
-    if (!(_form.currentState?.validate() ?? false)) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
+  Future<void> _save() async {
+    commitTextSession();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final w = working;
+    String? opt(String s) => s.trim().isEmpty ? null : s.trim();
+    final planned = AmountField.parse(w.planned);
+    final cubit = context.read<ProjectsCubit>();
+    FocusScope.of(context).unfocus();
+    setSaving(true);
     try {
-      final cubit = context.read<ProjectsCubit>();
-      final planned = _plannedValue;
-      if (_isEdit) {
-        await cubit.update(
-          widget.editingId!,
-          name: _name.text.trim(),
-          description:
-              _description.text.trim().isEmpty ? null : _description.text.trim(),
-          iconCode: _iconCode,
-          plannedAmount: planned,
-          // Explicit-null clear only when the plan existed and the user
-          // blanked the field (spec §10/4.23: NULL = plan display off).
-          clearPlannedAmount: planned == null && _initialPlanned != null,
-        );
-      } else {
-        final created = await cubit.create(
-          name: _name.text.trim(),
-          type: _type.text.trim().isEmpty ? null : _type.text.trim(),
-          description:
-              _description.text.trim().isEmpty ? null : _description.text.trim(),
-          iconCode: _iconCode,
-        );
-        // planned_amount is pinned on PUT only (API §10) — the create
-        // endpoint's field list doesn't include it, so a fresh plan is
-        // applied via a follow-up update (creator is the owner).
-        if (planned != null) {
-          await cubit.update(created.id, plannedAmount: planned);
-        }
-      }
+      final created = await cubit.create(
+        name: w.name.trim(),
+        type: opt(w.type),
+        description: opt(w.description),
+        iconCode: w.iconCode,
+      );
+      // planned_amount is only accepted on PUT (API §10).
+      if (planned != null) await cubit.update(created.id, plannedAmount: planned);
       if (!mounted) return;
-      context.pop();
+      HapticFeedback.mediumImpact();
+      commitSaved(w);
+      context.pushReplacement('/projects/${created.id}');
     } on ApiException catch (e) {
-      _error = e.message;
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(_isEdit ? 'Edit project' : 'New project')),
+    final l = AppLocalizations.of(context)!;
+    void onText(_Field f, String v) => applyTextChange(f, working.withText(f, v));
+    return editScope(Scaffold(
+      appBar: AppTopBar(
+        title: l.projectNewTitle,
+        showBack: true,
+        editing: true,
+        onBack: handleBack,
+      ),
       body: Form(
-        key: _form,
+        key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            TextFormField(
-              controller: _name,
-              decoration: const InputDecoration(labelText: 'Name *'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Required' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _type,
-              decoration: const InputDecoration(
-                  labelText: 'Type (e.g. trip, freelance)'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _description,
-              decoration: const InputDecoration(labelText: 'Description'),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 12),
-            // Planned budget — spec §10/4.23 "ตั้งงบไว้". Optional; the
-            // suffix clear button blanks the field, which on save turns
-            // the plan display off (explicit null).
-            TextFormField(
-              controller: _planned,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!
-                    .projectFormPlannedLabel,
-                helperText: AppLocalizations.of(context)!
-                    .projectFormPlannedHelper,
-                helperMaxLines: 2,
-                prefixText: '฿ ',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  tooltip: AppLocalizations.of(context)!
-                      .projectFormPlannedClearTooltip,
-                  onPressed: () => setState(() => _planned.clear()),
+            Row(
+              children: [
+                EditableCircle(
+                  size: 56,
+                  onTap: _pickIcon,
+                  child: IconDisplay(
+                      type: IconType.project, size: 56, iconCode: working.iconCode),
                 ),
-              ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: AppTextField(
+                    controller: _ctrl[_Field.name]!,
+                    label: l.projectNameLabel,
+                    autofocus: true,
+                    maxLength: 100,
+                    onChanged: (v) => onText(_Field.name, v),
+                    validator: (v) =>
+                        (v?.trim().isEmpty ?? true) ? l.projectNameRequired : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              controller: _ctrl[_Field.type]!,
+              label: l.projectTypeLabel,
+              hint: l.projectTypeHint,
+              prefixIcon: AppIcons.project,
+              maxLength: 50,
+              onChanged: (v) => onText(_Field.type, v),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              controller: _ctrl[_Field.description]!,
+              label: l.projectDescriptionLabel,
+              prefixIcon: AppIcons.note,
+              maxLines: 3,
+              maxLength: 500,
+              onChanged: (v) => onText(_Field.description, v),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AmountField(
+              controller: _ctrl[_Field.planned]!,
+              label: l.projectFormPlannedLabel,
+              onChanged: (v) => onText(_Field.planned, v),
               validator: (v) {
-                final t = (v ?? '').trim();
-                if (t.isEmpty) return null; // optional
-                final n = double.tryParse(t);
-                if (n == null || n <= 0) {
-                  return AppLocalizations.of(context)!
-                      .projectFormPlannedInvalid;
-                }
-                return null;
+                if (v == null || v.trim().isEmpty) return null;
+                final n = AmountField.parse(v);
+                return (n == null || n <= 0) ? l.projectFormPlannedInvalid : null;
               },
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: IconDisplay(
-                type: IconType.project,
-                size: 40,
-                iconCode: _iconCode,
-              ),
-              title: Text(_iconCode != null ? 'Project icon set' : 'Project icon'),
-              subtitle: Text(_iconCode != null
-                  ? 'Tap to change'
-                  : 'Optional — tap to pick icon & color'),
-              trailing: _iconCode != null
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () => setState(() => _iconCode = null),
-                    )
-                  : null,
-              onTap: _pickIcon,
-            ),
-            const SizedBox(height: 16),
-            if (_error != null)
-              Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-            FilledButton(
-              onPressed: _saving ? null : _submit,
-              child: Text(_isEdit ? 'Save' : 'Create'),
-            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(l.projectFormPlannedHelper,
+                style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),
-    );
+      bottomNavigationBar: editActionBar(onSave: _save),
+    ));
   }
+}
+
+class _NewProject {
+  const _NewProject({
+    this.name = '',
+    this.type = '',
+    this.description = '',
+    this.planned = '',
+    this.iconCode,
+  });
+
+  final String name;
+  final String type;
+  final String description;
+  final String planned;
+  final IconCode? iconCode;
+
+  String text(_Field f) => switch (f) {
+        _Field.name => name,
+        _Field.type => type,
+        _Field.description => description,
+        _Field.planned => planned,
+      };
+
+  _NewProject withText(_Field f, String v) => _NewProject(
+        name: f == _Field.name ? v : name,
+        type: f == _Field.type ? v : type,
+        description: f == _Field.description ? v : description,
+        planned: f == _Field.planned ? v : planned,
+        iconCode: iconCode,
+      );
+
+  _NewProject copyWith({IconCode? iconCode}) => _NewProject(
+        name: name,
+        type: type,
+        description: description,
+        planned: planned,
+        iconCode: iconCode ?? this.iconCode,
+      );
 
   @override
-  void dispose() {
-    _name.dispose();
-    _type.dispose();
-    _description.dispose();
-    _planned.dispose();
-    super.dispose();
-  }
+  bool operator ==(Object other) =>
+      other is _NewProject &&
+      other.name == name &&
+      other.type == type &&
+      other.description == description &&
+      other.planned == planned &&
+      other.iconCode == iconCode;
+
+  @override
+  int get hashCode => Object.hash(name, type, description, planned, iconCode);
 }

@@ -121,6 +121,7 @@ class NotificationsRepository {
     bool? autoRecordReceivedPayment,
     bool? autoResolveOwnInProjects,
     String? defaultAccountId,
+    Set<String>? mutedTypes,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -132,6 +133,7 @@ class NotificationsRepository {
           'auto_record_received_payment': ?autoRecordReceivedPayment,
           'auto_resolve_own_in_projects': ?autoResolveOwnInProjects,
           'default_account_id': ?defaultAccountId,
+          if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
         },
       );
       return NotificationSettings.fromJson(res.data!);

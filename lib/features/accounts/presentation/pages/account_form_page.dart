@@ -3,15 +3,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
+import '../wallet_errors.dart';
 import '../widgets/account_card.dart';
 
 /// Create / edit account form — routed at `/accounts/new` and
@@ -169,7 +173,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
     // empty form that would create a wrong PUT body on save.
     if (widget.isEdit && _initial == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l.accountFormTitleEdit)),
+        appBar: AppTopBar(title: l.accountFormTitleEdit, showBack: true),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -190,10 +194,22 @@ class _AccountFormPageState extends State<AccountFormPage> {
         if (ok && context.mounted) context.pop();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.isEdit ? l.accountFormTitleEdit : l.accountFormTitle,
-          ),
+        // A form = edit mode (§1.4): ✕, no nav; archive lives here (§10).
+        appBar: AppTopBar(
+          title: widget.isEdit ? l.accountFormTitleEdit : l.accountFormTitle,
+          showBack: true,
+          editing: true,
+          onBack: () => _leave(context, l),
+          actions: [
+            if (widget.isEdit)
+              AppBarAction(
+                icon: AppIcons.archive,
+                tooltip: l.accountDetailArchive,
+                label: l.accountDetailArchive,
+                destructive: true,
+                onPressed: () => _archive(context, l),
+              ),
+          ],
         ),
         body: Form(
           key: _formKey,
@@ -364,19 +380,15 @@ class _AccountFormPageState extends State<AccountFormPage> {
             ],
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: FilledButton(
-              onPressed: _save,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
-              child: Text(widget.isEdit
-                  ? l.accountFormSaveEdit
-                  : l.accountFormSave),
-            ),
-          ),
+        bottomNavigationBar: ModeActionBar(
+          canUndo: false,
+          canSave: true,
+          cancelLabel: l.commonCancel,
+          saveLabel: widget.isEdit ? l.accountFormSaveEdit : l.accountFormSave,
+          undoTooltip: l.commonUndo,
+          onCancel: () => _leave(context, l),
+          onUndo: () {},
+          onSave: _save,
         ),
       ),
     );
@@ -512,30 +524,51 @@ class _AccountFormPageState extends State<AccountFormPage> {
     context.pop();
   }
 
-  Future<bool> _confirmDiscard(BuildContext context, AppLocalizations l) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(widget.isEdit
+  Future<bool> _confirmDiscard(BuildContext context, AppLocalizations l) =>
+      showConfirmDialog(
+        context,
+        title: widget.isEdit
             ? l.accountFormDiscardTitleEdit
-            : l.accountFormDiscardTitle),
-        content: Text(l.accountFormDiscardBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(l.commonRemove),
-          ),
-        ],
-      ),
+            : l.accountFormDiscardTitle,
+        message: l.accountFormDiscardBody,
+        confirmLabel: l.commonDiscard,
+        destructive: true,
+      );
+
+  /// ✕ / ยกเลิก — asks first when something was typed.
+  Future<void> _leave(BuildContext context, AppLocalizations l) async {
+    if (_hasUserInput && !await _confirmDiscard(context, l)) return;
+    if (context.mounted) context.pop();
+  }
+
+  /// Archive from edit mode (owner). A wallet that still has other members
+  /// can't be archived (BE 409) — say so up front instead of failing.
+  Future<void> _archive(BuildContext context, AppLocalizations l) async {
+    final a = _initial!;
+    final others = a.members.where((m) => m.isActive).length > 1;
+    if (others) {
+      showAppSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
+      return;
+    }
+    final ok = await showConfirmDialog(
+      context,
+      title: l.accountArchiveConfirmTitle,
+      message: l.accountArchiveConfirmBody,
+      confirmLabel: l.accountArchiveConfirmAction,
+      destructive: true,
     );
-    return ok ?? false;
+    if (!ok || !context.mounted) return;
+    try {
+      await context.read<AccountsCubit>().remove(a.id);
+      if (!context.mounted) return;
+      showAppSnackBar(context, l.accountArchived, tone: Tone.success);
+      // Form and detail both point at a wallet that's gone — back to the list.
+      context.go('/accounts');
+    } on ApiException catch (e) {
+      if (context.mounted) {
+        showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+      }
+    }
   }
 }
 

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
@@ -61,7 +63,7 @@ class _BudgetFormPageState extends State<BudgetFormPage> {
       final existing = context.read<BudgetsCubit>().byId(widget.editingId!);
       if (existing != null) {
         _initial = existing;
-        _amountController.text = existing.amount.toString();
+        _amountController.text = AmountField.format(existing.amount);
         _descriptionController.text = existing.description ?? '';
         _noteController.text = existing.note ?? '';
         _categoryId = existing.categoryId;
@@ -85,119 +87,84 @@ class _BudgetFormPageState extends State<BudgetFormPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final title = widget.isEdit ? l.budgetFormTitleEdit : l.budgetFormTitle;
     if (widget.isEdit && _initial == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l.budgetFormTitleEdit)),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Text(
-              l.budgetDetailNotFoundMessage,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        appBar: AppTopBar(title: title, showBack: true),
+        body: EmptyView(
+          icon: AppIcons.empty,
+          title: l.budgetDetailNotFound,
+          message: l.budgetDetailNotFoundMessage,
         ),
       );
     }
+    // A form = edit mode (§1.4): ✕ + ยกเลิก · บันทึก, nav hidden by route.
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isEdit ? l.budgetFormTitleEdit : l.budgetFormTitle,
-        ),
+      appBar: AppTopBar(
+        title: title,
+        showBack: true,
+        editing: true,
+        onBack: () => context.pop(),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.huge,
-          ),
+              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.huge),
           children: [
             _CategoryTile(
               selectedId: _categoryId,
               enabled: !widget.isEdit,
               onChanged: (id) => setState(() => _categoryId = id),
             ),
-            const SizedBox(height: AppSpacing.md),
-            TextFormField(
-              controller: _descriptionController,
-              maxLength: 200,
-              decoration: InputDecoration(
-                labelText: l.budgetFormDescriptionLabel,
-                helperText: l.budgetFormDescriptionHelper,
-                helperMaxLines: 2,
-              ),
-              validator: (v) => (v != null && v.length > 200)
-                  ? l.budgetFormDescriptionTooLong
-                  : null,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            TextFormField(
+            const SizedBox(height: AppSpacing.lg),
+            AmountField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              decoration: InputDecoration(
-                labelText: l.budgetFormAmountLabel,
-                prefixText: '฿ ',
-              ),
+              label: l.budgetFormAmountLabel,
               validator: (v) {
-                final n = double.tryParse(v ?? '');
-                if (n == null || n <= 0) return l.budgetFormAmountInvalid;
-                return null;
+                final n = AmountField.parse(v);
+                return (n == null || n <= 0) ? l.budgetFormAmountInvalid : null;
               },
             ),
             const SizedBox(height: AppSpacing.lg),
             _SectionLabel(text: l.budgetFormPeriodLabel),
-            SegmentedButton<BudgetPeriod>(
-              segments: [
-                ButtonSegment(
-                  value: BudgetPeriod.weekly,
-                  label: Text(l.budgetPeriodWeekly),
-                ),
-                ButtonSegment(
-                  value: BudgetPeriod.monthly,
-                  label: Text(l.budgetPeriodMonthly),
-                ),
-                ButtonSegment(
-                  value: BudgetPeriod.yearly,
-                  label: Text(l.budgetPeriodYearly),
-                ),
+            AppTabBar<BudgetPeriod>(
+              selected: _period,
+              onChanged: (p) => setState(() => _period = p),
+              tabs: [
+                AppTab(value: BudgetPeriod.weekly, label: l.budgetPeriodWeekly),
+                AppTab(value: BudgetPeriod.monthly, label: l.budgetPeriodMonthly),
+                AppTab(value: BudgetPeriod.yearly, label: l.budgetPeriodYearly),
               ],
-              selected: {_period},
-              onSelectionChanged: (s) => setState(() => _period = s.first),
             ),
             const SizedBox(height: AppSpacing.lg),
-            TextFormField(
+            AppTextField(
+              controller: _descriptionController,
+              label: l.budgetFormDescriptionLabel,
+              helper: l.budgetFormDescriptionHelper,
+              prefixIcon: AppIcons.note,
+              maxLength: 200,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
               controller: _noteController,
+              label: l.budgetFormNoteLabel,
+              helper: l.budgetFormNoteHelper,
               maxLength: 500,
               maxLines: 3,
-              decoration: InputDecoration(
-                labelText: l.budgetFormNoteLabel,
-                helperText: l.budgetFormNoteHelper,
-                helperMaxLines: 2,
-              ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: FilledButton(
-            onPressed: _save,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: Text(widget.isEdit
-                ? l.budgetFormSaveEdit
-                : l.budgetFormSave),
-          ),
-        ),
+      bottomNavigationBar: ModeActionBar(
+        canUndo: false,
+        canSave: true,
+        cancelLabel: l.commonCancel,
+        saveLabel: widget.isEdit ? l.budgetFormSaveEdit : l.budgetFormSave,
+        undoTooltip: l.commonUndo,
+        onCancel: () => context.pop(),
+        onUndo: () {},
+        onSave: _save,
       ),
     );
   }
@@ -213,7 +180,7 @@ class _BudgetFormPageState extends State<BudgetFormPage> {
     }
     final cubit = context.read<BudgetsCubit>();
     final messenger = ScaffoldMessenger.of(context);
-    final amount = double.parse(_amountController.text.trim());
+    final amount = AmountField.parse(_amountController.text)!;
     final description = _descriptionController.text.trim();
     final descValue = description.isEmpty ? null : description;
     final note = _noteController.text.trim();

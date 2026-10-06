@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -10,6 +11,7 @@ import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
@@ -77,7 +79,7 @@ class _ScheduledTransactionFormPageState
       if (existing != null) {
         _initial = existing;
         _nameController.text = existing.name;
-        _amountController.text = existing.amount.toString();
+        _amountController.text = AmountField.format(existing.amount);
         _type = existing.type;
         _billingCycle = existing.billingCycle;
         _accountId = existing.accountId;
@@ -133,7 +135,7 @@ class _ScheduledTransactionFormPageState
     final l = AppLocalizations.of(context)!;
     if (widget.isEdit && _initial == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l.scheduledFormTitleEdit)),
+        appBar: AppTopBar(title: l.scheduledFormTitleEdit, showBack: true),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -145,11 +147,13 @@ class _ScheduledTransactionFormPageState
         ),
       );
     }
+    // A form = edit mode (§1.4): ✕ + ยกเลิก · บันทึก, nav hidden by route.
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEdit
-            ? l.scheduledFormTitleEdit
-            : l.scheduledFormTitle),
+      appBar: AppTopBar(
+        title: widget.isEdit ? l.scheduledFormTitleEdit : l.scheduledFormTitle,
+        showBack: true,
+        editing: true,
+        onBack: () => context.pop(),
       ),
       body: Form(
         key: _formKey,
@@ -225,25 +229,14 @@ class _ScheduledTransactionFormPageState
                   : null,
             ),
             const SizedBox(height: AppSpacing.md),
-            TextFormField(
+            AmountField(
               controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              decoration: InputDecoration(
-                labelText: _isInstallmentVariant
-                    ? l.scheduledFormPaymentLabel
-                    : l.scheduledFormAmountLabel,
-                prefixText: '฿ ',
-              ),
+              label: _isInstallmentVariant
+                  ? l.scheduledFormPaymentLabel
+                  : l.scheduledFormAmountLabel,
               validator: (v) {
-                final n = double.tryParse(v ?? '');
-                if (n == null || n <= 0) {
-                  return l.scheduledFormAmountInvalid;
-                }
-                return null;
+                final n = AmountField.parse(v);
+                return (n == null || n <= 0) ? l.scheduledFormAmountInvalid : null;
               },
             ),
             const SizedBox(height: AppSpacing.md),
@@ -418,19 +411,15 @@ class _ScheduledTransactionFormPageState
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: FilledButton(
-            onPressed: _save,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-            child: Text(widget.isEdit
-                ? l.scheduledFormSaveEdit
-                : l.scheduledFormSave),
-          ),
-        ),
+      bottomNavigationBar: ModeActionBar(
+        canUndo: false,
+        canSave: true,
+        cancelLabel: l.commonCancel,
+        saveLabel: widget.isEdit ? l.scheduledFormSaveEdit : l.scheduledFormSave,
+        undoTooltip: l.commonUndo,
+        onCancel: () => context.pop(),
+        onUndo: () {},
+        onSave: _save,
       ),
     );
   }
@@ -470,7 +459,7 @@ class _ScheduledTransactionFormPageState
     final cubit = context.read<ScheduledTransactionsCubit>();
     final messenger = ScaffoldMessenger.of(context);
 
-    final amount = double.parse(_amountController.text.trim());
+    final amount = AmountField.parse(_amountController.text)!;
     final entryType = _isInstallmentVariant
         ? ScheduledEntryType.installment
         : ScheduledEntryType.recurring;

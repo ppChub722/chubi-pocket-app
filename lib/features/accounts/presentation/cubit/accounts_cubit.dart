@@ -97,6 +97,14 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     ]));
   }
 
+  /// Archived wallets (for the "กระเป๋าที่เก็บถาวร" page).
+  Future<List<Account>> listArchived() => _repo.list(status: 'archived');
+
+  Future<void> restore(String id) async {
+    await _repo.restore(id);
+    await load();
+  }
+
   /// Archive (soft delete) — spec §3.10. The server flips status to
   /// 'archived'; locally we drop the row from the active list since
   /// `loadIfNeeded` only fetches active accounts by default.

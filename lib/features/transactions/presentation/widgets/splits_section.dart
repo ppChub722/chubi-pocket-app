@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 
@@ -99,24 +102,23 @@ class _SplitsSectionState extends State<SplitsSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context)!;
     final remaining = widget.totalAmount - _splitTotal;
     final overflow = remaining < -0.005;
 
     if (!_expanded) {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          icon: const Icon(Icons.call_split, size: 18),
-          label: Text(widget.title ?? 'Split with…'),
-          onPressed: () {
-            setState(() {
-              _expanded = true;
-              if (widget.drafts.isEmpty) {
-                widget.onChanged([SplitDraft()]);
-              }
-            });
-          },
-        ),
+      return AddTile(
+        label: widget.title ?? l.txSplitAdd,
+        variant: AddTileVariant.row,
+        icon: AppIcons.split,
+        onTap: () {
+          setState(() {
+            _expanded = true;
+            if (widget.drafts.isEmpty) {
+              widget.onChanged([SplitDraft()]);
+            }
+          });
+        },
       );
     }
 
@@ -127,19 +129,19 @@ class _SplitsSectionState extends State<SplitsSection> {
           children: [
             Expanded(
               child: Text(
-                widget.title ?? 'Split with',
+                widget.title ?? l.txSplitWith,
                 style: theme.textTheme.titleSmall,
               ),
             ),
             TextButton.icon(
               icon: const Icon(Icons.balance, size: 18),
-              label: const Text('Split equally'),
+              label: Text(l.txSplitEqually),
               onPressed: widget.drafts.isEmpty || widget.totalAmount <= 0
                   ? null
                   : _splitEqually,
             ),
             IconButton(
-              tooltip: 'Collapse',
+              tooltip: l.txSplitCollapse,
               icon: const Icon(Icons.close),
               onPressed: () {
                 setState(() {
@@ -170,14 +172,14 @@ class _SplitsSectionState extends State<SplitsSection> {
           children: [
             TextButton.icon(
               icon: const Icon(Icons.add),
-              label: const Text('Add person'),
+              label: Text(l.txSplitAddPerson),
               onPressed: () {
                 widget.onChanged([...widget.drafts, SplitDraft()]);
               },
             ),
             const Spacer(),
             Text(
-              'Remaining: ${remaining.toStringAsFixed(2)}',
+              l.txSplitRemaining(moneyString(context, remaining)),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: overflow ? theme.colorScheme.error : null,
                 fontWeight: overflow ? FontWeight.w600 : null,
@@ -189,7 +191,7 @@ class _SplitsSectionState extends State<SplitsSection> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Splits exceed the transaction amount.',
+              l.txSplitOver,
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: theme.colorScheme.error),
             ),
@@ -273,6 +275,7 @@ class _DraftRowState extends State<_DraftRow> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final draft = widget.draft;
     return BlocBuilder<ContactsCubit, ContactsState>(
       builder: (context, state) {
@@ -281,8 +284,8 @@ class _DraftRowState extends State<_DraftRow> {
             // Visual cue: filled link icon when wired, outline when free text.
             Tooltip(
               message: draft.isWired
-                  ? 'Wired to contact'
-                  : 'Free text — pick a contact from suggestions to wire',
+                  ? l.txSplitWiredContact
+                  : l.txSplitFreeText,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Icon(
@@ -314,8 +317,8 @@ class _DraftRowState extends State<_DraftRow> {
                   return TextField(
                     controller: controller,
                     focusNode: focusNode,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
+                    decoration: InputDecoration(
+                      labelText: l.txSplitName,
                       isDense: true,
                     ),
                     onChanged: (v) {
@@ -391,8 +394,8 @@ class _DraftRowState extends State<_DraftRow> {
               flex: 2,
               child: TextField(
                 controller: _amount,
-                decoration: const InputDecoration(
-                  labelText: 'Owes',
+                decoration: InputDecoration(
+                  labelText: l.txSplitOwes,
                   isDense: true,
                 ),
                 keyboardType:
@@ -404,7 +407,7 @@ class _DraftRowState extends State<_DraftRow> {
               ),
             ),
             IconButton(
-              tooltip: 'Remove',
+              tooltip: l.txSplitRemove,
               icon: const Icon(Icons.delete_outline),
               onPressed: widget.onRemove,
             ),

@@ -13,6 +13,10 @@ import '../../dev/logs_viewer_screen.dart';
 import '../../dev/state_widgets_preview_screen.dart';
 import '../../dev/theme_preview_screen.dart';
 import '../../dev/widget_gallery_screen.dart';
+import '../../features/accounts/presentation/cubit/accounts_cubit.dart';
+import '../../features/accounts/presentation/pages/archived_accounts_page.dart';
+import '../../features/transactions/data/transactions_repository.dart';
+import '../../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../../features/accounts/presentation/pages/account_detail_page.dart';
 import '../../features/accounts/presentation/pages/account_form_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
@@ -24,11 +28,13 @@ import '../../features/contacts/presentation/pages/contact_form_page.dart';
 import '../../features/contacts/presentation/pages/contacts_page.dart';
 import '../../features/notifications/presentation/pages/notification_settings_page.dart';
 import '../../features/notifications/presentation/pages/notifications_inbox_page.dart';
+import '../../features/personal_debts/presentation/pages/debt_person_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debt_detail_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debt_form_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debts_page.dart';
 import '../../features/projects/presentation/pages/project_detail_page.dart';
 import '../../features/projects/presentation/pages/project_form_page.dart';
+import '../../features/projects/presentation/pages/project_members_page.dart';
 import '../../features/projects/presentation/pages/project_transaction_form_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.dart';
@@ -215,11 +221,34 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                         const ShellChromeHider(child: AccountFormPage()),
                   ),
                   GoRoute(
+                    path: 'archived',
+                    name: 'accounts-archived',
+                    builder: (context, state) => const ArchivedAccountsPage(),
+                  ),
+                  GoRoute(
                     path: ':id',
                     name: 'account-detail',
                     builder: (context, state) => AccountDetailPage(
                       accountId: state.pathParameters['id']!,
                     ),
+                  ),
+                  // A wallet's full history ("ดูทั้งหมด ›") — stays in the
+                  // wallets stack, with its own list cubit so the
+                  // transactions tab keeps its filters.
+                  GoRoute(
+                    path: ':id/transactions',
+                    name: 'account-transactions',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return BlocProvider(
+                        create: (ctx) => TransactionsCubit(
+                            repository: ctx.read<TransactionsRepository>()),
+                        child: TransactionsListPage(
+                          initialAccountId: id,
+                          title: context.read<AccountsCubit>().byId(id)?.name,
+                        ),
+                      );
+                    },
                   ),
                   GoRoute(
                     path: ':id/edit',
@@ -259,8 +288,8 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/projects/new',
                 name: 'project-new',
-                builder: (context, state) =>
-                    const ShellChromeHider(child: ProjectFormPage()),
+                // Forms hide the nav themselves (EditModeMixin).
+                builder: (context, state) => const ProjectFormPage(),
               ),
               GoRoute(
                 path: '/projects/:id',
@@ -271,17 +300,21 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/projects/:id/edit',
                 name: 'project-edit',
-                builder: (context, state) => ShellChromeHider(
-                    child: ProjectFormPage(
-                        editingId: state.pathParameters['id'])),
+                // Info is edited in place — open the detail in edit mode.
+                builder: (context, state) => ProjectDetailPage(
+                    id: state.pathParameters['id']!, startEditing: true),
+              ),
+              GoRoute(
+                path: '/projects/:id/members',
+                name: 'project-members',
+                builder: (context, state) => ProjectMembersPage(
+                    projectId: state.pathParameters['id']!),
               ),
               GoRoute(
                 path: '/projects/:id/transactions/new',
                 name: 'project-tx-new',
-                builder: (context, state) => ShellChromeHider(
-                  child: ProjectTransactionFormPage(
-                    projectId: state.pathParameters['id']!,
-                  ),
+                builder: (context, state) => ProjectTransactionFormPage(
+                  projectId: state.pathParameters['id']!,
                 ),
               ),
               // Contacts (Phase 1b.1)
@@ -293,22 +326,21 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/contacts/new',
                 name: 'contact-new',
-                // `extra` carries the link-request payload when the
-                // inbox tap handler routes here for an unmatched
-                // sender.
+                // Plain create → the detail page in edit mode. `extra`
+                // with a linkRequestId = inbox accept flow → ContactFormPage.
                 builder: (context, state) {
                   final extra = state.extra;
-                  return ShellChromeHider(
-                    child: extra is Map
-                        ? ContactFormPage(
-                            linkRequestId:
-                                extra['linkRequestId'] as String?,
-                            lockedDisplayName:
-                                extra['lockedDisplayName'] as String?,
-                            lockedEmail: extra['lockedEmail'] as String?,
-                          )
-                        : const ContactFormPage(),
-                  );
+                  if (extra is Map && extra['linkRequestId'] != null) {
+                    return ShellChromeHider(
+                      child: ContactFormPage(
+                        linkRequestId: extra['linkRequestId'] as String?,
+                        lockedDisplayName:
+                            extra['lockedDisplayName'] as String?,
+                        lockedEmail: extra['lockedEmail'] as String?,
+                      ),
+                    );
+                  }
+                  return const ContactDetailPage();
                 },
               ),
               GoRoute(
@@ -320,19 +352,20 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/contacts/:id/edit',
                 name: 'contact-edit',
-                // `extra` (when present) carries the link-existing
-                // flow data ({ linkRequestId }).
+                // Plain edit → detail page opened in edit mode. `extra`
+                // with a linkRequestId = link-existing flow → ContactFormPage.
                 builder: (context, state) {
                   final extra = state.extra;
-                  final id = state.pathParameters['id'];
-                  return ShellChromeHider(
-                    child: ContactFormPage(
-                      editingId: id,
-                      linkRequestId: extra is Map
-                          ? extra['linkRequestId'] as String?
-                          : null,
-                    ),
-                  );
+                  final id = state.pathParameters['id']!;
+                  if (extra is Map && extra['linkRequestId'] != null) {
+                    return ShellChromeHider(
+                      child: ContactFormPage(
+                        editingId: id,
+                        linkRequestId: extra['linkRequestId'] as String?,
+                      ),
+                    );
+                  }
+                  return ContactDetailPage(id: id, startEditing: true);
                 },
               ),
               // Budgets (Phase 1c)
@@ -425,8 +458,23 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/personal-debts/new',
                 name: 'personal-debt-new',
-                builder: (context, state) =>
-                    const ShellChromeHider(child: PersonalDebtFormPage()),
+                // `extra` {contactId, name} prefills the person (from their
+                // page). The form hides the nav itself (EditModeMixin).
+                builder: (context, state) {
+                  final extra = state.extra;
+                  return PersonalDebtFormPage(
+                    contactId: extra is Map ? extra['contactId'] as String? : null,
+                    name: extra is Map ? extra['name'] as String? : null,
+                  );
+                },
+              ),
+              GoRoute(
+                path: '/personal-debts/person',
+                name: 'personal-debt-person',
+                builder: (context, state) => DebtPersonPage(
+                  contactId: state.uri.queryParameters['contact'],
+                  name: state.uri.queryParameters['name'] ?? '',
+                ),
               ),
               GoRoute(
                 path: '/personal-debts/:id',

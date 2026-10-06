@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/edit_mode/edit_mode_mixin.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/editable_circle.dart';
-import '../../../../shared/widgets/user_avatar.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../../shared/widgets/user_profile_preview.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 
+/// `/settings/profile` (§7) — opens straight in edit mode: header card
+/// (avatar → icon maker, name inline), username (locked), email. Default
+/// currency lives on the settings page only.
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
@@ -22,356 +28,225 @@ class EditProfilePage extends StatefulWidget {
   State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
-  static const _currencies = ['THB', 'USD', 'EUR', 'GBP', 'JPY'];
+enum _Field { name, email }
 
+class _EditProfilePageState extends State<EditProfilePage>
+    with EditModeMixin<EditProfilePage, _ProfileDraft> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _displayNameCtrl;
-  late final TextEditingController _emailCtrl;
-  late String _currency;
-  late User _initial;
-  IconCode? _iconCode;
-
-  bool _submitting = false;
-  ApiException? _error;
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  late final User _user;
+  String? _emailError;
 
   @override
   void initState() {
     super.initState();
-    final user = _userOrNull(context.read<AuthCubit>().state);
-    _initial = user!;
-    _displayNameCtrl = TextEditingController(text: user.displayName);
-    _emailCtrl = TextEditingController(text: user.email ?? '');
-    _currency = user.currency;
-    _iconCode = user.iconCode;
+    // Reached from settings, so the user is signed in (possibly refreshing).
+    final s = context.read<AuthCubit>().state;
+    _user = s is AuthAuthenticated
+        ? s.user
+        : ((s as AuthLoading).previous as AuthAuthenticated).user;
+    initDraft(_ProfileDraft.from(_user), editing: true);
+    onDraftRestored();
   }
 
   @override
   void dispose() {
-    _displayNameCtrl.dispose();
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
     super.dispose();
   }
 
-  bool get _dirty {
-    final emailTrimmed = _emailCtrl.text.trim();
-    final emailChanged =
-        emailTrimmed.isNotEmpty && emailTrimmed != (_initial.email ?? '');
-    return _displayNameCtrl.text.trim() != _initial.displayName ||
-        _currency != _initial.currency ||
-        _iconCode != _initial.iconCode ||
-        emailChanged;
+  @override
+  bool get leaveOnCancel => true;
+
+  @override
+  void leavePage() {
+    if (context.canPop()) context.pop();
+  }
+
+  @override
+  void onDraftRestored() {
+    if (_nameCtrl.text != working.name) _nameCtrl.text = working.name;
+    if (_emailCtrl.text != working.email) _emailCtrl.text = working.email;
+  }
+
+  Future<void> _pickAvatar() async {
+    final l = AppLocalizations.of(context)!;
+    final r = await showIconMakerSheet(
+      context: context,
+      type: IconType.userProfile,
+      title: l.editProfileTitle,
+      initial: working.iconCode,
+      removeLabel: l.commonRemove,
+      previewBuilder: (code) => UserProfilePreview(
+        displayName: working.name.trim().isEmpty ? _user.displayName : working.name,
+        iconCode: code,
+      ),
+    );
+    if (!mounted || r == null) return;
+    if (r is IconMakerSelected) applyChange(working.copyWith(iconCode: r.iconCode));
+    if (r is IconMakerRemoved) applyChange(working.copyWith(clearIcon: true));
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() {
-      _submitting = true;
-      _error = null;
-    });
+    commitTextSession();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l = AppLocalizations.of(context)!;
+    final w = working;
+    final o = original;
+    final email = w.email.trim();
+    final emailChanged = email.isNotEmpty && email != o.email;
+    final iconChanged = w.iconCode != o.iconCode;
+    final auth = context.read<AuthCubit>();
+    FocusScope.of(context).unfocus();
+    setSaving(true);
+    setState(() => _emailError = null);
     try {
-      final repo = context.read<UsersRepository>();
-      final newEmail = _emailCtrl.text.trim();
-      final emailChanged =
-          newEmail.isNotEmpty && newEmail != (_initial.email ?? '');
-      final iconChanged = _iconCode != _initial.iconCode;
-      final updated = await repo.updateMe(
-        displayName: _displayNameCtrl.text.trim() != _initial.displayName
-            ? _displayNameCtrl.text.trim()
-            : null,
-        currency: _currency != _initial.currency ? _currency : null,
-        email: emailChanged ? newEmail : null,
-        iconCode: iconChanged ? _iconCode : null,
-        clearIconCode: iconChanged && _iconCode == null,
-      );
+      final updated = await context.read<UsersRepository>().updateMe(
+            displayName: w.name.trim() != o.name ? w.name.trim() : null,
+            email: emailChanged ? email : null,
+            iconCode: iconChanged ? w.iconCode : null,
+            clearIconCode: iconChanged && w.iconCode == null,
+          );
+      auth.updateUser(updated);
       if (!mounted) return;
-      context.read<AuthCubit>().updateUser(updated);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                AppLocalizations.of(context)!.editProfileSnackSuccess)),
-      );
-      context.pop();
+      HapticFeedback.mediumImpact();
+      showAppSnackBar(context, l.editProfileSnackSuccess, tone: Tone.success);
+      commitSaved(w);
+      leavePage();
     } on ApiException catch (e) {
-      if (e.code == 'EMAIL_EXISTS' && mounted) {
-        final l = AppLocalizations.of(context)!;
-        setState(() => _error = ApiException(
-              code: e.code,
-              message: l.editProfileEmailTaken,
-            ));
+      if (!mounted) return;
+      setSaving(false);
+      if (e.code == 'EMAIL_EXISTS') {
+        setState(() => _emailError = l.editProfileEmailTaken);
       } else {
-        setState(() => _error = e);
+        showAppSnackBar(context, e.message, tone: Tone.danger);
       }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
     }
   }
 
-  Future<void> _openAvatarPicker() async {
-    final l = AppLocalizations.of(context)!;
-    final displayName = _displayNameCtrl.text.trim().isEmpty
-        ? _initial.displayName
-        : _displayNameCtrl.text.trim();
-    final result = await showIconMakerSheet(
-      context: context,
-      type: IconType.userProfile,
-      initial: _iconCode,
-      iconSectionLabel: l.avatarPickerStyleLabel,
-      colorSectionLabel: l.avatarPickerColorLabel,
-      useThisLabel: l.avatarPickerUseThis,
-      removeLabel: l.commonRemove,
-      previewBuilder: (iconCode) => UserProfilePreview(
-        displayName: displayName,
-        iconCode: iconCode,
-      ),
-    );
-    if (!mounted || result == null) return;
-    setState(() {
-      if (result is IconMakerSelected) {
-        _iconCode = result.iconCode;
-      } else if (result is IconMakerRemoved) {
-        _iconCode = null;
-      }
-    });
-  }
-
-  Future<bool> _confirmDiscard() async {
-    if (!_dirty) return true;
-    final l = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.editProfileDiscardTitle),
-        content: Text(l.editProfileDiscardBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l.editProfileDiscardKeep),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l.editProfileDiscardConfirm),
-          ),
-        ],
-      ),
-    );
-    return ok == true;
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return PopScope(
-      canPop: !_dirty,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        final ok = await _confirmDiscard();
-        if (!context.mounted) return;
-        if (ok) context.pop();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () async {
-              final ok = await _confirmDiscard();
-              if (!context.mounted) return;
-              if (ok) context.pop();
-            },
-          ),
-          title: Text(l.editProfileTitle),
-          actions: [
-            TextButton(
-              onPressed: (_dirty && !_submitting) ? _save : null,
-              child: _submitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l.commonSave),
+    final w = working;
+    return editScope(Scaffold(
+      appBar: AppTopBar(
+        title: l.editProfileTitle,
+        showBack: true,
+        editing: true,
+        onBack: handleBack,
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
+          children: [
+            HeaderCard(
+              leading: EditableCircle(
+                size: 64,
+                onTap: _pickAvatar,
+                child: UserAvatar(
+                  displayName: w.name.trim().isEmpty ? _user.displayName : w.name,
+                  iconCode: w.iconCode,
+                  size: 64,
+                ),
+              ),
+              title: InlineTitleField(
+                editing: true,
+                controller: _nameCtrl,
+                hint: l.editProfileDisplayNameLabel,
+                onChanged: (v) =>
+                    applyTextChange(_Field.name, working.copyWith(name: v)),
+                validator: (v) {
+                  final s = v?.trim() ?? '';
+                  if (s.isEmpty) return l.commonRequired;
+                  if (s.length > 100) return l.authRegisterDisplayNameTooLong;
+                  return null;
+                },
+              ),
+              subtitle: Text('@${_user.username}'),
             ),
-          ],
-        ),
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500),
-                child: Form(
-                  key: _formKey,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
+            const SizedBox(height: AppSpacing.lg),
+            SectionCard(
+              children: [
+                DetailRow(
+                  leading: const Icon(AppIcons.lock),
+                  label: l.editProfileUsernameLabel,
+                  helper: l.profileUsernameLocked,
+                  trailing: Text('@${_user.username}'),
+                ),
+                const RowDivider(),
+                DetailStacked(
+                  label: l.editProfileEmailLabel,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (_error != null) ...[
-                        _ErrorBanner(message: _error!.message),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
-                      _AvatarSection(
-                        displayName: _displayNameCtrl.text.isEmpty
-                            ? _initial.displayName
-                            : _displayNameCtrl.text,
-                        iconCode: _iconCode,
-                        onTap: _submitting ? null : _openAvatarPicker,
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                      TextFormField(
-                        controller: _displayNameCtrl,
-                        enabled: !_submitting,
-                        decoration: InputDecoration(
-                          labelText: l.editProfileDisplayNameLabel,
-                        ),
-                        onChanged: (_) => setState(() {}),
-                        validator: (v) {
-                          final s = v?.trim() ?? '';
-                          if (s.isEmpty) return l.commonRequired;
-                          if (s.length > 100) {
-                            return l.authRegisterDisplayNameTooLong;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      DropdownButtonFormField<String>(
-                        initialValue: _currency,
-                        decoration: InputDecoration(
-                          labelText: l.editProfileCurrencyLabel,
-                          helperText: l.editProfileCurrencyHelper,
-                          helperMaxLines: 2,
-                        ),
-                        items: _currencies
-                            .map((c) =>
-                                DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
-                        onChanged: _submitting
-                            ? null
-                            : (v) => setState(() => _currency = v ?? 'THB'),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                      _ReadOnlyField(
-                        label: l.editProfileUsernameLabel,
-                        value: '@${_initial.username}',
-                        helper: l.editProfileReadOnlyHelper,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      TextFormField(
+                      InlineField(
+                        editing: true,
                         controller: _emailCtrl,
-                        enabled: !_submitting,
+                        maxLength: 255,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: l.editProfileEmailLabel,
-                          helperText: l.editProfileEmailHelper,
-                          helperMaxLines: 3,
-                        ),
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (v) {
+                          if (_emailError != null) setState(() => _emailError = null);
+                          applyTextChange(_Field.email, working.copyWith(email: v));
+                        },
                         validator: (v) {
+                          if (_emailError != null) return _emailError;
                           final s = v?.trim() ?? '';
                           if (s.isEmpty) return null;
-                          if (s.length > 255) {
-                            return l.editProfileEmailTooLong;
-                          }
-                          final ok = RegExp(
-                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                          ).hasMatch(s);
-                          if (!ok) return l.editProfileEmailInvalid;
-                          return null;
+                          if (s.length > 255) return l.editProfileEmailTooLong;
+                          return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
+                              ? null
+                              : l.editProfileEmailInvalid;
                         },
                       ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(l.editProfileEmailHelper,
+                          style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
-          ),
+          ],
         ),
       ),
-    );
+      bottomNavigationBar: editActionBar(onSave: _save),
+    ));
   }
 }
 
-User? _userOrNull(AuthState state) {
-  if (state is AuthAuthenticated) return state.user;
-  if (state is AuthLoading && state.previous is AuthAuthenticated) {
-    return (state.previous as AuthAuthenticated).user;
-  }
-  return null;
-}
+class _ProfileDraft {
+  const _ProfileDraft({required this.name, required this.email, this.iconCode});
 
-class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({
-    required this.displayName,
-    required this.onTap,
-    this.iconCode,
-  });
+  factory _ProfileDraft.from(User u) =>
+      _ProfileDraft(name: u.displayName, email: u.email ?? '', iconCode: u.iconCode);
 
-  final String displayName;
+  final String name;
+  final String email;
   final IconCode? iconCode;
-  final VoidCallback? onTap;
+
+  _ProfileDraft copyWith({
+    String? name,
+    String? email,
+    IconCode? iconCode,
+    bool clearIcon = false,
+  }) =>
+      _ProfileDraft(
+        name: name ?? this.name,
+        email: email ?? this.email,
+        iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
+      );
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: EditableCircle(
-        size: 96,
-        onTap: onTap,
-        child: UserAvatar(
-          displayName: displayName,
-          iconCode: iconCode,
-          size: 96,
-        ),
-      ),
-    );
-  }
-}
-
-class _ReadOnlyField extends StatelessWidget {
-  const _ReadOnlyField({
-    required this.label,
-    required this.value,
-    required this.helper,
-  });
-  final String label;
-  final String value;
-  final String helper;
+  bool operator ==(Object other) =>
+      other is _ProfileDraft &&
+      other.name == name &&
+      other.email == email &&
+      other.iconCode == iconCode;
 
   @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: TextEditingController(text: value),
-      enabled: false,
-      decoration: InputDecoration(
-        labelText: label,
-        helperText: helper,
-      ),
-    );
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: scheme.onErrorContainer),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(message,
-                style: TextStyle(color: scheme.onErrorContainer)),
-          ),
-        ],
-      ),
-    );
-  }
+  int get hashCode => Object.hash(name, email, iconCode);
 }

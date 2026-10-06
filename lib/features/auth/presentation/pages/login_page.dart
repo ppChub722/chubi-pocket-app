@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/secret_tap.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../cubit/auth_cubit.dart';
+import '../widgets/auth_widgets.dart';
 
 /// Login form. Generic 401 message on bad credentials (no field-level reveal —
 /// security pattern). On success, [AuthCubit] flips to [AuthAuthenticated] and
@@ -21,7 +23,6 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -42,13 +43,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        // Hidden dev entrance: tap the title 5× → /dev (works logged out).
-        title: SecretTapDetector(
-          onUnlock: () => context.push('/dev'),
-          child: Text(l.authLoginTitle),
-        ),
-      ),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final isSubmitting = state is AuthLoading;
@@ -56,77 +50,81 @@ class _LoginPageState extends State<LoginPage> {
           return SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (failure != null)
-                          _ErrorBanner(message: _messageFor(l, failure)),
-                        if (failure != null)
-                          const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _identifierCtrl,
-                          enabled: !isSubmitting,
-                          autofillHints: const [
-                            AutofillHints.username,
-                            AutofillHints.email,
-                          ],
-                          textInputAction: TextInputAction.next,
-                          decoration: InputDecoration(
-                            labelText: l.authLoginIdentifierLabel,
-                          ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty)
-                                  ? l.commonRequired
-                                  : null,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        TextFormField(
-                          controller: _passwordCtrl,
-                          enabled: !isSubmitting,
-                          obscureText: _obscurePassword,
-                          autofillHints: const [AutofillHints.password],
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _submit(),
-                          decoration: InputDecoration(
-                            labelText: l.authLoginPasswordLabel,
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined),
-                              onPressed: () => setState(
-                                  () => _obscurePassword = !_obscurePassword),
+                  child: AutofillGroup(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const AuthBrandHeader(),
+                          const SizedBox(height: AppSpacing.xl),
+                          if (failure != null) ...[
+                            MessageBanner(
+                              message: _messageFor(l, failure),
+                              onClose: () => context
+                                  .read<AuthCubit>()
+                                  .acknowledgeFailure(),
                             ),
+                            const SizedBox(height: AppSpacing.md),
+                          ],
+                          AppTextField(
+                            controller: _identifierCtrl,
+                            enabled: !isSubmitting,
+                            label: l.authLoginIdentifierLabel,
+                            prefixIcon: AppIcons.profile,
+                            keyboardType: TextInputType.emailAddress,
+                            autofillHints: const [
+                              AutofillHints.username,
+                              AutofillHints.email,
+                            ],
+                            textInputAction: TextInputAction.next,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? l.commonRequired
+                                : null,
                           ),
-                          validator: (v) =>
-                              (v == null || v.isEmpty)
-                                  ? l.commonRequired
-                                  : null,
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        FilledButton(
-                          onPressed: isSubmitting ? null : _submit,
-                          child: isSubmitting
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                )
-                              : Text(l.authLoginSubmit),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        TextButton(
-                          onPressed: isSubmitting
-                              ? null
-                              : () => context.push('/auth/register'),
-                          child: Text(l.authLoginGoToRegister),
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.md),
+                          AppTextField(
+                            controller: _passwordCtrl,
+                            enabled: !isSubmitting,
+                            label: l.authLoginPasswordLabel,
+                            prefixIcon: AppIcons.lock,
+                            obscurable: true,
+                            autofillHints: const [AutofillHints.password],
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _submit(),
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? l.commonRequired
+                                : null,
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          AppButton(
+                            label: l.authLoginSubmit,
+                            onPressed: isSubmitting ? null : _submit,
+                            loading: isSubmitting,
+                            size: AppButtonSize.large,
+                            expand: true,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          const AuthOrDivider(),
+                          const SizedBox(height: AppSpacing.lg),
+                          // TODO(google-sign-in): wire once POST /auth/google
+                          // exists (contract §12).
+                          const GoogleSignInButton(),
+                          const SizedBox(height: AppSpacing.lg),
+                          TextButton(
+                            onPressed: isSubmitting
+                                ? null
+                                : () => context.push('/auth/register'),
+                            child: Text(l.authLoginGoToRegister),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          const AuthPrefsBar(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -150,39 +148,5 @@ class _LoginPageState extends State<LoginPage> {
       return l.errorBannerNoConnection;
     }
     return failure.error.message;
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: scheme.onErrorContainer),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(color: scheme.onErrorContainer),
-            ),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            icon: Icon(Icons.close, color: scheme.onErrorContainer),
-            onPressed: () => context.read<AuthCubit>().acknowledgeFailure(),
-          ),
-        ],
-      ),
-    );
   }
 }

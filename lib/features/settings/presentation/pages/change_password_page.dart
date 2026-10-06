@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../auth/data/auth_repository.dart';
 
 class ChangePasswordPage extends StatefulWidget {
@@ -71,16 +73,28 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.changePasswordTitle),
+      // A form = edit mode (§1.4): ✕ + ยกเลิก · บันทึก, no nav.
+      appBar: AppTopBar(
+        title: l.changePasswordTitle,
+        showBack: true,
+        editing: true,
+        onBack: () => context.pop(),
+      ),
+      bottomNavigationBar: ModeActionBar(
+        canUndo: false,
+        canSave: !_submitting,
+        saving: _submitting,
+        cancelLabel: l.commonCancel,
+        saveLabel: l.changePasswordSubmit,
+        undoTooltip: l.commonUndo,
+        onCancel: () => context.pop(),
+        onUndo: () {},
+        onSave: _submit,
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Form(
+            child: Form(
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: Column(
@@ -162,22 +176,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: AppSpacing.xl),
-                    FilledButton(
-                      onPressed: _submitting ? null : _submit,
-                      child: _submitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l.changePasswordSubmit),
-                    ),
                   ],
                 ),
               ),
-            ),
-          ),
         ),
       ),
     );

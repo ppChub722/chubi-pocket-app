@@ -67,39 +67,26 @@ class CategoriesRepository {
     }
   }
 
-  /// `DELETE /v1/categories/:id`. Returns the resolved status —
-  /// `"deleted"` when there were no transactions (hard delete) or
-  /// `"archived"` when soft-deleted with attached transactions
-  /// (spec §3.5).
-  Future<String> delete(String id) async {
+  /// `DELETE /v1/categories/:id` — always a real delete. Children move up
+  /// a level, transactions using it become uncategorised, its budgets are
+  /// deleted too.
+  Future<void> delete(String id) async {
     try {
-      final res = await _client.dio.delete<Map<String, dynamic>>(
-        '/categories/$id',
-      );
-      return (res.data!['status'] as String?) ?? 'deleted';
+      await _client.dio.delete<Map<String, dynamic>>('/categories/$id');
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// `POST /v1/categories/:id/restore` — reactivates an archived row.
-  Future<Category> restore(String id) async {
+  /// What a delete would touch, from `GET /v1/categories/:id`.
+  Future<({int transactions, int budgets})> usage(String id) async {
     try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/categories/$id/restore',
-      );
-      return Category.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  /// `DELETE /v1/categories/:id/permanent` — only valid from archived
-  /// state with zero transactions (spec §3.7).
-  Future<void> permanentDelete(String id) async {
-    try {
-      await _client.dio.delete<Map<String, dynamic>>(
-        '/categories/$id/permanent',
+      final res =
+          await _client.dio.get<Map<String, dynamic>>('/categories/$id');
+      final d = res.data!;
+      return (
+        transactions: (d['transaction_count'] as num?)?.toInt() ?? 0,
+        budgets: (d['budget_count'] as num?)?.toInt() ?? 0,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

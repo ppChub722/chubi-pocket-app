@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/network/connectivity_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -47,7 +48,7 @@ class _Banner extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: Row(
             children: [
-              Icon(Icons.wifi_off, size: 16, color: scheme.onSurface),
+              Icon(AppIcons.offline, size: 16, color: scheme.onSurface),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(

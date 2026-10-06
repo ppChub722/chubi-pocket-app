@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../features/auth/domain/user.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../shared/widgets/buttons/app_icon_button.dart';
+import '../../shared/widgets/chips/filter_chips.dart';
 import '../../shared/widgets/user_avatar.dart';
+import 'top_bar_crumbs.dart';
 
 /// A local (page-specific) action for [AppTopBar], rendered as an icon chip
 /// to the left of the universal notification + profile chips.
@@ -20,6 +23,7 @@ class AppBarAction {
     this.badgeCount = 0,
     this.destructive = false,
     this.enabled = true,
+    this.label,
   });
 
   final IconData icon;
@@ -27,11 +31,15 @@ class AppBarAction {
   final String? tooltip;
   final int badgeCount;
 
-  /// Red icon (🗑). Callers still confirm via `showConfirmDialog`.
+  /// Red, labelled pill ("🗑 ลบ") — destructive actions always show text
+  /// because they matter. Callers still confirm via `showConfirmDialog`.
   final bool destructive;
 
   /// false → dimmed and untappable (e.g. bulk actions with nothing selected).
   final bool enabled;
+
+  /// Text for a [destructive] pill; defaults to the localized "ลบ".
+  final String? label;
 }
 
 /// Universal top bar — the top-chrome counterpart to `MainBottomNav`.
@@ -63,6 +71,8 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions = const <AppBarAction>[],
     this.editing = false,
     this.showUniversal = true,
+    this.parent,
+    this.showParent = true,
     super.key,
   });
 
@@ -81,6 +91,13 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   /// Whether to show the 🔔 / 👤 chips (ignored while [editing]).
   final bool showUniversal;
 
+  /// Breadcrumb parent (`โปรเจกต์ › test`). Null = derived from the route
+  /// ([defaultTopBarCrumb]); pass one when the parent is a named item.
+  final TopBarCrumb? parent;
+
+  /// false = title only, even when a parent could be derived.
+  final bool showParent;
+
   bool get _universal => showUniversal && !editing;
 
   @override
@@ -98,8 +115,11 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: AppSpacing.md,
       title: _LeftGroup(
         showBack: showBack || editing,
-        backIcon: editing ? Icons.close : Icons.arrow_back,
+        backIcon: editing ? AppIcons.close : AppIcons.back,
         title: title,
+        parent: showParent ? (parent ?? defaultTopBarCrumb(context)) : null,
+        // Editing: leave only via ✕ (it asks before discarding).
+        parentEnabled: !editing,
         onBack: onBack ?? () => _defaultBack(context),
       ),
       actions: [
@@ -124,7 +144,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
           builder: (context, unread) => _actionChip(
             context,
             AppBarAction(
-              icon: Icons.notifications_outlined,
+              icon: AppIcons.notifications,
               tooltip: l.navNotificationsTooltip,
               onPressed: () => context.push('/notifications'),
               badgeCount: unread,
@@ -179,39 +199,56 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     if (context.canPop()) context.pop();
   }
 
-  /// A circular action chip ([AppIconButton]) with left spacing.
+  /// A circular action chip ([AppIconButton]) with left spacing; destructive
+  /// actions render as a red labelled [ActionPill] instead.
   Widget _actionChip(BuildContext context, AppBarAction a) {
     return Padding(
       padding: const EdgeInsets.only(left: AppSpacing.sm),
-      child: AppIconButton(
-        icon: a.icon,
-        tooltip: a.tooltip,
-        badgeCount: a.badgeCount,
-        destructive: a.destructive,
-        onPressed: a.enabled ? a.onPressed : null,
-      ),
+      child: a.destructive
+          ? Tooltip(
+              message: a.tooltip ?? '',
+              child: ActionPill(
+                icon: a.icon,
+                label: a.label ?? AppLocalizations.of(context)!.commonDelete,
+                destructive: true,
+                onTap: a.enabled ? a.onPressed : null,
+              ),
+            )
+          : AppIconButton(
+              icon: a.icon,
+              tooltip: a.tooltip,
+              badgeCount: a.badgeCount,
+              onPressed: a.enabled ? a.onPressed : null,
+            ),
     );
   }
 }
 
-/// The left group — a single rounded background wrapping the back button,
-/// a divider, and the title (so the background covers the title too).
+/// The left group — one rounded background around the back button, a
+/// divider and the breadcrumb title `หน้าแม่ › หน้านี้` (parent muted and
+/// tappable, capped at ~40% of the screen; the page title ellipsizes first).
 class _LeftGroup extends StatelessWidget {
   const _LeftGroup({
     required this.showBack,
     required this.title,
     required this.onBack,
-    this.backIcon = Icons.arrow_back,
+    this.parent,
+    this.parentEnabled = true,
+    this.backIcon = AppIcons.back,
   });
 
   final bool showBack;
   final String? title;
   final VoidCallback onBack;
+  final TopBarCrumb? parent;
+  final bool parentEnabled;
   final IconData backIcon;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final crumb = parent;
     if (!showBack && title == null) return const SizedBox.shrink();
     return Material(
       color: scheme.surfaceContainerHigh,
@@ -242,18 +279,41 @@ class _LeftGroup extends StatelessWidget {
               ),
               Container(width: 1, height: 20, color: scheme.outlineVariant),
             ],
+            if (crumb != null) ...[
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxWidth: MediaQuery.sizeOf(context).width * 0.4),
+                child: InkWell(
+                  onTap: parentEnabled ? () => goToCrumb(context, crumb) : null,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md, AppSpacing.sm, AppSpacing.xs, AppSpacing.sm),
+                    child: Text(
+                      crumb.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodyMedium
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ),
+                ),
+              ),
+              Icon(AppIcons.chevronRight, size: 16, color: scheme.onSurfaceVariant),
+            ],
             if (title != null)
               Flexible(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
+                  padding: EdgeInsets.fromLTRB(
+                    crumb != null ? AppSpacing.xs : AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.sm,
                   ),
                   child: Text(
                     title!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: textTheme.titleMedium,
                   ),
                 ),
               )

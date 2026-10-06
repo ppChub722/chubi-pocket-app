@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/currencies.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
+import '../../../../core/utils/date_formatter.dart';
+import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/edit_mode/edit_mode_mixin.dart';
+import '../../../../shared/widgets/ui.dart';
+import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/personal_debt.dart';
 import '../cubit/personal_debts_cubit.dart';
+import '../widgets/debt_widgets.dart';
 
+/// `/personal-debts/:id` — one debt, view ⇄ edit (§11). Edit covers amount,
+/// counterparty and note; paid-back amount and status only move through
+/// "รับเงินคืน / จ่ายคืน" (settle sheet) and "ยกเลิกหนี้นี้".
 class PersonalDebtDetailPage extends StatefulWidget {
   const PersonalDebtDetailPage({required this.id, super.key});
   final String id;
@@ -17,315 +29,424 @@ class PersonalDebtDetailPage extends StatefulWidget {
   State<PersonalDebtDetailPage> createState() => _PersonalDebtDetailPageState();
 }
 
-class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage> {
-  PersonalDebt? _debt;
-  bool _loading = true;
-  String? _error;
+enum _Field { amount, note }
+
+class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
+    with EditModeMixin<PersonalDebtDetailPage, _DebtDraft> {
+  final _formKey = GlobalKey<FormState>();
+  final _amountCtrl = TextEditingController();
+  final _noteCtrl = TextEditingController();
+  final _noteFocus = FocusNode();
+
+  /// Used when the debt isn't in the cubit yet (deep link).
+  PersonalDebt? _fetched;
+  ApiException? _error;
+  bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    final cached = context.read<PersonalDebtsCubit>().byId(widget.id);
+    // initDraft (no setState) — resetDraft can't run inside initState.
+    initDraft(cached == null ? const _DebtDraft() : _DebtDraft.from(cached));
+    onDraftRestored();
+    if (cached == null) _fetch();
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _amountCtrl.dispose();
+    _noteCtrl.dispose();
+    _noteFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetch() async {
     try {
-      final d =
-          await context.read<PersonalDebtsRepository>().get(widget.id);
+      final d = await context.read<PersonalDebtsRepository>().get(widget.id);
       if (!mounted) return;
-      setState(() {
-        _debt = d;
-        _loading = false;
-      });
+      setState(() => _fetched = d);
+      _rebase(d);
     } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _loading = false;
-      });
+      if (mounted) setState(() => _error = e);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(_debt?.counterpartyPersonName ?? 'Debt')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Text(_error!))
-              : _debt == null
-                  ? const Center(child: Text('Not found'))
-                  : _Body(debt: _debt!, onChanged: _load),
-    );
+  void _rebase(PersonalDebt d) => resetDraft(_DebtDraft.from(d));
+
+  PersonalDebt? _debt(PersonalDebtsState s) {
+    for (final d in s.debts) {
+      if (d.id == widget.id) return d;
+    }
+    return _fetched;
   }
-}
 
-class _Body extends StatelessWidget {
-  const _Body({required this.debt, required this.onChanged});
-  final PersonalDebt debt;
-  final Future<void> Function() onChanged;
+  // ── EditModeMixin hooks ─────────────────────────────────────────────
+
+  @override
+  void leavePage() {
+    if (context.canPop()) context.pop();
+  }
+
+  @override
+  void onDraftRestored() {
+    if (_amountCtrl.text != working.amount) _amountCtrl.text = working.amount;
+    if (_noteCtrl.text != working.note) _noteCtrl.text = working.note;
+  }
+
+  // ── Actions ─────────────────────────────────────────────────────────
+
+  Future<void> _pickCounterparty() async {
+    final r = await showContactPickerSheet(context,
+        selectedContactId: working.contactId);
+    if (!mounted || r == null) return;
+    applyChange(switch (r) {
+      ContactPicked(:final contact) => working.copyWith(
+          contactId: contact.id, name: contact.effectiveName),
+      ContactNameTyped(:final name) =>
+        working.copyWith(clearContact: true, name: name),
+    });
+  }
+
+  Future<void> _save(PersonalDebt debt) async {
+    commitTextSession();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final w = working;
+    final orig = original;
+    final counterpartyChanged =
+        w.contactId != orig.contactId || w.name != orig.name;
+    FocusScope.of(context).unfocus();
+    setSaving(true);
+    try {
+      final updated = await context.read<PersonalDebtsCubit>().update(
+            debt.id,
+            amount: AmountField.parse(w.amount),
+            note: w.note.trim(),
+            counterpartyPersonName: counterpartyChanged ? w.name : null,
+            counterpartyContactId: counterpartyChanged ? w.contactId : null,
+            clearContact: counterpartyChanged && w.contactId == null,
+          );
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      commitSaved(_DebtDraft.from(updated));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
+    }
+  }
+
+  Future<void> _delete(PersonalDebt debt) async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.debtDeleteTitle,
+      message: l.debtDeleteBody,
+      confirmLabel: l.commonDelete,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    setSaving(true);
+    try {
+      await context.read<PersonalDebtsCubit>().delete(debt.id);
+      if (!mounted) return;
+      showAppSnackBar(context, l.debtDeleted, tone: Tone.success);
+      commitSaved(working);
+      leavePage();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, e.message, tone: Tone.danger);
+    }
+  }
+
+  Future<void> _settle(PersonalDebt debt) async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showSettleDebtSheet(context, debt);
+    if (ok && mounted) {
+      showAppSnackBar(context, l.debtSettleDone, tone: Tone.success);
+    }
+  }
+
+  Future<void> _cancelDebt(PersonalDebt debt) async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.debtCancelTitle,
+      message: l.debtCancelBody,
+      confirmLabel: l.debtCancel,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<PersonalDebtsCubit>().cancel(debt.id);
+      if (mounted) showAppSnackBar(context, l.debtCancelled);
+    } on ApiException catch (e) {
+      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final dirLabel = debt.isOwedToMe ? 'Owed to me' : 'I owe';
-    final dirColor = debt.isOwedToMe ? Colors.green : Colors.redAccent;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Chip(
-                      label: Text(dirLabel),
-                      backgroundColor: dirColor.withValues(alpha: 0.15),
-                      side: BorderSide(color: dirColor),
-                    ),
-                    const SizedBox(width: 8),
-                    Chip(
-                      label: Text(debt.status.wire),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ],
+    final l = AppLocalizations.of(context)!;
+    final debt = context.select<PersonalDebtsCubit, PersonalDebt?>(
+        (c) => _debt(c.state));
+
+    if (debt == null) {
+      return Scaffold(
+        appBar: AppTopBar(title: l.moreDebts, showBack: true),
+        body: _error != null
+            ? ErrorView(error: _error!, onRetry: _fetch)
+            : const LoadingView(),
+      );
+    }
+
+    return editScope(Scaffold(
+      appBar: AppTopBar(
+        title: isEditing ? l.debtEditTitle : debt.counterpartyPersonName,
+        showBack: true,
+        editing: isEditing,
+        onBack: handleBack,
+        actions: isEditing
+            ? [
+                AppBarAction(
+                  icon: AppIcons.delete,
+                  tooltip: l.commonDelete,
+                  destructive: true,
+                  enabled: !isSaving,
+                  onPressed: () => _delete(debt),
                 ),
-                const SizedBox(height: 16),
-                Text('Amount', style: theme.textTheme.labelSmall),
-                Text('${debt.amount.toStringAsFixed(2)} ${debt.currency}',
-                    style: theme.textTheme.titleLarge),
-                const SizedBox(height: 12),
-                Text('Settled', style: theme.textTheme.labelSmall),
-                Text(debt.settledAmount.toStringAsFixed(2)),
-                const SizedBox(height: 12),
-                Text('Outstanding', style: theme.textTheme.labelSmall),
-                Text(
-                  debt.outstanding.toStringAsFixed(2),
-                  style: theme.textTheme.titleMedium?.copyWith(color: dirColor),
+              ]
+            : [
+                AppBarAction(
+                  icon: AppIcons.edit,
+                  tooltip: l.commonEdit,
+                  onPressed: enterEdit,
                 ),
-                if (debt.note != null) ...[
-                  const SizedBox(height: 12),
-                  Text('Note', style: theme.textTheme.labelSmall),
-                  Text(debt.note!),
-                ],
               ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
+          children: [
+            LockedInEdit(locked: isEditing, child: _header(l, debt)),
+            if (debt.isOpen && !isEditing) ...[
+              const SizedBox(height: AppSpacing.md),
+              AppButton(
+                label: debt.isOwedToMe ? l.debtReceive : l.debtPay,
+                icon: AppIcons.settle,
+                size: AppButtonSize.large,
+                expand: true,
+                onPressed: () => _settle(debt),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            _rows(l, debt),
+            if (debt.isOpen) ...[
+              const SizedBox(height: AppSpacing.xl),
+              LockedInEdit(
+                locked: isEditing,
+                child: Center(
+                  child: AppButton(
+                    label: l.debtCancel,
+                    variant: AppButtonVariant.text,
+                    loading: _busy,
+                    onPressed: () => _cancelDebt(debt),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      bottomNavigationBar:
+          isEditing ? editActionBar(onSave: () => _save(debt)) : null,
+    ));
+  }
+
+  Widget _header(AppLocalizations l, PersonalDebt debt) {
+    final symbol = Currencies.symbolOf(debt.currency);
+    final textTheme = Theme.of(context).textTheme;
+    final name = debt.counterpartyPersonName;
+    return HeaderCard(
+      leading: DebtAvatar(
+          contactId: debt.counterpartyContactId, name: name, size: 52),
+      title: Text(debt.isOwedToMe ? l.debtTheyOweYou(name) : l.debtYouOwe(name)),
+      subtitle: Align(
+        alignment: Alignment.centerLeft,
+        child: debtStatusPill(context, debt.status, dense: true),
+      ),
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.debtOutstanding, style: textTheme.labelMedium),
+          MoneyText(
+            debt.outstanding,
+            symbol: symbol,
+            tone: debt.isOpen
+                ? (debt.isOwedToMe ? MoneyTone.income : MoneyTone.expense)
+                : MoneyTone.plain,
+            style: textTheme.headlineMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ProgressRow(
+            value: debt.amount == 0 ? 0 : debt.settledAmount / debt.amount,
+            label: l.debtProgress(
+              moneyString(context, debt.settledAmount, symbol: symbol),
+              moneyString(context, debt.amount, symbol: symbol),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _rows(AppLocalizations l, PersonalDebt debt) {
+    final editing = isEditing;
+    final symbol = Currencies.symbolOf(debt.currency);
+    final scheme = Theme.of(context).colorScheme;
+    final (String source, String? sourceRoute) = debt.projectId != null
+        ? (l.debtSourceProject, '/projects/${debt.projectId}')
+        : debt.sourceTransactionId != null
+            ? (l.debtSourceTransaction,
+                '/transactions/${debt.sourceTransactionId}')
+            : (l.debtSourceManual, null);
+    return SectionCard(
+      children: [
+        if (editing)
+          DetailStacked(
+            label: l.debtAmount,
+            child: AmountField(
+              controller: _amountCtrl,
+              currencySymbol: symbol,
+              onChanged: (v) =>
+                  applyTextChange(_Field.amount, working.copyWith(amount: v)),
+              validator: (v) {
+                final n = AmountField.parse(v);
+                if (n == null || n <= 0) return l.debtAmountRequired;
+                if (n + 0.005 < debt.settledAmount) {
+                  return l.debtAmountBelowSettled(
+                      moneyString(context, debt.settledAmount, symbol: symbol));
+                }
+                return null;
+              },
+            ),
+          )
+        else
+          DetailRow(
+            label: l.debtAmount,
+            trailing: MoneyText(debt.amount, symbol: symbol),
+          ),
+        const RowDivider(),
+        LockedInEdit(
+          locked: editing,
+          child: DetailRow(
+            label: l.debtSettled,
+            trailing: MoneyText(debt.settledAmount, symbol: symbol),
+          ),
         ),
-        const SizedBox(height: 16),
-        if (debt.isOpen) ...[
-          FilledButton.icon(
-            icon: Icon(debt.isIOwe
-                ? Icons.payments_outlined
-                : Icons.call_received),
-            label: Text(debt.isIOwe ? 'Pay' : 'Mark received'),
-            onPressed: () => _settleDialog(context, direct: false),
+        const RowDivider(),
+        DetailRow(
+          label: l.debtCounterparty,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (working.contactId != null) ...[
+                Icon(AppIcons.link, size: 16, color: scheme.primary),
+                const SizedBox(width: AppSpacing.xs),
+              ],
+              Flexible(child: Text(working.name)),
+            ],
           ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.edit_note),
-            label: const Text('Settle without transaction'),
-            onPressed: () => _settleDialog(context, direct: true),
+          showChevron: editing,
+          onTap: editing ? _pickCounterparty : null,
+        ),
+        const RowDivider(),
+        LockedInEdit(
+          locked: editing,
+          child: DetailRow(
+            label: l.debtSource,
+            trailing: Text(source),
+            showChevron: sourceRoute != null,
+            onTap: sourceRoute == null ? null : () => context.push(sourceRoute),
           ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.cancel_outlined),
-            label: const Text('Cancel debt'),
-            onPressed: () => _confirmCancel(context),
+        ),
+        const RowDivider(),
+        DetailStacked(
+          label: l.debtNote,
+          child: InlineField(
+            editing: editing,
+            controller: _noteCtrl,
+            focusNode: _noteFocus,
+            maxLines: 3,
+            maxLength: 500,
+            onEnterEdit: () => enterEdit(focus: _noteFocus),
+            onChanged: (v) =>
+                applyTextChange(_Field.note, working.copyWith(note: v)),
+          ),
+        ),
+        if (debt.createdAt != null) ...[
+          const RowDivider(),
+          LockedInEdit(
+            locked: editing,
+            child: DetailRow(
+              label: l.debtCreatedAt,
+              trailing: Text(DateFormatter.medium(debt.createdAt!,
+                  locale: Localizations.localeOf(context).toLanguageTag())),
+            ),
           ),
         ],
-        const SizedBox(height: 8),
-        TextButton.icon(
-          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-          label: const Text('Delete',
-              style: TextStyle(color: Colors.redAccent)),
-          onPressed: () => _confirmDelete(context),
-        ),
       ],
     );
   }
+}
 
-  Future<void> _settleDialog(BuildContext context, {required bool direct}) async {
-    String? accountId;
-    if (!direct) {
-      final accountsCubit = context.read<AccountsCubit>();
-      if (accountsCubit.state.accounts.isEmpty) {
-        await accountsCubit.load();
-      }
-      if (!context.mounted) return;
-      final accounts = accountsCubit.state.accounts;
-      if (accounts.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No accounts available')),
-        );
-        return;
-      }
-      accountId = accounts.first.id;
-    }
+class _DebtDraft {
+  const _DebtDraft({this.amount = '', this.note = '', this.contactId, this.name = ''});
 
-    final amountCtl =
-        TextEditingController(text: debt.outstanding.toStringAsFixed(2));
-    final accountCtlBag = _AccountBag(accountId);
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(direct
-            ? (debt.isIOwe ? 'Forgive / barter' : 'Mark received (no money)')
-            : (debt.isIOwe ? 'Pay back' : 'Mark received')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!direct)
-              _AccountPicker(
-                bag: accountCtlBag,
-                onChanged: (v) => accountCtlBag.id = v,
-              ),
-            TextField(
-              controller: amountCtl,
-              decoration: const InputDecoration(labelText: 'Amount'),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-            ),
-            if (direct)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'No transaction will be recorded — direct edit only.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    final cubit = context.read<PersonalDebtsCubit>();
-    final txCubit = context.read<TransactionsCubit>();
-    final accountsCubit = context.read<AccountsCubit>();
-    try {
-      await cubit.settle(
-        debt.id,
-        accountId: direct ? null : accountCtlBag.id,
-        amount: double.tryParse(amountCtl.text),
-        direct: direct,
+  factory _DebtDraft.from(PersonalDebt d) => _DebtDraft(
+        amount: AmountField.format(d.amount),
+        note: d.note ?? '',
+        contactId: d.counterpartyContactId,
+        name: d.counterpartyPersonName,
       );
-      // The non-direct path created an income/expense transaction + moved
-      // the account balance. The cubit only refreshed the debt; the
-      // transactions list and account balances need explicit refresh
-      // so the user sees the new row + updated balance when they
-      // navigate to /transactions or back to the dashboard.
-      if (!direct) {
-        await Future.wait([
-          txCubit.load(),
-          accountsCubit.load(),
-        ]);
-      }
-      if (!context.mounted) return;
-      await onChanged();
-    } on ApiException catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message)));
-    }
-  }
 
-  Future<void> _confirmCancel(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Cancel debt?'),
-        content: const Text(
-            'Marks status=cancelled. No money moves. Used for forgiveness or mistakes.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cancel debt'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    try {
-      await context.read<PersonalDebtsCubit>().cancel(debt.id);
-      if (!context.mounted) return;
-      await onChanged();
-    } on ApiException catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message)));
-    }
-  }
+  /// Formatted text, as in the field.
+  final String amount;
+  final String note;
+  final String? contactId;
+  final String name;
 
-  Future<void> _confirmDelete(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Delete debt?'),
-        content: const Text('This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    try {
-      await context.read<PersonalDebtsCubit>().delete(debt.id);
-      if (!context.mounted) return;
-      context.pop();
-    } on ApiException catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message)));
-    }
-  }
-}
-
-class _AccountBag {
-  _AccountBag(this.id);
-  String? id;
-}
-
-class _AccountPicker extends StatelessWidget {
-  const _AccountPicker({required this.bag, required this.onChanged});
-  final _AccountBag bag;
-  final ValueChanged<String?> onChanged;
+  _DebtDraft copyWith({
+    String? amount,
+    String? note,
+    String? contactId,
+    bool clearContact = false,
+    String? name,
+  }) =>
+      _DebtDraft(
+        amount: amount ?? this.amount,
+        note: note ?? this.note,
+        contactId: clearContact ? null : (contactId ?? this.contactId),
+        name: name ?? this.name,
+      );
 
   @override
-  Widget build(BuildContext context) {
-    final accounts = context.read<AccountsCubit>().state.accounts;
-    return DropdownButtonFormField<String>(
-      initialValue: bag.id,
-      items: accounts
-          .map((a) => DropdownMenuItem(value: a.id, child: Text(a.name)))
-          .toList(),
-      onChanged: onChanged,
-      decoration: const InputDecoration(labelText: 'Account'),
-    );
-  }
+  bool operator ==(Object other) =>
+      other is _DebtDraft &&
+      other.amount == amount &&
+      other.note == note &&
+      other.contactId == contactId &&
+      other.name == name;
+
+  @override
+  int get hashCode => Object.hash(amount, note, contactId, name);
 }

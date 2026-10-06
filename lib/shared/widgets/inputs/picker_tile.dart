@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 
@@ -96,7 +97,7 @@ class PickerTile extends StatelessWidget {
                   ),
                 ],
                 if (!readOnly)
-                  Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+                  Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
               ],
             ),
           ),

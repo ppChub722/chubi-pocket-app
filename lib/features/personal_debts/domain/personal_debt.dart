@@ -63,6 +63,7 @@ class PersonalDebt extends Equatable {
     this.sourceProjectTransactionId,
     this.projectId,
     this.note,
+    this.createdAt,
   });
 
   final String id;
@@ -78,6 +79,7 @@ class PersonalDebt extends Equatable {
   final String currency;
   final DebtStatus status;
   final String? note;
+  final DateTime? createdAt;
 
   double get outstanding => (amount - settledAmount).clamp(0, double.infinity);
   bool get isOpen => status == DebtStatus.open;
@@ -100,6 +102,7 @@ class PersonalDebt extends Equatable {
       currency: json['currency'] as String,
       status: DebtStatusWire.parse(json['status'] as String?),
       note: json['note'] as String?,
+      createdAt: DateTime.tryParse((json['created_at'] as String?) ?? '')?.toLocal(),
     );
   }
 
@@ -118,6 +121,7 @@ class PersonalDebt extends Equatable {
         currency,
         status,
         note,
+        createdAt,
       ];
 }
 
@@ -190,4 +194,62 @@ class PeopleResponse extends Equatable {
   @override
   List<Object?> get props =>
       [data, totalOwedToMe, totalIOwe, netPosition, currency];
+}
+
+/// Everything with one counterparty, grouped the way the BE's `/people`
+/// does it: by contact when linked, otherwise by the typed name
+/// (case-insensitive). A linked row and a typed row with the same name are
+/// two different people until the name is absorbed into the contact.
+class DebtPerson {
+  DebtPerson({required this.contactId, required this.displayName, required this.debts});
+
+  final String? contactId;
+  final String displayName;
+  final List<PersonalDebt> debts;
+
+  static String keyOf(PersonalDebt d) => d.counterpartyContactId != null
+      ? 'c:${d.counterpartyContactId}'
+      : 'n:${d.counterpartyPersonName.trim().toLowerCase()}';
+
+  String get key => contactId != null
+      ? 'c:$contactId'
+      : 'n:${displayName.trim().toLowerCase()}';
+
+  bool matches(PersonalDebt d) => keyOf(d) == key;
+
+  Iterable<PersonalDebt> get open => debts.where((d) => d.isOpen);
+
+  double get owedToMeOpen =>
+      open.where((d) => d.isOwedToMe).fold(0, (a, d) => a + d.outstanding);
+  double get iOweOpen =>
+      open.where((d) => d.isIOwe).fold(0, (a, d) => a + d.outstanding);
+
+  /// > 0 → they owe me (net); < 0 → I owe them.
+  double get net => owedToMeOpen - iOweOpen;
+  int get openCount => open.length;
+  String get currency => debts.isEmpty ? 'THB' : debts.first.currency;
+
+  /// Group [all] by person; most money at stake first, settled-up last.
+  static List<DebtPerson> group(Iterable<PersonalDebt> all) {
+    final byKey = <String, DebtPerson>{};
+    for (final d in all) {
+      byKey
+          .putIfAbsent(
+            keyOf(d),
+            () => DebtPerson(
+              contactId: d.counterpartyContactId,
+              displayName: d.counterpartyPersonName,
+              debts: [],
+            ),
+          )
+          .debts
+          .add(d);
+    }
+    return byKey.values.toList()
+      ..sort((a, b) {
+        final byOpen = (b.openCount > 0 ? 1 : 0) - (a.openCount > 0 ? 1 : 0);
+        if (byOpen != 0) return byOpen;
+        return b.net.abs().compareTo(a.net.abs());
+      });
+  }
 }

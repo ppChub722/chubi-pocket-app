@@ -2,27 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../domain/account.dart';
 import '../cubit/accounts_cubit.dart';
 import '../widgets/account_card.dart';
-import '../widgets/add_account_tile.dart';
 
-/// Wallets grid (single unified list — shared wallets mix in, spec §14).
-///
-/// Responsive (APK only — web target lives in a separate repo):
-/// - **Phone** (shortestSide < 600 dp), portrait or landscape → **1 col**
-/// - **Tablet** (shortestSide >= 600 dp), any orientation → **2 col**
-///
-/// Card layout is always the **horizontal row** style — icon · name+type ·
-/// balance — because the vertical/stacked layout looked off in narrow
-/// 2-col mode. We accept slightly less density on tablets in exchange for
-/// a single, consistent card visual.
-///
-/// The [AddAccountTile] is rendered as the **last** item in the grid (not
-/// first). Tapping it opens the create form.
+/// Wallets tab root (§10). Totals card (mine · shared pot — never summed,
+/// spec §14; 👁 hides them) → wallet grid (1 col phone / 2 col tablet) →
+/// dashed "+ เพิ่มกระเป๋า" → "กระเป๋าที่เก็บถาวร (n) ›". Reorder waits on
+/// `PATCH /accounts/reorder` (contract §3).
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
 
@@ -31,91 +23,115 @@ class AccountsPage extends StatefulWidget {
 }
 
 class _AccountsPageState extends State<AccountsPage> {
+  int _archivedCount = 0;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<AccountsCubit>().loadIfNeeded();
+      _loadArchivedCount();
     });
+  }
+
+  Future<void> _loadArchivedCount() async {
+    try {
+      final list = await context.read<AccountsCubit>().listArchived();
+      if (mounted) setState(() => _archivedCount = list.length);
+    } on ApiException {
+      // Optional link — keep the last count.
+    }
+  }
+
+  Future<void> _refresh() async {
+    await context.read<AccountsCubit>().load();
+    await _loadArchivedCount();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     return BlocBuilder<AccountsCubit, AccountsState>(
       builder: (context, state) {
         final accounts = state.accounts;
-        final isLoading = state.status == AccountsStatus.loading &&
-            accounts.isEmpty;
-        if (isLoading) {
-          return const Center(child: CircularProgressIndicator());
+        if (state.status == AccountsStatus.loading && accounts.isEmpty) {
+          return ListView(children: [
+            for (var i = 0; i < 4; i++) const SkeletonListTile(),
+          ]);
         }
-        final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
-        final cols = isTablet ? 2 : 1;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (accounts.isNotEmpty) _TotalsHeader(accounts: accounts),
-            Expanded(
-              child: GridView.builder(
+        final cols = MediaQuery.sizeOf(context).shortestSide >= 600 ? 2 : 1;
+        return PullToRefresh(
+          onRefresh: _refresh,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              if (accounts.isNotEmpty)
+                SliverToBoxAdapter(child: _TotalsCard(accounts: accounts)),
+              SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
+                    AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    mainAxisSpacing: AppSpacing.md,
+                    crossAxisSpacing: AppSpacing.md,
+                    // Room for description/note + shared-member avatars.
+                    mainAxisExtent: 108,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      if (i == accounts.length) {
+                        return AddTile(
+                          label: l.accountsAddNew,
+                          onTap: () => context.push('/accounts/new'),
+                        );
+                      }
+                      final a = accounts[i];
+                      return AccountCard(
+                        account: a,
+                        horizontal: true,
+                        onTap: () => context.push('/accounts/${a.id}'),
+                      );
+                    },
+                    childCount: accounts.length + 1,
+                  ),
                 ),
-                // mainAxisExtent locks the row height regardless of column
-                // count, so cards stay readable on narrow tablet columns
-                // instead of collapsing into squashed pills.
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: cols,
-                  mainAxisSpacing: AppSpacing.md,
-                  crossAxisSpacing: AppSpacing.md,
-                  // 108 dp leaves room for an optional description / note
-                  // line under the type label PLUS the shared-member
-                  // avatar stack (spec §14) without squishing the icon
-                  // or balance.
-                  mainAxisExtent: 108,
-                ),
-                itemCount: accounts.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == accounts.length) {
-                    return AddAccountTile(onTap: () => _onAddTap(context));
-                  }
-                  final account = accounts[index];
-                  return AccountCard(
-                    account: account,
-                    horizontal: true,
-                    onTap: () => context.push('/accounts/${account.id}'),
-                  );
-                },
               ),
-            ),
-          ],
+              if (_archivedCount > 0)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.md),
+                    child: DetailRow(
+                      leading: const Icon(AppIcons.archive),
+                      label: l.accountsArchivedLink(_archivedCount),
+                      showChevron: true,
+                      onTap: () async {
+                        await context.push('/accounts/archived');
+                        if (mounted) _loadArchivedCount();
+                      },
+                    ),
+                  ),
+                ),
+              const SliverToBoxAdapter(child: SizedBox(height: 96)),
+            ],
+          ),
         );
       },
     );
   }
-
-  void _onAddTap(BuildContext context) {
-    context.push('/accounts/new');
-  }
 }
 
-/// Split header totals (spec §14 / B2): personal-wallet balances and
-/// shared-wallet balances are NEVER summed into one number — "mine" is
-/// my money, "shared" is the pot. The shared part only appears when at
-/// least one shared wallet exists.
-class _TotalsHeader extends StatelessWidget {
-  const _TotalsHeader({required this.accounts});
+/// Mine and the shared pot side by side (never summed — spec §14).
+class _TotalsCard extends StatelessWidget {
+  const _TotalsCard({required this.accounts});
   final List<Account> accounts;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    double mine = 0;
-    double shared = 0;
+    var mine = 0.0;
+    var shared = 0.0;
     var hasShared = false;
     for (final a in accounts) {
       if (a.isShared) {
@@ -125,23 +141,26 @@ class _TotalsHeader extends StatelessWidget {
         mine += a.balance;
       }
     }
-    final parts = <String>[
-      l.walletsHeaderMine(CurrencyFormatter.format(mine)),
-      if (hasShared) l.walletsHeaderShared(CurrencyFormatter.format(shared)),
-    ];
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.lg,
-        0,
-      ),
-      child: Text(
-        parts.join(' · '),
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
+    return Card(
+      margin: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg, AppSpacing.sm, AppSpacing.sm, AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Align(
+              alignment: Alignment.centerRight,
+              child: MoneyVisibilityToggle(),
             ),
+            SummaryStats(stats: [
+              SummaryStat(label: l.accountsTotalMine, amount: mine),
+              if (hasShared)
+                SummaryStat(label: l.accountsTotalShared, amount: shared),
+            ]),
+          ],
+        ),
       ),
     );
   }

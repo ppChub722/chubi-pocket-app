@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 
 /// Detail-page building blocks (category-detail style): a frameless group
@@ -120,7 +121,7 @@ class DetailRow extends StatelessWidget {
           ],
           if (showChevron) ...[
             const SizedBox(width: AppSpacing.xs),
-            Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+            Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
           ],
         ],
       ),

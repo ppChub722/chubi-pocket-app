@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/theme/app_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -40,7 +41,7 @@ class TypeIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final color = isIncome ? palette.income : palette.expense;
-    final signIcon = isIncome ? Icons.add : Icons.remove;
+    final signIcon = isIncome ? AppIcons.income : AppIcons.expense;
 
     switch (variant) {
       case TypeIndicatorVariant.sign:

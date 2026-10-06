@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/top_bar_crumbs.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -84,6 +87,18 @@ class _WalletMembersPageState extends State<WalletMembersPage> {
   /// "first invite converts this wallet" warning gate.
   int get _activeCount => _members.where((m) => m.isActive).length;
 
+  TopBarCrumb? _walletCrumb(BuildContext context) {
+    final a = context.read<AccountsCubit>().byId(widget.accountId);
+    return a == null
+        ? null
+        : TopBarCrumb(
+            label: a.name,
+            path: '/accounts/${a.id}',
+            routeName: 'account-detail',
+          );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -91,11 +106,20 @@ class _WalletMembersPageState extends State<WalletMembersPage> {
         _members.where((m) => !m.hasLeft).toList(); // includes pending
     final history = _members.where((m) => m.hasLeft).toList();
     return Scaffold(
-      appBar: AppBar(title: Text(l.walletMembersTitle)),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _loading ? null : () => _onInvitePressed(l),
-        icon: const Icon(Icons.person_add_alt_1),
-        label: Text(l.walletMembersInvite),
+      // Invite sits on the top bar — an extended FAB would clash with the
+      // shell's quick-add +. Breadcrumb parent = this wallet.
+      appBar: AppTopBar(
+        title: l.walletMembersTitle,
+        showBack: true,
+        parent: _walletCrumb(context),
+        actions: [
+          AppBarAction(
+            icon: AppIcons.inviteMember,
+            tooltip: l.walletMembersInvite,
+            enabled: !_loading,
+            onPressed: () => _onInvitePressed(l),
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

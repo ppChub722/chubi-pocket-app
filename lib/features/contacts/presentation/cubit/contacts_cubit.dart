@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/contacts_repository.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
 import '../../domain/contact.dart';
 
 enum ContactsStatus { initial, loading, loaded, error }
@@ -97,7 +98,7 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     String? email,
     String? phone,
     String? notes,
-    String? icon,
+    IconCode? iconCode,
     List<String>? absorbNames,
   }) async {
     final res = await _repo.create(
@@ -105,7 +106,7 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
       email: email,
       phone: phone,
       notes: notes,
-      icon: icon,
+      iconCode: iconCode,
       absorbNames: absorbNames,
     );
     emit(state.copyWith(contacts: [res.contact, ...state.contacts]));
@@ -117,7 +118,7 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     String? email,
     String? phone,
     String? notes,
-    String? icon,
+    IconCode? iconCode,
   }) async {
     final updated = await _repo.update(
       id,
@@ -125,7 +126,7 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
       email: email,
       phone: phone,
       notes: notes,
-      icon: icon,
+      iconCode: iconCode,
     );
     _replace(updated);
     return updated;

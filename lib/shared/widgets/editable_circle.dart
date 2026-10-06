@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_icons.dart';
+
 /// Wraps any [child] in a tappable circle and overlays a pencil-edit badge
 /// at the bottom-right when [onTap] is non-null.
 ///
@@ -67,7 +69,7 @@ class EditableCircle extends StatelessWidget {
                   border: Border.all(color: scheme.surface, width: 2),
                 ),
                 child: Icon(
-                  Icons.edit,
+                  AppIcons.editBadge,
                   size: badgeSize * 0.55,
                   color: scheme.onPrimary,
                 ),

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/icon_maker/icon_code.dart';
 import '../domain/contact.dart';
 
 class ContactCreateResult {
@@ -49,7 +50,7 @@ class ContactsRepository {
     String? email,
     String? phone,
     String? notes,
-    String? icon,
+    IconCode? iconCode,
     List<String>? absorbNames,
   }) async {
     try {
@@ -60,7 +61,7 @@ class ContactsRepository {
           'email': ?email,
           'phone': ?phone,
           'notes': ?notes,
-          'icon': ?icon,
+          if (iconCode != null) 'icon_code': iconCode.toJson(),
           'absorb_names': ?absorbNames,
         },
       );
@@ -78,7 +79,7 @@ class ContactsRepository {
     String? email,
     String? phone,
     String? notes,
-    String? icon,
+    IconCode? iconCode,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
@@ -88,7 +89,7 @@ class ContactsRepository {
           'email': ?email,
           'phone': ?phone,
           'notes': ?notes,
-          'icon': ?icon,
+          if (iconCode != null) 'icon_code': iconCode.toJson(),
         },
       );
       return Contact.fromJson(res.data!);

@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../cubit/saving_goals_cubit.dart';
 import '../widgets/saving_goal_card.dart';
 
-/// `/saving-goals` — entry point from the More menu (Phase 1c).
-///
-/// Outside the bottom-nav shell — owns its own Scaffold + AppBar with a
-/// back button (matches `/personal-debts`, `/contacts`, `/projects`
-/// convention). The `+` action in the AppBar pushes the create form.
+/// `/saving-goals` — goal cards with a dashed "+ เพิ่มเป้าหมาย" at the end
+/// (§1.2 card page — no top-bar add).
 class SavingGoalsListPage extends StatefulWidget {
   const SavingGoalsListPage({super.key});
 
@@ -25,69 +24,52 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<SavingGoalsCubit>().loadIfNeeded();
+      if (mounted) context.read<SavingGoalsCubit>().loadIfNeeded();
     });
   }
+
+  void _add() => context.push('/saving-goals/new');
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.savingGoalsTitle),
-        actions: [
-          IconButton(
-            tooltip: l.savingGoalsAddNew,
-            icon: const Icon(Icons.add),
-            onPressed: () => context.push('/saving-goals/new'),
-          ),
-        ],
-      ),
+      appBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
       body: BlocConsumer<SavingGoalsCubit, SavingGoalsState>(
         listenWhen: (a, b) =>
             a.errorMessage != b.errorMessage && b.errorMessage != null,
-        listener: (ctx, state) {
-          ScaffoldMessenger.of(ctx)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(state.errorMessage!)));
-        },
+        listener: (ctx, s) =>
+            showAppSnackBar(ctx, s.errorMessage!, tone: Tone.danger),
         builder: (context, state) {
-          if (state.status == SavingGoalsStatus.loading &&
-              state.goals.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+          if (state.status == SavingGoalsStatus.loading && state.goals.isEmpty) {
+            return ListView(children: [
+              for (var i = 0; i < 3; i++) const SkeletonListTile(),
+            ]);
           }
           if (state.goals.isEmpty) {
             return EmptyView(
-              icon: Icons.flag_outlined,
+              icon: AppIcons.savingGoal,
               title: l.savingGoalsEmptyTitle,
               message: l.savingGoalsEmptyMessage,
-              cta: FilledButton.icon(
-                onPressed: () => context.push('/saving-goals/new'),
-                icon: const Icon(Icons.add),
-                label: Text(l.savingGoalsAddNew),
-              ),
+              cta: AddTile(label: l.savingGoalsAddNew, onTap: _add),
             );
           }
-          return RefreshIndicator(
+          return PullToRefresh(
             onRefresh: () => context.read<SavingGoalsCubit>().load(),
-            child: ListView.separated(
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              itemCount: state.goals.length,
-              separatorBuilder: (_, _) =>
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
+              children: [
+                for (final g in state.goals) ...[
+                  SavingGoalCard(
+                    goal: g,
+                    onTap: () => context.push('/saving-goals/${g.id}'),
+                  ),
                   const SizedBox(height: AppSpacing.md),
-              itemBuilder: (_, i) {
-                final goal = state.goals[i];
-                return SavingGoalCard(
-                  goal: goal,
-                  onTap: () => context.push('/saving-goals/${goal.id}'),
-                );
-              },
+                ],
+                AddTile(label: l.savingGoalsAddNew, onTap: _add),
+              ],
             ),
           );
         },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../inputs/app_search_bar.dart';
 import 'app_sheet.dart';
@@ -98,7 +99,7 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
               title: Text(o.label, style: o.labelStyle),
               subtitle: o.subtitle == null ? null : Text(o.subtitle!),
               trailing: o.value == widget.selected
-                  ? Icon(Icons.check, color: scheme.primary)
+                  ? Icon(AppIcons.check, color: scheme.primary)
                   : null,
               selected: o.value == widget.selected,
               onTap: () => Navigator.pop(context, o.value),

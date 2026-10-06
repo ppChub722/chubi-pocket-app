@@ -55,14 +55,31 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     }
   }
 
+  /// Optimistic: the switch flips at once; a failed save flips it back and
+  /// sets [SettingsState.errorMessage] (the page shows "เปลี่ยนกลับแล้ว").
   Future<void> update({
     bool? autoNotifyLinkedSplitContacts,
     bool? autoAddToPersonalDebtOnSplitNotification,
     bool? autoRecordReceivedPayment,
     bool? autoResolveOwnInProjects,
     String? defaultAccountId,
+    Set<String>? mutedTypes,
   }) async {
-    emit(state.copyWith(status: SettingsStatus.saving, clearError: true));
+    final before = state.settings;
+    if (before == null) return;
+    emit(state.copyWith(
+      settings: before.copyWith(
+        autoNotifyLinkedSplitContacts: autoNotifyLinkedSplitContacts,
+        autoAddToPersonalDebtOnSplitNotification:
+            autoAddToPersonalDebtOnSplitNotification,
+        autoRecordReceivedPayment: autoRecordReceivedPayment,
+        autoResolveOwnInProjects: autoResolveOwnInProjects,
+        defaultAccountId: defaultAccountId,
+        mutedTypes: mutedTypes,
+      ),
+      status: SettingsStatus.saving,
+      clearError: true,
+    ));
     try {
       final updated = await _repo.updateSettings(
         autoNotifyLinkedSplitContacts: autoNotifyLinkedSplitContacts,
@@ -71,10 +88,18 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
         autoRecordReceivedPayment: autoRecordReceivedPayment,
         autoResolveOwnInProjects: autoResolveOwnInProjects,
         defaultAccountId: defaultAccountId,
+        mutedTypes: mutedTypes,
       );
-      emit(state.copyWith(settings: updated, status: SettingsStatus.loaded));
+      // Until the BE stores muted_types it won't echo them — keep ours.
+      emit(state.copyWith(
+        settings: mutedTypes != null && !updated.mutedTypes.containsAll(mutedTypes)
+            ? updated.copyWith(mutedTypes: mutedTypes)
+            : updated,
+        status: SettingsStatus.loaded,
+      ));
     } on ApiException catch (e) {
       emit(state.copyWith(
+        settings: before,
         status: SettingsStatus.error,
         errorMessage: e.message,
       ));

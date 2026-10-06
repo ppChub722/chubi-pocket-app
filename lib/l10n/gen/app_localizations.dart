@@ -200,6 +200,90 @@ abstract class AppLocalizations {
   /// **'Undo'**
   String get commonUndo;
 
+  /// No description provided for @commonDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get commonDiscard;
+
+  /// No description provided for @commonDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get commonDiscardTitle;
+
+  /// No description provided for @commonDiscardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your edits will be lost.'**
+  String get commonDiscardBody;
+
+  /// No description provided for @commonCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get commonCurrency;
+
+  /// No description provided for @currencyNameTHB.
+  ///
+  /// In en, this message translates to:
+  /// **'Thai baht'**
+  String get currencyNameTHB;
+
+  /// No description provided for @currencyNameUSD.
+  ///
+  /// In en, this message translates to:
+  /// **'US dollar'**
+  String get currencyNameUSD;
+
+  /// No description provided for @currencyNameEUR.
+  ///
+  /// In en, this message translates to:
+  /// **'Euro'**
+  String get currencyNameEUR;
+
+  /// No description provided for @currencyNameGBP.
+  ///
+  /// In en, this message translates to:
+  /// **'British pound'**
+  String get currencyNameGBP;
+
+  /// No description provided for @currencyNameJPY.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese yen'**
+  String get currencyNameJPY;
+
+  /// No description provided for @contactPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who?'**
+  String get contactPickerTitle;
+
+  /// No description provided for @contactPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search contacts or type a name'**
+  String get contactPickerSearchHint;
+
+  /// No description provided for @contactPickerUseName.
+  ///
+  /// In en, this message translates to:
+  /// **'Use \"{name}\"'**
+  String contactPickerUseName(String name);
+
+  /// No description provided for @contactPickerUseNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved as a contact'**
+  String get contactPickerUseNameHint;
+
+  /// No description provided for @contactPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet — type a name above'**
+  String get contactPickerEmpty;
+
   /// No description provided for @commonShowAmounts.
   ///
   /// In en, this message translates to:
@@ -1340,6 +1424,2136 @@ abstract class AppLocalizations {
   /// **'People you add appear here — link them to share transactions and debts.'**
   String get contactsEmptyMessage;
 
+  /// No description provided for @contactsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search name, email or phone'**
+  String get contactsSearchHint;
+
+  /// No description provided for @contactsStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get contactsStatusLabel;
+
+  /// No description provided for @contactsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching contacts'**
+  String get contactsNoMatch;
+
+  /// No description provided for @contactTitleNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New contact'**
+  String get contactTitleNew;
+
+  /// No description provided for @contactTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit contact'**
+  String get contactTitleEdit;
+
+  /// No description provided for @contactNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact not found'**
+  String get contactNotFound;
+
+  /// No description provided for @contactNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get contactNameLabel;
+
+  /// No description provided for @contactNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get contactNameRequired;
+
+  /// No description provided for @contactNameTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 100 characters'**
+  String get contactNameTooLong;
+
+  /// No description provided for @contactEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get contactEmailLabel;
+
+  /// No description provided for @contactEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email'**
+  String get contactEmailInvalid;
+
+  /// No description provided for @contactPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get contactPhoneLabel;
+
+  /// No description provided for @contactNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get contactNotesLabel;
+
+  /// No description provided for @contactLinkedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to an app account'**
+  String get contactLinkedBadge;
+
+  /// No description provided for @contactLinkedLockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name and email come from their account'**
+  String get contactLinkedLockedHint;
+
+  /// No description provided for @contactArchivedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get contactArchivedBadge;
+
+  /// No description provided for @contactSectionActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get contactSectionActions;
+
+  /// No description provided for @contactLinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link account'**
+  String get contactLinkTitle;
+
+  /// No description provided for @contactLinkLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked — name, email and icon follow their account'**
+  String get contactLinkLinked;
+
+  /// No description provided for @contactLinkRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Send link request'**
+  String get contactLinkRequest;
+
+  /// No description provided for @contactLinkRequestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If this email belongs to a user, they\'ll get a request'**
+  String get contactLinkRequestHint;
+
+  /// No description provided for @contactLinkNeedsEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an email to send a link request'**
+  String get contactLinkNeedsEmail;
+
+  /// No description provided for @contactLinkRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Link request sent'**
+  String get contactLinkRequested;
+
+  /// No description provided for @contactUnlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get contactUnlink;
+
+  /// No description provided for @contactUnlinkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink {name}?'**
+  String contactUnlinkTitle(String name);
+
+  /// No description provided for @contactUnlinkBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The contact goes back to the name and email you saved.'**
+  String get contactUnlinkBody;
+
+  /// No description provided for @contactUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlinked'**
+  String get contactUnlinked;
+
+  /// No description provided for @contactWireTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Match names in splits'**
+  String get contactWireTitle;
+
+  /// No description provided for @contactWireHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} names · {splits} splits not linked to a contact'**
+  String contactWireHint(int names, int splits);
+
+  /// No description provided for @contactWireNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No unlinked names'**
+  String get contactWireNone;
+
+  /// No description provided for @contactWireSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link names to {name}'**
+  String contactWireSheetTitle(String name);
+
+  /// No description provided for @contactWireSheetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the typed names in your splits that are this person — their debts get linked to this contact.'**
+  String get contactWireSheetBody;
+
+  /// No description provided for @contactWireSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search names'**
+  String get contactWireSearch;
+
+  /// No description provided for @contactWireCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 split} other{{count} splits}}'**
+  String contactWireCount(int count);
+
+  /// No description provided for @contactWireSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Link {count}'**
+  String contactWireSave(int count);
+
+  /// No description provided for @contactWireDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked {count} splits to {name}'**
+  String contactWireDone(int count, String name);
+
+  /// No description provided for @contactArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get contactArchive;
+
+  /// No description provided for @contactArchiveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from pickers; history stays'**
+  String get contactArchiveHint;
+
+  /// No description provided for @contactRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get contactRestore;
+
+  /// No description provided for @contactDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Debts with this person'**
+  String get contactDebts;
+
+  /// No description provided for @contactDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String contactDeleteTitle(String name);
+
+  /// No description provided for @contactDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Splits and debts that mention this person keep their name as text.'**
+  String get contactDeleteBody;
+
+  /// No description provided for @contactDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted {name}'**
+  String contactDeleted(String name);
+
+  /// No description provided for @contactLinkCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add linked contact'**
+  String get contactLinkCreateTitle;
+
+  /// No description provided for @contactLinkExistingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link contact'**
+  String get contactLinkExistingTitle;
+
+  /// No description provided for @contactLinkSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Link & save'**
+  String get contactLinkSave;
+
+  /// No description provided for @contactLinkBannerNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving creates a new contact linked to {name}.'**
+  String contactLinkBannerNew(String name);
+
+  /// No description provided for @contactLinkBannerExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving links this contact to {name}.'**
+  String contactLinkBannerExisting(String name);
+
+  /// No description provided for @debtsNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get debtsNet;
+
+  /// No description provided for @debtsOwedToMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Owe you'**
+  String get debtsOwedToMe;
+
+  /// No description provided for @debtsIOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe'**
+  String get debtsIOwe;
+
+  /// No description provided for @debtsEven.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled up'**
+  String get debtsEven;
+
+  /// No description provided for @debtsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search name'**
+  String get debtsSearchHint;
+
+  /// No description provided for @debtsStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get debtsStatusLabel;
+
+  /// No description provided for @debtsStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding'**
+  String get debtsStatusOpen;
+
+  /// No description provided for @debtsStatusAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get debtsStatusAll;
+
+  /// No description provided for @debtsOpenCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing outstanding} =1{1 outstanding} other{{count} outstanding}}'**
+  String debtsOpenCount(int count);
+
+  /// No description provided for @debtsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No debts yet'**
+  String get debtsEmptyTitle;
+
+  /// No description provided for @debtsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Record who owes you or whom you owe — or split a bill from a transaction.'**
+  String get debtsEmptyMessage;
+
+  /// No description provided for @debtsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching people'**
+  String get debtsNoMatch;
+
+  /// No description provided for @debtsAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a debt'**
+  String get debtsAddNew;
+
+  /// No description provided for @debtsPersonHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History ({count})'**
+  String debtsPersonHistory(int count);
+
+  /// No description provided for @debtsPersonAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a debt with this person'**
+  String get debtsPersonAdd;
+
+  /// No description provided for @debtsPersonLinkContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to a contact'**
+  String get debtsPersonLinkContact;
+
+  /// No description provided for @debtsPersonLinkContactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge this name\'s debts into a contact'**
+  String get debtsPersonLinkContactHint;
+
+  /// No description provided for @debtsPersonLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked {count} debts to {name}'**
+  String debtsPersonLinked(int count, String name);
+
+  /// No description provided for @debtsPersonOpenContact.
+  ///
+  /// In en, this message translates to:
+  /// **'View contact'**
+  String get debtsPersonOpenContact;
+
+  /// No description provided for @debtTheyOweYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} owes you'**
+  String debtTheyOweYou(String name);
+
+  /// No description provided for @debtYouOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe {name}'**
+  String debtYouOwe(String name);
+
+  /// No description provided for @debtStatusSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back'**
+  String get debtStatusSettled;
+
+  /// No description provided for @debtStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get debtStatusCancelled;
+
+  /// No description provided for @debtOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding'**
+  String get debtOutstanding;
+
+  /// No description provided for @debtProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back {paid} of {total}'**
+  String debtProgress(String paid, String total);
+
+  /// No description provided for @debtReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive payment'**
+  String get debtReceive;
+
+  /// No description provided for @debtPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay back'**
+  String get debtPay;
+
+  /// No description provided for @debtAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Full amount'**
+  String get debtAmount;
+
+  /// No description provided for @debtSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back'**
+  String get debtSettled;
+
+  /// No description provided for @debtSource.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get debtSource;
+
+  /// No description provided for @debtSourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded manually'**
+  String get debtSourceManual;
+
+  /// No description provided for @debtSourceTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill split'**
+  String get debtSourceTransaction;
+
+  /// No description provided for @debtSourceProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get debtSourceProject;
+
+  /// No description provided for @debtNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get debtNote;
+
+  /// No description provided for @debtCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get debtCreatedAt;
+
+  /// No description provided for @debtCounterparty.
+  ///
+  /// In en, this message translates to:
+  /// **'With'**
+  String get debtCounterparty;
+
+  /// No description provided for @debtCounterpartyPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a contact or type a name'**
+  String get debtCounterpartyPlaceholder;
+
+  /// No description provided for @debtCounterpartyRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick or type a name'**
+  String get debtCounterpartyRequired;
+
+  /// No description provided for @debtCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this debt'**
+  String get debtCancel;
+
+  /// No description provided for @debtCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this debt?'**
+  String get debtCancelTitle;
+
+  /// No description provided for @debtCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No money moves. Use it when you forgive the debt or recorded it by mistake.'**
+  String get debtCancelBody;
+
+  /// No description provided for @debtCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt cancelled'**
+  String get debtCancelled;
+
+  /// No description provided for @debtDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this debt?'**
+  String get debtDeleteTitle;
+
+  /// No description provided for @debtDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good — this can\'t be undone.'**
+  String get debtDeleteBody;
+
+  /// No description provided for @debtDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt deleted'**
+  String get debtDeleted;
+
+  /// No description provided for @debtNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt not found'**
+  String get debtNotFound;
+
+  /// No description provided for @debtNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a debt'**
+  String get debtNewTitle;
+
+  /// No description provided for @debtEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit debt'**
+  String get debtEditTitle;
+
+  /// No description provided for @debtDirectionOwedToMe.
+  ///
+  /// In en, this message translates to:
+  /// **'They owe me'**
+  String get debtDirectionOwedToMe;
+
+  /// No description provided for @debtDirectionOwedToMeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'I lent money or paid for them'**
+  String get debtDirectionOwedToMeDesc;
+
+  /// No description provided for @debtDirectionIOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe them'**
+  String get debtDirectionIOwe;
+
+  /// No description provided for @debtDirectionIOweDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'I borrowed or they paid for me'**
+  String get debtDirectionIOweDesc;
+
+  /// No description provided for @debtAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above 0'**
+  String get debtAmountRequired;
+
+  /// No description provided for @debtAmountBelowSettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t be less than what\'s been paid back ({amount})'**
+  String debtAmountBelowSettled(String amount);
+
+  /// No description provided for @debtSettleTitleReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive from {name}'**
+  String debtSettleTitleReceive(String name);
+
+  /// No description provided for @debtSettleTitlePay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay back {name}'**
+  String debtSettleTitlePay(String name);
+
+  /// No description provided for @debtSettleAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get debtSettleAll;
+
+  /// No description provided for @debtSettleHalf.
+  ///
+  /// In en, this message translates to:
+  /// **'Half'**
+  String get debtSettleHalf;
+
+  /// No description provided for @debtSettleOver.
+  ///
+  /// In en, this message translates to:
+  /// **'More than outstanding ({amount})'**
+  String debtSettleOver(String amount);
+
+  /// No description provided for @debtSettleRecordTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Record as a transaction'**
+  String get debtSettleRecordTx;
+
+  /// No description provided for @debtSettleRecordTxHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds income/expense and updates the wallet balance'**
+  String get debtSettleRecordTxHint;
+
+  /// No description provided for @debtSettleNoTxHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only lowers the outstanding amount — no transaction'**
+  String get debtSettleNoTxHint;
+
+  /// No description provided for @debtSettleAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get debtSettleAccount;
+
+  /// No description provided for @debtSettleAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet'**
+  String get debtSettleAccountRequired;
+
+  /// No description provided for @debtSettleDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get debtSettleDate;
+
+  /// No description provided for @debtSettleConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get debtSettleConfirm;
+
+  /// No description provided for @debtSettleDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment recorded'**
+  String get debtSettleDone;
+
+  /// No description provided for @projectStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get projectStatusActive;
+
+  /// No description provided for @projectStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get projectStatusCompleted;
+
+  /// No description provided for @projectStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get projectStatusCancelled;
+
+  /// No description provided for @projectStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get projectStatusArchived;
+
+  /// No description provided for @projectsStatusAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get projectsStatusAll;
+
+  /// No description provided for @projectsStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get projectsStatusLabel;
+
+  /// No description provided for @projectsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search projects'**
+  String get projectsSearchHint;
+
+  /// No description provided for @projectsSortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get projectsSortRecent;
+
+  /// No description provided for @projectsSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get projectsSortName;
+
+  /// No description provided for @projectsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects yet'**
+  String get projectsEmptyTitle;
+
+  /// No description provided for @projectsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep a trip or a job\'s spending in one place, then settle up with friends at the end.'**
+  String get projectsEmptyMessage;
+
+  /// No description provided for @projectsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching projects'**
+  String get projectsNoMatch;
+
+  /// No description provided for @projectsMembersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 member} other{{count} members}}'**
+  String projectsMembersCount(int count);
+
+  /// No description provided for @projectTabDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get projectTabDashboard;
+
+  /// No description provided for @projectTabTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get projectTabTransactions;
+
+  /// No description provided for @projectTabResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Settle up'**
+  String get projectTabResolve;
+
+  /// No description provided for @projectAddTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add transaction'**
+  String get projectAddTransaction;
+
+  /// No description provided for @projectNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New project'**
+  String get projectNewTitle;
+
+  /// No description provided for @projectEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit project'**
+  String get projectEditTitle;
+
+  /// No description provided for @projectNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project name'**
+  String get projectNameLabel;
+
+  /// No description provided for @projectNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get projectNameRequired;
+
+  /// No description provided for @projectTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get projectTypeLabel;
+
+  /// No description provided for @projectTypeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. trip, freelance'**
+  String get projectTypeHint;
+
+  /// No description provided for @projectDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get projectDescriptionLabel;
+
+  /// No description provided for @projectIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project icon'**
+  String get projectIconLabel;
+
+  /// No description provided for @projectStatusChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change status'**
+  String get projectStatusChangeTitle;
+
+  /// No description provided for @projectStatusLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change to {status}?'**
+  String projectStatusLockTitle(String status);
+
+  /// No description provided for @projectStatusLockBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The project gets locked: no adding or editing transactions until it is reopened.'**
+  String get projectStatusLockBody;
+
+  /// No description provided for @projectStatusChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Status changed to {status}'**
+  String projectStatusChanged(String status);
+
+  /// No description provided for @projectLockedCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: no new transactions'**
+  String get projectLockedCompleted;
+
+  /// No description provided for @projectLockedCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled: transactions cannot be added, edited or deleted'**
+  String get projectLockedCancelled;
+
+  /// No description provided for @projectLockedArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived: read only'**
+  String get projectLockedArchived;
+
+  /// No description provided for @projectDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String projectDeleteTitle(String name);
+
+  /// No description provided for @projectDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Only projects without transactions can be deleted. If it has some, archive it instead.'**
+  String get projectDeleteBody;
+
+  /// No description provided for @projectDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Project deleted'**
+  String get projectDeleted;
+
+  /// No description provided for @projectDashTotalExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spent'**
+  String get projectDashTotalExpense;
+
+  /// No description provided for @projectDashTotalIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Total income'**
+  String get projectDashTotalIncome;
+
+  /// No description provided for @projectDashMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get projectDashMembers;
+
+  /// No description provided for @projectDashWhoPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid'**
+  String get projectDashWhoPaid;
+
+  /// No description provided for @projectDashTopCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Top categories'**
+  String get projectDashTopCategories;
+
+  /// No description provided for @projectDashRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get projectDashRecent;
+
+  /// No description provided for @projectDashSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get projectDashSeeAll;
+
+  /// No description provided for @projectDashTxCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No transactions} =1{1 transaction} other{{count} transactions}}'**
+  String projectDashTxCount(int count);
+
+  /// No description provided for @projectTxSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search transactions'**
+  String get projectTxSearchHint;
+
+  /// No description provided for @projectTxTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get projectTxTypeLabel;
+
+  /// No description provided for @projectTxTypeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get projectTxTypeAll;
+
+  /// No description provided for @projectTxTypeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get projectTxTypeExpense;
+
+  /// No description provided for @projectTxTypeIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get projectTxTypeIncome;
+
+  /// No description provided for @projectTxOnlyMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Only me'**
+  String get projectTxOnlyMine;
+
+  /// No description provided for @projectTxSortTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get projectTxSortTime;
+
+  /// No description provided for @projectTxSortAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get projectTxSortAmount;
+
+  /// No description provided for @projectTxSortMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Who paid'**
+  String get projectTxSortMember;
+
+  /// No description provided for @projectTxSortCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get projectTxSortCategory;
+
+  /// No description provided for @projectTxEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions in this project yet'**
+  String get projectTxEmpty;
+
+  /// No description provided for @projectTxNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching transactions'**
+  String get projectTxNoMatch;
+
+  /// No description provided for @projectTxOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'owes {name}'**
+  String projectTxOwes(String name);
+
+  /// No description provided for @projectTxUnmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmark'**
+  String get projectTxUnmark;
+
+  /// No description provided for @projectTxResolve.
+  ///
+  /// In en, this message translates to:
+  /// **'Record in my book'**
+  String get projectTxResolve;
+
+  /// No description provided for @projectTxResolveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a transaction or a debt in your own book'**
+  String get projectTxResolveHint;
+
+  /// No description provided for @projectTxEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transaction'**
+  String get projectTxEdit;
+
+  /// No description provided for @projectTxDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete transaction'**
+  String get projectTxDelete;
+
+  /// No description provided for @projectTxDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transaction?'**
+  String get projectTxDeleteTitle;
+
+  /// No description provided for @projectTxDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Its splits are deleted too.'**
+  String get projectTxDeleteBody;
+
+  /// No description provided for @projectTxDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction deleted'**
+  String get projectTxDeleted;
+
+  /// No description provided for @projectResolveAsTx.
+  ///
+  /// In en, this message translates to:
+  /// **'As transaction'**
+  String get projectResolveAsTx;
+
+  /// No description provided for @projectResolveAsDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'As debt'**
+  String get projectResolveAsDebt;
+
+  /// No description provided for @projectResolveShareOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only my share'**
+  String get projectResolveShareOnly;
+
+  /// No description provided for @projectResolveShareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Full {full} · my share {share}'**
+  String projectResolveShareHint(String full, String share);
+
+  /// No description provided for @projectResolveAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get projectResolveAmount;
+
+  /// No description provided for @projectResolveCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category (optional)'**
+  String get projectResolveCategory;
+
+  /// No description provided for @projectResolveCategoryNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get projectResolveCategoryNone;
+
+  /// No description provided for @projectResolveDebtHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The person comes from the project member'**
+  String get projectResolveDebtHint;
+
+  /// No description provided for @projectResolveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get projectResolveConfirm;
+
+  /// No description provided for @projectResolveDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded in your book'**
+  String get projectResolveDone;
+
+  /// No description provided for @projectResolveComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'A settle-up summary is on the way. For now, tick rows in the Transactions tab.'**
+  String get projectResolveComingSoon;
+
+  /// No description provided for @projectMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get projectMembersTitle;
+
+  /// No description provided for @projectMembersPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to accept'**
+  String get projectMembersPending;
+
+  /// No description provided for @projectMembersLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get projectMembersLeft;
+
+  /// No description provided for @projectRoleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get projectRoleOwner;
+
+  /// No description provided for @projectRoleMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get projectRoleMember;
+
+  /// No description provided for @projectMemberLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Has an app account'**
+  String get projectMemberLinked;
+
+  /// No description provided for @projectMemberAdHoc.
+  ///
+  /// In en, this message translates to:
+  /// **'No app account'**
+  String get projectMemberAdHoc;
+
+  /// No description provided for @projectMembersInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite member'**
+  String get projectMembersInvite;
+
+  /// No description provided for @projectLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave project'**
+  String get projectLeave;
+
+  /// No description provided for @projectLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave {name}?'**
+  String projectLeaveTitle(String name);
+
+  /// No description provided for @projectLeaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You will not see this project again unless you are invited back.'**
+  String get projectLeaveBody;
+
+  /// No description provided for @projectLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'You left the project'**
+  String get projectLeft;
+
+  /// No description provided for @projectMemberRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from project'**
+  String get projectMemberRemove;
+
+  /// No description provided for @projectMemberRemoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String projectMemberRemoveTitle(String name);
+
+  /// No description provided for @projectMemberRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed'**
+  String get projectMemberRemoved;
+
+  /// No description provided for @projectMemberTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Make owner'**
+  String get projectMemberTransfer;
+
+  /// No description provided for @projectMemberTransferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make {name} the owner?'**
+  String projectMemberTransferTitle(String name);
+
+  /// No description provided for @projectMemberTransferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} becomes the owner; you become a regular member.'**
+  String projectMemberTransferBody(String name);
+
+  /// No description provided for @projectMemberTransferred.
+  ///
+  /// In en, this message translates to:
+  /// **'Ownership transferred'**
+  String get projectMemberTransferred;
+
+  /// No description provided for @projectMemberTransferNeedsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Only members with an app account can own a project'**
+  String get projectMemberTransferNeedsAccount;
+
+  /// No description provided for @projectAddMemberName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get projectAddMemberName;
+
+  /// No description provided for @projectAddMemberNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get projectAddMemberNameRequired;
+
+  /// No description provided for @projectAddMemberEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email (optional)'**
+  String get projectAddMemberEmail;
+
+  /// No description provided for @projectAddMemberEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an email to invite an app user; leave it empty for someone without an account'**
+  String get projectAddMemberEmailHint;
+
+  /// No description provided for @projectAddMemberFromContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick from contacts'**
+  String get projectAddMemberFromContacts;
+
+  /// No description provided for @projectAddMemberSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get projectAddMemberSubmit;
+
+  /// No description provided for @projectAddMemberAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {name}'**
+  String projectAddMemberAdded(String name);
+
+  /// No description provided for @projectTxNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add project transaction'**
+  String get projectTxNewTitle;
+
+  /// No description provided for @projectTxEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit transaction'**
+  String get projectTxEditTitle;
+
+  /// No description provided for @projectTxPaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get projectTxPaidBy;
+
+  /// No description provided for @projectTxReceivedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Received by'**
+  String get projectTxReceivedBy;
+
+  /// No description provided for @projectTxDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get projectTxDescription;
+
+  /// No description provided for @projectTxDescriptionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Description is required'**
+  String get projectTxDescriptionRequired;
+
+  /// No description provided for @projectTxDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get projectTxDate;
+
+  /// No description provided for @projectTxNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get projectTxNote;
+
+  /// No description provided for @projectTxCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get projectTxCategory;
+
+  /// No description provided for @projectTxCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name the category and pick an icon'**
+  String get projectTxCategoryRequired;
+
+  /// No description provided for @projectTxCategoryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get projectTxCategoryName;
+
+  /// No description provided for @projectTxSplits.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with'**
+  String get projectTxSplits;
+
+  /// No description provided for @projectTxSplitsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How much each person owes the payer; the payer keeps the rest'**
+  String get projectTxSplitsHint;
+
+  /// No description provided for @projectTxAddSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a split'**
+  String get projectTxAddSplit;
+
+  /// No description provided for @projectTxSplitEqual.
+  ///
+  /// In en, this message translates to:
+  /// **'Split equally'**
+  String get projectTxSplitEqual;
+
+  /// No description provided for @projectTxSplitsOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Splits ({sum}) are more than the total'**
+  String projectTxSplitsOver(String sum);
+
+  /// No description provided for @projectTxPayerKeeps.
+  ///
+  /// In en, this message translates to:
+  /// **'Payer\'s own share {amount}'**
+  String projectTxPayerKeeps(String amount);
+
+  /// No description provided for @projectTxAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above 0'**
+  String get projectTxAmountRequired;
+
+  /// No description provided for @settingsThemeMint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mint'**
+  String get settingsThemeMint;
+
+  /// No description provided for @settingsThemeSweet.
+  ///
+  /// In en, this message translates to:
+  /// **'Sweet'**
+  String get settingsThemeSweet;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsNotificationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What you get and what happens automatically'**
+  String get settingsNotificationsHint;
+
+  /// No description provided for @settingsDefaultCurrencyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used when you create wallets and debts'**
+  String get settingsDefaultCurrencyHint;
+
+  /// No description provided for @settingsCurrencySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Default currency updated'**
+  String get settingsCurrencySaved;
+
+  /// No description provided for @settingsFontSample.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample ภาษาไทย 123'**
+  String get settingsFontSample;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsTabAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get notificationsTabAll;
+
+  /// No description provided for @notificationsTabUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get notificationsTabUnread;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsSettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notificationsSettingsTooltip;
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You are all caught up'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity from people you share with shows up here'**
+  String get notificationsEmptyMessage;
+
+  /// No description provided for @notificationsEmptyUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing unread'**
+  String get notificationsEmptyUnread;
+
+  /// No description provided for @notificationsSomeone.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone'**
+  String get notificationsSomeone;
+
+  /// No description provided for @notifSplitCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} split a bill with you'**
+  String notifSplitCreated(String actor);
+
+  /// No description provided for @notifSplitPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} paid back their share'**
+  String notifSplitPaid(String actor);
+
+  /// No description provided for @notifSplitReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} confirmed your payment'**
+  String notifSplitReceived(String actor);
+
+  /// No description provided for @notifProjectTxForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} recorded a project transaction for you'**
+  String notifProjectTxForYou(String actor);
+
+  /// No description provided for @notifProjectTxChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} edited a project transaction'**
+  String notifProjectTxChanged(String actor);
+
+  /// No description provided for @notifProjectInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} invited you to {project}'**
+  String notifProjectInvite(String actor, String project);
+
+  /// No description provided for @notifContactLink.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} wants to link as contacts'**
+  String notifContactLink(String actor);
+
+  /// No description provided for @notifUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
+  String get notifUnknown;
+
+  /// No description provided for @notifAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted · tap to open'**
+  String get notifAccepted;
+
+  /// No description provided for @notifRejectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline this request?'**
+  String get notifRejectTitle;
+
+  /// No description provided for @notifRejectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They will not be told that you declined.'**
+  String get notifRejectBody;
+
+  /// No description provided for @notifHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get notifHidden;
+
+  /// No description provided for @notifSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get notifSettingsTitle;
+
+  /// No description provided for @notifSettingsReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications you get'**
+  String get notifSettingsReceive;
+
+  /// No description provided for @notifSettingsReceiveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off what you do not need. Invites and requests always come through because they need an answer.'**
+  String get notifSettingsReceiveHint;
+
+  /// No description provided for @notifGroupSplits.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill splits'**
+  String get notifGroupSplits;
+
+  /// No description provided for @notifGroupProjects.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects'**
+  String get notifGroupProjects;
+
+  /// No description provided for @notifGroupRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Invites and requests'**
+  String get notifGroupRequests;
+
+  /// No description provided for @notifGroupPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get notifGroupPayments;
+
+  /// No description provided for @notifTypeSplitCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone splits a bill with me'**
+  String get notifTypeSplitCreated;
+
+  /// No description provided for @notifTypeSplitPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone pays back their share'**
+  String get notifTypeSplitPaid;
+
+  /// No description provided for @notifTypeSplitReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone confirms my payment'**
+  String get notifTypeSplitReceived;
+
+  /// No description provided for @notifTypeProjectTxForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'A project transaction is recorded for me'**
+  String get notifTypeProjectTxForYou;
+
+  /// No description provided for @notifTypeProjectTxChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'A project transaction is edited'**
+  String get notifTypeProjectTxChanged;
+
+  /// No description provided for @notifTypeAlwaysOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Always on'**
+  String get notifTypeAlwaysOn;
+
+  /// No description provided for @notifSettingsAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic actions'**
+  String get notifSettingsAuto;
+
+  /// No description provided for @notifSettingsAutoPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved now; starts working once the server supports it'**
+  String get notifSettingsAutoPending;
+
+  /// No description provided for @notifAutoNotifySplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell linked contacts when I split a bill'**
+  String get notifAutoNotifySplit;
+
+  /// No description provided for @notifAutoAddDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Track bills split with me as debts'**
+  String get notifAutoAddDebt;
+
+  /// No description provided for @notifAutoRecordPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Record payments people send me'**
+  String get notifAutoRecordPayment;
+
+  /// No description provided for @notifDefaultAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving wallet'**
+  String get notifDefaultAccount;
+
+  /// No description provided for @notifDefaultAccountNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get notifDefaultAccountNone;
+
+  /// No description provided for @notifAutoResolveProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Record my own project transactions in my book'**
+  String get notifAutoResolveProject;
+
+  /// No description provided for @notifSettingsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save, changed back'**
+  String get notifSettingsSaveFailed;
+
+  /// No description provided for @profileUsernameLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Username cannot be changed'**
+  String get profileUsernameLocked;
+
+  /// No description provided for @homeUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up (7 days)'**
+  String get homeUpcoming;
+
+  /// No description provided for @homeUpcomingInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =0{Today} =1{Tomorrow} other{In {days} days}}'**
+  String homeUpcomingInDays(int days);
+
+  /// No description provided for @homeByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending by category (this month)'**
+  String get homeByCategory;
+
+  /// No description provided for @homeBudgetLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{spent} of {amount}'**
+  String homeBudgetLine(String spent, String amount);
+
+  /// No description provided for @homeGoalLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {target}'**
+  String homeGoalLine(String current, String target);
+
+  /// No description provided for @homeNoTxYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get homeNoTxYet;
+
+  /// No description provided for @homeAddFirstTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first transaction'**
+  String get homeAddFirstTx;
+
+  /// No description provided for @transactionsFilterType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get transactionsFilterType;
+
+  /// No description provided for @transactionsFilterRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get transactionsFilterRange;
+
+  /// No description provided for @transactionsFilterAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get transactionsFilterAccount;
+
+  /// No description provided for @transactionsFilterCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get transactionsFilterCategory;
+
+  /// No description provided for @transactionsSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get transactionsSortNewest;
+
+  /// No description provided for @transactionsSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest'**
+  String get transactionsSortOldest;
+
+  /// No description provided for @transactionsSortAmountHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest'**
+  String get transactionsSortAmountHigh;
+
+  /// No description provided for @transactionsSortAmountLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Smallest'**
+  String get transactionsSortAmountLow;
+
+  /// No description provided for @transactionsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions match these filters'**
+  String get transactionsNoMatch;
+
+  /// No description provided for @transactionsClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get transactionsClearFilters;
+
+  /// No description provided for @txDetailDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get txDetailDate;
+
+  /// No description provided for @txDetailAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get txDetailAccount;
+
+  /// No description provided for @txDetailCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get txDetailCategory;
+
+  /// No description provided for @txDetailTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get txDetailTags;
+
+  /// No description provided for @txDetailNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get txDetailNote;
+
+  /// No description provided for @txDetailSplits.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get txDetailSplits;
+
+  /// No description provided for @txDetailHasSplits.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with others'**
+  String get txDetailHasSplits;
+
+  /// No description provided for @txDetailRecordedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded by'**
+  String get txDetailRecordedBy;
+
+  /// No description provided for @txDetailSource.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get txDetailSource;
+
+  /// No description provided for @txDetailSourceDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt payment'**
+  String get txDetailSourceDebt;
+
+  /// No description provided for @txDetailSourceProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get txDetailSourceProject;
+
+  /// No description provided for @txDetailSystemLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'System transaction: cannot be edited or deleted'**
+  String get txDetailSystemLocked;
+
+  /// No description provided for @txDetailTransferTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get txDetailTransferTo;
+
+  /// No description provided for @txDetailBalanceAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance after'**
+  String get txDetailBalanceAfter;
+
+  /// No description provided for @txDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transaction?'**
+  String get txDeleteTitle;
+
+  /// No description provided for @txDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The wallet balance is adjusted back.'**
+  String get txDeleteBody;
+
+  /// No description provided for @txDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction deleted'**
+  String get txDeleted;
+
+  /// No description provided for @txSplitAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with others'**
+  String get txSplitAdd;
+
+  /// No description provided for @txSplitWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with'**
+  String get txSplitWith;
+
+  /// No description provided for @txSplitEqually.
+  ///
+  /// In en, this message translates to:
+  /// **'Split equally'**
+  String get txSplitEqually;
+
+  /// No description provided for @txSplitCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove split'**
+  String get txSplitCollapse;
+
+  /// No description provided for @txSplitAddPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Add person'**
+  String get txSplitAddPerson;
+
+  /// No description provided for @txSplitRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share {amount}'**
+  String txSplitRemaining(String amount);
+
+  /// No description provided for @txSplitWiredContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to a contact'**
+  String get txSplitWiredContact;
+
+  /// No description provided for @txSplitName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get txSplitName;
+
+  /// No description provided for @txSplitOwes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes'**
+  String get txSplitOwes;
+
+  /// No description provided for @txSplitRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get txSplitRemove;
+
+  /// No description provided for @authTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Track income and spending, split bills with friends'**
+  String get authTagline;
+
+  /// No description provided for @authOr.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authOr;
+
+  /// No description provided for @authContinueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get authContinueWithGoogle;
+
+  /// No description provided for @authComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get authComingSoon;
+
+  /// No description provided for @authRegisterSectionAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in details'**
+  String get authRegisterSectionAccount;
+
+  /// No description provided for @authRegisterSectionProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'About you'**
+  String get authRegisterSectionProfile;
+
+  /// No description provided for @authRegisterUsernameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'a-z 0-9 _ -, 3 to 50 characters'**
+  String get authRegisterUsernameHint;
+
+  /// No description provided for @authRegisterPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get authRegisterPasswordHint;
+
+  /// No description provided for @authRegisterEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets friends link their account with yours'**
+  String get authRegisterEmailHint;
+
+  /// No description provided for @authLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get authLanguage;
+
+  /// No description provided for @accountsTotalMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get accountsTotalMine;
+
+  /// No description provided for @accountsTotalShared.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared pot'**
+  String get accountsTotalShared;
+
+  /// No description provided for @accountsArchivedLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived wallets ({count})'**
+  String accountsArchivedLink(int count);
+
+  /// No description provided for @accountsArchivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived wallets'**
+  String get accountsArchivedTitle;
+
+  /// No description provided for @accountsArchivedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived wallets'**
+  String get accountsArchivedEmpty;
+
+  /// No description provided for @accountRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get accountRestore;
+
+  /// No description provided for @accountRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored {name}'**
+  String accountRestored(String name);
+
+  /// No description provided for @accountDetailSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get accountDetailSeeAll;
+
+  /// No description provided for @accountDetailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get accountDetailDescription;
+
+  /// No description provided for @accountDetailNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get accountDetailNote;
+
+  /// No description provided for @accountDetailMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get accountDetailMembers;
+
+  /// No description provided for @accountArchiveHasMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'A wallet with other members cannot be archived. Remove them first.'**
+  String get accountArchiveHasMembers;
+
+  /// No description provided for @accountArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet archived'**
+  String get accountArchived;
+
+  /// No description provided for @txSplitOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Splits are more than the transaction amount'**
+  String get txSplitOver;
+
+  /// No description provided for @txSplitFreeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed name: pick a contact from the suggestions to link it'**
+  String get txSplitFreeText;
+
   /// No description provided for @moreDebts.
   ///
   /// In en, this message translates to:
@@ -1676,6 +3890,60 @@ abstract class AppLocalizations {
   /// **'Add category'**
   String get categoriesAddNew;
 
+  /// No description provided for @categoriesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search categories'**
+  String get categoriesSearchHint;
+
+  /// No description provided for @categoriesSearchNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching categories'**
+  String get categoriesSearchNoMatch;
+
+  /// No description provided for @categoryDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category'**
+  String get categoryDelete;
+
+  /// No description provided for @categoryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"?'**
+  String categoryDeleteTitle(String name);
+
+  /// No description provided for @categoryDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Subcategories move up under the parent.'**
+  String get categoryDeleteBody;
+
+  /// No description provided for @categoryDeleteTxImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transaction} other{{count} transactions}} will become uncategorised.'**
+  String categoryDeleteTxImpact(int count);
+
+  /// No description provided for @categoryDeleteBudgetImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 budget} other{{count} budgets}} for this category will be deleted.'**
+  String categoryDeleteBudgetImpact(int count);
+
+  /// No description provided for @categoryDeletedResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String categoryDeletedResult(String name);
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
   /// No description provided for @categoriesReorderEnter.
   ///
   /// In en, this message translates to:
@@ -1747,6 +4015,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add tag'**
   String get tagsAddNew;
+
+  /// No description provided for @tagsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search tags'**
+  String get tagsSearchHint;
+
+  /// No description provided for @tagsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching tags'**
+  String get tagsNoMatch;
+
+  /// No description provided for @tagsSortUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Most used'**
+  String get tagsSortUsage;
+
+  /// No description provided for @tagsSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all shown'**
+  String get tagsSelectAll;
+
+  /// No description provided for @tagsBulkColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Change colour'**
+  String get tagsBulkColor;
+
+  /// No description provided for @tagsBulkIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Change icon'**
+  String get tagsBulkIcon;
+
+  /// No description provided for @tagsDeleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selected'**
+  String get tagsDeleteSelected;
+
+  /// No description provided for @tagsFiltersClearedForError.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters cleared to show a tag that needs fixing'**
+  String get tagsFiltersClearedForError;
 
   /// No description provided for @tagsUsageCount.
   ///
@@ -1913,7 +4229,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAppVersionValue.
   ///
   /// In en, this message translates to:
-  /// **'Phase 0 (1.0.0+1)'**
+  /// **'1.0.0 (1)'**
   String get settingsAppVersionValue;
 
   /// No description provided for @settingsLogout.
@@ -3655,6 +5971,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this schedule?'**
   String get scheduledDeleteConfirmTitle;
+
+  /// No description provided for @scheduledStatusChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change status'**
+  String get scheduledStatusChangeTitle;
 
   /// No description provided for @scheduledDeleteConfirmBody.
   ///

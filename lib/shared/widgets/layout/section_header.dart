@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 
 /// Section title with an optional count and a trailing "ดูทั้งหมด ›" style
@@ -57,7 +58,7 @@ class SectionHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(actionLabel!),
-                  const Icon(Icons.chevron_right, size: 18),
+                  const Icon(AppIcons.chevronRight, size: 18),
                 ],
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_radius.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -20,25 +21,25 @@ class MorePage extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final groups = <(String, List<_MoreEntry>)>[
       (l.moreGroupLibrary, [
-        _MoreEntry(Icons.category_outlined, l.moreCategories,
+        _MoreEntry(AppIcons.category, l.moreCategories,
             l.moreCategoriesDesc, '/categories', Tone.primary),
-        _MoreEntry(Icons.sell_outlined, l.moreTags, l.moreTagsDesc, '/tags',
+        _MoreEntry(AppIcons.tag, l.moreTags, l.moreTagsDesc, '/tags',
             Tone.info),
       ]),
       (l.moreGroupPeople, [
-        _MoreEntry(Icons.contacts_outlined, l.moreContacts,
+        _MoreEntry(AppIcons.contact, l.moreContacts,
             l.moreContactsDesc, '/contacts', Tone.success),
-        _MoreEntry(Icons.groups_outlined, l.moreProjects, l.moreProjectsDesc,
+        _MoreEntry(AppIcons.project, l.moreProjects, l.moreProjectsDesc,
             '/projects', Tone.warning),
-        _MoreEntry(Icons.account_balance_outlined, l.moreDebts,
+        _MoreEntry(AppIcons.debt, l.moreDebts,
             l.moreDebtsDesc, '/personal-debts', Tone.expense),
       ]),
       (l.moreGroupPlanning, [
-        _MoreEntry(Icons.savings_outlined, l.moreBudgets, l.moreBudgetsDesc,
+        _MoreEntry(AppIcons.budget, l.moreBudgets, l.moreBudgetsDesc,
             '/budgets', Tone.income),
-        _MoreEntry(Icons.flag_outlined, l.moreSavingGoals,
+        _MoreEntry(AppIcons.savingGoal, l.moreSavingGoals,
             l.moreSavingGoalsDesc, '/saving-goals', Tone.info),
-        _MoreEntry(Icons.schedule_outlined, l.moreScheduled,
+        _MoreEntry(AppIcons.scheduled, l.moreScheduled,
             l.moreScheduledDesc, '/scheduled-transactions', Tone.primary),
       ]),
     ];

@@ -1,27 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/currencies.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../domain/notification.dart';
 
-/// One notification inbox row.
-///
-/// - `contact_link_request`, **pending** → renders inline Accept /
-///   Reject buttons. Row-body tap is a no-op for pending link-requests
-///   so accidental taps don't accept (the buttons are the action).
-/// - `contact_link_request`, **actioned** (= accepted) → no buttons.
-///   Tapping the row routes to the linked contact / link-existing edit
-///   / link-create form (parent page owns the routing).
-/// - `account_invite` (shared-wallet invite, spec §14) → same inline
-///   Accept / Reject pattern while pending.
-/// - Other types → tap = mark read + follow [AppNotification.deepLink].
-///
-/// Overflow: Mark-as-read (when unread) + Dismiss (when not yet
-/// dismissed).
+/// One inbox row (§7): sender avatar with a type badge, the sentence, time,
+/// ● when unread. Swipe left to hide (handled by the page). Pending
+/// invites / link requests get big Accept / Decline buttons (decline asks
+/// first); once accepted the row says so and stays tappable.
 class NotificationTile extends StatelessWidget {
   const NotificationTile({
     required this.notification,
-    required this.onMarkRead,
-    required this.onDismiss,
     required this.onTap,
     required this.onAccept,
     required this.onReject,
@@ -29,116 +22,107 @@ class NotificationTile extends StatelessWidget {
   });
 
   final AppNotification notification;
-  final ValueChanged<String> onMarkRead;
-  final ValueChanged<String> onDismiss;
   final ValueChanged<AppNotification> onTap;
 
-  /// Inline-button handlers — only invoked for pending
-  /// `contact_link_request` / `account_invite` rows. Ignored otherwise.
+  /// Pending `contact_link_request` / `account_invite` only.
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
+  bool get _isRequest =>
+      notification.type == NotificationType.contactLinkRequest ||
+      notification.type == NotificationType.accountInvite;
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final n = notification;
-    final theme = Theme.of(context);
-    final hasInlineActions =
-        n.type == NotificationType.contactLinkRequest ||
-            n.type == NotificationType.accountInvite;
-    final showInlineActions = hasInlineActions && n.actionedAt == null;
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final pending = _isRequest && n.actionedAt == null;
+    final accepted = _isRequest && n.actionedAt != null;
+    final amount = _amount(context);
+    final actor = n.actorDisplayName ?? l.notificationsSomeone;
 
     return Material(
       color: n.isUnread
-          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.18)
-          : theme.colorScheme.surface,
+          ? scheme.primary.withValues(alpha: 0.06)
+          : Colors.transparent,
       child: InkWell(
         onTap: () => onTap(n),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg, vertical: AppSpacing.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: theme.colorScheme.secondaryContainer,
-                child: Icon(_iconFor(n.type), size: 18),
+              CornerBadge(
+                badge: Icon(_iconFor(n.type), size: 12),
+                child: UserAvatar(displayName: actor, size: 40),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _title(context, n),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight:
-                            n.isUnread ? FontWeight.w600 : FontWeight.w400,
-                      ),
+                      _title(l, n, actor),
+                      style: textTheme.bodyMedium?.copyWith(
+                          fontWeight:
+                              n.isUnread ? FontWeight.w600 : FontWeight.w400),
                     ),
-                    if (_subtitle(n) case final sub?)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          sub,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    if (showInlineActions)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            FilledButton.tonal(
+                    const SizedBox(height: 2),
+                    Text(
+                      [
+                        DateFormatter.time(n.createdAt.toLocal(),
+                            locale: Localizations.localeOf(context)
+                                .toLanguageTag()),
+                        ?amount,
+                      ].join(' · '),
+                      style: textTheme.bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                    if (accepted) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      AppBadge(
+                          label: l.notifAccepted,
+                          icon: AppIcons.success,
+                          tone: Tone.success),
+                    ],
+                    if (pending) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppButton(
+                              label: l.notificationAccept,
+                              icon: AppIcons.check,
                               onPressed: () => onAccept(n.id),
-                              style: FilledButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              child: Text(AppLocalizations.of(context)!
-                                  .notificationAccept),
                             ),
-                            const SizedBox(width: 8),
-                            OutlinedButton(
-                              onPressed: () => onReject(n.id),
-                              style: OutlinedButton.styleFrom(
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              child: Text(AppLocalizations.of(context)!
-                                  .notificationReject),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: AppButton(
+                              label: l.notificationReject,
+                              variant: AppButtonVariant.outlined,
+                              onPressed: () => _confirmReject(context),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 20),
-                onSelected: (action) {
-                  switch (action) {
-                    case 'read':
-                      onMarkRead(n.id);
-                    case 'dismiss':
-                      onDismiss(n.id);
-                  }
-                },
-                // Dismiss is universal (idempotent on already-dismissed
-                // rows). Mark-as-read only when the row is still unread —
-                // hiding it for already-read rows keeps the menu honest.
-                itemBuilder: (context) => [
-                  if (n.isUnread)
-                    const PopupMenuItem(
-                      value: 'read',
-                      child: Text('Mark as read'),
-                    ),
-                  const PopupMenuItem(
-                    value: 'dismiss',
-                    child: Text('Dismiss'),
+              if (n.isUnread)
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.sm, top: 6),
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                        color: scheme.primary, shape: BoxShape.circle),
                   ),
-                ],
-              ),
+                ),
             ],
           ),
         ),
@@ -146,58 +130,51 @@ class NotificationTile extends StatelessWidget {
     );
   }
 
-  IconData _iconFor(NotificationType t) {
-    switch (t) {
-      case NotificationType.splitCreated:
-      case NotificationType.splitPaid:
-      case NotificationType.splitReceived:
-        return Icons.receipt_long_outlined;
-      case NotificationType.projectTxRecordedForYou:
-      case NotificationType.projectTxChanged:
-        return Icons.folder_shared_outlined;
-      case NotificationType.projectInvite:
-      case NotificationType.contactLinkRequest:
-        return Icons.person_add_alt_1_outlined;
-      case NotificationType.accountInvite:
-        return Icons.account_balance_wallet_outlined;
-      case NotificationType.unknown:
-        return Icons.notifications_outlined;
-    }
+  Future<void> _confirmReject(BuildContext context) async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.notifRejectTitle,
+      message: l.notifRejectBody,
+      confirmLabel: l.notificationReject,
+      destructive: true,
+    );
+    if (ok) onReject(notification.id);
   }
 
-  String _title(BuildContext context, AppNotification n) {
-    final actor = n.actorDisplayName ?? 'Someone';
-    switch (n.type) {
-      case NotificationType.splitCreated:
-        return '$actor split a bill with you';
-      case NotificationType.splitPaid:
-        return '$actor paid your split';
-      case NotificationType.splitReceived:
-        return '$actor confirmed receiving your payment';
-      case NotificationType.projectTxRecordedForYou:
-        return '$actor recorded a project transaction for you';
-      case NotificationType.projectTxChanged:
-        return '$actor edited a project transaction';
-      case NotificationType.projectInvite:
-        final projectName = n.payload['project_name'] as String? ?? 'a project';
-        return '$actor invited you to $projectName';
-      case NotificationType.contactLinkRequest:
-        return '$actor wants to link as a contact';
-      case NotificationType.accountInvite:
-        final walletName = n.payload['account_name'] as String? ?? '';
-        return AppLocalizations.of(context)!
-            .notificationWalletInviteTitle(actor, walletName);
-      case NotificationType.unknown:
-        return 'Notification';
-    }
+  String? _amount(BuildContext context) {
+    final a = notification.payload['amount'];
+    if (a is! num) return null;
+    final cur = (notification.payload['currency'] as String?) ?? 'THB';
+    return moneyString(context, a, symbol: Currencies.symbolOf(cur));
   }
 
-  String? _subtitle(AppNotification n) {
-    final amount = n.payload['amount'];
-    if (amount is num) {
-      final cur = (n.payload['currency'] as String?) ?? '';
-      return '$cur ${amount.toStringAsFixed(2)}'.trim();
-    }
-    return null;
-  }
+  static IconData _iconFor(NotificationType t) => switch (t) {
+        NotificationType.splitCreated ||
+        NotificationType.splitPaid ||
+        NotificationType.splitReceived =>
+          AppIcons.split,
+        NotificationType.projectTxRecordedForYou ||
+        NotificationType.projectTxChanged ||
+        NotificationType.projectInvite =>
+          AppIcons.project,
+        NotificationType.contactLinkRequest => AppIcons.link,
+        NotificationType.accountInvite => AppIcons.bank,
+        NotificationType.unknown => AppIcons.notifications,
+      };
+
+  static String _title(AppLocalizations l, AppNotification n, String actor) =>
+      switch (n.type) {
+        NotificationType.splitCreated => l.notifSplitCreated(actor),
+        NotificationType.splitPaid => l.notifSplitPaid(actor),
+        NotificationType.splitReceived => l.notifSplitReceived(actor),
+        NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(actor),
+        NotificationType.projectTxChanged => l.notifProjectTxChanged(actor),
+        NotificationType.projectInvite => l.notifProjectInvite(
+            actor, (n.payload['project_name'] as String?) ?? ''),
+        NotificationType.contactLinkRequest => l.notifContactLink(actor),
+        NotificationType.accountInvite => l.notificationWalletInviteTitle(
+            actor, (n.payload['account_name'] as String?) ?? ''),
+        NotificationType.unknown => l.notifUnknown,
+      };
 }

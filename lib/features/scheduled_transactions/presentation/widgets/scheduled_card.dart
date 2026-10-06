@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
@@ -99,8 +99,8 @@ class ScheduledCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              Text(
-                CurrencyFormatter.format(entry.amount),
+              MoneyText(
+                entry.amount,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: amountColor ?? scheme.onSurface,
                       fontWeight: FontWeight.w700,

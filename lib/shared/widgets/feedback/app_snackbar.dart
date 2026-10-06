@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../chips/tone.dart';
 
@@ -13,10 +14,10 @@ void showAppSnackBar(
   VoidCallback? onAction,
 }) {
   final icon = switch (tone) {
-    Tone.success => Icons.check_circle_outline,
-    Tone.danger => Icons.error_outline,
-    Tone.warning => Icons.warning_amber_outlined,
-    Tone.info => Icons.info_outline,
+    Tone.success => AppIcons.success,
+    Tone.danger => AppIcons.error,
+    Tone.warning => AppIcons.warning,
+    Tone.info => AppIcons.info,
     _ => null,
   };
   ScaffoldMessenger.of(context)
