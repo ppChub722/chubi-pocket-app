@@ -4226,12 +4226,6 @@ abstract class AppLocalizations {
   /// **'App version'**
   String get settingsAppVersion;
 
-  /// No description provided for @settingsAppVersionValue.
-  ///
-  /// In en, this message translates to:
-  /// **'1.0.0 (1)'**
-  String get settingsAppVersionValue;
-
   /// No description provided for @settingsLogout.
   ///
   /// In en, this message translates to:

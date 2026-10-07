@@ -2323,9 +2323,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppVersion => 'App version';
 
   @override
-  String get settingsAppVersionValue => '1.0.0 (1)';
-
-  @override
   String get settingsLogout => 'Log out';
 
   @override

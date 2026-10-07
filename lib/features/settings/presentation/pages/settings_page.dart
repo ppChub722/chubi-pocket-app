@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
@@ -373,6 +374,17 @@ class _VersionRow extends StatefulWidget {
 
 class _VersionRowState extends State<_VersionRow> {
   final _counter = TapUnlockCounter();
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) {
+        setState(() => _version = '${info.version} (${info.buildNumber})');
+      }
+    }).catchError((Object _) {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -380,7 +392,7 @@ class _VersionRowState extends State<_VersionRow> {
     return DetailRow(
       leading: const Icon(AppIcons.info),
       label: l.settingsAppVersion,
-      trailing: Text(l.settingsAppVersionValue),
+      trailing: Text(_version),
       onTap: () {
         if (_counter.register()) context.push('/dev');
       },

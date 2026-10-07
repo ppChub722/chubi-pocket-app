@@ -796,7 +796,6 @@
   "settingsLanguage": "Language",
   "settingsFont": "Font",
   "settingsAppVersion": "App version",
-  "settingsAppVersionValue": "1.0.0 (1)",
   "settingsLogout": "Log out",
   "settingsLogoutDialogTitle": "Log out of ChubiPocket?",
   "settingsLogoutDialogBody": "You will be returned to the login screen.",

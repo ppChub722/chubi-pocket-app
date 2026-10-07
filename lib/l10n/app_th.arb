@@ -718,7 +718,6 @@
   "settingsLanguage": "ภาษา",
   "settingsFont": "ฟอนต์",
   "settingsAppVersion": "เวอร์ชันแอป",
-  "settingsAppVersionValue": "1.0.0 (1)",
   "settingsLogout": "ออกจากระบบ",
   "settingsLogoutDialogTitle": "ออกจากระบบ ChubiPocket?",
   "settingsLogoutDialogBody": "คุณจะถูกนำกลับไปยังหน้าเข้าสู่ระบบ",

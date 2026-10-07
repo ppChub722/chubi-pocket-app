@@ -2276,9 +2276,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsAppVersion => 'เวอร์ชันแอป';
 
   @override
-  String get settingsAppVersionValue => '1.0.0 (1)';
-
-  @override
   String get settingsLogout => 'ออกจากระบบ';
 
   @override
