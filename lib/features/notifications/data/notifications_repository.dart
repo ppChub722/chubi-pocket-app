@@ -115,30 +115,26 @@ class NotificationsRepository {
     }
   }
 
+  /// `PUT /v1/notifications/settings` — partial; lists replace wholesale.
   Future<NotificationSettings> updateSettings({
-    bool? autoNotifyLinkedSplitContacts,
-    bool? autoAddToPersonalDebtOnSplitNotification,
-    bool? autoRecordReceivedPayment,
-    bool? autoResolveOwnInProjects,
+    Set<String>? mutedTypes,
+    Set<String>? autoTypes,
     String? defaultAccountId,
     bool clearDefaultAccount = false,
-    Set<String>? mutedTypes,
+    bool? autoResolveOwnInProjects,
   }) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/notifications/settings',
         data: <String, dynamic>{
-          'auto_notify_linked_split_contacts': ?autoNotifyLinkedSplitContacts,
-          'auto_add_to_personal_debt_on_split_notification':
-              ?autoAddToPersonalDebtOnSplitNotification,
-          'auto_record_received_payment': ?autoRecordReceivedPayment,
+          if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
+          if (autoTypes != null) 'auto_types': autoTypes.toList(),
           'auto_resolve_own_in_projects': ?autoResolveOwnInProjects,
           // Explicit null clears it (contract §5).
           if (clearDefaultAccount)
             'default_account_id': null
           else
             'default_account_id': ?defaultAccountId,
-          if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
         },
       );
       return NotificationSettings.fromJson(res.data!);

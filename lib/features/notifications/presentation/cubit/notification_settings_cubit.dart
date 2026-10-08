@@ -58,48 +58,34 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
   /// Optimistic: the switch flips at once; a failed save flips it back and
   /// sets [SettingsState.errorMessage] (the page shows "เปลี่ยนกลับแล้ว").
   Future<void> update({
-    bool? autoNotifyLinkedSplitContacts,
-    bool? autoAddToPersonalDebtOnSplitNotification,
-    bool? autoRecordReceivedPayment,
-    bool? autoResolveOwnInProjects,
+    Set<String>? mutedTypes,
+    Set<String>? autoTypes,
     String? defaultAccountId,
     bool clearDefaultAccount = false,
-    Set<String>? mutedTypes,
+    bool? autoResolveOwnInProjects,
   }) async {
     final before = state.settings;
     if (before == null) return;
     emit(state.copyWith(
       settings: before.copyWith(
-        autoNotifyLinkedSplitContacts: autoNotifyLinkedSplitContacts,
-        autoAddToPersonalDebtOnSplitNotification:
-            autoAddToPersonalDebtOnSplitNotification,
-        autoRecordReceivedPayment: autoRecordReceivedPayment,
-        autoResolveOwnInProjects: autoResolveOwnInProjects,
+        mutedTypes: mutedTypes,
+        autoTypes: autoTypes,
         defaultAccountId: defaultAccountId,
         clearDefaultAccount: clearDefaultAccount,
-        mutedTypes: mutedTypes,
+        autoResolveOwnInProjects: autoResolveOwnInProjects,
       ),
       status: SettingsStatus.saving,
       clearError: true,
     ));
     try {
       final updated = await _repo.updateSettings(
-        autoNotifyLinkedSplitContacts: autoNotifyLinkedSplitContacts,
-        autoAddToPersonalDebtOnSplitNotification:
-            autoAddToPersonalDebtOnSplitNotification,
-        autoRecordReceivedPayment: autoRecordReceivedPayment,
-        autoResolveOwnInProjects: autoResolveOwnInProjects,
+        mutedTypes: mutedTypes,
+        autoTypes: autoTypes,
         defaultAccountId: defaultAccountId,
         clearDefaultAccount: clearDefaultAccount,
-        mutedTypes: mutedTypes,
+        autoResolveOwnInProjects: autoResolveOwnInProjects,
       );
-      // Guard for an older BE that doesn't echo muted_types — keep ours.
-      emit(state.copyWith(
-        settings: mutedTypes != null && !updated.mutedTypes.containsAll(mutedTypes)
-            ? updated.copyWith(mutedTypes: mutedTypes)
-            : updated,
-        status: SettingsStatus.loaded,
-      ));
+      emit(state.copyWith(settings: updated, status: SettingsStatus.loaded));
     } on ApiException catch (e) {
       emit(state.copyWith(
         settings: before,

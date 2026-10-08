@@ -1080,15 +1080,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtSettleRecordTx => 'บันทึกเป็นรายการในกระเป๋า';
-
-  @override
-  String get debtSettleRecordTxHint => 'สร้างรายรับ/รายจ่าย และปรับยอดกระเป๋า';
-
-  @override
-  String get debtSettleNoTxHint => 'ลดยอดคงค้างอย่างเดียว ไม่สร้างรายการ';
-
-  @override
   String get debtSettleAccount => 'กระเป๋า';
 
   @override
@@ -1634,10 +1625,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifSettingsReceive => 'การแจ้งเตือนที่ได้รับ';
 
   @override
-  String get notifSettingsReceiveHint =>
-      'ปิดเรื่องที่ไม่อยากรับ · คำเชิญและคำขอปิดไม่ได้ เพราะต้องตอบ';
-
-  @override
   String get notifGroupSplits => 'การหารบิล';
 
   @override
@@ -1647,16 +1634,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifGroupRequests => 'คำเชิญและคำขอ';
 
   @override
-  String get notifGroupPayments => 'การรับเงิน';
-
-  @override
   String get notifTypeSplitCreated => 'มีคนหารบิลกับฉัน';
 
   @override
   String get notifTypeSplitPaid => 'มีคนจ่ายส่วนของเขาคืน';
-
-  @override
-  String get notifTypeSplitReceived => 'มีคนยืนยันว่าได้รับเงินจากฉัน';
 
   @override
   String get notifTypeProjectTxForYou => 'มีคนบันทึกรายการโปรเจกต์ให้ฉัน';
@@ -1668,14 +1649,45 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifTypeAlwaysOn => 'เปิดตลอด';
 
   @override
-  String get notifSettingsAuto => 'การทำงานอัตโนมัติ';
+  String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าโปรเจกต์';
 
   @override
   String get notifSettingsAutoHint =>
-      'มีผลทันทีกับรายการใหม่ · ปิด \"เพิ่มเข้าหนี้อัตโนมัติ\" แล้ว แจ้งเตือนจะมีปุ่มให้เพิ่มเอง · ไม่เลือกกระเป๋ารับเงิน = ปิดหนี้ฝั่งเราโดยไม่บันทึกเข้ากระเป๋า';
+      '\"อัตโนมัติ\" = พอแจ้งเตือนมาถึง ระบบกดปุ่มให้เลย · ปิดรับแจ้งเตือนประเภทไหน ประเภทนั้นจะไม่ทำอะไรเลย · คำเชิญและคำขอปิดไม่ได้ เพราะต้องตอบ';
 
   @override
-  String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าโปรเจกต์';
+  String get notifAutoAddDebt => 'อัตโนมัติ: เพิ่มเข้าหนี้ของฉัน';
+
+  @override
+  String get notifAutoRecordPayment => 'อัตโนมัติ: บันทึกรับเงิน';
+
+  @override
+  String get notifAutoCopyToBook => 'อัตโนมัติ: บันทึกเข้าบัญชีส่วนตัว';
+
+  @override
+  String get notifAutoUpdateCopy => 'อัตโนมัติ: อัปเดตรายการส่วนตัวตาม';
+
+  @override
+  String get notifAutoResolveProject =>
+      'บันทึกรายการที่ฉันจ่ายเองลงบัญชีส่วนตัวด้วย';
+
+  @override
+  String get notifActionAddDebt => 'เพิ่มเข้าหนี้ของฉัน';
+
+  @override
+  String get notifActionRecordReceipt => 'บันทึกรับเงิน';
+
+  @override
+  String get notifActionCopyToBook => 'บันทึกเข้าบัญชีส่วนตัว';
+
+  @override
+  String get notifActionUpdateCopy => 'อัปเดตตาม';
+
+  @override
+  String get notifActionSkip => 'ข้าม';
+
+  @override
+  String get notifActionDone => 'ทำแล้ว · แตะเพื่อเปิด';
 
   @override
   String notifProjectAdded(String actor, String project) {
@@ -1683,24 +1695,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get notifAutoNotifySplit =>
-      'แจ้งผู้ติดต่อที่เชื่อมบัญชีเมื่อฉันหารบิล';
-
-  @override
-  String get notifAutoAddDebt => 'บันทึกเป็นหนี้อัตโนมัติเมื่อมีคนหารบิลกับฉัน';
-
-  @override
-  String get notifAutoRecordPayment => 'บันทึกเงินที่มีคนจ่ายคืนอัตโนมัติ';
-
-  @override
   String get notifDefaultAccount => 'กระเป๋าที่รับเงิน';
 
   @override
   String get notifDefaultAccountNone => 'ยังไม่ได้เลือก';
-
-  @override
-  String get notifAutoResolveProject =>
-      'ลงบัญชีรายการโปรเจกต์ของฉันเองอัตโนมัติ';
 
   @override
   String get notifSettingsSaveFailed => 'บันทึกไม่ได้ — เปลี่ยนกลับแล้ว';

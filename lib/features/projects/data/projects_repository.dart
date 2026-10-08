@@ -354,6 +354,20 @@ class ProjectsRepository {
   /// Toggle the caller's per-row "marked resolved" flag. Idempotent.
   /// Independent of personal-book resolve — does NOT create personal
   /// entries.
+  /// `POST /v1/projects/:id/project-transactions/:pt_id/copy` — copy a
+  /// project row into my own book (floating, no wallet; contract §5).
+  /// Idempotent; returns the personal transaction id.
+  Future<String> copyToPersonal(String projectId, String ptId) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/projects/$projectId/project-transactions/$ptId/copy',
+      );
+      return res.data!['transaction_id'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   Future<ProjectTransaction> toggleMark(
       String projectId, String ptId, bool marked) async {
     try {

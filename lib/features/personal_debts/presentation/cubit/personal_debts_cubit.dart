@@ -136,10 +136,9 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
     String? accountId,
     double? amount,
     String? date,
-    bool direct = false,
   }) async {
     final res = await _repo.settle(id,
-        accountId: accountId, amount: amount, date: date, direct: direct);
+        accountId: accountId, amount: amount, date: date);
     _replace(res.debt);
     return res.debt;
   }

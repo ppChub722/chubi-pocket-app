@@ -28,13 +28,32 @@ class NotificationTile extends StatelessWidget {
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
+  /// Requests need an answer (accept / reject, with a confirm on reject).
   bool get _isRequest =>
       notification.type == NotificationType.contactLinkRequest ||
-      notification.type == NotificationType.accountInvite ||
-      // A split I haven't added to my debts yet (my auto-add is off) —
-      // accept = "add to my debts" (contract §5).
-      (notification.type == NotificationType.splitCreated &&
-          notification.payload['recipient_debt_id'] == null);
+      notification.type == NotificationType.accountInvite;
+
+  /// One-tap actions (contract §5) — "skip" just hides the row. Auto-run
+  /// ones arrive already actioned and show "ทำแล้ว".
+  bool get _hasAction => switch (notification.type) {
+        NotificationType.splitCreated ||
+        NotificationType.splitPaid ||
+        NotificationType.projectTxRecordedForYou =>
+          true,
+        // Only when I have a personal copy to update.
+        NotificationType.projectTxChanged =>
+          notification.payload['personal_transaction_id'] != null &&
+              notification.payload['suggested'] != null,
+        _ => false,
+      };
+
+  String _actionLabel(AppLocalizations l) => switch (notification.type) {
+        NotificationType.splitCreated => l.notifActionAddDebt,
+        NotificationType.splitPaid => l.notifActionRecordReceipt,
+        NotificationType.projectTxRecordedForYou => l.notifActionCopyToBook,
+        NotificationType.projectTxChanged => l.notifActionUpdateCopy,
+        _ => l.notificationAccept,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +61,9 @@ class NotificationTile extends StatelessWidget {
     final n = notification;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final pending = _isRequest && n.actionedAt == null;
-    final accepted = _isRequest && n.actionedAt != null;
+    final actionable = _isRequest || _hasAction;
+    final pending = actionable && n.actionedAt == null;
+    final accepted = actionable && n.actionedAt != null;
     final amount = _amount(context);
     final actor = n.actorDisplayName ?? l.notificationsSomeone;
 
@@ -88,7 +108,7 @@ class NotificationTile extends StatelessWidget {
                     if (accepted) ...[
                       const SizedBox(height: AppSpacing.xs),
                       AppBadge(
-                          label: l.notifAccepted,
+                          label: _isRequest ? l.notifAccepted : l.notifActionDone,
                           icon: AppIcons.success,
                           tone: Tone.success),
                     ],
@@ -98,7 +118,7 @@ class NotificationTile extends StatelessWidget {
                         children: [
                           Expanded(
                             child: AppButton(
-                              label: l.notificationAccept,
+                              label: _actionLabel(l),
                               icon: AppIcons.check,
                               onPressed: () => onAccept(n.id),
                             ),
@@ -106,9 +126,13 @@ class NotificationTile extends StatelessWidget {
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: AppButton(
-                              label: l.notificationReject,
+                              label: _isRequest
+                                  ? l.notificationReject
+                                  : l.notifActionSkip,
                               variant: AppButtonVariant.outlined,
-                              onPressed: () => _confirmReject(context),
+                              onPressed: _isRequest
+                                  ? () => _confirmReject(context)
+                                  : () => onReject(n.id),
                             ),
                           ),
                         ],

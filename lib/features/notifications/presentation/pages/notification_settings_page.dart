@@ -12,10 +12,10 @@ import '../../data/notifications_repository.dart';
 import '../../domain/notification.dart';
 import '../cubit/notification_settings_cubit.dart';
 
-/// `/notifications/settings` (§7): what you get (per type; invites and
-/// requests always on) and what happens automatically (bill splits ·
-/// payments + receiving wallet · projects). Switches save immediately and
-/// flip back on failure.
+/// `/notifications/settings` (§7, contract §5): per type, receive it and —
+/// where it carries an action — run that action automatically on arrival
+/// (muted = auto ignored). Invites / requests are always on. Switches save
+/// immediately and flip back on failure.
 class NotificationSettingsPage extends StatelessWidget {
   const NotificationSettingsPage({super.key});
 
@@ -49,26 +49,42 @@ class _Body extends StatelessWidget {
           if (s == null) return const LoadingView();
           final cubit = ctx.read<NotificationSettingsCubit>();
 
-          Widget muteSwitch(NotificationType t, String label) => SwitchListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                title: Text(label),
-                value: !s.isMuted(t),
-                onChanged: (on) => cubit.update(
-                  mutedTypes: on
-                      ? (s.mutedTypes.toSet()..remove(t.wire))
-                      : {...s.mutedTypes, t.wire},
-                ),
-              );
+          final muted = s.mutedTypes;
+          final auto = s.autoTypes;
+          Set<String> toggled(Set<String> set, String v, bool add) =>
+              add ? {...set, v} : (set.toSet()..remove(v));
 
-          Widget autoSwitch(String label, bool value, ValueChanged<bool> set) =>
+          /// One type: "receive" switch, plus — when the type has an action
+          /// — an indented "do it automatically" switch. Muted → the auto
+          /// switch is disabled (and ignored by the server) but keeps its
+          /// value for when the type is turned back on.
+          List<Widget> typeRows(NotificationType t, String label,
+              {String? autoLabel, Widget? extra}) {
+            final on = !s.isMuted(t);
+            return [
               SwitchListTile(
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 title: Text(label),
-                value: value,
-                onChanged: set,
-              );
+                value: on,
+                onChanged: (v) =>
+                    cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
+              ),
+              if (autoLabel != null)
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.only(
+                      left: AppSpacing.xxxl, right: AppSpacing.lg),
+                  dense: true,
+                  title: Text(autoLabel),
+                  value: s.isAuto(t),
+                  onChanged: on
+                      ? (v) =>
+                          cubit.update(autoTypes: toggled(auto, t.wire, v))
+                      : null,
+                ),
+              ?extra,
+            ];
+          }
 
           Widget groupTitle(String t) => Padding(
                 padding: const EdgeInsets.fromLTRB(
@@ -81,6 +97,8 @@ class _Body extends StatelessWidget {
           final accounts = ctx.watch<AccountsCubit>().state.accounts;
           final receiving =
               accounts.where((a) => a.id == s.defaultAccountId).firstOrNull;
+          final paidAuto = !s.isMuted(NotificationType.splitPaid) &&
+              s.isAuto(NotificationType.splitPaid);
 
           return ListView(
             padding: const EdgeInsets.only(bottom: AppSpacing.huge),
@@ -90,82 +108,70 @@ class _Body extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: Text(l.notifSettingsReceiveHint,
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ),
-                  groupTitle(l.notifGroupSplits),
-                  muteSwitch(NotificationType.splitCreated, l.notifTypeSplitCreated),
-                  muteSwitch(NotificationType.splitPaid, l.notifTypeSplitPaid),
-                  muteSwitch(NotificationType.splitReceived, l.notifTypeSplitReceived),
-                  groupTitle(l.notifGroupProjects),
-                  muteSwitch(NotificationType.projectTxRecordedForYou,
-                      l.notifTypeProjectTxForYou),
-                  muteSwitch(NotificationType.projectTxChanged,
-                      l.notifTypeProjectTxChanged),
-                  muteSwitch(NotificationType.projectAdded,
-                      l.notifTypeProjectAdded),
-                  groupTitle(l.notifGroupRequests),
-                  DetailRow(
-                    label: l.notifGroupRequests,
-                    trailing: AppBadge(label: l.notifTypeAlwaysOn, icon: AppIcons.lock),
-                  ),
-                ],
-              ),
-              SectionCard(
-                title: l.notifSettingsAuto,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                     child: Text(l.notifSettingsAutoHint,
                         style: Theme.of(context).textTheme.bodySmall),
                   ),
                   groupTitle(l.notifGroupSplits),
-                  autoSwitch(
-                    l.notifAutoNotifySplit,
-                    s.autoNotifyLinkedSplitContacts,
-                    (v) => cubit.update(autoNotifyLinkedSplitContacts: v),
-                  ),
-                  autoSwitch(
-                    l.notifAutoAddDebt,
-                    s.autoAddToPersonalDebtOnSplitNotification,
-                    (v) => cubit.update(autoAddToPersonalDebtOnSplitNotification: v),
-                  ),
-                  groupTitle(l.notifGroupPayments),
-                  autoSwitch(
-                    l.notifAutoRecordPayment,
-                    s.autoRecordReceivedPayment,
-                    (v) => cubit.update(autoRecordReceivedPayment: v),
-                  ),
-                  LockedInEdit(
-                    // The wallet only matters while auto-record is on.
-                    locked: !s.autoRecordReceivedPayment,
-                    child: DetailRow(
-                      leading: const Icon(AppIcons.bank),
-                      label: l.notifDefaultAccount,
-                      trailing: Text(receiving?.name ?? l.notifDefaultAccountNone),
-                      showChevron: true,
-                      onTap: () async {
-                        final r = await showAccountPickerSheet(
-                          context: ctx,
-                          accounts: accounts,
-                          selected: receiving,
-                          title: l.notifDefaultAccount,
-                          // "None" = settle my side without a wallet entry.
-                          allowNone: true,
-                        );
-                        if (r is AccountPickerSelected) {
-                          cubit.update(defaultAccountId: r.account.id);
-                        } else if (r is AccountPickerCleared) {
-                          cubit.update(clearDefaultAccount: true);
-                        }
-                      },
+                  ...typeRows(NotificationType.splitCreated, l.notifTypeSplitCreated,
+                      autoLabel: l.notifAutoAddDebt),
+                  ...typeRows(
+                    NotificationType.splitPaid,
+                    l.notifTypeSplitPaid,
+                    autoLabel: l.notifAutoRecordPayment,
+                    extra: LockedInEdit(
+                      // The wallet only matters while auto-record is on.
+                      locked: !paidAuto,
+                      child: DetailRow(
+                        leading: const Icon(AppIcons.bank),
+                        label: l.notifDefaultAccount,
+                        trailing:
+                            Text(receiving?.name ?? l.notifDefaultAccountNone),
+                        showChevron: true,
+                        onTap: () async {
+                          final r = await showAccountPickerSheet(
+                            context: ctx,
+                            accounts: accounts,
+                            selected: receiving,
+                            title: l.notifDefaultAccount,
+                            // "None" = record it without a wallet.
+                            allowNone: true,
+                          );
+                          if (r is AccountPickerSelected) {
+                            cubit.update(defaultAccountId: r.account.id);
+                          } else if (r is AccountPickerCleared) {
+                            cubit.update(clearDefaultAccount: true);
+                          }
+                        },
+                      ),
                     ),
                   ),
                   groupTitle(l.notifGroupProjects),
-                  autoSwitch(
-                    l.notifAutoResolveProject,
-                    s.autoResolveOwnInProjects,
-                    (v) => cubit.update(autoResolveOwnInProjects: v),
+                  ...typeRows(NotificationType.projectTxRecordedForYou,
+                      l.notifTypeProjectTxForYou,
+                      autoLabel: l.notifAutoCopyToBook),
+                  ...typeRows(NotificationType.projectTxChanged,
+                      l.notifTypeProjectTxChanged,
+                      autoLabel: l.notifAutoUpdateCopy),
+                  ...typeRows(
+                      NotificationType.projectAdded, l.notifTypeProjectAdded),
+                  groupTitle(l.notifGroupRequests),
+                  DetailRow(
+                    label: l.notifGroupRequests,
+                    trailing:
+                        AppBadge(label: l.notifTypeAlwaysOn, icon: AppIcons.lock),
+                  ),
+                ],
+              ),
+              SectionCard(
+                title: l.notifGroupProjects,
+                children: [
+                  // Not a notification — I recorded it myself.
+                  SwitchListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    title: Text(l.notifAutoResolveProject),
+                    value: s.autoResolveOwnInProjects,
+                    onChanged: (v) => cubit.update(autoResolveOwnInProjects: v),
                   ),
                 ],
               ),

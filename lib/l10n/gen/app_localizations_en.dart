@@ -1095,17 +1095,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtSettleRecordTx => 'Record as a transaction';
-
-  @override
-  String get debtSettleRecordTxHint =>
-      'Adds income/expense and updates the wallet balance';
-
-  @override
-  String get debtSettleNoTxHint =>
-      'Only lowers the outstanding amount — no transaction';
-
-  @override
   String get debtSettleAccount => 'Wallet';
 
   @override
@@ -1660,10 +1649,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifSettingsReceive => 'Notifications you get';
 
   @override
-  String get notifSettingsReceiveHint =>
-      'Turn off what you do not need. Invites and requests always come through because they need an answer.';
-
-  @override
   String get notifGroupSplits => 'Bill splits';
 
   @override
@@ -1673,16 +1658,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifGroupRequests => 'Invites and requests';
 
   @override
-  String get notifGroupPayments => 'Payments';
-
-  @override
   String get notifTypeSplitCreated => 'Someone splits a bill with me';
 
   @override
   String get notifTypeSplitPaid => 'Someone pays back their share';
-
-  @override
-  String get notifTypeSplitReceived => 'Someone confirms my payment';
 
   @override
   String get notifTypeProjectTxForYou =>
@@ -1695,14 +1674,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifTypeAlwaysOn => 'Always on';
 
   @override
-  String get notifSettingsAuto => 'Automatic actions';
+  String get notifTypeProjectAdded => 'Added to a project';
 
   @override
   String get notifSettingsAutoHint =>
-      'Applies to new activity right away. With auto-add off, the notification gets an \"add to my debts\" button. No receiving wallet = settle my side without a wallet entry.';
+      '\"Auto\" = the button is pressed for you as soon as the notification arrives. Turn a type off and nothing happens for it. Invites and requests stay on — they need an answer.';
 
   @override
-  String get notifTypeProjectAdded => 'Added to a project';
+  String get notifAutoAddDebt => 'Auto: add to my debts';
+
+  @override
+  String get notifAutoRecordPayment => 'Auto: record the receipt';
+
+  @override
+  String get notifAutoCopyToBook => 'Auto: add to my book';
+
+  @override
+  String get notifAutoUpdateCopy => 'Auto: update my copy to match';
+
+  @override
+  String get notifAutoResolveProject =>
+      'Also add project rows I paid to my own book';
+
+  @override
+  String get notifActionAddDebt => 'Add to my debts';
+
+  @override
+  String get notifActionRecordReceipt => 'Record receipt';
+
+  @override
+  String get notifActionCopyToBook => 'Add to my book';
+
+  @override
+  String get notifActionUpdateCopy => 'Update to match';
+
+  @override
+  String get notifActionSkip => 'Skip';
+
+  @override
+  String get notifActionDone => 'Done · tap to open';
 
   @override
   String notifProjectAdded(String actor, String project) {
@@ -1710,23 +1720,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notifAutoNotifySplit => 'Tell linked contacts when I split a bill';
-
-  @override
-  String get notifAutoAddDebt => 'Track bills split with me as debts';
-
-  @override
-  String get notifAutoRecordPayment => 'Record payments people send me';
-
-  @override
   String get notifDefaultAccount => 'Receiving wallet';
 
   @override
   String get notifDefaultAccountNone => 'Not set';
-
-  @override
-  String get notifAutoResolveProject =>
-      'Record my own project transactions in my book';
 
   @override
   String get notifSettingsSaveFailed => 'Could not save, changed back';

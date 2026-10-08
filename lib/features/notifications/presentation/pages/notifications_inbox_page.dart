@@ -20,6 +20,9 @@ import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
+import '../../../personal_debts/presentation/widgets/debt_widgets.dart';
+import '../../../projects/data/projects_repository.dart';
+import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../data/notifications_repository.dart';
 import '../../domain/notification.dart';
 import '../cubit/notifications_inbox_cubit.dart';
@@ -174,15 +177,20 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                           _onAcceptWalletInvite(ctx, id),
                         NotificationType.splitCreated =>
                           _onAcceptSplit(ctx, id),
+                        NotificationType.splitPaid => _onRecordReceipt(ctx, n),
+                        NotificationType.projectTxRecordedForYou =>
+                          _onCopyToBook(ctx, n),
+                        NotificationType.projectTxChanged =>
+                          _onUpdateCopy(ctx, n),
                         _ => _onAcceptLinkRequest(ctx, id),
                       },
                       onReject: (id) => switch (n.type) {
                         NotificationType.accountInvite =>
                           _onRejectWalletInvite(ctx, id),
-                        // Declining a split = just hide the notice.
-                        NotificationType.splitCreated =>
-                          ctx.read<NotificationsInboxCubit>().markDismissed(id),
-                        _ => _onRejectLinkRequest(ctx, id),
+                        NotificationType.contactLinkRequest =>
+                          _onRejectLinkRequest(ctx, id),
+                        // One-tap actions: "skip" just hides the row.
+                        _ => ctx.read<NotificationsInboxCubit>().markDismissed(id),
                       },
                     ),
                   ));
@@ -234,11 +242,6 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
         pushFromOverlay(ctx, '/accounts/$accountId');
       }
       return;
-    }
-    if (n.type == NotificationType.splitCreated &&
-        n.payload['recipient_debt_id'] == null &&
-        n.actionedAt == null) {
-      return; // "add to my debts" buttons are the action
     }
     // Default: informational types — mark read + follow deep link.
     if (n.isUnread) {
@@ -303,6 +306,70 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  void _showError(ScaffoldMessengerState messenger, ApiException e) => messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(e.message)));
+
+  /// "บันทึกรับเงิน" on split_paid — my settle sheet for my side of the
+  /// debt, pre-filled with what they paid. Saved → the row is actioned.
+  Future<void> _onRecordReceipt(BuildContext ctx, AppNotification n) async {
+    final debtId = n.payload['recipient_debt_id'] as String?;
+    if (debtId == null) return;
+    final inboxCubit = ctx.read<NotificationsInboxCubit>();
+    final messenger = ScaffoldMessenger.of(ctx);
+    try {
+      final debt = await ctx.read<PersonalDebtsRepository>().get(debtId);
+      if (!ctx.mounted) return;
+      final saved = await showSettleDebtSheet(ctx, debt,
+          amount: (n.payload['amount'] as num?)?.toDouble());
+      if (saved) await inboxCubit.markActioned(n.id);
+    } on ApiException catch (e) {
+      _showError(messenger, e);
+    }
+  }
+
+  /// "บันทึกเข้าบัญชีส่วนตัว" on project_tx_recorded_for_you — a floating
+  /// copy in my book, then open it.
+  Future<void> _onCopyToBook(BuildContext ctx, AppNotification n) async {
+    final projectId = n.payload['project_id'] as String?;
+    final ptId = n.payload['project_transaction_id'] as String?;
+    if (projectId == null || ptId == null) return;
+    final inboxCubit = ctx.read<NotificationsInboxCubit>();
+    final txCubit = ctx.read<TransactionsCubit>();
+    final messenger = ScaffoldMessenger.of(ctx);
+    try {
+      final txId = await ctx
+          .read<ProjectsRepository>()
+          .copyToPersonal(projectId, ptId);
+      await inboxCubit.markActioned(n.id);
+      unawaited(txCubit.load());
+      if (ctx.mounted) pushFromOverlay(ctx, '/transactions/$txId');
+    } on ApiException catch (e) {
+      _showError(messenger, e);
+    }
+  }
+
+  /// "อัปเดตตาม" on project_tx_changed — write the suggested amount / date /
+  /// note onto my personal copy.
+  Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
+    final txId = n.payload['personal_transaction_id'] as String?;
+    final s = n.payload['suggested'];
+    if (txId == null || s is! Map) return;
+    final inboxCubit = ctx.read<NotificationsInboxCubit>();
+    final messenger = ScaffoldMessenger.of(ctx);
+    try {
+      await ctx.read<TransactionsCubit>().updateTransaction(
+            id: txId,
+            amount: (s['amount'] as num?)?.toDouble(),
+            date: s['date'] as String?,
+            note: s['note'] as String?,
+          );
+      await inboxCubit.markActioned(n.id);
+    } on ApiException catch (e) {
+      _showError(messenger, e);
     }
   }
 

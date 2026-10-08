@@ -176,24 +176,21 @@ class PersonalDebtsRepository {
     }
   }
 
-  /// Settle a debt. Two paths:
-  ///   - With `accountId` set + `direct=false` → creates a transaction
-  ///     (income for owed_to_me, expense for i_owe) AND bumps settled_amount.
-  ///   - With `direct=true` → just bumps settled_amount, no transaction
-  ///     (forgiveness, barter, no-cash adjust).
+  /// Settle a debt: always records a transaction (income for owed_to_me,
+  /// expense for i_owe) — into [accountId], or a floating (no-wallet) row
+  /// when it's null — and bumps settled_amount. Write-offs use cancel.
   Future<SettleResult> settle(String id, {
     String? accountId,
     double? amount,
     String? date,
     String? note,
-    bool direct = false,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/personal-debts/$id/settle',
-        queryParameters: direct ? {'direct': 'true'} : null,
         data: <String, dynamic>{
-          'account_id': accountId ?? '00000000-0000-0000-0000-000000000000',
+          // None = a floating (no-wallet) transaction (contract §7).
+          'account_id': ?accountId,
           'amount': ?amount,
           'date': ?date,
           'note': ?note,

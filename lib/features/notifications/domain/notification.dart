@@ -139,83 +139,65 @@ DateTime? _parseDate(Object? raw) {
 
 /// Per-user notification preferences. One row per user; auto-seeded on
 /// registration. See spec §13.1.
+/// Per-user notification switches (contract §5). For each type the
+/// recipient picks: receive it (not in [mutedTypes]) and run its action
+/// automatically on arrival ([autoTypes]). A muted type ignores its auto
+/// choice — kept, and back in force once it's unmuted.
 class NotificationSettings extends Equatable {
   const NotificationSettings({
     required this.userId,
-    required this.autoNotifyLinkedSplitContacts,
-    required this.autoAddToPersonalDebtOnSplitNotification,
-    required this.autoRecordReceivedPayment,
-    required this.autoResolveOwnInProjects,
-    this.defaultAccountId,
     this.mutedTypes = const {},
+    this.autoTypes = const {},
+    this.defaultAccountId,
+    this.autoResolveOwnInProjects = false,
   });
 
   final String userId;
-  final bool autoNotifyLinkedSplitContacts;
-  final bool autoAddToPersonalDebtOnSplitNotification;
-  final bool autoRecordReceivedPayment;
-  final bool autoResolveOwnInProjects;
+  final Set<String> mutedTypes;
+  final Set<String> autoTypes;
+
+  /// Wallet the "record receipt" auto-action uses; null = no wallet.
   final String? defaultAccountId;
 
-  /// Types the user turned off (contract §5 — BE pending; absent = none).
-  final Set<String> mutedTypes;
+  /// Rows I record myself in a project → my personal copy too.
+  final bool autoResolveOwnInProjects;
 
   bool isMuted(NotificationType t) => mutedTypes.contains(t.wire);
+  bool isAuto(NotificationType t) => autoTypes.contains(t.wire);
 
   factory NotificationSettings.fromJson(Map<String, dynamic> json) {
+    Set<String> set(String k) =>
+        {...((json[k] as List?) ?? const []).cast<String>()};
     return NotificationSettings(
       userId: json['user_id'] as String,
-      autoNotifyLinkedSplitContacts:
-          json['auto_notify_linked_split_contacts'] as bool? ?? true,
-      autoAddToPersonalDebtOnSplitNotification:
-          json['auto_add_to_personal_debt_on_split_notification'] as bool? ??
-              false,
-      autoRecordReceivedPayment:
-          json['auto_record_received_payment'] as bool? ?? false,
+      mutedTypes: set('muted_types'),
+      autoTypes: set('auto_types'),
+      defaultAccountId: json['default_account_id'] as String?,
       autoResolveOwnInProjects:
           json['auto_resolve_own_in_projects'] as bool? ?? false,
-      defaultAccountId: json['default_account_id'] as String?,
-      mutedTypes: {
-        ...((json['muted_types'] as List?) ?? const []).cast<String>(),
-      },
     );
   }
 
   NotificationSettings copyWith({
-    bool? autoNotifyLinkedSplitContacts,
-    bool? autoAddToPersonalDebtOnSplitNotification,
-    bool? autoRecordReceivedPayment,
-    bool? autoResolveOwnInProjects,
+    Set<String>? mutedTypes,
+    Set<String>? autoTypes,
     String? defaultAccountId,
     bool clearDefaultAccount = false,
-    Set<String>? mutedTypes,
+    bool? autoResolveOwnInProjects,
   }) {
     return NotificationSettings(
       userId: userId,
-      autoNotifyLinkedSplitContacts:
-          autoNotifyLinkedSplitContacts ?? this.autoNotifyLinkedSplitContacts,
-      autoAddToPersonalDebtOnSplitNotification:
-          autoAddToPersonalDebtOnSplitNotification ??
-              this.autoAddToPersonalDebtOnSplitNotification,
-      autoRecordReceivedPayment:
-          autoRecordReceivedPayment ?? this.autoRecordReceivedPayment,
-      autoResolveOwnInProjects:
-          autoResolveOwnInProjects ?? this.autoResolveOwnInProjects,
+      mutedTypes: mutedTypes ?? this.mutedTypes,
+      autoTypes: autoTypes ?? this.autoTypes,
       defaultAccountId: clearDefaultAccount
           ? null
           : (defaultAccountId ?? this.defaultAccountId),
-      mutedTypes: mutedTypes ?? this.mutedTypes,
+      autoResolveOwnInProjects:
+          autoResolveOwnInProjects ?? this.autoResolveOwnInProjects,
     );
   }
 
   @override
-  List<Object?> get props => [
-        userId,
-        autoNotifyLinkedSplitContacts,
-        autoAddToPersonalDebtOnSplitNotification,
-        autoRecordReceivedPayment,
-        autoResolveOwnInProjects,
-        defaultAccountId,
-        mutedTypes,
-      ];
+  List<Object?> get props =>
+      [userId, mutedTypes, autoTypes, defaultAccountId, autoResolveOwnInProjects];
 }

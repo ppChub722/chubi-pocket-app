@@ -2054,24 +2054,6 @@ abstract class AppLocalizations {
   /// **'More than outstanding ({amount})'**
   String debtSettleOver(String amount);
 
-  /// No description provided for @debtSettleRecordTx.
-  ///
-  /// In en, this message translates to:
-  /// **'Record as a transaction'**
-  String get debtSettleRecordTx;
-
-  /// No description provided for @debtSettleRecordTxHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Adds income/expense and updates the wallet balance'**
-  String get debtSettleRecordTxHint;
-
-  /// No description provided for @debtSettleNoTxHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Only lowers the outstanding amount — no transaction'**
-  String get debtSettleNoTxHint;
-
   /// No description provided for @debtSettleAccount.
   ///
   /// In en, this message translates to:
@@ -3038,12 +3020,6 @@ abstract class AppLocalizations {
   /// **'Notifications you get'**
   String get notifSettingsReceive;
 
-  /// No description provided for @notifSettingsReceiveHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn off what you do not need. Invites and requests always come through because they need an answer.'**
-  String get notifSettingsReceiveHint;
-
   /// No description provided for @notifGroupSplits.
   ///
   /// In en, this message translates to:
@@ -3062,12 +3038,6 @@ abstract class AppLocalizations {
   /// **'Invites and requests'**
   String get notifGroupRequests;
 
-  /// No description provided for @notifGroupPayments.
-  ///
-  /// In en, this message translates to:
-  /// **'Payments'**
-  String get notifGroupPayments;
-
   /// No description provided for @notifTypeSplitCreated.
   ///
   /// In en, this message translates to:
@@ -3079,12 +3049,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Someone pays back their share'**
   String get notifTypeSplitPaid;
-
-  /// No description provided for @notifTypeSplitReceived.
-  ///
-  /// In en, this message translates to:
-  /// **'Someone confirms my payment'**
-  String get notifTypeSplitReceived;
 
   /// No description provided for @notifTypeProjectTxForYou.
   ///
@@ -3104,47 +3068,89 @@ abstract class AppLocalizations {
   /// **'Always on'**
   String get notifTypeAlwaysOn;
 
-  /// No description provided for @notifSettingsAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatic actions'**
-  String get notifSettingsAuto;
-
-  /// No description provided for @notifSettingsAutoHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Applies to new activity right away. With auto-add off, the notification gets an \"add to my debts\" button. No receiving wallet = settle my side without a wallet entry.'**
-  String get notifSettingsAutoHint;
-
   /// No description provided for @notifTypeProjectAdded.
   ///
   /// In en, this message translates to:
   /// **'Added to a project'**
   String get notifTypeProjectAdded;
 
-  /// No description provided for @notifProjectAdded.
+  /// No description provided for @notifSettingsAutoHint.
   ///
   /// In en, this message translates to:
-  /// **'{actor} added you to {project}'**
-  String notifProjectAdded(String actor, String project);
-
-  /// No description provided for @notifAutoNotifySplit.
-  ///
-  /// In en, this message translates to:
-  /// **'Tell linked contacts when I split a bill'**
-  String get notifAutoNotifySplit;
+  /// **'\"Auto\" = the button is pressed for you as soon as the notification arrives. Turn a type off and nothing happens for it. Invites and requests stay on — they need an answer.'**
+  String get notifSettingsAutoHint;
 
   /// No description provided for @notifAutoAddDebt.
   ///
   /// In en, this message translates to:
-  /// **'Track bills split with me as debts'**
+  /// **'Auto: add to my debts'**
   String get notifAutoAddDebt;
 
   /// No description provided for @notifAutoRecordPayment.
   ///
   /// In en, this message translates to:
-  /// **'Record payments people send me'**
+  /// **'Auto: record the receipt'**
   String get notifAutoRecordPayment;
+
+  /// No description provided for @notifAutoCopyToBook.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto: add to my book'**
+  String get notifAutoCopyToBook;
+
+  /// No description provided for @notifAutoUpdateCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto: update my copy to match'**
+  String get notifAutoUpdateCopy;
+
+  /// No description provided for @notifAutoResolveProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Also add project rows I paid to my own book'**
+  String get notifAutoResolveProject;
+
+  /// No description provided for @notifActionAddDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my debts'**
+  String get notifActionAddDebt;
+
+  /// No description provided for @notifActionRecordReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Record receipt'**
+  String get notifActionRecordReceipt;
+
+  /// No description provided for @notifActionCopyToBook.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my book'**
+  String get notifActionCopyToBook;
+
+  /// No description provided for @notifActionUpdateCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Update to match'**
+  String get notifActionUpdateCopy;
+
+  /// No description provided for @notifActionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get notifActionSkip;
+
+  /// No description provided for @notifActionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done · tap to open'**
+  String get notifActionDone;
+
+  /// No description provided for @notifProjectAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} added you to {project}'**
+  String notifProjectAdded(String actor, String project);
 
   /// No description provided for @notifDefaultAccount.
   ///
@@ -3157,12 +3163,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not set'**
   String get notifDefaultAccountNone;
-
-  /// No description provided for @notifAutoResolveProject.
-  ///
-  /// In en, this message translates to:
-  /// **'Record my own project transactions in my book'**
-  String get notifAutoResolveProject;
 
   /// No description provided for @notifSettingsSaveFailed.
   ///

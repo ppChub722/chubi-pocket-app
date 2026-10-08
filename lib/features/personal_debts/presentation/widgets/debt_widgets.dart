@@ -137,10 +137,13 @@ class DebtTile extends StatelessWidget {
 // Settle sheet — replaces the old two-dialog flow (§11).
 // ────────────────────────────────────────────────────────────────────
 
-/// "รับเงินคืน / จ่ายคืน". Amount (≤ outstanding) with ทั้งหมด / ครึ่งหนึ่ง;
-/// "บันทึกเป็นรายการในกระเป๋า" on → wallet + date (creates income/expense);
-/// off → direct settle (no transaction, no date). Returns true when saved.
-Future<bool> showSettleDebtSheet(BuildContext context, PersonalDebt debt) async {
+/// "รับเงินคืน / จ่ายคืน". Amount (≤ outstanding) with ทั้งหมด / ครึ่งหนึ่ง,
+/// wallet (or "ไม่ผูกกระเป๋า" → a floating row) and date. Always records a
+/// transaction — income for owed_to_me, expense for i_owe (contract §7).
+/// [amount] pre-fills the field (e.g. from a "จ่ายแล้ว" notification).
+/// Returns true when saved.
+Future<bool> showSettleDebtSheet(BuildContext context, PersonalDebt debt,
+    {double? amount}) async {
   final l = AppLocalizations.of(context)!;
   final accounts = context.read<AccountsCubit>();
   if (accounts.state.accounts.isEmpty) await accounts.load();
@@ -151,14 +154,15 @@ Future<bool> showSettleDebtSheet(BuildContext context, PersonalDebt debt) async 
     title: debt.isOwedToMe
         ? l.debtSettleTitleReceive(name)
         : l.debtSettleTitlePay(name),
-    builder: (_) => _SettleSheet(debt: debt),
+    builder: (_) => _SettleSheet(debt: debt, amount: amount),
   );
   return ok ?? false;
 }
 
 class _SettleSheet extends StatefulWidget {
-  const _SettleSheet({required this.debt});
+  const _SettleSheet({required this.debt, this.amount});
   final PersonalDebt debt;
+  final double? amount;
 
   @override
   State<_SettleSheet> createState() => _SettleSheetState();
@@ -166,13 +170,15 @@ class _SettleSheet extends StatefulWidget {
 
 class _SettleSheetState extends State<_SettleSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final _amount =
-      TextEditingController(text: AmountField.format(widget.debt.outstanding));
-  bool _recordTx = true;
+  late final _amount = TextEditingController(
+      text: AmountField.format(
+          (widget.amount ?? widget.debt.outstanding)
+              .clamp(0, widget.debt.outstanding)));
+
+  /// null = no wallet (a floating transaction).
   Account? _account;
   DateTime _date = DateTime.now();
   bool _saving = false;
-  String? _accountError;
 
   @override
   void initState() {
@@ -197,13 +203,10 @@ class _SettleSheetState extends State<_SettleSheet> {
       accounts: context.read<AccountsCubit>().state.accounts,
       selected: _account,
       title: l.debtSettleAccount,
+      allowNone: true,
     );
-    if (r is AccountPickerSelected) {
-      setState(() {
-        _account = r.account;
-        _accountError = null;
-      });
-    }
+    if (r is AccountPickerSelected) setState(() => _account = r.account);
+    if (r is AccountPickerCleared) setState(() => _account = null);
   }
 
   Future<void> _pickDate() async {
@@ -217,12 +220,7 @@ class _SettleSheetState extends State<_SettleSheet> {
   }
 
   Future<void> _confirm() async {
-    final l = AppLocalizations.of(context)!;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_recordTx && _account == null) {
-      setState(() => _accountError = l.debtSettleAccountRequired);
-      return;
-    }
     final debts = context.read<PersonalDebtsCubit>();
     final tx = context.read<TransactionsCubit>();
     final accounts = context.read<AccountsCubit>();
@@ -230,13 +228,12 @@ class _SettleSheetState extends State<_SettleSheet> {
     try {
       await debts.settle(
         widget.debt.id,
-        accountId: _recordTx ? _account!.id : null,
+        accountId: _account?.id,
         amount: AmountField.parse(_amount.text),
-        date: _recordTx ? _ymd(_date) : null,
-        direct: !_recordTx,
+        date: _ymd(_date),
       );
-      // A recorded payment moved a wallet — refresh what shows it.
-      if (_recordTx) await Future.wait([tx.load(), accounts.load()]);
+      // A transaction was recorded (and maybe a wallet moved).
+      await Future.wait([tx.load(), accounts.load()]);
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -280,38 +277,24 @@ class _SettleSheetState extends State<_SettleSheet> {
               },
             ),
             const SizedBox(height: AppSpacing.md),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _recordTx,
-              onChanged: (v) => setState(() => _recordTx = v),
-              title: Text(l.debtSettleRecordTx),
-              subtitle: Text(
-                  _recordTx ? l.debtSettleRecordTxHint : l.debtSettleNoTxHint),
+            PickerTile(
+              label: l.debtSettleAccount,
+              value: _account?.name ?? l.transactionFormAccountNone,
+              leading: Icon(_account == null ? AppIcons.noWallet : AppIcons.bank),
+              onTap: _pickAccount,
             ),
-            // The direct path stores no date, so the field only exists
-            // when a transaction is recorded.
-            if (_recordTx) ...[
-              PickerTile(
-                label: l.debtSettleAccount,
-                value: _account?.name,
-                placeholder: l.debtSettleAccountRequired,
-                leading: const Icon(AppIcons.bank),
-                errorText: _accountError,
-                onTap: _pickAccount,
+            const SizedBox(height: AppSpacing.sm),
+            PickerTile(
+              label: l.debtSettleDate,
+              value: DateFormatter.friendly(
+                _date,
+                today: l.commonToday,
+                yesterday: l.commonYesterday,
+                locale: Localizations.localeOf(context).languageCode,
               ),
-              const SizedBox(height: AppSpacing.sm),
-              PickerTile(
-                label: l.debtSettleDate,
-                value: DateFormatter.friendly(
-                  _date,
-                  today: l.commonToday,
-                  yesterday: l.commonYesterday,
-                  locale: Localizations.localeOf(context).languageCode,
-                ),
-                leading: const Icon(AppIcons.date),
-                onTap: _pickDate,
-              ),
-            ],
+              leading: const Icon(AppIcons.date),
+              onTap: _pickDate,
+            ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: l.debtSettleConfirm,
