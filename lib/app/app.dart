@@ -22,6 +22,8 @@ import '../features/categories/presentation/cubit/categories_cubit.dart';
 import '../features/contacts/data/contacts_repository.dart';
 import '../features/contacts/presentation/cubit/contacts_cubit.dart';
 import '../features/home/data/dashboard_repository.dart';
+import '../features/pending/data/pending_repository.dart';
+import '../features/pending/presentation/cubit/pending_cubit.dart';
 import '../features/home/presentation/cubit/dashboard_cubit.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/cubit/unread_badge_cubit.dart';
@@ -75,6 +77,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final BudgetsRepository _budgetsRepository;
   late final ScheduledTransactionsRepository _scheduledTransactionsRepository;
   late final DashboardRepository _dashboardRepository;
+  late final PendingRepository _pendingRepository;
   late final AuthCubit _authCubit;
   late final GoRouter _router;
 
@@ -98,6 +101,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _scheduledTransactionsRepository =
         ScheduledTransactionsRepository(client: _apiClient);
     _dashboardRepository = DashboardRepository(client: _apiClient);
+    _pendingRepository = PendingRepository(client: _apiClient);
     _authCubit = AuthCubit(
       repository: _authRepository,
       tokenStorage: _tokenStorage,
@@ -213,6 +217,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           BlocProvider<DashboardCubit>(
             create: (_) => DashboardCubit(repository: _dashboardRepository),
           ),
+          BlocProvider<PendingCubit>(
+            create: (_) => PendingCubit(repository: _pendingRepository),
+          ),
         ],
         child: Builder(
           builder: (context) {
@@ -316,6 +323,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     ctx.read<BudgetsCubit>().clear();
     ctx.read<ScheduledTransactionsCubit>().clear();
     ctx.read<DashboardCubit>().clear();
+    ctx.read<PendingCubit>().clear();
     ctx.read<UnreadBadgeCubit>().clear();
   }
 }

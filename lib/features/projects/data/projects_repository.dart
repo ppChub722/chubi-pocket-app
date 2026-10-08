@@ -10,10 +10,18 @@ import '../domain/project.dart';
 /// `linked_count` — the number of board rows created from the included
 /// bills (new + ticked).
 class QuickCreateResult {
-  const QuickCreateResult({required this.project, required this.linkedCount});
+  const QuickCreateResult({
+    required this.project,
+    required this.linkedCount,
+    this.transactionId,
+  });
 
   final Project project;
   final int linkedCount;
+
+  /// The new bill the call created (null from an older server) — used to
+  /// attach tags after the fact.
+  final String? transactionId;
 }
 
 /// Thin Dio wrapper around `/v1/projects` (API §10).
@@ -144,6 +152,32 @@ class ProjectsRepository {
       return QuickCreateResult(
         project: Project.fromJson(res.data!),
         linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
+        transactionId: res.data!['transaction_id'] as String?,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `POST /v1/projects/:id/bills` — the new bill (plus optional loose
+  /// bills) pulled into an existing project; same response as [quickCreate].
+  Future<QuickCreateResult> addBills(
+    String projectId, {
+    required Map<String, dynamic> newTransaction,
+    List<String> transactionIds = const [],
+  }) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/projects/$projectId/bills',
+        data: <String, dynamic>{
+          'new_transaction': newTransaction,
+          if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
+        },
+      );
+      return QuickCreateResult(
+        project: Project.fromJson(res.data!),
+        linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
+        transactionId: res.data!['transaction_id'] as String?,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

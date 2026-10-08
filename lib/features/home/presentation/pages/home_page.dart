@@ -14,6 +14,8 @@ import '../../../../shared/widgets/skeleton_box.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../budgets/presentation/cubit/budgets_cubit.dart';
+import '../../../pending/domain/pending_transaction.dart';
+import '../../../pending/presentation/cubit/pending_cubit.dart';
 import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../../../saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import '../../../scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
@@ -53,6 +55,8 @@ class _HomePageState extends State<HomePage> {
       context.read<CategoriesCubit>().loadIfNeeded();
       // App-scoped cubit (the More hub reads it too).
       context.read<DashboardCubit>().loadIfNeeded();
+      // Drafts badge (top bar) + the รอยืนยัน block below.
+      context.read<PendingCubit>().loadIfNeeded();
     });
   }
 
@@ -150,6 +154,7 @@ class _HomeView extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                 ],
                 _NetWorthCard(netWorth: d.netWorth),
+                const _PendingBlock(),
                 const SizedBox(height: AppSpacing.md),
                 _MonthCard(current: d.summary, previous: d.previous),
                 if (d.upcoming.items.isNotEmpty) _ComingUp(block: d.upcoming),
@@ -885,6 +890,98 @@ class _Recent extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+// ── Pending drafts ────────────────────────────────────────────────────
+
+/// "รอยืนยัน N รายการ" — the first two drafts, tap for the page. Hidden
+/// when nothing is pending. Drafts aren't in any total on this screen.
+class _PendingBlock extends StatelessWidget {
+  const _PendingBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final items = context.watch<PendingCubit>().state.items;
+    if (items.isEmpty) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    Widget row(PendingTransaction p) {
+      final d = p.draft;
+      final title = (d.note?.trim().isNotEmpty ?? false)
+          ? d.note!.trim()
+          : l.pendingUntitled;
+      return Row(
+        children: [
+          Expanded(
+            child: Text(title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.bodySmall),
+          ),
+          MoneyText(
+            d.amount ?? 0,
+            tone: switch (d.type) {
+              TransactionType.expense => MoneyTone.expense,
+              TransactionType.income => MoneyTone.income,
+              _ => MoneyTone.plain,
+            },
+            style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+        ],
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Card(
+        margin: EdgeInsets.zero,
+        color: scheme.primaryContainer,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push('/pending'),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(AppIcons.pending, size: 18, color: scheme.onPrimaryContainer),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(l.pendingBlockTitle(items.length),
+                          style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: scheme.onPrimaryContainer)),
+                    ),
+                    Text(l.homeRecentViewAll,
+                        style: textTheme.labelMedium
+                            ?.copyWith(color: scheme.onPrimaryContainer)),
+                    Icon(AppIcons.chevronRight,
+                        size: 18, color: scheme.onPrimaryContainer),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                for (final p in items.take(2)) ...[
+                  row(p),
+                  const SizedBox(height: AppSpacing.xxs),
+                ],
+                Text(
+                  items.length > 2
+                      ? '${l.pendingBlockMore(items.length - 2)} · ${l.pendingNotCounted}'
+                      : l.pendingNotCounted,
+                  style: textTheme.labelSmall
+                      ?.copyWith(color: scheme.onPrimaryContainer),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

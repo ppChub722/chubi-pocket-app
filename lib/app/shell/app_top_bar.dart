@@ -7,6 +7,7 @@ import '../../core/constants/app_spacing.dart';
 import '../../features/auth/domain/user.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart';
+import '../../features/pending/presentation/cubit/pending_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../shared/widgets/buttons/app_icon_button.dart';
 import '../../shared/widgets/chips/filter_chips.dart';
@@ -138,6 +139,20 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
+        // Universal: pending drafts (รอยืนยัน), next to the inbox.
+        if (_universal)
+        BlocBuilder<PendingCubit, PendingState>(
+          buildWhen: (a, b) => a.count != b.count,
+          builder: (context, pending) => _actionChip(
+            context,
+            AppBarAction(
+              icon: AppIcons.pending,
+              tooltip: l.pendingTooltip,
+              onPressed: () => context.push('/pending'),
+              badgeCount: pending.count,
+            ),
+          ),
+        ),
         // Universal: notification inbox.
         if (_universal)
         BlocBuilder<UnreadBadgeCubit, int>(

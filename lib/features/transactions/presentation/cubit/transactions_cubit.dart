@@ -281,13 +281,14 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
             rows: newRows,
           ),
         );
-      } on ApiException {
-        // Attach failed — the transaction itself is created. Surface
-        // the rows unmodified; caller will see an error snackbar.
+      } on ApiException catch (e) {
+        // Attach failed — but the transaction IS created. Never rethrow the
+        // ApiException: a form would stay open and a second Save would
+        // create a duplicate. [TagsAttachFailed] says "saved, tags not".
         _emitWrite(
           state.copyWith(transactions: [...result.rows, ...state.transactions]),
         );
-        rethrow;
+        throw TagsAttachFailed(result, e);
       }
     }
     // Insert the new row(s) at the front of the cache assuming
@@ -457,4 +458,13 @@ class _ListQuery {
   final bool uncategorized;
   final String sort;
   final int perPage;
+}
+
+/// Thrown by [TransactionsCubit.add] when the transaction was created but
+/// attaching its tags failed. Callers treat it as saved (close the form)
+/// and warn that the tags didn't stick.
+class TagsAttachFailed implements Exception {
+  const TagsAttachFailed(this.result, this.cause);
+  final TransactionMutationResult result;
+  final ApiException cause;
 }

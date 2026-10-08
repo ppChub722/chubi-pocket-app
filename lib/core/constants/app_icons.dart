@@ -22,6 +22,7 @@ abstract final class AppIcons {
   static const back = Icons.arrow_back;
   static const close = Icons.close;
   static const notifications = Icons.notifications_outlined;
+  static const pending = Icons.move_to_inbox_outlined;
   static const settings = Icons.settings_outlined;
   static const markAllRead = Icons.done_all;
   static const profile = Icons.person_outline;
@@ -111,6 +112,7 @@ abstract final class AppIcons {
       'transactions': transactions, 'transactionsActive': transactionsActive,
       'wallet': wallet, 'walletActive': walletActive, 'more': more,
       'back': back, 'close': close, 'notifications': notifications,
+      'pending': pending,
       'settings': settings,
       'markAllRead': markAllRead, 'profile': profile,
     },

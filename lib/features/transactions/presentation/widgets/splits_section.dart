@@ -155,10 +155,9 @@ class _SplitsSectionState extends State<SplitsSection> {
         const SizedBox(height: AppSpacing.xs),
         for (var i = 0; i < widget.drafts.length; i++) ...[
           _DraftRow(
-            // Re-mount each row when its identity changes (e.g. after
-            // remove). Without a key, the underlying TextEditingController
-            // bleeds between siblings on list edits.
-            key: ValueKey(i),
+            // Key by the draft object itself: removing a middle row must
+            // drop THAT row's controllers, not shift names onto siblings.
+            key: ObjectKey(widget.drafts[i]),
             draft: widget.drafts[i],
             onChange: () => widget.onChanged(List.of(widget.drafts)),
             onRemove: () {

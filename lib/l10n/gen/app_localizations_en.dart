@@ -1978,6 +1978,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txSplitRemove => 'Remove';
 
   @override
+  String get txSplitExceeds =>
+      'Split total is more than the transaction amount';
+
+  @override
+  String get txSavedTagsFailed =>
+      'Saved, but the tags didn\'t stick — edit them on the transaction';
+
+  @override
+  String get txTransferNeedsTo => 'Pick the destination wallet';
+
+  @override
+  String get txTransferSameWallet =>
+      'Source and destination must be different wallets';
+
+  @override
   String get authTagline =>
       'Track income and spending, split bills with friends';
 
@@ -2676,6 +2691,270 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionFormTitleNew => 'New transaction';
+
+  @override
+  String get quickSave => 'Save';
+
+  @override
+  String get quickSaved => 'Saved';
+
+  @override
+  String get quickNoteHint => 'Note (optional)';
+
+  @override
+  String get quickMore => 'More details';
+
+  @override
+  String get quickAllCategories => 'All';
+
+  @override
+  String get quickFrom => 'From';
+
+  @override
+  String get quickTo => 'To';
+
+  @override
+  String get quickSwap => 'Swap source and destination';
+
+  @override
+  String get quickPickWallet => 'Pick a wallet';
+
+  @override
+  String get quickAmountRequired => 'Enter an amount first';
+
+  @override
+  String get quickDiscardTitle => 'Close without saving?';
+
+  @override
+  String get quickDiscardMessage => 'What you entered will be lost.';
+
+  @override
+  String get quickDiscardConfirm => 'Discard';
+
+  @override
+  String get quickDiscardKeep => 'Keep editing';
+
+  @override
+  String get quickAddToEvent => 'Add to an event';
+
+  @override
+  String get quickEventLabel => 'Event';
+
+  @override
+  String quickEventNewNamed(String name) {
+    return 'New: $name';
+  }
+
+  @override
+  String get quickEventRemove => 'Don\'t add to an event';
+
+  @override
+  String get quickEventNew => 'Create a new event';
+
+  @override
+  String get quickEventNameLabel => 'Event name';
+
+  @override
+  String get quickEventCreate => 'Create';
+
+  @override
+  String get quickEventExisting => 'Or add to an existing event';
+
+  @override
+  String get quickEventNoneYet => 'No open events yet';
+
+  @override
+  String get quickEventDefaultName => 'Event';
+
+  @override
+  String get quickEventNeedsWallet => 'Adding to an event needs a wallet';
+
+  @override
+  String get pendingTitle => 'Pending';
+
+  @override
+  String get pendingTooltip => 'Pending';
+
+  @override
+  String get pendingSubtitle =>
+      'Not counted yet · edit anything before confirming';
+
+  @override
+  String get pendingSelectAll => 'Select all';
+
+  @override
+  String get pendingSelectNone => 'Select none';
+
+  @override
+  String get pendingSelectOne => 'Select this one';
+
+  @override
+  String pendingFilterAll(int count) {
+    return 'All $count';
+  }
+
+  @override
+  String pendingFilterManual(int count) {
+    return 'Mine $count';
+  }
+
+  @override
+  String pendingFilterOthers(int count) {
+    return 'From others $count';
+  }
+
+  @override
+  String pendingResult(int done, int failed) {
+    return 'Saved $done · $failed left';
+  }
+
+  @override
+  String get pendingEmptyTitle => 'Nothing pending';
+
+  @override
+  String get pendingEmptyMessage =>
+      'Jot things down now and confirm them here later';
+
+  @override
+  String get pendingAdd => 'Add drafts';
+
+  @override
+  String pendingSubmitSelected(int count) {
+    return 'Confirm selected ($count)';
+  }
+
+  @override
+  String pendingSubmittedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transactions saved',
+      one: '1 transaction saved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingSeeTransactions => 'View';
+
+  @override
+  String get pendingUntitled => 'No note';
+
+  @override
+  String get pendingSourceManual => 'Mine';
+
+  @override
+  String get pendingSourceSplitPaid => 'Paid back';
+
+  @override
+  String get pendingSourceProject => 'Project';
+
+  @override
+  String get pendingSourceOcr => 'Scan';
+
+  @override
+  String get pendingSourceChat => 'Chat';
+
+  @override
+  String get pendingSourceOther => 'Other';
+
+  @override
+  String pendingSavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count drafts saved',
+      one: '1 draft saved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pendingBatchHint =>
+      'An amount is enough — fill in the rest on the Pending page';
+
+  @override
+  String get pendingAddRow => 'Add a row';
+
+  @override
+  String get pendingBatchMoreHint =>
+      'Need a transfer, a split or tags? Open the draft on the Pending page to edit it in full.';
+
+  @override
+  String pendingSaveAsDrafts(int count) {
+    return 'Save $count as drafts';
+  }
+
+  @override
+  String pendingSubmitAllNow(int count) {
+    return 'Confirm all $count now';
+  }
+
+  @override
+  String get pendingRemoveRow => 'Remove this row';
+
+  @override
+  String get pendingSavedAsDraft => 'Saved as a draft · it\'s in Pending';
+
+  @override
+  String get pendingSaveDraft => 'Save draft';
+
+  @override
+  String get pendingSubmitThis => 'Confirm this one';
+
+  @override
+  String get pendingEditTitle => 'Edit draft';
+
+  @override
+  String get pendingDiscardTitle => 'Discard this draft?';
+
+  @override
+  String get pendingKeepAsDraft => 'Keep as a draft';
+
+  @override
+  String get pendingDropEditsTitle => 'Drop your changes?';
+
+  @override
+  String get pendingDropEditsMessage => 'The draft goes back to how it was.';
+
+  @override
+  String pendingBlockTitle(int count) {
+    return '$count pending';
+  }
+
+  @override
+  String pendingBlockMore(int count) {
+    return '+ $count more';
+  }
+
+  @override
+  String get pendingNotCounted => 'Not counted in the totals below yet';
+
+  @override
+  String get pendingErrMissingType => 'Pick a type before confirming';
+
+  @override
+  String get pendingErrMissingAmount => 'Enter an amount before confirming';
+
+  @override
+  String get pendingErrMissingDate => 'Pick a date before confirming';
+
+  @override
+  String get pendingErrAccount =>
+      'This wallet can\'t be used any more — pick another or none';
+
+  @override
+  String get pendingErrCategory =>
+      'This category can\'t be used — pick another';
+
+  @override
+  String get pendingErrCurrency => 'Can\'t transfer between currencies';
+
+  @override
+  String get pendingErrTag => 'A tag on it was deleted';
+
+  @override
+  String get pendingErrContact => 'A contact in the split was deleted';
 
   @override
   String get transactionFormTitleEdit => 'Edit transaction';

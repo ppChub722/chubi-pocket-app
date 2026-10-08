@@ -3572,6 +3572,30 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get txSplitRemove;
 
+  /// No description provided for @txSplitExceeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Split total is more than the transaction amount'**
+  String get txSplitExceeds;
+
+  /// No description provided for @txSavedTagsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved, but the tags didn\'t stick — edit them on the transaction'**
+  String get txSavedTagsFailed;
+
+  /// No description provided for @txTransferNeedsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the destination wallet'**
+  String get txTransferNeedsTo;
+
+  /// No description provided for @txTransferSameWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Source and destination must be different wallets'**
+  String get txTransferSameWallet;
+
   /// No description provided for @authTagline.
   ///
   /// In en, this message translates to:
@@ -4819,6 +4843,450 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New transaction'**
   String get transactionFormTitleNew;
+
+  /// No description provided for @quickSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get quickSave;
+
+  /// No description provided for @quickSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get quickSaved;
+
+  /// No description provided for @quickNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get quickNoteHint;
+
+  /// No description provided for @quickMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More details'**
+  String get quickMore;
+
+  /// No description provided for @quickAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get quickAllCategories;
+
+  /// No description provided for @quickFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get quickFrom;
+
+  /// No description provided for @quickTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get quickTo;
+
+  /// No description provided for @quickSwap.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap source and destination'**
+  String get quickSwap;
+
+  /// No description provided for @quickPickWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet'**
+  String get quickPickWallet;
+
+  /// No description provided for @quickAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount first'**
+  String get quickAmountRequired;
+
+  /// No description provided for @quickDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close without saving?'**
+  String get quickDiscardTitle;
+
+  /// No description provided for @quickDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'What you entered will be lost.'**
+  String get quickDiscardMessage;
+
+  /// No description provided for @quickDiscardConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get quickDiscardConfirm;
+
+  /// No description provided for @quickDiscardKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get quickDiscardKeep;
+
+  /// No description provided for @quickAddToEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to an event'**
+  String get quickAddToEvent;
+
+  /// No description provided for @quickEventLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get quickEventLabel;
+
+  /// No description provided for @quickEventNewNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'New: {name}'**
+  String quickEventNewNamed(String name);
+
+  /// No description provided for @quickEventRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t add to an event'**
+  String get quickEventRemove;
+
+  /// No description provided for @quickEventNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new event'**
+  String get quickEventNew;
+
+  /// No description provided for @quickEventNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event name'**
+  String get quickEventNameLabel;
+
+  /// No description provided for @quickEventCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get quickEventCreate;
+
+  /// No description provided for @quickEventExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Or add to an existing event'**
+  String get quickEventExisting;
+
+  /// No description provided for @quickEventNoneYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No open events yet'**
+  String get quickEventNoneYet;
+
+  /// No description provided for @quickEventDefaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get quickEventDefaultName;
+
+  /// No description provided for @quickEventNeedsWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding to an event needs a wallet'**
+  String get quickEventNeedsWallet;
+
+  /// No description provided for @pendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pendingTitle;
+
+  /// No description provided for @pendingTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pendingTooltip;
+
+  /// No description provided for @pendingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not counted yet · edit anything before confirming'**
+  String get pendingSubtitle;
+
+  /// No description provided for @pendingSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get pendingSelectAll;
+
+  /// No description provided for @pendingSelectNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Select none'**
+  String get pendingSelectNone;
+
+  /// No description provided for @pendingSelectOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Select this one'**
+  String get pendingSelectOne;
+
+  /// No description provided for @pendingFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count}'**
+  String pendingFilterAll(int count);
+
+  /// No description provided for @pendingFilterManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine {count}'**
+  String pendingFilterManual(int count);
+
+  /// No description provided for @pendingFilterOthers.
+  ///
+  /// In en, this message translates to:
+  /// **'From others {count}'**
+  String pendingFilterOthers(int count);
+
+  /// No description provided for @pendingResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {done} · {failed} left'**
+  String pendingResult(int done, int failed);
+
+  /// No description provided for @pendingEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing pending'**
+  String get pendingEmptyTitle;
+
+  /// No description provided for @pendingEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Jot things down now and confirm them here later'**
+  String get pendingEmptyMessage;
+
+  /// No description provided for @pendingAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add drafts'**
+  String get pendingAdd;
+
+  /// No description provided for @pendingSubmitSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm selected ({count})'**
+  String pendingSubmitSelected(int count);
+
+  /// No description provided for @pendingSubmittedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 transaction saved} other{{count} transactions saved}}'**
+  String pendingSubmittedCount(int count);
+
+  /// No description provided for @pendingSeeTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get pendingSeeTransactions;
+
+  /// No description provided for @pendingUntitled.
+  ///
+  /// In en, this message translates to:
+  /// **'No note'**
+  String get pendingUntitled;
+
+  /// No description provided for @pendingSourceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get pendingSourceManual;
+
+  /// No description provided for @pendingSourceSplitPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back'**
+  String get pendingSourceSplitPaid;
+
+  /// No description provided for @pendingSourceProject.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get pendingSourceProject;
+
+  /// No description provided for @pendingSourceOcr.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get pendingSourceOcr;
+
+  /// No description provided for @pendingSourceChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get pendingSourceChat;
+
+  /// No description provided for @pendingSourceOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get pendingSourceOther;
+
+  /// No description provided for @pendingSavedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 draft saved} other{{count} drafts saved}}'**
+  String pendingSavedCount(int count);
+
+  /// No description provided for @pendingBatchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'An amount is enough — fill in the rest on the Pending page'**
+  String get pendingBatchHint;
+
+  /// No description provided for @pendingAddRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a row'**
+  String get pendingAddRow;
+
+  /// No description provided for @pendingBatchMoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Need a transfer, a split or tags? Open the draft on the Pending page to edit it in full.'**
+  String get pendingBatchMoreHint;
+
+  /// No description provided for @pendingSaveAsDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {count} as drafts'**
+  String pendingSaveAsDrafts(int count);
+
+  /// No description provided for @pendingSubmitAllNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm all {count} now'**
+  String pendingSubmitAllNow(int count);
+
+  /// No description provided for @pendingRemoveRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this row'**
+  String get pendingRemoveRow;
+
+  /// No description provided for @pendingSavedAsDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as a draft · it\'s in Pending'**
+  String get pendingSavedAsDraft;
+
+  /// No description provided for @pendingSaveDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Save draft'**
+  String get pendingSaveDraft;
+
+  /// No description provided for @pendingSubmitThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm this one'**
+  String get pendingSubmitThis;
+
+  /// No description provided for @pendingEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit draft'**
+  String get pendingEditTitle;
+
+  /// No description provided for @pendingDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this draft?'**
+  String get pendingDiscardTitle;
+
+  /// No description provided for @pendingKeepAsDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep as a draft'**
+  String get pendingKeepAsDraft;
+
+  /// No description provided for @pendingDropEditsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop your changes?'**
+  String get pendingDropEditsTitle;
+
+  /// No description provided for @pendingDropEditsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The draft goes back to how it was.'**
+  String get pendingDropEditsMessage;
+
+  /// No description provided for @pendingBlockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending'**
+  String pendingBlockTitle(int count);
+
+  /// No description provided for @pendingBlockMore.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {count} more'**
+  String pendingBlockMore(int count);
+
+  /// No description provided for @pendingNotCounted.
+  ///
+  /// In en, this message translates to:
+  /// **'Not counted in the totals below yet'**
+  String get pendingNotCounted;
+
+  /// No description provided for @pendingErrMissingType.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a type before confirming'**
+  String get pendingErrMissingType;
+
+  /// No description provided for @pendingErrMissingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount before confirming'**
+  String get pendingErrMissingAmount;
+
+  /// No description provided for @pendingErrMissingDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date before confirming'**
+  String get pendingErrMissingDate;
+
+  /// No description provided for @pendingErrAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This wallet can\'t be used any more — pick another or none'**
+  String get pendingErrAccount;
+
+  /// No description provided for @pendingErrCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'This category can\'t be used — pick another'**
+  String get pendingErrCategory;
+
+  /// No description provided for @pendingErrCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t transfer between currencies'**
+  String get pendingErrCurrency;
+
+  /// No description provided for @pendingErrTag.
+  ///
+  /// In en, this message translates to:
+  /// **'A tag on it was deleted'**
+  String get pendingErrTag;
+
+  /// No description provided for @pendingErrContact.
+  ///
+  /// In en, this message translates to:
+  /// **'A contact in the split was deleted'**
+  String get pendingErrContact;
 
   /// No description provided for @transactionFormTitleEdit.
   ///

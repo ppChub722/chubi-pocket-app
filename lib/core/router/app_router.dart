@@ -28,6 +28,8 @@ import '../../features/contacts/presentation/pages/contact_form_page.dart';
 import '../../features/contacts/presentation/pages/contacts_page.dart';
 import '../../features/notifications/presentation/pages/notification_settings_page.dart';
 import '../../features/notifications/presentation/pages/notifications_inbox_page.dart';
+import '../../features/pending/presentation/pages/pending_batch_add_page.dart';
+import '../../features/pending/presentation/pages/pending_page.dart';
 import '../../features/personal_debts/presentation/pages/debt_person_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debt_detail_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debt_form_page.dart';
@@ -155,6 +157,20 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                         ),
                       );
                     },
+                  ),
+                  // Pending transactions (รอยืนยัน) — overlay layer like the
+                  // inbox (no nav / FAB): drafts list + jot-several page.
+                  GoRoute(
+                    path: 'pending',
+                    name: 'pending',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => const PendingPage(),
+                  ),
+                  GoRoute(
+                    path: 'pending/new',
+                    name: 'pending-new',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (context, state) => const PendingBatchAddPage(),
                   ),
                   // Notifications (Phase 1b.2) — overlay layer: pushed on
                   // the root navigator ABOVE the shell (no bottom nav / FAB);

@@ -13,10 +13,11 @@ import '../cubit/transactions_cubit.dart';
 import 'transaction_form_body.dart';
 
 /// Full-page wrapper around [TransactionFormBody] — used for:
-/// - `/transactions/new` (create from More menu / FAB-on-tablet)
+/// - `/transactions/new` (empty-state "add first transaction" tiles; the
+///   `+` button opens the quick-create sheet instead)
 /// - `/transactions/:id/edit` (edit always opens full-page)
 ///
-/// Differences vs [showTransactionFormSheet]:
+/// Differences vs the quick-create sheet:
 /// - Note field always visible (not collapsible).
 /// - "Save & add another" shown alongside Save when creating.
 /// - Has its own AppBar + back nav + PopScope discard-confirm.
@@ -195,92 +196,6 @@ class _Scaffold extends StatelessWidget {
                 onUndo: () {},
                 onSave: () => bodyKey.currentState?.save(keepOpen: false),
               ),
-      ),
-    );
-  }
-}
-
-/// Modal bottom-sheet wrapper. Quick-add — note collapsed, no
-/// "Save & add another" button, no full Scaffold.
-///
-/// Returns true if at least one transaction was saved before the
-/// sheet was dismissed. Callers can use that to refresh local views
-/// (though the cubit's surgical updates already cover most cases).
-Future<bool> showTransactionFormSheet(BuildContext context) async {
-  final saved = await showModalBottomSheet<bool>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (_) => const _SheetWrapper(),
-  );
-  return saved ?? false;
-}
-
-class _SheetWrapper extends StatefulWidget {
-  const _SheetWrapper();
-
-  @override
-  State<_SheetWrapper> createState() => _SheetWrapperState();
-}
-
-class _SheetWrapperState extends State<_SheetWrapper> {
-  final _bodyKey = GlobalKey<TransactionFormBodyState>();
-  bool _anySaved = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<AccountsCubit>().loadIfNeeded();
-      context.read<CategoriesCubit>().loadIfNeeded();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final viewInsets = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      // Lift content above the keyboard.
-      padding: EdgeInsets.only(bottom: viewInsets),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Text(
-                l.transactionFormTitleNew,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            TransactionFormBody(
-              key: _bodyKey,
-              allowSaveAndAddAnother: false,
-              collapsibleNote: true,
-              initial: const TransactionFormInitial(),
-              enableEventSection: true,
-              onSaved: ({required addedAnother}) {
-                _anySaved = true;
-                if (!mounted) return;
-                Navigator.of(context).pop(_anySaved);
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FilledButton(
-              onPressed: () => _bodyKey.currentState?.save(keepOpen: false),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
-              child: Text(l.transactionFormSave),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_icons.dart';
-import '../../features/transactions/presentation/pages/transaction_form_page.dart';
+import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'app_top_bar.dart';
 import 'main_bottom_nav.dart';
@@ -87,7 +87,7 @@ class _MainShellState extends State<MainShell> {
             currentIndex: widget.navigationShell.currentIndex,
             moreSelected: widget.navigationShell.currentIndex == _moreBranch,
             onTabSelected: _goBranch,
-            onAddPressed: () => showTransactionFormSheet(context),
+            onAddPressed: () => showQuickCreateSheet(context),
             onMorePressed: () => _goBranch(_moreBranch),
           );
 
@@ -98,7 +98,7 @@ class _MainShellState extends State<MainShell> {
         ? null
         : FloatingActionButton(
             tooltip: l.navAddTransaction,
-            onPressed: () => showTransactionFormSheet(context),
+            onPressed: () => showQuickCreateSheet(context),
             shape: const CircleBorder(),
             child: const Icon(AppIcons.add),
           );

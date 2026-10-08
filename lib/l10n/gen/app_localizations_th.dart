@@ -1949,6 +1949,20 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txSplitRemove => 'นำออก';
 
   @override
+  String get txSplitExceeds => 'ยอดหารรวมเกินยอดรายการ';
+
+  @override
+  String get txSavedTagsFailed =>
+      'บันทึกรายการแล้ว แต่ใส่แท็กไม่สำเร็จ แก้แท็กในรายการได้';
+
+  @override
+  String get txTransferNeedsTo => 'เลือกกระเป๋าปลายทาง';
+
+  @override
+  String get txTransferSameWallet =>
+      'กระเป๋าต้นทางกับปลายทางต้องไม่ใช่อันเดียวกัน';
+
+  @override
   String get authTagline => 'จดรายรับรายจ่าย หารบิลกับเพื่อน';
 
   @override
@@ -2623,6 +2637,255 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transactionFormTitleNew => 'รายการใหม่';
+
+  @override
+  String get quickSave => 'บันทึก';
+
+  @override
+  String get quickSaved => 'บันทึกแล้ว';
+
+  @override
+  String get quickNoteHint => 'โน้ต (ไม่บังคับ)';
+
+  @override
+  String get quickMore => 'รายละเอียดเพิ่ม';
+
+  @override
+  String get quickAllCategories => 'ทั้งหมด';
+
+  @override
+  String get quickFrom => 'จาก';
+
+  @override
+  String get quickTo => 'ไป';
+
+  @override
+  String get quickSwap => 'สลับต้นทางกับปลายทาง';
+
+  @override
+  String get quickPickWallet => 'เลือกกระเป๋า';
+
+  @override
+  String get quickAmountRequired => 'ใส่ยอดเงินก่อน';
+
+  @override
+  String get quickDiscardTitle => 'ปิดโดยไม่บันทึก?';
+
+  @override
+  String get quickDiscardMessage => 'สิ่งที่กรอกไว้จะหายไป';
+
+  @override
+  String get quickDiscardConfirm => 'ทิ้ง';
+
+  @override
+  String get quickDiscardKeep => 'กลับไปแก้ต่อ';
+
+  @override
+  String get quickAddToEvent => 'เพิ่มเข้าอีเวนต์';
+
+  @override
+  String get quickEventLabel => 'อีเวนต์';
+
+  @override
+  String quickEventNewNamed(String name) {
+    return 'ใหม่: $name';
+  }
+
+  @override
+  String get quickEventRemove => 'ไม่เพิ่มเข้าอีเวนต์';
+
+  @override
+  String get quickEventNew => 'สร้างอีเวนต์ใหม่';
+
+  @override
+  String get quickEventNameLabel => 'ชื่ออีเวนต์';
+
+  @override
+  String get quickEventCreate => 'สร้าง';
+
+  @override
+  String get quickEventExisting => 'หรือเพิ่มเข้าอีเวนต์ที่มีอยู่';
+
+  @override
+  String get quickEventNoneYet => 'ยังไม่มีอีเวนต์ที่เปิดอยู่';
+
+  @override
+  String get quickEventDefaultName => 'อีเวนต์';
+
+  @override
+  String get quickEventNeedsWallet => 'เพิ่มเข้าอีเวนต์ต้องเลือกกระเป๋า';
+
+  @override
+  String get pendingTitle => 'รอยืนยัน';
+
+  @override
+  String get pendingTooltip => 'รอยืนยัน';
+
+  @override
+  String get pendingSubtitle => 'ยังไม่นับในยอด · แก้ได้ทุกช่องก่อนยืนยัน';
+
+  @override
+  String get pendingSelectAll => 'เลือกทั้งหมด';
+
+  @override
+  String get pendingSelectNone => 'ไม่เลือก';
+
+  @override
+  String get pendingSelectOne => 'เลือกรายการนี้';
+
+  @override
+  String pendingFilterAll(int count) {
+    return 'ทั้งหมด $count';
+  }
+
+  @override
+  String pendingFilterManual(int count) {
+    return 'ใส่เอง $count';
+  }
+
+  @override
+  String pendingFilterOthers(int count) {
+    return 'จากคนอื่น $count';
+  }
+
+  @override
+  String pendingResult(int done, int failed) {
+    return 'บันทึกแล้ว $done · ค้าง $failed';
+  }
+
+  @override
+  String get pendingEmptyTitle => 'ไม่มีรายการรอยืนยัน';
+
+  @override
+  String get pendingEmptyMessage => 'จดไว้ก่อนแล้วค่อยมายืนยันได้ที่นี่';
+
+  @override
+  String get pendingAdd => 'เพิ่มร่าง';
+
+  @override
+  String pendingSubmitSelected(int count) {
+    return 'ยืนยันที่เลือก ($count)';
+  }
+
+  @override
+  String pendingSubmittedCount(int count) {
+    return 'บันทึก $count รายการแล้ว';
+  }
+
+  @override
+  String get pendingSeeTransactions => 'ดูในรายการ';
+
+  @override
+  String get pendingUntitled => 'ไม่มีโน้ต';
+
+  @override
+  String get pendingSourceManual => 'ใส่เอง';
+
+  @override
+  String get pendingSourceSplitPaid => 'จ่ายแล้ว';
+
+  @override
+  String get pendingSourceProject => 'โปรเจกต์';
+
+  @override
+  String get pendingSourceOcr => 'สแกน';
+
+  @override
+  String get pendingSourceChat => 'แชท';
+
+  @override
+  String get pendingSourceOther => 'อื่นๆ';
+
+  @override
+  String pendingSavedCount(int count) {
+    return 'เก็บเป็นร่าง $count รายการแล้ว';
+  }
+
+  @override
+  String get pendingBatchHint =>
+      'กรอกแค่ยอดก็พอ ที่เหลือค่อยเติมในหน้ารอยืนยัน';
+
+  @override
+  String get pendingAddRow => 'เพิ่มแถว';
+
+  @override
+  String get pendingBatchMoreHint =>
+      'ต้องการโอน หารบิล หรือแท็ก? เปิดร่างในหน้ารอยืนยันแล้วแก้แบบเต็มได้';
+
+  @override
+  String pendingSaveAsDrafts(int count) {
+    return 'เก็บเป็นร่าง $count รายการ';
+  }
+
+  @override
+  String pendingSubmitAllNow(int count) {
+    return 'ยืนยันเลยทั้ง $count รายการ';
+  }
+
+  @override
+  String get pendingRemoveRow => 'ลบแถวนี้';
+
+  @override
+  String get pendingSavedAsDraft => 'เก็บเป็นร่างแล้ว · อยู่ในรอยืนยัน';
+
+  @override
+  String get pendingSaveDraft => 'บันทึกร่าง';
+
+  @override
+  String get pendingSubmitThis => 'ยืนยันรายการนี้';
+
+  @override
+  String get pendingEditTitle => 'แก้ร่าง';
+
+  @override
+  String get pendingDiscardTitle => 'ทิ้งร่างนี้?';
+
+  @override
+  String get pendingKeepAsDraft => 'เก็บเป็นร่าง';
+
+  @override
+  String get pendingDropEditsTitle => 'ทิ้งการแก้ไข?';
+
+  @override
+  String get pendingDropEditsMessage => 'ร่างจะกลับไปเป็นแบบเดิม';
+
+  @override
+  String pendingBlockTitle(int count) {
+    return 'รอยืนยัน $count รายการ';
+  }
+
+  @override
+  String pendingBlockMore(int count) {
+    return '+ อีก $count รายการ';
+  }
+
+  @override
+  String get pendingNotCounted => 'ยังไม่นับในยอดด้านล่าง';
+
+  @override
+  String get pendingErrMissingType => 'ต้องเลือกประเภทก่อนยืนยัน';
+
+  @override
+  String get pendingErrMissingAmount => 'ต้องใส่ยอดเงินก่อนยืนยัน';
+
+  @override
+  String get pendingErrMissingDate => 'ต้องเลือกวันที่ก่อนยืนยัน';
+
+  @override
+  String get pendingErrAccount =>
+      'กระเป๋านี้ใช้ไม่ได้แล้ว เลือกใหม่หรือไม่ผูกกระเป๋า';
+
+  @override
+  String get pendingErrCategory => 'หมวดนี้ใช้ไม่ได้ เลือกหมวดใหม่';
+
+  @override
+  String get pendingErrCurrency => 'โอนข้ามสกุลเงินไม่ได้';
+
+  @override
+  String get pendingErrTag => 'มีแท็กที่ถูกลบไปแล้ว';
+
+  @override
+  String get pendingErrContact => 'ผู้ติดต่อในการหารถูกลบไปแล้ว';
 
   @override
   String get transactionFormTitleEdit => 'แก้ไขรายการ';

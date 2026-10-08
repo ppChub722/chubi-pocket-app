@@ -49,8 +49,8 @@ class TransactionFormInitial {
 }
 
 /// The actual form fields — embedded in [TransactionFormPage] (full
-/// page, with Save & add another) and [showTransactionFormSheet] (modal
-/// quick-add, no Save & add another, note collapsible).
+/// page: create from the empty-state tiles, and every edit). The `+`
+/// button uses its own quick-create sheet (quick_create_sheet.dart).
 ///
 /// `allowSaveAndAddAnother` toggles the second action button + the
 /// `popOnSave` behavior of the parent. For the modal, the parent wraps
@@ -268,15 +268,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
       return _saveAsEvent(event);
     }
     if (!(_formKey.currentState?.validate() ?? false)) return false;
-    if (_isTransfer && _account == null) return false;
-    if (_isTransfer && _toAccount == null) return false;
-    if (_isTransfer && _account!.id == _toAccount!.id) return false;
-    // Category required for expense/income (BE rejects with
-    // VALIDATION_ERROR otherwise — mirror the rule client-side so the
-    // user gets a fast feedback loop instead of a snackbar round-trip).
-    // Skipped on another member's row: their category stays untouched
-    // (author-only field, spec §14/2.2) and can't resolve against our
-    // own categories cache anyway.
+    if (!_transferOk()) return false;
     final amount = AmountField.parse(_amountController.text);
     if (amount == null || amount <= 0) return false;
 
@@ -383,6 +375,16 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
       }
       widget.onSaved(addedAnother: keepOpen);
       return true;
+    } on TagsAttachFailed {
+      // Saved — only the tags didn't stick. Close like a save (a second
+      // Save would duplicate the transaction) and say so.
+      if (!mounted) return true;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+            content: Text(AppLocalizations.of(context)!.txSavedTagsFailed)));
+      widget.onSaved(addedAnother: false);
+      return true;
     } on ApiException catch (e) {
       if (!mounted) return false;
       // Shared-wallet codes (CATEGORY_AUTHOR_ONLY / ROW_LOCKED /
@@ -444,6 +446,23 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     }
   }
 
+  /// Transfer needs both wallets, and different ones. Says what's missing
+  /// instead of failing silently.
+  bool _transferOk() {
+    if (!_isTransfer) return true;
+    final l = AppLocalizations.of(context)!;
+    final msg = _account == null || _toAccount == null
+        ? l.txTransferNeedsTo
+        : _account!.id == _toAccount!.id
+            ? l.txTransferSameWallet
+            : null;
+    if (msg == null) return true;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+    return false;
+  }
+
   /// Sentinel returned by [_collectSplitsPayload] when the drafted
   /// splits exceed the transaction amount (snackbar already shown).
   /// Distinct from `null`, which means "no splits".
@@ -463,8 +482,8 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
     if (total > amount + 0.005) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text(
-          'Splits exceed transaction amount.',
+        ..showSnackBar(SnackBar(content: Text(
+          AppLocalizations.of(context)!.txSplitExceeds,
         )));
       return _splitsExceedSentinel;
     }
@@ -485,9 +504,7 @@ class TransactionFormBodyState extends State<TransactionFormBody> {
   /// Not meaningful in edit mode.
   Map<String, dynamic>? buildCreatePayload() {
     if (!(_formKey.currentState?.validate() ?? false)) return null;
-    if (_isTransfer && _account == null) return null;
-    if (_isTransfer && _toAccount == null) return null;
-    if (_isTransfer && _account!.id == _toAccount!.id) return null;
+    if (!_transferOk()) return null;
     final amount = AmountField.parse(_amountController.text);
     if (amount == null || amount <= 0) return null;
 
