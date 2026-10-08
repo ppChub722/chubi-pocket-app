@@ -132,6 +132,30 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 // for their path; More-menu features live in the เพิ่มเติม
                 // branch below.
                 routes: [
+                  // Dashboard drill-down ("เงินไปไหน" → one category in one
+                  // month). Stays in the dashboard stack with its own list
+                  // cubit so the transactions tab keeps its filters.
+                  // ?category=<id> | ?uncategorized=true, &month=YYYY-MM.
+                  GoRoute(
+                    path: 'browse',
+                    name: 'dashboard-browse',
+                    builder: (context, state) {
+                      final p = state.uri.queryParameters;
+                      final month = p['month'];
+                      return BlocProvider(
+                        create: (ctx) => TransactionsCubit(
+                            repository: ctx.read<TransactionsRepository>()),
+                        child: TransactionsListPage(
+                          initialCategoryId: p['category'],
+                          initialUncategorized: p['uncategorized'] == 'true',
+                          initialMonth: month == null
+                              ? null
+                              : DateTime.tryParse('$month-01'),
+                          title: p['title'] ?? '',
+                        ),
+                      );
+                    },
+                  ),
                   // Notifications (Phase 1b.2) — overlay layer: pushed on
                   // the root navigator ABOVE the shell (no bottom nav / FAB);
                   // back returns to the tab exactly where it was. Links out

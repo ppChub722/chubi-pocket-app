@@ -33,6 +33,26 @@ class AccountsRepository {
     }
   }
 
+
+  /// `PATCH /v1/accounts/reorder` (contract §3) — [ids] in the caller's
+  /// new order. The order is per member: it never moves a shared wallet
+  /// for anyone else. Returns the active list in the new order.
+  Future<List<Account>> reorder(List<String> ids) async {
+    try {
+      final res = await _client.dio.patch<Map<String, dynamic>>(
+        '/accounts/reorder',
+        data: {
+          'items': [
+            for (var i = 0; i < ids.length; i++) {'id': ids[i], 'sort_order': i},
+          ],
+        },
+      );
+      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
+      return data.map(Account.fromJson).toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
   /// `POST /v1/accounts`. Server creates the row + (when [Account.balance]
   /// is non-zero) an Opening Balance transaction in the same DB tx, so the
   /// returned `balance` already reflects the opening transaction.

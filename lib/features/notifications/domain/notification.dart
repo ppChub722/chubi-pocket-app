@@ -17,6 +17,10 @@ enum NotificationType {
   /// same as project member invites). Payload carries `account_id` +
   /// `account_name`; pending rows render inline Accept / Reject.
   accountInvite('account_invite'),
+
+  /// "You were added to a project" (quick create, spec §10/4.24) —
+  /// informational, mutable.
+  projectAdded('project_added'),
   unknown('unknown');
 
   const NotificationType(this.wire);
@@ -183,6 +187,7 @@ class NotificationSettings extends Equatable {
     bool? autoRecordReceivedPayment,
     bool? autoResolveOwnInProjects,
     String? defaultAccountId,
+    bool clearDefaultAccount = false,
     Set<String>? mutedTypes,
   }) {
     return NotificationSettings(
@@ -196,7 +201,9 @@ class NotificationSettings extends Equatable {
           autoRecordReceivedPayment ?? this.autoRecordReceivedPayment,
       autoResolveOwnInProjects:
           autoResolveOwnInProjects ?? this.autoResolveOwnInProjects,
-      defaultAccountId: defaultAccountId ?? this.defaultAccountId,
+      defaultAccountId: clearDefaultAccount
+          ? null
+          : (defaultAccountId ?? this.defaultAccountId),
       mutedTypes: mutedTypes ?? this.mutedTypes,
     );
   }

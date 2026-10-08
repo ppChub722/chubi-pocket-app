@@ -1280,6 +1280,7 @@ class _DataDemo extends StatelessWidget {
             ],
           ),
         ),
+        const _ChartsDemo(),
         _Demo(
           title: 'แถวเงิน + หัวข้อกลุ่มวันที่',
           name: 'DateGroupHeader · MoneyListTile · IconBubble',
@@ -1832,6 +1833,83 @@ class _DomainDemoState extends State<_DomainDemo> {
             value: _picked,
             leading: const Icon(AppIcons.contact),
             onTap: _pickContact,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Charts ─────────────────────────────────────────────────────────────
+
+class _ChartsDemo extends StatefulWidget {
+  const _ChartsDemo();
+  @override
+  State<_ChartsDemo> createState() => _ChartsDemoState();
+}
+
+class _ChartsDemoState extends State<_ChartsDemo> {
+  int _slices = 5;
+  int? _selected = 5;
+
+  static const _values = [6200.0, 3100.0, 2400.0, 1800.0, 6880.0];
+  static const _months = [
+    BarPair(label: 'พ.ค.', a: 30000, b: 21000),
+    BarPair(label: 'มิ.ย.', a: 30000, b: 26500),
+    BarPair(label: 'ก.ค.', a: 32000, b: 18000),
+    BarPair(label: 'ส.ค.', a: 30000, b: 31200),
+    BarPair(label: 'ก.ย.', a: 30000, b: 24000),
+    BarPair(label: 'ต.ค.', a: 32000, b: 18580),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ChartPalette.categorical(context);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final segments = [
+      for (var i = 0; i < _slices; i++)
+        DonutSegment(
+          value: _values[i],
+          color: i < colors.length ? colors[i] : ChartPalette.other(context),
+        ),
+    ];
+    return Column(
+      children: [
+        _Demo(
+          title: 'โดนัทสัดส่วน (แตะเพื่อเปลี่ยนจำนวนชิ้น · 0 = ว่าง)',
+          name: 'DonutChart · ChartPalette',
+          child: GestureDetector(
+            onTap: () => setState(() => _slices = (_slices + 1) % 6),
+            child: Row(
+              children: [
+                DonutChart(
+                  segments: segments,
+                  center: Text('$_slices ชิ้น'),
+                ),
+                const SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  child: Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      for (final c in [...colors, ChartPalette.other(context)])
+                        Container(width: 24, height: 24, color: c),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'แท่งคู่ รายรับ vs รายจ่าย (แตะเดือน)',
+          name: 'PairedBarChart',
+          child: PairedBarChart(
+            groups: _months,
+            colorA: palette.income,
+            colorB: palette.expense,
+            selected: _selected,
+            onSelect: (i) => setState(() => _selected = i),
           ),
         ),
       ],

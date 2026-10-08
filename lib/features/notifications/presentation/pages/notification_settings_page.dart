@@ -102,6 +102,8 @@ class _Body extends StatelessWidget {
                       l.notifTypeProjectTxForYou),
                   muteSwitch(NotificationType.projectTxChanged,
                       l.notifTypeProjectTxChanged),
+                  muteSwitch(NotificationType.projectAdded,
+                      l.notifTypeProjectAdded),
                   groupTitle(l.notifGroupRequests),
                   DetailRow(
                     label: l.notifGroupRequests,
@@ -114,16 +116,8 @@ class _Body extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: Row(
-                      children: [
-                        AppBadge(label: l.moreComingSoonBadge, tone: Tone.info),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(l.notifSettingsAutoPending,
-                              style: Theme.of(context).textTheme.bodySmall),
-                        ),
-                      ],
-                    ),
+                    child: Text(l.notifSettingsAutoHint,
+                        style: Theme.of(context).textTheme.bodySmall),
                   ),
                   groupTitle(l.notifGroupSplits),
                   autoSwitch(
@@ -156,9 +150,13 @@ class _Body extends StatelessWidget {
                           accounts: accounts,
                           selected: receiving,
                           title: l.notifDefaultAccount,
+                          // "None" = settle my side without a wallet entry.
+                          allowNone: true,
                         );
                         if (r is AccountPickerSelected) {
                           cubit.update(defaultAccountId: r.account.id);
+                        } else if (r is AccountPickerCleared) {
+                          cubit.update(clearDefaultAccount: true);
                         }
                       },
                     ),

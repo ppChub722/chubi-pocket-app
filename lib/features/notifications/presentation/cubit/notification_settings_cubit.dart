@@ -63,6 +63,7 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     bool? autoRecordReceivedPayment,
     bool? autoResolveOwnInProjects,
     String? defaultAccountId,
+    bool clearDefaultAccount = false,
     Set<String>? mutedTypes,
   }) async {
     final before = state.settings;
@@ -75,6 +76,7 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
         autoRecordReceivedPayment: autoRecordReceivedPayment,
         autoResolveOwnInProjects: autoResolveOwnInProjects,
         defaultAccountId: defaultAccountId,
+        clearDefaultAccount: clearDefaultAccount,
         mutedTypes: mutedTypes,
       ),
       status: SettingsStatus.saving,
@@ -88,9 +90,10 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
         autoRecordReceivedPayment: autoRecordReceivedPayment,
         autoResolveOwnInProjects: autoResolveOwnInProjects,
         defaultAccountId: defaultAccountId,
+        clearDefaultAccount: clearDefaultAccount,
         mutedTypes: mutedTypes,
       );
-      // Until the BE stores muted_types it won't echo them — keep ours.
+      // Guard for an older BE that doesn't echo muted_types — keep ours.
       emit(state.copyWith(
         settings: mutedTypes != null && !updated.mutedTypes.containsAll(mutedTypes)
             ? updated.copyWith(mutedTypes: mutedTypes)

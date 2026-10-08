@@ -21,6 +21,8 @@ import '../features/categories/data/categories_repository.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
 import '../features/contacts/data/contacts_repository.dart';
 import '../features/contacts/presentation/cubit/contacts_cubit.dart';
+import '../features/home/data/dashboard_repository.dart';
+import '../features/home/presentation/cubit/dashboard_cubit.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../features/personal_debts/data/personal_debts_repository.dart';
@@ -72,6 +74,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final SavingGoalsRepository _savingGoalsRepository;
   late final BudgetsRepository _budgetsRepository;
   late final ScheduledTransactionsRepository _scheduledTransactionsRepository;
+  late final DashboardRepository _dashboardRepository;
   late final AuthCubit _authCubit;
   late final GoRouter _router;
 
@@ -94,6 +97,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _budgetsRepository = BudgetsRepository(client: _apiClient);
     _scheduledTransactionsRepository =
         ScheduledTransactionsRepository(client: _apiClient);
+    _dashboardRepository = DashboardRepository(client: _apiClient);
     _authCubit = AuthCubit(
       repository: _authRepository,
       tokenStorage: _tokenStorage,
@@ -141,6 +145,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             value: _budgetsRepository),
         RepositoryProvider<ScheduledTransactionsRepository>.value(
             value: _scheduledTransactionsRepository),
+        RepositoryProvider<DashboardRepository>.value(
+            value: _dashboardRepository),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -202,6 +208,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             create: (_) => ScheduledTransactionsCubit(
               repository: _scheduledTransactionsRepository,
             ),
+          ),
+          // App-scoped so the เพิ่มเติม hub can show live figures too.
+          BlocProvider<DashboardCubit>(
+            create: (_) => DashboardCubit(repository: _dashboardRepository),
           ),
         ],
         child: Builder(
@@ -305,6 +315,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     ctx.read<SavingGoalsCubit>().clear();
     ctx.read<BudgetsCubit>().clear();
     ctx.read<ScheduledTransactionsCubit>().clear();
+    ctx.read<DashboardCubit>().clear();
     ctx.read<UnreadBadgeCubit>().clear();
   }
 }

@@ -121,6 +121,7 @@ class NotificationsRepository {
     bool? autoRecordReceivedPayment,
     bool? autoResolveOwnInProjects,
     String? defaultAccountId,
+    bool clearDefaultAccount = false,
     Set<String>? mutedTypes,
   }) async {
     try {
@@ -132,7 +133,11 @@ class NotificationsRepository {
               ?autoAddToPersonalDebtOnSplitNotification,
           'auto_record_received_payment': ?autoRecordReceivedPayment,
           'auto_resolve_own_in_projects': ?autoResolveOwnInProjects,
-          'default_account_id': ?defaultAccountId,
+          // Explicit null clears it (contract §5).
+          if (clearDefaultAccount)
+            'default_account_id': null
+          else
+            'default_account_id': ?defaultAccountId,
           if (mutedTypes != null) 'muted_types': mutedTypes.toList(),
         },
       );

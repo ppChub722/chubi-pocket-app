@@ -21,6 +21,11 @@ export 'inputs/picker_tile.dart';
 export 'inputs/select_card_group.dart';
 export 'inputs/select_check.dart';
 
+// Charts
+export 'charts/chart_palette.dart';
+export 'charts/donut_chart.dart';
+export 'charts/paired_bar_chart.dart';
+
 // Chips & pills
 export 'chips/filter_chips.dart';
 export 'chips/status_pill.dart';

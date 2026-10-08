@@ -20,6 +20,7 @@ class TransactionsState extends Equatable {
     this.errorMessage,
     this.page = 0,
     this.totalPages = 0,
+    this.revision = 0,
   });
 
   final List<Transaction> transactions;
@@ -30,6 +31,11 @@ class TransactionsState extends Equatable {
   final int page;
   final int totalPages;
 
+  /// Bumped by every successful write (add / update / tags / remove) —
+  /// never by loads. Screens that aggregate the book (dashboard) listen
+  /// for it to know their totals went stale.
+  final int revision;
+
   bool get hasMore => page > 0 && page < totalPages;
 
   TransactionsState copyWith({
@@ -38,6 +44,7 @@ class TransactionsState extends Equatable {
     String? errorMessage,
     int? page,
     int? totalPages,
+    int? revision,
     bool clearError = false,
   }) {
     return TransactionsState(
@@ -46,12 +53,19 @@ class TransactionsState extends Equatable {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       page: page ?? this.page,
       totalPages: totalPages ?? this.totalPages,
+      revision: revision ?? this.revision,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [transactions, status, errorMessage, page, totalPages];
+  List<Object?> get props => [
+    transactions,
+    status,
+    errorMessage,
+    page,
+    totalPages,
+    revision,
+  ];
 }
 
 enum TransactionsStatus { initial, loading, loaded, error }
@@ -62,33 +76,24 @@ enum TransactionsStatus { initial, loading, loaded, error }
 /// (matched by id). No full reload after a write.
 class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   TransactionsCubit({required TransactionsRepository repository})
-      : _repo = repository,
-        super(const TransactionsState());
+    : _repo = repository,
+      super(const TransactionsState());
 
   final TransactionsRepository _repo;
 
   @override
   void clear() {
-    _lastAccountId = null;
-    _lastCategoryId = null;
-    _lastType = null;
-    _lastFrom = null;
-    _lastTo = null;
-    _lastNoWallet = false;
-    _lastSort = 'date_desc';
-    _lastPerPage = 20;
+    _last = const _ListQuery();
+    _seq++;
     emit(const TransactionsState());
   }
 
   /// Last-used filter / sort, reused by [loadMore].
-  String? _lastAccountId;
-  String? _lastCategoryId;
-  TransactionsType? _lastType;
-  String? _lastFrom;
-  String? _lastTo;
-  bool _lastNoWallet = false;
-  String _lastSort = 'date_desc';
-  int _lastPerPage = 20;
+  _ListQuery _last = const _ListQuery();
+
+  /// Bumped per [load]; a response for an older load is dropped (search
+  /// typing fires loads faster than they return).
+  int _seq = 0;
 
   /// Fetches page 1 with the supplied filters, replacing the cache.
   /// Use this when the user changes filter / sort.
@@ -99,47 +104,68 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     String? from,
     String? to,
     bool noWallet = false,
+    String? q,
+    List<String> tagIds = const [],
+    bool includeChildren = false,
+    bool uncategorized = false,
     String sort = 'date_desc',
     int perPage = 20,
   }) async {
-    _lastAccountId = accountId;
-    _lastCategoryId = categoryId;
-    _lastType = type == null ? null : TransactionsType._(type);
-    _lastFrom = from;
-    _lastTo = to;
-    _lastNoWallet = noWallet;
-    _lastSort = sort;
-    _lastPerPage = perPage;
+    _last = _ListQuery(
+      accountId: accountId,
+      categoryId: categoryId,
+      type: type,
+      from: from,
+      to: to,
+      noWallet: noWallet,
+      q: q,
+      tagIds: tagIds,
+      includeChildren: includeChildren,
+      uncategorized: uncategorized,
+      sort: sort,
+      perPage: perPage,
+    );
+    final seq = ++_seq;
 
-    emit(state.copyWith(
-      status: TransactionsStatus.loading,
-      clearError: true,
-    ));
+    emit(state.copyWith(status: TransactionsStatus.loading, clearError: true));
     try {
-      final pageRes = await _repo.list(
-        accountId: accountId,
-        categoryId: categoryId,
-        type: type,
-        from: from,
-        to: to,
-        noWallet: noWallet,
-        page: 1,
-        perPage: perPage,
-        sort: sort,
+      final pageRes = await _fetch(_last, page: 1);
+      if (seq != _seq) return;
+      emit(
+        state.copyWith(
+          transactions: pageRes.transactions,
+          status: TransactionsStatus.loaded,
+          page: pageRes.page,
+          totalPages: pageRes.totalPages,
+        ),
       );
-      emit(state.copyWith(
-        transactions: pageRes.transactions,
-        status: TransactionsStatus.loaded,
-        page: pageRes.page,
-        totalPages: pageRes.totalPages,
-      ));
     } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: TransactionsStatus.error,
-        errorMessage: e.message,
-      ));
+      if (seq != _seq) return;
+      emit(
+        state.copyWith(
+          status: TransactionsStatus.error,
+          errorMessage: e.message,
+        ),
+      );
     }
   }
+
+  Future<TransactionsPage> _fetch(_ListQuery f, {required int page}) =>
+      _repo.list(
+        accountId: f.accountId,
+        categoryId: f.categoryId,
+        type: f.type,
+        from: f.from,
+        to: f.to,
+        noWallet: f.noWallet,
+        q: f.q,
+        tagIds: f.tagIds,
+        includeChildren: f.includeChildren,
+        uncategorized: f.uncategorized,
+        page: page,
+        perPage: f.perPage,
+        sort: f.sort,
+      );
 
   /// Loads page 1 only when nothing's loaded yet. Page entry points
   /// (e.g. transactions list, account detail) call this from initState
@@ -160,30 +186,27 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   Future<void> loadMore() async {
     if (!state.hasMore) return;
     if (state.status == TransactionsStatus.loading) return;
+    final seq = _seq;
     emit(state.copyWith(status: TransactionsStatus.loading, clearError: true));
     try {
-      final pageRes = await _repo.list(
-        accountId: _lastAccountId,
-        categoryId: _lastCategoryId,
-        type: _lastType?.value,
-        from: _lastFrom,
-        to: _lastTo,
-        noWallet: _lastNoWallet,
-        page: state.page + 1,
-        perPage: _lastPerPage,
-        sort: _lastSort,
+      final pageRes = await _fetch(_last, page: state.page + 1);
+      if (seq != _seq) return;
+      emit(
+        state.copyWith(
+          transactions: [...state.transactions, ...pageRes.transactions],
+          status: TransactionsStatus.loaded,
+          page: pageRes.page,
+          totalPages: pageRes.totalPages,
+        ),
       );
-      emit(state.copyWith(
-        transactions: [...state.transactions, ...pageRes.transactions],
-        status: TransactionsStatus.loaded,
-        page: pageRes.page,
-        totalPages: pageRes.totalPages,
-      ));
     } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: TransactionsStatus.error,
-        errorMessage: e.message,
-      ));
+      if (seq != _seq) return;
+      emit(
+        state.copyWith(
+          status: TransactionsStatus.error,
+          errorMessage: e.message,
+        ),
+      );
     }
   }
 
@@ -239,9 +262,9 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         // so the in-memory state reflects the attached tags.
         final patchedRow = target.copyWith(tags: tags);
         if (result.single != null) {
-          emit(state.copyWith(
-            transactions: [patchedRow, ...state.transactions],
-          ));
+          _emitWrite(
+            state.copyWith(transactions: [patchedRow, ...state.transactions]),
+          );
           return TransactionMutationResult.single(patchedRow);
         }
         // Transfer — replace OUT row with the patched one.
@@ -249,9 +272,9 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
           for (final r in result.transfer!.rows)
             if (r.id == target.id) patchedRow else r,
         ];
-        emit(state.copyWith(
-          transactions: [...newRows, ...state.transactions],
-        ));
+        _emitWrite(
+          state.copyWith(transactions: [...newRows, ...state.transactions]),
+        );
         return TransactionMutationResult.transfer(
           TransferResult(
             transferGroupId: result.transfer!.transferGroupId,
@@ -261,18 +284,18 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       } on ApiException {
         // Attach failed — the transaction itself is created. Surface
         // the rows unmodified; caller will see an error snackbar.
-        emit(state.copyWith(
-          transactions: [...result.rows, ...state.transactions],
-        ));
+        _emitWrite(
+          state.copyWith(transactions: [...result.rows, ...state.transactions]),
+        );
         rethrow;
       }
     }
     // Insert the new row(s) at the front of the cache assuming
     // sort=date_desc and that the user just created today's transaction.
     // For older dates the order will be slightly off until next load.
-    emit(state.copyWith(
-      transactions: [...result.rows, ...state.transactions],
-    ));
+    _emitWrite(
+      state.copyWith(transactions: [...result.rows, ...state.transactions]),
+    );
     return result;
   }
 
@@ -301,7 +324,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       transferToAccountId: transferToAccountId,
     );
     final patched = _patch(state.transactions, result.rows);
-    emit(state.copyWith(transactions: patched));
+    _emitWrite(state.copyWith(transactions: patched));
     return result;
   }
 
@@ -331,22 +354,21 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       await _repo.detachTag(transactionId: transactionId, tagId: id);
     }
     if (toAttach.isNotEmpty) {
-      await _repo.attachTags(
-        transactionId: transactionId,
-        tagIds: toAttach,
-      );
+      await _repo.attachTags(transactionId: transactionId, tagIds: toAttach);
     }
 
     // Refresh the row by fetching it — simplest correct path; gives us
     // the BE's authoritative ordered tag list with full embedded
     // metadata (color/icon).
     final fresh = await _repo.get(transactionId);
-    emit(state.copyWith(
-      transactions: [
-        for (final t in state.transactions)
-          if (t.id == fresh.id) fresh else t,
-      ],
-    ));
+    _emitWrite(
+      state.copyWith(
+        transactions: [
+          for (final t in state.transactions)
+            if (t.id == fresh.id) fresh else t,
+        ],
+      ),
+    );
   }
 
   /// Deletes a transaction. For transfers, the BE cascades to the
@@ -355,15 +377,19 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     final tx = byId(id);
     await _repo.delete(id);
     if (tx?.transferGroupId != null) {
-      emit(state.copyWith(
-        transactions: state.transactions
-            .where((t) => t.transferGroupId != tx!.transferGroupId)
-            .toList(),
-      ));
+      _emitWrite(
+        state.copyWith(
+          transactions: state.transactions
+              .where((t) => t.transferGroupId != tx!.transferGroupId)
+              .toList(),
+        ),
+      );
     } else {
-      emit(state.copyWith(
-        transactions: state.transactions.where((t) => t.id != id).toList(),
-      ));
+      _emitWrite(
+        state.copyWith(
+          transactions: state.transactions.where((t) => t.id != id).toList(),
+        ),
+      );
     }
   }
 
@@ -383,10 +409,16 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
 
   // ── Internal ──────────────────────────────────────────────────────
 
+  /// Emits a post-write state and bumps [TransactionsState.revision].
+  void _emitWrite(TransactionsState next) =>
+      emit(next.copyWith(revision: state.revision + 1));
+
   /// Replaces existing rows whose id matches one of [updates]; rows
   /// not in [updates] are preserved as-is. Order preserved.
   List<Transaction> _patch(
-      List<Transaction> existing, List<Transaction> updates) {
+    List<Transaction> existing,
+    List<Transaction> updates,
+  ) {
     if (updates.isEmpty) return existing;
     final byId = {for (final u in updates) u.id: u};
     return [
@@ -396,10 +428,33 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   }
 }
 
-/// Tiny holder so we can null-out the type filter cleanly across
-/// load + loadMore. (Direct `TransactionType?` field would conflate
-/// "no filter" with "filter not yet set".)
-class TransactionsType {
-  const TransactionsType._(this.value);
-  final TransactionType value;
+/// The filters + sort of the last [TransactionsCubit.load].
+class _ListQuery {
+  const _ListQuery({
+    this.accountId,
+    this.categoryId,
+    this.type,
+    this.from,
+    this.to,
+    this.noWallet = false,
+    this.q,
+    this.tagIds = const [],
+    this.includeChildren = false,
+    this.uncategorized = false,
+    this.sort = 'date_desc',
+    this.perPage = 20,
+  });
+
+  final String? accountId;
+  final String? categoryId;
+  final TransactionType? type;
+  final String? from;
+  final String? to;
+  final bool noWallet;
+  final String? q;
+  final List<String> tagIds;
+  final bool includeChildren;
+  final bool uncategorized;
+  final String sort;
+  final int perPage;
 }

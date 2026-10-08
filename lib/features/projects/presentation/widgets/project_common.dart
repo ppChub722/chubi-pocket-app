@@ -130,8 +130,9 @@ class ProjectView {
   String get currency => txs.isNotEmpty ? txs.first.currency : 'THB';
   String get symbol => Currencies.symbolOf(currency);
 
-  /// Completed / cancelled / archived → no new rows.
-  bool get canAddTx => project.isActive;
+  /// Completed / cancelled / archived → no new rows; viewers are
+  /// read-only (contract §6b).
+  bool get canAddTx => project.isActive && me?.role != MemberRole.viewer;
 
   /// Cancelled / archived → rows can't be edited, deleted or ticked.
   bool get rowsLocked => project.isLocked;

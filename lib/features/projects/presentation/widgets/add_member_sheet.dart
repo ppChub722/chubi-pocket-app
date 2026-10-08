@@ -61,7 +61,8 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
     final email = _email.text.trim();
     setState(() => _saving = true);
     try {
-      // The UI only shows owner / member (BE doesn't separate viewer yet).
+      // New members start as members; the owner can make them view-only
+      // from the members page (contract §6b).
       await context.read<ProjectsRepository>().addMember(
             widget.projectId,
             displayName: name,

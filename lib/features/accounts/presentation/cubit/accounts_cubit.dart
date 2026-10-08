@@ -46,13 +46,11 @@ enum AccountsStatus { initial, loading, loaded, error }
 /// (Categories and tags are seeded; accounts are deliberately not.)
 ///
 /// Mutators round-trip through the API and re-throw [ApiException] on
-/// failure so the form page can show a snackbar. Local reorder is
-/// in-memory only for now — the BE has a `sort_order` column but no
-/// reorder endpoint yet (spec §3.5 Phase 2).
+/// failure so the form page can show a snackbar.
 class AccountsCubit extends Cubit<AccountsState> with Clearable {
   AccountsCubit({required AccountsRepository repository})
-      : _repo = repository,
-        super(const AccountsState());
+    : _repo = repository,
+      super(const AccountsState());
 
   final AccountsRepository _repo;
 
@@ -71,16 +69,17 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     emit(state.copyWith(status: AccountsStatus.loading, clearError: true));
     try {
       final list = await _repo.list();
-      emit(state.copyWith(
-        accounts: list,
-        status: AccountsStatus.loaded,
-        clearError: true,
-      ));
+      emit(
+        state.copyWith(
+          accounts: list,
+          status: AccountsStatus.loaded,
+          clearError: true,
+        ),
+      );
     } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: AccountsStatus.error,
-        errorMessage: e.message,
-      ));
+      emit(
+        state.copyWith(status: AccountsStatus.error, errorMessage: e.message),
+      );
     }
   }
 
@@ -91,10 +90,14 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
 
   Future<void> update(Account account) async {
     final updated = await _repo.update(account);
-    emit(state.copyWith(accounts: [
-      for (final a in state.accounts)
-        if (a.id == updated.id) updated else a,
-    ]));
+    emit(
+      state.copyWith(
+        accounts: [
+          for (final a in state.accounts)
+            if (a.id == updated.id) updated else a,
+        ],
+      ),
+    );
   }
 
   /// Archived wallets (for the "กระเป๋าที่เก็บถาวร" page).
@@ -110,9 +113,11 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
   /// `loadIfNeeded` only fetches active accounts by default.
   Future<void> remove(String id) async {
     await _repo.archive(id);
-    emit(state.copyWith(
-      accounts: state.accounts.where((a) => a.id != id).toList(),
-    ));
+    emit(
+      state.copyWith(
+        accounts: state.accounts.where((a) => a.id != id).toList(),
+      ),
+    );
   }
 
   /// Manual balance adjustment (spec §2.5). Server creates an
@@ -131,10 +136,14 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
       note: note,
       date: date,
     );
-    emit(state.copyWith(accounts: [
-      for (final a in state.accounts)
-        if (a.id == outcome.account.id) outcome.account else a,
-    ]));
+    emit(
+      state.copyWith(
+        accounts: [
+          for (final a in state.accounts)
+            if (a.id == outcome.account.id) outcome.account else a,
+        ],
+      ),
+    );
     return outcome;
   }
 
@@ -148,10 +157,14 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     required WalletReportScope scope,
   }) async {
     await _repo.setReportScope(accountId: accountId, scope: scope);
-    emit(state.copyWith(accounts: [
-      for (final a in state.accounts)
-        if (a.id == accountId) a.copyWith(myReportScope: scope) else a,
-    ]));
+    emit(
+      state.copyWith(
+        accounts: [
+          for (final a in state.accounts)
+            if (a.id == accountId) a.copyWith(myReportScope: scope) else a,
+        ],
+      ),
+    );
   }
 
   Account? byId(String id) {
@@ -165,25 +178,22 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
   /// after a transaction mutation. Avoids a full `/v1/accounts` reload
   /// when the BE already told us the post-state via
   /// `account_balance_after` (spec §3.1).
-  void patchBalance({
-    required String accountId,
-    required double newBalance,
-  }) {
-    emit(state.copyWith(accounts: [
-      for (final a in state.accounts)
-        if (a.id == accountId) a.copyWith(balance: newBalance) else a,
-    ]));
+  void patchBalance({required String accountId, required double newBalance}) {
+    emit(
+      state.copyWith(
+        accounts: [
+          for (final a in state.accounts)
+            if (a.id == accountId) a.copyWith(balance: newBalance) else a,
+        ],
+      ),
+    );
   }
 
-  /// Local-only reorder — the spec-§3.5 reorder endpoint isn't on the
-  /// roadmap until Phase 2. Until then we shuffle the in-memory list so
-  /// the user gets immediate feedback; on next [load] the server's
-  /// stored order wins.
-  void reorder(int oldIndex, int newIndex) {
-    final list = [...state.accounts];
-    final adjusted = newIndex > oldIndex ? newIndex - 1 : newIndex;
-    final item = list.removeAt(oldIndex);
-    list.insert(adjusted, item);
-    emit(state.copyWith(accounts: list));
+  /// Saves the caller's own wallet order ([ordered] = the full active
+  /// list, top to bottom). Re-throws [ApiException]; state is untouched
+  /// on failure.
+  Future<void> saveOrder(List<Account> ordered) async {
+    final fresh = await _repo.reorder([for (final a in ordered) a.id]);
+    emit(state.copyWith(accounts: fresh));
   }
 }

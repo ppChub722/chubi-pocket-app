@@ -9,9 +9,10 @@ import 'project_common.dart';
 import 'project_tx_tiles.dart';
 
 /// "แดชบอร์ด" tab (§12b, default): totals, plan vs actual, members, who
-/// paid, top categories, the latest 3 rows → "ดูทั้งหมด". All computed on
-/// the client from the loaded rows (contract §6 will move the breakdowns
-/// server-side).
+/// paid, top categories, the latest 3 rows → "ดูทั้งหมด". "My position"
+/// comes from the BE summary (contract §6a); who-paid / categories are
+/// computed on the client from the loaded rows (the summary carries them
+/// too, as `members` / `by_category`).
 class ProjectDashboardTab extends StatelessWidget {
   const ProjectDashboardTab({
     required this.view,
@@ -104,6 +105,31 @@ class ProjectDashboardTab extends StatelessWidget {
                                   symbol: symbol),
                               moneyString(context, s.remaining ?? 0,
                                   symbol: symbol)),
+                    ),
+                  ],
+                  // Caller's standing, computed by the BE (contract §6a).
+                  if (s?.myNet != null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l.projectMyPosition(
+                                moneyString(context, s!.myPaid ?? 0,
+                                    symbol: symbol),
+                                moneyString(context, s.myShare ?? 0,
+                                    symbol: symbol)),
+                            style: textTheme.bodySmall,
+                          ),
+                        ),
+                        Text('${l.projectMyNet} ',
+                            style: textTheme.bodySmall),
+                        MoneyText(s.myNet!,
+                            tone: MoneyTone.signed,
+                            symbol: symbol,
+                            style: textTheme.labelLarge
+                                ?.copyWith(fontWeight: FontWeight.w700)),
+                      ],
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),

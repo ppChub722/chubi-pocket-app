@@ -30,7 +30,11 @@ class NotificationTile extends StatelessWidget {
 
   bool get _isRequest =>
       notification.type == NotificationType.contactLinkRequest ||
-      notification.type == NotificationType.accountInvite;
+      notification.type == NotificationType.accountInvite ||
+      // A split I haven't added to my debts yet (my auto-add is off) —
+      // accept = "add to my debts" (contract §5).
+      (notification.type == NotificationType.splitCreated &&
+          notification.payload['recipient_debt_id'] == null);
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +160,8 @@ class NotificationTile extends StatelessWidget {
           AppIcons.split,
         NotificationType.projectTxRecordedForYou ||
         NotificationType.projectTxChanged ||
-        NotificationType.projectInvite =>
+        NotificationType.projectInvite ||
+        NotificationType.projectAdded =>
           AppIcons.project,
         NotificationType.contactLinkRequest => AppIcons.link,
         NotificationType.accountInvite => AppIcons.bank,
@@ -173,6 +178,8 @@ class NotificationTile extends StatelessWidget {
         NotificationType.projectInvite => l.notifProjectInvite(
             actor, (n.payload['project_name'] as String?) ?? ''),
         NotificationType.contactLinkRequest => l.notifContactLink(actor),
+        NotificationType.projectAdded => l.notifProjectAdded(
+            actor, (n.payload['project_name'] as String?) ?? ''),
         NotificationType.accountInvite => l.notificationWalletInviteTitle(
             actor, (n.payload['account_name'] as String?) ?? ''),
         NotificationType.unknown => l.notifUnknown,

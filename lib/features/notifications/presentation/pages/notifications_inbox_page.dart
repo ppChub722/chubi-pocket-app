@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,8 @@ import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../contacts/data/contacts_repository.dart';
 import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
+import '../../../personal_debts/data/personal_debts_repository.dart';
+import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../../data/notifications_repository.dart';
 import '../../domain/notification.dart';
 import '../cubit/notifications_inbox_cubit.dart';
@@ -165,12 +169,21 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                     child: NotificationTile(
                       notification: n,
                       onTap: (notif) => _onTap(ctx, notif),
-                      onAccept: (id) => n.type == NotificationType.accountInvite
-                          ? _onAcceptWalletInvite(ctx, id)
-                          : _onAcceptLinkRequest(ctx, id),
-                      onReject: (id) => n.type == NotificationType.accountInvite
-                          ? _onRejectWalletInvite(ctx, id)
-                          : _onRejectLinkRequest(ctx, id),
+                      onAccept: (id) => switch (n.type) {
+                        NotificationType.accountInvite =>
+                          _onAcceptWalletInvite(ctx, id),
+                        NotificationType.splitCreated =>
+                          _onAcceptSplit(ctx, id),
+                        _ => _onAcceptLinkRequest(ctx, id),
+                      },
+                      onReject: (id) => switch (n.type) {
+                        NotificationType.accountInvite =>
+                          _onRejectWalletInvite(ctx, id),
+                        // Declining a split = just hide the notice.
+                        NotificationType.splitCreated =>
+                          ctx.read<NotificationsInboxCubit>().markDismissed(id),
+                        _ => _onRejectLinkRequest(ctx, id),
+                      },
                     ),
                   ));
                 }
@@ -222,6 +235,11 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       }
       return;
     }
+    if (n.type == NotificationType.splitCreated &&
+        n.payload['recipient_debt_id'] == null &&
+        n.actionedAt == null) {
+      return; // "add to my debts" buttons are the action
+    }
     // Default: informational types — mark read + follow deep link.
     if (n.isUnread) {
       ctx.read<NotificationsInboxCubit>().markRead(n.id);
@@ -261,6 +279,26 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     try {
       await repo.rejectLinkRequest(id);
       await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
+    } on ApiException catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+    }
+  }
+
+  /// "Add to my debts" on a split someone shared with me (contract §5 —
+  /// only offered when my auto-add is off). Creates my side of the debt,
+  /// then opens it.
+  Future<void> _onAcceptSplit(BuildContext ctx, String id) async {
+    final repo = ctx.read<PersonalDebtsRepository>();
+    final debtsCubit = ctx.read<PersonalDebtsCubit>();
+    final inboxCubit = ctx.read<NotificationsInboxCubit>();
+    final messenger = ScaffoldMessenger.of(ctx);
+    try {
+      final debt = await repo.acceptSplitRequest(id);
+      await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
+      unawaited(debtsCubit.load());
+      if (ctx.mounted) pushFromOverlay(ctx, '/personal-debts/${debt.id}');
     } on ApiException catch (e) {
       messenger
         ..hideCurrentSnackBar()

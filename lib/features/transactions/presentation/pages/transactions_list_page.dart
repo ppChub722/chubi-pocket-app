@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -14,12 +16,16 @@ import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/widgets/category_picker_sheet.dart';
+import '../../../tags/domain/tag.dart';
+import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../widgets/transaction_tile.dart';
 
-enum _Range { week, month, year, all }
+/// [custom] = one specific month ([_TransactionsListPageState._month]),
+/// set when opened from the dashboard.
+enum _Range { week, month, year, all, custom }
 
 /// Wallet filter: everything, floating rows only, or one wallet.
 sealed class _WalletFilter {
@@ -39,17 +45,31 @@ class _OneWallet extends _WalletFilter {
   final Account account;
 }
 
-/// `/transactions` tab root (§9). Top bar comes from the shell. One
-/// scrolling row of dropdown chips — [ประเภท▾][ช่วงเวลา▾][กระเป๋า▾]
-/// [หมวด▾] — plus sort; rows grouped under "วันนี้ · −฿540" day headers.
-/// Search is waiting on the API (`q`, contract §1).
+/// `/transactions` tab root (§9). Top bar comes from the shell. A search
+/// box (note / category / wallet, contract §1), then one scrolling row of
+/// dropdown chips — [ประเภท▾][ช่วงเวลา▾][กระเป๋า▾][หมวด▾][แท็ก▾] — plus
+/// sort; rows grouped under "วันนี้ · −฿540" day headers.
 ///
 /// [initialAccountId] pre-filters to one wallet ("ดูทั้งหมด ›" from a
-/// wallet).
+/// wallet). [initialCategoryId] / [initialUncategorized] + [initialMonth]
+/// open a dashboard slice ("เงินไปไหน" → one category in one month).
+/// Picking a category always includes its subcategories.
 class TransactionsListPage extends StatefulWidget {
-  const TransactionsListPage({this.initialAccountId, this.title, super.key});
+  const TransactionsListPage({
+    this.initialAccountId,
+    this.initialCategoryId,
+    this.initialUncategorized = false,
+    this.initialMonth,
+    this.title,
+    super.key,
+  });
 
   final String? initialAccountId;
+  final String? initialCategoryId;
+  final bool initialUncategorized;
+
+  /// Any day in the month to show; null = the default range.
+  final DateTime? initialMonth;
 
   /// Set when pushed outside the tab root (a wallet's "ดูทั้งหมด") — the
   /// page then draws its own top bar.
@@ -64,8 +84,16 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
   _Range _range = _Range.month;
   _WalletFilter _wallet = const _AnyWallet();
   Category? _category;
+
+  /// "No category" filter — mutually exclusive with [_category].
+  bool _uncategorized = false;
+  Tag? _tag;
+  String _q = '';
+  Timer? _debounce;
+  DateTime? _month;
   String _sort = 'date_desc';
   final _scroll = ScrollController();
+  final _search = TextEditingController();
 
   @override
   void initState() {
@@ -91,14 +119,65 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
           _range = _Range.all;
         }
       }
+      final catId = widget.initialCategoryId;
+      if (catId != null) {
+        final c = context.read<CategoriesCubit>().byId(catId);
+        if (c != null) {
+          _category = c;
+          _type = c.type == CategoryType.income
+              ? TransactionType.income
+              : TransactionType.expense;
+        }
+      }
+      if (widget.initialUncategorized) {
+        _uncategorized = true;
+        _type = TransactionType.expense;
+      }
+      final m = widget.initialMonth;
+      if (m != null) {
+        _month = DateTime(m.year, m.month);
+        _range = _Range.custom;
+      }
+      context.read<TagsCubit>().loadIfNeeded();
+      setState(() {});
       _refetch();
     });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _scroll.dispose();
+    _search.dispose();
     super.dispose();
+  }
+
+  void _onSearch(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted || v.trim() == _q) return;
+      _set(() => _q = v.trim());
+    });
+  }
+
+  Future<void> _pickTag() async {
+    final l = AppLocalizations.of(context)!;
+    final tags = context.read<TagsCubit>().state.tags;
+    final picked = await showOptionSheet<String>(
+      context,
+      title: l.transactionsFilterTag,
+      selected: _tag?.id ?? '*',
+      options: [
+        SheetOption(value: '*', label: l.transactionsListFilterAll),
+        for (final t in tags) SheetOption(value: t.id, label: t.name),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    _set(
+      () => _tag = picked == '*'
+          ? null
+          : tags.where((t) => t.id == picked).firstOrNull,
+    );
   }
 
   static String _ymd(DateTime d) =>
@@ -109,32 +188,42 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
     final today = DateTime(now.year, now.month, now.day);
     return switch (_range) {
       _Range.week => (
-          from: _ymd(today.subtract(Duration(days: today.weekday - 1))),
-          to: _ymd(today.add(Duration(days: 7 - today.weekday))),
-        ),
+        from: _ymd(today.subtract(Duration(days: today.weekday - 1))),
+        to: _ymd(today.add(Duration(days: 7 - today.weekday))),
+      ),
       _Range.month => (
-          from: _ymd(DateTime(now.year, now.month, 1)),
-          to: _ymd(DateTime(now.year, now.month + 1, 0)),
-        ),
+        from: _ymd(DateTime(now.year, now.month, 1)),
+        to: _ymd(DateTime(now.year, now.month + 1, 0)),
+      ),
       _Range.year => (
-          from: _ymd(DateTime(now.year, 1, 1)),
-          to: _ymd(DateTime(now.year, 12, 31)),
-        ),
+        from: _ymd(DateTime(now.year, 1, 1)),
+        to: _ymd(DateTime(now.year, 12, 31)),
+      ),
       _Range.all => (from: null, to: null),
+      _Range.custom => (
+        from: _ymd(_month ?? DateTime(now.year, now.month)),
+        to: _ymd(DateTime((_month ?? now).year, (_month ?? now).month + 1, 0)),
+      ),
     };
   }
 
   Future<void> _refetch() async {
     final b = _bounds();
     await context.read<TransactionsCubit>().load(
-          type: _type,
-          categoryId: _category?.id,
-          accountId: _wallet is _OneWallet ? (_wallet as _OneWallet).account.id : null,
-          noWallet: _wallet is _NoWallet,
-          from: b.from,
-          to: b.to,
-          sort: _sort,
-        );
+      type: _type,
+      categoryId: _category?.id,
+      includeChildren: _category != null,
+      uncategorized: _uncategorized,
+      accountId: _wallet is _OneWallet
+          ? (_wallet as _OneWallet).account.id
+          : null,
+      noWallet: _wallet is _NoWallet,
+      q: _q,
+      tagIds: [?_tag?.id],
+      from: b.from,
+      to: b.to,
+      sort: _sort,
+    );
   }
 
   void _set(VoidCallback change) {
@@ -146,14 +235,24 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
       _type != null ||
       _range != _Range.month ||
       _wallet is! _AnyWallet ||
-      _category != null;
+      _category != null ||
+      _uncategorized ||
+      _tag != null ||
+      _q.isNotEmpty;
 
-  void _clearFilters() => _set(() {
-        _type = null;
-        _range = _Range.month;
-        _wallet = const _AnyWallet();
-        _category = null;
-      });
+  void _clearFilters() {
+    _search.clear();
+    _set(() {
+      _type = null;
+      _range = _Range.month;
+      _month = null;
+      _wallet = const _AnyWallet();
+      _category = null;
+      _uncategorized = false;
+      _tag = null;
+      _q = '';
+    });
+  }
 
   Future<void> _pickWallet() async {
     final l = AppLocalizations.of(context)!;
@@ -170,19 +269,22 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
       options: [
         SheetOption(value: '*', label: l.transactionsListFilterAll),
         SheetOption(
-            value: '-',
-            label: l.transactionFormAccountNone,
-            leading: const Icon(AppIcons.noWallet)),
+          value: '-',
+          label: l.transactionFormAccountNone,
+          leading: const Icon(AppIcons.noWallet),
+        ),
         for (final a in accounts)
           SheetOption(value: a.id, label: a.name, leading: Icon(a.type.icon)),
       ],
     );
     if (picked == null || !mounted) return;
-    _set(() => _wallet = switch (picked) {
-          '*' => const _AnyWallet(),
-          '-' => const _NoWallet(),
-          _ => _OneWallet(accounts.firstWhere((a) => a.id == picked)),
-        });
+    _set(
+      () => _wallet = switch (picked) {
+        '*' => const _AnyWallet(),
+        '-' => const _NoWallet(),
+        _ => _OneWallet(accounts.firstWhere((a) => a.id == picked)),
+      },
+    );
   }
 
   Future<void> _pickCategory() async {
@@ -195,7 +297,10 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
       selected: _category,
     );
     if (!mounted || r == null) return;
-    _set(() => _category = r is CategoryPickerSelected ? r.category : null);
+    _set(() {
+      _category = r is CategoryPickerSelected ? r.category : null;
+      _uncategorized = false;
+    });
   }
 
   @override
@@ -212,6 +317,11 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
       _Range.month: l.transactionsRangeMonth,
       _Range.year: l.transactionsRangeYear,
       _Range.all: l.transactionsRangeAll,
+      if (_month != null)
+        _Range.custom: DateFormatter.monthYear(
+          _month!,
+          locale: Localizations.localeOf(context).toLanguageTag(),
+        ),
     };
     final categoryEnabled =
         _type == TransactionType.expense || _type == TransactionType.income;
@@ -227,6 +337,7 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
           : AppTopBar(title: widget.title, showBack: true),
       body: Column(
         children: [
+          AppSearchBar(controller: _search, onChanged: _onSearch),
           FilterBar(
             chips: [
               OptionMenuAnchor<TransactionType?>(
@@ -235,6 +346,7 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
                   _type = t;
                   // A category belongs to one type.
                   _category = null;
+                  _uncategorized = false;
                 }),
                 options: [
                   for (final e in typeLabels.entries)
@@ -268,9 +380,16 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
               if (categoryEnabled)
                 FilterDropdownChip(
                   label: l.transactionsFilterCategory,
-                  valueLabel: _category?.name,
+                  valueLabel: _uncategorized
+                      ? l.homeUncategorized
+                      : _category?.name,
                   onTap: _pickCategory,
                 ),
+              FilterDropdownChip(
+                label: l.transactionsFilterTag,
+                valueLabel: _tag?.name,
+                onTap: _pickTag,
+              ),
             ],
             trailing: SortChip<String>(
               selected: _sort,
@@ -288,9 +407,11 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
               builder: (context, state) {
                 if (state.status == TransactionsStatus.loading &&
                     state.transactions.isEmpty) {
-                  return ListView(children: [
-                    for (var i = 0; i < 8; i++) const SkeletonListTile(),
-                  ]);
+                  return ListView(
+                    children: [
+                      for (var i = 0; i < 8; i++) const SkeletonListTile(),
+                    ],
+                  );
                 }
                 if (state.status == TransactionsStatus.error &&
                     state.transactions.isEmpty) {
@@ -373,30 +494,43 @@ class _DayGroupedList extends StatelessWidget {
         final net = e.value
             .where((t) => t.type != TransactionType.transfer)
             .fold<double>(0, (a, t) => a + t.signedAmount);
-        children.add(DateGroupHeader(
-          label: d == null
-              ? e.key
-              : DateFormatter.friendly(d,
-                  today: l.commonToday,
-                  yesterday: l.commonYesterday,
-                  locale: Localizations.localeOf(context).languageCode),
-          total: net,
-        ));
+        children.add(
+          DateGroupHeader(
+            label: d == null
+                ? e.key
+                : DateFormatter.friendly(
+                    d,
+                    today: l.commonToday,
+                    yesterday: l.commonYesterday,
+                    locale: Localizations.localeOf(context).languageCode,
+                  ),
+            total: net,
+          ),
+        );
         for (final t in e.value) {
-          children.add(TransactionTile(transaction: t, showAccount: !hideAccount));
+          children.add(
+            TransactionTile(transaction: t, showAccount: !hideAccount),
+          );
         }
       }
     } else {
       for (final t in transactions) {
-        children.add(TransactionTile(
-            transaction: t, showAccount: !hideAccount, showDate: true));
+        children.add(
+          TransactionTile(
+            transaction: t,
+            showAccount: !hideAccount,
+            showDate: true,
+          ),
+        );
       }
     }
     if (loadingMore) {
-      children.add(const Padding(
-        padding: EdgeInsets.all(AppSpacing.lg),
-        child: Center(child: CircularProgressIndicator()),
-      ));
+      children.add(
+        const Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
     }
     return ListView(
       controller: controller,

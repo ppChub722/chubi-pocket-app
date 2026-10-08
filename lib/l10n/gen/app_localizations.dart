@@ -500,18 +500,6 @@ abstract class AppLocalizations {
   /// **'Already registered'**
   String get authRegisterEmailTakenInline;
 
-  /// No description provided for @homeEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing to show yet'**
-  String get homeEmptyTitle;
-
-  /// No description provided for @homeEmptyMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Add a wallet from the Wallets tab, then tap the + button to log your first transaction.'**
-  String get homeEmptyMessage;
-
   /// No description provided for @homeNetWorthLabel.
   ///
   /// In en, this message translates to:
@@ -535,12 +523,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View all'**
   String get homeRecentViewAll;
-
-  /// No description provided for @homeSettingsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get homeSettingsTooltip;
 
   /// No description provided for @navDashboard.
   ///
@@ -625,6 +607,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add wallet'**
   String get accountsAddNew;
+
+  /// No description provided for @accountsReorderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag ≡ to reorder. This order is yours only — it never moves wallets for other members.'**
+  String get accountsReorderHint;
 
   /// No description provided for @accountTypeCash.
   ///
@@ -2594,6 +2582,42 @@ abstract class AppLocalizations {
   /// **'Member'**
   String get projectRoleMember;
 
+  /// No description provided for @projectRoleViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'View only'**
+  String get projectRoleViewer;
+
+  /// No description provided for @projectMemberMakeViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Make view-only'**
+  String get projectMemberMakeViewer;
+
+  /// No description provided for @projectMemberMakeContributor.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow editing (member)'**
+  String get projectMemberMakeContributor;
+
+  /// No description provided for @projectMemberRoleChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Access updated'**
+  String get projectMemberRoleChanged;
+
+  /// No description provided for @projectMyPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Me: paid {paid} · my share {share}'**
+  String projectMyPosition(String paid, String share);
+
+  /// No description provided for @projectMyNet.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get projectMyNet;
+
   /// No description provided for @projectMemberLinked.
   ///
   /// In en, this message translates to:
@@ -3086,11 +3110,23 @@ abstract class AppLocalizations {
   /// **'Automatic actions'**
   String get notifSettingsAuto;
 
-  /// No description provided for @notifSettingsAutoPending.
+  /// No description provided for @notifSettingsAutoHint.
   ///
   /// In en, this message translates to:
-  /// **'Saved now; starts working once the server supports it'**
-  String get notifSettingsAutoPending;
+  /// **'Applies to new activity right away. With auto-add off, the notification gets an \"add to my debts\" button. No receiving wallet = settle my side without a wallet entry.'**
+  String get notifSettingsAutoHint;
+
+  /// No description provided for @notifTypeProjectAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to a project'**
+  String get notifTypeProjectAdded;
+
+  /// No description provided for @notifProjectAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{actor} added you to {project}'**
+  String notifProjectAdded(String actor, String project);
 
   /// No description provided for @notifAutoNotifySplit.
   ///
@@ -3140,35 +3176,11 @@ abstract class AppLocalizations {
   /// **'Username cannot be changed'**
   String get profileUsernameLocked;
 
-  /// No description provided for @homeUpcoming.
-  ///
-  /// In en, this message translates to:
-  /// **'Coming up (7 days)'**
-  String get homeUpcoming;
-
   /// No description provided for @homeUpcomingInDays.
   ///
   /// In en, this message translates to:
   /// **'{days, plural, =0{Today} =1{Tomorrow} other{In {days} days}}'**
   String homeUpcomingInDays(int days);
-
-  /// No description provided for @homeByCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Spending by category (this month)'**
-  String get homeByCategory;
-
-  /// No description provided for @homeBudgetLine.
-  ///
-  /// In en, this message translates to:
-  /// **'{spent} of {amount}'**
-  String homeBudgetLine(String spent, String amount);
-
-  /// No description provided for @homeGoalLine.
-  ///
-  /// In en, this message translates to:
-  /// **'{current} of {target}'**
-  String homeGoalLine(String current, String target);
 
   /// No description provided for @homeNoTxYet.
   ///
@@ -3181,6 +3193,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add your first transaction'**
   String get homeAddFirstTx;
+
+  /// No description provided for @homeAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Assets'**
+  String get homeAssets;
+
+  /// No description provided for @homeLiabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Liabilities'**
+  String get homeLiabilities;
+
+  /// No description provided for @homeIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get homeIncome;
+
+  /// No description provided for @homeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get homeExpense;
+
+  /// No description provided for @homeLeftOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Left over'**
+  String get homeLeftOver;
+
+  /// No description provided for @homeVsPrevMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending vs last month'**
+  String get homeVsPrevMonth;
+
+  /// No description provided for @homeComingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get homeComingUp;
+
+  /// No description provided for @homeComingUpWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String homeComingUpWindow(int days);
+
+  /// No description provided for @homeOverdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day late} other{{days} days late}}'**
+  String homeOverdueDays(int days);
+
+  /// No description provided for @homeCardDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Card payment'**
+  String get homeCardDue;
+
+  /// No description provided for @homeWhereMoneyWent.
+  ///
+  /// In en, this message translates to:
+  /// **'Where it went'**
+  String get homeWhereMoneyWent;
+
+  /// No description provided for @homeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get homeOther;
+
+  /// No description provided for @homeUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get homeUncategorized;
+
+  /// No description provided for @homeNoExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'No spending this month yet'**
+  String get homeNoExpense;
+
+  /// No description provided for @homeTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Income vs expense, 6 months'**
+  String get homeTrend;
+
+  /// No description provided for @homeBudgetsUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% used'**
+  String homeBudgetsUsed(String pct);
+
+  /// No description provided for @homeBudgetsOver.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 over budget} other{{count} over budget}}'**
+  String homeBudgetsOver(int count);
+
+  /// No description provided for @homeBudgetsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No budgets yet'**
+  String get homeBudgetsNone;
+
+  /// No description provided for @homeDebtsOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 open} other{{count} open}}'**
+  String homeDebtsOpen(int count);
+
+  /// No description provided for @homeDebtsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'All settled'**
+  String get homeDebtsNone;
+
+  /// No description provided for @homeGoalsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 goal} other{{count} goals}}'**
+  String homeGoalsCount(int count);
+
+  /// No description provided for @homeGoalsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No goals yet'**
+  String get homeGoalsNone;
+
+  /// No description provided for @homeLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the dashboard'**
+  String get homeLoadError;
+
+  /// No description provided for @homePrevMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get homePrevMonth;
+
+  /// No description provided for @homeNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get homeNextMonth;
 
   /// No description provided for @transactionsFilterType.
   ///
@@ -3205,6 +3367,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Category'**
   String get transactionsFilterCategory;
+
+  /// No description provided for @transactionsFilterTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag'**
+  String get transactionsFilterTag;
 
   /// No description provided for @transactionsSortNewest.
   ///
@@ -3655,6 +3823,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recurring & upcoming bills'**
   String get moreScheduledDesc;
+
+  /// No description provided for @moreLiveCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String moreLiveCount(int count);
+
+  /// No description provided for @moreLiveDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed to you {owed} · you owe {owe}'**
+  String moreLiveDebts(String owed, String owe);
+
+  /// No description provided for @moreLiveDueSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 due in {days} days} other{{count} due in {days} days}}'**
+  String moreLiveDueSoon(int count, int days);
 
   /// No description provided for @moreComingInPhase1a.
   ///

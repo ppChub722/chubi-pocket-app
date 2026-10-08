@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +13,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
+import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../domain/scheduled_enums.dart';
 import '../../domain/scheduled_history.dart';
 import '../../domain/scheduled_transaction.dart';
@@ -448,6 +451,9 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
     setState(() => _busy = true);
     try {
       final result = await cubit.generateNow(widget.entry.id);
+      // The generated transaction moved a wallet — refresh balances (the
+      // dashboard reloads off this too).
+      if (mounted) unawaited(context.read<AccountsCubit>().load());
       widget.onGenerated();
       if (!mounted) return;
       messenger

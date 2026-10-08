@@ -214,13 +214,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get authRegisterEmailTakenInline => 'ถูกใช้แล้ว';
 
   @override
-  String get homeEmptyTitle => 'ยังไม่มีรายการ';
-
-  @override
-  String get homeEmptyMessage =>
-      'เพิ่มกระเป๋าจากแท็บกระเป๋า แล้วกดปุ่ม + เพื่อเริ่มบันทึกรายการ';
-
-  @override
   String get homeNetWorthLabel => 'ทรัพย์สินสุทธิ';
 
   @override
@@ -239,9 +232,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get homeRecentViewAll => 'ดูทั้งหมด';
-
-  @override
-  String get homeSettingsTooltip => 'การตั้งค่า';
 
   @override
   String get navDashboard => 'แดชบอร์ด';
@@ -284,6 +274,10 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountsAddNew => 'เพิ่มกระเป๋า';
+
+  @override
+  String get accountsReorderHint =>
+      'ลากที่ ≡ เพื่อจัดลำดับ ลำดับนี้เป็นของคุณคนเดียว ไม่กระทบสมาชิกกระเป๋าแชร์';
 
   @override
   String get accountTypeCash => 'เงินสด';
@@ -1375,6 +1369,26 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectRoleMember => 'สมาชิก';
 
   @override
+  String get projectRoleViewer => 'ดูอย่างเดียว';
+
+  @override
+  String get projectMemberMakeViewer => 'ให้ดูได้อย่างเดียว';
+
+  @override
+  String get projectMemberMakeContributor => 'ให้แก้ไขได้ (สมาชิก)';
+
+  @override
+  String get projectMemberRoleChanged => 'เปลี่ยนสิทธิ์แล้ว';
+
+  @override
+  String projectMyPosition(String paid, String share) {
+    return 'ของฉัน: จ่ายไป $paid · ส่วนของฉัน $share';
+  }
+
+  @override
+  String get projectMyNet => 'สุทธิ';
+
+  @override
   String get projectMemberLinked => 'มีบัญชีในแอป';
 
   @override
@@ -1657,8 +1671,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifSettingsAuto => 'การทำงานอัตโนมัติ';
 
   @override
-  String get notifSettingsAutoPending =>
-      'บันทึกได้แล้ว · จะเริ่มทำงานเมื่อเซิร์ฟเวอร์รองรับ';
+  String get notifSettingsAutoHint =>
+      'มีผลทันทีกับรายการใหม่ · ปิด \"เพิ่มเข้าหนี้อัตโนมัติ\" แล้ว แจ้งเตือนจะมีปุ่มให้เพิ่มเอง · ไม่เลือกกระเป๋ารับเงิน = ปิดหนี้ฝั่งเราโดยไม่บันทึกเข้ากระเป๋า';
+
+  @override
+  String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าโปรเจกต์';
+
+  @override
+  String notifProjectAdded(String actor, String project) {
+    return '$actor เพิ่มคุณเข้าโปรเจกต์ $project';
+  }
 
   @override
   String get notifAutoNotifySplit =>
@@ -1687,9 +1709,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get profileUsernameLocked => 'เปลี่ยนชื่อผู้ใช้ไม่ได้';
 
   @override
-  String get homeUpcoming => 'ที่จะถึงใน 7 วัน';
-
-  @override
   String homeUpcomingInDays(int days) {
     String _temp0 = intl.Intl.pluralLogic(
       days,
@@ -1702,23 +1721,118 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get homeByCategory => 'ใช้จ่ายตามหมวด (เดือนนี้)';
-
-  @override
-  String homeBudgetLine(String spent, String amount) {
-    return '$spent จาก $amount';
-  }
-
-  @override
-  String homeGoalLine(String current, String target) {
-    return '$current จาก $target';
-  }
-
-  @override
   String get homeNoTxYet => 'ยังไม่มีรายการ';
 
   @override
   String get homeAddFirstTx => 'เพิ่มรายการแรก';
+
+  @override
+  String get homeAssets => 'ทรัพย์สิน';
+
+  @override
+  String get homeLiabilities => 'หนี้สิน';
+
+  @override
+  String get homeIncome => 'รายรับ';
+
+  @override
+  String get homeExpense => 'รายจ่าย';
+
+  @override
+  String get homeLeftOver => 'คงเหลือ';
+
+  @override
+  String get homeVsPrevMonth => 'รายจ่ายเทียบเดือนก่อน';
+
+  @override
+  String get homeComingUp => 'เร็วๆ นี้';
+
+  @override
+  String homeComingUpWindow(int days) {
+    return '$days วัน';
+  }
+
+  @override
+  String homeOverdueDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'เลย $days วัน',
+      one: 'เลย 1 วัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeCardDue => 'ชำระบัตร';
+
+  @override
+  String get homeWhereMoneyWent => 'เงินไปไหน';
+
+  @override
+  String get homeOther => 'อื่นๆ';
+
+  @override
+  String get homeUncategorized => 'ไม่มีหมวด';
+
+  @override
+  String get homeNoExpense => 'เดือนนี้ยังไม่มีรายจ่าย';
+
+  @override
+  String get homeTrend => 'รับ vs จ่าย 6 เดือน';
+
+  @override
+  String homeBudgetsUsed(String pct) {
+    return 'ใช้ไป $pct%';
+  }
+
+  @override
+  String homeBudgetsOver(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'เกินงบ $count หมวด',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeBudgetsNone => 'ยังไม่ตั้งงบ';
+
+  @override
+  String homeDebtsOpen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ค้าง $count รายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDebtsNone => 'ไม่มีหนี้ค้าง';
+
+  @override
+  String homeGoalsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count เป้าหมาย',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeGoalsNone => 'ยังไม่มีเป้า';
+
+  @override
+  String get homeLoadError => 'โหลดแดชบอร์ดไม่สำเร็จ';
+
+  @override
+  String get homePrevMonth => 'เดือนก่อน';
+
+  @override
+  String get homeNextMonth => 'เดือนถัดไป';
 
   @override
   String get transactionsFilterType => 'ประเภท';
@@ -1731,6 +1845,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transactionsFilterCategory => 'หมวด';
+
+  @override
+  String get transactionsFilterTag => 'แท็ก';
 
   @override
   String get transactionsSortNewest => 'ล่าสุด';
@@ -1964,6 +2081,31 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get moreScheduledDesc => 'บิลประจำและที่จะถึง';
+
+  @override
+  String moreLiveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count รายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String moreLiveDebts(String owed, String owe) {
+    return 'เขาติด $owed · คุณติด $owe';
+  }
+
+  @override
+  String moreLiveDueSoon(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ถึงกำหนด $count รายการใน $days วัน',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get moreComingInPhase1a => 'จะมาในเฟส 1a';

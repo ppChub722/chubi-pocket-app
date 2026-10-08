@@ -93,6 +93,16 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
             subtitle: Text(m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc),
           ),
           const Divider(height: 1),
+          // Viewer = read-only (contract §6b); toggles back to member.
+          ListTile(
+            leading: Icon(m.role == MemberRole.viewer
+                ? Icons.edit_outlined
+                : Icons.visibility_outlined),
+            title: Text(m.role == MemberRole.viewer
+                ? l.projectMemberMakeContributor
+                : l.projectMemberMakeViewer),
+            onTap: () => Navigator.pop(sheet, 'role'),
+          ),
           ListTile(
             leading: const Icon(AppIcons.member),
             title: Text(l.projectMemberTransfer),
@@ -113,7 +123,16 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     );
     if (!mounted) return;
     final repo = context.read<ProjectsRepository>();
-    if (action == 'remove') {
+    if (action == 'role') {
+      await _run(
+          () => repo.updateMemberRole(
+              widget.projectId,
+              m.id,
+              m.role == MemberRole.viewer
+                  ? MemberRole.contributor
+                  : MemberRole.viewer),
+          done: l.projectMemberRoleChanged);
+    } else if (action == 'remove') {
       final ok = await showConfirmDialog(
         context,
         title: l.projectMemberRemoveTitle(m.displayName),
@@ -208,7 +227,11 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                           ? l.projectMemberLinked
                           : l.projectMemberAdHoc),
                       trailing: StatusPill(
-                        label: m.isOwner ? l.projectRoleOwner : l.projectRoleMember,
+                        label: m.isOwner
+                            ? l.projectRoleOwner
+                            : m.role == MemberRole.viewer
+                                ? l.projectRoleViewer
+                                : l.projectRoleMember,
                         tone: m.isOwner ? Tone.primary : Tone.neutral,
                         dense: true,
                       ),

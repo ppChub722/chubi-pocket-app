@@ -215,13 +215,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authRegisterEmailTakenInline => 'Already registered';
 
   @override
-  String get homeEmptyTitle => 'Nothing to show yet';
-
-  @override
-  String get homeEmptyMessage =>
-      'Add a wallet from the Wallets tab, then tap the + button to log your first transaction.';
-
-  @override
   String get homeNetWorthLabel => 'Net worth';
 
   @override
@@ -240,9 +233,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeRecentViewAll => 'View all';
-
-  @override
-  String get homeSettingsTooltip => 'Settings';
 
   @override
   String get navDashboard => 'Dashboard';
@@ -287,6 +277,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountsAddNew => 'Add wallet';
+
+  @override
+  String get accountsReorderHint =>
+      'Drag ≡ to reorder. This order is yours only — it never moves wallets for other members.';
 
   @override
   String get accountTypeCash => 'Cash';
@@ -1401,6 +1395,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectRoleMember => 'Member';
 
   @override
+  String get projectRoleViewer => 'View only';
+
+  @override
+  String get projectMemberMakeViewer => 'Make view-only';
+
+  @override
+  String get projectMemberMakeContributor => 'Allow editing (member)';
+
+  @override
+  String get projectMemberRoleChanged => 'Access updated';
+
+  @override
+  String projectMyPosition(String paid, String share) {
+    return 'Me: paid $paid · my share $share';
+  }
+
+  @override
+  String get projectMyNet => 'Net';
+
+  @override
   String get projectMemberLinked => 'Has an app account';
 
   @override
@@ -1684,8 +1698,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifSettingsAuto => 'Automatic actions';
 
   @override
-  String get notifSettingsAutoPending =>
-      'Saved now; starts working once the server supports it';
+  String get notifSettingsAutoHint =>
+      'Applies to new activity right away. With auto-add off, the notification gets an \"add to my debts\" button. No receiving wallet = settle my side without a wallet entry.';
+
+  @override
+  String get notifTypeProjectAdded => 'Added to a project';
+
+  @override
+  String notifProjectAdded(String actor, String project) {
+    return '$actor added you to $project';
+  }
 
   @override
   String get notifAutoNotifySplit => 'Tell linked contacts when I split a bill';
@@ -1713,9 +1735,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileUsernameLocked => 'Username cannot be changed';
 
   @override
-  String get homeUpcoming => 'Coming up (7 days)';
-
-  @override
   String homeUpcomingInDays(int days) {
     String _temp0 = intl.Intl.pluralLogic(
       days,
@@ -1728,23 +1747,121 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get homeByCategory => 'Spending by category (this month)';
-
-  @override
-  String homeBudgetLine(String spent, String amount) {
-    return '$spent of $amount';
-  }
-
-  @override
-  String homeGoalLine(String current, String target) {
-    return '$current of $target';
-  }
-
-  @override
   String get homeNoTxYet => 'No transactions yet';
 
   @override
   String get homeAddFirstTx => 'Add your first transaction';
+
+  @override
+  String get homeAssets => 'Assets';
+
+  @override
+  String get homeLiabilities => 'Liabilities';
+
+  @override
+  String get homeIncome => 'Income';
+
+  @override
+  String get homeExpense => 'Expense';
+
+  @override
+  String get homeLeftOver => 'Left over';
+
+  @override
+  String get homeVsPrevMonth => 'Spending vs last month';
+
+  @override
+  String get homeComingUp => 'Coming up';
+
+  @override
+  String homeComingUpWindow(int days) {
+    return '$days days';
+  }
+
+  @override
+  String homeOverdueDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days late',
+      one: '1 day late',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeCardDue => 'Card payment';
+
+  @override
+  String get homeWhereMoneyWent => 'Where it went';
+
+  @override
+  String get homeOther => 'Other';
+
+  @override
+  String get homeUncategorized => 'No category';
+
+  @override
+  String get homeNoExpense => 'No spending this month yet';
+
+  @override
+  String get homeTrend => 'Income vs expense, 6 months';
+
+  @override
+  String homeBudgetsUsed(String pct) {
+    return '$pct% used';
+  }
+
+  @override
+  String homeBudgetsOver(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count over budget',
+      one: '1 over budget',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeBudgetsNone => 'No budgets yet';
+
+  @override
+  String homeDebtsOpen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count open',
+      one: '1 open',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDebtsNone => 'All settled';
+
+  @override
+  String homeGoalsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count goals',
+      one: '1 goal',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeGoalsNone => 'No goals yet';
+
+  @override
+  String get homeLoadError => 'Couldn\'t load the dashboard';
+
+  @override
+  String get homePrevMonth => 'Previous month';
+
+  @override
+  String get homeNextMonth => 'Next month';
 
   @override
   String get transactionsFilterType => 'Type';
@@ -1757,6 +1874,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionsFilterCategory => 'Category';
+
+  @override
+  String get transactionsFilterTag => 'Tag';
 
   @override
   String get transactionsSortNewest => 'Newest';
@@ -1993,6 +2113,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreScheduledDesc => 'Recurring & upcoming bills';
+
+  @override
+  String moreLiveCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String moreLiveDebts(String owed, String owe) {
+    return 'Owed to you $owed · you owe $owe';
+  }
+
+  @override
+  String moreLiveDueSoon(int count, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count due in $days days',
+      one: '1 due in $days days',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get moreComingInPhase1a => 'Ships in Phase 1a';

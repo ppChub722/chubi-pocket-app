@@ -74,6 +74,19 @@ class PersonalDebtsRepository {
     }
   }
 
+
+  /// `POST /v1/personal-debts/split-requests/:notification_id/accept` —
+  /// "add to my debts" on a split someone shared with me (contract §5).
+  Future<PersonalDebt> acceptSplitRequest(String notificationId) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/personal-debts/split-requests/$notificationId/accept',
+      );
+      return PersonalDebt.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
   Future<PersonalDebt> create({
     required DebtDirection direction,
     required String counterpartyPersonName,

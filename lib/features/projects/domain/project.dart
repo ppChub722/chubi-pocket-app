@@ -353,6 +353,9 @@ class ProjectSummary extends Equatable {
     this.plannedAmount,
     this.spentNet,
     this.remaining,
+    this.myPaid,
+    this.myShare,
+    this.myNet,
   });
 
   final String projectId;
@@ -369,6 +372,12 @@ class ProjectSummary extends Equatable {
   final double? spentNet;
   final double? remaining;
 
+  /// Caller's standing (contract §6a, expense parents only): null when
+  /// the caller isn't a member. net > 0 = the others owe me.
+  final double? myPaid;
+  final double? myShare;
+  final double? myNet;
+
   bool get hasPlan => plannedAmount != null;
   bool get isOverPlan => (remaining ?? 0) < 0;
 
@@ -382,6 +391,9 @@ class ProjectSummary extends Equatable {
       plannedAmount: (json['planned_amount'] as num?)?.toDouble(),
       spentNet: (json['spent_net'] as num?)?.toDouble(),
       remaining: (json['remaining'] as num?)?.toDouble(),
+      myPaid: (json['my_position']?['paid'] as num?)?.toDouble(),
+      myShare: (json['my_position']?['share'] as num?)?.toDouble(),
+      myNet: (json['my_position']?['net'] as num?)?.toDouble(),
     );
   }
 
@@ -395,5 +407,8 @@ class ProjectSummary extends Equatable {
         plannedAmount,
         spentNet,
         remaining,
+        myPaid,
+        myShare,
+        myNet,
       ];
 }
