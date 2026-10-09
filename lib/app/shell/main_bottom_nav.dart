@@ -26,13 +26,12 @@ class MainBottomNav extends StatelessWidget {
     super.key,
   });
 
-  /// Branch index of the active destination tab
-  /// (Dashboard=0, Transactions=1, Accounts=2). `+` and `More` are
-  /// actions, not branches, so they never drive this value.
+  /// Branch index of the active tab (Dashboard=0, Transactions=1,
+  /// Accounts=2). Any other tab (a เพิ่มเติม card, ⏳ 🔔 👤) lights no slot.
   final int currentIndex;
 
-  /// True on a "More"-menu page (contacts, categories, …): the More slot
-  /// lights up instead of the branch the page happens to be stacked on.
+  /// True only on the เพิ่มเติม hub itself — its cards' tabs don't light
+  /// it (owner 2026-10-09).
   final bool moreSelected;
 
   /// Called with the target branch index (0, 1, or 2).

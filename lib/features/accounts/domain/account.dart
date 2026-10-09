@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../shared/icon_maker/icon_code.dart';
+import 'account_identifier.dart';
 import 'account_type.dart';
 import 'wallet_member.dart';
 
@@ -24,6 +25,7 @@ class Account extends Equatable {
     this.members = const [],
     this.myReportScope,
     this.isShared = false,
+    this.identifiers = const [],
   });
 
   final String id;
@@ -46,6 +48,10 @@ class Account extends Equatable {
   final List<WalletMember> members;
   final WalletReportScope? myReportScope;
   final bool isShared;
+
+  /// Numbers this wallet is known by on bank slips (spec 15 §5) — the
+  /// owner edits them; slip import matches against them.
+  final List<AccountIdentifier> identifiers;
 
   /// Active members other than [selfUserId] — for the "other members"
   /// avatar stack on cards / detail (spec B2: exclude self).
@@ -74,6 +80,7 @@ class Account extends Equatable {
     List<WalletMember>? members,
     WalletReportScope? myReportScope,
     bool? isShared,
+    List<AccountIdentifier>? identifiers,
   }) {
     return Account(
       id: id ?? this.id,
@@ -91,6 +98,7 @@ class Account extends Equatable {
       members: members ?? this.members,
       myReportScope: myReportScope ?? this.myReportScope,
       isShared: isShared ?? this.isShared,
+      identifiers: identifiers ?? this.identifiers,
     );
   }
 
@@ -120,6 +128,12 @@ class Account extends Equatable {
           ? WalletReportScopeWire.parse(json['my_report_scope'] as String)
           : null,
       isShared: (json['is_shared'] as bool?) ?? false,
+      identifiers: json['identifiers'] is List
+          ? (json['identifiers'] as List)
+                .cast<Map<String, dynamic>>()
+                .map(AccountIdentifier.fromJson)
+                .toList()
+          : const [],
     );
   }
 
@@ -138,6 +152,8 @@ class Account extends Equatable {
         if (paymentDueDate != null) 'payment_due_date': paymentDueDate,
         if (minimumPayment != null) 'minimum_payment': minimumPayment,
       },
+      if (identifiers.isNotEmpty)
+        'identifiers': [for (final i in identifiers) i.toJson()],
     };
   }
 
@@ -155,6 +171,8 @@ class Account extends Equatable {
         'payment_due_date': paymentDueDate,
         'minimum_payment': minimumPayment,
       },
+      // The whole list — the BE replaces the stored one ([] clears it).
+      'identifiers': [for (final i in identifiers) i.toJson()],
     };
   }
 
@@ -173,6 +191,7 @@ class Account extends Equatable {
     paymentDueDate,
     minimumPayment,
     members,
+    identifiers,
     myReportScope,
     isShared,
   ];

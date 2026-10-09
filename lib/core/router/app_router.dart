@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/shell/main_shell.dart';
 import '../../app/shell/more_page.dart';
 import '../../app/shell/shell_chrome.dart';
+import '../../app/shell/tab_nav.dart';
 import '../../dev/dev_hub_screen.dart';
 import '../../dev/imports_lab_screen.dart';
 import '../../dev/logs_viewer_screen.dart';
@@ -67,24 +67,18 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 /// - When authenticated, visiting any `/auth/*` route redirects to `/`.
 /// - `/dev/*` is always accessible (debug hub).
 ///
-/// Top-level routing (see product/phase2/ux-overhaul-plan.md §2):
-/// - **Tab layer (shell)** — branch roots (`/`, `/transactions`,
-///   `/accounts`) + every feature page. Bottom nav + `+` FAB on every
-///   page (pages hide them in edit mode via ShellChrome). Each tab keeps
-///   its own stack; "More"-menu pages are pushed onto the current tab.
-/// - **Overlay layer (root navigator)** — settings, profile, password,
-///   notifications: a separate stack above the shell with no nav/FAB;
-///   back returns to the tab exactly where it was.
+/// Top-level routing (owner 2026-10-09 — every page group is its own tab):
+/// - **Shell** — one branch per [ShellTab], each with its own stack: the
+///   four bottom-nav tabs, the top bar's ⏳ / 🔔 / 👤 pages, and every
+///   เพิ่มเติม card. Bottom nav + `+` on every page (pages hide them in
+///   edit mode via ShellChrome). A link to another tab's page switches to
+///   that tab (`openPage`); back walks the tab history (`MainShell`).
+/// - Detail routes are siblings of their list, not children — opened from
+///   another tab, the page lands alone, so back returns to where the user
+///   came from instead of the list.
 /// - **Outside the shell** — `/auth/*` and `/dev/*`.
 GoRouter buildAppRouter(AuthCubit authCubit) {
-  final rootNavigatorKey = GlobalKey<NavigatorState>();
-  final dashboardNavigatorKey = GlobalKey<NavigatorState>();
-  final transactionsNavigatorKey = GlobalKey<NavigatorState>();
-  final accountsNavigatorKey = GlobalKey<NavigatorState>();
-  final moreNavigatorKey = GlobalKey<NavigatorState>();
-
   return GoRouter(
-    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     debugLogDiagnostics: kDebugMode,
     refreshListenable: _StreamToListenable(authCubit.stream),
@@ -121,413 +115,10 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
             },
           );
         },
+        // In [ShellTab] order — branch index == `ShellTab.index`.
         branches: [
-          StatefulShellBranch(
-            navigatorKey: dashboardNavigatorKey,
-            routes: [
-              GoRoute(
-                path: '/',
-                name: 'home',
-                builder: (context, state) => const HomePage(),
-                // Overlay-layer pages (root navigator) hang off `/` only
-                // for their path; More-menu features live in the เพิ่มเติม
-                // branch below.
-                routes: [
-                  // Dashboard drill-down ("เงินไปไหน" → one category in one
-                  // month). Stays in the dashboard stack with its own list
-                  // cubit so the transactions tab keeps its filters.
-                  // ?category=<id> | ?uncategorized=true, &month=YYYY-MM.
-                  GoRoute(
-                    path: 'browse',
-                    name: 'dashboard-browse',
-                    builder: (context, state) {
-                      final p = state.uri.queryParameters;
-                      final month = p['month'];
-                      return BlocProvider(
-                        create: (ctx) => TransactionsCubit(
-                          repository: ctx.read<TransactionsRepository>(),
-                        ),
-                        child: TransactionsListPage(
-                          initialCategoryId: p['category'],
-                          initialUncategorized: p['uncategorized'] == 'true',
-                          initialMonth: month == null
-                              ? null
-                              : DateTime.tryParse('$month-01'),
-                          title: p['title'] ?? '',
-                        ),
-                      );
-                    },
-                  ),
-                  // Pending transactions (รอยืนยัน) — overlay layer like the
-                  // inbox (no nav / FAB): drafts list + jot-several page.
-                  GoRoute(
-                    path: 'pending',
-                    name: 'pending',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const PendingPage(),
-                  ),
-                  GoRoute(
-                    path: 'pending/new',
-                    name: 'pending-new',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const PendingBatchAddPage(),
-                  ),
-                  // Notifications (Phase 1b.2) — overlay layer: pushed on
-                  // the root navigator ABOVE the shell (no bottom nav / FAB);
-                  // back returns to the tab exactly where it was. Links out
-                  // to tab pages go through `pushFromOverlay`.
-                  GoRoute(
-                    path: 'notifications',
-                    name: 'notifications',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const NotificationsInboxPage(),
-                  ),
-                  GoRoute(
-                    path: 'notifications/settings',
-                    name: 'notifications-settings',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) =>
-                        const NotificationSettingsPage(),
-                  ),
-                  // Settings — overlay layer (root navigator, above the
-                  // shell): its own stack, no bottom nav / FAB.
-                  GoRoute(
-                    path: 'settings',
-                    name: 'settings',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const SettingsPage(),
-                  ),
-                  GoRoute(
-                    path: 'settings/profile',
-                    name: 'settings-profile',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const EditProfilePage(),
-                  ),
-                  GoRoute(
-                    path: 'settings/password',
-                    name: 'settings-password',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) => const ChangePasswordPage(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            navigatorKey: transactionsNavigatorKey,
-            routes: [
-              GoRoute(
-                path: '/transactions',
-                name: 'transactions',
-                builder: (context, state) => const TransactionsListPage(),
-                // Create and edit both open the quick create sheet — no
-                // form routes.
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    name: 'transaction-detail',
-                    builder: (context, state) => TransactionDetailPage(
-                      transactionId: state.pathParameters['id']!,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            navigatorKey: accountsNavigatorKey,
-            routes: [
-              GoRoute(
-                path: '/accounts',
-                name: 'accounts',
-                builder: (context, state) => const AccountsPage(),
-                routes: [
-                  GoRoute(
-                    path: 'new',
-                    name: 'account-new',
-                    // One page for create / view / edit (EditModeMixin hides
-                    // the nav itself in edit mode).
-                    builder: (context, state) => const AccountDetailPage(),
-                  ),
-                  GoRoute(
-                    path: 'archived',
-                    name: 'accounts-archived',
-                    builder: (context, state) => const ArchivedAccountsPage(),
-                  ),
-                  GoRoute(
-                    path: ':id',
-                    name: 'account-detail',
-                    builder: (context, state) => AccountDetailPage(
-                      accountId: state.pathParameters['id']!,
-                    ),
-                  ),
-                  // A wallet's full history ("ดูทั้งหมด ›") — stays in the
-                  // wallets stack, with its own list cubit so the
-                  // transactions tab keeps its filters.
-                  GoRoute(
-                    path: ':id/transactions',
-                    name: 'account-transactions',
-                    builder: (context, state) {
-                      final id = state.pathParameters['id']!;
-                      return BlocProvider(
-                        create: (ctx) => TransactionsCubit(
-                          repository: ctx.read<TransactionsRepository>(),
-                        ),
-                        child: TransactionsListPage(
-                          initialAccountId: id,
-                          title: context.read<AccountsCubit>().byId(id)?.name,
-                        ),
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: ':id/edit',
-                    name: 'account-edit',
-                    builder: (context, state) => AccountDetailPage(
-                      accountId: state.pathParameters['id']!,
-                      startEditing: true,
-                    ),
-                  ),
-                  // Shared-wallet members (spec §14) — reached from the
-                  // wallet page's sharing section (members row).
-                  GoRoute(
-                    path: ':id/members',
-                    name: 'account-members',
-                    builder: (context, state) => WalletMembersPage(
-                      accountId: state.pathParameters['id']!,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // เพิ่มเติม — its own tab + stack. Root = card hub; every
-          // feature without a tab lives here (paths unchanged).
-          StatefulShellBranch(
-            navigatorKey: moreNavigatorKey,
-            routes: [
-              GoRoute(
-                path: '/more',
-                name: 'more',
-                builder: (context, state) => const MorePage(),
-              ),
-              // Projects (Phase 1b.2)
-              GoRoute(
-                path: '/projects',
-                name: 'projects',
-                builder: (context, state) => const ProjectsPage(),
-              ),
-              GoRoute(
-                path: '/projects/new',
-                name: 'project-new',
-                // Forms hide the nav themselves (EditModeMixin).
-                builder: (context, state) => const ProjectFormPage(),
-              ),
-              GoRoute(
-                path: '/projects/:id',
-                name: 'project-detail',
-                builder: (context, state) =>
-                    ProjectDetailPage(id: state.pathParameters['id']!),
-              ),
-              GoRoute(
-                path: '/projects/:id/edit',
-                name: 'project-edit',
-                // Info is edited in place — open the detail in edit mode.
-                builder: (context, state) => ProjectDetailPage(
-                  id: state.pathParameters['id']!,
-                  startEditing: true,
-                ),
-              ),
-              GoRoute(
-                path: '/projects/:id/members',
-                name: 'project-members',
-                builder: (context, state) =>
-                    ProjectMembersPage(projectId: state.pathParameters['id']!),
-              ),
-              // Contacts (Phase 1b.1)
-              GoRoute(
-                path: '/contacts',
-                name: 'contacts',
-                builder: (context, state) => const ContactsPage(),
-              ),
-              GoRoute(
-                path: '/contacts/new',
-                name: 'contact-new',
-                // Plain create → the detail page in edit mode. `extra`
-                // with a linkRequestId = inbox accept flow → ContactFormPage.
-                builder: (context, state) {
-                  final extra = state.extra;
-                  if (extra is Map && extra['linkRequestId'] != null) {
-                    return ShellChromeHider(
-                      child: ContactFormPage(
-                        linkRequestId: extra['linkRequestId'] as String?,
-                        lockedDisplayName:
-                            extra['lockedDisplayName'] as String?,
-                        lockedEmail: extra['lockedEmail'] as String?,
-                      ),
-                    );
-                  }
-                  return const ContactDetailPage();
-                },
-              ),
-              GoRoute(
-                path: '/contacts/:id',
-                name: 'contact-detail',
-                builder: (context, state) =>
-                    ContactDetailPage(id: state.pathParameters['id']!),
-              ),
-              GoRoute(
-                path: '/contacts/:id/edit',
-                name: 'contact-edit',
-                // Plain edit → detail page opened in edit mode. `extra`
-                // with a linkRequestId = link-existing flow → ContactFormPage.
-                builder: (context, state) {
-                  final extra = state.extra;
-                  final id = state.pathParameters['id']!;
-                  if (extra is Map && extra['linkRequestId'] != null) {
-                    return ShellChromeHider(
-                      child: ContactFormPage(
-                        editingId: id,
-                        linkRequestId: extra['linkRequestId'] as String?,
-                      ),
-                    );
-                  }
-                  return ContactDetailPage(id: id, startEditing: true);
-                },
-              ),
-              // Budgets (Phase 1c)
-              GoRoute(
-                path: '/budgets',
-                name: 'budgets',
-                builder: (context, state) => const BudgetsListPage(),
-              ),
-              // One page for create / view / edit (EditModeMixin hides the
-              // nav itself in edit mode).
-              GoRoute(
-                path: '/budgets/new',
-                name: 'budget-new',
-                builder: (context, state) => const BudgetDetailPage(),
-              ),
-              GoRoute(
-                path: '/budgets/:id',
-                name: 'budget-detail',
-                builder: (context, state) =>
-                    BudgetDetailPage(id: state.pathParameters['id']!),
-              ),
-              GoRoute(
-                path: '/budgets/:id/edit',
-                name: 'budget-edit',
-                builder: (context, state) => BudgetDetailPage(
-                  id: state.pathParameters['id']!,
-                  startEditing: true,
-                ),
-              ),
-              // Scheduled transactions (Phase 1c) — create / edit happen in the
-              // quick create sheet (`scheduled:` mode); no form routes.
-              GoRoute(
-                path: '/scheduled-transactions',
-                name: 'scheduled-transactions',
-                builder: (context, state) =>
-                    const ScheduledTransactionsListPage(),
-              ),
-              GoRoute(
-                path: '/scheduled-transactions/:id',
-                name: 'scheduled-transaction-detail',
-                builder: (context, state) => ScheduledTransactionDetailPage(
-                  id: state.pathParameters['id']!,
-                ),
-              ),
-              // Saving goals (Phase 1c)
-              GoRoute(
-                path: '/saving-goals',
-                name: 'saving-goals',
-                builder: (context, state) => const SavingGoalsListPage(),
-              ),
-              // One page for create / view / edit.
-              GoRoute(
-                path: '/saving-goals/new',
-                name: 'saving-goal-new',
-                builder: (context, state) => const SavingGoalDetailPage(),
-              ),
-              GoRoute(
-                path: '/saving-goals/:id',
-                name: 'saving-goal-detail',
-                builder: (context, state) =>
-                    SavingGoalDetailPage(id: state.pathParameters['id']!),
-              ),
-              GoRoute(
-                path: '/saving-goals/:id/edit',
-                name: 'saving-goal-edit',
-                builder: (context, state) => SavingGoalDetailPage(
-                  id: state.pathParameters['id']!,
-                  startEditing: true,
-                ),
-              ),
-              // Personal debts (bidirectional)
-              GoRoute(
-                path: '/personal-debts',
-                name: 'personal-debts',
-                builder: (context, state) => const PersonalDebtsPage(),
-              ),
-              GoRoute(
-                path: '/personal-debts/new',
-                name: 'personal-debt-new',
-                // `extra` {contactId, name} prefills the person (from their
-                // page). The form hides the nav itself (EditModeMixin).
-                builder: (context, state) {
-                  final extra = state.extra;
-                  return PersonalDebtFormPage(
-                    contactId: extra is Map
-                        ? extra['contactId'] as String?
-                        : null,
-                    name: extra is Map ? extra['name'] as String? : null,
-                  );
-                },
-              ),
-              GoRoute(
-                path: '/personal-debts/person',
-                name: 'personal-debt-person',
-                builder: (context, state) => DebtPersonPage(
-                  contactId: state.uri.queryParameters['contact'],
-                  name: state.uri.queryParameters['name'] ?? '',
-                ),
-              ),
-              GoRoute(
-                path: '/personal-debts/:id',
-                name: 'personal-debt-detail',
-                builder: (context, state) =>
-                    PersonalDebtDetailPage(id: state.pathParameters['id']!),
-              ),
-              // Categories & tags
-              GoRoute(
-                path: '/categories',
-                name: 'categories',
-                builder: (context, state) => const CategoriesPage(),
-              ),
-              // Create / edit a category: one editable-detail page inside
-              // the shell (bottom nav + FAB visible in view mode; edit
-              // mode hides them via ShellChrome).
-              // See product/phase2/inline-edit-ux.md.
-              GoRoute(
-                path: '/categories/new',
-                name: 'category-new',
-                builder: (context, state) => const CategoryDetailPage(),
-              ),
-              GoRoute(
-                path: '/categories/:id',
-                name: 'category-detail',
-                builder: (context, state) =>
-                    CategoryDetailPage(editingId: state.pathParameters['id']),
-              ),
-              // Tags are managed inline on one page (name + icon only),
-              // so there's no separate create/edit route.
-              GoRoute(
-                path: '/tags',
-                name: 'tags',
-                builder: (context, state) => const TagsPage(),
-              ),
-            ],
-          ),
+          for (final tab in ShellTab.values)
+            StatefulShellBranch(routes: _tabRoutes(tab)),
         ],
       ),
       GoRoute(
@@ -575,6 +166,406 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
     ],
   );
 }
+
+/// The routes of one tab's branch; its first route is the tab's root.
+List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
+  ShellTab.home => [
+    GoRoute(
+      path: '/',
+      name: 'home',
+      builder: (context, state) => const HomePage(),
+      routes: [
+        // Dashboard drill-down ("เงินไปไหน" → one category in one month).
+        // Stays in the dashboard stack with its own list cubit so the
+        // transactions tab keeps its filters.
+        // ?category=<id> | ?uncategorized=true, &month=YYYY-MM.
+        GoRoute(
+          path: 'browse',
+          name: 'dashboard-browse',
+          builder: (context, state) {
+            final p = state.uri.queryParameters;
+            final month = p['month'];
+            return BlocProvider(
+              create: (ctx) => TransactionsCubit(
+                repository: ctx.read<TransactionsRepository>(),
+              ),
+              child: TransactionsListPage(
+                initialCategoryId: p['category'],
+                initialUncategorized: p['uncategorized'] == 'true',
+                initialMonth: month == null
+                    ? null
+                    : DateTime.tryParse('$month-01'),
+                title: p['title'] ?? '',
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  ],
+  ShellTab.transactions => [
+    GoRoute(
+      path: '/transactions',
+      name: 'transactions',
+      builder: (context, state) => const TransactionsListPage(),
+    ),
+    // Create and edit both open the quick create sheet — no form routes.
+    GoRoute(
+      path: '/transactions/:id',
+      name: 'transaction-detail',
+      builder: (context, state) =>
+          TransactionDetailPage(transactionId: state.pathParameters['id']!),
+    ),
+  ],
+  ShellTab.accounts => [
+    GoRoute(
+      path: '/accounts',
+      name: 'accounts',
+      builder: (context, state) => const AccountsPage(),
+    ),
+    GoRoute(
+      path: '/accounts/new',
+      name: 'account-new',
+      // One page for create / view / edit (EditModeMixin hides the nav
+      // itself in edit mode).
+      builder: (context, state) => const AccountDetailPage(),
+    ),
+    GoRoute(
+      path: '/accounts/archived',
+      name: 'accounts-archived',
+      builder: (context, state) => const ArchivedAccountsPage(),
+    ),
+    GoRoute(
+      path: '/accounts/:id',
+      name: 'account-detail',
+      builder: (context, state) =>
+          AccountDetailPage(accountId: state.pathParameters['id']!),
+    ),
+    // A wallet's full history ("ดูทั้งหมด ›") — stays in the wallets
+    // stack, with its own list cubit so the transactions tab keeps its
+    // filters.
+    GoRoute(
+      path: '/accounts/:id/transactions',
+      name: 'account-transactions',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return BlocProvider(
+          create: (ctx) =>
+              TransactionsCubit(repository: ctx.read<TransactionsRepository>()),
+          child: TransactionsListPage(
+            initialAccountId: id,
+            title: context.read<AccountsCubit>().byId(id)?.name,
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/accounts/:id/edit',
+      name: 'account-edit',
+      builder: (context, state) => AccountDetailPage(
+        accountId: state.pathParameters['id']!,
+        startEditing: true,
+      ),
+    ),
+    // Shared-wallet members (spec §14) — reached from the wallet page's
+    // sharing section (members row).
+    GoRoute(
+      path: '/accounts/:id/members',
+      name: 'account-members',
+      builder: (context, state) =>
+          WalletMembersPage(accountId: state.pathParameters['id']!),
+    ),
+  ],
+  // เพิ่มเติม — the card hub alone; each card opens its own tab.
+  ShellTab.more => [
+    GoRoute(
+      path: '/more',
+      name: 'more',
+      builder: (context, state) => const MorePage(),
+    ),
+  ],
+  // Pending transactions (รอยืนยัน): drafts list + jot-several page.
+  ShellTab.pending => [
+    GoRoute(
+      path: '/pending',
+      name: 'pending',
+      builder: (context, state) => const PendingPage(),
+      routes: [
+        GoRoute(
+          path: 'new',
+          name: 'pending-new',
+          // A whole-page form: hides the nav (app rule: forms are edit mode).
+          builder: (context, state) =>
+              const ShellChromeHider(child: PendingBatchAddPage()),
+        ),
+      ],
+    ),
+  ],
+  // Notifications (Phase 1b.2).
+  ShellTab.notifications => [
+    GoRoute(
+      path: '/notifications',
+      name: 'notifications',
+      builder: (context, state) => const NotificationsInboxPage(),
+      routes: [
+        GoRoute(
+          path: 'settings',
+          name: 'notifications-settings',
+          builder: (context, state) => const NotificationSettingsPage(),
+        ),
+      ],
+    ),
+  ],
+  ShellTab.settings => [
+    GoRoute(
+      path: '/settings',
+      name: 'settings',
+      builder: (context, state) => const SettingsPage(),
+      routes: [
+        GoRoute(
+          path: 'profile',
+          name: 'settings-profile',
+          builder: (context, state) => const EditProfilePage(),
+        ),
+        GoRoute(
+          path: 'password',
+          name: 'settings-password',
+          builder: (context, state) =>
+              const ShellChromeHider(child: ChangePasswordPage()),
+        ),
+        // Same page as /notifications/settings, kept in this tab's stack
+        // so settings doesn't jump to the inbox tab.
+        GoRoute(
+          path: 'notifications',
+          name: 'settings-notifications',
+          builder: (context, state) => const NotificationSettingsPage(),
+        ),
+      ],
+    ),
+  ],
+  // Projects (Phase 1b.2)
+  ShellTab.projects => [
+    GoRoute(
+      path: '/projects',
+      name: 'projects',
+      builder: (context, state) => const ProjectsPage(),
+    ),
+    GoRoute(
+      path: '/projects/new',
+      name: 'project-new',
+      // Forms hide the nav themselves (EditModeMixin).
+      builder: (context, state) => const ProjectFormPage(),
+    ),
+    GoRoute(
+      path: '/projects/:id',
+      name: 'project-detail',
+      builder: (context, state) =>
+          ProjectDetailPage(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/projects/:id/edit',
+      name: 'project-edit',
+      // Info is edited in place — open the detail in edit mode.
+      builder: (context, state) => ProjectDetailPage(
+        id: state.pathParameters['id']!,
+        startEditing: true,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:id/members',
+      name: 'project-members',
+      builder: (context, state) =>
+          ProjectMembersPage(projectId: state.pathParameters['id']!),
+    ),
+  ],
+  // Contacts (Phase 1b.1)
+  ShellTab.contacts => [
+    GoRoute(
+      path: '/contacts',
+      name: 'contacts',
+      builder: (context, state) => const ContactsPage(),
+    ),
+    GoRoute(
+      path: '/contacts/new',
+      name: 'contact-new',
+      // Plain create → the detail page in edit mode. `extra` with a
+      // linkRequestId = inbox accept flow → ContactFormPage.
+      builder: (context, state) {
+        final extra = state.extra;
+        if (extra is Map && extra['linkRequestId'] != null) {
+          return ShellChromeHider(
+            child: ContactFormPage(
+              linkRequestId: extra['linkRequestId'] as String?,
+              lockedDisplayName: extra['lockedDisplayName'] as String?,
+              lockedEmail: extra['lockedEmail'] as String?,
+            ),
+          );
+        }
+        return const ContactDetailPage();
+      },
+    ),
+    GoRoute(
+      path: '/contacts/:id',
+      name: 'contact-detail',
+      builder: (context, state) =>
+          ContactDetailPage(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/contacts/:id/edit',
+      name: 'contact-edit',
+      // Plain edit → detail page opened in edit mode. `extra` with a
+      // linkRequestId = link-existing flow → ContactFormPage.
+      builder: (context, state) {
+        final extra = state.extra;
+        final id = state.pathParameters['id']!;
+        if (extra is Map && extra['linkRequestId'] != null) {
+          return ShellChromeHider(
+            child: ContactFormPage(
+              editingId: id,
+              linkRequestId: extra['linkRequestId'] as String?,
+            ),
+          );
+        }
+        return ContactDetailPage(id: id, startEditing: true);
+      },
+    ),
+  ],
+  // Budgets (Phase 1c)
+  ShellTab.budgets => [
+    GoRoute(
+      path: '/budgets',
+      name: 'budgets',
+      builder: (context, state) => const BudgetsListPage(),
+    ),
+    // One page for create / view / edit (EditModeMixin hides the nav
+    // itself in edit mode).
+    GoRoute(
+      path: '/budgets/new',
+      name: 'budget-new',
+      builder: (context, state) => const BudgetDetailPage(),
+    ),
+    GoRoute(
+      path: '/budgets/:id',
+      name: 'budget-detail',
+      builder: (context, state) =>
+          BudgetDetailPage(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/budgets/:id/edit',
+      name: 'budget-edit',
+      builder: (context, state) =>
+          BudgetDetailPage(id: state.pathParameters['id']!, startEditing: true),
+    ),
+  ],
+  // Scheduled transactions (Phase 1c) — create / edit happen in the quick
+  // create sheet (`scheduled:` mode); no form routes.
+  ShellTab.scheduled => [
+    GoRoute(
+      path: '/scheduled-transactions',
+      name: 'scheduled-transactions',
+      builder: (context, state) => const ScheduledTransactionsListPage(),
+    ),
+    GoRoute(
+      path: '/scheduled-transactions/:id',
+      name: 'scheduled-transaction-detail',
+      builder: (context, state) =>
+          ScheduledTransactionDetailPage(id: state.pathParameters['id']!),
+    ),
+  ],
+  // Saving goals (Phase 1c)
+  ShellTab.savingGoals => [
+    GoRoute(
+      path: '/saving-goals',
+      name: 'saving-goals',
+      builder: (context, state) => const SavingGoalsListPage(),
+    ),
+    // One page for create / view / edit.
+    GoRoute(
+      path: '/saving-goals/new',
+      name: 'saving-goal-new',
+      builder: (context, state) => const SavingGoalDetailPage(),
+    ),
+    GoRoute(
+      path: '/saving-goals/:id',
+      name: 'saving-goal-detail',
+      builder: (context, state) =>
+          SavingGoalDetailPage(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/saving-goals/:id/edit',
+      name: 'saving-goal-edit',
+      builder: (context, state) => SavingGoalDetailPage(
+        id: state.pathParameters['id']!,
+        startEditing: true,
+      ),
+    ),
+  ],
+  // Personal debts (bidirectional)
+  ShellTab.debts => [
+    GoRoute(
+      path: '/personal-debts',
+      name: 'personal-debts',
+      builder: (context, state) => const PersonalDebtsPage(),
+    ),
+    GoRoute(
+      path: '/personal-debts/new',
+      name: 'personal-debt-new',
+      // `extra` {contactId, name} prefills the person (from their page).
+      // The form hides the nav itself (EditModeMixin).
+      builder: (context, state) {
+        final extra = state.extra;
+        return PersonalDebtFormPage(
+          contactId: extra is Map ? extra['contactId'] as String? : null,
+          name: extra is Map ? extra['name'] as String? : null,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/personal-debts/person',
+      name: 'personal-debt-person',
+      builder: (context, state) => DebtPersonPage(
+        contactId: state.uri.queryParameters['contact'],
+        name: state.uri.queryParameters['name'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/personal-debts/:id',
+      name: 'personal-debt-detail',
+      builder: (context, state) =>
+          PersonalDebtDetailPage(id: state.pathParameters['id']!),
+    ),
+  ],
+  ShellTab.categories => [
+    GoRoute(
+      path: '/categories',
+      name: 'categories',
+      builder: (context, state) => const CategoriesPage(),
+    ),
+    // Create / edit a category: one editable-detail page (bottom nav + FAB
+    // visible in view mode; edit mode hides them via ShellChrome).
+    // See product/phase2/inline-edit-ux.md.
+    GoRoute(
+      path: '/categories/new',
+      name: 'category-new',
+      builder: (context, state) => const CategoryDetailPage(),
+    ),
+    GoRoute(
+      path: '/categories/:id',
+      name: 'category-detail',
+      builder: (context, state) =>
+          CategoryDetailPage(editingId: state.pathParameters['id']),
+    ),
+  ],
+  // Tags are managed inline on one page (name + icon only), so there's no
+  // separate create/edit route.
+  ShellTab.tags => [
+    GoRoute(
+      path: '/tags',
+      name: 'tags',
+      builder: (context, state) => const TagsPage(),
+    ),
+  ],
+};
 
 /// Adapts a [Stream] to a [Listenable] so [GoRouter.refreshListenable] can
 /// rebuild the router whenever [AuthCubit] emits.

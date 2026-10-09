@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/account.dart';
+import '../domain/payment_provider.dart';
 import '../domain/wallet_member.dart';
 
 /// Thin Dio wrapper around `/v1/accounts` (spec §03/§2.1–§2.7) plus the
@@ -14,6 +15,28 @@ class AccountsRepository {
   AccountsRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
+
+  /// Cached `GET /v1/payment-providers` — the list only changes with a
+  /// BE migration, so one fetch per app run.
+  Future<List<PaymentProvider>>? _providers;
+
+  /// `GET /v1/payment-providers` — banks (and later e-wallets / card
+  /// issuers) for the wallet page's bank picker. A failed fetch isn't
+  /// cached, so the next call tries again.
+  Future<List<PaymentProvider>> paymentProviders() {
+    return _providers ??= () async {
+      try {
+        final res = await _client.dio.get<Map<String, dynamic>>(
+          '/payment-providers',
+        );
+        final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
+        return data.map(PaymentProvider.fromJson).toList();
+      } on DioException catch (e) {
+        _providers = null;
+        throw ApiException.fromDioException(e);
+      }
+    }();
+  }
 
   /// `GET /v1/accounts`. Default returns active accounts; pass
   /// `status: 'all'` to include archived/closed for the user's history view.

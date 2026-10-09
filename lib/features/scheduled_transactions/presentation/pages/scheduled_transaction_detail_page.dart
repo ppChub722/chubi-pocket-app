@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
 import '../../../../core/constants/app_icons.dart';
@@ -495,7 +496,7 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
     final l = AppLocalizations.of(context)!;
     final cubit = context.read<ScheduledTransactionsCubit>();
     final messenger = ScaffoldMessenger.of(context);
-    final router = GoRouter.of(context);
+    final open = pageOpener(context);
     setState(() => _busy = true);
     try {
       final result = await cubit.generateNow(widget.entry.id);
@@ -509,8 +510,7 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
         l.scheduledGenerateNowSuccess,
         tone: Tone.success,
         actionLabel: l.scheduledGenerateNowViewTransaction,
-        onAction: () =>
-            router.push('/transactions/${result.generatedTransactionId}'),
+        onAction: () => open('/transactions/${result.generatedTransactionId}'),
       );
     } on ApiException catch (e) {
       if (!mounted) return;

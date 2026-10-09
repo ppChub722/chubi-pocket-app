@@ -11,6 +11,7 @@ class User extends Equatable {
     required this.currency,
     this.email,
     this.iconCode,
+    this.feeCategoryId,
   });
 
   final String id;
@@ -19,6 +20,11 @@ class User extends Equatable {
   final String currency;
   final String? email;
   final IconCode? iconCode;
+
+  /// Server preference `fee_category_id` (spec 15 §7): the expense category
+  /// fee drafts from bank slips get. Only on `GET`/`PUT /users/me` —
+  /// login answers without preferences, so it may be stale until then.
+  final String? feeCategoryId;
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -30,6 +36,10 @@ class User extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      feeCategoryId: switch (json['preferences']) {
+        {'fee_category_id': final String id} => id,
+        _ => null,
+      },
     );
   }
 
@@ -40,6 +50,8 @@ class User extends Equatable {
     IconCode? iconCode,
     bool clearEmail = false,
     bool clearIconCode = false,
+    String? feeCategoryId,
+    bool clearFeeCategory = false,
   }) {
     return User(
       id: id,
@@ -48,6 +60,9 @@ class User extends Equatable {
       currency: currency ?? this.currency,
       email: clearEmail ? null : (email ?? this.email),
       iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
+      feeCategoryId: clearFeeCategory
+          ? null
+          : (feeCategoryId ?? this.feeCategoryId),
     );
   }
 
@@ -59,5 +74,6 @@ class User extends Equatable {
     currency,
     email,
     iconCode,
+    feeCategoryId,
   ];
 }

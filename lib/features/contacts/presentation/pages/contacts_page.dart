@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -99,90 +100,93 @@ class _ContactsPageState extends State<ContactsPage> {
     return Scaffold(
       appBar: AppTopBar(title: l.moreContacts, showBack: true),
       extendBodyBehindAppBar: true,
-      body: BlocBuilder<ContactsCubit, ContactsState>(
-        builder: (ctx, state) => AsyncStateView(
-          loading:
-              state.status == ContactsStatus.initial ||
-              state.status == ContactsStatus.loading,
-          error: state.error,
-          isEmpty: state.contacts.isEmpty,
-          onRetry: ctx.read<ContactsCubit>().load,
-          skeleton: Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(ctx).top),
-            child: const LoadingView(skeleton: ContactsListSkeleton()),
-          ),
-          // Empty lives under the search/filter bar (below).
-          builder: (context) {
-            final shown = _filter(state.contacts);
-            return Column(
-              children: [
-                // Clear the floating top bar; search + filter stay pinned.
-                SizedBox(height: MediaQuery.paddingOf(context).top),
-                AppSearchBar(
-                  hint: l.contactsSearchHint,
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-                FilterBar(
-                  // Add is also the dashed tile at the end of the list; this
-                  // one is always in reach.
-                  trailing: AppIconButton(
-                    icon: AppIcons.add,
-                    size: 36,
-                    tooltip: l.contactsAddNew,
-                    onPressed: _add,
+      body: TabSwitchBody(
+        child: BlocBuilder<ContactsCubit, ContactsState>(
+          builder: (ctx, state) => AsyncStateView(
+            loading:
+                state.status == ContactsStatus.initial ||
+                state.status == ContactsStatus.loading,
+            error: state.error,
+            isEmpty: state.contacts.isEmpty,
+            onRetry: ctx.read<ContactsCubit>().load,
+            skeleton: Padding(
+              padding: EdgeInsets.only(top: MediaQuery.paddingOf(ctx).top),
+              child: const LoadingView(skeleton: ContactsListSkeleton()),
+            ),
+            // Empty lives under the search/filter bar (below).
+            builder: (context) {
+              final shown = _filter(state.contacts);
+              return Column(
+                children: [
+                  // Clear the floating top bar; search + filter stay pinned.
+                  SizedBox(height: MediaQuery.paddingOf(context).top),
+                  AppSearchBar(
+                    hint: l.contactsSearchHint,
+                    onChanged: (v) => setState(() => _query = v),
                   ),
-                  chips: [
-                    OptionMenuAnchor<String>(
-                      selected: state.statusFilter,
-                      onSelected: (v) =>
-                          ctx.read<ContactsCubit>().load(statusFilter: v),
-                      options: [
-                        for (final e in statusLabels.entries)
-                          SheetOption(value: e.key, label: e.value),
-                      ],
-                      builder: (context, toggle) => FilterDropdownChip(
-                        label: l.contactsStatusLabel,
-                        valueLabel: statusLabels[state.statusFilter],
-                        active: state.statusFilter != 'active',
-                        onTap: toggle,
-                      ),
+                  FilterBar(
+                    // Add is also the dashed tile at the end of the list; this
+                    // one is always in reach.
+                    trailing: AppIconButton(
+                      icon: AppIcons.add,
+                      size: 36,
+                      tooltip: l.contactsAddNew,
+                      onPressed: _add,
                     ),
-                  ],
-                ),
-                Expanded(
-                  // A filter (เก็บถาวร / ทั้งหมด) with no rows is a no-match,
-                  // not "add your first contact".
-                  child:
-                      state.contacts.isEmpty && state.statusFilter == 'active'
-                      ? EmptyView(
-                          icon: AppIcons.contact,
-                          title: l.contactsEmptyTitle,
-                          message: l.contactsEmptyMessage,
-                          cta: AddTile(label: l.contactsAddNew, onTap: _add),
-                        )
-                      : PullToRefresh(
-                          onRefresh: () => ctx.read<ContactsCubit>().load(),
-                          child: shown.isEmpty
-                              ? _noResults(l, state.statusFilter)
-                              : ListView.separated(
-                                  physics:
-                                      const AlwaysScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.only(bottom: 96),
-                                  // + the dashed add tile at the end.
-                                  itemCount: shown.length + 1,
-                                  separatorBuilder: (_, i) =>
-                                      i < shown.length - 1
-                                      ? const RowDivider()
-                                      : const SizedBox.shrink(),
-                                  itemBuilder: (context, i) => i < shown.length
-                                      ? _ContactRow(contact: shown[i])
-                                      : _addTile(l),
-                                ),
+                    chips: [
+                      OptionMenuAnchor<String>(
+                        selected: state.statusFilter,
+                        onSelected: (v) =>
+                            ctx.read<ContactsCubit>().load(statusFilter: v),
+                        options: [
+                          for (final e in statusLabels.entries)
+                            SheetOption(value: e.key, label: e.value),
+                        ],
+                        builder: (context, toggle) => FilterDropdownChip(
+                          label: l.contactsStatusLabel,
+                          valueLabel: statusLabels[state.statusFilter],
+                          active: state.statusFilter != 'active',
+                          onTap: toggle,
                         ),
-                ),
-              ],
-            );
-          },
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    // A filter (เก็บถาวร / ทั้งหมด) with no rows is a no-match,
+                    // not "add your first contact".
+                    child:
+                        state.contacts.isEmpty && state.statusFilter == 'active'
+                        ? EmptyView(
+                            icon: AppIcons.contact,
+                            title: l.contactsEmptyTitle,
+                            message: l.contactsEmptyMessage,
+                            cta: AddTile(label: l.contactsAddNew, onTap: _add),
+                          )
+                        : PullToRefresh(
+                            onRefresh: () => ctx.read<ContactsCubit>().load(),
+                            child: shown.isEmpty
+                                ? _noResults(l, state.statusFilter)
+                                : ListView.separated(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    padding: const EdgeInsets.only(bottom: 96),
+                                    // + the dashed add tile at the end.
+                                    itemCount: shown.length + 1,
+                                    separatorBuilder: (_, i) =>
+                                        i < shown.length - 1
+                                        ? const RowDivider()
+                                        : const SizedBox.shrink(),
+                                    itemBuilder: (context, i) =>
+                                        i < shown.length
+                                        ? _ContactRow(contact: shown[i])
+                                        : _addTile(l),
+                                  ),
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

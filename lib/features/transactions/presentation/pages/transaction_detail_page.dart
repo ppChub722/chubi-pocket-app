@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
@@ -222,7 +223,8 @@ class _Loaded extends StatelessWidget {
                     showChevron: tx.account != null,
                     onTap: tx.account == null
                         ? null
-                        : () => context.push('/accounts/${tx.account!.id}'),
+                        : () =>
+                              openPage(context, '/accounts/${tx.account!.id}'),
                   ),
                   if (tx.type != TransactionType.transfer) ...[
                     const RowDivider(),
@@ -285,7 +287,8 @@ class _Loaded extends StatelessWidget {
                       label: l.txDetailSource,
                       trailing: Text(l.txDetailSourceProject),
                       showChevron: true,
-                      onTap: () => context.push('/projects/${tx.projectId}'),
+                      onTap: () =>
+                          openPage(context, '/projects/${tx.projectId}'),
                     ),
                   ],
                 ],

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -36,44 +37,46 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     return Scaffold(
       appBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
       extendBodyBehindAppBar: true,
-      body: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(
-        builder: (context, state) => AsyncStateView(
-          loading:
-              state.status == SavingGoalsStatus.initial ||
-              state.status == SavingGoalsStatus.loading,
-          error: state.error,
-          isEmpty: state.goals.isEmpty,
-          onRetry: context.read<SavingGoalsCubit>().load,
-          skeleton: ListView(
-            children: [for (var i = 0; i < 3; i++) const SkeletonListTile()],
-          ),
-          empty: EmptyView(
-            icon: AppIcons.savingGoal,
-            title: l.savingGoalsEmptyTitle,
-            message: l.savingGoalsEmptyMessage,
-            cta: AddTile(label: l.savingGoalsAddNew, onTap: _add),
-          ),
-          builder: (context) => PullToRefresh(
-            onRefresh: () => context.read<SavingGoalsCubit>().load(),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              // Top: clear the floating top bar.
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.md,
-                AppSpacing.lg,
-                96,
-              ),
-              children: [
-                for (final g in state.goals) ...[
-                  SavingGoalCard(
-                    goal: g,
-                    onTap: () => context.push('/saving-goals/${g.id}'),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
+      body: TabSwitchBody(
+        child: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(
+          builder: (context, state) => AsyncStateView(
+            loading:
+                state.status == SavingGoalsStatus.initial ||
+                state.status == SavingGoalsStatus.loading,
+            error: state.error,
+            isEmpty: state.goals.isEmpty,
+            onRetry: context.read<SavingGoalsCubit>().load,
+            skeleton: ListView(
+              children: [for (var i = 0; i < 3; i++) const SkeletonListTile()],
+            ),
+            empty: EmptyView(
+              icon: AppIcons.savingGoal,
+              title: l.savingGoalsEmptyTitle,
+              message: l.savingGoalsEmptyMessage,
+              cta: AddTile(label: l.savingGoalsAddNew, onTap: _add),
+            ),
+            builder: (context) => PullToRefresh(
+              onRefresh: () => context.read<SavingGoalsCubit>().load(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                // Top: clear the floating top bar.
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.md,
+                  AppSpacing.lg,
+                  96,
+                ),
+                children: [
+                  for (final g in state.goals) ...[
+                    SavingGoalCard(
+                      goal: g,
+                      onTap: () => context.push('/saving-goals/${g.id}'),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  AddTile(label: l.savingGoalsAddNew, onTap: _add),
                 ],
-                AddTile(label: l.savingGoalsAddNew, onTap: _add),
-              ],
+              ),
             ),
           ),
         ),

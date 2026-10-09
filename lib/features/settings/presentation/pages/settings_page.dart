@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -21,9 +22,10 @@ import '../../../preferences/presentation/cubit/theme_id_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../../../users/data/users_repository.dart';
 
-/// `/settings` (overlay layer, §7): profile card → บัญชี (password, default
-/// currency — edited only here) → การแจ้งเตือน → การตั้งค่าส่วนตัว (theme
-/// cards, mode, language & font sheets) → เกี่ยวกับ → ออกจากระบบ.
+/// `/settings` (its own tab, opened by the 👤 chip): profile card → บัญชี
+/// (password, default currency — edited only here) → การแจ้งเตือน →
+/// การตั้งค่าส่วนตัว (theme cards, mode, language & font sheets) →
+/// เกี่ยวกับ → ออกจากระบบ.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -31,95 +33,97 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppTopBar(title: l.settingsTitle, showBack: true),
+      appBar: AppTopBar(title: l.settingsTitle),
       extendBodyBehindAppBar: true,
-      body: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          final user = _userOf(state);
-          if (user == null) return const SizedBox.shrink();
-          return ListView(
-            // Clear the floating top bar.
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              MediaQuery.paddingOf(context).top + AppSpacing.sm,
-              AppSpacing.lg,
-              AppSpacing.huge,
-            ),
-            children: [
-              HeaderCard(
-                leading: UserAvatar(
-                  displayName: user.displayName,
-                  iconCode: user.iconCode,
-                  size: 52,
-                ),
-                title: Text(user.displayName),
-                subtitle: Text(
-                  [
-                    '@${user.username}',
-                    if (user.email?.isNotEmpty ?? false) user.email!,
-                  ].join(' · '),
-                ),
-                trailing: const Icon(AppIcons.chevronRight),
-                onTap: () => context.push('/settings/profile'),
+      body: TabSwitchBody(
+        child: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            final user = _userOf(state);
+            if (user == null) return const SizedBox.shrink();
+            return ListView(
+              // Clear the floating top bar.
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.huge,
               ),
-              SectionCard(
-                title: l.settingsSectionAccount,
-                children: [
-                  DetailRow(
-                    leading: const Icon(AppIcons.lock),
-                    label: l.settingsChangePassword,
-                    showChevron: true,
-                    onTap: () => context.push('/settings/password'),
+              children: [
+                HeaderCard(
+                  leading: UserAvatar(
+                    displayName: user.displayName,
+                    iconCode: user.iconCode,
+                    size: 52,
                   ),
-                  const RowDivider(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                      vertical: AppSpacing.sm,
+                  title: Text(user.displayName),
+                  subtitle: Text(
+                    [
+                      '@${user.username}',
+                      if (user.email?.isNotEmpty ?? false) user.email!,
+                    ].join(' · '),
+                  ),
+                  trailing: const Icon(AppIcons.chevronRight),
+                  onTap: () => context.push('/settings/profile'),
+                ),
+                SectionCard(
+                  title: l.settingsSectionAccount,
+                  children: [
+                    DetailRow(
+                      leading: const Icon(AppIcons.lock),
+                      label: l.settingsChangePassword,
+                      showChevron: true,
+                      onTap: () => context.push('/settings/password'),
                     ),
-                    child: _CurrencyRow(user: user),
-                  ),
-                ],
-              ),
-              SectionCard(
-                title: l.settingsNotifications,
-                children: [
-                  DetailRow(
-                    leading: const Icon(AppIcons.notifications),
-                    label: l.settingsNotifications,
-                    helper: l.settingsNotificationsHint,
-                    showChevron: true,
-                    onTap: () => context.push('/notifications/settings'),
-                  ),
-                ],
-              ),
-              SectionCard(
-                title: l.settingsSectionPreferences,
-                children: const [
-                  _ThemeCards(),
-                  RowDivider(),
-                  _ThemeModeRow(),
-                  RowDivider(),
-                  _LanguageRow(),
-                  RowDivider(),
-                  _FontRow(),
-                ],
-              ),
-              SectionCard(
-                title: l.settingsSectionAbout,
-                children: const [_VersionRow()],
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              AppButton(
-                label: l.settingsLogout,
-                icon: AppIcons.logout,
-                variant: AppButtonVariant.destructive,
-                expand: true,
-                onPressed: () => _confirmLogout(context),
-              ),
-            ],
-          );
-        },
+                    const RowDivider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.sm,
+                      ),
+                      child: _CurrencyRow(user: user),
+                    ),
+                  ],
+                ),
+                SectionCard(
+                  title: l.settingsNotifications,
+                  children: [
+                    DetailRow(
+                      leading: const Icon(AppIcons.notifications),
+                      label: l.settingsNotifications,
+                      helper: l.settingsNotificationsHint,
+                      showChevron: true,
+                      onTap: () => context.push('/settings/notifications'),
+                    ),
+                  ],
+                ),
+                SectionCard(
+                  title: l.settingsSectionPreferences,
+                  children: const [
+                    _ThemeCards(),
+                    RowDivider(),
+                    _ThemeModeRow(),
+                    RowDivider(),
+                    _LanguageRow(),
+                    RowDivider(),
+                    _FontRow(),
+                  ],
+                ),
+                SectionCard(
+                  title: l.settingsSectionAbout,
+                  children: const [_VersionRow()],
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                AppButton(
+                  label: l.settingsLogout,
+                  icon: AppIcons.logout,
+                  variant: AppButtonVariant.destructive,
+                  expand: true,
+                  onPressed: () => _confirmLogout(context),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

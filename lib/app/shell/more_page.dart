@@ -7,6 +7,7 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/theme/module_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../shared/widgets/ui.dart';
+import 'tab_nav.dart';
 import 'tab_root_scaffold.dart';
 import '../../features/categories/presentation/cubit/categories_cubit.dart';
 import '../../features/contacts/presentation/cubit/contacts_cubit.dart';
@@ -15,9 +16,9 @@ import '../../features/home/presentation/cubit/dashboard_cubit.dart';
 import '../../features/projects/presentation/cubit/projects_cubit.dart';
 import '../../features/tags/presentation/cubit/tags_cubit.dart';
 
-/// `/more` — root of the เพิ่มเติม tab: every feature without its own tab,
-/// as big cards grouped by purpose. Pages opened from here stack inside
-/// this tab (its own navigator), so other tabs keep their place.
+/// `/more` — the เพิ่มเติม hub: every feature without a nav slot, as big
+/// cards grouped by purpose. Each card opens the feature's own tab
+/// ([ShellTab]); back at that tab's root returns here.
 ///
 /// Card subtitles show a live figure when one is known — counts from the
 /// shared cubits, planning figures from the app-scoped [DashboardCubit]
@@ -60,84 +61,87 @@ class _MorePageState extends State<MorePage> {
         .length;
     // One colour per group, from the active theme (ModuleColors).
     final groupColors = ModuleColors.of(context);
+    _MoreEntry entry(ShellTab tab) => switch (tab) {
+      ShellTab.categories => _MoreEntry(
+        AppIcons.category,
+        l.moreCategories,
+        count(categories) ?? l.moreCategoriesDesc,
+        '/categories',
+      ),
+      ShellTab.tags => _MoreEntry(
+        AppIcons.tag,
+        l.moreTags,
+        count(tags) ?? l.moreTagsDesc,
+        '/tags',
+      ),
+      ShellTab.contacts => _MoreEntry(
+        AppIcons.contact,
+        l.moreContacts,
+        count(contacts) ?? l.moreContactsDesc,
+        '/contacts',
+      ),
+      ShellTab.projects => _MoreEntry(
+        AppIcons.project,
+        l.moreProjects,
+        count(projects) ?? l.moreProjectsDesc,
+        '/projects',
+      ),
+      ShellTab.debts => _MoreEntry(
+        AppIcons.debt,
+        l.moreDebts,
+        debts == null || debts.openCount == 0
+            ? l.moreDebtsDesc
+            : l.moreLiveDebts(
+                moneyString(context, debts.owedToMe),
+                moneyString(context, debts.iOwe),
+              ),
+        '/personal-debts',
+      ),
+      ShellTab.budgets => _MoreEntry(
+        AppIcons.budget,
+        l.moreBudgets,
+        budgets == null || budgets.count == 0
+            ? l.moreBudgetsDesc
+            : l.homeBudgetsUsed(budgets.utilizationPct.round().toString()),
+        '/budgets',
+      ),
+      ShellTab.savingGoals => _MoreEntry(
+        AppIcons.savingGoal,
+        l.moreSavingGoals,
+        goals == null || goals.count == 0
+            ? l.moreSavingGoalsDesc
+            : '${goals.progressPct.round()}% · ${l.homeGoalsCount(goals.count)}',
+        '/saving-goals',
+      ),
+      ShellTab.scheduled => _MoreEntry(
+        AppIcons.scheduled,
+        l.moreScheduled,
+        dueSoon == null || dueSoon == 0
+            ? l.moreScheduledDesc
+            : l.moreLiveDueSoon(dueSoon, d!.upcoming.days),
+        '/scheduled-transactions',
+      ),
+      _ => throw ArgumentError('$tab has no เพิ่มเติม card'),
+    };
+    // Sections + cards come from the เพิ่มเติม rows (ShellRow), so the hub,
+    // the swipe order and the module switches (AppModules) always agree.
+    // A section with every module off is left out.
     final groups = <(String, Color, List<_MoreEntry>)>[
-      (
-        l.moreGroupLibrary,
-        groupColors.library,
-        [
-          _MoreEntry(
-            AppIcons.category,
-            l.moreCategories,
-            count(categories) ?? l.moreCategoriesDesc,
-            '/categories',
+      for (final row in ShellRow.values)
+        if (row.inMore && row.tabs.isNotEmpty)
+          (
+            switch (row) {
+              ShellRow.library => l.moreGroupLibrary,
+              ShellRow.people => l.moreGroupPeople,
+              _ => l.moreGroupPlanning,
+            },
+            switch (row) {
+              ShellRow.library => groupColors.library,
+              ShellRow.people => groupColors.people,
+              _ => groupColors.planning,
+            },
+            [for (final tab in row.tabs) entry(tab)],
           ),
-          _MoreEntry(
-            AppIcons.tag,
-            l.moreTags,
-            count(tags) ?? l.moreTagsDesc,
-            '/tags',
-          ),
-        ],
-      ),
-      (
-        l.moreGroupPeople,
-        groupColors.people,
-        [
-          _MoreEntry(
-            AppIcons.contact,
-            l.moreContacts,
-            count(contacts) ?? l.moreContactsDesc,
-            '/contacts',
-          ),
-          _MoreEntry(
-            AppIcons.project,
-            l.moreProjects,
-            count(projects) ?? l.moreProjectsDesc,
-            '/projects',
-          ),
-          _MoreEntry(
-            AppIcons.debt,
-            l.moreDebts,
-            debts == null || debts.openCount == 0
-                ? l.moreDebtsDesc
-                : l.moreLiveDebts(
-                    moneyString(context, debts.owedToMe),
-                    moneyString(context, debts.iOwe),
-                  ),
-            '/personal-debts',
-          ),
-        ],
-      ),
-      (
-        l.moreGroupPlanning,
-        groupColors.planning,
-        [
-          _MoreEntry(
-            AppIcons.budget,
-            l.moreBudgets,
-            budgets == null || budgets.count == 0
-                ? l.moreBudgetsDesc
-                : l.homeBudgetsUsed(budgets.utilizationPct.round().toString()),
-            '/budgets',
-          ),
-          _MoreEntry(
-            AppIcons.savingGoal,
-            l.moreSavingGoals,
-            goals == null || goals.count == 0
-                ? l.moreSavingGoalsDesc
-                : '${goals.progressPct.round()}% · ${l.homeGoalsCount(goals.count)}',
-            '/saving-goals',
-          ),
-          _MoreEntry(
-            AppIcons.scheduled,
-            l.moreScheduled,
-            dueSoon == null || dueSoon == 0
-                ? l.moreScheduledDesc
-                : l.moreLiveDueSoon(dueSoon, d!.upcoming.days),
-            '/scheduled-transactions',
-          ),
-        ],
-      ),
     ];
 
     // No title chip on the hub. Builder: the top inset must be read inside
@@ -212,7 +216,8 @@ class _MoreCard extends StatelessWidget {
     return TintedCard(
       tint: tint,
       glyph: entry.icon,
-      onTap: () => context.push(entry.route),
+      // Its own tab, opened fresh at its root (owner 2026-10-09).
+      onTap: () => context.go(entry.route),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(

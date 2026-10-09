@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -656,7 +656,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final projects = context.read<ProjectsRepository>();
     final txRepo = context.read<TransactionsRepository>();
     final navigator = Navigator.of(context);
-    final router = GoRouter.of(context);
+    final open = pageOpener(context);
     final messenger = ScaffoldMessenger.of(context);
     final splits = _c.splits
         .where((s) => s.isComplete)
@@ -728,7 +728,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         warn ?? l.quickSaved,
         tone: warn == null ? Tone.success : Tone.warning,
       );
-      if (openProject != null) router.push('/projects/$openProject');
+      if (openProject != null) open('/projects/$openProject');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);

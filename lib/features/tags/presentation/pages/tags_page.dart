@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -476,45 +477,52 @@ class _TagsPageState extends State<TagsPage>
           editing: isEditing,
           onBack: isEditing ? handleBack : null,
         ),
-        body: BlocBuilder<TagsCubit, TagsState>(
-          builder: (context, state) => AsyncStateView(
-            loading:
-                state.status == TagsStatus.initial ||
-                state.status == TagsStatus.loading,
-            error: state.error,
-            // Edit mode shows its drafts grid even before the first tag.
-            isEmpty: !isEditing && state.tags.isEmpty,
-            onRetry: context.read<TagsCubit>().load,
-            skeleton: Padding(
-              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-              child: const LoadingView(skeleton: TagsListSkeleton()),
+        body: TabSwitchBody(
+          child: BlocBuilder<TagsCubit, TagsState>(
+            builder: (context, state) => AsyncStateView(
+              loading:
+                  state.status == TagsStatus.initial ||
+                  state.status == TagsStatus.loading,
+              error: state.error,
+              // Edit mode shows its drafts grid even before the first tag.
+              isEmpty: !isEditing && state.tags.isEmpty,
+              onRetry: context.read<TagsCubit>().load,
+              skeleton: Padding(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top,
+                ),
+                child: const LoadingView(skeleton: TagsListSkeleton()),
+              ),
+              empty: EmptyView(
+                icon: AppIcons.tag,
+                title: l.tagsEmptyTitle,
+                message: l.tagsEmptyMessage,
+                cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
+              ),
+              builder: (context) {
+                final visible = isEditing ? _visibleDrafts() : null;
+                return Column(
+                  children: [
+                    // Clear the transparent top bar.
+                    SizedBox(height: MediaQuery.paddingOf(context).top),
+                    AppSearchBar(
+                      controller: _searchController,
+                      hint: l.tagsSearchHint,
+                      onChanged: (v) => _onFilterChanged(() => _query = v),
+                    ),
+                    SizedBox(
+                      height: 48,
+                      child: _toolRow(l, state.tags, visible),
+                    ),
+                    Expanded(
+                      child: isEditing
+                          ? _editGrid(l, visible!)
+                          : _viewGrid(l, state.tags),
+                    ),
+                  ],
+                );
+              },
             ),
-            empty: EmptyView(
-              icon: AppIcons.tag,
-              title: l.tagsEmptyTitle,
-              message: l.tagsEmptyMessage,
-              cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
-            ),
-            builder: (context) {
-              final visible = isEditing ? _visibleDrafts() : null;
-              return Column(
-                children: [
-                  // Clear the transparent top bar.
-                  SizedBox(height: MediaQuery.paddingOf(context).top),
-                  AppSearchBar(
-                    controller: _searchController,
-                    hint: l.tagsSearchHint,
-                    onChanged: (v) => _onFilterChanged(() => _query = v),
-                  ),
-                  SizedBox(height: 48, child: _toolRow(l, state.tags, visible)),
-                  Expanded(
-                    child: isEditing
-                        ? _editGrid(l, visible!)
-                        : _viewGrid(l, state.tags),
-                  ),
-                ],
-              );
-            },
           ),
         ),
         bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,

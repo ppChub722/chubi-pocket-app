@@ -5,7 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/overlay_nav.dart';
+import '../../../../app/shell/fade_branch_container.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -90,193 +91,197 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final l = AppLocalizations.of(context)!;
     void openSettings() => context.push('/notifications/settings');
     return Scaffold(
-      appBar: AppTopBar(title: l.notificationsTitle, showBack: true),
+      appBar: AppTopBar(title: l.notificationsTitle),
       extendBodyBehindAppBar: true,
       // Pinned tabs clear the floating bar; the list below them must not
       // add the bar height again.
-      body: Builder(
-        builder: (context) => MediaQuery.removePadding(
-          context: context,
-          removeTop: true,
-          child: Column(
-            children: [
-              SizedBox(height: MediaQuery.paddingOf(context).top),
-              AppTabBar<bool>(
-                selected: _unreadOnly,
-                onChanged: _setTab,
-                tabs: [
-                  AppTab(value: false, label: l.notificationsTabAll),
-                  AppTab(value: true, label: l.notificationsTabUnread),
-                ],
-              ),
-              Expanded(
-                child: BlocConsumer<NotificationsInboxCubit, InboxState>(
-                  listenWhen: (a, b) =>
-                      a.unreadCount != b.unreadCount || a.error != b.error,
-                  listener: (ctx, state) {
-                    ctx.read<UnreadBadgeCubit>().refresh();
-                    // Row actions (accept / mark read …) fail without leaving
-                    // `loaded`; load failures are AsyncStateView's.
-                    if (state.error != null &&
-                        state.status != InboxStatus.error) {
-                      showAppSnackBar(
-                        ctx,
-                        state.errorMessage!,
-                        tone: Tone.danger,
-                      );
-                    }
-                  },
-                  builder: (ctx, state) {
-                    // Dismissed rows are hidden for good; actioned requests
-                    // stay so the post-accept flow is still reachable.
-                    final visible = state.notifications
-                        .where((n) => n.dismissedAt == null)
-                        .toList();
-                    return AsyncStateView(
-                      loading:
-                          state.status == InboxStatus.initial ||
-                          state.status == InboxStatus.loading,
-                      error: state.status == InboxStatus.error
-                          ? state.error
-                          : null,
-                      isEmpty: visible.isEmpty,
-                      onRetry: () => ctx.read<NotificationsInboxCubit>().load(
-                        unreadOnly: _unreadOnly,
-                      ),
-                      empty: EmptyView(
-                        icon: AppIcons.notifications,
-                        title: _unreadOnly
-                            ? l.notificationsEmptyUnread
-                            : l.notificationsEmptyTitle,
-                        message: _unreadOnly ? '' : l.notificationsEmptyMessage,
-                        // Settings stay reachable with an empty inbox.
-                        cta: TextButton.icon(
-                          onPressed: openSettings,
-                          icon: const Icon(AppIcons.settings, size: 18),
-                          label: Text(l.notifSettingsTitle),
+      body: TabSwitchBody(
+        child: Builder(
+          builder: (context) => MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: Column(
+              children: [
+                SizedBox(height: MediaQuery.paddingOf(context).top),
+                AppTabBar<bool>(
+                  selected: _unreadOnly,
+                  onChanged: _setTab,
+                  tabs: [
+                    AppTab(value: false, label: l.notificationsTabAll),
+                    AppTab(value: true, label: l.notificationsTabUnread),
+                  ],
+                ),
+                Expanded(
+                  child: BlocConsumer<NotificationsInboxCubit, InboxState>(
+                    listenWhen: (a, b) =>
+                        a.unreadCount != b.unreadCount || a.error != b.error,
+                    listener: (ctx, state) {
+                      ctx.read<UnreadBadgeCubit>().refresh();
+                      // Row actions (accept / mark read …) fail without leaving
+                      // `loaded`; load failures are AsyncStateView's.
+                      if (state.error != null &&
+                          state.status != InboxStatus.error) {
+                        showAppSnackBar(
+                          ctx,
+                          state.errorMessage!,
+                          tone: Tone.danger,
+                        );
+                      }
+                    },
+                    builder: (ctx, state) {
+                      // Dismissed rows are hidden for good; actioned requests
+                      // stay so the post-accept flow is still reachable.
+                      final visible = state.notifications
+                          .where((n) => n.dismissedAt == null)
+                          .toList();
+                      return AsyncStateView(
+                        loading:
+                            state.status == InboxStatus.initial ||
+                            state.status == InboxStatus.loading,
+                        error: state.status == InboxStatus.error
+                            ? state.error
+                            : null,
+                        isEmpty: visible.isEmpty,
+                        onRetry: () => ctx.read<NotificationsInboxCubit>().load(
+                          unreadOnly: _unreadOnly,
                         ),
-                      ),
-                      builder: (context) {
-                        final rows = <Widget>[
-                          // Head of the list: only while something is unread.
-                          if (state.unreadCount > 0)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.sm,
-                                ),
-                                child: TextButton.icon(
-                                  onPressed: () => ctx
-                                      .read<NotificationsInboxCubit>()
-                                      .markReadAll(),
-                                  icon: const Icon(
-                                    AppIcons.markAllRead,
-                                    size: 18,
+                        empty: EmptyView(
+                          icon: AppIcons.notifications,
+                          title: _unreadOnly
+                              ? l.notificationsEmptyUnread
+                              : l.notificationsEmptyTitle,
+                          message: _unreadOnly
+                              ? ''
+                              : l.notificationsEmptyMessage,
+                          // Settings stay reachable with an empty inbox.
+                          cta: TextButton.icon(
+                            onPressed: openSettings,
+                            icon: const Icon(AppIcons.settings, size: 18),
+                            label: Text(l.notifSettingsTitle),
+                          ),
+                        ),
+                        builder: (context) {
+                          final rows = <Widget>[
+                            // Head of the list: only while something is unread.
+                            if (state.unreadCount > 0)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.sm,
                                   ),
-                                  label: Text(l.notificationsMarkAllRead),
+                                  child: TextButton.icon(
+                                    onPressed: () => ctx
+                                        .read<NotificationsInboxCubit>()
+                                        .markReadAll(),
+                                    icon: const Icon(
+                                      AppIcons.markAllRead,
+                                      size: 18,
+                                    ),
+                                    label: Text(l.notificationsMarkAllRead),
+                                  ),
                                 ),
                               ),
-                            ),
-                        ];
-                        String? lastDay;
-                        for (final n in visible) {
-                          final local = n.createdAt.toLocal();
-                          final day =
-                              '${local.year}-${local.month}-${local.day}';
-                          if (day != lastDay) {
-                            lastDay = day;
+                          ];
+                          String? lastDay;
+                          for (final n in visible) {
+                            final local = n.createdAt.toLocal();
+                            final day =
+                                '${local.year}-${local.month}-${local.day}';
+                            if (day != lastDay) {
+                              lastDay = day;
+                              rows.add(
+                                DateGroupHeader(label: _dayLabel(ctx, local)),
+                              );
+                            }
                             rows.add(
-                              DateGroupHeader(label: _dayLabel(ctx, local)),
+                              Dismissible(
+                                key: ValueKey('notif_${n.id}'),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(
+                                    right: AppSpacing.xl,
+                                  ),
+                                  color: Theme.of(
+                                    ctx,
+                                  ).colorScheme.surfaceContainerHighest,
+                                  child: const Icon(AppIcons.hidden),
+                                ),
+                                onDismissed: (_) {
+                                  ctx
+                                      .read<NotificationsInboxCubit>()
+                                      .markDismissed(n.id);
+                                  showAppSnackBar(ctx, l.notifHidden);
+                                },
+                                child: NotificationTile(
+                                  notification: n,
+                                  onTap: (notif) => _onTap(ctx, notif),
+                                  onAccept: (id) => switch (n.type) {
+                                    NotificationType.accountInvite =>
+                                      _onAcceptWalletInvite(ctx, id),
+                                    NotificationType.splitCreated =>
+                                      _onAcceptSplit(ctx, id),
+                                    NotificationType.splitPaid =>
+                                      _onRecordReceipt(ctx, n),
+                                    NotificationType.projectTxRecordedForYou =>
+                                      _onCopyToBook(ctx, n),
+                                    NotificationType.projectTxChanged =>
+                                      _onUpdateCopy(ctx, n),
+                                    _ => _onAcceptLinkRequest(ctx, id),
+                                  },
+                                  onReject: (id) => switch (n.type) {
+                                    NotificationType.accountInvite =>
+                                      _onRejectWalletInvite(ctx, id),
+                                    NotificationType.contactLinkRequest =>
+                                      _onRejectLinkRequest(ctx, id),
+                                    // One-tap actions: "skip" just hides the row.
+                                    _ =>
+                                      ctx
+                                          .read<NotificationsInboxCubit>()
+                                          .markDismissed(id),
+                                  },
+                                ),
+                              ),
                             );
                           }
+                          if (state.hasMore) {
+                            // Load-more placeholder: skeleton rows, no spinner.
+                            rows.addAll(const [
+                              SkeletonListTile(),
+                              SkeletonListTile(),
+                            ]);
+                          }
+                          // Notification settings close the list.
                           rows.add(
-                            Dismissible(
-                              key: ValueKey('notif_${n.id}'),
-                              direction: DismissDirection.endToStart,
-                              background: Container(
-                                alignment: Alignment.centerRight,
+                            DetailRow(
+                              leading: const Icon(AppIcons.settings),
+                              label: l.notifSettingsTitle,
+                              showChevron: true,
+                              onTap: openSettings,
+                            ),
+                          );
+                          return PullToRefresh(
+                            onRefresh: () => ctx
+                                .read<NotificationsInboxCubit>()
+                                .load(unreadOnly: _unreadOnly),
+                            child: NotificationListenerWidget(
+                              child: ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
                                 padding: const EdgeInsets.only(
-                                  right: AppSpacing.xl,
+                                  bottom: AppSpacing.huge,
                                 ),
-                                color: Theme.of(
-                                  ctx,
-                                ).colorScheme.surfaceContainerHighest,
-                                child: const Icon(AppIcons.hidden),
-                              ),
-                              onDismissed: (_) {
-                                ctx
-                                    .read<NotificationsInboxCubit>()
-                                    .markDismissed(n.id);
-                                showAppSnackBar(ctx, l.notifHidden);
-                              },
-                              child: NotificationTile(
-                                notification: n,
-                                onTap: (notif) => _onTap(ctx, notif),
-                                onAccept: (id) => switch (n.type) {
-                                  NotificationType.accountInvite =>
-                                    _onAcceptWalletInvite(ctx, id),
-                                  NotificationType.splitCreated =>
-                                    _onAcceptSplit(ctx, id),
-                                  NotificationType.splitPaid =>
-                                    _onRecordReceipt(ctx, n),
-                                  NotificationType.projectTxRecordedForYou =>
-                                    _onCopyToBook(ctx, n),
-                                  NotificationType.projectTxChanged =>
-                                    _onUpdateCopy(ctx, n),
-                                  _ => _onAcceptLinkRequest(ctx, id),
-                                },
-                                onReject: (id) => switch (n.type) {
-                                  NotificationType.accountInvite =>
-                                    _onRejectWalletInvite(ctx, id),
-                                  NotificationType.contactLinkRequest =>
-                                    _onRejectLinkRequest(ctx, id),
-                                  // One-tap actions: "skip" just hides the row.
-                                  _ =>
-                                    ctx
-                                        .read<NotificationsInboxCubit>()
-                                        .markDismissed(id),
-                                },
+                                children: rows,
                               ),
                             ),
                           );
-                        }
-                        if (state.hasMore) {
-                          // Load-more placeholder: skeleton rows, no spinner.
-                          rows.addAll(const [
-                            SkeletonListTile(),
-                            SkeletonListTile(),
-                          ]);
-                        }
-                        // Notification settings close the list.
-                        rows.add(
-                          DetailRow(
-                            leading: const Icon(AppIcons.settings),
-                            label: l.notifSettingsTitle,
-                            showChevron: true,
-                            onTap: openSettings,
-                          ),
-                        );
-                        return PullToRefresh(
-                          onRefresh: () => ctx
-                              .read<NotificationsInboxCubit>()
-                              .load(unreadOnly: _unreadOnly),
-                          child: NotificationListenerWidget(
-                            child: ListView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.only(
-                                bottom: AppSpacing.huge,
-                              ),
-                              children: rows,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -301,7 +306,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       // Accepted wallet invite → jump to the wallet.
       final accountId = n.payload['account_id'] as String?;
       if (accountId != null && accountId.isNotEmpty) {
-        pushFromOverlay(ctx, '/accounts/$accountId');
+        openPage(ctx, '/accounts/$accountId');
       }
       return;
     }
@@ -311,7 +316,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     }
     final link = n.deepLink;
     if (link != null && link.isNotEmpty) {
-      pushFromOverlay(ctx, link);
+      openPage(ctx, link);
     }
   }
 
@@ -359,7 +364,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       final debt = await repo.acceptSplitRequest(id);
       await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
       unawaited(debtsCubit.load());
-      if (ctx.mounted) pushFromOverlay(ctx, '/personal-debts/${debt.id}');
+      if (ctx.mounted) openPage(ctx, '/personal-debts/${debt.id}');
     } on ApiException catch (e) {
       showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
     }
@@ -405,7 +410,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       );
       await inboxCubit.markActioned(n.id);
       unawaited(txCubit.load());
-      if (ctx.mounted) pushFromOverlay(ctx, '/transactions/$txId');
+      if (ctx.mounted) openPage(ctx, '/transactions/$txId');
     } on ApiException catch (e) {
       _showError(messenger, e);
     }
@@ -479,14 +484,9 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final contactsCubit = ctx.read<ContactsCubit>();
     final repo = ctx.read<ContactsRepository>();
     final messenger = ScaffoldMessenger.of(ctx);
-    final router = GoRouter.of(ctx);
-    final rootNav = Navigator.of(ctx, rootNavigator: true);
-    // Contacts live in the tab layer; close this overlay first (captured
-    // up front because ctx may be gone after the awaits below).
-    void open(String location, {Object? extra}) {
-      rootNav.popUntil((r) => r.isFirst);
-      router.push(location, extra: extra);
-    }
+    // Contacts are their own tab (captured up front because ctx may be
+    // gone after the awaits below).
+    final open = pageOpener(ctx);
 
     // 1. Linked-contact match — navigate.
     final linked = _firstWhere(

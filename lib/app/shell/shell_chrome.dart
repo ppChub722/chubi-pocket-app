@@ -97,7 +97,7 @@ class _ShellChromeHiderState extends State<ShellChromeHider> {
     final element = context
         .getElementForInheritedWidgetOfExactType<ShellChrome>();
     final controller = (element?.widget as ShellChrome?)?.notifier;
-    if (controller == null) return; // outside the shell (overlay, tests)
+    if (controller == null) return; // outside the shell (tests)
     _controller = controller;
     // Not mid-build (hiding rebuilds the shell), and not mid page
     // transition either — see [whenRouteSettled].

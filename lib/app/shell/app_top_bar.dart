@@ -14,6 +14,7 @@ import '../../shared/widgets/buttons/app_icon_button.dart';
 import '../../shared/icon_maker/icon_shape.dart';
 import '../../shared/widgets/user_avatar.dart';
 import 'fade_branch_container.dart';
+import 'tab_nav.dart';
 import 'top_bar_crumbs.dart';
 
 /// Universal top bar — the top-chrome counterpart to `MainBottomNav`.
@@ -39,10 +40,9 @@ import 'top_bar_crumbs.dart';
 ///   asks before discarding), the breadcrumb parent stops being a link and
 ///   the universal chips slide up out of view (owner 2026-10-09).
 /// - **[showUniversal] false**: hides the chips — only where they can't
-///   work (signed out) or on a whole-page form. The overlay pages they open
-///   (รอยืนยัน, inbox, settings) show them too (owner 2026-10-09); a chip
-///   for the page you're on does nothing, and from its sub-page it goes
-///   back to it.
+///   work (signed out) or on a whole-page form. Each chip opens its own
+///   tab (รอยืนยัน, inbox, settings — [ShellTab]), as it was left; the
+///   chip of the tab you're in returns to its root (owner 2026-10-09).
 ///
 /// Motion (owner 2026-10-09 — the bar must not move between pages):
 /// - Both halves are [Hero]es, so on push / back they stay put while the
@@ -180,8 +180,14 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       ? animation
       : ReverseAnimation(animation);
 
+  /// Pops the page; on a tab's root (nothing to pop) it's the shell's back
+  /// — the previous tab, the เพิ่มเติม hub, or the dashboard.
   void _defaultBack(BuildContext context) {
-    if (context.canPop()) context.pop();
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      ShellBackScope.maybeOf(context)?.call();
+    }
   }
 }
 
@@ -401,93 +407,98 @@ class _ChipsSlot extends StatelessWidget {
 class _UniversalChips extends StatelessWidget {
   const _UniversalChips();
 
-  /// Opens a chip's page. Already there → nothing (no duplicate on the
-  /// stack); on one of its sub-pages (inbox › settings) → back to it.
-  static void _open(BuildContext context, String path) {
-    String? here;
-    try {
-      here = GoRouterState.of(context).uri.path;
-    } catch (_) {
-      here = null; // outside the router (tests, dev previews)
-    }
-    if (here == path) return;
-    if (here != null && here.startsWith('$path/')) {
-      context.pop();
+  /// Opens a chip's tab, as it was left. Already in it → back to its root
+  /// (inbox › settings → inbox), like re-tapping a nav tab.
+  static void _open(BuildContext context, ShellTab tab, String path) {
+    final shell = StatefulNavigationShell.maybeOf(context);
+    if (shell == null) {
+      // Outside the shell (tests, dev previews).
+      GoRouter.maybeOf(context)?.push(path);
       return;
     }
-    context.push(path);
+    shell.goBranch(tab.index, initialLocation: shell.currentIndex == tab.index);
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    // In the top row's order, modules switched off left out (ShellRow /
+    // AppModules) — the same order swipe walks between their pages.
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Pending drafts (รอยืนยัน), next to the inbox.
-        BlocBuilder<PendingCubit, PendingState>(
-          buildWhen: (a, b) => a.count != b.count,
-          builder: (context, pending) => _chip(
-            icon: AppIcons.pending,
-            tooltip: l.pendingTooltip,
-            badgeCount: pending.count,
-            onPressed: () => _open(context, '/pending'),
-          ),
+        for (final tab in ShellRow.top.tabs) _chipFor(context, l, tab),
+      ],
+    );
+  }
+
+  Widget _chipFor(BuildContext context, AppLocalizations l, ShellTab tab) {
+    return switch (tab) {
+      // Pending drafts (รอยืนยัน).
+      ShellTab.pending => BlocBuilder<PendingCubit, PendingState>(
+        buildWhen: (a, b) => a.count != b.count,
+        builder: (context, pending) => _chip(
+          icon: AppIcons.pending,
+          tooltip: l.pendingTooltip,
+          badgeCount: pending.count,
+          onPressed: () => _open(context, ShellTab.pending, '/pending'),
         ),
-        // Notification inbox.
-        BlocBuilder<UnreadBadgeCubit, int>(
-          builder: (context, unread) => _chip(
-            icon: AppIcons.notifications,
-            tooltip: l.navNotificationsTooltip,
-            badgeCount: unread,
-            onPressed: () => _open(context, '/notifications'),
-          ),
+      ),
+      // Notification inbox.
+      ShellTab.notifications => BlocBuilder<UnreadBadgeCubit, int>(
+        builder: (context, unread) => _chip(
+          icon: AppIcons.notifications,
+          tooltip: l.navNotificationsTooltip,
+          badgeCount: unread,
+          onPressed: () =>
+              _open(context, ShellTab.notifications, '/notifications'),
         ),
-        // Profile — the full avatar (no chip border), with a matching
-        // shadow.
-        BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, state) {
-            final user = _userOf(state);
-            if (user == null) return const SizedBox(width: AppSpacing.sm);
-            // The shadow + ripple follow the avatar's own shape (circle,
-            // squircle, leaf, …) the user picked for their icon.
-            final outline = IconShape.fromId(user.iconCode?.shape).radius(40);
-            return Padding(
-              padding: const EdgeInsets.only(
-                left: AppSpacing.sm,
-                right: AppSpacing.md,
-              ),
-              child: Tooltip(
-                message: l.navProfileTooltip,
-                child: InkWell(
-                  customBorder: RoundedRectangleBorder(borderRadius: outline),
-                  onTap: () => _open(context, '/settings'),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: outline,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.shadow.withValues(alpha: 0.2),
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: UserAvatar(
-                      displayName: user.displayName,
-                      iconCode: user.iconCode,
-                      size: 40,
-                    ),
+      ),
+      // Profile — the full avatar (no chip border), with a matching
+      // shadow.
+      ShellTab.settings => BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          final user = _userOf(state);
+          if (user == null) return const SizedBox(width: AppSpacing.sm);
+          // The shadow + ripple follow the avatar's own shape (circle,
+          // squircle, leaf, …) the user picked for their icon.
+          final outline = IconShape.fromId(user.iconCode?.shape).radius(40);
+          return Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.sm,
+              right: AppSpacing.md,
+            ),
+            child: Tooltip(
+              message: l.navProfileTooltip,
+              child: InkWell(
+                customBorder: RoundedRectangleBorder(borderRadius: outline),
+                onTap: () => _open(context, ShellTab.settings, '/settings'),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: outline,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.shadow.withValues(alpha: 0.2),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: UserAvatar(
+                    displayName: user.displayName,
+                    iconCode: user.iconCode,
+                    size: 40,
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      ],
-    );
+            ),
+          );
+        },
+      ),
+      _ => throw ArgumentError('$tab has no top-bar chip'),
+    };
   }
 
   /// A universal circular chip ([AppIconButton]) with left spacing.

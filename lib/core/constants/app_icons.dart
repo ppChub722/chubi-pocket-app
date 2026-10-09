@@ -49,6 +49,8 @@ abstract final class AppIcons {
   static const eWallet = Icons.qr_code_2_outlined;
   static const creditCard = Icons.credit_card_outlined;
   static const payLater = Icons.access_time_outlined;
+  // A wallet number of kind "other" (spec 15 §5) — not a bank / PromptPay / card.
+  static const accountNumber = Icons.pin_outlined;
   static const income = Icons.add;
   static const expense = Icons.remove;
   static const transfer = Icons.swap_horiz;
@@ -160,6 +162,7 @@ abstract final class AppIcons {
       'cash': cash,
       'eWallet': eWallet,
       'creditCard': creditCard,
+      'accountNumber': accountNumber,
       'payLater': payLater,
       'income': income,
       'expense': expense,

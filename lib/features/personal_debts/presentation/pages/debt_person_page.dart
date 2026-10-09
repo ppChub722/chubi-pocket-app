@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -224,7 +225,7 @@ class _Header extends StatelessWidget {
           : AppIconButton(
               icon: AppIcons.contact,
               tooltip: l.debtsPersonOpenContact,
-              onPressed: () => context.push('/contacts/${p.contactId}'),
+              onPressed: () => openPage(context, '/contacts/${p.contactId}'),
             ),
       footer: even
           ? null

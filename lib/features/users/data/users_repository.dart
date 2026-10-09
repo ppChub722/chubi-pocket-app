@@ -42,4 +42,31 @@ class UsersRepository {
       throw ApiException.fromDioException(e);
     }
   }
+
+  /// `GET /v1/users/me` — the profile with its server preferences (the
+  /// login answer has none).
+  Future<User> getMe() async {
+    try {
+      final res = await _client.dio.get<Map<String, dynamic>>('/users/me');
+      return User.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// Sets (or clears, [categoryId] null) the fee category preference —
+  /// the BE checks it is one of the user's expense categories.
+  Future<User> setFeeCategory(String? categoryId) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/users/me',
+        data: {
+          'preferences': {'fee_category_id': categoryId},
+        },
+      );
+      return User.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
 }

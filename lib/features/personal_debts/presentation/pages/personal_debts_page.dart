@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -70,100 +71,105 @@ class _PersonalDebtsPageState extends State<PersonalDebtsPage> {
     return Scaffold(
       appBar: AppTopBar(title: l.moreDebts, showBack: true),
       extendBodyBehindAppBar: true,
-      body: BlocBuilder<PersonalDebtsCubit, PersonalDebtsState>(
-        builder: (context, state) => AsyncStateView(
-          loading:
-              state.status == PersonalDebtsStatus.initial ||
-              state.status == PersonalDebtsStatus.loading,
-          error: state.error,
-          isEmpty: state.debts.isEmpty,
-          onRetry: context.read<PersonalDebtsCubit>().load,
-          empty: EmptyView(
-            icon: AppIcons.debt,
-            title: l.debtsEmptyTitle,
-            message: l.debtsEmptyMessage,
-            cta: AddTile(label: l.debtsAddNew, onTap: _addDebt),
-          ),
-          builder: (context) {
-            final people = state.people;
-            final shown = _filter(people);
-            final owed = people.fold<double>(0, (a, p) => a + p.owedToMeOpen);
-            final owe = people.fold<double>(0, (a, p) => a + p.iOweOpen);
-            final symbol = Currencies.symbolOf(
-              people.isEmpty ? 'THB' : people.first.currency,
-            );
-            return PullToRefresh(
-              onRefresh: () => context.read<PersonalDebtsCubit>().load(),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                // Top: clear the floating top bar.
-                padding: EdgeInsets.only(
-                  top: MediaQuery.paddingOf(context).top,
-                  bottom: 96,
-                ),
-                children: [
-                  _Summary(
-                    owedToMe: owed,
-                    iOwe: owe,
-                    symbol: symbol,
-                    selected: _dir,
-                    onSelect: (d) =>
-                        setState(() => _dir = _dir == d ? null : d),
+      body: TabSwitchBody(
+        child: BlocBuilder<PersonalDebtsCubit, PersonalDebtsState>(
+          builder: (context, state) => AsyncStateView(
+            loading:
+                state.status == PersonalDebtsStatus.initial ||
+                state.status == PersonalDebtsStatus.loading,
+            error: state.error,
+            isEmpty: state.debts.isEmpty,
+            onRetry: context.read<PersonalDebtsCubit>().load,
+            empty: EmptyView(
+              icon: AppIcons.debt,
+              title: l.debtsEmptyTitle,
+              message: l.debtsEmptyMessage,
+              cta: AddTile(label: l.debtsAddNew, onTap: _addDebt),
+            ),
+            builder: (context) {
+              final people = state.people;
+              final shown = _filter(people);
+              final owed = people.fold<double>(0, (a, p) => a + p.owedToMeOpen);
+              final owe = people.fold<double>(0, (a, p) => a + p.iOweOpen);
+              final symbol = Currencies.symbolOf(
+                people.isEmpty ? 'THB' : people.first.currency,
+              );
+              return PullToRefresh(
+                onRefresh: () => context.read<PersonalDebtsCubit>().load(),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  // Top: clear the floating top bar.
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.paddingOf(context).top,
+                    bottom: 96,
                   ),
-                  AppSearchBar(
-                    hint: l.debtsSearchHint,
-                    onChanged: (v) => setState(() => _query = v),
-                  ),
-                  FilterBar(
-                    chips: [
-                      OptionMenuAnchor<_Status>(
-                        selected: _status,
-                        onSelected: (s) => setState(() => _status = s),
-                        options: [
-                          SheetOption(
-                            value: _Status.open,
-                            label: l.debtsStatusOpen,
-                          ),
-                          SheetOption(
-                            value: _Status.all,
-                            label: l.debtsStatusAll,
-                          ),
-                        ],
-                        builder: (context, toggle) => FilterDropdownChip(
-                          label: l.debtsStatusLabel,
-                          valueLabel: _status == _Status.open
-                              ? l.debtsStatusOpen
-                              : l.debtsStatusAll,
-                          active: _status != _Status.open,
-                          onTap: toggle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (shown.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xxl),
-                      child: Text(l.debtsNoMatch, textAlign: TextAlign.center),
-                    )
-                  else
-                    for (final (i, p) in shown.indexed) ...[
-                      if (i > 0) const RowDivider(),
-                      _PersonRow(person: p, onTap: () => _openPerson(p)),
-                    ],
-                  // Add lives at the end of the list (no top-bar actions).
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      AppSpacing.md,
-                      AppSpacing.lg,
-                      0,
+                  children: [
+                    _Summary(
+                      owedToMe: owed,
+                      iOwe: owe,
+                      symbol: symbol,
+                      selected: _dir,
+                      onSelect: (d) =>
+                          setState(() => _dir = _dir == d ? null : d),
                     ),
-                    child: AddTile(label: l.debtsAddNew, onTap: _addDebt),
-                  ),
-                ],
-              ),
-            );
-          },
+                    AppSearchBar(
+                      hint: l.debtsSearchHint,
+                      onChanged: (v) => setState(() => _query = v),
+                    ),
+                    FilterBar(
+                      chips: [
+                        OptionMenuAnchor<_Status>(
+                          selected: _status,
+                          onSelected: (s) => setState(() => _status = s),
+                          options: [
+                            SheetOption(
+                              value: _Status.open,
+                              label: l.debtsStatusOpen,
+                            ),
+                            SheetOption(
+                              value: _Status.all,
+                              label: l.debtsStatusAll,
+                            ),
+                          ],
+                          builder: (context, toggle) => FilterDropdownChip(
+                            label: l.debtsStatusLabel,
+                            valueLabel: _status == _Status.open
+                                ? l.debtsStatusOpen
+                                : l.debtsStatusAll,
+                            active: _status != _Status.open,
+                            onTap: toggle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (shown.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xxl),
+                        child: Text(
+                          l.debtsNoMatch,
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    else
+                      for (final (i, p) in shown.indexed) ...[
+                        if (i > 0) const RowDivider(),
+                        _PersonRow(person: p, onTap: () => _openPerson(p)),
+                      ],
+                    // Add lives at the end of the list (no top-bar actions).
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.md,
+                        AppSpacing.lg,
+                        0,
+                      ),
+                      child: AddTile(label: l.debtsAddNew, onTap: _addDebt),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

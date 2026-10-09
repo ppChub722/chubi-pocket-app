@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -108,42 +109,44 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
     return Scaffold(
       appBar: AppTopBar(title: l.budgetsTitle, showBack: true),
       extendBodyBehindAppBar: true,
-      body: BlocConsumer<BudgetsCubit, BudgetsState>(
-        listenWhen: (prev, cur) =>
-            cur.status == BudgetsStatus.loaded &&
-            (prev.status != cur.status || prev.budgets != cur.budgets),
-        listener: (context, state) => _loadOverview(state.budgets),
-        builder: (context, state) => AsyncStateView(
-          loading:
-              state.status == BudgetsStatus.initial ||
-              state.status == BudgetsStatus.loading,
-          error: state.error,
-          isEmpty: state.budgets.isEmpty,
-          onRetry: context.read<BudgetsCubit>().load,
-          skeleton: ListView(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              MediaQuery.paddingOf(context).top + AppSpacing.md,
-              AppSpacing.lg,
-              0,
-            ),
-            children: [
-              BudgetOverviewCard(
-                periods: const [],
-                period: BudgetPeriod.monthly,
-                onPeriodChanged: (_) {},
+      body: TabSwitchBody(
+        child: BlocConsumer<BudgetsCubit, BudgetsState>(
+          listenWhen: (prev, cur) =>
+              cur.status == BudgetsStatus.loaded &&
+              (prev.status != cur.status || prev.budgets != cur.budgets),
+          listener: (context, state) => _loadOverview(state.budgets),
+          builder: (context, state) => AsyncStateView(
+            loading:
+                state.status == BudgetsStatus.initial ||
+                state.status == BudgetsStatus.loading,
+            error: state.error,
+            isEmpty: state.budgets.isEmpty,
+            onRetry: context.read<BudgetsCubit>().load,
+            skeleton: ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.md,
+                AppSpacing.lg,
+                0,
               ),
-              const SizedBox(height: AppSpacing.md),
-              for (var i = 0; i < 4; i++) const SkeletonListTile(),
-            ],
+              children: [
+                BudgetOverviewCard(
+                  periods: const [],
+                  period: BudgetPeriod.monthly,
+                  onPeriodChanged: (_) {},
+                ),
+                const SizedBox(height: AppSpacing.md),
+                for (var i = 0; i < 4; i++) const SkeletonListTile(),
+              ],
+            ),
+            empty: EmptyView(
+              icon: AppIcons.budget,
+              title: l.budgetsEmptyTitle,
+              message: l.budgetsEmptyMessage,
+              cta: AddTile(label: l.budgetsAddNew, onTap: _add),
+            ),
+            builder: (context) => _list(context, l, state.budgets),
           ),
-          empty: EmptyView(
-            icon: AppIcons.budget,
-            title: l.budgetsEmptyTitle,
-            message: l.budgetsEmptyMessage,
-            cta: AddTile(label: l.budgetsAddNew, onTap: _add),
-          ),
-          builder: (context) => _list(context, l, state.budgets),
         ),
       ),
     );

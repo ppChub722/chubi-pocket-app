@@ -24,6 +24,8 @@ String walletErrorMessage(AppLocalizations l, ApiException e) {
       return l.walletErrorScopeNotAllowed;
     case 'USER_NOT_FOUND':
       return l.walletErrorUserNotFound;
+    case 'INVALID_IDENTIFIER':
+      return l.walletErrorInvalidIdentifier;
     case 'USER_ALREADY_MEMBER':
       return l.walletErrorAlreadyMember;
     default:

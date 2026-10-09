@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -103,7 +103,7 @@ class TransactionTile extends StatelessWidget {
       footer: tx.tags.isEmpty
           ? null
           : TagShortList(tags: [for (final t in tx.tags) t.asTag]),
-      onTap: onTap ?? () => context.push('/transactions/${tx.id}'),
+      onTap: onTap ?? () => openPage(context, '/transactions/${tx.id}'),
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -409,7 +410,9 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
             label: l.debtSource,
             trailing: Text(source),
             showChevron: sourceRoute != null,
-            onTap: sourceRoute == null ? null : () => context.push(sourceRoute),
+            onTap: sourceRoute == null
+                ? null
+                : () => openPage(context, sourceRoute),
           ),
         ),
         const RowDivider(),

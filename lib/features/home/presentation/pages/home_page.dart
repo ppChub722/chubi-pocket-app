@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/tab_root_scaffold.dart';
 import '../../../../core/constants/app_durations.dart';
 import '../../../../core/constants/app_icons.dart';
@@ -460,7 +461,8 @@ class _UpcomingCard extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => context.push(
+          onTap: () => openPage(
+            context,
             isCard
                 ? '/accounts/${item.id}'
                 : '/scheduled-transactions/${item.id}',
@@ -841,7 +843,7 @@ class _Tile extends StatelessWidget {
       glyph: icon,
       glyphSize: 64,
       margin: EdgeInsets.zero,
-      onTap: () => context.push(route),
+      onTap: () => openPage(context, route),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -994,7 +996,7 @@ class _PendingBlock extends StatelessWidget {
         color: scheme.primaryContainer,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => context.push('/pending'),
+          onTap: () => openPage(context, '/pending'),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(

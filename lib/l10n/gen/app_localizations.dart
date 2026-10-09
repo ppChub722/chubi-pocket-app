@@ -6289,6 +6289,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit scheduled entry'**
   String get scheduledSheetTitleEdit;
+
+  /// No description provided for @accountIdentifiersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account numbers'**
+  String get accountIdentifiersTitle;
+
+  /// No description provided for @accountIdentifiersHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches bank slips to this wallet'**
+  String get accountIdentifiersHelper;
+
+  /// No description provided for @accountIdentifiersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No numbers yet'**
+  String get accountIdentifiersEmpty;
+
+  /// No description provided for @accountIdentifiersAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a number'**
+  String get accountIdentifiersAdd;
+
+  /// No description provided for @identifierKindBankAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank account'**
+  String get identifierKindBankAccount;
+
+  /// No description provided for @identifierKindPromptPay.
+  ///
+  /// In en, this message translates to:
+  /// **'PromptPay'**
+  String get identifierKindPromptPay;
+
+  /// No description provided for @identifierKindCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get identifierKindCard;
+
+  /// No description provided for @identifierKindOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get identifierKindOther;
+
+  /// No description provided for @identifierSheetAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a number'**
+  String get identifierSheetAddTitle;
+
+  /// No description provided for @identifierSheetEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit number'**
+  String get identifierSheetEditTitle;
+
+  /// No description provided for @identifierKindLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Kind'**
+  String get identifierKindLabel;
+
+  /// No description provided for @identifierBankLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank'**
+  String get identifierBankLabel;
+
+  /// No description provided for @identifierBankNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get identifierBankNone;
+
+  /// No description provided for @identifierValueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Number'**
+  String get identifierValueLabel;
+
+  /// No description provided for @identifierValueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 123-4-56789-0 or xxx-x-x2780-x'**
+  String get identifierValueHint;
+
+  /// No description provided for @identifierValueHelperPromptPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone or national ID number'**
+  String get identifierValueHelperPromptPay;
+
+  /// No description provided for @identifierValueInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Digits, x and dashes only'**
+  String get identifierValueInvalid;
+
+  /// No description provided for @identifierValueTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs at least 4 digits'**
+  String get identifierValueTooShort;
+
+  /// No description provided for @identifierValueTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Too long'**
+  String get identifierValueTooLong;
+
+  /// No description provided for @identifierDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this number'**
+  String get identifierDelete;
+
+  /// No description provided for @walletErrorInvalidIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'That account number isn’t valid'**
+  String get walletErrorInvalidIdentifier;
+
+  /// No description provided for @categoryFeeSwitchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Use for fees'**
+  String get categoryFeeSwitchLabel;
+
+  /// No description provided for @categoryFeeSwitchHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Fees from bank slips go here · one category at a time'**
+  String get categoryFeeSwitchHelper;
+
+  /// No description provided for @categoryFeeSwitchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t set the fee category'**
+  String get categoryFeeSwitchFailed;
 }
 
 class _AppLocalizationsDelegate

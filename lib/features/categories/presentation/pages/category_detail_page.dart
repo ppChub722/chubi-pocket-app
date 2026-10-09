@@ -17,6 +17,8 @@ import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/type_indicator.dart';
 import '../../../../shared/widgets/ui.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../users/data/users_repository.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
@@ -63,6 +65,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   Category? _persisted;
   bool _notFound = false;
 
+  /// The user's fee category (preference `fee_category_id`, spec 15 §7):
+  /// fee drafts from bank slips get it. Starts from the signed-in user,
+  /// refreshed from `GET /users/me` (login answers without preferences).
+  String? _feeCategoryId;
+  bool _feeBusy = false;
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +86,44 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       );
     }
     onDraftRestored();
+    if (!widget.isCreate) _loadFeeCategory();
+  }
+
+  Future<void> _loadFeeCategory() async {
+    final auth = context.read<AuthCubit>().state;
+    if (auth is AuthAuthenticated) _feeCategoryId = auth.user.feeCategoryId;
+    try {
+      final me = await context.read<UsersRepository>().getMe();
+      if (!mounted) return;
+      setState(() => _feeCategoryId = me.feeCategoryId);
+      context.read<AuthCubit>().updateUser(me);
+    } on ApiException {
+      // Keep what the signed-in user had; the switch still works.
+    }
+  }
+
+  /// Applies at once (a user preference, not part of the category's
+  /// draft). On: this category; off: none. One at a time — turning it on
+  /// here moves it off any other.
+  Future<void> _setFeeCategory(bool on) async {
+    final id = _persisted?.id;
+    if (id == null) return;
+    final l = AppLocalizations.of(context)!;
+    setState(() => _feeBusy = true);
+    try {
+      final me = await context.read<UsersRepository>().setFeeCategory(
+        on ? id : null,
+      );
+      if (!mounted) return;
+      context.read<AuthCubit>().updateUser(me);
+      setState(() => _feeCategoryId = me.feeCategoryId);
+    } on ApiException {
+      if (mounted) {
+        showAppSnackBar(context, l.categoryFeeSwitchFailed, tone: Tone.danger);
+      }
+    } finally {
+      if (mounted) setState(() => _feeBusy = false);
+    }
   }
 
   @override
@@ -498,6 +544,18 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                     applyChange(working.copyWith(includeInReport: v)),
               ),
             ),
+            // Expense categories only, and only once saved (needs an id).
+            if (_persisted != null && working.type == CategoryType.expense) ...[
+              const RowDivider(),
+              DetailRow(
+                label: l.categoryFeeSwitchLabel,
+                helper: l.categoryFeeSwitchHelper,
+                trailing: Switch(
+                  value: _feeCategoryId == _persisted!.id,
+                  onChanged: _feeBusy ? null : _setFeeCategory,
+                ),
+              ),
+            ],
           ],
         ),
         // Delete lives at the bottom of the body in edit mode (the top bar

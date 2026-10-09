@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_durations.dart';
+import 'tab_nav.dart';
 
 /// Tab-switch container for the shell: keeps every branch alive in an
-/// [IndexedStack] (state + scroll preserved) and runs a fade / lift each
+/// [IndexedStack] (state + scroll preserved) and runs a fade / slide each
 /// time the selected tab changes.
 ///
 /// The container itself doesn't animate anything — that would move the
@@ -107,7 +109,7 @@ class TabSwitchScope extends InheritedWidget {
 
   final Map<int, Object?> _topBars;
 
-  /// Null outside the shell (overlay pages, tests, dev previews).
+  /// Null outside the shell (tests, dev previews).
   static TabSwitchScope? maybeOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<TabSwitchScope>();
 
@@ -138,29 +140,63 @@ class _BranchIndex extends InheritedWidget {
   bool updateShouldNotify(_BranchIndex old) => index != old.index;
 }
 
-/// Fades / lifts [child] in when the shell switches tabs. Wrap a page's
-/// body with it — never the Scaffold, so the top bar stays still. Outside
-/// the shell (tests, dev previews) it's a no-op.
+/// How far (px) the visible tab body trails the finger during a sideways
+/// swipe on a tab root — a small fake "the page is moving" cue before the
+/// switch (owner 2026-10-09). Provided by `MainShell`; sits at 0 otherwise.
+class TabSwipeNudge extends InheritedWidget {
+  const TabSwipeNudge({required this.offset, required super.child, super.key});
+
+  final ValueListenable<double> offset;
+
+  static ValueListenable<double>? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<TabSwipeNudge>()?.offset;
+
+  @override
+  bool updateShouldNotify(TabSwipeNudge old) => offset != old.offset;
+}
+
+/// Fades / slides [child] in when the shell switches tabs, and follows the
+/// [TabSwipeNudge] mid-swipe. Wrap a page's body with it — never the
+/// Scaffold, so the top bar stays still. Outside the shell (tests, dev
+/// previews) it's a no-op.
 class TabSwitchBody extends StatelessWidget {
   const TabSwitchBody({required this.child, super.key});
 
   final Widget child;
 
-  static final Animatable<Offset> _lift = Tween<Offset>(
-    begin: const Offset(0, 0.015),
-    end: Offset.zero,
-  );
+  /// Entry slide, as a fraction of the body's width.
+  static const _enterShift = 0.06;
 
   @override
   Widget build(BuildContext context) {
     final scope = TabSwitchScope.maybeOf(context);
     if (scope == null) return child;
-    return FadeTransition(
+    final previous = scope.previous;
+    // Tabs sit in rows (ShellRow), so within one the new body comes in
+    // from the side it lies on — a tab to the right slides in from the
+    // right, whether it was swiped to, tapped or backed into. Across rows
+    // (a เพิ่มเติม card from the hub, a ⏳ 🔔 👤 chip) there's no side: it
+    // just fades.
+    final from = previous == null
+        ? 0.0
+        : ShellTab.values[previous].sideOf(ShellTab.values[scope.current]) *
+              _enterShift;
+    final Widget body = FadeTransition(
       opacity: scope.animation,
       child: SlideTransition(
-        position: scope.animation.drive(_lift),
+        position: scope.animation.drive(
+          Tween<Offset>(begin: Offset(from, 0), end: Offset.zero),
+        ),
         child: child,
       ),
+    );
+    final nudge = TabSwipeNudge.maybeOf(context);
+    if (nudge == null) return body;
+    return ValueListenableBuilder<double>(
+      valueListenable: nudge,
+      builder: (context, dx, body) =>
+          Transform.translate(offset: Offset(dx, 0), child: body),
+      child: body,
     );
   }
 }

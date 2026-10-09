@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -544,7 +545,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           leading: const Icon(AppIcons.debt),
           label: l.contactDebts,
           showChevron: true,
-          onTap: () => context.push(
+          onTap: () => openPage(
+            context,
             Uri(
               path: '/personal-debts/person',
               queryParameters: {'contact': c.id, 'name': c.effectiveName},

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/shell_chrome.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -552,77 +553,83 @@ class _CategoriesPageState extends State<CategoriesPage> {
               editing: _reorderMode,
               onBack: _reorderMode ? _cancelReorder : null,
             ),
-            body: AsyncStateView(
-              loading:
-                  state.status == CategoriesStatus.initial ||
-                  state.status == CategoriesStatus.loading,
-              error: state.error,
-              isEmpty: all.isEmpty,
-              onRetry: context.read<CategoriesCubit>().load,
-              skeleton: Builder(
-                builder: (context) => Padding(
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.paddingOf(context).top,
-                  ),
-                  child: const LoadingView(skeleton: CategoriesListSkeleton()),
-                ),
-              ),
-              // Per-type empty lives under the tabs ([_listOrEmpty]).
-              builder: (context) => Column(
-                children: [
-                  // Clear the transparent top bar.
-                  SizedBox(height: MediaQuery.paddingOf(context).top),
-                  AppTabBar<CategoryType>(
-                    selected: _listType,
-                    onChanged: _setListType,
-                    pager: _pages,
-                    tabs: [
-                      AppTab(
-                        value: CategoryType.expense,
-                        label: l.categoryTypeExpense,
-                      ),
-                      AppTab(
-                        value: CategoryType.income,
-                        label: l.categoryTypeIncome,
-                      ),
-                    ],
-                  ),
-                  // Hidden (not just disabled) in reorder mode so the
-                  // tree can't be filtered mid-drag.
-                  if (!_reorderMode && typeUsers.isNotEmpty)
-                    AppSearchBar(
-                      hint: l.categoriesSearchHint,
-                      onChanged: (v) => setState(() => _query = v),
+            body: TabSwitchBody(
+              child: AsyncStateView(
+                loading:
+                    state.status == CategoriesStatus.initial ||
+                    state.status == CategoriesStatus.loading,
+                error: state.error,
+                isEmpty: all.isEmpty,
+                onRetry: context.read<CategoriesCubit>().load,
+                skeleton: Builder(
+                  builder: (context) => Padding(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.paddingOf(context).top,
                     ),
-                  // [สี▾][ไอคอน▾] … (✏️)(+) — same row as the other list
-                  // pages. Hidden with the search in reorder mode.
-                  if (!_reorderMode) _filterRow(l, typeUsers, all),
-                  Expanded(
-                    // Swipe sideways = the other tab, following the finger
-                    // (off while reordering — a sideways drag there picks
-                    // a depth lane; paging stops via physics only).
-                    child: AppTabPager<CategoryType>(
-                      controller: _pages,
-                      values: _types,
+                    child: const LoadingView(
+                      skeleton: CategoriesListSkeleton(),
+                    ),
+                  ),
+                ),
+                // Per-type empty lives under the tabs ([_listOrEmpty]).
+                builder: (context) => Column(
+                  children: [
+                    // Clear the transparent top bar.
+                    SizedBox(height: MediaQuery.paddingOf(context).top),
+                    AppTabBar<CategoryType>(
                       selected: _listType,
                       onChanged: _setListType,
-                      enabled: !_reorderMode,
-                      builder: (context, t) {
-                        if (t == _listType) {
-                          return _listOrEmpty(l, typeUsers, all, visible, t);
-                        }
-                        final other = users.where((c) => c.type == t).toList();
-                        return _listOrEmpty(
-                          l,
-                          other,
-                          all,
-                          _reorderMode ? null : _visibleIds(other),
-                          t,
-                        );
-                      },
+                      pager: _pages,
+                      tabs: [
+                        AppTab(
+                          value: CategoryType.expense,
+                          label: l.categoryTypeExpense,
+                        ),
+                        AppTab(
+                          value: CategoryType.income,
+                          label: l.categoryTypeIncome,
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    // Hidden (not just disabled) in reorder mode so the
+                    // tree can't be filtered mid-drag.
+                    if (!_reorderMode && typeUsers.isNotEmpty)
+                      AppSearchBar(
+                        hint: l.categoriesSearchHint,
+                        onChanged: (v) => setState(() => _query = v),
+                      ),
+                    // [สี▾][ไอคอน▾] … (✏️)(+) — same row as the other list
+                    // pages. Hidden with the search in reorder mode.
+                    if (!_reorderMode) _filterRow(l, typeUsers, all),
+                    Expanded(
+                      // Swipe sideways = the other tab, following the finger
+                      // (off while reordering — a sideways drag there picks
+                      // a depth lane; paging stops via physics only).
+                      child: AppTabPager<CategoryType>(
+                        controller: _pages,
+                        values: _types,
+                        selected: _listType,
+                        onChanged: _setListType,
+                        enabled: !_reorderMode,
+                        builder: (context, t) {
+                          if (t == _listType) {
+                            return _listOrEmpty(l, typeUsers, all, visible, t);
+                          }
+                          final other = users
+                              .where((c) => c.type == t)
+                              .toList();
+                          return _listOrEmpty(
+                            l,
+                            other,
+                            all,
+                            _reorderMode ? null : _visibleIds(other),
+                            t,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             // Browse: the shell's nav shows through. Reorder: this bar

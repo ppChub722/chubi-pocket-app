@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -40,48 +41,54 @@ class _ScheduledTransactionsListPageState
     return Scaffold(
       appBar: AppTopBar(title: l.scheduledTitle, showBack: true),
       extendBodyBehindAppBar: true,
-      body: BlocBuilder<ScheduledTransactionsCubit, ScheduledTransactionsState>(
-        builder: (context, state) => AsyncStateView(
-          loading:
-              state.status == ScheduledTransactionsStatus.initial ||
-              state.status == ScheduledTransactionsStatus.loading,
-          error: state.error,
-          isEmpty: state.entries.isEmpty,
-          onRetry: context.read<ScheduledTransactionsCubit>().load,
-          skeleton: ListView(
-            children: [for (var i = 0; i < 4; i++) const SkeletonListTile()],
-          ),
-          empty: EmptyView(
-            icon: AppIcons.scheduled,
-            title: l.scheduledEmptyTitle,
-            message: l.scheduledEmptyMessage,
-            cta: AddTile(label: l.scheduledAddNew, onTap: _add),
-          ),
-          builder: (context) => PullToRefresh(
-            onRefresh: () => context.read<ScheduledTransactionsCubit>().load(),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              // Top: clear the transparent top bar.
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.md,
-                AppSpacing.lg,
-                96,
-              ),
-              children: [
-                for (final e in state.entries) ...[
-                  ScheduledCard(
-                    entry: e,
-                    onTap: () =>
-                        context.push('/scheduled-transactions/${e.id}'),
+      body: TabSwitchBody(
+        child:
+            BlocBuilder<ScheduledTransactionsCubit, ScheduledTransactionsState>(
+              builder: (context, state) => AsyncStateView(
+                loading:
+                    state.status == ScheduledTransactionsStatus.initial ||
+                    state.status == ScheduledTransactionsStatus.loading,
+                error: state.error,
+                isEmpty: state.entries.isEmpty,
+                onRetry: context.read<ScheduledTransactionsCubit>().load,
+                skeleton: ListView(
+                  children: [
+                    for (var i = 0; i < 4; i++) const SkeletonListTile(),
+                  ],
+                ),
+                empty: EmptyView(
+                  icon: AppIcons.scheduled,
+                  title: l.scheduledEmptyTitle,
+                  message: l.scheduledEmptyMessage,
+                  cta: AddTile(label: l.scheduledAddNew, onTap: _add),
+                ),
+                builder: (context) => PullToRefresh(
+                  onRefresh: () =>
+                      context.read<ScheduledTransactionsCubit>().load(),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    // Top: clear the transparent top bar.
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      MediaQuery.paddingOf(context).top + AppSpacing.md,
+                      AppSpacing.lg,
+                      96,
+                    ),
+                    children: [
+                      for (final e in state.entries) ...[
+                        ScheduledCard(
+                          entry: e,
+                          onTap: () =>
+                              context.push('/scheduled-transactions/${e.id}'),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
+                      AddTile(label: l.scheduledAddNew, onTap: _add),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-                AddTile(label: l.scheduledAddNew, onTap: _add),
-              ],
+                ),
+              ),
             ),
-          ),
-        ),
       ),
     );
   }

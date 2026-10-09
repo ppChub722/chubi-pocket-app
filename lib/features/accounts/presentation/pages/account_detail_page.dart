@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_durations.dart';
 import '../../../../core/constants/app_icons.dart';
@@ -23,13 +25,17 @@ import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/period_summary_card.dart';
 import '../../../transactions/presentation/pages/transactions_list_page.dart';
+import '../../data/accounts_repository.dart';
 import '../../domain/account.dart';
+import '../../domain/account_identifier.dart';
+import '../../domain/payment_provider.dart';
 import '../../domain/account_type.dart';
 import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
 import '../wallet_errors.dart';
 import '../widgets/account_card.dart';
 import '../widgets/adjust_balance_sheet.dart';
+import '../widgets/identifier_widgets.dart';
 import '../widgets/member_avatar_stack.dart';
 
 /// One wallet — create (`/accounts/new`), view (`/accounts/:id`) and edit
@@ -137,6 +143,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   late final String _currency;
   bool _scopeBusy = false;
 
+  /// Banks for the numbers section (names + the sheet's picker).
+  List<PaymentProvider> _providers = const [];
+
   bool get _isCreate => widget.isCreate;
 
   @override
@@ -153,6 +162,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       );
     }
     onDraftRestored();
+    context
+        .read<AccountsRepository>()
+        .paymentProviders()
+        .then((p) {
+          if (mounted) setState(() => _providers = p);
+        })
+        // Names fall back to the bank code; the picker shows "not set".
+        .catchError((Object _) {});
   }
 
   @override
@@ -352,6 +369,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             statementDate: statementDay,
             paymentDueDate: dueDay,
             minimumPayment: minPayment,
+            identifiers: w.identifiers,
           ),
         );
       } else {
@@ -376,6 +394,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             members: p.members,
             myReportScope: p.myReportScope,
             isShared: p.isShared,
+            identifiers: w.identifiers,
           ),
         );
       }
@@ -434,7 +453,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     if (result == null || !mounted) return;
     final cubit = context.read<AccountsCubit>();
     final txCubit = context.read<TransactionsCubit>();
-    final router = GoRouter.of(context);
+    final open = pageOpener(context);
     try {
       final outcome = await cubit.adjustBalance(
         id: a.id,
@@ -449,7 +468,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         tone: Tone.success,
         actionLabel: l.accountAdjustBalanceViewTransaction,
         onAction: () =>
-            router.push('/transactions/${outcome.adjustmentTransactionId}'),
+            open('/transactions/${outcome.adjustmentTransactionId}'),
       );
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
@@ -633,6 +652,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         const SizedBox(height: AppSpacing.md),
       ],
       _infoSection(l),
+      if (_identifiersSection(l) case final numbers?) ...[
+        const SizedBox(height: AppSpacing.md),
+        numbers,
+      ],
       if (a != null) ...[
         const SizedBox(height: AppSpacing.md),
         LockedInEdit(locked: editing, child: _sharingSection(l, a)),
@@ -789,6 +812,73 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       ],
     );
   }
+
+  /// The wallet's numbers (spec 15 §5) — what bank slips are matched
+  /// against. View: the list, hidden behind the app-wide 👁 like money;
+  /// edit: tap a row to change it, × to remove, + to add. Non-owners only
+  /// see a list that has something in it.
+  Widget? _identifiersSection(AppLocalizations l) {
+    final editing = isEditing;
+    final owner = _isOwner;
+    final list = working.identifiers;
+    if (list.isEmpty && !owner) return null;
+    final hidden = !editing && isMoneyHidden(context);
+    return SectionCard(
+      children: [
+        IdentifiersTitle(
+          title: l.accountIdentifiersTitle,
+          showToggle: !editing && list.isNotEmpty,
+        ),
+        if (list.isEmpty && !editing)
+          DetailRow(
+            label: l.accountIdentifiersEmpty,
+            helper: l.accountIdentifiersHelper,
+            onTap: enterEdit,
+          ),
+        for (final (i, id) in list.indexed) ...[
+          if (i > 0) const RowDivider(),
+          IdentifierRow(
+            identifier: id,
+            providers: _providers,
+            hidden: hidden,
+            onTap: editing ? () => _editIdentifier(i) : null,
+            onDelete: editing ? () => _removeIdentifier(i) : null,
+          ),
+        ],
+        if (editing) ...[
+          if (list.isNotEmpty) const RowDivider(),
+          AddTile(
+            label: l.accountIdentifiersAdd,
+            variant: AddTileVariant.row,
+            onTap: () => _editIdentifier(null),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// [index] null → add a new number.
+  Future<void> _editIdentifier(int? index) async {
+    final list = working.identifiers;
+    final result = await showIdentifierSheet(
+      context,
+      providers: _providers,
+      initial: index == null ? null : list[index],
+    );
+    if (!mounted || result == null) return;
+    final next = [...list];
+    if (index == null) {
+      if (next.contains(result)) return; // already there
+      next.add(result);
+    } else {
+      next[index] = result;
+    }
+    applyChange(working.copyWith(identifiers: next));
+  }
+
+  void _removeIdentifier(int index) => applyChange(
+    working.copyWith(identifiers: [...working.identifiers]..removeAt(index)),
+  );
 
   /// Card / pay-later billing: read-only rows in view mode (unset ones
   /// hidden), inputs in edit mode.
@@ -1297,6 +1387,7 @@ class _AccountDraft {
     this.statementDay = '',
     this.dueDay = '',
     this.minPayment = '',
+    this.identifiers = const [],
   });
 
   final String name;
@@ -1311,6 +1402,7 @@ class _AccountDraft {
   final String statementDay;
   final String dueDay;
   final String minPayment;
+  final List<AccountIdentifier> identifiers;
 
   factory _AccountDraft.from(Account a) => _AccountDraft(
     name: a.name,
@@ -1326,6 +1418,7 @@ class _AccountDraft {
     minPayment: a.minimumPayment == null
         ? ''
         : AmountField.format(a.minimumPayment!),
+    identifiers: a.identifiers,
   );
 
   /// What the server stores (text trimmed) — the post-save baseline.
@@ -1348,6 +1441,7 @@ class _AccountDraft {
     String? statementDay,
     String? dueDay,
     String? minPayment,
+    List<AccountIdentifier>? identifiers,
   }) {
     return _AccountDraft(
       name: name ?? this.name,
@@ -1360,6 +1454,7 @@ class _AccountDraft {
       statementDay: statementDay ?? this.statementDay,
       dueDay: dueDay ?? this.dueDay,
       minPayment: minPayment ?? this.minPayment,
+      identifiers: identifiers ?? this.identifiers,
     );
   }
 
@@ -1375,7 +1470,8 @@ class _AccountDraft {
       other.creditLimit == creditLimit &&
       other.statementDay == statementDay &&
       other.dueDay == dueDay &&
-      other.minPayment == minPayment;
+      other.minPayment == minPayment &&
+      listEquals(other.identifiers, identifiers);
 
   @override
   int get hashCode => Object.hash(
@@ -1389,5 +1485,6 @@ class _AccountDraft {
     statementDay,
     dueDay,
     minPayment,
+    Object.hashAll(identifiers),
   );
 }

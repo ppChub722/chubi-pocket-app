@@ -3574,4 +3574,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduledSheetTitleEdit => 'Edit scheduled entry';
+
+  @override
+  String get accountIdentifiersTitle => 'Account numbers';
+
+  @override
+  String get accountIdentifiersHelper => 'Matches bank slips to this wallet';
+
+  @override
+  String get accountIdentifiersEmpty => 'No numbers yet';
+
+  @override
+  String get accountIdentifiersAdd => 'Add a number';
+
+  @override
+  String get identifierKindBankAccount => 'Bank account';
+
+  @override
+  String get identifierKindPromptPay => 'PromptPay';
+
+  @override
+  String get identifierKindCard => 'Card';
+
+  @override
+  String get identifierKindOther => 'Other';
+
+  @override
+  String get identifierSheetAddTitle => 'Add a number';
+
+  @override
+  String get identifierSheetEditTitle => 'Edit number';
+
+  @override
+  String get identifierKindLabel => 'Kind';
+
+  @override
+  String get identifierBankLabel => 'Bank';
+
+  @override
+  String get identifierBankNone => 'Not set';
+
+  @override
+  String get identifierValueLabel => 'Number';
+
+  @override
+  String get identifierValueHint => 'e.g. 123-4-56789-0 or xxx-x-x2780-x';
+
+  @override
+  String get identifierValueHelperPromptPay => 'Phone or national ID number';
+
+  @override
+  String get identifierValueInvalid => 'Digits, x and dashes only';
+
+  @override
+  String get identifierValueTooShort => 'Needs at least 4 digits';
+
+  @override
+  String get identifierValueTooLong => 'Too long';
+
+  @override
+  String get identifierDelete => 'Remove this number';
+
+  @override
+  String get walletErrorInvalidIdentifier => 'That account number isn’t valid';
+
+  @override
+  String get categoryFeeSwitchLabel => 'Use for fees';
+
+  @override
+  String get categoryFeeSwitchHelper =>
+      'Fees from bank slips go here · one category at a time';
+
+  @override
+  String get categoryFeeSwitchFailed => 'Couldn’t set the fee category';
 }

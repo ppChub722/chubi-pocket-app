@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -72,103 +73,105 @@ class _ProjectsPageState extends State<ProjectsPage> {
     return Scaffold(
       appBar: AppTopBar(title: l.navProjects, showBack: true),
       extendBodyBehindAppBar: true,
-      body: BlocBuilder<ProjectsCubit, ProjectsState>(
-        builder: (ctx, state) {
-          final shown = _shown(state.projects);
-          return Column(
-            children: [
-              // Clear the floating top bar (ctx is inside the body).
-              SizedBox(height: MediaQuery.paddingOf(ctx).top),
-              AppSearchBar(
-                hint: l.projectsSearchHint,
-                onChanged: (v) => setState(() => _query = v),
-              ),
-              FilterBar(
-                chips: [
-                  OptionMenuAnchor<String>(
-                    selected: state.statusFilter,
-                    onSelected: (v) =>
-                        ctx.read<ProjectsCubit>().load(statusFilter: v),
-                    options: [
-                      for (final e in statusLabels.entries)
-                        SheetOption(value: e.key, label: e.value),
-                    ],
-                    builder: (context, toggle) => FilterDropdownChip(
-                      label: l.projectsStatusLabel,
-                      valueLabel: statusLabels[state.statusFilter],
-                      active: state.statusFilter != 'active',
-                      onTap: toggle,
-                    ),
-                  ),
-                ],
-                trailing: SortChip<_Sort>(
-                  selected: _sort,
-                  onSelected: (s) => setState(() => _sort = s),
-                  options: [
-                    SortOption(_Sort.recent, l.projectsSortRecent),
-                    SortOption(_Sort.name, l.projectsSortName),
-                  ],
+      body: TabSwitchBody(
+        child: BlocBuilder<ProjectsCubit, ProjectsState>(
+          builder: (ctx, state) {
+            final shown = _shown(state.projects);
+            return Column(
+              children: [
+                // Clear the floating top bar (ctx is inside the body).
+                SizedBox(height: MediaQuery.paddingOf(ctx).top),
+                AppSearchBar(
+                  hint: l.projectsSearchHint,
+                  onChanged: (v) => setState(() => _query = v),
                 ),
-              ),
-              Expanded(
-                child: AsyncStateView(
-                  loading:
-                      state.status == ProjectsStatus.initial ||
-                      state.status == ProjectsStatus.loading,
-                  error: state.error,
-                  isEmpty: state.projects.isEmpty,
-                  onRetry: ctx.read<ProjectsCubit>().load,
-                  // Zero padding: the bar is already cleared above.
-                  skeleton: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      for (var i = 0; i < 5; i++) const SkeletonListTile(),
+                FilterBar(
+                  chips: [
+                    OptionMenuAnchor<String>(
+                      selected: state.statusFilter,
+                      onSelected: (v) =>
+                          ctx.read<ProjectsCubit>().load(statusFilter: v),
+                      options: [
+                        for (final e in statusLabels.entries)
+                          SheetOption(value: e.key, label: e.value),
+                      ],
+                      builder: (context, toggle) => FilterDropdownChip(
+                        label: l.projectsStatusLabel,
+                        valueLabel: statusLabels[state.statusFilter],
+                        active: state.statusFilter != 'active',
+                        onTap: toggle,
+                      ),
+                    ),
+                  ],
+                  trailing: SortChip<_Sort>(
+                    selected: _sort,
+                    onSelected: (s) => setState(() => _sort = s),
+                    options: [
+                      SortOption(_Sort.recent, l.projectsSortRecent),
+                      SortOption(_Sort.name, l.projectsSortName),
                     ],
                   ),
-                  // Another status filter with no rows → the list's no-match.
-                  empty: state.statusFilter == 'active'
-                      ? EmptyView(
-                          icon: AppIcons.project,
-                          title: l.projectsEmptyTitle,
-                          message: l.projectsEmptyMessage,
-                          cta: AddTile(
-                            label: l.projectsCreateNew,
-                            onTap: _create,
-                          ),
-                        )
-                      : null,
-                  builder: (context) => PullToRefresh(
-                    onRefresh: () => ctx.read<ProjectsCubit>().load(),
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xs,
-                        AppSpacing.lg,
-                        96,
-                      ),
+                ),
+                Expanded(
+                  child: AsyncStateView(
+                    loading:
+                        state.status == ProjectsStatus.initial ||
+                        state.status == ProjectsStatus.loading,
+                    error: state.error,
+                    isEmpty: state.projects.isEmpty,
+                    onRetry: ctx.read<ProjectsCubit>().load,
+                    // Zero padding: the bar is already cleared above.
+                    skeleton: ListView(
+                      padding: EdgeInsets.zero,
                       children: [
-                        if (shown.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(AppSpacing.xl),
-                            child: Text(
-                              l.projectsNoMatch,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        for (final p in shown) ...[
-                          _ProjectCard(project: p, onTap: () => _open(p)),
-                          const SizedBox(height: AppSpacing.sm),
-                        ],
-                        AddTile(label: l.projectsCreateNew, onTap: _create),
+                        for (var i = 0; i < 5; i++) const SkeletonListTile(),
                       ],
                     ),
+                    // Another status filter with no rows → the list's no-match.
+                    empty: state.statusFilter == 'active'
+                        ? EmptyView(
+                            icon: AppIcons.project,
+                            title: l.projectsEmptyTitle,
+                            message: l.projectsEmptyMessage,
+                            cta: AddTile(
+                              label: l.projectsCreateNew,
+                              onTap: _create,
+                            ),
+                          )
+                        : null,
+                    builder: (context) => PullToRefresh(
+                      onRefresh: () => ctx.read<ProjectsCubit>().load(),
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.xs,
+                          AppSpacing.lg,
+                          96,
+                        ),
+                        children: [
+                          if (shown.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(AppSpacing.xl),
+                              child: Text(
+                                l.projectsNoMatch,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          for (final p in shown) ...[
+                            _ProjectCard(project: p, onTap: () => _open(p)),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
+                          AddTile(label: l.projectsCreateNew, onTap: _create),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

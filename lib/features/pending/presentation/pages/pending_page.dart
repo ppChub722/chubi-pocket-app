@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/overlay_nav.dart';
+import '../../../../app/shell/fade_branch_container.dart';
+import '../../../../app/shell/shell_chrome.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -87,7 +89,7 @@ class _PendingPageState extends State<PendingPage> {
           l.pendingSubmittedCount(r.submitted.length),
           tone: Tone.success,
           actionLabel: l.pendingSeeTransactions,
-          onAction: () => pushFromOverlay(context, '/transactions'),
+          onAction: () => openPage(context, '/transactions'),
         );
       }
     } on ApiException catch (e) {
@@ -138,7 +140,7 @@ class _PendingPageState extends State<PendingPage> {
     final lead = importSlip == null ? 0 : 1;
 
     return Scaffold(
-      appBar: AppTopBar(title: l.pendingTitle, showBack: true),
+      appBar: AppTopBar(title: l.pendingTitle),
       extendBodyBehindAppBar: true,
       // UI only for now — typing a draft in words isn't wired yet.
       floatingActionButton: ChatDial(
@@ -147,154 +149,160 @@ class _PendingPageState extends State<PendingPage> {
         sendTooltip: l.pendingChatSend,
         closeTooltip: l.pendingChatClose,
       ),
-      // One button, only while something is ticked.
+      // One button, only while something is ticked — it takes the shell
+      // nav's place instead of stacking on it.
       bottomNavigationBar: _selected.isEmpty
           ? null
-          : Container(
-              decoration: BoxDecoration(
-                color: scheme.surface,
-                border: Border(top: BorderSide(color: scheme.outlineVariant)),
-              ),
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.lg,
-              ),
-              child: SafeArea(
-                top: false,
-                child: AppButton(
-                  label: l.pendingSubmitSelected(_selected.length),
-                  expand: true,
-                  loading: _submitting,
-                  onPressed: _submitSelected,
+          : ShellChromeHider(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  border: Border(top: BorderSide(color: scheme.outlineVariant)),
+                ),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: AppButton(
+                    label: l.pendingSubmitSelected(_selected.length),
+                    expand: true,
+                    loading: _submitting,
+                    onPressed: _submitSelected,
+                  ),
                 ),
               ),
             ),
       // Pinned rows clear the floating bar; the list below them must not
       // add the bar height again.
-      body: Builder(
-        builder: (context) => MediaQuery.removePadding(
-          context: context,
-          removeTop: true,
-          child: Column(
-            children: [
-              SizedBox(height: MediaQuery.paddingOf(context).top),
-              if (visible.isNotEmpty)
-                _SelectAllRow(
-                  label: l.pendingSelectAll,
-                  value: pickedVisible == 0
-                      ? false
-                      : (pickedVisible == visible.length ? true : null),
-                  count: '$pickedVisible/${visible.length}',
-                  onTap: () => setState(
-                    () => pickedVisible == visible.length
-                        ? _selected.removeAll(visible.map((p) => p.id))
-                        : _selected.addAll(visible.map((p) => p.id)),
+      body: TabSwitchBody(
+        child: Builder(
+          builder: (context) => MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: Column(
+              children: [
+                SizedBox(height: MediaQuery.paddingOf(context).top),
+                if (visible.isNotEmpty)
+                  _SelectAllRow(
+                    label: l.pendingSelectAll,
+                    value: pickedVisible == 0
+                        ? false
+                        : (pickedVisible == visible.length ? true : null),
+                    count: '$pickedVisible/${visible.length}',
+                    onTap: () => setState(
+                      () => pickedVisible == visible.length
+                          ? _selected.removeAll(visible.map((p) => p.id))
+                          : _selected.addAll(visible.map((p) => p.id)),
+                    ),
                   ),
-                ),
-              if (others > 0)
-                FilterBar(
-                  chips: [
-                    for (final f in _Filter.values)
-                      FilterDropdownChip(
-                        label: switch (f) {
-                          _Filter.all => l.pendingFilterAll(all.length),
-                          _Filter.manual => l.pendingFilterManual(manual),
-                          _Filter.others => l.pendingFilterOthers(others),
-                        },
-                        active: _filter == f,
-                        onTap: () => setState(() => _filter = f),
-                      ),
-                  ],
-                ),
-              if (result != null && result.failed > 0)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    0,
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                  ),
-                  child: MessageBanner(
-                    message: l.pendingResult(result.done, result.failed),
-                    tone: Tone.warning,
-                    onClose: () => setState(() => _lastResult = null),
-                  ),
-                ),
-              Expanded(
-                child: AsyncStateView(
-                  loading:
-                      state.status == PendingStatus.initial ||
-                      state.status == PendingStatus.loading,
-                  error: state.error,
-                  isEmpty: visible.isEmpty,
-                  onRetry: context.read<PendingCubit>().load,
-                  skeleton: ListView(
-                    children: [
-                      for (var i = 0; i < 4; i++) const SkeletonListTile(),
+                if (others > 0)
+                  FilterBar(
+                    chips: [
+                      for (final f in _Filter.values)
+                        FilterDropdownChip(
+                          label: switch (f) {
+                            _Filter.all => l.pendingFilterAll(all.length),
+                            _Filter.manual => l.pendingFilterManual(manual),
+                            _Filter.others => l.pendingFilterOthers(others),
+                          },
+                          active: _filter == f,
+                          onTap: () => setState(() => _filter = f),
+                        ),
                     ],
                   ),
-                  empty: EmptyView(
-                    icon: AppIcons.empty,
-                    title: l.pendingEmptyTitle,
-                    message: l.pendingEmptyMessage,
-                    cta: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (importSlip != null) ...[
-                          importSlip,
-                          const SizedBox(height: AppSpacing.sm),
-                        ],
-                        AddTile(
-                          label: l.pendingAdd,
-                          onTap: () => context.push('/pending/new'),
-                        ),
-                      ],
+                if (result != null && result.failed > 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      0,
+                      AppSpacing.lg,
+                      AppSpacing.sm,
+                    ),
+                    child: MessageBanner(
+                      message: l.pendingResult(result.done, result.failed),
+                      tone: Tone.warning,
+                      onClose: () => setState(() => _lastResult = null),
                     ),
                   ),
-                  builder: (context) => PullToRefresh(
-                    onRefresh: context.read<PendingCubit>().load,
-                    child: ListView.separated(
-                      // Room under the last row for the floating chat button.
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        0,
-                        AppSpacing.lg,
-                        96,
-                      ),
-                      itemCount: visible.length + lead + 1,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: AppSpacing.sm),
-                      itemBuilder: (context, i) {
-                        // "นำเข้าสลิป" opens the list, "เพิ่มร่าง" closes it.
-                        if (i == 0 && importSlip != null) return importSlip;
-                        if (i == visible.length + lead) {
-                          return AddTile(
+                Expanded(
+                  child: AsyncStateView(
+                    loading:
+                        state.status == PendingStatus.initial ||
+                        state.status == PendingStatus.loading,
+                    error: state.error,
+                    isEmpty: visible.isEmpty,
+                    onRetry: context.read<PendingCubit>().load,
+                    skeleton: ListView(
+                      children: [
+                        for (var i = 0; i < 4; i++) const SkeletonListTile(),
+                      ],
+                    ),
+                    empty: EmptyView(
+                      icon: AppIcons.empty,
+                      title: l.pendingEmptyTitle,
+                      message: l.pendingEmptyMessage,
+                      cta: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (importSlip != null) ...[
+                            importSlip,
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
+                          AddTile(
                             label: l.pendingAdd,
-                            variant: AddTileVariant.row,
                             onTap: () => context.push('/pending/new'),
-                          );
-                        }
-                        final p = visible[i - lead];
-                        return _PendingCard(
-                          item: p,
-                          selected: _selected.contains(p.id),
-                          onToggle: () => setState(
-                            () => _selected.contains(p.id)
-                                ? _selected.remove(p.id)
-                                : _selected.add(p.id),
                           ),
-                          onOpen: () => showQuickCreateSheet(context, draft: p),
-                          onDiscard: () => _discard(p),
-                        );
-                      },
+                        ],
+                      ),
+                    ),
+                    builder: (context) => PullToRefresh(
+                      onRefresh: context.read<PendingCubit>().load,
+                      child: ListView.separated(
+                        // Room under the last row for the floating chat button.
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          0,
+                          AppSpacing.lg,
+                          96,
+                        ),
+                        itemCount: visible.length + lead + 1,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: AppSpacing.sm),
+                        itemBuilder: (context, i) {
+                          // "นำเข้าสลิป" opens the list, "เพิ่มร่าง" closes it.
+                          if (i == 0 && importSlip != null) return importSlip;
+                          if (i == visible.length + lead) {
+                            return AddTile(
+                              label: l.pendingAdd,
+                              variant: AddTileVariant.row,
+                              onTap: () => context.push('/pending/new'),
+                            );
+                          }
+                          final p = visible[i - lead];
+                          return _PendingCard(
+                            item: p,
+                            selected: _selected.contains(p.id),
+                            onToggle: () => setState(
+                              () => _selected.contains(p.id)
+                                  ? _selected.remove(p.id)
+                                  : _selected.add(p.id),
+                            ),
+                            onOpen: () =>
+                                showQuickCreateSheet(context, draft: p),
+                            onDiscard: () => _discard(p),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

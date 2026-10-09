@@ -3491,4 +3491,77 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get scheduledSheetTitleEdit => 'แก้รายการประจำ';
+
+  @override
+  String get accountIdentifiersTitle => 'เลขบัญชี · พร้อมเพย์ · บัตร';
+
+  @override
+  String get accountIdentifiersHelper => 'ใช้จับคู่สลิปธนาคารกับกระเป๋านี้';
+
+  @override
+  String get accountIdentifiersEmpty => 'ยังไม่มีเลข';
+
+  @override
+  String get accountIdentifiersAdd => 'เพิ่มเลข';
+
+  @override
+  String get identifierKindBankAccount => 'เลขบัญชี';
+
+  @override
+  String get identifierKindPromptPay => 'พร้อมเพย์';
+
+  @override
+  String get identifierKindCard => 'บัตร';
+
+  @override
+  String get identifierKindOther => 'อื่น ๆ';
+
+  @override
+  String get identifierSheetAddTitle => 'เพิ่มเลข';
+
+  @override
+  String get identifierSheetEditTitle => 'แก้ไขเลข';
+
+  @override
+  String get identifierKindLabel => 'ชนิด';
+
+  @override
+  String get identifierBankLabel => 'ธนาคาร';
+
+  @override
+  String get identifierBankNone => 'ไม่ระบุ';
+
+  @override
+  String get identifierValueLabel => 'เลข';
+
+  @override
+  String get identifierValueHint => 'เช่น 123-4-56789-0 หรือ xxx-x-x2780-x';
+
+  @override
+  String get identifierValueHelperPromptPay => 'เบอร์โทรหรือเลขบัตรประชาชน';
+
+  @override
+  String get identifierValueInvalid => 'ใส่ได้แค่ตัวเลข, x และขีด';
+
+  @override
+  String get identifierValueTooShort => 'ต้องมีตัวเลขอย่างน้อย 4 ตัว';
+
+  @override
+  String get identifierValueTooLong => 'ยาวเกินไป';
+
+  @override
+  String get identifierDelete => 'ลบเลขนี้';
+
+  @override
+  String get walletErrorInvalidIdentifier => 'เลขบัญชีไม่ถูกต้อง';
+
+  @override
+  String get categoryFeeSwitchLabel => 'ใช้เป็นหมวดค่าธรรมเนียม';
+
+  @override
+  String get categoryFeeSwitchHelper =>
+      'ค่าธรรมเนียมจากสลิปจะเข้าหมวดนี้ · ได้ทีละหมวด';
+
+  @override
+  String get categoryFeeSwitchFailed => 'ตั้งหมวดค่าธรรมเนียมไม่สำเร็จ';
 }

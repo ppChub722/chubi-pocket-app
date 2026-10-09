@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_durations.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../shared/widgets/feedback/confirm_dialog.dart';
 
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
+import 'fade_branch_container.dart';
 import 'main_bottom_nav.dart';
 import 'shell_chrome.dart';
+import 'tab_nav.dart';
 
 /// App chrome shared by every tab-layer screen.
 ///
@@ -16,8 +19,13 @@ import 'shell_chrome.dart';
 /// pages: tab roots use [TabRootScaffold] (transparent bar, content scrolls
 /// under it), deeper pages bring their own [Scaffold] + back button — so
 /// pushing a page never changes the shell's layout mid-transition.
-/// "More"-menu pages highlight the เพิ่มเติม slot. Settings / notifications
-/// are NOT here — they're the overlay layer on the root navigator (no nav).
+/// Every page group is its own tab ([ShellTab]); only the four nav tabs
+/// light a slot — เพิ่มเติม only on the hub itself, the hub's cards and the
+/// ⏳ / 🔔 / 👤 pages none.
+///
+/// **Back between tabs** (owner 2026-10-09): the shell remembers the tabs
+/// visited, so back on a tab's root returns to the previous one — see
+/// [_MainShellState._onBackAtRoot].
 ///
 /// A page can also **take over the bottom chrome** via [ShellChrome]: when
 /// it calls [ShellChromeController.hide] (e.g. categories' reorder mode),
@@ -33,11 +41,13 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell>
+    with SingleTickerProviderStateMixin {
   final ShellChromeController _chrome = ShellChromeController();
 
-  /// Branch index of the เพิ่มเติม tab (see app_router.dart).
-  static const _moreBranch = 3;
+  static final _moreBranch = ShellTab.more.index;
+
+  ShellTab get _current => ShellTab.values[widget.navigationShell.currentIndex];
 
   void _goBranch(int i) => widget.navigationShell.goBranch(
     i,
@@ -46,8 +56,34 @@ class _MainShellState extends State<MainShell> {
     initialLocation: i == widget.navigationShell.currentIndex,
   );
 
+  /// Tabs visited before the current one, most recent last. Each appears
+  /// once (revisiting moves it to the end) and never the current tab, so
+  /// back can't ping-pong between two tabs forever.
+  final List<int> _history = [];
+
+  /// The tab a back is heading to — arriving there records nothing, so
+  /// back never builds a "forward" trail.
+  int? _backTo;
+
+  @override
+  void didUpdateWidget(MainShell old) {
+    super.didUpdateWidget(old);
+    final from = old.navigationShell.currentIndex;
+    final to = widget.navigationShell.currentIndex;
+    if (from == to) return;
+    _history.remove(to);
+    if (_backTo == to) {
+      _backTo = null;
+      return;
+    }
+    _history
+      ..remove(from)
+      ..add(from);
+  }
+
   @override
   void dispose() {
+    _nudge.dispose();
     _chrome.dispose();
     super.dispose();
   }
@@ -55,36 +91,89 @@ class _MainShellState extends State<MainShell> {
   /// A fling this fast (px/s) sideways moves to the neighbouring tab.
   static const _minFlingVelocity = 300.0;
 
-  /// Swipe between tabs (owner 2026-10-09) — only on a tab's root page
-  /// (nothing pushed in that tab) and not while a page has taken over the
-  /// bottom chrome (edit / reorder). Anything inside that wants a sideways
-  /// drag — an in-page tab pager, a horizontal chip row, swipe-to-dismiss —
-  /// is deeper in the gesture arena and wins, so this only fires where
-  /// nothing else claims the gesture.
-  void _onFling(DragEndDetails d) {
-    final v = d.primaryVelocity ?? 0;
-    if (v.abs() < _minFlingVelocity || _chrome.hidden) return;
+  /// Furthest (px) the tab body trails the finger mid-swipe.
+  static const _maxNudge = 24.0;
+
+  /// The tab body's mid-swipe offset (px), read by [TabSwitchBody].
+  late final AnimationController _nudge = AnimationController.unbounded(
+    vsync: this,
+  );
+
+  /// Whether the drag in progress may switch tabs.
+  bool _swiping = false;
+  double _dragDx = 0;
+
+  /// Swipe between the tabs of one on-screen row ([ShellRow] — the nav,
+  /// the top bar's chips, each เพิ่มเติม section; owner 2026-10-09/10) —
+  /// only on a tab's root page (nothing pushed in that tab) and not while
+  /// a page has taken over the bottom chrome (edit / reorder). Anything
+  /// inside that wants a sideways drag — an in-page tab pager, a horizontal
+  /// chip row, swipe-to-dismiss — is deeper in the gesture arena and wins,
+  /// so this only fires where nothing else claims the gesture.
+  void _onDragStart(DragStartDetails _) {
     final shell = widget.navigationShell;
     final branchNav = shell.route.branches[shell.currentIndex].navigatorKey;
-    if (branchNav.currentState?.canPop() ?? true) return;
-    // Swipe left (negative) → the tab to the right.
-    final next = shell.currentIndex + (v < 0 ? 1 : -1);
-    if (next < 0 || next >= shell.route.branches.length) return;
+    _swiping = !_chrome.hidden && !(branchNav.currentState?.canPop() ?? true);
+    _dragDx = 0;
+    if (_swiping) _nudge.stop();
+  }
+
+  /// The body trails the finger, damped so it only ever moves a little —
+  /// half as far toward an end with no tab past it.
+  void _onDragUpdate(DragUpdateDetails d) {
+    if (!_swiping) return;
+    _dragDx += d.primaryDelta ?? 0;
+    final max = _neighbour(_dragDx) == null ? _maxNudge / 2 : _maxNudge;
+    final u = _dragDx / (max * 3);
+    _nudge.value = max * u / (1 + u.abs());
+  }
+
+  void _onDragEnd(DragEndDetails d) {
+    if (!_swiping) return;
+    _swiping = false;
+    final v = d.primaryVelocity ?? 0;
+    final next = _neighbour(v);
+    if (v.abs() < _minFlingVelocity || next == null) return _settle();
+    // The new tab brings its own entry slide (TabSwitchBody).
+    _nudge.value = 0;
     HapticFeedback.selectionClick();
     _goBranch(next);
   }
 
-  /// Branch index of the dashboard (หน้าแรก).
-  static const _homeBranch = 0;
+  void _onDragCancel() {
+    if (!_swiping) return;
+    _swiping = false;
+    _settle();
+  }
+
+  void _settle() => _nudge.animateTo(
+    0,
+    duration: AppDurations.chrome,
+    curve: AppDurations.chromeCurve,
+  );
+
+  /// The tab a swipe toward [dx]'s sign lands on, or null past either end
+  /// of the row. Swipe left (negative) → the tab to the right.
+  int? _neighbour(double dx) => _current.beside(dx < 0 ? 1 : -1)?.index;
 
   bool _askingExit = false;
 
-  /// Back with nothing left to pop (a tab's root page — pushed pages,
-  /// sheets and the overlay layer pop before this is reached): another tab
-  /// → the dashboard; the dashboard → "ปิดแอป?" (owner 2026-10-09).
+  /// Back with nothing left to pop in the tab (pushed pages and sheets pop
+  /// before this is reached; the top bar's ← lands here too):
+  /// 1. the previous tab in the history, as it was left;
+  /// 2. none — a เพิ่มเติม card's tab → the hub; any other tab → the
+  ///    dashboard;
+  /// 3. the dashboard → "ปิดแอป?" (owner 2026-10-09).
   Future<void> _onBackAtRoot() async {
-    if (widget.navigationShell.currentIndex != _homeBranch) {
-      _goBranch(_homeBranch);
+    final ShellTab? fallback = _current.inMore
+        ? ShellTab.more
+        : _current == ShellTab.home
+        ? null
+        : ShellTab.home;
+    final to = _history.isNotEmpty ? _history.removeLast() : fallback?.index;
+    if (to != null) {
+      _backTo = to;
+      widget.navigationShell.goBranch(to);
       return;
     }
     if (_askingExit) return;
@@ -108,7 +197,7 @@ class _MainShellState extends State<MainShell> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _onBackAtRoot();
       },
-      child: _shell(context),
+      child: ShellBackScope(onBack: _onBackAtRoot, child: _shell(context)),
     );
   }
 
@@ -118,8 +207,11 @@ class _MainShellState extends State<MainShell> {
       child: Scaffold(
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
-          onHorizontalDragEnd: _onFling,
-          child: widget.navigationShell,
+          onHorizontalDragStart: _onDragStart,
+          onHorizontalDragUpdate: _onDragUpdate,
+          onHorizontalDragEnd: _onDragEnd,
+          onHorizontalDragCancel: _onDragCancel,
+          child: TabSwipeNudge(offset: _nudge, child: widget.navigationShell),
         ),
         // Only the nav rebuilds when a page toggles the controller — the
         // branch content underneath is untouched.
