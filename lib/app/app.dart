@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -98,8 +99,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _projectsRepository = ProjectsRepository(client: _apiClient);
     _savingGoalsRepository = SavingGoalsRepository(client: _apiClient);
     _budgetsRepository = BudgetsRepository(client: _apiClient);
-    _scheduledTransactionsRepository =
-        ScheduledTransactionsRepository(client: _apiClient);
+    _scheduledTransactionsRepository = ScheduledTransactionsRepository(
+      client: _apiClient,
+    );
     _dashboardRepository = DashboardRepository(client: _apiClient);
     _pendingRepository = PendingRepository(client: _apiClient);
     _authCubit = AuthCubit(
@@ -129,44 +131,47 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         RepositoryProvider<AuthRepository>.value(value: _authRepository),
         RepositoryProvider<UsersRepository>.value(value: _usersRepository),
         RepositoryProvider<AccountsRepository>.value(
-            value: _accountsRepository),
+          value: _accountsRepository,
+        ),
         RepositoryProvider<CategoriesRepository>.value(
-            value: _categoriesRepository),
+          value: _categoriesRepository,
+        ),
         RepositoryProvider<TagsRepository>.value(value: _tagsRepository),
         RepositoryProvider<TransactionsRepository>.value(
-            value: _transactionsRepository),
+          value: _transactionsRepository,
+        ),
         RepositoryProvider<NotificationsRepository>.value(
-            value: _notificationsRepository),
+          value: _notificationsRepository,
+        ),
         RepositoryProvider<ContactsRepository>.value(
-            value: _contactsRepository),
+          value: _contactsRepository,
+        ),
         RepositoryProvider<PersonalDebtsRepository>.value(
-            value: _personalDebtsRepository),
+          value: _personalDebtsRepository,
+        ),
         RepositoryProvider<ProjectsRepository>.value(
-            value: _projectsRepository),
+          value: _projectsRepository,
+        ),
         RepositoryProvider<SavingGoalsRepository>.value(
-            value: _savingGoalsRepository),
-        RepositoryProvider<BudgetsRepository>.value(
-            value: _budgetsRepository),
+          value: _savingGoalsRepository,
+        ),
+        RepositoryProvider<BudgetsRepository>.value(value: _budgetsRepository),
         RepositoryProvider<ScheduledTransactionsRepository>.value(
-            value: _scheduledTransactionsRepository),
+          value: _scheduledTransactionsRepository,
+        ),
         RepositoryProvider<DashboardRepository>.value(
-            value: _dashboardRepository),
+          value: _dashboardRepository,
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<AuthCubit>.value(value: _authCubit),
-          BlocProvider<ConnectivityCubit>(
-            create: (_) => ConnectivityCubit(),
-          ),
-          BlocProvider<ThemeIdCubit>(
-            create: (_) => ThemeIdCubit(widget.prefs),
-          ),
+          BlocProvider<ConnectivityCubit>(create: (_) => ConnectivityCubit()),
+          BlocProvider<ThemeIdCubit>(create: (_) => ThemeIdCubit(widget.prefs)),
           BlocProvider<ThemeModeCubit>(
             create: (_) => ThemeModeCubit(widget.prefs),
           ),
-          BlocProvider<LocaleCubit>(
-            create: (_) => LocaleCubit(widget.prefs),
-          ),
+          BlocProvider<LocaleCubit>(create: (_) => LocaleCubit(widget.prefs)),
           BlocProvider<MoneyVisibilityCubit>(
             create: (_) => MoneyVisibilityCubit(widget.prefs),
           ),
@@ -187,9 +192,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                 TransactionsCubit(repository: _transactionsRepository),
           ),
           BlocProvider<UnreadBadgeCubit>(
-            create: (_) => UnreadBadgeCubit(
-              repository: _notificationsRepository,
-            )..start(),
+            create: (_) =>
+                UnreadBadgeCubit(repository: _notificationsRepository)..start(),
           ),
           BlocProvider<ContactsCubit>(
             create: (_) => ContactsCubit(repository: _contactsRepository),
@@ -202,8 +206,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
             create: (_) => ProjectsCubit(repository: _projectsRepository),
           ),
           BlocProvider<SavingGoalsCubit>(
-            create: (_) =>
-                SavingGoalsCubit(repository: _savingGoalsRepository),
+            create: (_) => SavingGoalsCubit(repository: _savingGoalsRepository),
           ),
           BlocProvider<BudgetsCubit>(
             create: (_) => BudgetsCubit(repository: _budgetsRepository),
@@ -249,35 +252,42 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                 }
               },
               child: MaterialApp.router(
-              debugShowCheckedModeBanner: false,
-              title: 'chubiPocket',
-              theme: ThemeBuilder.build(
-                theme: theme,
-                font: font,
-                brightness: Brightness.light,
-              ),
-              darkTheme: ThemeBuilder.build(
-                theme: theme,
-                font: font,
-                brightness: Brightness.dark,
-              ),
-              themeMode: themeMode,
-              locale: locale,
-              supportedLocales: supportedLocales,
-              localizationsDelegates: const [
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              onGenerateTitle: (ctx) => AppLocalizations.of(ctx)!.appName,
-              routerConfig: _router,
-              builder: (context, child) => Column(
-                children: [
-                  const OfflineBanner(),
-                  Expanded(child: child ?? const SizedBox.shrink()),
+                debugShowCheckedModeBanner: false,
+                title: 'chubiPocket',
+                theme: ThemeBuilder.build(
+                  theme: theme,
+                  font: font,
+                  brightness: Brightness.light,
+                ),
+                darkTheme: ThemeBuilder.build(
+                  theme: theme,
+                  font: font,
+                  brightness: Brightness.dark,
+                ),
+                themeMode: themeMode,
+                locale: locale,
+                supportedLocales: supportedLocales,
+                localizationsDelegates: const [
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
                 ],
-              ),
+                onGenerateTitle: (ctx) => AppLocalizations.of(ctx)!.appName,
+                routerConfig: _router,
+                // Same status-bar style on screens without an AppTopBar.
+                builder: (context, child) =>
+                    AnnotatedRegion<SystemUiOverlayStyle>(
+                      value: ThemeBuilder.systemBarsStyle(
+                        Theme.of(context).scaffoldBackgroundColor,
+                      ),
+                      child: Column(
+                        children: [
+                          const OfflineBanner(),
+                          Expanded(child: child ?? const SizedBox.shrink()),
+                        ],
+                      ),
+                    ),
               ),
             );
           },

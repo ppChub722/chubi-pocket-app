@@ -13,28 +13,29 @@ class AccountsState extends Equatable {
   const AccountsState({
     this.accounts = const [],
     this.status = AccountsStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final List<Account> accounts;
   final AccountsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   AccountsState copyWith({
     List<Account>? accounts,
     AccountsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return AccountsState(
       accounts: accounts ?? this.accounts,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [accounts, status, errorMessage];
+  List<Object?> get props => [accounts, status, error];
 }
 
 enum AccountsStatus { initial, loading, loaded, error }
@@ -76,9 +77,12 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
           clearError: true,
         ),
       );
-    } on ApiException catch (e) {
+    } catch (e, st) {
       emit(
-        state.copyWith(status: AccountsStatus.error, errorMessage: e.message),
+        state.copyWith(
+          status: AccountsStatus.error,
+          error: ApiException.from(e, st),
+        ),
       );
     }
   }

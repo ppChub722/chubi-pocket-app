@@ -13,7 +13,7 @@ class ContactsState extends Equatable {
   const ContactsState({
     this.contacts = const [],
     this.status = ContactsStatus.initial,
-    this.errorMessage,
+    this.error,
     this.statusFilter = 'active',
     this.linkedFilter,
     this.search,
@@ -21,7 +21,8 @@ class ContactsState extends Equatable {
 
   final List<Contact> contacts;
   final ContactsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
   final String statusFilter; // active | archived | all
   final bool? linkedFilter;
   final String? search;
@@ -29,7 +30,7 @@ class ContactsState extends Equatable {
   ContactsState copyWith({
     List<Contact>? contacts,
     ContactsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     String? statusFilter,
     bool? linkedFilter,
     String? search,
@@ -40,22 +41,30 @@ class ContactsState extends Equatable {
     return ContactsState(
       contacts: contacts ?? this.contacts,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
       statusFilter: statusFilter ?? this.statusFilter,
-      linkedFilter: clearLinkedFilter ? null : (linkedFilter ?? this.linkedFilter),
+      linkedFilter: clearLinkedFilter
+          ? null
+          : (linkedFilter ?? this.linkedFilter),
       search: clearSearch ? null : (search ?? this.search),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [contacts, status, errorMessage, statusFilter, linkedFilter, search];
+  List<Object?> get props => [
+    contacts,
+    status,
+    error,
+    statusFilter,
+    linkedFilter,
+    search,
+  ];
 }
 
 class ContactsCubit extends Cubit<ContactsState> with Clearable {
   ContactsCubit({required ContactsRepository repository})
-      : _repo = repository,
-        super(const ContactsState());
+    : _repo = repository,
+      super(const ContactsState());
 
   final ContactsRepository _repo;
 
@@ -69,15 +78,17 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     String? search,
     bool clearSearch = false,
   }) async {
-    emit(state.copyWith(
-      status: ContactsStatus.loading,
-      statusFilter: statusFilter,
-      linkedFilter: linkedFilter,
-      clearLinkedFilter: clearLinkedFilter,
-      search: search,
-      clearSearch: clearSearch,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        status: ContactsStatus.loading,
+        statusFilter: statusFilter,
+        linkedFilter: linkedFilter,
+        clearLinkedFilter: clearLinkedFilter,
+        search: search,
+        clearSearch: clearSearch,
+        clearError: true,
+      ),
+    );
     try {
       final list = await _repo.list(
         status: state.statusFilter,
@@ -85,11 +96,13 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
         search: state.search,
       );
       emit(state.copyWith(contacts: list, status: ContactsStatus.loaded));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: ContactsStatus.error,
-        errorMessage: e.message,
-      ));
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: ContactsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -113,7 +126,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     return res.contact;
   }
 
-  Future<Contact> update(String id, {
+  Future<Contact> update(
+    String id, {
     String? displayName,
     String? email,
     String? phone,
@@ -165,17 +179,21 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
 
   Future<void> delete(String id) async {
     await _repo.delete(id);
-    emit(state.copyWith(
-      contacts: state.contacts.where((c) => c.id != id).toList(),
-    ));
+    emit(
+      state.copyWith(
+        contacts: state.contacts.where((c) => c.id != id).toList(),
+      ),
+    );
   }
 
   void _replace(Contact c) {
-    emit(state.copyWith(
-      contacts: [
-        for (final existing in state.contacts)
-          if (existing.id == c.id) c else existing,
-      ],
-    ));
+    emit(
+      state.copyWith(
+        contacts: [
+          for (final existing in state.contacts)
+            if (existing.id == c.id) c else existing,
+        ],
+      ),
+    );
   }
 }

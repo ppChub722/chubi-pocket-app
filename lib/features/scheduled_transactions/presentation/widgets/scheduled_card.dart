@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -15,11 +16,7 @@ import '../../domain/scheduled_transaction.dart';
 /// next billing date · amount. For installments, also shows
 /// `remaining/total` so the user sees how many payments are left.
 class ScheduledCard extends StatelessWidget {
-  const ScheduledCard({
-    super.key,
-    required this.entry,
-    this.onTap,
-  });
+  const ScheduledCard({super.key, required this.entry, this.onTap});
 
   final ScheduledTransaction entry;
   final VoidCallback? onTap;
@@ -30,8 +27,9 @@ class ScheduledCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent = entry.iconCode?.accentColorFor(palette) ?? scheme.primary;
-    final amountColor =
-        entry.type == ScheduledTransactionType.income ? Colors.green : null;
+    final amountColor = entry.type == ScheduledTransactionType.income
+        ? palette.income
+        : null;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -69,14 +67,15 @@ class ScheduledCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.event_outlined,
-                            size: 14, color: scheme.onSurfaceVariant),
+                        Icon(
+                          AppIcons.date,
+                          size: 14,
+                          color: scheme.onSurfaceVariant,
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           l.scheduledNextDue(entry.nextBillingDate),
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: scheme.onSurfaceVariant),
                         ),
                         if (entry.isInstallment &&
@@ -87,10 +86,9 @@ class ScheduledCard extends StatelessWidget {
                               entry.remainingInstallments ?? 0,
                               entry.totalInstallments!,
                             ),
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: accent),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(color: accent),
                           ),
                         ],
                       ],
@@ -102,9 +100,9 @@ class ScheduledCard extends StatelessWidget {
               MoneyText(
                 entry.amount,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: amountColor ?? scheme.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: amountColor ?? scheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -125,8 +123,8 @@ class _VariantPill extends StatelessWidget {
     final label = entry.isLoan
         ? l.scheduledVariantLoan
         : entry.isInstallment
-            ? l.scheduledVariantInstallment
-            : l.scheduledVariantRecurring;
+        ? l.scheduledVariantInstallment
+        : l.scheduledVariantRecurring;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
@@ -139,9 +137,9 @@ class _VariantPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
+          color: scheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

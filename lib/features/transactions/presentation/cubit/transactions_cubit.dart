@@ -17,15 +17,17 @@ class TransactionsState extends Equatable {
   const TransactionsState({
     this.transactions = const [],
     this.status = TransactionsStatus.initial,
-    this.errorMessage,
+    this.error,
     this.page = 0,
     this.totalPages = 0,
     this.revision = 0,
+    this.loadingMore = false,
   });
 
   final List<Transaction> transactions;
   final TransactionsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   /// Last-loaded page index. 0 = nothing loaded yet.
   final int page;
@@ -36,24 +38,31 @@ class TransactionsState extends Equatable {
   /// for it to know their totals went stale.
   final int revision;
 
+  /// A [TransactionsCubit.loadMore] page fetch is in flight. Separate from
+  /// [status] so a filter refetch / pull-to-refresh (status `loading`)
+  /// doesn't read as "loading the next page".
+  final bool loadingMore;
+
   bool get hasMore => page > 0 && page < totalPages;
 
   TransactionsState copyWith({
     List<Transaction>? transactions,
     TransactionsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     int? page,
     int? totalPages,
     int? revision,
+    bool? loadingMore,
     bool clearError = false,
   }) {
     return TransactionsState(
       transactions: transactions ?? this.transactions,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
       page: page ?? this.page,
       totalPages: totalPages ?? this.totalPages,
       revision: revision ?? this.revision,
+      loadingMore: loadingMore ?? this.loadingMore,
     );
   }
 
@@ -61,10 +70,11 @@ class TransactionsState extends Equatable {
   List<Object?> get props => [
     transactions,
     status,
-    errorMessage,
+    error,
     page,
     totalPages,
     revision,
+    loadingMore,
   ];
 }
 
@@ -127,7 +137,14 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     );
     final seq = ++_seq;
 
-    emit(state.copyWith(status: TransactionsStatus.loading, clearError: true));
+    // A refetch supersedes any in-flight page (its response is dropped).
+    emit(
+      state.copyWith(
+        status: TransactionsStatus.loading,
+        loadingMore: false,
+        clearError: true,
+      ),
+    );
     try {
       final pageRes = await _fetch(_last, page: 1);
       if (seq != _seq) return;
@@ -139,12 +156,12 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
           totalPages: pageRes.totalPages,
         ),
       );
-    } on ApiException catch (e) {
+    } catch (e, st) {
       if (seq != _seq) return;
       emit(
         state.copyWith(
           status: TransactionsStatus.error,
-          errorMessage: e.message,
+          error: ApiException.from(e, st),
         ),
       );
     }
@@ -185,9 +202,11 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   /// Appends the next page using the last-used filters/sort.
   Future<void> loadMore() async {
     if (!state.hasMore) return;
-    if (state.status == TransactionsStatus.loading) return;
+    if (state.loadingMore || state.status == TransactionsStatus.loading) {
+      return;
+    }
     final seq = _seq;
-    emit(state.copyWith(status: TransactionsStatus.loading, clearError: true));
+    emit(state.copyWith(loadingMore: true, clearError: true));
     try {
       final pageRes = await _fetch(_last, page: state.page + 1);
       if (seq != _seq) return;
@@ -195,16 +214,18 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         state.copyWith(
           transactions: [...state.transactions, ...pageRes.transactions],
           status: TransactionsStatus.loaded,
+          loadingMore: false,
           page: pageRes.page,
           totalPages: pageRes.totalPages,
         ),
       );
-    } on ApiException catch (e) {
+    } catch (e, st) {
       if (seq != _seq) return;
       emit(
         state.copyWith(
           status: TransactionsStatus.error,
-          errorMessage: e.message,
+          loadingMore: false,
+          error: ApiException.from(e, st),
         ),
       );
     }

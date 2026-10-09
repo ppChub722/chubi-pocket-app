@@ -118,15 +118,12 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     sync(_Field.notes, working.notes);
   }
 
-  void _onText(_Field f, String v) => applyTextChange(
-        f,
-        switch (f) {
-          _Field.name => working.copyWith(name: v),
-          _Field.email => working.copyWith(email: v),
-          _Field.phone => working.copyWith(phone: v),
-          _Field.notes => working.copyWith(notes: v),
-        },
-      );
+  void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
+    _Field.name => working.copyWith(name: v),
+    _Field.email => working.copyWith(email: v),
+    _Field.phone => working.copyWith(phone: v),
+    _Field.notes => working.copyWith(notes: v),
+  });
 
   // ── Save / delete ───────────────────────────────────────────────────
 
@@ -187,8 +184,11 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     try {
       await context.read<ContactsCubit>().delete(c.id);
       if (!mounted) return;
-      showAppSnackBar(context, l.contactDeleted(c.effectiveName),
-          tone: Tone.success);
+      showAppSnackBar(
+        context,
+        l.contactDeleted(c.effectiveName),
+        tone: Tone.success,
+      );
       commitSaved(working);
       leavePage();
     } on ApiException catch (e) {
@@ -239,8 +239,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       confirmLabel: l.contactUnlink,
     );
     if (!ok || !mounted) return;
-    await _run(() => context.read<ContactsCubit>().unlink(_contact!.id),
-        done: l.contactUnlinked);
+    await _run(
+      () => context.read<ContactsCubit>().unlink(_contact!.id),
+      done: l.contactUnlinked,
+    );
   }
 
   Future<void> _requestLink() async {
@@ -270,65 +272,73 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     if (!widget.isCreate && _contact == null) {
       return Scaffold(
         appBar: AppTopBar(title: l.moreContacts, showBack: true),
+        extendBodyBehindAppBar: true,
         body: _loading
-            ? const LoadingView()
-            : _error != null
-                ? ErrorView(error: _error!, onRetry: _load)
-                : EmptyView(
-                    icon: AppIcons.contact,
-                    title: l.contactNotFound,
-                    message: '',
+            // The generic skeleton is a padded list — clear the bar.
+            ? Builder(
+                builder: (context) => Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.paddingOf(context).top,
                   ),
+                  child: const LoadingView(),
+                ),
+              )
+            : _error != null
+            ? ErrorView(error: _error!, onRetry: _load)
+            : EmptyView(
+                icon: AppIcons.contact,
+                title: l.contactNotFound,
+                message: '',
+              ),
       );
     }
 
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: widget.isCreate
-            ? l.contactTitleNew
-            : isEditing
-                ? l.contactTitleEdit
-                : _contact!.effectiveName,
-        showBack: true,
-        editing: isEditing,
-        onBack: handleBack,
-        actions: isEditing
-            ? [
-                if (!widget.isCreate)
-                  AppBarAction(
-                    icon: AppIcons.delete,
-                    tooltip: l.commonDelete,
-                    destructive: true,
-                    enabled: !isSaving,
-                    onPressed: _delete,
-                  ),
-              ]
-            : [
-                AppBarAction(
-                  icon: AppIcons.edit,
-                  tooltip: l.commonEdit,
-                  onPressed: enterEdit,
-                ),
-              ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
-          children: [
-            _header(l),
-            const SizedBox(height: AppSpacing.lg),
-            _fields(l),
-            if (!widget.isCreate) ...[
-              const SizedBox(height: AppSpacing.lg),
-              LockedInEdit(locked: isEditing, child: _actions(l)),
-            ],
-          ],
+    return editScope(
+      Scaffold(
+        appBar: AppTopBar(
+          title: widget.isCreate
+              ? l.contactTitleNew
+              : isEditing
+              ? l.contactTitleEdit
+              : _contact!.effectiveName,
+          showBack: true,
+          editing: isEditing,
+          onBack: handleBack,
         ),
+        extendBodyBehindAppBar: true,
+        body: Form(
+          key: _formKey,
+          // Builder: its context sees the floating bar's height.
+          child: Builder(
+            builder: (context) => ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.huge,
+              ),
+              children: [
+                _header(l),
+                const SizedBox(height: AppSpacing.lg),
+                _fields(l),
+                if (!widget.isCreate) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  LockedInEdit(locked: isEditing, child: _actions(l)),
+                ],
+                // Delete lives at the bottom in edit mode (no top-bar actions).
+                if (isEditing && !widget.isCreate)
+                  DangerRow(
+                    icon: AppIcons.delete,
+                    label: l.contactDeleteThis,
+                    onTap: isSaving ? null : _delete,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
-      bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
-    ));
+    );
   }
 
   Widget _header(AppLocalizations l) {
@@ -336,13 +346,15 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final c = _contact;
     final iconEditable = editing && !_linked;
     return HeaderCard(
+      onEdit: editing ? null : enterEdit,
       leading: GestureDetector(
         onLongPress: editing || _linked
             ? null
             : () {
                 enterEdit();
-                WidgetsBinding.instance
-                    .addPostFrameCallback((_) => _openIconMaker());
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _openIconMaker(),
+                );
               },
         child: EditableCircle(
           size: 52,
@@ -360,7 +372,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         controller: _ctrl[_Field.name]!,
         focusNode: _focus[_Field.name],
         hint: l.contactNameLabel,
-        onEnterEdit: _linked ? null : () => enterEdit(focus: _focus[_Field.name]),
+        onEnterEdit: _linked
+            ? null
+            : () => enterEdit(focus: _focus[_Field.name]),
         onChanged: (v) => _onText(_Field.name, v),
         validator: (v) {
           final s = v?.trim() ?? '';
@@ -377,11 +391,15 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               children: [
                 if (c.isLinked)
                   AppBadge(
-                      label: l.contactLinkedBadge,
-                      icon: AppIcons.link,
-                      tone: Tone.info),
+                    label: l.contactLinkedBadge,
+                    icon: AppIcons.link,
+                    tone: Tone.info,
+                  ),
                 if (c.isArchived)
-                  AppBadge(label: l.contactArchivedBadge, icon: AppIcons.archive),
+                  AppBadge(
+                    label: l.contactArchivedBadge,
+                    icon: AppIcons.archive,
+                  ),
               ],
             ),
     );
@@ -389,12 +407,15 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   Widget _fields(AppLocalizations l) {
     final editing = isEditing;
-    Widget field(_Field f, String label,
-        {bool locked = false,
-        int maxLines = 1,
-        int? maxLength,
-        TextInputType? keyboard,
-        FormFieldValidator<String>? validator}) {
+    Widget field(
+      _Field f,
+      String label, {
+      bool locked = false,
+      int maxLines = 1,
+      int? maxLength,
+      TextInputType? keyboard,
+      FormFieldValidator<String>? validator,
+    }) {
       return DetailStacked(
         label: label,
         child: InlineField(
@@ -430,16 +451,25 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         if (_linked && editing)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
             child: Text(
               l.contactLinkedLockedHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         const RowDivider(),
-        field(_Field.phone, l.contactPhoneLabel,
-            maxLength: 50, keyboard: TextInputType.phone),
+        field(
+          _Field.phone,
+          l.contactPhoneLabel,
+          maxLength: 50,
+          keyboard: TextInputType.phone,
+        ),
         const RowDivider(),
         field(_Field.notes, l.contactNotesLabel, maxLines: 3, maxLength: 500),
       ],
@@ -466,7 +496,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           DetailRow(
             leading: const Icon(AppIcons.send),
             label: l.contactLinkRequest,
-            helper: hasEmail ? l.contactLinkRequestHint : l.contactLinkNeedsEmail,
+            helper: hasEmail
+                ? l.contactLinkRequestHint
+                : l.contactLinkNeedsEmail,
             showChevron: hasEmail,
             onTap: hasEmail ? _requestLink : null,
           ),
@@ -482,10 +514,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           label: l.contactDebts,
           showChevron: true,
           onTap: () => context.push(
-            Uri(path: '/personal-debts/person', queryParameters: {
-              'contact': c.id,
-              'name': c.effectiveName,
-            }).toString(),
+            Uri(
+              path: '/personal-debts/person',
+              queryParameters: {'contact': c.id, 'name': c.effectiveName},
+            ).toString(),
           ),
         ),
         const RowDivider(),
@@ -505,7 +537,11 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 // ────────────────────────────────────────────────────────────────────
 
 class _WireNamesRow extends StatefulWidget {
-  const _WireNamesRow({required this.contact, required this.onWired, super.key});
+  const _WireNamesRow({
+    required this.contact,
+    required this.onWired,
+    super.key,
+  });
 
   final Contact contact;
   final Future<void> Function() onWired;
@@ -561,8 +597,8 @@ class _WireNamesRowState extends State<_WireNamesRow> {
       helper: names == null
           ? '…'
           : has
-              ? l.contactWireHint(names.length, splits)
-              : l.contactWireNone,
+          ? l.contactWireHint(names.length, splits)
+          : l.contactWireNone,
       showChevron: has,
       onTap: has ? _open : null,
     );
@@ -587,9 +623,10 @@ class _WireNamesSheetState extends State<_WireNamesSheet> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      final n = await context
-          .read<ContactsCubit>()
-          .absorb(widget.contact.id, _picked.toList());
+      final n = await context.read<ContactsCubit>().absorb(
+        widget.contact.id,
+        _picked.toList(),
+      );
       if (mounted) Navigator.of(context).pop(n);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -615,10 +652,9 @@ class _WireNamesSheetState extends State<_WireNamesSheet> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
               l.contactWireSheetBody,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
           AppSearchBar(
@@ -656,7 +692,8 @@ class _WireNamesSheetState extends State<_WireNamesSheet> {
   }
 
   void _toggle(String name) => setState(
-      () => _picked.contains(name) ? _picked.remove(name) : _picked.add(name));
+    () => _picked.contains(name) ? _picked.remove(name) : _picked.add(name),
+  );
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -671,12 +708,12 @@ class _ContactDraft {
   });
 
   factory _ContactDraft.from(Contact c) => _ContactDraft(
-        name: c.effectiveDisplayName,
-        email: c.effectiveEmail ?? '',
-        phone: c.phone ?? '',
-        notes: c.notes ?? '',
-        iconCode: c.iconCode,
-      );
+    name: c.effectiveDisplayName,
+    email: c.effectiveEmail ?? '',
+    phone: c.phone ?? '',
+    notes: c.notes ?? '',
+    iconCode: c.iconCode,
+  );
 
   final String name;
   final String email;
@@ -685,12 +722,12 @@ class _ContactDraft {
   final IconCode? iconCode;
 
   _ContactDraft trimmed() => _ContactDraft(
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        notes: notes.trim(),
-        iconCode: iconCode,
-      );
+    name: name.trim(),
+    email: email.trim(),
+    phone: phone.trim(),
+    notes: notes.trim(),
+    iconCode: iconCode,
+  );
 
   _ContactDraft copyWith({
     String? name,
@@ -698,14 +735,13 @@ class _ContactDraft {
     String? phone,
     String? notes,
     IconCode? iconCode,
-  }) =>
-      _ContactDraft(
-        name: name ?? this.name,
-        email: email ?? this.email,
-        phone: phone ?? this.phone,
-        notes: notes ?? this.notes,
-        iconCode: iconCode ?? this.iconCode,
-      );
+  }) => _ContactDraft(
+    name: name ?? this.name,
+    email: email ?? this.email,
+    phone: phone ?? this.phone,
+    notes: notes ?? this.notes,
+    iconCode: iconCode ?? this.iconCode,
+  );
 
   @override
   bool operator ==(Object other) =>

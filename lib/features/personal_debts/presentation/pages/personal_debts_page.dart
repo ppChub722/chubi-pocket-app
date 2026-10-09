@@ -55,109 +55,116 @@ class _PersonalDebtsPageState extends State<PersonalDebtsPage> {
     }).toList();
   }
 
-  void _openPerson(DebtPerson p) => context.push(Uri(
-        path: '/personal-debts/person',
-        queryParameters: {
-          'contact': ?p.contactId,
-          'name': p.displayName,
-        },
-      ).toString());
+  void _openPerson(DebtPerson p) => context.push(
+    Uri(
+      path: '/personal-debts/person',
+      queryParameters: {'contact': ?p.contactId, 'name': p.displayName},
+    ).toString(),
+  );
+
+  void _addDebt() => context.push('/personal-debts/new');
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppTopBar(
-        title: l.moreDebts,
-        showBack: true,
-        actions: [
-          AppBarAction(
-            icon: AppIcons.addDebt,
-            tooltip: l.debtsAddNew,
-            onPressed: () => context.push('/personal-debts/new'),
+      appBar: AppTopBar(title: l.moreDebts, showBack: true),
+      extendBodyBehindAppBar: true,
+      body: BlocBuilder<PersonalDebtsCubit, PersonalDebtsState>(
+        builder: (context, state) => AsyncStateView(
+          loading:
+              state.status == PersonalDebtsStatus.initial ||
+              state.status == PersonalDebtsStatus.loading,
+          error: state.error,
+          isEmpty: state.debts.isEmpty,
+          onRetry: context.read<PersonalDebtsCubit>().load,
+          empty: EmptyView(
+            icon: AppIcons.debt,
+            title: l.debtsEmptyTitle,
+            message: l.debtsEmptyMessage,
+            cta: AddTile(label: l.debtsAddNew, onTap: _addDebt),
           ),
-        ],
-      ),
-      body: BlocConsumer<PersonalDebtsCubit, PersonalDebtsState>(
-        listenWhen: (a, b) =>
-            a.errorMessage != b.errorMessage && b.errorMessage != null,
-        listener: (ctx, s) =>
-            showAppSnackBar(ctx, s.errorMessage!, tone: Tone.danger),
-        builder: (context, state) {
-          if (state.status == PersonalDebtsStatus.loading &&
-              state.debts.isEmpty) {
-            return ListView(
-              children: [
-                for (var i = 0; i < 6; i++) const SkeletonListTile(),
-              ],
+          builder: (context) {
+            final people = state.people;
+            final shown = _filter(people);
+            final owed = people.fold<double>(0, (a, p) => a + p.owedToMeOpen);
+            final owe = people.fold<double>(0, (a, p) => a + p.iOweOpen);
+            final symbol = Currencies.symbolOf(
+              people.isEmpty ? 'THB' : people.first.currency,
             );
-          }
-          if (state.debts.isEmpty) {
-            return EmptyView(
-              icon: AppIcons.debt,
-              title: l.debtsEmptyTitle,
-              message: l.debtsEmptyMessage,
-              cta: AddTile(
-                label: l.debtsAddNew,
-                onTap: () => context.push('/personal-debts/new'),
+            return PullToRefresh(
+              onRefresh: () => context.read<PersonalDebtsCubit>().load(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                // Top: clear the floating top bar.
+                padding: EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top,
+                  bottom: 96,
+                ),
+                children: [
+                  _Summary(
+                    owedToMe: owed,
+                    iOwe: owe,
+                    symbol: symbol,
+                    selected: _dir,
+                    onSelect: (d) =>
+                        setState(() => _dir = _dir == d ? null : d),
+                  ),
+                  AppSearchBar(
+                    hint: l.debtsSearchHint,
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
+                  FilterBar(
+                    chips: [
+                      OptionMenuAnchor<_Status>(
+                        selected: _status,
+                        onSelected: (s) => setState(() => _status = s),
+                        options: [
+                          SheetOption(
+                            value: _Status.open,
+                            label: l.debtsStatusOpen,
+                          ),
+                          SheetOption(
+                            value: _Status.all,
+                            label: l.debtsStatusAll,
+                          ),
+                        ],
+                        builder: (context, toggle) => FilterDropdownChip(
+                          label: l.debtsStatusLabel,
+                          valueLabel: _status == _Status.open
+                              ? l.debtsStatusOpen
+                              : l.debtsStatusAll,
+                          active: _status != _Status.open,
+                          onTap: toggle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (shown.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xxl),
+                      child: Text(l.debtsNoMatch, textAlign: TextAlign.center),
+                    )
+                  else
+                    for (final (i, p) in shown.indexed) ...[
+                      if (i > 0) const RowDivider(),
+                      _PersonRow(person: p, onTap: () => _openPerson(p)),
+                    ],
+                  // Add lives at the end of the list (no top-bar actions).
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.md,
+                      AppSpacing.lg,
+                      0,
+                    ),
+                    child: AddTile(label: l.debtsAddNew, onTap: _addDebt),
+                  ),
+                ],
               ),
             );
-          }
-          final people = state.people;
-          final shown = _filter(people);
-          final owed = people.fold<double>(0, (a, p) => a + p.owedToMeOpen);
-          final owe = people.fold<double>(0, (a, p) => a + p.iOweOpen);
-          final symbol = Currencies.symbolOf(
-              people.isEmpty ? 'THB' : people.first.currency);
-          return PullToRefresh(
-            onRefresh: () => context.read<PersonalDebtsCubit>().load(),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 96),
-              children: [
-                _Summary(
-                  owedToMe: owed,
-                  iOwe: owe,
-                  symbol: symbol,
-                  selected: _dir,
-                  onSelect: (d) => setState(() => _dir = _dir == d ? null : d),
-                ),
-                AppSearchBar(
-                  hint: l.debtsSearchHint,
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-                FilterBar(chips: [
-                  OptionMenuAnchor<_Status>(
-                    selected: _status,
-                    onSelected: (s) => setState(() => _status = s),
-                    options: [
-                      SheetOption(value: _Status.open, label: l.debtsStatusOpen),
-                      SheetOption(value: _Status.all, label: l.debtsStatusAll),
-                    ],
-                    builder: (context, toggle) => FilterDropdownChip(
-                      label: l.debtsStatusLabel,
-                      valueLabel: _status == _Status.open
-                          ? l.debtsStatusOpen
-                          : l.debtsStatusAll,
-                      active: _status != _Status.open,
-                      onTap: toggle,
-                    ),
-                  ),
-                ]),
-                if (shown.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.xxl),
-                    child: Text(l.debtsNoMatch, textAlign: TextAlign.center),
-                  )
-                else
-                  for (final (i, p) in shown.indexed) ...[
-                    if (i > 0) const RowDivider(),
-                    _PersonRow(person: p, onTap: () => _openPerson(p)),
-                  ],
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -201,15 +208,20 @@ class _Summary extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label,
-                        style: textTheme.labelMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                    Text(
+                      label,
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     MoneyText(
                       amount,
                       symbol: symbol,
-                      style: textTheme.titleMedium
-                          ?.copyWith(color: color, fontWeight: FontWeight.w700),
+                      style: textTheme.titleMedium?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -222,7 +234,11 @@ class _Summary extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xs),
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
@@ -230,9 +246,12 @@ class _Summary extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(l.debtsNet,
-                    style: textTheme.labelLarge
-                        ?.copyWith(color: scheme.onSurfaceVariant)),
+                Text(
+                  l.debtsNet,
+                  style: textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
                 const Spacer(),
                 const MoneyVisibilityToggle(),
               ],
@@ -241,14 +260,19 @@ class _Summary extends StatelessWidget {
               owedToMe - iOwe,
               symbol: symbol,
               tone: MoneyTone.signed,
-              style: textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                box(DebtDirection.owedToMe, l.debtsOwedToMe, owedToMe,
-                    palette.income),
+                box(
+                  DebtDirection.owedToMe,
+                  l.debtsOwedToMe,
+                  owedToMe,
+                  palette.income,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 box(DebtDirection.iOwe, l.debtsIOwe, iOwe, palette.expense),
               ],
@@ -278,8 +302,11 @@ class _PersonRow extends StatelessWidget {
       title: Row(
         children: [
           Flexible(
-            child: Text(p.displayName,
-                maxLines: 1, overflow: TextOverflow.ellipsis),
+            child: Text(
+              p.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           if (p.contactId != null) ...[
             const SizedBox(width: AppSpacing.xs),
@@ -297,17 +324,15 @@ class _PersonRow extends StatelessWidget {
               p.net.abs(),
               symbol: Currencies.symbolOf(p.currency),
               tone: p.net > 0 ? MoneyTone.income : MoneyTone.expense,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
           Text(
             even ? l.debtsEven : (p.net > 0 ? l.debtsOwedToMe : l.debtsIOwe),
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: scheme.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
       ),

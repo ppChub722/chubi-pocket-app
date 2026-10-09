@@ -11,34 +11,35 @@ class SettingsState extends Equatable {
   const SettingsState({
     this.settings,
     this.status = SettingsStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final NotificationSettings? settings;
   final SettingsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   SettingsState copyWith({
     NotificationSettings? settings,
     SettingsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return SettingsState(
       settings: settings ?? this.settings,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [settings, status, errorMessage];
+  List<Object?> get props => [settings, status, error];
 }
 
 class NotificationSettingsCubit extends Cubit<SettingsState> {
   NotificationSettingsCubit({required NotificationsRepository repository})
-      : _repo = repository,
-        super(const SettingsState());
+    : _repo = repository,
+      super(const SettingsState());
 
   final NotificationsRepository _repo;
 
@@ -47,16 +48,18 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     try {
       final s = await _repo.getSettings();
       emit(state.copyWith(settings: s, status: SettingsStatus.loaded));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: SettingsStatus.error,
-        errorMessage: e.message,
-      ));
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: SettingsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
   /// Optimistic: the switch flips at once; a failed save flips it back and
-  /// sets [SettingsState.errorMessage] (the page shows "เปลี่ยนกลับแล้ว").
+  /// sets [SettingsState.error] (the page shows "เปลี่ยนกลับแล้ว").
   Future<void> update({
     Set<String>? mutedTypes,
     Set<String>? autoTypes,
@@ -66,17 +69,19 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
   }) async {
     final before = state.settings;
     if (before == null) return;
-    emit(state.copyWith(
-      settings: before.copyWith(
-        mutedTypes: mutedTypes,
-        autoTypes: autoTypes,
-        defaultAccountId: defaultAccountId,
-        clearDefaultAccount: clearDefaultAccount,
-        autoResolveOwnInProjects: autoResolveOwnInProjects,
+    emit(
+      state.copyWith(
+        settings: before.copyWith(
+          mutedTypes: mutedTypes,
+          autoTypes: autoTypes,
+          defaultAccountId: defaultAccountId,
+          clearDefaultAccount: clearDefaultAccount,
+          autoResolveOwnInProjects: autoResolveOwnInProjects,
+        ),
+        status: SettingsStatus.saving,
+        clearError: true,
       ),
-      status: SettingsStatus.saving,
-      clearError: true,
-    ));
+    );
     try {
       final updated = await _repo.updateSettings(
         mutedTypes: mutedTypes,
@@ -87,11 +92,13 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
       );
       emit(state.copyWith(settings: updated, status: SettingsStatus.loaded));
     } on ApiException catch (e) {
-      emit(state.copyWith(
-        settings: before,
-        status: SettingsStatus.error,
-        errorMessage: e.message,
-      ));
+      emit(
+        state.copyWith(
+          settings: before,
+          status: SettingsStatus.error,
+          error: e,
+        ),
+      );
     }
   }
 }

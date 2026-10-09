@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -106,8 +107,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
   Future<void> _loadExisting() async {
     setState(() => _loading = true);
     try {
-      final c =
-          await context.read<ContactsRepository>().get(widget.editingId!);
+      final c = await context.read<ContactsRepository>().get(widget.editingId!);
       if (!mounted) return;
       _existing = c;
       // For linked / link-existing flows we render the linked user's
@@ -192,78 +192,95 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final title = _isLinkCreate
         ? l.contactLinkCreateTitle
         : _isLinkExisting
-            ? l.contactLinkExistingTitle
-            : _isEditExisting
-                ? l.contactTitleEdit
-                : l.contactTitleNew;
+        ? l.contactLinkExistingTitle
+        : _isEditExisting
+        ? l.contactTitleEdit
+        : l.contactTitleNew;
     final saveLabel = _isLinkFlow ? l.contactLinkSave : l.commonSave;
-    final lockedHelper = _displayFieldsLocked ? l.contactLinkedLockedHint : null;
-    final lockedIcon =
-        _displayFieldsLocked ? AppIcons.link : null;
+    final lockedHelper = _displayFieldsLocked
+        ? l.contactLinkedLockedHint
+        : null;
+    final lockedIcon = _displayFieldsLocked ? AppIcons.link : null;
     return Scaffold(
       appBar: AppTopBar(title: title, showBack: true, editing: true),
-      body: _loading && _isEditExisting && _existing == null
-          ? const LoadingView()
-          : Form(
-              key: _form,
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                children: [
-                  if (_isLinkFlow)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: _LinkBanner(
-                        senderName: _name.text,
-                        isExisting: _isLinkExisting,
-                      ),
+      extendBodyBehindAppBar: true,
+      // Builder: its context sees the floating bar's height.
+      body: Builder(
+        builder: (context) {
+          final top = MediaQuery.paddingOf(context).top;
+          if (_loading && _isEditExisting && _existing == null) {
+            return Padding(
+              padding: EdgeInsets.only(top: top),
+              child: const LoadingView(),
+            );
+          }
+          return Form(
+            key: _form,
+            child: ListView(
+              padding: const EdgeInsets.all(
+                AppSpacing.lg,
+              ).add(EdgeInsets.only(top: top)),
+              children: [
+                if (_isLinkFlow)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: _LinkBanner(
+                      senderName: _name.text,
+                      isExisting: _isLinkExisting,
                     ),
-                  AppTextField(
-                    controller: _name,
-                    label: l.contactNameLabel,
-                    readOnly: _displayFieldsLocked,
-                    prefixIcon: lockedIcon,
-                    helper: lockedHelper,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? l.contactNameRequired
-                        : null,
                   ),
+                AppTextField(
+                  controller: _name,
+                  label: l.contactNameLabel,
+                  readOnly: _displayFieldsLocked,
+                  prefixIcon: lockedIcon,
+                  helper: lockedHelper,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? l.contactNameRequired
+                      : null,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _email,
+                  label: l.contactEmailLabel,
+                  readOnly: _displayFieldsLocked,
+                  prefixIcon: lockedIcon,
+                  helper: lockedHelper,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _phone,
+                  label: l.contactPhoneLabel,
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _notes,
+                  label: l.contactNotesLabel,
+                  maxLines: 3,
+                ),
+                if (_error != null) ...[
                   const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: _email,
-                    label: l.contactEmailLabel,
-                    readOnly: _displayFieldsLocked,
-                    prefixIcon: lockedIcon,
-                    helper: lockedHelper,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: _phone,
-                    label: l.contactPhoneLabel,
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: _notes,
-                    label: l.contactNotesLabel,
-                    maxLines: 3,
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    Text(_error!,
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.error)),
-                  ],
-                  const SizedBox(height: AppSpacing.lg),
-                  AppButton(
-                    label: saveLabel,
-                    expand: true,
-                    loading: _loading,
-                    onPressed: _loading ? null : _submit,
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                 ],
-              ),
+                const SizedBox(height: AppSpacing.lg),
+                AppButton(
+                  label: saveLabel,
+                  expand: true,
+                  loading: _loading,
+                  onPressed: _loading ? null : _submit,
+                ),
+              ],
             ),
+          );
+        },
+      ),
     );
   }
 
@@ -290,7 +307,7 @@ class _LinkBanner extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: scheme.primaryContainer.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(

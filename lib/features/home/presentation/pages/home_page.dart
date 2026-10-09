@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/shell/tab_root_scaffold.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -22,6 +23,7 @@ import '../../../scheduled_transactions/presentation/cubit/scheduled_transaction
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../../transactions/presentation/widgets/transaction_tile.dart';
 import '../../domain/dashboard.dart';
 import '../cubit/dashboard_cubit.dart';
@@ -61,7 +63,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) => const _HomeView();
+  Widget build(BuildContext context) => TabRootScaffold(
+    title: AppLocalizations.of(context)!.navDashboard,
+    body: const _HomeView(),
+  );
 }
 
 class _HomeView extends StatelessWidget {
@@ -101,26 +106,21 @@ class _HomeView extends StatelessWidget {
       ],
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
-          final d = state.data;
           final cubit = context.read<DashboardCubit>();
-          if (d == null) {
-            if (state.status == DashboardStatus.error) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(l.homeLoadError),
-                      const SizedBox(height: AppSpacing.md),
-                      AppButton(label: l.commonRetry, onPressed: cubit.load),
-                    ],
-                  ),
-                ),
-              );
-            }
-            return ListView(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+          return AsyncStateView(
+            loading:
+                state.status == DashboardStatus.initial ||
+                state.status == DashboardStatus.loading,
+            error: state.error,
+            isEmpty: state.data == null,
+            onRetry: cubit.load,
+            // Stale data + a failed load → the banner below, not a snackbar.
+            snackOnRefreshError: false,
+            skeleton: ListView(
+              // Body sits under the transparent top bar.
+              padding: const EdgeInsets.all(
+                AppSpacing.lg,
+              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
               children: const [
                 SkeletonBox(height: 40),
                 SizedBox(height: AppSpacing.md),
@@ -132,39 +132,47 @@ class _HomeView extends StatelessWidget {
                 SizedBox(height: AppSpacing.lg),
                 SkeletonBox(height: 160),
               ],
-            );
-          }
-          return PullToRefresh(
-            onRefresh: cubit.load,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                96,
-              ),
-              children: [
-                _MonthBar(
-                  month: d.month,
-                  loading: state.status == DashboardStatus.loading,
-                ),
-                if (state.status == DashboardStatus.error) ...[
-                  MessageBanner(message: l.homeLoadError, tone: Tone.danger),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-                _NetWorthCard(netWorth: d.netWorth),
-                const _PendingBlock(),
-                const SizedBox(height: AppSpacing.md),
-                _MonthCard(current: d.summary, previous: d.previous),
-                if (d.upcoming.items.isNotEmpty) _ComingUp(block: d.upcoming),
-                _WhereItWent(d: d),
-                _Trend(points: d.trend),
-                const SizedBox(height: AppSpacing.lg),
-                _Tiles(d: d),
-                _Recent(d: d),
-              ],
             ),
+            builder: (context) {
+              final d = state.data!;
+              return PullToRefresh(
+                onRefresh: cubit.load,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  // Body sits under the transparent top bar.
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    MediaQuery.paddingOf(context).top + AppSpacing.xs,
+                    AppSpacing.lg,
+                    96,
+                  ),
+                  children: [
+                    _MonthBar(
+                      month: d.month,
+                      loading: state.status == DashboardStatus.loading,
+                    ),
+                    if (state.status == DashboardStatus.error) ...[
+                      MessageBanner(
+                        message: l.homeLoadError,
+                        tone: Tone.danger,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                    _NetWorthCard(netWorth: d.netWorth),
+                    const _PendingBlock(),
+                    const SizedBox(height: AppSpacing.md),
+                    _MonthCard(current: d.summary, previous: d.previous),
+                    if (d.upcoming.items.isNotEmpty)
+                      _ComingUp(block: d.upcoming),
+                    _WhereItWent(d: d),
+                    _Trend(points: d.trend),
+                    const SizedBox(height: AppSpacing.lg),
+                    _Tiles(d: d),
+                    _Recent(d: d),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
@@ -193,7 +201,7 @@ class _MonthBar extends StatelessWidget {
       children: [
         IconButton(
           tooltip: l.homePrevMonth,
-          icon: const Icon(Icons.chevron_left),
+          icon: const Icon(AppIcons.chevronLeft),
           onPressed: () => cubit.shiftMonth(-1),
         ),
         Text(
@@ -332,10 +340,10 @@ class _MonthCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.xs),
                   Icon(
                     pct > 0
-                        ? Icons.arrow_upward
+                        ? AppIcons.trendUp
                         : pct < 0
-                        ? Icons.arrow_downward
-                        : Icons.remove,
+                        ? AppIcons.trendDown
+                        : AppIcons.trendFlat,
                     size: 14,
                     // Spending up = expense colour; down = income colour.
                     color: pct > 0
@@ -877,7 +885,8 @@ class _Recent extends StatelessWidget {
                       AddTile(
                         label: l.homeAddFirstTx,
                         variant: AddTileVariant.row,
-                        onTap: () => context.push('/transactions/new'),
+                        // Same flow as the nav's +.
+                        onTap: () => showQuickCreateSheet(context),
                       ),
                     ],
                   ),
@@ -917,10 +926,12 @@ class _PendingBlock extends StatelessWidget {
       return Row(
         children: [
           Expanded(
-            child: Text(title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.bodySmall),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodySmall,
+            ),
           ),
           MoneyText(
             d.amount ?? 0,
@@ -950,19 +961,32 @@ class _PendingBlock extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(AppIcons.pending, size: 18, color: scheme.onPrimaryContainer),
+                    Icon(
+                      AppIcons.pending,
+                      size: 18,
+                      color: scheme.onPrimaryContainer,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
-                      child: Text(l.pendingBlockTitle(items.length),
-                          style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: scheme.onPrimaryContainer)),
+                      child: Text(
+                        l.pendingBlockTitle(items.length),
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: scheme.onPrimaryContainer,
+                        ),
+                      ),
                     ),
-                    Text(l.homeRecentViewAll,
-                        style: textTheme.labelMedium
-                            ?.copyWith(color: scheme.onPrimaryContainer)),
-                    Icon(AppIcons.chevronRight,
-                        size: 18, color: scheme.onPrimaryContainer),
+                    Text(
+                      l.homeRecentViewAll,
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                      ),
+                    ),
+                    Icon(
+                      AppIcons.chevronRight,
+                      size: 18,
+                      color: scheme.onPrimaryContainer,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -974,8 +998,9 @@ class _PendingBlock extends StatelessWidget {
                   items.length > 2
                       ? '${l.pendingBlockMore(items.length - 2)} · ${l.pendingNotCounted}'
                       : l.pendingNotCounted,
-                  style: textTheme.labelSmall
-                      ?.copyWith(color: scheme.onPrimaryContainer),
+                  style: textTheme.labelSmall?.copyWith(
+                    color: scheme.onPrimaryContainer,
+                  ),
                 ),
               ],
             ),

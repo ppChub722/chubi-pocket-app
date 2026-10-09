@@ -350,12 +350,6 @@ abstract class AppLocalizations {
   /// **'You\'re offline'**
   String get offlineBanner;
 
-  /// No description provided for @authLoginTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Log in'**
-  String get authLoginTitle;
-
   /// No description provided for @authLoginIdentifierLabel.
   ///
   /// In en, this message translates to:
@@ -578,30 +572,6 @@ abstract class AppLocalizations {
   /// **'Profile & settings'**
   String get navProfileTooltip;
 
-  /// No description provided for @addTransactionComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Logging transactions ships in Phase 1a'**
-  String get addTransactionComingSoon;
-
-  /// No description provided for @notificationsComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'The notifications inbox ships in Phase 1b'**
-  String get notificationsComingSoon;
-
-  /// No description provided for @accountsPlaceholderTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No wallets yet'**
-  String get accountsPlaceholderTitle;
-
-  /// No description provided for @accountsPlaceholderMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Adding wallets ships in Phase 1a.'**
-  String get accountsPlaceholderMessage;
-
   /// No description provided for @accountsAddNew.
   ///
   /// In en, this message translates to:
@@ -662,12 +632,6 @@ abstract class AppLocalizations {
   /// **'This wallet may have been archived or deleted.'**
   String get accountDetailNotFoundMessage;
 
-  /// No description provided for @accountDetailEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get accountDetailEdit;
-
   /// No description provided for @accountDetailAdjustBalance.
   ///
   /// In en, this message translates to:
@@ -679,12 +643,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Archive'**
   String get accountDetailArchive;
-
-  /// No description provided for @accountDetailActionComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'This action ships in Phase 1a'**
-  String get accountDetailActionComingSoon;
 
   /// No description provided for @accountDetailCreditAvailable.
   ///
@@ -722,12 +680,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{No transactions} =1{1 transaction} other{{count} transactions}}'**
   String accountDetailSummaryTransactions(int count);
 
-  /// No description provided for @accountDetailBillingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Billing'**
-  String get accountDetailBillingTitle;
-
   /// No description provided for @accountDetailStatementDate.
   ///
   /// In en, this message translates to:
@@ -758,18 +710,6 @@ abstract class AppLocalizations {
   /// **'Transactions'**
   String get accountDetailTransactionsTitle;
 
-  /// No description provided for @accountDetailTransactionsEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No transactions yet'**
-  String get accountDetailTransactionsEmptyTitle;
-
-  /// No description provided for @accountDetailTransactionsEmptyMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Logging transactions ships in Phase 1a.'**
-  String get accountDetailTransactionsEmptyMessage;
-
   /// No description provided for @accountFormTitle.
   ///
   /// In en, this message translates to:
@@ -781,18 +721,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit wallet'**
   String get accountFormTitleEdit;
-
-  /// No description provided for @accountFormSaveEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Save changes'**
-  String get accountFormSaveEdit;
-
-  /// No description provided for @accountFormPreviewLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview'**
-  String get accountFormPreviewLabel;
 
   /// No description provided for @accountFormTypeLabel.
   ///
@@ -830,12 +758,6 @@ abstract class AppLocalizations {
   /// **'Color'**
   String get accountFormColorLabel;
 
-  /// No description provided for @accountFormUploadLogo.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload custom logo (Phase 2)'**
-  String get accountFormUploadLogo;
-
   /// No description provided for @accountFormBalanceLabel.
   ///
   /// In en, this message translates to:
@@ -847,12 +769,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Money already in this wallet on the day you start tracking.'**
   String get accountFormBalanceHelper;
-
-  /// No description provided for @accountFormCreditSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Credit details'**
-  String get accountFormCreditSection;
 
   /// No description provided for @accountFormCreditLimitLabel.
   ///
@@ -902,41 +818,11 @@ abstract class AppLocalizations {
   /// **'Must be 1–31'**
   String get accountFormDayInvalid;
 
-  /// No description provided for @accountFormSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Save wallet'**
-  String get accountFormSave;
-
-  /// No description provided for @accountFormDiscardTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard new wallet?'**
-  String get accountFormDiscardTitle;
-
-  /// No description provided for @accountFormDiscardBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Your changes will be lost.'**
-  String get accountFormDiscardBody;
-
-  /// No description provided for @accountFormDiscardTitleEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard changes?'**
-  String get accountFormDiscardTitleEdit;
-
   /// No description provided for @accountAdjustBalanceTitle.
   ///
   /// In en, this message translates to:
   /// **'Adjust balance'**
   String get accountAdjustBalanceTitle;
-
-  /// No description provided for @accountAdjustBalanceBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Set a new balance. The difference will be recorded as an Adjustment transaction so the history stays consistent.'**
-  String get accountAdjustBalanceBody;
 
   /// No description provided for @accountAdjustBalanceCurrentLabel.
   ///
@@ -956,23 +842,11 @@ abstract class AppLocalizations {
   /// **'Note (optional)'**
   String get accountAdjustBalanceNoteLabel;
 
-  /// No description provided for @accountAdjustBalanceInvalidAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a number'**
-  String get accountAdjustBalanceInvalidAmount;
-
   /// No description provided for @accountAdjustBalanceNoChange.
   ///
   /// In en, this message translates to:
   /// **'New balance must differ from the current balance.'**
   String get accountAdjustBalanceNoChange;
-
-  /// No description provided for @accountAdjustBalanceConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Adjust'**
-  String get accountAdjustBalanceConfirm;
 
   /// No description provided for @accountArchiveConfirmTitle.
   ///
@@ -992,47 +866,11 @@ abstract class AppLocalizations {
   /// **'Archive'**
   String get accountArchiveConfirmAction;
 
-  /// No description provided for @accountFormCurrencyLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Currency'**
-  String get accountFormCurrencyLabel;
-
-  /// No description provided for @accountFormCurrencyPhase2.
-  ///
-  /// In en, this message translates to:
-  /// **'Multi-currency ships in Phase 2'**
-  String get accountFormCurrencyPhase2;
-
-  /// No description provided for @accountFormPhase2Badge.
-  ///
-  /// In en, this message translates to:
-  /// **'Phase 2'**
-  String get accountFormPhase2Badge;
-
-  /// No description provided for @accountFormDescriptionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get accountFormDescriptionLabel;
-
   /// No description provided for @accountFormDescriptionHelper.
   ///
   /// In en, this message translates to:
   /// **'What this wallet is for. Visible to you only.'**
   String get accountFormDescriptionHelper;
-
-  /// No description provided for @accountFormDescriptionTooLong.
-  ///
-  /// In en, this message translates to:
-  /// **'Max 200 characters'**
-  String get accountFormDescriptionTooLong;
-
-  /// No description provided for @accountFormNoteLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get accountFormNoteLabel;
 
   /// No description provided for @accountFormNoteHelper.
   ///
@@ -1040,47 +878,11 @@ abstract class AppLocalizations {
   /// **'Personal scratch note (e.g. \"Travel money for Japan trip\").'**
   String get accountFormNoteHelper;
 
-  /// No description provided for @accountFormNoteTooLong.
-  ///
-  /// In en, this message translates to:
-  /// **'Max 200 characters'**
-  String get accountFormNoteTooLong;
-
-  /// No description provided for @iconPickerSectionStyle.
-  ///
-  /// In en, this message translates to:
-  /// **'Style'**
-  String get iconPickerSectionStyle;
-
-  /// No description provided for @iconPickerSectionColor.
-  ///
-  /// In en, this message translates to:
-  /// **'Color'**
-  String get iconPickerSectionColor;
-
   /// No description provided for @iconPickerUseThis.
   ///
   /// In en, this message translates to:
   /// **'Use this'**
   String get iconPickerUseThis;
-
-  /// No description provided for @iconPickerRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get iconPickerRemove;
-
-  /// No description provided for @iconPickerUploadComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload (Phase 2)'**
-  String get iconPickerUploadComingSoon;
-
-  /// No description provided for @iconPickerCropComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Crop (Phase 2)'**
-  String get iconPickerCropComingSoon;
 
   /// No description provided for @iconMakerRoleIcon.
   ///
@@ -1100,59 +902,17 @@ abstract class AppLocalizations {
   /// **'Border'**
   String get iconMakerRoleBorder;
 
-  /// No description provided for @iconMakerColor.
-  ///
-  /// In en, this message translates to:
-  /// **'Colour'**
-  String get iconMakerColor;
-
-  /// No description provided for @iconMakerColorEditing.
-  ///
-  /// In en, this message translates to:
-  /// **'Editing colour'**
-  String get iconMakerColorEditing;
-
-  /// No description provided for @iconMakerColorHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap a colour below to change the selected slot'**
-  String get iconMakerColorHint;
-
-  /// No description provided for @iconMakerRecentCustom.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent · Custom'**
-  String get iconMakerRecentCustom;
-
   /// No description provided for @iconMakerThemeColors.
   ///
   /// In en, this message translates to:
   /// **'Theme'**
   String get iconMakerThemeColors;
 
-  /// No description provided for @iconMakerPresetColors.
-  ///
-  /// In en, this message translates to:
-  /// **'Preset'**
-  String get iconMakerPresetColors;
-
-  /// No description provided for @iconMakerHex.
-  ///
-  /// In en, this message translates to:
-  /// **'Hex'**
-  String get iconMakerHex;
-
   /// No description provided for @iconMakerReset.
   ///
   /// In en, this message translates to:
   /// **'Reset to default'**
   String get iconMakerReset;
-
-  /// No description provided for @iconMakerPresetLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'preset'**
-  String get iconMakerPresetLabel;
 
   /// No description provided for @iconMakerTitle.
   ///
@@ -1183,12 +943,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pattern'**
   String get iconMakerPattern;
-
-  /// No description provided for @iconMakerNone.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get iconMakerNone;
 
   /// No description provided for @iconMakerCommonColors.
   ///
@@ -1237,12 +991,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick a color'**
   String get iconMakerPickColor;
-
-  /// No description provided for @iconMakerHexInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Use #RRGGBB'**
-  String get iconMakerHexInvalid;
 
   /// No description provided for @iconMakerResetConfirmTitle.
   ///
@@ -1321,36 +1069,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shared projects ship in Phase 1b.'**
   String get projectsPlaceholderMessage;
-
-  /// No description provided for @moreSheetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'More'**
-  String get moreSheetTitle;
-
-  /// No description provided for @morePhase1aHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Phase 1a — coming soon'**
-  String get morePhase1aHeader;
-
-  /// No description provided for @morePhase1bHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Phase 1b — coming soon'**
-  String get morePhase1bHeader;
-
-  /// No description provided for @morePhase1cHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Phase 1c — coming soon'**
-  String get morePhase1cHeader;
-
-  /// No description provided for @moreTransactions.
-  ///
-  /// In en, this message translates to:
-  /// **'Transactions'**
-  String get moreTransactions;
 
   /// No description provided for @moreCategories.
   ///
@@ -1970,12 +1688,6 @@ abstract class AppLocalizations {
   /// **'Debt deleted'**
   String get debtDeleted;
 
-  /// No description provided for @debtNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'Debt not found'**
-  String get debtNotFound;
-
   /// No description provided for @debtNewTitle.
   ///
   /// In en, this message translates to:
@@ -2318,11 +2030,11 @@ abstract class AppLocalizations {
   /// **'Who paid'**
   String get projectDashWhoPaid;
 
-  /// No description provided for @projectDashTopCategories.
+  /// No description provided for @projectDashTopTags.
   ///
   /// In en, this message translates to:
-  /// **'Top categories'**
-  String get projectDashTopCategories;
+  /// **'Top tags'**
+  String get projectDashTopTags;
 
   /// No description provided for @projectDashRecent.
   ///
@@ -2396,11 +2108,11 @@ abstract class AppLocalizations {
   /// **'Who paid'**
   String get projectTxSortMember;
 
-  /// No description provided for @projectTxSortCategory.
+  /// No description provided for @projectTxSortTag.
   ///
   /// In en, this message translates to:
-  /// **'Category'**
-  String get projectTxSortCategory;
+  /// **'Tag'**
+  String get projectTxSortTag;
 
   /// No description provided for @projectTxEmpty.
   ///
@@ -2756,47 +2468,53 @@ abstract class AppLocalizations {
   /// **'Received by'**
   String get projectTxReceivedBy;
 
-  /// No description provided for @projectTxDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get projectTxDescription;
-
-  /// No description provided for @projectTxDescriptionRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Description is required'**
-  String get projectTxDescriptionRequired;
-
-  /// No description provided for @projectTxDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Date'**
-  String get projectTxDate;
-
   /// No description provided for @projectTxNote.
   ///
   /// In en, this message translates to:
   /// **'Note'**
   String get projectTxNote;
 
-  /// No description provided for @projectTxCategory.
+  /// No description provided for @projectTxTags.
   ///
   /// In en, this message translates to:
-  /// **'Category'**
-  String get projectTxCategory;
+  /// **'Tags'**
+  String get projectTxTags;
 
-  /// No description provided for @projectTxCategoryRequired.
+  /// No description provided for @projectTxAddTag.
   ///
   /// In en, this message translates to:
-  /// **'Name the category and pick an icon'**
-  String get projectTxCategoryRequired;
+  /// **'New tag'**
+  String get projectTxAddTag;
 
-  /// No description provided for @projectTxCategoryName.
+  /// No description provided for @projectTxTagHint.
   ///
   /// In en, this message translates to:
-  /// **'Category name'**
-  String get projectTxCategoryName;
+  /// **'Tag name'**
+  String get projectTxTagHint;
+
+  /// No description provided for @projectTxDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get projectTxDescriptionHint;
+
+  /// No description provided for @projectTxDescriptionUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use \"{text}\"'**
+  String projectTxDescriptionUse(String text);
+
+  /// No description provided for @projectTxDescriptionPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Used before in this project'**
+  String get projectTxDescriptionPast;
+
+  /// No description provided for @projectTxSplitMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Who'**
+  String get projectTxSplitMember;
 
   /// No description provided for @projectTxSplits.
   ///
@@ -2905,12 +2623,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark all as read'**
   String get notificationsMarkAllRead;
-
-  /// No description provided for @notificationsSettingsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Notification settings'**
-  String get notificationsSettingsTooltip;
 
   /// No description provided for @notificationsEmptyTitle.
   ///
@@ -3410,12 +3122,6 @@ abstract class AppLocalizations {
   /// **'Clear filters'**
   String get transactionsClearFilters;
 
-  /// No description provided for @txDetailDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Date'**
-  String get txDetailDate;
-
   /// No description provided for @txDetailAccount.
   ///
   /// In en, this message translates to:
@@ -3464,23 +3170,11 @@ abstract class AppLocalizations {
   /// **'From'**
   String get txDetailSource;
 
-  /// No description provided for @txDetailSourceDebt.
-  ///
-  /// In en, this message translates to:
-  /// **'Debt payment'**
-  String get txDetailSourceDebt;
-
   /// No description provided for @txDetailSourceProject.
   ///
   /// In en, this message translates to:
   /// **'Project'**
   String get txDetailSourceProject;
-
-  /// No description provided for @txDetailSystemLocked.
-  ///
-  /// In en, this message translates to:
-  /// **'System transaction: cannot be edited or deleted'**
-  String get txDetailSystemLocked;
 
   /// No description provided for @txDetailTransferTo.
   ///
@@ -3493,18 +3187,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Balance after'**
   String get txDetailBalanceAfter;
-
-  /// No description provided for @txDeleteTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete this transaction?'**
-  String get txDeleteTitle;
-
-  /// No description provided for @txDeleteBody.
-  ///
-  /// In en, this message translates to:
-  /// **'The wallet balance is adjusted back.'**
-  String get txDeleteBody;
 
   /// No description provided for @txDeleted.
   ///
@@ -3656,17 +3338,41 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get authLanguage;
 
-  /// No description provided for @accountsTotalMine.
-  ///
-  /// In en, this message translates to:
-  /// **'Mine'**
-  String get accountsTotalMine;
-
   /// No description provided for @accountsTotalShared.
   ///
   /// In en, this message translates to:
   /// **'Shared pot'**
   String get accountsTotalShared;
+
+  /// No description provided for @accountsSummaryNet.
+  ///
+  /// In en, this message translates to:
+  /// **'My net balance'**
+  String get accountsSummaryNet;
+
+  /// No description provided for @accountsSummaryAssets.
+  ///
+  /// In en, this message translates to:
+  /// **'Money on hand'**
+  String get accountsSummaryAssets;
+
+  /// No description provided for @accountsSummaryDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Card / pay-later debt'**
+  String get accountsSummaryDebt;
+
+  /// No description provided for @accountsSummaryCreditUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit used {pct}% · {left} left'**
+  String accountsSummaryCreditUsed(int pct, String left);
+
+  /// No description provided for @accountsSummaryWalletCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 wallet} other{{count} wallets}}'**
+  String accountsSummaryWalletCount(int count);
 
   /// No description provided for @accountsArchivedLink.
   ///
@@ -3715,12 +3421,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note'**
   String get accountDetailNote;
-
-  /// No description provided for @accountDetailMembers.
-  ///
-  /// In en, this message translates to:
-  /// **'Members'**
-  String get accountDetailMembers;
 
   /// No description provided for @accountArchiveHasMembers.
   ///
@@ -3775,12 +3475,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Scheduled transactions'**
   String get moreScheduled;
-
-  /// No description provided for @moreComingSoonBadge.
-  ///
-  /// In en, this message translates to:
-  /// **'Soon'**
-  String get moreComingSoonBadge;
 
   /// No description provided for @moreGroupLibrary.
   ///
@@ -3866,41 +3560,11 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 due in {days} days} other{{count} due in {days} days}}'**
   String moreLiveDueSoon(int count, int days);
 
-  /// No description provided for @moreComingInPhase1a.
-  ///
-  /// In en, this message translates to:
-  /// **'Ships in Phase 1a'**
-  String get moreComingInPhase1a;
-
-  /// No description provided for @moreComingInPhase1b.
-  ///
-  /// In en, this message translates to:
-  /// **'Ships in Phase 1b'**
-  String get moreComingInPhase1b;
-
-  /// No description provided for @moreComingInPhase1c.
-  ///
-  /// In en, this message translates to:
-  /// **'Ships in Phase 1c'**
-  String get moreComingInPhase1c;
-
   /// No description provided for @categoriesTitle.
   ///
   /// In en, this message translates to:
   /// **'Categories'**
   String get categoriesTitle;
-
-  /// No description provided for @categoriesSectionExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Expense'**
-  String get categoriesSectionExpense;
-
-  /// No description provided for @categoriesSectionIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get categoriesSectionIncome;
 
   /// No description provided for @categoriesEmptyTitle.
   ///
@@ -3913,6 +3577,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add your first category to start organizing transactions.'**
   String get categoriesEmptyMessage;
+
+  /// No description provided for @categoryDetailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Category not found'**
+  String get categoryDetailNotFound;
+
+  /// No description provided for @categoryDetailNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This category may have been deleted.'**
+  String get categoryDetailNotFoundMessage;
 
   /// No description provided for @categoriesLimitReached.
   ///
@@ -3949,18 +3625,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit category'**
   String get categoryFormTitleEdit;
-
-  /// No description provided for @categoryFormBadge.
-  ///
-  /// In en, this message translates to:
-  /// **'Category'**
-  String get categoryFormBadge;
-
-  /// No description provided for @categoryFormPreviewLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview'**
-  String get categoryFormPreviewLabel;
 
   /// No description provided for @categoryFormNameLabel.
   ///
@@ -4010,12 +3674,6 @@ abstract class AppLocalizations {
   /// **'None'**
   String get categoryFormParentNone;
 
-  /// No description provided for @categoryFormParentDepthHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Categories can nest up to 3 levels deep.'**
-  String get categoryFormParentDepthHint;
-
   /// No description provided for @categoryFormIconLabel.
   ///
   /// In en, this message translates to:
@@ -4034,12 +3692,6 @@ abstract class AppLocalizations {
   /// **'Description'**
   String get categoryFormDescriptionLabel;
 
-  /// No description provided for @categoryFormDescriptionHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'What this category is for. Visible to you only.'**
-  String get categoryFormDescriptionHelper;
-
   /// No description provided for @categoryFormDescriptionTooLong.
   ///
   /// In en, this message translates to:
@@ -4051,12 +3703,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note'**
   String get categoryFormNoteLabel;
-
-  /// No description provided for @categoryFormNoteHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Personal scratch note (e.g. \"Don\'t use for snacks\").'**
-  String get categoryFormNoteHelper;
 
   /// No description provided for @categoryFormNoteTooLong.
   ///
@@ -4075,24 +3721,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Off = transactions in this category are excluded from totals and charts.'**
   String get categoryFormIncludeInReportHelper;
-
-  /// No description provided for @categoryFormSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Save category'**
-  String get categoryFormSave;
-
-  /// No description provided for @categoryFormDiscardTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard changes?'**
-  String get categoryFormDiscardTitle;
-
-  /// No description provided for @categoryFormDiscardBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Your edits will be lost.'**
-  String get categoryFormDiscardBody;
 
   /// No description provided for @categoriesAddNew.
   ///
@@ -4154,6 +3782,48 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get commonDelete;
 
+  /// No description provided for @budgetDeleteThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this budget'**
+  String get budgetDeleteThis;
+
+  /// No description provided for @savingGoalDeleteThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this goal'**
+  String get savingGoalDeleteThis;
+
+  /// No description provided for @contactDeleteThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this contact'**
+  String get contactDeleteThis;
+
+  /// No description provided for @debtDeleteThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this debt'**
+  String get debtDeleteThis;
+
+  /// No description provided for @projectDeleteThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this project'**
+  String get projectDeleteThis;
+
+  /// No description provided for @scheduledDeleteThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this schedule'**
+  String get scheduledDeleteThis;
+
+  /// No description provided for @transactionDeleteThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this transaction'**
+  String get transactionDeleteThis;
+
   /// No description provided for @categoriesReorderEnter.
   ///
   /// In en, this message translates to:
@@ -4172,29 +3842,11 @@ abstract class AppLocalizations {
   /// **'Discard'**
   String get categoriesReorderDiscard;
 
-  /// No description provided for @categoriesReorderHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Drag to reorder. Drop near another category to move under its parent.'**
-  String get categoriesReorderHint;
-
   /// No description provided for @categoriesUndo.
   ///
   /// In en, this message translates to:
   /// **'Undo'**
   String get categoriesUndo;
-
-  /// No description provided for @categoriesReorderTooDeep.
-  ///
-  /// In en, this message translates to:
-  /// **'That move would exceed the 3-level limit'**
-  String get categoriesReorderTooDeep;
-
-  /// No description provided for @categoriesReorderCycle.
-  ///
-  /// In en, this message translates to:
-  /// **'Can\'t drop a category into its own descendant'**
-  String get categoriesReorderCycle;
 
   /// No description provided for @categoriesReorderCancel.
   ///
@@ -4262,12 +3914,6 @@ abstract class AppLocalizations {
   /// **'Change icon'**
   String get tagsBulkIcon;
 
-  /// No description provided for @tagsDeleteSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete selected'**
-  String get tagsDeleteSelected;
-
   /// No description provided for @tagsFiltersClearedForError.
   ///
   /// In en, this message translates to:
@@ -4298,23 +3944,11 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get tagDeleteConfirmAction;
 
-  /// No description provided for @tagFormTitleNew.
-  ///
-  /// In en, this message translates to:
-  /// **'New tag'**
-  String get tagFormTitleNew;
-
   /// No description provided for @tagFormTitleEdit.
   ///
   /// In en, this message translates to:
   /// **'Edit tag'**
   String get tagFormTitleEdit;
-
-  /// No description provided for @tagFormPreviewLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview'**
-  String get tagFormPreviewLabel;
 
   /// No description provided for @tagFormNameLabel.
   ///
@@ -4351,24 +3985,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Color'**
   String get tagFormColorLabel;
-
-  /// No description provided for @tagFormSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Save tag'**
-  String get tagFormSave;
-
-  /// No description provided for @tagFormDiscardTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard changes?'**
-  String get tagFormDiscardTitle;
-
-  /// No description provided for @tagFormDiscardBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Your edits will be lost.'**
-  String get tagFormDiscardBody;
 
   /// No description provided for @settingsTitle.
   ///
@@ -4466,30 +4082,6 @@ abstract class AppLocalizations {
   /// **'Display name'**
   String get editProfileDisplayNameLabel;
 
-  /// No description provided for @editProfileCurrencyLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Default currency'**
-  String get editProfileCurrencyLabel;
-
-  /// No description provided for @editProfileCurrencyHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Used as default for new transactions. Existing transactions keep their original currency.'**
-  String get editProfileCurrencyHelper;
-
-  /// No description provided for @editProfileAvatarUrlLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Avatar URL (optional)'**
-  String get editProfileAvatarUrlLabel;
-
-  /// No description provided for @editProfileAvatarUrlHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Phase 0: paste a URL or leave blank for initials.'**
-  String get editProfileAvatarUrlHelper;
-
   /// No description provided for @editProfileUsernameLabel.
   ///
   /// In en, this message translates to:
@@ -4526,47 +4118,11 @@ abstract class AppLocalizations {
   /// **'That email is already registered to another account.'**
   String get editProfileEmailTaken;
 
-  /// No description provided for @editProfileReadOnlyHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Cannot be changed in this version'**
-  String get editProfileReadOnlyHelper;
-
-  /// No description provided for @editProfileEmailNone.
-  ///
-  /// In en, this message translates to:
-  /// **'—'**
-  String get editProfileEmailNone;
-
   /// No description provided for @editProfileSnackSuccess.
   ///
   /// In en, this message translates to:
   /// **'Profile updated'**
   String get editProfileSnackSuccess;
-
-  /// No description provided for @editProfileDiscardTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard changes?'**
-  String get editProfileDiscardTitle;
-
-  /// No description provided for @editProfileDiscardBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Your edits will be lost.'**
-  String get editProfileDiscardBody;
-
-  /// No description provided for @editProfileDiscardKeep.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep editing'**
-  String get editProfileDiscardKeep;
-
-  /// No description provided for @editProfileDiscardConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard'**
-  String get editProfileDiscardConfirm;
 
   /// No description provided for @changePasswordTitle.
   ///
@@ -4627,102 +4183,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password updated'**
   String get changePasswordSnackSuccess;
-
-  /// No description provided for @avatarPickerStyleLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Style'**
-  String get avatarPickerStyleLabel;
-
-  /// No description provided for @avatarPickerColorLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Color'**
-  String get avatarPickerColorLabel;
-
-  /// No description provided for @avatarPickerUseThis.
-  ///
-  /// In en, this message translates to:
-  /// **'Use this'**
-  String get avatarPickerUseThis;
-
-  /// No description provided for @avatarPickerUploadDisabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload (Phase 2)'**
-  String get avatarPickerUploadDisabled;
-
-  /// No description provided for @avatarPickerCropDisabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Crop (Phase 2)'**
-  String get avatarPickerCropDisabled;
-
-  /// No description provided for @avatarPresetInitials.
-  ///
-  /// In en, this message translates to:
-  /// **'Initials'**
-  String get avatarPresetInitials;
-
-  /// No description provided for @avatarPresetMale.
-  ///
-  /// In en, this message translates to:
-  /// **'Male'**
-  String get avatarPresetMale;
-
-  /// No description provided for @avatarPresetFemale.
-  ///
-  /// In en, this message translates to:
-  /// **'Female'**
-  String get avatarPresetFemale;
-
-  /// No description provided for @avatarPresetChubby.
-  ///
-  /// In en, this message translates to:
-  /// **'Chubby'**
-  String get avatarPresetChubby;
-
-  /// No description provided for @avatarPresetSnacker.
-  ///
-  /// In en, this message translates to:
-  /// **'Snacker'**
-  String get avatarPresetSnacker;
-
-  /// No description provided for @avatarPresetStrong.
-  ///
-  /// In en, this message translates to:
-  /// **'Strong'**
-  String get avatarPresetStrong;
-
-  /// No description provided for @avatarColorRed.
-  ///
-  /// In en, this message translates to:
-  /// **'Red'**
-  String get avatarColorRed;
-
-  /// No description provided for @avatarColorGreen.
-  ///
-  /// In en, this message translates to:
-  /// **'Green'**
-  String get avatarColorGreen;
-
-  /// No description provided for @avatarColorBlue.
-  ///
-  /// In en, this message translates to:
-  /// **'Blue'**
-  String get avatarColorBlue;
-
-  /// No description provided for @avatarColorTeal.
-  ///
-  /// In en, this message translates to:
-  /// **'Teal'**
-  String get avatarColorTeal;
-
-  /// No description provided for @avatarColorPink.
-  ///
-  /// In en, this message translates to:
-  /// **'Pink'**
-  String get avatarColorPink;
 
   /// No description provided for @previewTitle.
   ///
@@ -5006,11 +4466,47 @@ abstract class AppLocalizations {
   /// **'Pending'**
   String get pendingTooltip;
 
-  /// No description provided for @pendingSubtitle.
+  /// No description provided for @pendingImportSlip.
   ///
   /// In en, this message translates to:
-  /// **'Not counted yet · edit anything before confirming'**
-  String get pendingSubtitle;
+  /// **'Import slips'**
+  String get pendingImportSlip;
+
+  /// No description provided for @pendingTypeIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a draft'**
+  String get pendingTypeIt;
+
+  /// No description provided for @pendingChatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. coffee 65'**
+  String get pendingChatHint;
+
+  /// No description provided for @pendingChatSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get pendingChatSend;
+
+  /// No description provided for @pendingChatClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get pendingChatClose;
+
+  /// No description provided for @pendingScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading slips…'**
+  String get pendingScanning;
+
+  /// No description provided for @pendingScanDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Slips imported'**
+  String get pendingScanDone;
 
   /// No description provided for @pendingSelectAll.
   ///
@@ -5149,12 +4645,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a row'**
   String get pendingAddRow;
-
-  /// No description provided for @pendingBatchMoreHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Need a transfer, a split or tags? Open the draft on the Pending page to edit it in full.'**
-  String get pendingBatchMoreHint;
 
   /// No description provided for @pendingSaveAsDrafts.
   ///
@@ -5318,30 +4808,6 @@ abstract class AppLocalizations {
   /// **'Wallet'**
   String get transactionFormAccountLabel;
 
-  /// No description provided for @transactionFormFromAccountLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'From wallet'**
-  String get transactionFormFromAccountLabel;
-
-  /// No description provided for @transactionFormToAccountLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'To wallet'**
-  String get transactionFormToAccountLabel;
-
-  /// No description provided for @transactionFormAccountRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick a wallet'**
-  String get transactionFormAccountRequired;
-
-  /// No description provided for @transactionFormAccountSameError.
-  ///
-  /// In en, this message translates to:
-  /// **'Source and destination must differ'**
-  String get transactionFormAccountSameError;
-
   /// No description provided for @transactionFormCategoryLabel.
   ///
   /// In en, this message translates to:
@@ -5354,53 +4820,11 @@ abstract class AppLocalizations {
   /// **'Uncategorized'**
   String get transactionFormCategoryNone;
 
-  /// No description provided for @transactionFormTransferCategoryHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto-set to Transfer In/Out'**
-  String get transactionFormTransferCategoryHint;
-
-  /// No description provided for @transactionFormDateLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Date'**
-  String get transactionFormDateLabel;
-
   /// No description provided for @transactionFormAmountLabel.
   ///
   /// In en, this message translates to:
   /// **'Amount'**
   String get transactionFormAmountLabel;
-
-  /// No description provided for @transactionFormAmountRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Required'**
-  String get transactionFormAmountRequired;
-
-  /// No description provided for @transactionFormAmountInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a valid number'**
-  String get transactionFormAmountInvalid;
-
-  /// No description provided for @transactionFormAmountTooSmall.
-  ///
-  /// In en, this message translates to:
-  /// **'Must be greater than 0'**
-  String get transactionFormAmountTooSmall;
-
-  /// No description provided for @transactionFormNoteLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Note (optional)'**
-  String get transactionFormNoteLabel;
-
-  /// No description provided for @transactionFormNoteAddLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'+ Add note'**
-  String get transactionFormNoteAddLabel;
 
   /// No description provided for @transactionFormTagsLabel.
   ///
@@ -5420,29 +4844,11 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get transactionFormSave;
 
-  /// No description provided for @transactionFormSaveAndAddAnother.
-  ///
-  /// In en, this message translates to:
-  /// **'Save & add another'**
-  String get transactionFormSaveAndAddAnother;
-
-  /// No description provided for @transactionFormSavedAddedAnother.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved. Add another below.'**
-  String get transactionFormSavedAddedAnother;
-
   /// No description provided for @transactionFormAccountNone.
   ///
   /// In en, this message translates to:
   /// **'No wallet'**
   String get transactionFormAccountNone;
-
-  /// No description provided for @transactionFormMoveTransferTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Move wallets'**
-  String get transactionFormMoveTransferTitle;
 
   /// No description provided for @transactionFormAccountPickerTitle.
   ///
@@ -5473,36 +4879,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No categories of this type yet.'**
   String get transactionFormCategoryPickerEmpty;
-
-  /// No description provided for @transactionFormDiscardTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard transaction?'**
-  String get transactionFormDiscardTitle;
-
-  /// No description provided for @transactionFormDiscardTitleEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard changes?'**
-  String get transactionFormDiscardTitleEdit;
-
-  /// No description provided for @transactionFormDiscardBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Your changes will be lost.'**
-  String get transactionFormDiscardBody;
-
-  /// No description provided for @transactionDetailEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get transactionDetailEdit;
-
-  /// No description provided for @transactionDetailDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get transactionDetailDelete;
 
   /// No description provided for @transactionDetailNotFound.
   ///
@@ -5546,12 +4922,6 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get transactionDetailDeleteConfirmAction;
 
-  /// No description provided for @transactionDetailTransferReadonlyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'To change wallets, delete and create a new transfer.'**
-  String get transactionDetailTransferReadonlyHint;
-
   /// No description provided for @transactionDetailSystemRowBanner.
   ///
   /// In en, this message translates to:
@@ -5594,47 +4964,17 @@ abstract class AppLocalizations {
   /// **'Tap the + button to add one.'**
   String get transactionsEmptyAccountMessage;
 
-  /// No description provided for @transactionsListTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Transactions'**
-  String get transactionsListTitle;
-
   /// No description provided for @transactionsListFilterAll.
   ///
   /// In en, this message translates to:
   /// **'All'**
   String get transactionsListFilterAll;
 
-  /// No description provided for @transactionsListFilterCategoryAll.
-  ///
-  /// In en, this message translates to:
-  /// **'All categories'**
-  String get transactionsListFilterCategoryAll;
-
   /// No description provided for @transactionsListEmptyMessage.
   ///
   /// In en, this message translates to:
   /// **'No transactions match these filters.'**
   String get transactionsListEmptyMessage;
-
-  /// No description provided for @transactionsListRetry.
-  ///
-  /// In en, this message translates to:
-  /// **'Retry'**
-  String get transactionsListRetry;
-
-  /// No description provided for @transactionsListDateToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Today'**
-  String get transactionsListDateToday;
-
-  /// No description provided for @transactionsListDateYesterday.
-  ///
-  /// In en, this message translates to:
-  /// **'Yesterday'**
-  String get transactionsListDateYesterday;
 
   /// No description provided for @accountAdjustBalanceViewTransaction.
   ///
@@ -5696,18 +5036,6 @@ abstract class AppLocalizations {
   /// **'Edit saving goal'**
   String get savingGoalFormTitleEdit;
 
-  /// No description provided for @savingGoalFormSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Create goal'**
-  String get savingGoalFormSave;
-
-  /// No description provided for @savingGoalFormSaveEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Save changes'**
-  String get savingGoalFormSaveEdit;
-
   /// No description provided for @savingGoalFormIconLabel.
   ///
   /// In en, this message translates to:
@@ -5732,18 +5060,6 @@ abstract class AppLocalizations {
   /// **'Linked wallet'**
   String get savingGoalFormLinkedAccountLabel;
 
-  /// No description provided for @savingGoalFormLinkedAccountHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Progress = wallet balance × allocation %'**
-  String get savingGoalFormLinkedAccountHelper;
-
-  /// No description provided for @savingGoalFormLinkedAccountLockedHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Linked wallet can\'t be changed. Delete and recreate to switch wallets.'**
-  String get savingGoalFormLinkedAccountLockedHelper;
-
   /// No description provided for @savingGoalFormAccountRequired.
   ///
   /// In en, this message translates to:
@@ -5767,12 +5083,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allocation'**
   String get savingGoalFormAllocationLabel;
-
-  /// No description provided for @savingGoalFormAllocationHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Leave blank to let the server suggest a default. Total per wallet ≤ 100%.'**
-  String get savingGoalFormAllocationHelper;
 
   /// No description provided for @savingGoalFormAllocationInvalid.
   ///
@@ -5810,23 +5120,11 @@ abstract class AppLocalizations {
   /// **'This saving goal may have been deleted or archived.'**
   String get savingGoalDetailNotFoundMessage;
 
-  /// No description provided for @savingGoalDetailEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get savingGoalDetailEdit;
-
   /// No description provided for @savingGoalDetailArchive.
   ///
   /// In en, this message translates to:
   /// **'Archive'**
   String get savingGoalDetailArchive;
-
-  /// No description provided for @savingGoalDetailDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get savingGoalDetailDelete;
 
   /// No description provided for @savingGoalDetailOfTarget.
   ///
@@ -5834,23 +5132,11 @@ abstract class AppLocalizations {
   /// **'of {target}'**
   String savingGoalDetailOfTarget(String target);
 
-  /// No description provided for @savingGoalDetailAllocation.
-  ///
-  /// In en, this message translates to:
-  /// **'Allocation'**
-  String get savingGoalDetailAllocation;
-
   /// No description provided for @savingGoalDetailRemaining.
   ///
   /// In en, this message translates to:
   /// **'Remaining'**
   String get savingGoalDetailRemaining;
-
-  /// No description provided for @savingGoalDetailDeadline.
-  ///
-  /// In en, this message translates to:
-  /// **'Deadline'**
-  String get savingGoalDetailDeadline;
 
   /// No description provided for @savingGoalDetailDaysRemaining.
   ///
@@ -5966,18 +5252,6 @@ abstract class AppLocalizations {
   /// **'Edit budget'**
   String get budgetFormTitleEdit;
 
-  /// No description provided for @budgetFormSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Create budget'**
-  String get budgetFormSave;
-
-  /// No description provided for @budgetFormSaveEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Save changes'**
-  String get budgetFormSaveEdit;
-
   /// No description provided for @budgetFormCategoryLabel.
   ///
   /// In en, this message translates to:
@@ -5990,41 +5264,11 @@ abstract class AppLocalizations {
   /// **'Pick a category'**
   String get budgetFormCategoryPlaceholder;
 
-  /// No description provided for @budgetFormCategoryHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Only expense categories. Picking a parent tracks all its sub-categories.'**
-  String get budgetFormCategoryHelper;
-
-  /// No description provided for @budgetFormCategoryLockedHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Category can\'t be changed. Delete and recreate to switch categories.'**
-  String get budgetFormCategoryLockedHelper;
-
   /// No description provided for @budgetFormCategoryRequired.
   ///
   /// In en, this message translates to:
   /// **'Pick a category'**
   String get budgetFormCategoryRequired;
-
-  /// No description provided for @budgetFormDescriptionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get budgetFormDescriptionLabel;
-
-  /// No description provided for @budgetFormDescriptionHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional. Shown as the budget\'s title; falls back to the category name when blank.'**
-  String get budgetFormDescriptionHelper;
-
-  /// No description provided for @budgetFormDescriptionTooLong.
-  ///
-  /// In en, this message translates to:
-  /// **'Max 200 characters'**
-  String get budgetFormDescriptionTooLong;
 
   /// No description provided for @budgetFormAmountLabel.
   ///
@@ -6050,12 +5294,6 @@ abstract class AppLocalizations {
   /// **'Note'**
   String get budgetFormNoteLabel;
 
-  /// No description provided for @budgetFormNoteHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional. Longer free-form note shown on the detail page.'**
-  String get budgetFormNoteHelper;
-
   /// No description provided for @budgetDetailNotFound.
   ///
   /// In en, this message translates to:
@@ -6074,23 +5312,11 @@ abstract class AppLocalizations {
   /// **'Budget'**
   String get budgetDetailFallbackTitle;
 
-  /// No description provided for @budgetDetailEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get budgetDetailEdit;
-
   /// No description provided for @budgetDetailArchive.
   ///
   /// In en, this message translates to:
   /// **'Archive'**
   String get budgetDetailArchive;
-
-  /// No description provided for @budgetDetailDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get budgetDetailDelete;
 
   /// No description provided for @budgetDetailOfLimit.
   ///
@@ -6200,18 +5426,6 @@ abstract class AppLocalizations {
   /// **'Loan'**
   String get scheduledVariantLoan;
 
-  /// No description provided for @scheduledTypeExpense.
-  ///
-  /// In en, this message translates to:
-  /// **'Expense'**
-  String get scheduledTypeExpense;
-
-  /// No description provided for @scheduledTypeIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get scheduledTypeIncome;
-
   /// No description provided for @scheduledCycleDaily.
   ///
   /// In en, this message translates to:
@@ -6272,47 +5486,17 @@ abstract class AppLocalizations {
   /// **'{remaining}/{total} left'**
   String scheduledInstallmentsLeft(int remaining, int total);
 
-  /// No description provided for @scheduledFormTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'New scheduled'**
-  String get scheduledFormTitle;
-
-  /// No description provided for @scheduledFormTitleEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit scheduled'**
-  String get scheduledFormTitleEdit;
-
   /// No description provided for @scheduledFormSave.
   ///
   /// In en, this message translates to:
   /// **'Create'**
   String get scheduledFormSave;
 
-  /// No description provided for @scheduledFormSaveEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Save changes'**
-  String get scheduledFormSaveEdit;
-
   /// No description provided for @scheduledFormIconLabel.
   ///
   /// In en, this message translates to:
   /// **'Icon'**
   String get scheduledFormIconLabel;
-
-  /// No description provided for @scheduledFormVariantLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Type'**
-  String get scheduledFormVariantLabel;
-
-  /// No description provided for @scheduledFormTypeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Direction'**
-  String get scheduledFormTypeLabel;
 
   /// No description provided for @scheduledFormNameLabel.
   ///
@@ -6464,12 +5648,6 @@ abstract class AppLocalizations {
   /// **'This scheduled entry may have been deleted or cancelled.'**
   String get scheduledDetailNotFoundMessage;
 
-  /// No description provided for @scheduledDetailEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get scheduledDetailEdit;
-
   /// No description provided for @scheduledDetailPause.
   ///
   /// In en, this message translates to:
@@ -6487,12 +5665,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get scheduledDetailCancel;
-
-  /// No description provided for @scheduledDetailDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get scheduledDetailDelete;
 
   /// No description provided for @scheduledDetailNextDue.
   ///
@@ -6656,23 +5828,11 @@ abstract class AppLocalizations {
   /// **'Enter a positive amount'**
   String get projectFormPlannedInvalid;
 
-  /// No description provided for @projectFormPlannedClearTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear'**
-  String get projectFormPlannedClearTooltip;
-
   /// No description provided for @projectMetaPlanned.
   ///
   /// In en, this message translates to:
   /// **'Budget {amount}'**
   String projectMetaPlanned(String amount);
-
-  /// No description provided for @projectPlannedRemainingCardLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Remaining'**
-  String get projectPlannedRemainingCardLabel;
 
   /// No description provided for @projectPlannedLine.
   ///
@@ -6685,42 +5845,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'🔴 Over budget by {over}'**
   String projectPlannedOverLine(String over);
-
-  /// No description provided for @projectSummaryPlannedLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Planned'**
-  String get projectSummaryPlannedLabel;
-
-  /// No description provided for @projectSummarySpentLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Spent (net)'**
-  String get projectSummarySpentLabel;
-
-  /// No description provided for @projectSummaryRemainingLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Left'**
-  String get projectSummaryRemainingLabel;
-
-  /// No description provided for @projectSummaryOverLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Over budget'**
-  String get projectSummaryOverLabel;
-
-  /// No description provided for @walletsHeaderMine.
-  ///
-  /// In en, this message translates to:
-  /// **'Mine {amount}'**
-  String walletsHeaderMine(String amount);
-
-  /// No description provided for @walletsHeaderShared.
-  ///
-  /// In en, this message translates to:
-  /// **'Shared {amount}'**
-  String walletsHeaderShared(String amount);
 
   /// No description provided for @walletSharedLabel.
   ///
@@ -6902,12 +6026,6 @@ abstract class AppLocalizations {
   /// **'Ownership transferred'**
   String get walletTransferOwnershipSuccess;
 
-  /// No description provided for @walletSettingsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Wallet settings'**
-  String get walletSettingsTitle;
-
   /// No description provided for @walletSettingsMembersSubtitlePersonal.
   ///
   /// In en, this message translates to:
@@ -7028,12 +6146,6 @@ abstract class AppLocalizations {
   /// **'That user is already a member of this wallet.'**
   String get walletErrorAlreadyMember;
 
-  /// No description provided for @quickCreateToggle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create an event from this bill...'**
-  String get quickCreateToggle;
-
   /// No description provided for @transactionSplitWithTitle.
   ///
   /// In en, this message translates to:
@@ -7046,83 +6158,11 @@ abstract class AppLocalizations {
   /// **'Share with… (I owe them their part)'**
   String get transactionSplitShareTitle;
 
-  /// No description provided for @quickCreateOldBillsSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Add past bills to this event (optional)'**
-  String get quickCreateOldBillsSection;
-
-  /// No description provided for @quickCreateOldBillsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Your loose bills from the last 90 days — tick any to bring them onto the event board.'**
-  String get quickCreateOldBillsHint;
-
-  /// No description provided for @quickCreateSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search past bills'**
-  String get quickCreateSearchHint;
-
-  /// No description provided for @quickCreateOldBillsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No loose bills from the last 90 days.'**
-  String get quickCreateOldBillsEmpty;
-
-  /// No description provided for @quickCreateOldBillsSearchEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No bills match your search.'**
-  String get quickCreateOldBillsSearchEmpty;
-
-  /// No description provided for @quickCreateOldBillsLoadMore.
-  ///
-  /// In en, this message translates to:
-  /// **'Load more'**
-  String get quickCreateOldBillsLoadMore;
-
-  /// No description provided for @quickCreateOldBillsRetry.
-  ///
-  /// In en, this message translates to:
-  /// **'Retry'**
-  String get quickCreateOldBillsRetry;
-
-  /// No description provided for @quickCreateSelectedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} selected'**
-  String quickCreateSelectedCount(int count);
-
   /// No description provided for @quickCreateNameSection.
   ///
   /// In en, this message translates to:
   /// **'Event name'**
   String get quickCreateNameSection;
-
-  /// No description provided for @quickCreateNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Event name'**
-  String get quickCreateNameLabel;
-
-  /// No description provided for @quickCreateNameRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter an event name'**
-  String get quickCreateNameRequired;
-
-  /// No description provided for @quickCreateDefaultName.
-  ///
-  /// In en, this message translates to:
-  /// **'{members} · {date}'**
-  String quickCreateDefaultName(String members, String date);
-
-  /// No description provided for @quickCreateDefaultNameSolo.
-  ///
-  /// In en, this message translates to:
-  /// **'Event · {date}'**
-  String quickCreateDefaultNameSolo(String date);
 
   /// No description provided for @quickCreateSubmit.
   ///
@@ -7147,6 +6187,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something\'s not right — check the form and try again.'**
   String get quickCreateErrorValidation;
+
+  /// No description provided for @budgetNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget name'**
+  String get budgetNameLabel;
+
+  /// No description provided for @budgetsOverviewSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent {spent} of {total}'**
+  String budgetsOverviewSpent(String spent, String total);
+
+  /// No description provided for @budgetsOverviewOverCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 budget over} other{{count} budgets over}}'**
+  String budgetsOverviewOverCount(int count);
+
+  /// No description provided for @transactionsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search note · category · wallet'**
+  String get transactionsSearchHint;
+
+  /// No description provided for @savingGoalAllocationAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get savingGoalAllocationAuto;
+
+  /// No description provided for @accountSharingSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing & reports'**
+  String get accountSharingSectionTitle;
+
+  /// No description provided for @accountFormOpeningDebtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening outstanding balance'**
+  String get accountFormOpeningDebtLabel;
+
+  /// No description provided for @accountFormOpeningDebtHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'What you still owe on it on the day you start tracking (0 if nothing)'**
+  String get accountFormOpeningDebtHelper;
+
+  /// No description provided for @accountAdjustBalanceNewDebtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New outstanding balance'**
+  String get accountAdjustBalanceNewDebtLabel;
+
+  /// No description provided for @accountAdjustBalanceDiffLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference'**
+  String get accountAdjustBalanceDiffLabel;
+
+  /// No description provided for @accountAdjustBalanceWillCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'This adds an \"Adjust balance\" transaction of {amount}, dated today.'**
+  String accountAdjustBalanceWillCreate(String amount);
+
+  /// No description provided for @scheduledSheetTitleNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New scheduled entry'**
+  String get scheduledSheetTitleNew;
+
+  /// No description provided for @scheduledSheetTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit scheduled entry'**
+  String get scheduledSheetTitleEdit;
 }
 
 class _AppLocalizationsDelegate

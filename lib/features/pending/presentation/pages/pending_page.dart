@@ -80,15 +80,13 @@ class _PendingPageState extends State<PendingPage> {
         _lastResult = (done: r.submitted.length, failed: r.failed.length);
       });
       if (r.submitted.isNotEmpty) {
-        messenger
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(
-            content: Text(l.pendingSubmittedCount(r.submitted.length)),
-            action: SnackBarAction(
-              label: l.pendingSeeTransactions,
-              onPressed: () => pushFromOverlay(context, '/transactions'),
-            ),
-          ));
+        showAppSnackBarOn(
+          messenger,
+          l.pendingSubmittedCount(r.submitted.length),
+          tone: Tone.success,
+          actionLabel: l.pendingSeeTransactions,
+          onAction: () => pushFromOverlay(context, '/transactions'),
+        );
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -117,140 +115,234 @@ class _PendingPageState extends State<PendingPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final state = context.watch<PendingCubit>().state;
     final all = state.items;
     final visible = _visible(all);
     final manual = all.where((p) => p.source.isManual).length;
     final others = all.length - manual;
-    final allSelected =
-        visible.isNotEmpty && visible.every((p) => _selected.contains(p.id));
+    final pickedVisible = visible.where((p) => _selected.contains(p.id)).length;
     final result = _lastResult;
+    // UI only for now — the slip scan itself isn't wired yet.
+    final importSlip = AddTile(
+      label: l.pendingImportSlip,
+      icon: AppIcons.importSlip,
+      variant: AddTileVariant.row,
+      onTap: () {},
+    );
 
     return Scaffold(
       appBar: AppTopBar(
         title: l.pendingTitle,
         showBack: true,
         showUniversal: false,
-        actions: [
-          if (visible.isNotEmpty)
-            AppBarAction(
-              icon: allSelected ? AppIcons.clear : AppIcons.check,
-              tooltip: allSelected ? l.pendingSelectNone : l.pendingSelectAll,
-              onPressed: () => setState(() => allSelected
-                  ? _selected.removeAll(visible.map((p) => p.id))
-                  : _selected.addAll(visible.map((p) => p.id))),
-            ),
-        ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
-            child: Text(l.pendingSubtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          ),
-          if (others > 0)
-            FilterBar(chips: [
-              for (final f in _Filter.values)
-                FilterDropdownChip(
-                  label: switch (f) {
-                    _Filter.all => l.pendingFilterAll(all.length),
-                    _Filter.manual => l.pendingFilterManual(manual),
-                    _Filter.others => l.pendingFilterOthers(others),
-                  },
-                  active: _filter == f,
-                  onTap: () => setState(() => _filter = f),
-                ),
-            ]),
-          if (result != null && result.failed > 0)
-            Padding(
+      extendBodyBehindAppBar: true,
+      // UI only for now — typing a draft in words isn't wired yet.
+      floatingActionButton: ChatDial(
+        hint: l.pendingChatHint,
+        tooltip: l.pendingTypeIt,
+        sendTooltip: l.pendingChatSend,
+        closeTooltip: l.pendingChatClose,
+      ),
+      // One button, only while something is ticked.
+      bottomNavigationBar: _selected.isEmpty
+          ? null
+          : Container(
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                border: Border(top: BorderSide(color: scheme.outlineVariant)),
+              ),
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
-              child: MessageBanner(
-                message: l.pendingResult(result.done, result.failed),
-                tone: Tone.warning,
-                onClose: () => setState(() => _lastResult = null),
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
+              child: SafeArea(
+                top: false,
+                child: AppButton(
+                  label: l.pendingSubmitSelected(_selected.length),
+                  expand: true,
+                  loading: _submitting,
+                  onPressed: _submitSelected,
+                ),
               ),
             ),
-          Expanded(
-            child: state.status == PendingStatus.loading && all.isEmpty
-                ? ListView(children: [
-                    for (var i = 0; i < 4; i++) const SkeletonListTile(),
-                  ])
-                : visible.isEmpty
-                    ? EmptyView(
-                        icon: AppIcons.empty,
-                        title: l.pendingEmptyTitle,
-                        message: l.pendingEmptyMessage,
-                        cta: AddTile(
+      // Pinned rows clear the floating bar; the list below them must not
+      // add the bar height again.
+      body: Builder(
+        builder: (context) => MediaQuery.removePadding(
+          context: context,
+          removeTop: true,
+          child: Column(
+            children: [
+              SizedBox(height: MediaQuery.paddingOf(context).top),
+              if (visible.isNotEmpty)
+                _SelectAllRow(
+                  label: l.pendingSelectAll,
+                  value: pickedVisible == 0
+                      ? false
+                      : (pickedVisible == visible.length ? true : null),
+                  count: '$pickedVisible/${visible.length}',
+                  onTap: () => setState(
+                    () => pickedVisible == visible.length
+                        ? _selected.removeAll(visible.map((p) => p.id))
+                        : _selected.addAll(visible.map((p) => p.id)),
+                  ),
+                ),
+              if (others > 0)
+                FilterBar(
+                  chips: [
+                    for (final f in _Filter.values)
+                      FilterDropdownChip(
+                        label: switch (f) {
+                          _Filter.all => l.pendingFilterAll(all.length),
+                          _Filter.manual => l.pendingFilterManual(manual),
+                          _Filter.others => l.pendingFilterOthers(others),
+                        },
+                        active: _filter == f,
+                        onTap: () => setState(() => _filter = f),
+                      ),
+                  ],
+                ),
+              if (result != null && result.failed > 0)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    0,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
+                  child: MessageBanner(
+                    message: l.pendingResult(result.done, result.failed),
+                    tone: Tone.warning,
+                    onClose: () => setState(() => _lastResult = null),
+                  ),
+                ),
+              Expanded(
+                child: AsyncStateView(
+                  loading:
+                      state.status == PendingStatus.initial ||
+                      state.status == PendingStatus.loading,
+                  error: state.error,
+                  isEmpty: visible.isEmpty,
+                  onRetry: context.read<PendingCubit>().load,
+                  skeleton: ListView(
+                    children: [
+                      for (var i = 0; i < 4; i++) const SkeletonListTile(),
+                    ],
+                  ),
+                  empty: EmptyView(
+                    icon: AppIcons.empty,
+                    title: l.pendingEmptyTitle,
+                    message: l.pendingEmptyMessage,
+                    cta: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        importSlip,
+                        const SizedBox(height: AppSpacing.sm),
+                        AddTile(
                           label: l.pendingAdd,
                           onTap: () => context.push('/pending/new'),
                         ),
-                      )
-                    : PullToRefresh(
-                        onRefresh: context.read<PendingCubit>().load,
-                        child: ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.xxl),
-                          itemCount: visible.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: AppSpacing.sm),
-                          itemBuilder: (context, i) {
-                            final p = visible[i];
-                            return _PendingCard(
-                              item: p,
-                              selected: _selected.contains(p.id),
-                              onToggle: () => setState(() =>
-                                  _selected.contains(p.id)
-                                      ? _selected.remove(p.id)
-                                      : _selected.add(p.id)),
-                              onOpen: () =>
-                                  showQuickCreateSheet(context, draft: p),
-                              onDiscard: () => _discard(p),
-                            );
-                          },
-                        ),
+                      ],
+                    ),
+                  ),
+                  builder: (context) => PullToRefresh(
+                    onRefresh: context.read<PendingCubit>().load,
+                    child: ListView.separated(
+                      // Room under the last row for the floating chat button.
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        0,
+                        AppSpacing.lg,
+                        96,
                       ),
+                      itemCount: visible.length + 2,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AppSpacing.sm),
+                      itemBuilder: (context, i) {
+                        // "นำเข้าสลิป" opens the list, "เพิ่มร่าง" closes it.
+                        if (i == 0) return importSlip;
+                        if (i == visible.length + 1) {
+                          return AddTile(
+                            label: l.pendingAdd,
+                            variant: AddTileVariant.row,
+                            onTap: () => context.push('/pending/new'),
+                          );
+                        }
+                        final p = visible[i - 1];
+                        return _PendingCard(
+                          item: p,
+                          selected: _selected.contains(p.id),
+                          onToggle: () => setState(
+                            () => _selected.contains(p.id)
+                                ? _selected.remove(p.id)
+                                : _selected.add(p.id),
+                          ),
+                          onOpen: () => showQuickCreateSheet(context, draft: p),
+                          onDiscard: () => _discard(p),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              border: Border(
-                  top: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant)),
-            ),
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: l.pendingAdd,
-                      icon: AppIcons.add,
-                      variant: AppButtonVariant.outlined,
-                      expand: true,
-                      onPressed: () => context.push('/pending/new'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    flex: 3,
-                    child: AppButton(
-                      label: l.pendingSubmitSelected(_selected.length),
-                      expand: true,
-                      loading: _submitting,
-                      onPressed: _selected.isEmpty ? null : _submitSelected,
-                    ),
-                  ),
-                ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The thin row under the top bar: ○ เลือกทั้งหมด … 2/5.
+class _SelectAllRow extends StatelessWidget {
+  const _SelectAllRow({
+    required this.label,
+    required this.value,
+    required this.count,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool? value;
+  final String count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          children: [
+            SelectCheck(value: value, onTap: onTap),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                label,
+                style: textTheme.labelLarge?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ),
-          ),
-        ],
+            Text(
+              count,
+              style: textTheme.labelMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -286,7 +378,9 @@ class _PendingCard extends StatelessWidget {
 
     final category = categories.where((c) => c.id == d.categoryId).firstOrNull;
     final wallet = accounts.where((a) => a.id == d.accountId).firstOrNull;
-    final toWallet = accounts.where((a) => a.id == d.transferToAccountId).firstOrNull;
+    final toWallet = accounts
+        .where((a) => a.id == d.transferToAccountId)
+        .firstOrNull;
     final title = (d.note?.trim().isNotEmpty ?? false)
         ? d.note!.trim()
         : category?.name ?? l.pendingUntitled;
@@ -298,16 +392,17 @@ class _PendingCard extends StatelessWidget {
         wallet?.name ?? l.transactionFormAccountNone,
       ],
       for (final id in d.tagIds)
-        if (tags.where((t) => t.id == id).firstOrNull case final t?) '#${t.name}',
+        if (tags.where((t) => t.id == id).firstOrNull case final t?)
+          '#${t.name}',
     ].join(' · ');
     final date = DateTime.tryParse(d.date ?? '');
     final warn = item.lastError != null
         ? pendingErrorText(l, item.lastError!)
         : d.type == null
-            ? l.pendingErrMissingType
-            : (d.amount ?? 0) <= 0
-                ? l.pendingErrMissingAmount
-                : null;
+        ? l.pendingErrMissingType
+        : (d.amount ?? 0) <= 0
+        ? l.pendingErrMissingAmount
+        : null;
     final tone = switch (d.type) {
       TransactionType.expense => MoneyTone.expense,
       TransactionType.income => MoneyTone.income,
@@ -319,7 +414,9 @@ class _PendingCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         side: BorderSide(
-          color: item.lastError != null ? palette.warning : scheme.outlineVariant,
+          color: item.lastError != null
+              ? palette.warning
+              : scheme.outlineVariant,
           width: item.lastError != null ? 1.5 : 1,
         ),
       ),
@@ -328,7 +425,11 @@ class _PendingCard extends StatelessWidget {
         onTap: onOpen,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xs, AppSpacing.sm, AppSpacing.xs, AppSpacing.sm),
+            AppSpacing.xs,
+            AppSpacing.sm,
+            AppSpacing.xs,
+            AppSpacing.sm,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -351,13 +452,17 @@ class _PendingCard extends StatelessWidget {
                         const SizedBox(width: AppSpacing.xs),
                         if (date != null)
                           Text(
-                            DateFormatter.friendly(date,
-                                today: l.commonToday,
-                                yesterday: l.commonYesterday,
-                                locale:
-                                    Localizations.localeOf(context).languageCode),
-                            style: textTheme.labelSmall
-                                ?.copyWith(color: scheme.onSurfaceVariant),
+                            DateFormatter.friendly(
+                              date,
+                              today: l.commonToday,
+                              yesterday: l.commonYesterday,
+                              locale: Localizations.localeOf(
+                                context,
+                              ).languageCode,
+                            ),
+                            style: textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
                       ],
                     ),
@@ -367,35 +472,51 @@ class _PendingCard extends StatelessWidget {
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Expanded(
-                          child: Text(title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w600)),
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                        MoneyText(d.amount ?? 0,
-                            tone: tone,
-                            style: textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700)),
+                        MoneyText(
+                          d.amount ?? 0,
+                          tone: tone,
+                          style: textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ),
                     if (meta.isNotEmpty)
-                      Text(meta,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant)),
+                      Text(
+                        meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
                     if (warn != null) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Row(
                         children: [
-                          Icon(AppIcons.warning, size: 14, color: palette.warning),
+                          Icon(
+                            AppIcons.warning,
+                            size: 14,
+                            color: palette.warning,
+                          ),
                           const SizedBox(width: AppSpacing.xs),
                           Expanded(
-                            child: Text(warn,
-                                style: textTheme.labelSmall?.copyWith(
-                                    color: palette.warning,
-                                    fontWeight: FontWeight.w600)),
+                            child: Text(
+                              warn,
+                              style: textTheme.labelSmall?.copyWith(
+                                color: palette.warning,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -415,11 +536,12 @@ class _PendingCard extends StatelessWidget {
     );
   }
 
-  static String _sourceLabel(AppLocalizations l, PendingSource s) => switch (s) {
+  static String _sourceLabel(AppLocalizations l, PendingSource s) =>
+      switch (s) {
         PendingSource.manual => l.pendingSourceManual,
         PendingSource.splitPaid => l.pendingSourceSplitPaid,
-        PendingSource.projectCopy || PendingSource.projectUpdate =>
-          l.pendingSourceProject,
+        PendingSource.projectCopy ||
+        PendingSource.projectUpdate => l.pendingSourceProject,
         PendingSource.ocr => l.pendingSourceOcr,
         PendingSource.chat => l.pendingSourceChat,
         PendingSource.other => l.pendingSourceOther,

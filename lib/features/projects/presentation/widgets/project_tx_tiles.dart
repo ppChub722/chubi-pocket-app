@@ -8,7 +8,6 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -24,20 +23,22 @@ import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
-import '../pages/project_transaction_form_page.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import 'project_common.dart';
 
 String projectTxDateLabel(BuildContext context, String ymd) {
   final l = AppLocalizations.of(context)!;
   final d = DateFormatter.parseDay(ymd);
   if (d == null) return ymd;
-  return DateFormatter.friendly(d,
-      today: l.commonToday,
-      yesterday: l.commonYesterday,
-      locale: Localizations.localeOf(context).languageCode);
+  return DateFormatter.friendly(
+    d,
+    today: l.commonToday,
+    yesterday: l.commonYesterday,
+    locale: Localizations.localeOf(context).languageCode,
+  );
 }
 
-/// Category bubble for a project row (snapshot name + icon on the row).
+/// Type bubble for a project row (expense / income).
 class ProjectTxIcon extends StatelessWidget {
   const ProjectTxIcon({required this.tx, this.size = 36, super.key});
 
@@ -48,12 +49,9 @@ class ProjectTxIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final isExpense = tx.type == 'expense';
-    final color = tx.categoryIconCode?.accentColorFor(palette) ??
-        (isExpense ? palette.expense : palette.income);
     return IconBubble(
-      icon: IconRegistry.get(tx.categoryIconCode?.icon,
-          fallback: isExpense ? AppIcons.expense : AppIcons.income),
-      color: color,
+      icon: isExpense ? AppIcons.expense : AppIcons.income,
+      color: isExpense ? palette.expense : palette.income,
       size: size,
     );
   }
@@ -83,10 +81,9 @@ class ProjectTxTreeTile extends StatelessWidget {
     final myId = view.me?.id;
     final marked = myId != null && parent.isMarkedBy(myId);
     final scheme = Theme.of(context).colorScheme;
-    final subtitleStyle = Theme.of(context)
-        .textTheme
-        .bodySmall
-        ?.copyWith(color: scheme.onSurfaceVariant);
+    final subtitleStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -98,8 +95,8 @@ class ProjectTxTreeTile extends StatelessWidget {
               onTap: view.rowsLocked
                   ? null
                   : () => marked
-                      ? _actions(context, parent, isParent: true)
-                      : _tick(context, parent, isParent: true),
+                        ? _actions(context, parent, isParent: true)
+                        : _tick(context, parent, isParent: true),
               child: CornerBadge(
                 badge: marked
                     ? const Icon(AppIcons.check, size: 12)
@@ -107,7 +104,7 @@ class ProjectTxTreeTile extends StatelessWidget {
                 child: ProjectTxIcon(tx: parent),
               ),
             ),
-            title: parent.description ?? parent.categoryName ?? '—',
+            title: parent.description ?? parent.tags.firstOrNull ?? '—',
             subtitle: Row(
               children: [
                 ProjectMemberAvatar(member: payer, size: 16),
@@ -117,8 +114,7 @@ class ProjectTxTreeTile extends StatelessWidget {
                     [
                       payer.displayName,
                       projectTxDateLabel(context, parent.date),
-                      if (parent.categoryName?.isNotEmpty ?? false)
-                        parent.categoryName!,
+                      for (final t in parent.tags) '#$t',
                     ].join(' · '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -157,8 +153,11 @@ class ProjectTxTreeTile extends StatelessWidget {
         tree.parent.transactionMemberId == my;
   }
 
-  Future<void> _tick(BuildContext context, ProjectTransaction tx,
-      {required bool isParent}) async {
+  Future<void> _tick(
+    BuildContext context,
+    ProjectTransaction tx, {
+    required bool isParent,
+  }) async {
     if (view.rowsLocked) {
       await _actions(context, tx, isParent: isParent);
       return;
@@ -170,14 +169,17 @@ class ProjectTxTreeTile extends StatelessWidget {
     await _mark(context, tx, true);
   }
 
-  Future<bool> _resolve(BuildContext context, ProjectTransaction tx,
-      {required bool isParent}) async {
+  Future<bool> _resolve(
+    BuildContext context,
+    ProjectTransaction tx, {
+    required bool isParent,
+  }) async {
     final my = view.me!.id;
     final counterparty = isParent
         ? null
         : tx.transactionMemberId == my
-            ? view.member(tree.parent.transactionMemberId)
-            : view.member(tx.transactionMemberId);
+        ? view.member(tree.parent.transactionMemberId)
+        : view.member(tx.transactionMemberId);
     final ok = await showAppSheet<bool>(
       context,
       title: AppLocalizations.of(context)!.projectTxResolve,
@@ -190,25 +192,39 @@ class ProjectTxTreeTile extends StatelessWidget {
       ),
     );
     if (ok == true && context.mounted) {
-      showAppSnackBar(context, AppLocalizations.of(context)!.projectResolveDone,
-          tone: Tone.success);
+      showAppSnackBar(
+        context,
+        AppLocalizations.of(context)!.projectResolveDone,
+        tone: Tone.success,
+      );
     }
     return ok == true;
   }
 
-  Future<void> _mark(BuildContext context, ProjectTransaction tx, bool on) async {
+  Future<void> _mark(
+    BuildContext context,
+    ProjectTransaction tx,
+    bool on,
+  ) async {
     try {
-      await context
-          .read<ProjectsRepository>()
-          .toggleMark(view.project.id, tx.id, on);
+      await context.read<ProjectsRepository>().toggleMark(
+        view.project.id,
+        tx.id,
+        on,
+      );
       await onChanged();
     } on ApiException catch (e) {
-      if (context.mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (context.mounted) {
+        showAppSnackBar(context, e.message, tone: Tone.danger);
+      }
     }
   }
 
-  Future<void> _actions(BuildContext context, ProjectTransaction tx,
-      {required bool isParent}) async {
+  Future<void> _actions(
+    BuildContext context,
+    ProjectTransaction tx, {
+    required bool isParent,
+  }) async {
     final l = AppLocalizations.of(context)!;
     final my = view.me?.id;
     final marked = my != null && tx.isMarkedBy(my);
@@ -222,12 +238,14 @@ class ProjectTxTreeTile extends StatelessWidget {
         children: [
           ListTile(
             leading: ProjectTxIcon(tx: tx),
-            title: Text(tx.description ?? tx.categoryName ?? '—'),
-            subtitle: Text([
-              view.member(tx.transactionMemberId).displayName,
-              projectTxDateLabel(context, tx.date),
-              if (tx.note?.isNotEmpty ?? false) tx.note!,
-            ].join(' · ')),
+            title: Text(tx.description ?? tx.tags.firstOrNull ?? '—'),
+            subtitle: Text(
+              [
+                view.member(tx.transactionMemberId).displayName,
+                projectTxDateLabel(context, tx.date),
+                if (tx.note?.isNotEmpty ?? false) tx.note!,
+              ].join(' · '),
+            ),
             trailing: MoneyText(
               tx.type == 'expense' ? -tx.amount : tx.amount,
               symbol: Currencies.symbolOf(tx.currency),
@@ -256,10 +274,14 @@ class ProjectTxTreeTile extends StatelessWidget {
             ),
           if (editable)
             ListTile(
-              leading: Icon(AppIcons.delete,
-                  color: Theme.of(context).colorScheme.error),
-              title: Text(l.projectTxDelete,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              leading: Icon(
+                AppIcons.delete,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                l.projectTxDelete,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
               onTap: () => Navigator.pop(sheet, 'delete'),
             ),
           const SizedBox(height: AppSpacing.md),
@@ -273,13 +295,12 @@ class ProjectTxTreeTile extends StatelessWidget {
       case 'resolve':
         await _resolve(context, tx, isParent: isParent);
       case 'edit':
-        final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
-          builder: (_) => ProjectTransactionFormPage(
-            projectId: view.project.id,
-            editing: tree,
-          ),
-        ));
-        if (saved == true) await onChanged();
+        final saved = await showQuickCreateSheet(
+          context,
+          project: view,
+          projectRow: tree,
+        );
+        if (saved) await onChanged();
       case 'delete':
         await _delete(context, tx);
     }
@@ -296,15 +317,18 @@ class ProjectTxTreeTile extends StatelessWidget {
     );
     if (!ok || !context.mounted) return;
     try {
-      await context
-          .read<ProjectsRepository>()
-          .deleteTransaction(view.project.id, tx.id);
+      await context.read<ProjectsRepository>().deleteTransaction(
+        view.project.id,
+        tx.id,
+      );
       if (context.mounted) {
         showAppSnackBar(context, l.projectTxDeleted, tone: Tone.success);
       }
       await onChanged();
     } on ApiException catch (e) {
-      if (context.mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (context.mounted) {
+        showAppSnackBar(context, e.message, tone: Tone.danger);
+      }
     }
   }
 }
@@ -339,33 +363,44 @@ class _ChildRow extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xxl + AppSpacing.lg, 2, AppSpacing.lg, 2),
+            AppSpacing.xxl + AppSpacing.lg,
+            2,
+            AppSpacing.lg,
+            2,
+          ),
           child: Row(
             children: [
-              SelectCheck(value: marked, onTap: locked ? null : onTap, size: 18),
+              SelectCheck(
+                value: marked,
+                onTap: locked ? null : onTap,
+                size: 18,
+              ),
               const SizedBox(width: AppSpacing.xs),
               ProjectMemberAvatar(member: debtor, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text.rich(
-                  TextSpan(children: [
-                    TextSpan(text: debtor.displayName),
-                    TextSpan(
-                      text: ' $owesLabel',
-                      style: TextStyle(color: scheme.onSurfaceVariant),
-                    ),
-                  ]),
+                  TextSpan(
+                    children: [
+                      TextSpan(text: debtor.displayName),
+                      TextSpan(
+                        text: ' $owesLabel',
+                        style: TextStyle(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              MoneyText(child.amount,
-                  symbol: symbol,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              MoneyText(
+                child.amount,
+                symbol: symbol,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
         ),
@@ -484,24 +519,23 @@ class _ResolveSheetState extends State<_ResolveSheet> {
     try {
       if (_mode == _Mode.asTransaction) {
         await context.read<TransactionsRepository>().create(
-              type: _txType,
-              accountId: _account!.id,
-              amount: _amount,
-              date: widget.tx.date,
-              note: widget.tx.note ?? widget.tx.description,
-              categoryId: _category?.id,
-              sourceProjectTransactionId: widget.tx.id,
-            );
+          type: _txType,
+          accountId: _account!.id,
+          amount: _amount,
+          date: widget.tx.date,
+          note: widget.tx.note ?? widget.tx.description,
+          categoryId: _category?.id,
+          sourceProjectTransactionId: widget.tx.id,
+        );
         await Future.wait([txCubit.load(), accounts.load()]);
       } else {
         await context.read<PersonalDebtsRepository>().create(
-              direction:
-                  _iAmDebtor ? DebtDirection.iOwe : DebtDirection.owedToMe,
-              counterpartyPersonName: widget.counterparty?.displayName ?? '?',
-              amount: _amount,
-              currency: widget.tx.currency,
-              note: widget.tx.description ?? widget.tx.note,
-            );
+          direction: _iAmDebtor ? DebtDirection.iOwe : DebtDirection.owedToMe,
+          counterpartyPersonName: widget.counterparty?.displayName ?? '?',
+          amount: _amount,
+          currency: widget.tx.currency,
+          note: widget.tx.description ?? widget.tx.note,
+        );
       }
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
@@ -518,7 +552,11 @@ class _ResolveSheetState extends State<_ResolveSheet> {
     final name = widget.counterparty?.displayName ?? '?';
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -544,11 +582,16 @@ class _ResolveSheetState extends State<_ResolveSheet> {
               value: _shareOnly,
               onChanged: (v) => setState(() => _shareOnly = v),
               title: Text(l.projectResolveShareOnly),
-              subtitle: Text(l.projectResolveShareHint(
-                moneyString(context, widget.tx.amount, symbol: symbol),
-                moneyString(context, widget.tx.amount - widget.childrenTotal,
-                    symbol: symbol),
-              )),
+              subtitle: Text(
+                l.projectResolveShareHint(
+                  moneyString(context, widget.tx.amount, symbol: symbol),
+                  moneyString(
+                    context,
+                    widget.tx.amount - widget.childrenTotal,
+                    symbol: symbol,
+                  ),
+                ),
+              ),
             ),
           const SizedBox(height: AppSpacing.sm),
           if (_mode == _Mode.asTransaction) ...[

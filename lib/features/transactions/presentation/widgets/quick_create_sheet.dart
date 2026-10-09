@@ -8,7 +8,6 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -16,49 +15,105 @@ import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
-import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
+import '../../../projects/presentation/widgets/project_common.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
 import '../../../pending/presentation/pending_errors.dart';
+import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
+import '../../../scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../data/transactions_repository.dart';
+import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
-import 'account_picker_sheet.dart';
-import 'event_section.dart' show quickCreateErrorMessage;
-import 'splits_section.dart';
+import 'draft_form.dart';
+
+/// Maps the pinned quick-create error codes (API §10) to friendly copy;
+/// falls back to the BE message for anything unmapped.
+String _eventErrorMessage(AppLocalizations l, ApiException e) {
+  switch (e.code) {
+    case 'TX_NOT_FOUND':
+      return l.quickCreateErrorTxNotFound;
+    case 'TX_ALREADY_IN_PROJECT':
+      return l.quickCreateErrorTxAlreadyInProject;
+    case 'VALIDATION_ERROR':
+      return l.quickCreateErrorValidation;
+    default:
+      return e.message;
+  }
+}
 
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
 /// — never a new page:
 ///
-///   type · big amount · recent-category chips · wallet + date · note
-///   ── รายละเอียดเพิ่ม (visible, scroll for more) ──
-///   tags · หารกับ… · เพิ่มเข้าอีเวนต์
+///   type · big amount · category + wallet cards · date · note
+///   ▸ รายละเอียดเพิ่ม (closed; tap to open): tags · หารกับ… · เพิ่มเข้าอีเวนต์
 ///
-/// Save sits pinned above the keyboard. Scrolling past the amount slides
-/// in a compact summary (type · amount · category) at the top; tap it to
-/// scroll back. Closing with anything entered asks first.
+/// The fields are the shared [DraftForm] — the same one "เพิ่มร่าง" and
+/// "แก้ร่าง" use. Save sits pinned above the keyboard. Scrolling past the
+/// amount slides in a compact summary (type · amount · category) at the
+/// top; tap it to scroll back. Closing with anything entered asks first.
 ///
-/// Defaults: the last wallet used (else the first), today, and the 6
-/// categories used most recently for the type. "เพิ่มเข้าอีเวนต์" files the
-/// bill into a new event or an existing one (POST /projects/quick or
-/// /projects/:id/bills). "บันทึกร่าง" parks it in รอยืนยัน instead.
+/// Defaults: the last wallet used (else the first) and today.
+/// "เพิ่มเข้าอีเวนต์" files the bill into a new event or an existing one
+/// (POST /projects/quick or /projects/:id/bills). "บันทึกร่าง" parks it in
+/// รอยืนยัน instead.
 ///
 /// With [draft] the same sheet edits a pending draft (title "แก้ร่าง"):
 /// "บันทึกร่าง" saves it back, "ยืนยันรายการนี้" submits it, "ทิ้ง" removes
 /// it; the event tile is hidden (drafts don't go to events).
 ///
+/// With [transaction] it edits a saved transaction (title "แก้ไขรายการ"):
+/// one "บันทึก" button; the type is fixed, splits and events are hidden
+/// (both are create-only), another member's row keeps its category, and an
+/// ex-member's locked row is read-only.
+///
+/// With [project] it's event mode — a row on that project's board (no
+/// wallet or category; payer, description, note, tags, member splits; see
+/// [DraftEvent]). [projectRow] edits that row (its type and payer are
+/// fixed). Saves through the project API.
+///
+/// With [scheduled] it's scheduled mode — a recurring / installment / loan
+/// template (title "ตั้งรายการประจำ"; see [DraftSchedule]): variant, type,
+/// amount, icon + name, category + wallet (both required), note, cycle,
+/// next due date and the installment fields. [scheduledEntry] edits that
+/// entry (title "แก้รายการประจำ"; variant and type fixed). One save button;
+/// saves through [ScheduledTransactionsCubit].
+///
 /// Returns true when something was saved.
-Future<bool> showQuickCreateSheet(BuildContext context,
-    {PendingTransaction? draft}) async {
-  context.read<AccountsCubit>().loadIfNeeded();
-  context.read<CategoriesCubit>().loadIfNeeded();
+Future<bool> showQuickCreateSheet(
+  BuildContext context, {
+  PendingTransaction? draft,
+  Transaction? transaction,
+  ProjectView? project,
+  ProjectTxTree? projectRow,
+  bool scheduled = false,
+  ScheduledTransaction? scheduledEntry,
+}) async {
+  assert(
+    [
+          draft,
+          transaction,
+          project,
+          scheduled ? true : null,
+        ].where((x) => x != null).length <=
+        1,
+  );
+  assert(projectRow == null || project != null);
+  assert(scheduledEntry == null || scheduled);
+  final accounts = context.read<AccountsCubit>().loadIfNeeded();
+  final categories = context.read<CategoriesCubit>().loadIfNeeded();
   context.read<TagsCubit>().loadIfNeeded();
+  // Prefilling resolves wallet / category ids against the caches — wait
+  // for them, or a cold start would open with both empty.
+  if (draft != null || transaction != null || scheduledEntry != null) {
+    await Future.wait([accounts, categories]);
+  }
+  if (!context.mounted) return false;
   final prefs = await SharedPreferences.getInstance();
   if (!context.mounted) return false;
   final saved = await showModalBottomSheet<bool>(
@@ -68,7 +123,15 @@ Future<bool> showQuickCreateSheet(BuildContext context,
     // Drag-to-dismiss would skip the "discard?" question; the ✕, the
     // barrier and back all go through PopScope instead.
     enableDrag: false,
-    builder: (_) => _QuickCreateSheet(prefs: prefs, draft: draft),
+    builder: (_) => _QuickCreateSheet(
+      prefs: prefs,
+      draft: draft,
+      transaction: transaction,
+      project: project,
+      projectRow: projectRow,
+      scheduled: scheduled,
+      scheduledEntry: scheduledEntry,
+    ),
   );
   return saved ?? false;
 }
@@ -76,8 +139,6 @@ Future<bool> showQuickCreateSheet(BuildContext context,
 // ── Remembered defaults ───────────────────────────────────────────────
 
 const _kLastAccount = 'quick.last_account_id';
-String _kRecent(CategoryType t) => 'quick.recent_categories.${t.name}';
-const _recentMax = 6;
 
 enum _CloseChoice { draft, keepEditing, discard }
 
@@ -97,29 +158,43 @@ class _ExistingEvent extends _EventTarget {
 }
 
 class _QuickCreateSheet extends StatefulWidget {
-  const _QuickCreateSheet({required this.prefs, this.draft});
+  const _QuickCreateSheet({
+    required this.prefs,
+    this.draft,
+    this.transaction,
+    this.project,
+    this.projectRow,
+    this.scheduled = false,
+    this.scheduledEntry,
+  });
   final SharedPreferences prefs;
 
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
+
+  /// Editing this saved transaction instead of creating.
+  final Transaction? transaction;
+
+  /// Event mode: a row on this project's board.
+  final ProjectView? project;
+
+  /// Event mode, editing this row.
+  final ProjectTxTree? projectRow;
+
+  /// Scheduled mode: a recurring template.
+  final bool scheduled;
+
+  /// Scheduled mode, editing this entry.
+  final ScheduledTransaction? scheduledEntry;
 
   @override
   State<_QuickCreateSheet> createState() => _QuickCreateSheetState();
 }
 
 class _QuickCreateSheetState extends State<_QuickCreateSheet> {
-  final _amount = TextEditingController();
-  final _note = TextEditingController();
+  final _c = DraftFormController();
   final _scroll = ScrollController();
 
-  TransactionType _type = TransactionType.expense;
-  Category? _category;
-  Account? _account;
-  Account? _toAccount;
-  bool _accountTouched = false;
-  DateTime _date = DateTime.now();
-  final Set<String> _tagIds = {};
-  List<SplitDraft> _splits = const [];
   _EventTarget? _event;
   bool _saving = false;
 
@@ -127,18 +202,186 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   bool _collapsed = false;
   static const _collapseAt = 170.0;
 
-  bool get _isTransfer => _type == TransactionType.transfer;
-  double get _amountValue => AmountField.parse(_amount.text) ?? 0;
-
   bool get _editingDraft => widget.draft != null;
+  bool get _editingTx => widget.transaction != null;
 
-  bool get _dirty => _editingDraft
-      ? _currentDraft() != widget.draft!.draft
-      : _amount.text.isNotEmpty ||
-          _note.text.trim().isNotEmpty ||
-          _tagIds.isNotEmpty ||
-          _splits.any((s) => s.isComplete) ||
-          _event != null;
+  /// Ex-member's row on a shared wallet — shown, not editable.
+  bool get _locked => widget.transaction?.isLocked ?? false;
+
+  /// The saved transaction as first loaded — what "changed?" compares to.
+  PendingDraft? _txBaseline;
+  String? _initialAccountId;
+  String? _initialToAccountId;
+
+  bool get _isEvent => widget.project != null;
+  bool get _editingRow => widget.projectRow != null;
+
+  /// Event mode: the fields as first shown, and the project's tags (from
+  /// the loaded rows first, then the full list from the server).
+  String? _eventBaseline;
+  List<String> _eventTags = const [];
+  late final List<String> _pastDescriptions = _mostUsed([
+    for (final t in widget.project?.trees ?? const <ProjectTxTree>[])
+      if ((t.parent.description ?? '').trim().isNotEmpty)
+        t.parent.description!.trim(),
+  ]);
+
+  bool get _isScheduled => widget.scheduled;
+  bool get _editingScheduled => widget.scheduledEntry != null;
+
+  /// Scheduled mode: the fields as first shown.
+  String? _scheduledBaseline;
+
+  bool get _dirty => _isScheduled
+      ? _c.scheduledSnapshot() != _scheduledBaseline
+      : _isEvent
+      ? _c.eventSnapshot() != _eventBaseline
+      : _editingDraft
+      ? _c.toDraft() != widget.draft!.draft
+      : _editingTx
+      ? !_locked && _c.toDraft() != _txBaseline
+      : _c.hasContent || _event != null;
+
+  /// Distinct values, most frequent first.
+  static List<String> _mostUsed(Iterable<String> values) {
+    final counts = <String, int>{};
+    for (final v in values) {
+      counts.update(v, (n) => n + 1, ifAbsent: () => 1);
+    }
+    return counts.keys.toList()
+      ..sort((a, b) => counts[b]!.compareTo(counts[a]!));
+  }
+
+  void _initEvent() {
+    final view = widget.project!;
+    final row = widget.projectRow;
+    if (row != null) {
+      _c.prefillProjectRow(row);
+    } else {
+      _c.payerId = (view.me ?? view.currentMembers.firstOrNull)?.id;
+    }
+    _eventBaseline = _c.eventSnapshot();
+    _eventTags = _mostUsed([for (final t in view.trees) ...t.parent.tags]);
+    context
+        .read<ProjectsRepository>()
+        .listTags(view.project.id)
+        .then((tags) {
+          if (mounted) setState(() => _eventTags = tags);
+        })
+        .catchError((_) {}); // keep the local list
+  }
+
+  /// Event mode "บันทึก": create or update the project row.
+  Future<void> _saveEvent() async {
+    final l = AppLocalizations.of(context)!;
+    final view = widget.project!;
+    final amount = _c.amountValue;
+    final payer = _c.payerId;
+    String? problem;
+    if (amount <= 0) {
+      problem = l.projectTxAmountRequired;
+    } else if (_c.memberSplitSum > amount + 0.005) {
+      problem = l.projectTxSplitsOver(
+        moneyString(context, _c.memberSplitSum, symbol: view.symbol),
+      );
+    }
+    if (problem != null || payer == null) {
+      HapticFeedback.lightImpact();
+      if (problem != null) _toast(problem);
+      return;
+    }
+    final repo = context.read<ProjectsRepository>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final description = _c.description.text.trim();
+    final note = _c.note.text.trim();
+    final splits = [
+      for (final s in _c.memberSplits)
+        if (s.memberId != null && s.amountValue > 0)
+          ProjectSplitInput(memberId: s.memberId!, amount: s.amountValue),
+    ];
+    setState(() => _saving = true);
+    try {
+      final row = widget.projectRow;
+      if (row == null) {
+        await repo.createTransaction(
+          view.project.id,
+          transactionMemberId: payer,
+          type: _c.type == TransactionType.income ? 'income' : 'expense',
+          amount: amount,
+          currency: view.currency,
+          date: _ymd(_c.date),
+          description: description.isEmpty ? null : description,
+          note: note.isEmpty ? null : note,
+          tags: List.of(_c.tagNames),
+          splits: splits,
+        );
+      } else {
+        await repo.updateTransaction(
+          view.project.id,
+          row.parent.id,
+          amount: amount,
+          date: _ymd(_c.date),
+          description: description,
+          note: note,
+          tags: List.of(_c.tagNames),
+          splits: splits,
+        );
+      }
+      HapticFeedback.mediumImpact();
+      navigator.pop(true);
+      showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _toast(e.message);
+    }
+  }
+
+  void _initScheduled() {
+    final e = widget.scheduledEntry;
+    if (e != null) {
+      _c.prefillScheduled(
+        e,
+        accounts: context.read<AccountsCubit>().state.accounts,
+        categories: context.read<CategoriesCubit>().state.categories,
+      );
+    }
+    _scheduledBaseline = _c.scheduledSnapshot();
+  }
+
+  /// Scheduled mode "บันทึก": create or update the entry. Edits affect
+  /// future cycles only (spec §2.5).
+  Future<void> _saveScheduled() async {
+    final l = AppLocalizations.of(context)!;
+    final problem = _c.scheduledProblem(l);
+    if (problem != null) {
+      HapticFeedback.lightImpact();
+      _c.schedule.revealErrors();
+      _toast(problem);
+      return;
+    }
+    final cubit = context.read<ScheduledTransactionsCubit>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final initial = widget.scheduledEntry;
+    final entry = _c.toScheduled(initial: initial);
+    setState(() => _saving = true);
+    try {
+      if (initial == null) {
+        await cubit.add(entry);
+      } else {
+        await cubit.update(entry);
+      }
+      HapticFeedback.mediumImpact();
+      navigator.pop(true);
+      showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _toast(e.message);
+    }
+  }
 
   @override
   void initState() {
@@ -147,51 +390,51 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       final c = _scroll.offset > _collapseAt;
       if (c != _collapsed) setState(() => _collapsed = c);
     });
+    if (_isEvent) _initEvent();
+    if (_isScheduled) _initScheduled();
     final p = widget.draft;
-    if (p != null) _prefill(p.draft);
-  }
-
-  /// Loads a pending draft into the fields (wallet "none" stays none).
-  void _prefill(PendingDraft d) {
-    final accounts = context.read<AccountsCubit>().state.accounts;
-    final categories = context.read<CategoriesCubit>().state.categories;
-    _type = d.type ?? TransactionType.expense;
-    final amount = d.amount;
-    if (amount != null && amount > 0) _amount.text = AmountField.format(amount);
-    _note.text = d.note ?? '';
-    _date = DateTime.tryParse(d.date ?? '') ?? _date;
-    _accountTouched = true;
-    _account = accounts.where((a) => a.id == d.accountId).firstOrNull;
-    _toAccount = accounts.where((a) => a.id == d.transferToAccountId).firstOrNull;
-    _category = categories.where((c) => c.id == d.categoryId).firstOrNull;
-    _tagIds.addAll(d.tagIds);
-    _splits = [
-      for (final s in d.splits)
-        SplitDraft(
-          personName: s['person_name'] as String?,
-          contactId: s['contact_id'] as String?,
-          owedAmount: (s['owed_amount'] as num?)?.toDouble(),
-        ),
-    ];
-  }
-
-  /// The fields as a draft — no validation, anything may be empty.
-  PendingDraft _currentDraft() {
-    final amount = AmountField.parse(_amount.text);
-    final note = _note.text.trim();
-    return PendingDraft(
-      type: _type,
-      amount: amount,
-      accountId: _account?.id,
-      categoryId: _isTransfer ? null : _category?.id,
-      date: _ymd(_date),
-      note: note.isEmpty ? null : note,
-      transferToAccountId: _isTransfer ? _toAccount?.id : null,
-      tagIds: _tagIds.toList(),
-      splits: _isTransfer
-          ? const []
-          : [for (final s in _splits.where((s) => s.isComplete)) s.toJson()],
-    );
+    if (p != null) {
+      _c.prefill(
+        p.draft,
+        accounts: context.read<AccountsCubit>().state.accounts,
+        categories: context.read<CategoriesCubit>().state.categories,
+      );
+    }
+    final t = widget.transaction;
+    if (t != null) {
+      final accounts = context.read<AccountsCubit>().state.accounts;
+      // A transfer's other side is its sibling row in the same group.
+      Account? toAccount;
+      final group = t.transferGroupId;
+      if (group != null) {
+        final sibling = context
+            .read<TransactionsCubit>()
+            .state
+            .transactions
+            .where((x) => x.id != t.id && x.transferGroupId == group)
+            .firstOrNull;
+        toAccount = accounts
+            .where((a) => a.id == sibling?.accountId)
+            .firstOrNull;
+      }
+      _c.prefillTransaction(
+        t,
+        accounts: accounts,
+        categories: context.read<CategoriesCubit>().state.categories,
+        toAccount: toAccount,
+      );
+      _txBaseline = _c.toDraft();
+      _initialAccountId = _c.account?.id;
+      _initialToAccountId = _c.toAccount?.id;
+    }
+    // Typing / picking rebuilds the sheet (summary bar, close guard); a
+    // transfer can't go to an event.
+    _c.addListener(() {
+      if (!mounted) return;
+      setState(() {
+        if (_c.isTransfer) _event = null;
+      });
+    });
   }
 
   /// "บันทึกร่าง": park it in รอยืนยัน (new) or save the edits back.
@@ -202,7 +445,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      final d = _currentDraft();
+      final d = _c.toDraft();
       final p = widget.draft;
       if (p == null) {
         await pending.add([d]);
@@ -211,9 +454,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
       await _remember();
       navigator.pop(true);
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l.pendingSavedAsDraft)));
+      showAppSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -238,7 +479,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final id = widget.draft!.id;
     setState(() => _saving = true);
     try {
-      await pending.updateDraft(id, _currentDraft());
+      await pending.updateDraft(id, _c.toDraft());
       final result = await pending.submit([id]);
       final failed = result.failed[id];
       if (failed != null) {
@@ -250,9 +491,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       await Future.wait([accounts.load(), txCubit.load()]);
       await _remember();
       navigator.pop(true);
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l.quickSaved)));
+      showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -282,8 +521,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   @override
   void dispose() {
-    _amount.dispose();
-    _note.dispose();
+    _c.dispose();
     _scroll.dispose();
     super.dispose();
   }
@@ -296,120 +534,33 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     return accounts.where((a) => a.id == last).firstOrNull ?? accounts.first;
   }
 
-  /// Recent categories for the current type, topped up with top-level ones.
-  List<Category> _recentCategories(List<Category> all) {
-    final type =
-        _type == TransactionType.income ? CategoryType.income : CategoryType.expense;
-    final usable = all.where((c) => c.type == type && !c.isSystem).toList();
-    final byId = {for (final c in usable) c.id: c};
-    final ids = widget.prefs.getStringList(_kRecent(type)) ?? const [];
-    final out = <Category>[
-      for (final id in ids)
-        if (byId[id] != null) byId[id]!,
-    ];
-    final roots = usable.where((c) => c.parentId == null).toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    for (final c in roots) {
-      if (out.length >= _recentMax) break;
-      if (!out.contains(c)) out.add(c);
-    }
-    final picked = _category;
-    if (picked != null && !out.contains(picked)) out.insert(0, picked);
-    return out.take(_recentMax).toList();
-  }
-
   Future<void> _remember() async {
-    final acc = _account;
+    final acc = _c.account;
     if (acc != null) await widget.prefs.setString(_kLastAccount, acc.id);
-    final cat = _category;
-    if (cat != null) {
-      final key = _kRecent(cat.type);
-      final list = [
-        cat.id,
-        ...(widget.prefs.getStringList(key) ?? const []).where((id) => id != cat.id),
-      ].take(12).toList();
-      await widget.prefs.setStringList(key, list);
-    }
   }
 
-  void _setType(TransactionType t) => setState(() {
-        _type = t;
-        _category = null; // a category belongs to one type
-        if (t == TransactionType.transfer) {
-          _splits = const [];
-          _event = null;
-        }
-      });
-
-  // ── Pickers ───────────────────────────────────────────────────────
-
-  Future<void> _pickCategory() async {
-    final r = await showCategoryPickerSheet(
-      context: context,
-      categories: context.read<CategoriesCubit>().state.categories,
-      type: _type == TransactionType.income
-          ? CategoryType.income
-          : CategoryType.expense,
-      selected: _category,
-    );
-    if (!mounted || r == null) return;
-    setState(() => _category = r is CategoryPickerSelected ? r.category : null);
-  }
-
-  Future<void> _pickAccount({bool to = false}) async {
-    final l = AppLocalizations.of(context)!;
-    final accounts = context.read<AccountsCubit>().state.accounts;
-    final r = await showAccountPickerSheet(
-      context: context,
-      accounts: accounts,
-      selected: to ? _toAccount : _account,
-      excludeId: to ? _account?.id : (_isTransfer ? _toAccount?.id : null),
-      title: to ? l.quickTo : l.transactionFormAccountLabel,
-      // Expense / income may be floating; a transfer needs real wallets.
-      allowNone: !_isTransfer && !to,
-    );
-    if (!mounted || r == null) return;
-    setState(() {
-      if (to) {
-        if (r is AccountPickerSelected) _toAccount = r.account;
-      } else {
-        _accountTouched = true;
-        _account = r is AccountPickerSelected ? r.account : null;
-      }
-    });
-  }
-
-  Future<void> _pickDate() async {
-    final d = await showDatePicker(
-      context: context,
-      initialDate: _date,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (d != null) setState(() => _date = d);
-  }
+  // ── Event ─────────────────────────────────────────────────────────
 
   Future<void> _pickEvent() async {
-    final picked = await showModalBottomSheet<_EventTarget>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      builder: (_) => _EventTargetSheet(
-        suggestedName: _suggestEventName(),
-      ),
+    final picked = await showAppSheet<_EventTarget>(
+      context,
+      title: AppLocalizations.of(context)!.quickAddToEvent,
+      useRootNavigator: false,
+      builder: (_) => _EventTargetSheet(suggestedName: _suggestEventName()),
     );
     if (picked != null && mounted) setState(() => _event = picked);
   }
 
   String _suggestEventName() {
     final l = AppLocalizations.of(context)!;
-    final names = _splits
+    final names = _c.splits
         .where((s) => s.personName.trim().isNotEmpty)
         .map((s) => s.personName.trim())
         .toList();
-    final date = DateFormatter.medium(_date,
-        locale: Localizations.localeOf(context).toLanguageTag());
+    final date = DateFormatter.medium(
+      _c.date,
+      locale: Localizations.localeOf(context).toLanguageTag(),
+    );
     return names.isEmpty
         ? '${l.quickEventDefaultName} · $date'
         : '${names.join(', ')} · $date';
@@ -424,12 +575,16 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final choice = await showDialog<_CloseChoice>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(_editingDraft ? l.pendingDropEditsTitle : l.quickDiscardTitle),
-        content: Text(_editingDraft ? l.pendingDropEditsMessage : l.quickDiscardMessage),
+        title: Text(
+          _editingDraft ? l.pendingDropEditsTitle : l.quickDiscardTitle,
+        ),
+        content: Text(
+          _editingDraft ? l.pendingDropEditsMessage : l.quickDiscardMessage,
+        ),
         actionsOverflowDirection: VerticalDirection.down,
         actionsOverflowButtonSpacing: AppSpacing.sm,
         actions: [
-          if (!_editingDraft)
+          if (!_editingDraft && !_editingTx && !_isEvent && !_isScheduled)
             FilledButton(
               onPressed: () => Navigator.pop(ctx, _CloseChoice.draft),
               child: Text(l.pendingKeepAsDraft),
@@ -441,7 +596,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, _CloseChoice.discard),
             style: TextButton.styleFrom(
-                foregroundColor: Theme.of(ctx).colorScheme.error),
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
             child: Text(l.quickDiscardConfirm),
           ),
         ],
@@ -458,25 +614,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  void _toast(String msg) => ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(msg)));
+  void _toast(String msg) => showAppSnackBar(context, msg, tone: Tone.danger);
 
   String _ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   /// Every rule the server would reject, said here first.
   String? _problem(AppLocalizations l) {
-    if (_amountValue <= 0) return l.quickAmountRequired;
-    if (_isTransfer) {
-      if (_account == null || _toAccount == null) return l.txTransferNeedsTo;
-      if (_account!.id == _toAccount!.id) return l.txTransferSameWallet;
+    if (_c.amountValue <= 0) return l.quickAmountRequired;
+    if (_c.isTransfer) {
+      if (_c.account == null || _c.toAccount == null) {
+        return l.txTransferNeedsTo;
+      }
+      if (_c.account!.id == _c.toAccount!.id) return l.txTransferSameWallet;
     }
-    final splitTotal = _splits
+    final splitTotal = _c.splits
         .where((s) => s.isComplete)
         .fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
-    if (splitTotal > _amountValue + 0.005) return l.txSplitExceeds;
-    if (_event != null && _account == null) return l.quickEventNeedsWallet;
+    if (splitTotal > _c.amountValue + 0.005) return l.txSplitExceeds;
+    if (_event != null && _c.account == null) return l.quickEventNeedsWallet;
     return null;
   }
 
@@ -495,9 +651,16 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final navigator = Navigator.of(context);
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final splits = _splits.where((s) => s.isComplete).map((s) => s.toJson()).toList();
-    final note = _note.text.trim().isEmpty ? null : _note.text.trim();
+    final splits = _c.splits
+        .where((s) => s.isComplete)
+        .map((s) => s.toJson())
+        .toList();
+    final note = _c.note.text.trim().isEmpty ? null : _c.note.text.trim();
     final event = _event;
+    final type = _c.type;
+    final amount = _c.amountValue;
+    final account = _c.account;
+    final tagIds = _c.tagIds.toList();
 
     setState(() => _saving = true);
     String? warn;
@@ -506,14 +669,14 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (event == null) {
         try {
           await txCubit.add(
-            type: _type,
-            accountId: _account?.id,
-            amount: _amountValue,
-            date: _ymd(_date),
-            categoryId: _isTransfer ? null : _category?.id,
+            type: type,
+            accountId: account?.id,
+            amount: amount,
+            date: _ymd(_c.date),
+            categoryId: _c.isTransfer ? null : _c.category?.id,
             note: note,
-            transferToAccountId: _isTransfer ? _toAccount?.id : null,
-            tagIds: _tagIds.toList(),
+            transferToAccountId: _c.isTransfer ? _c.toAccount?.id : null,
+            tagIds: tagIds,
             splits: splits.isEmpty ? null : splits,
           );
         } on TagsAttachFailed {
@@ -521,25 +684,29 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         }
       } else {
         final body = <String, dynamic>{
-          'type': _type.toJson(),
-          'amount': _amountValue,
-          'date': _ymd(_date),
-          'account_id': ?_account?.id,
-          'category_id': ?_category?.id,
+          'type': type.toJson(),
+          'amount': amount,
+          'date': _ymd(_c.date),
+          'account_id': ?account?.id,
+          'category_id': ?_c.category?.id,
           'note': ?note,
           if (splits.isNotEmpty) 'splits': splits,
         };
         final result = switch (event) {
-          _NewEvent(:final name) =>
-            await projects.quickCreate(name: name, newTransaction: body),
-          _ExistingEvent(:final project) =>
-            await projects.addBills(project.id, newTransaction: body),
+          _NewEvent(:final name) => await projects.quickCreate(
+            name: name,
+            newTransaction: body,
+          ),
+          _ExistingEvent(:final project) => await projects.addBills(
+            project.id,
+            newTransaction: body,
+          ),
         };
         openProject = result.project.id;
         final txId = result.transactionId;
-        if (txId != null && _tagIds.isNotEmpty) {
+        if (txId != null && tagIds.isNotEmpty) {
           try {
-            await txRepo.attachTags(transactionId: txId, tagIds: _tagIds.toList());
+            await txRepo.attachTags(transactionId: txId, tagIds: tagIds);
           } on ApiException {
             warn = l.txSavedTagsFailed;
           }
@@ -549,14 +716,90 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       await accounts.load();
       await _remember();
       navigator.pop(true);
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(warn ?? l.quickSaved)));
+      showAppSnackBarOn(
+        messenger,
+        warn ?? l.quickSaved,
+        tone: warn == null ? Tone.success : Tone.warning,
+      );
       if (openProject != null) router.push('/projects/$openProject');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(event == null ? walletErrorMessage(l, e) : quickCreateErrorMessage(l, e));
+      _toast(
+        event == null ? walletErrorMessage(l, e) : _eventErrorMessage(l, e),
+      );
+    }
+  }
+
+  /// Edit mode "บันทึก": update the saved row with what changed, then
+  /// reconcile its tags.
+  Future<void> _saveEdit() async {
+    final l = AppLocalizations.of(context)!;
+    final problem = _problem(l);
+    if (problem != null) {
+      HapticFeedback.lightImpact();
+      _toast(problem);
+      return;
+    }
+    final t = widget.transaction!;
+    final txCubit = context.read<TransactionsCubit>();
+    final accounts = context.read<AccountsCubit>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final isTransfer = _c.isTransfer;
+    final note = _c.note.text.trim().isEmpty ? null : _c.note.text.trim();
+    // Another member's row: never send category_id — only the author may
+    // change it (403 CATEGORY_AUTHOR_ONLY otherwise).
+    final canCategory = !isTransfer && t.canEditCategory;
+    final accountId = _c.account?.id;
+    final accountChanged = accountId != _initialAccountId;
+    final toAccountChanged =
+        isTransfer && _c.toAccount?.id != _initialToAccountId;
+
+    setState(() => _saving = true);
+    String? warn;
+    try {
+      final result = await txCubit.updateTransaction(
+        id: t.id,
+        amount: _c.amountValue,
+        date: _ymd(_c.date),
+        categoryId: canCategory ? _c.category?.id : null,
+        clearCategory:
+            canCategory && t.categoryId != null && _c.category == null,
+        note: note,
+        clearNote: note == null && t.note != null,
+        accountId: accountChanged ? accountId : null,
+        clearAccount: accountChanged && accountId == null,
+        transferToAccountId: toAccountChanged ? _c.toAccount?.id : null,
+      );
+      // A transfer's tags live on its OUT row.
+      final tagTarget = result.transfer != null
+          ? result.transfer!.rows
+                .firstWhere(
+                  (r) => r.signedAmount < 0,
+                  orElse: () => result.transfer!.rows.first,
+                )
+                .id
+          : t.id;
+      try {
+        await txCubit.setTags(
+          transactionId: tagTarget,
+          tagIds: _c.tagIds.toList(),
+        );
+      } on ApiException {
+        warn = l.txSavedTagsFailed; // saved — just the tags
+      }
+      await accounts.load();
+      navigator.pop(true);
+      showAppSnackBarOn(
+        messenger,
+        warn ?? l.quickSaved,
+        tone: warn == null ? Tone.success : Tone.warning,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _toast(walletErrorMessage(l, e));
     }
   }
 
@@ -567,8 +810,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final accounts = context.watch<AccountsCubit>().state.accounts;
-    if (!_accountTouched) _account = _defaultAccount(accounts);
-    final categories = context.watch<CategoriesCubit>().state.categories;
     final insets = MediaQuery.viewInsetsOf(context).bottom;
 
     return PopScope(
@@ -595,24 +836,38 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg, AppSpacing.xs, AppSpacing.xs, 0),
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                  AppSpacing.xs,
+                  0,
+                ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
-                          _editingDraft
-                              ? l.pendingEditTitle
-                              : l.transactionFormTitleNew,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
+                        _isScheduled
+                            ? (_editingScheduled
+                                  ? l.scheduledSheetTitleEdit
+                                  : l.scheduledSheetTitleNew)
+                            : _isEvent
+                            ? (_editingRow
+                                  ? l.projectTxEditTitle
+                                  : l.projectTxNewTitle)
+                            : _editingDraft
+                            ? l.pendingEditTitle
+                            : _editingTx
+                            ? l.transactionFormTitleEdit
+                            : l.transactionFormTitleNew,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
                     ),
                     if (_editingDraft)
                       TextButton(
                         onPressed: _saving ? null : _discardDraft,
                         style: TextButton.styleFrom(
-                            foregroundColor: scheme.error),
+                          foregroundColor: scheme.error,
+                        ),
                         child: Text(l.quickDiscardConfirm),
                       ),
                     IconButton(
@@ -629,112 +884,56 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                     ListView(
                       controller: _scroll,
                       padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, AppSpacing.xxl),
+                        AppSpacing.lg,
+                        AppSpacing.xs,
+                        AppSpacing.lg,
+                        AppSpacing.xxl,
+                      ),
                       children: [
-                        _TypeSwitch(type: _type, onChanged: _setType),
-                        const SizedBox(height: AppSpacing.sm),
-                        _AmountInput(
-                          controller: _amount,
-                          type: _type,
-                          onChanged: () => setState(() {}),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        if (_isTransfer)
-                          _TransferRow(
-                            from: _account,
-                            to: _toAccount,
-                            onFrom: () => _pickAccount(),
-                            onTo: () => _pickAccount(to: true),
-                            onSwap: () => setState(() {
-                              final f = _account;
-                              _account = _toAccount;
-                              _toAccount = f;
-                              _accountTouched = true;
-                            }),
-                          )
-                        else
-                          _CategoryChips(
-                            categories: _recentCategories(categories),
-                            selected: _category,
-                            onPick: (c) => setState(
-                                () => _category = _category == c ? null : c),
-                            onAll: _pickCategory,
+                        if (_locked) ...[
+                          MessageBanner(
+                            message: l.transactionFormLockedBanner,
+                            tone: Tone.warning,
                           ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Row(
-                          children: [
-                            if (!_isTransfer) ...[
-                              Expanded(
-                                child: _Pill(
-                                  icon: _account == null
-                                      ? AppIcons.noWallet
-                                      : AppIcons.wallet,
-                                  label: _account?.name ??
-                                      l.transactionFormAccountNone,
-                                  onTap: () => _pickAccount(),
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                            ],
-                            Expanded(
-                              child: _Pill(
-                                icon: AppIcons.date,
-                                label: DateFormatter.friendly(
-                                  _date,
-                                  today: l.commonToday,
-                                  yesterday: l.commonYesterday,
-                                  locale:
-                                      Localizations.localeOf(context).languageCode,
-                                ),
-                                onTap: _pickDate,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        TextField(
-                          controller: _note,
-                          maxLength: 500,
-                          textInputAction: TextInputAction.done,
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            hintText: l.quickNoteHint,
-                            counterText: '',
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        _SectionLabel(l.quickMore),
-                        const SizedBox(height: AppSpacing.sm),
-                        _TagsBlock(
-                          selected: _tagIds,
-                          onToggle: (id) => setState(() =>
-                              _tagIds.contains(id) ? _tagIds.remove(id) : _tagIds.add(id)),
-                        ),
-                        if (!_isTransfer) ...[
                           const SizedBox(height: AppSpacing.sm),
-                          SplitsSection(
-                            totalAmount: _amountValue,
-                            drafts: _splits,
-                            onChanged: (d) => setState(() => _splits = d),
-                            title: _type == TransactionType.income
-                                ? l.transactionSplitShareTitle
-                                : l.transactionSplitWithTitle,
-                          ),
+                        ],
+                        DraftForm(
+                          controller: _c,
+                          defaultAccount: _defaultAccount(accounts),
+                          // Saved rows: type, splits and events are
+                          // create-only (the update API can't change them).
+                          typeLocked: _editingTx || _editingRow,
+                          allowSplits: !_editingTx,
+                          event: _isEvent
+                              ? DraftEvent(
+                                  members: widget.project!.currentMembers,
+                                  symbol: widget.project!.symbol,
+                                  pastDescriptions: _pastDescriptions,
+                                  tags: _eventTags,
+                                )
+                              : null,
+                          schedule: _isScheduled
+                              ? DraftSchedule(editing: _editingScheduled)
+                              : null,
+                          readOnly: _locked,
+                          categoryLockedHint:
+                              _editingTx && !widget.transaction!.canEditCategory
+                              ? l.transactionFormCategoryAuthorOnlyHint
+                              : null,
                           // Drafts don't go to events (submit is a plain
                           // create) — the tile only exists when creating.
-                          if (!_editingDraft) ...[
-                            const SizedBox(height: AppSpacing.sm),
-                            _EventTile(
-                              target: _event,
-                              onTap: _pickEvent,
-                              onClear: () => setState(() => _event = null),
-                            ),
-                          ],
-                        ],
+                          moreExtra:
+                              _editingDraft ||
+                                  _editingTx ||
+                                  _isEvent ||
+                                  _isScheduled
+                              ? null
+                              : _EventTile(
+                                  target: _event,
+                                  onTap: _pickEvent,
+                                  onClear: () => setState(() => _event = null),
+                                ),
+                        ),
                       ],
                     ),
                     // Compact summary — slides in once the amount scrolls off.
@@ -745,19 +944,24 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                       child: IgnorePointer(
                         ignoring: !_collapsed,
                         child: AnimatedSlide(
-                          offset: _collapsed ? Offset.zero : const Offset(0, -0.6),
+                          offset: _collapsed
+                              ? Offset.zero
+                              : const Offset(0, -0.6),
                           duration: const Duration(milliseconds: 220),
                           curve: Curves.easeOutCubic,
                           child: AnimatedOpacity(
                             opacity: _collapsed ? 1 : 0,
                             duration: const Duration(milliseconds: 180),
                             child: _SummaryBar(
-                              type: _type,
-                              amount: _amountValue,
-                              category: _category,
-                              onTap: () => _scroll.animateTo(0,
-                                  duration: const Duration(milliseconds: 280),
-                                  curve: Curves.easeOutCubic),
+                              type: _c.type,
+                              amount: _c.amountValue,
+                              category: _c.category,
+                              symbol: widget.project?.symbol ?? '฿',
+                              onTap: () => _scroll.animateTo(
+                                0,
+                                duration: const Duration(milliseconds: 280),
+                                curve: Curves.easeOutCubic,
+                              ),
                             ),
                           ),
                         ),
@@ -767,37 +971,79 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 ),
               ),
               // Pinned above the keyboard: draft (→ รอยืนยัน) · save for real.
-              Container(
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  border: Border(top: BorderSide(color: scheme.outlineVariant)),
-                ),
-                padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm,
-                    AppSpacing.lg, insets > 0 ? AppSpacing.sm : AppSpacing.lg),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        label: l.pendingSaveDraft,
-                        variant: AppButtonVariant.outlined,
-                        expand: true,
-                        // A draft can't go to an event.
-                        onPressed: _saving || _event != null ? null : _saveDraft,
-                      ),
+              // Editing a saved row: just save. Locked row: nothing to save.
+              // Scheduled: one button too — drafts are for one-off rows.
+              if (_editingTx || _isEvent || _isScheduled)
+                Container(
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    border: Border(
+                      top: BorderSide(color: scheme.outlineVariant),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      flex: 3,
-                      child: AppButton(
-                        label: _editingDraft ? l.pendingSubmitThis : l.quickSave,
-                        expand: true,
-                        loading: _saving,
-                        onPressed: _editingDraft ? _submitDraft : _save,
-                      ),
+                  ),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                    AppSpacing.lg,
+                    insets > 0 ? AppSpacing.sm : AppSpacing.lg,
+                  ),
+                  child: AppButton(
+                    label: _isScheduled && !_editingScheduled
+                        ? l.scheduledFormSave
+                        : l.transactionFormSave,
+                    expand: true,
+                    loading: _saving,
+                    onPressed: _isScheduled
+                        ? _saveScheduled
+                        : _isEvent
+                        ? _saveEvent
+                        : _locked
+                        ? null
+                        : _saveEdit,
+                  ),
+                )
+              else
+                Container(
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    border: Border(
+                      top: BorderSide(color: scheme.outlineVariant),
                     ),
-                  ],
+                  ),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                    AppSpacing.lg,
+                    insets > 0 ? AppSpacing.sm : AppSpacing.lg,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: AppButton(
+                          label: l.pendingSaveDraft,
+                          variant: AppButtonVariant.outlined,
+                          expand: true,
+                          // A draft can't go to an event.
+                          onPressed: _saving || _event != null
+                              ? null
+                              : _saveDraft,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        flex: 3,
+                        child: AppButton(
+                          label: _editingDraft
+                              ? l.pendingSubmitThis
+                              : l.quickSave,
+                          expand: true,
+                          loading: _saving,
+                          onPressed: _editingDraft ? _submitDraft : _save,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -808,299 +1054,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
 // ── Pieces ────────────────────────────────────────────────────────────
 
-class _TypeSwitch extends StatelessWidget {
-  const _TypeSwitch({required this.type, required this.onChanged});
-  final TransactionType type;
-  final ValueChanged<TransactionType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return SegmentedButton<TransactionType>(
-      showSelectedIcon: false,
-      expandedInsets: EdgeInsets.zero,
-      segments: [
-        ButtonSegment(
-            value: TransactionType.expense, label: Text(l.transactionTypeExpense)),
-        ButtonSegment(
-            value: TransactionType.income, label: Text(l.transactionTypeIncome)),
-        ButtonSegment(
-            value: TransactionType.transfer, label: Text(l.transactionTypeTransfer)),
-      ],
-      selected: {type},
-      onSelectionChanged: (s) => onChanged(s.first),
-    );
-  }
-}
-
-Color _typeColor(BuildContext context, TransactionType t) {
-  final palette = Theme.of(context).extension<AppColors>()!;
-  return switch (t) {
-    TransactionType.expense => palette.expense,
-    TransactionType.income => palette.income,
-    TransactionType.transfer => Theme.of(context).colorScheme.onSurface,
-  };
-}
-
-String _typeSign(TransactionType t) => switch (t) {
-      TransactionType.expense => '−',
-      TransactionType.income => '+',
-      TransactionType.transfer => '',
-    };
-
-/// The big centred amount — focused on open, numeric keyboard, coloured by
-/// type. Rebuilds the sheet on every keystroke (split totals stay live).
-class _AmountInput extends StatelessWidget {
-  const _AmountInput({
-    required this.controller,
-    required this.type,
-    required this.onChanged,
-  });
-  final TextEditingController controller;
-  final TransactionType type;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final color = _typeColor(context, type);
-    final big = Theme.of(context).textTheme.displaySmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: color,
-          fontFeatures: const [FontFeature.tabularFigures()],
-        );
-    return TextField(
-      controller: controller,
-      autofocus: true,
-      textAlign: TextAlign.center,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [ThousandsInputFormatter()],
-      onChanged: (_) => onChanged(),
-      style: big,
-      cursorColor: Theme.of(context).colorScheme.primary,
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        hintText: '0',
-        hintStyle: big?.copyWith(color: color.withValues(alpha: 0.35)),
-        prefixText: '${_typeSign(type)}฿ ',
-        prefixStyle: big?.copyWith(fontSize: (big.fontSize ?? 36) * 0.6),
-        semanticCounterText: l.transactionFormAmountLabel,
-      ),
-    );
-  }
-}
-
-class _CategoryChips extends StatelessWidget {
-  const _CategoryChips({
-    required this.categories,
-    required this.selected,
-    required this.onPick,
-    required this.onAll,
-  });
-  final List<Category> categories;
-  final Category? selected;
-  final ValueChanged<Category> onPick;
-  final VoidCallback onAll;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return SizedBox(
-      height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          for (final c in categories) ...[
-            ChoiceChip(
-              label: Text(c.name),
-              selected: selected?.id == c.id,
-              showCheckmark: false,
-              onSelected: (_) => onPick(c),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-          ],
-          ActionChip(
-            label: Text(l.quickAllCategories),
-            avatar: const Icon(AppIcons.category, size: 16),
-            onPressed: onAll,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A compact tappable field: icon · value · ▾.
-class _Pill extends StatelessWidget {
-  const _Pill({required this.icon, required this.label, required this.onTap, this.caption, this.warn = false});
-  final IconData icon;
-  final String label;
-  final String? caption;
-  final VoidCallback onTap;
-  final bool warn;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final warnColor = Theme.of(context).extension<AppColors>()!.warning;
-    return Material(
-      color: scheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: warn ? warnColor : scheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 44),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-            child: Row(
-              children: [
-                Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (caption != null)
-                        Text(caption!,
-                            style: textTheme.labelSmall
-                                ?.copyWith(color: scheme.onSurfaceVariant)),
-                      Text(label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.bodyMedium?.copyWith(
-                              color: warn ? warnColor : null,
-                              fontWeight: caption != null ? FontWeight.w600 : null)),
-                    ],
-                  ),
-                ),
-                Icon(AppIcons.dropdown, size: 18, color: scheme.onSurfaceVariant),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TransferRow extends StatelessWidget {
-  const _TransferRow({
-    required this.from,
-    required this.to,
-    required this.onFrom,
-    required this.onTo,
-    required this.onSwap,
-  });
-  final Account? from;
-  final Account? to;
-  final VoidCallback onFrom;
-  final VoidCallback onTo;
-  final VoidCallback onSwap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return Row(
-      children: [
-        Expanded(
-          child: _Pill(
-            icon: AppIcons.wallet,
-            caption: l.quickFrom,
-            label: from?.name ?? l.quickPickWallet,
-            warn: from == null,
-            onTap: onFrom,
-          ),
-        ),
-        IconButton(
-          tooltip: l.quickSwap,
-          icon: const Icon(AppIcons.transfer),
-          onPressed: onSwap,
-        ),
-        Expanded(
-          child: _Pill(
-            icon: AppIcons.wallet,
-            caption: l.quickTo,
-            label: to?.name ?? l.quickPickWallet,
-            warn: to == null,
-            onTap: onTo,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(text,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600)),
-        const SizedBox(width: AppSpacing.sm),
-        const Expanded(child: Divider()),
-      ],
-    );
-  }
-}
-
-class _TagsBlock extends StatelessWidget {
-  const _TagsBlock({required this.selected, required this.onToggle});
-  final Set<String> selected;
-  final ValueChanged<String> onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final tags = context.watch<TagsCubit>().state.tags;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(AppIcons.tag, size: 16),
-            const SizedBox(width: AppSpacing.xs),
-            Text(l.transactionFormTagsLabel,
-                style: Theme.of(context).textTheme.labelLarge),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        if (tags.isEmpty)
-          Text(l.transactionFormTagsEmpty,
-              style: Theme.of(context).textTheme.bodySmall)
-        else
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
-              for (final t in tags)
-                FilterChip(
-                  label: Text('#${t.name}'),
-                  selected: selected.contains(t.id),
-                  showCheckmark: false,
-                  onSelected: (_) => onToggle(t.id),
-                ),
-            ],
-          ),
-      ],
-    );
-  }
-}
-
 class _EventTile extends StatelessWidget {
-  const _EventTile({required this.target, required this.onTap, required this.onClear});
+  const _EventTile({
+    required this.target,
+    required this.onTap,
+    required this.onClear,
+  });
   final _EventTarget? target;
   final VoidCallback onTap;
   final VoidCallback onClear;
@@ -1147,11 +1106,13 @@ class _SummaryBar extends StatelessWidget {
     required this.amount,
     required this.category,
     required this.onTap,
+    this.symbol = '฿',
   });
   final TransactionType type;
   final double amount;
   final Category? category;
   final VoidCallback onTap;
+  final String symbol;
 
   @override
   Widget build(BuildContext context) {
@@ -1173,23 +1134,31 @@ class _SummaryBar extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           child: Row(
             children: [
-              Text(typeLabel,
-                  style: textTheme.labelMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
+              Text(
+                typeLabel,
+                style: textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: MoneyText(
                   amount,
+                  symbol: symbol,
                   tone: switch (type) {
                     TransactionType.expense => MoneyTone.expense,
                     TransactionType.income => MoneyTone.income,
                     TransactionType.transfer => MoneyTone.plain,
                   },
                   hideable: false,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               if (category != null)
@@ -1236,21 +1205,22 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
     final l = AppLocalizations.of(context)!;
     final state = context.watch<ProjectsCubit>().state;
     final active = state.projects.where((p) => p.isActive).toList();
+    // Title row, drag handle and keyboard inset come from [showAppSheet].
     return Padding(
-      padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg,
-          AppSpacing.lg + MediaQuery.viewInsetsOf(context).bottom),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l.quickAddToEvent,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: AppSpacing.md),
-          Text(l.quickEventNew, style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: AppSpacing.xs),
+          SectionHeader(
+            title: l.quickEventNew,
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          ),
           Row(
             children: [
               Expanded(
@@ -1270,20 +1240,36 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(l.quickEventExisting, style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: AppSpacing.xs),
+          SectionHeader(
+            title: l.quickEventExisting,
+            padding: const EdgeInsets.only(
+              top: AppSpacing.lg,
+              bottom: AppSpacing.xs,
+            ),
+          ),
           if (state.status == ProjectsStatus.loading && active.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(AppSpacing.lg),
-              child: Center(child: CircularProgressIndicator()),
-            )
+            // Row-shaped skeletons matching the event rows below.
+            for (var i = 0; i < 3; i++)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Row(
+                  children: [
+                    SkeletonCircle(size: 24),
+                    SizedBox(width: AppSpacing.lg),
+                    Expanded(child: SkeletonLine()),
+                  ],
+                ),
+              )
           else if (active.isEmpty)
-            Text(l.quickEventNoneYet, style: Theme.of(context).textTheme.bodySmall)
+            Text(
+              l.quickEventNoneYet,
+              style: Theme.of(context).textTheme.bodySmall,
+            )
           else
             ConstrainedBox(
               constraints: BoxConstraints(
-                  maxHeight: MediaQuery.sizeOf(context).height * 0.4),
+                maxHeight: MediaQuery.sizeOf(context).height * 0.4,
+              ),
               child: ListView(
                 shrinkWrap: true,
                 children: [

@@ -7,6 +7,7 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../cubit/scheduled_transactions_cubit.dart';
 import '../widgets/scheduled_card.dart';
 
@@ -30,52 +31,57 @@ class _ScheduledTransactionsListPageState
     });
   }
 
-  void _add() => context.push('/scheduled-transactions/new');
+  /// Creating goes through the quick create sheet (scheduled mode).
+  void _add() => showQuickCreateSheet(context, scheduled: true);
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppTopBar(title: l.scheduledTitle, showBack: true),
-      body: BlocConsumer<ScheduledTransactionsCubit, ScheduledTransactionsState>(
-        listenWhen: (a, b) =>
-            a.errorMessage != b.errorMessage && b.errorMessage != null,
-        listener: (ctx, s) =>
-            showAppSnackBar(ctx, s.errorMessage!, tone: Tone.danger),
-        builder: (context, state) {
-          if (state.status == ScheduledTransactionsStatus.loading &&
-              state.entries.isEmpty) {
-            return ListView(children: [
-              for (var i = 0; i < 4; i++) const SkeletonListTile(),
-            ]);
-          }
-          if (state.entries.isEmpty) {
-            return EmptyView(
-              icon: AppIcons.scheduled,
-              title: l.scheduledEmptyTitle,
-              message: l.scheduledEmptyMessage,
-              cta: AddTile(label: l.scheduledAddNew, onTap: _add),
-            );
-          }
-          return PullToRefresh(
+      extendBodyBehindAppBar: true,
+      body: BlocBuilder<ScheduledTransactionsCubit, ScheduledTransactionsState>(
+        builder: (context, state) => AsyncStateView(
+          loading:
+              state.status == ScheduledTransactionsStatus.initial ||
+              state.status == ScheduledTransactionsStatus.loading,
+          error: state.error,
+          isEmpty: state.entries.isEmpty,
+          onRetry: context.read<ScheduledTransactionsCubit>().load,
+          skeleton: ListView(
+            children: [for (var i = 0; i < 4; i++) const SkeletonListTile()],
+          ),
+          empty: EmptyView(
+            icon: AppIcons.scheduled,
+            title: l.scheduledEmptyTitle,
+            message: l.scheduledEmptyMessage,
+            cta: AddTile(label: l.scheduledAddNew, onTap: _add),
+          ),
+          builder: (context) => PullToRefresh(
             onRefresh: () => context.read<ScheduledTransactionsCubit>().load(),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
+              // Top: clear the transparent top bar.
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.md,
+                AppSpacing.lg,
+                96,
+              ),
               children: [
                 for (final e in state.entries) ...[
                   ScheduledCard(
                     entry: e,
-                    onTap: () => context.push('/scheduled-transactions/${e.id}'),
+                    onTap: () =>
+                        context.push('/scheduled-transactions/${e.id}'),
                   ),
                   const SizedBox(height: AppSpacing.md),
                 ],
                 AddTile(label: l.scheduledAddNew, onTap: _add),
               ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

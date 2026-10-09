@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/top_bar_crumbs.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
@@ -14,35 +15,59 @@ import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../domain/scheduled_enums.dart';
 import '../../domain/scheduled_history.dart';
 import '../../domain/scheduled_transaction.dart';
 import '../cubit/scheduled_transactions_cubit.dart';
 
-/// `/scheduled-transactions/:id`: header (icon · name · status pill ·
-/// variant · amount · next due) → stats → "สร้างตอนนี้" → history. Top bar
-/// `[🗑 ลบ][✏️]`; pause / resume / cancel live on the status pill (§1.5).
-class ScheduledTransactionDetailPage extends StatelessWidget {
+/// `/scheduled-transactions/:id` — view only: header (icon · name · status
+/// pill · variant · amount · next due) → stats → "สร้างตอนนี้" → history →
+/// delete. ✏️ on the header opens the quick create sheet in scheduled mode;
+/// pause / resume / cancel live on the status pill (§1.5). No in-place
+/// edit mode, so delete is always the last row (as on transaction detail).
+class ScheduledTransactionDetailPage extends StatefulWidget {
   const ScheduledTransactionDetailPage({required this.id, super.key});
 
   final String id;
+
+  @override
+  State<ScheduledTransactionDetailPage> createState() =>
+      _ScheduledTransactionDetailPageState();
+}
+
+class _ScheduledTransactionDetailPageState
+    extends State<ScheduledTransactionDetailPage> {
+  /// Last entry shown. After delete (the row below) the cubit drops it
+  /// while this page is still animating away — keep painting it instead of
+  /// flashing "not found".
+  ScheduledTransaction? _last;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return BlocBuilder<ScheduledTransactionsCubit, ScheduledTransactionsState>(
       builder: (context, state) {
-        final entry = context.read<ScheduledTransactionsCubit>().byId(id);
-        if (entry != null) return _LoadedScaffold(entry: entry);
+        final entry =
+            context.read<ScheduledTransactionsCubit>().byId(widget.id) ?? _last;
+        if (entry != null) {
+          _last = entry;
+          return _LoadedScaffold(entry: entry);
+        }
         return Scaffold(
           appBar: AppTopBar(title: l.scheduledTitle, showBack: true),
-          body: state.status == ScheduledTransactionsStatus.loading
-              ? const LoadingView()
-              : EmptyView(
-                  icon: AppIcons.empty,
-                  title: l.scheduledDetailNotFound,
-                  message: l.scheduledDetailNotFoundMessage,
-                ),
+          extendBodyBehindAppBar: true,
+          body: AsyncStateView.fallback(
+            loading: state.status == ScheduledTransactionsStatus.loading,
+            error: state.error,
+            onRetry: context.read<ScheduledTransactionsCubit>().load,
+            skeleton: const LoadingView(),
+            notFound: EmptyView(
+              icon: AppIcons.empty,
+              title: l.scheduledDetailNotFound,
+              message: l.scheduledDetailNotFoundMessage,
+            ),
+          ),
         );
       },
     );
@@ -60,36 +85,43 @@ class _LoadedScaffold extends StatefulWidget {
 enum _StatusAction { pause, resume, cancel }
 
 class _LoadedScaffoldState extends State<_LoadedScaffold> {
-  late Future<ScheduledHistory> _historyFuture =
-      context.read<ScheduledTransactionsCubit>().history(widget.entry.id);
+  late Future<ScheduledHistory> _historyFuture = context
+      .read<ScheduledTransactionsCubit>()
+      .history(widget.entry.id);
 
   void _refreshHistory() => setState(() {
-        _historyFuture =
-            context.read<ScheduledTransactionsCubit>().history(widget.entry.id);
-      });
+    _historyFuture = context.read<ScheduledTransactionsCubit>().history(
+      widget.entry.id,
+    );
+  });
 
   Future<void> _changeStatus() async {
     final l = AppLocalizations.of(context)!;
     final e = widget.entry;
+    // Each option leads with its action icon, tinted with the tone of the
+    // status it moves to — the same tones as the pill.
     final action = await showOptionSheet<_StatusAction>(
       context,
       title: l.scheduledStatusChangeTitle,
       options: [
         if (e.canPause)
           SheetOption(
-              value: _StatusAction.pause,
-              label: l.scheduledDetailPause,
-              leading: const Icon(Icons.pause_circle_outline)),
+            value: _StatusAction.pause,
+            label: l.scheduledDetailPause,
+            leading: const _ToneIcon(AppIcons.pause, Tone.warning),
+          ),
         if (e.canResume)
           SheetOption(
-              value: _StatusAction.resume,
-              label: l.scheduledDetailResume,
-              leading: const Icon(Icons.play_circle_outline)),
+            value: _StatusAction.resume,
+            label: l.scheduledDetailResume,
+            leading: const _ToneIcon(AppIcons.resume, Tone.success),
+          ),
         if (e.canCancel)
           SheetOption(
-              value: _StatusAction.cancel,
-              label: l.scheduledDetailCancel,
-              leading: const Icon(Icons.cancel_outlined)),
+            value: _StatusAction.cancel,
+            label: l.scheduledDetailCancel,
+            leading: const _ToneIcon(AppIcons.stop, Tone.danger),
+          ),
       ],
     );
     if (action == null || !mounted) return;
@@ -111,6 +143,17 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
     }
   }
 
+  Future<void> _run(Future<void> Function() action) async {
+    try {
+      await action();
+    } on ApiException catch (e) {
+      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+    }
+  }
+
+  /// Delete, then land on the list — pop back to it when it's in the
+  /// stack, else go there. The page keeps painting the last entry while it
+  /// animates away (see [_ScheduledTransactionDetailPageState._last]).
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
@@ -121,22 +164,21 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
       destructive: true,
     );
     if (!ok || !mounted) return;
-    final router = GoRouter.of(context);
-    await _run(
-      () => context.read<ScheduledTransactionsCubit>().remove(widget.entry.id),
-      then: () {
-        if (router.canPop()) router.pop();
-      },
-    );
-  }
-
-  Future<void> _run(Future<void> Function() action, {VoidCallback? then}) async {
     try {
-      await action();
-      then?.call();
+      await context.read<ScheduledTransactionsCubit>().remove(widget.entry.id);
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      return;
     }
+    if (!mounted) return;
+    goToCrumb(
+      context,
+      TopBarCrumb(
+        label: l.moreScheduled,
+        path: '/scheduled-transactions',
+        routeName: 'scheduled-transactions',
+      ),
+    );
   }
 
   @override
@@ -145,47 +187,56 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
     final entry = widget.entry;
     final canChange = entry.canPause || entry.canResume || entry.canCancel;
     return Scaffold(
-      appBar: AppTopBar(
-        title: entry.name,
-        showBack: true,
-        actions: [
-          AppBarAction(
-            icon: AppIcons.delete,
-            tooltip: l.scheduledDetailDelete,
-            destructive: true,
-            onPressed: _delete,
+      appBar: AppTopBar(title: entry.name, showBack: true),
+      extendBodyBehindAppBar: true,
+      // Builder: the body's context sees the bar height in padding.top.
+      body: Builder(
+        builder: (context) => ListView(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            MediaQuery.paddingOf(context).top + AppSpacing.md,
+            AppSpacing.lg,
+            96,
           ),
-          AppBarAction(
-            icon: AppIcons.edit,
-            tooltip: l.scheduledDetailEdit,
-            onPressed: () =>
-                context.push('/scheduled-transactions/${entry.id}/edit'),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
-        children: [
-          _Hero(entry: entry, onStatusTap: canChange ? _changeStatus : null),
-          const SizedBox(height: AppSpacing.lg),
-          _StatsCard(entry: entry),
-          if (entry.canGenerateNow) ...[
+          children: [
+            _Hero(
+              entry: entry,
+              onStatusTap: canChange ? _changeStatus : null,
+              onEdit: () => showQuickCreateSheet(
+                context,
+                scheduled: true,
+                scheduledEntry: entry,
+              ),
+            ),
             const SizedBox(height: AppSpacing.lg),
-            _GenerateNowCard(entry: entry, onGenerated: _refreshHistory),
+            _StatsCard(entry: entry),
+            if (entry.canGenerateNow) ...[
+              const SizedBox(height: AppSpacing.lg),
+              _GenerateNowCard(entry: entry, onGenerated: _refreshHistory),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            _HistorySection(future: _historyFuture),
+            DangerRow(
+              icon: AppIcons.delete,
+              label: l.scheduledDeleteThis,
+              onTap: _delete,
+            ),
           ],
-          const SizedBox(height: AppSpacing.lg),
-          _HistorySection(future: _historyFuture),
-        ],
+        ),
       ),
     );
   }
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.entry, required this.onStatusTap});
+  const _Hero({
+    required this.entry,
+    required this.onStatusTap,
+    required this.onEdit,
+  });
   final ScheduledTransaction entry;
   final VoidCallback? onStatusTap;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -201,8 +252,12 @@ class _Hero extends StatelessWidget {
     };
     return HeaderCard(
       accent: accent,
-      leading:
-          IconDisplay(type: IconType.category, size: 52, iconCode: entry.iconCode),
+      onEdit: onEdit,
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 52,
+        iconCode: entry.iconCode,
+      ),
       title: Text(entry.name),
       subtitle: Wrap(
         spacing: AppSpacing.sm,
@@ -219,13 +274,14 @@ class _Hero extends StatelessWidget {
           MoneyText(
             entry.amount,
             tone: isIncome ? MoneyTone.income : MoneyTone.plain,
-            style: Theme.of(context)
-                .textTheme
-                .headlineMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
-          Text(l.scheduledDetailNextDue(entry.nextBillingDate),
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            l.scheduledDetailNextDue(entry.nextBillingDate),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );
@@ -243,11 +299,13 @@ class _VariantPill extends StatelessWidget {
     final label = entry.isLoan
         ? l.scheduledVariantLoan
         : entry.isInstallment
-            ? l.scheduledVariantInstallment
-            : l.scheduledVariantRecurring;
+        ? l.scheduledVariantInstallment
+        : l.scheduledVariantRecurring;
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(999),
@@ -255,12 +313,24 @@ class _VariantPill extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
+          color: scheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
+}
+
+/// A status-change option's icon (⏸ / ▶ / ⏹), tinted with the tone of the
+/// status it leads to.
+class _ToneIcon extends StatelessWidget {
+  const _ToneIcon(this.icon, this.tone);
+  final IconData icon;
+  final Tone tone;
+
+  @override
+  Widget build(BuildContext context) =>
+      Icon(icon, size: 22, color: tone.color(context));
 }
 
 class _StatsCard extends StatelessWidget {
@@ -277,37 +347,37 @@ class _StatsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _StatRow(
-              icon: Icons.account_balance_wallet_outlined,
+              icon: AppIcons.wallet,
               label: l.scheduledDetailAccount,
               value: entry.account?.name ?? '—',
             ),
             if (entry.category != null)
               _StatRow(
-                icon: Icons.category_outlined,
+                icon: AppIcons.category,
                 label: l.scheduledDetailCategory,
                 value: entry.category!.name,
               ),
             _StatRow(
-              icon: Icons.cached,
+              icon: AppIcons.scheduled,
               label: l.scheduledDetailCycle,
               value: _cycleLabel(l, entry.billingCycle),
             ),
             if (entry.isInstallment) ...[
               if (entry.totalAmount != null)
                 _StatRow(
-                  icon: Icons.payments_outlined,
+                  icon: AppIcons.cash,
                   label: l.scheduledDetailTotalAmount,
                   value: moneyString(context, entry.totalAmount!),
                 ),
               if (entry.downPayment != null && entry.downPayment! > 0)
                 _StatRow(
-                  icon: Icons.south_outlined,
+                  icon: AppIcons.trendDown,
                   label: l.scheduledDetailDownPayment,
                   value: moneyString(context, entry.downPayment!),
                 ),
               if (entry.totalInstallments != null)
                 _StatRow(
-                  icon: Icons.format_list_numbered,
+                  icon: AppIcons.transactions,
                   label: l.scheduledDetailInstallments,
                   value: l.scheduledInstallmentsLeft(
                     entry.remainingInstallments ?? 0,
@@ -316,14 +386,14 @@ class _StatsCard extends StatelessWidget {
                 ),
               if (entry.interestRate != null && entry.interestRate! > 0)
                 _StatRow(
-                  icon: Icons.percent,
+                  icon: AppIcons.trendUp,
                   label: l.scheduledDetailInterestRate,
                   value: '${entry.interestRate!.toStringAsFixed(2)}%',
                 ),
             ],
             if (entry.note != null && entry.note!.isNotEmpty)
               _StatRow(
-                icon: Icons.sticky_note_2_outlined,
+                icon: AppIcons.note,
                 label: l.scheduledDetailNote,
                 value: entry.note!,
               ),
@@ -369,18 +439,15 @@ class _StatRow extends StatelessWidget {
           Icon(icon, size: 20, color: scheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
           ),
           Flexible(
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -418,23 +485,18 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
             const SizedBox(height: AppSpacing.sm),
             Text(
               l.scheduledGenerateNowBody,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSpacing.md),
             Align(
               alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: _busy ? null : _trigger,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.bolt),
-                label: Text(l.scheduledGenerateNowAction),
+              child: AppButton(
+                label: l.scheduledGenerateNowAction,
+                icon: AppIcons.add,
+                loading: _busy,
+                onPressed: _trigger,
               ),
             ),
           ],
@@ -456,22 +518,17 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
       if (mounted) unawaited(context.read<AccountsCubit>().load());
       widget.onGenerated();
       if (!mounted) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(l.scheduledGenerateNowSuccess),
-          action: SnackBarAction(
-            label: l.scheduledGenerateNowViewTransaction,
-            onPressed: () => router.push(
-              '/transactions/${result.generatedTransactionId}',
-            ),
-          ),
-        ));
+      showAppSnackBarOn(
+        messenger,
+        l.scheduledGenerateNowSuccess,
+        tone: Tone.success,
+        actionLabel: l.scheduledGenerateNowViewTransaction,
+        onAction: () =>
+            router.push('/transactions/${result.generatedTransactionId}'),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -501,14 +558,33 @@ class _HistorySection extends StatelessWidget {
               future: future,
               builder: (context, snap) {
                 if (snap.connectionState != ConnectionState.done) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                    child: Center(child: CircularProgressIndicator()),
+                  // Rows shaped like the history rows below.
+                  return Column(
+                    children: [
+                      for (var i = 0; i < 3; i++)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: AppSpacing.sm,
+                          ),
+                          child: Row(
+                            children: [
+                              SkeletonCircle(size: 20),
+                              SizedBox(width: AppSpacing.md),
+                              Expanded(child: SkeletonLine()),
+                              SizedBox(width: AppSpacing.xl),
+                              SkeletonLine(width: 64),
+                            ],
+                          ),
+                        ),
+                    ],
                   );
                 }
                 if (snap.hasError) {
                   return Text(
-                    snap.error.toString(),
+                    ErrorView.titleFor(
+                      l,
+                      ApiException.from(snap.error!, snap.stackTrace),
+                    ),
                     style: TextStyle(color: scheme.error),
                   );
                 }
@@ -516,12 +592,13 @@ class _HistorySection extends StatelessWidget {
                 if (h.entries.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.md),
+                      vertical: AppSpacing.md,
+                    ),
                     child: Text(
                       l.scheduledDetailHistoryEmpty,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   );
                 }
@@ -529,30 +606,29 @@ class _HistorySection extends StatelessWidget {
                   children: [
                     for (final e in h.entries)
                       InkWell(
-                        onTap: () => GoRouter.of(context)
-                            .push('/transactions/${e.id}'),
+                        onTap: () =>
+                            GoRouter.of(context).push('/transactions/${e.id}'),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.sm),
+                            vertical: AppSpacing.sm,
+                          ),
                           child: Row(
                             children: [
-                              Icon(Icons.receipt_long_outlined,
-                                  size: 20,
-                                  color: scheme.onSurfaceVariant),
+                              Icon(
+                                AppIcons.transactions,
+                                size: 20,
+                                color: scheme.onSurfaceVariant,
+                              ),
                               const SizedBox(width: AppSpacing.md),
                               Expanded(
                                 child: Text(
                                   e.date,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium,
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ),
                               Text(
                                 moneyString(context, e.amount),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
+                                style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                             ],
@@ -568,17 +644,12 @@ class _HistorySection extends StatelessWidget {
                           children: [
                             Text(
                               l.scheduledDetailHistoryTotal(h.totalGenerated),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
+                              style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(color: scheme.onSurfaceVariant),
                             ),
                             Text(
-                              moneyString(context, 
-                                  h.totalAmountGenerated),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
+                              moneyString(context, h.totalAmountGenerated),
+                              style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
                                     color: scheme.onSurface,
                                     fontWeight: FontWeight.w600,

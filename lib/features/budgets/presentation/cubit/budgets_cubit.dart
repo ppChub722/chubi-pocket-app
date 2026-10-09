@@ -13,28 +13,29 @@ class BudgetsState extends Equatable {
   const BudgetsState({
     this.budgets = const [],
     this.status = BudgetsStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final List<Budget> budgets;
   final BudgetsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   BudgetsState copyWith({
     List<Budget>? budgets,
     BudgetsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return BudgetsState(
       budgets: budgets ?? this.budgets,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [budgets, status, errorMessage];
+  List<Object?> get props => [budgets, status, error];
 }
 
 enum BudgetsStatus { initial, loading, loaded, error }
@@ -50,8 +51,8 @@ enum BudgetsStatus { initial, loading, loaded, error }
 /// surfaces the message via snackbar.
 class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
   BudgetsCubit({required BudgetsRepository repository})
-      : _repo = repository,
-        super(const BudgetsState());
+    : _repo = repository,
+      super(const BudgetsState());
 
   final BudgetsRepository _repo;
 
@@ -70,16 +71,20 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
     emit(state.copyWith(status: BudgetsStatus.loading, clearError: true));
     try {
       final list = await _repo.list(scope: BudgetScope.user);
-      emit(state.copyWith(
-        budgets: list,
-        status: BudgetsStatus.loaded,
-        clearError: true,
-      ));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: BudgetsStatus.error,
-        errorMessage: e.message,
-      ));
+      emit(
+        state.copyWith(
+          budgets: list,
+          status: BudgetsStatus.loaded,
+          clearError: true,
+        ),
+      );
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: BudgetsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -90,17 +95,21 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
 
   Future<void> update(Budget budget) async {
     final updated = await _repo.update(budget);
-    emit(state.copyWith(budgets: [
-      for (final b in state.budgets)
-        if (b.id == updated.id) updated else b,
-    ]));
+    emit(
+      state.copyWith(
+        budgets: [
+          for (final b in state.budgets)
+            if (b.id == updated.id) updated else b,
+        ],
+      ),
+    );
   }
 
   Future<void> archive(String id) async {
     await _repo.archive(id);
-    emit(state.copyWith(
-      budgets: state.budgets.where((b) => b.id != id).toList(),
-    ));
+    emit(
+      state.copyWith(budgets: state.budgets.where((b) => b.id != id).toList()),
+    );
   }
 
   Future<void> restore(String id) async {
@@ -110,9 +119,9 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
 
   Future<void> remove(String id) async {
     await _repo.delete(id);
-    emit(state.copyWith(
-      budgets: state.budgets.where((b) => b.id != id).toList(),
-    ));
+    emit(
+      state.copyWith(budgets: state.budgets.where((b) => b.id != id).toList()),
+    );
   }
 
   /// Overview summary (spec §3.7). Not cached — recomputed on demand
@@ -122,11 +131,7 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
     BudgetScope scope = BudgetScope.user,
     String? projectId,
   }) {
-    return _repo.overview(
-      period: period,
-      scope: scope,
-      projectId: projectId,
-    );
+    return _repo.overview(period: period, scope: scope, projectId: projectId);
   }
 
   Budget? byId(String id) {

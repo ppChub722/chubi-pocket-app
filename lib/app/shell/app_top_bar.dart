@@ -10,57 +10,35 @@ import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart'
 import '../../features/pending/presentation/cubit/pending_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../shared/widgets/buttons/app_icon_button.dart';
-import '../../shared/widgets/chips/filter_chips.dart';
+import '../../shared/icon_maker/icon_shape.dart';
 import '../../shared/widgets/user_avatar.dart';
 import 'top_bar_crumbs.dart';
 
-/// A local (page-specific) action for [AppTopBar], rendered as an icon chip
-/// to the left of the universal notification + profile chips.
-class AppBarAction {
-  const AppBarAction({
-    required this.icon,
-    required this.onPressed,
-    this.tooltip,
-    this.badgeCount = 0,
-    this.destructive = false,
-    this.enabled = true,
-    this.label,
-  });
-
-  final IconData icon;
-  final VoidCallback onPressed;
-  final String? tooltip;
-  final int badgeCount;
-
-  /// Red, labelled pill ("🗑 ลบ") — destructive actions always show text
-  /// because they matter. Callers still confirm via `showConfirmDialog`.
-  final bool destructive;
-
-  /// false → dimmed and untappable (e.g. bulk actions with nothing selected).
-  final bool enabled;
-
-  /// Text for a [destructive] pill; defaults to the localized "ลบ".
-  final String? label;
-}
-
 /// Universal top bar — the top-chrome counterpart to `MainBottomNav`.
 ///
-/// Same on every page: a **transparent** bar (blends into the page; it still
-/// occupies its row, content starts below it) where every icon sits in its
-/// own circular chip. Layout:
+/// Same on every page, in every mode (owner rule 2026-10-09):
 ///
-/// `[ ← │ Title ]               [ …local ] [ 🔔 ] [ 👤 ]`
+/// `[ ← │ Title ]                         [ ⏳ ] [ 🔔 ] [ 👤 ]`
 ///
-/// - **Left**: optional back chip + a thin divider + the title (left-aligned).
-/// - **Right**: page-specific [actions], then the always-present
-///   notification + profile chips.
+/// - **Left**: optional back chip + a thin divider + the breadcrumb title.
+/// - **Right**: the universal chips only — pending drafts, inbox, profile.
+///
+/// **No page actions, ever** — not add, not edit, not delete. They live in
+/// the page body (pencil on the `HeaderCard`, `AddTile`s, a `DangerRow` at
+/// the bottom in edit mode, …). There is deliberately no `actions`
+/// parameter, so one can't creep back in.
+///
+/// The bar is transparent and pages float it over their content
+/// (`Scaffold.extendBodyBehindAppBar: true`, first item padded by
+/// `MediaQuery.paddingOf(context).top`).
 ///
 /// Modes:
-/// - **[editing]** (edit / reorder mode, forms): back chip becomes ✕
-///   (= cancel) and the universal chips are hidden — only the page's own
-///   edit actions remain.
+/// - **[editing]** (edit / reorder mode, forms): ← becomes ✕ (= cancel,
+///   asks before discarding) and the breadcrumb parent stops being a link.
+///   The universal chips stay — opening them pushes an overlay page, so the
+///   edit in progress is still there on return.
 /// - **[showUniversal] false** (overlay layer: settings, notifications):
-///   hides 🔔 👤 since the layer was opened from them.
+///   hides the chips since the layer was opened from them.
 ///
 /// Implements [PreferredSizeWidget] so it drops straight into
 /// `Scaffold.appBar`.
@@ -69,7 +47,6 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.title,
     this.showBack = false,
     this.onBack,
-    this.actions = const <AppBarAction>[],
     this.editing = false,
     this.showUniversal = true,
     this.parent,
@@ -83,13 +60,10 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   /// Custom back handler; defaults to popping the current route.
   final VoidCallback? onBack;
 
-  /// Page-specific action chips, shown left of the universal chips.
-  final List<AppBarAction> actions;
-
-  /// Edit-mode chrome: ✕ instead of ←, no universal chips.
+  /// Edit-mode chrome: ✕ instead of ←.
   final bool editing;
 
-  /// Whether to show the 🔔 / 👤 chips (ignored while [editing]).
+  /// Whether to show the ⏳ / 🔔 / 👤 chips.
   final bool showUniversal;
 
   /// Breadcrumb parent (`โปรเจกต์ › test`). Null = derived from the route
@@ -98,8 +72,6 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// false = title only, even when a parent could be derived.
   final bool showParent;
-
-  bool get _universal => showUniversal && !editing;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -124,88 +96,72 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
         onBack: onBack ?? () => _defaultBack(context),
       ),
       actions: [
-        for (final a in actions) _actionChip(context, a),
-        if (!_universal)
-          const SizedBox(width: AppSpacing.md)
-        // Separate the page-local actions from the universal ones. Only a
-        // left margin here — the next chip brings its own left padding, so
-        // the divider sits evenly between the two groups.
-        else if (actions.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.sm),
-            child: Container(
-              width: 2,
-              height: 24,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-        // Universal: pending drafts (รอยืนยัน), next to the inbox.
-        if (_universal)
-        BlocBuilder<PendingCubit, PendingState>(
-          buildWhen: (a, b) => a.count != b.count,
-          builder: (context, pending) => _actionChip(
-            context,
-            AppBarAction(
+        if (!showUniversal) const SizedBox(width: AppSpacing.md),
+        // Pending drafts (รอยืนยัน), next to the inbox.
+        if (showUniversal)
+          BlocBuilder<PendingCubit, PendingState>(
+            buildWhen: (a, b) => a.count != b.count,
+            builder: (context, pending) => _chip(
               icon: AppIcons.pending,
               tooltip: l.pendingTooltip,
-              onPressed: () => context.push('/pending'),
               badgeCount: pending.count,
+              onPressed: () => context.push('/pending'),
             ),
           ),
-        ),
-        // Universal: notification inbox.
-        if (_universal)
-        BlocBuilder<UnreadBadgeCubit, int>(
-          builder: (context, unread) => _actionChip(
-            context,
-            AppBarAction(
+        // Notification inbox.
+        if (showUniversal)
+          BlocBuilder<UnreadBadgeCubit, int>(
+            builder: (context, unread) => _chip(
               icon: AppIcons.notifications,
               tooltip: l.navNotificationsTooltip,
-              onPressed: () => context.push('/notifications'),
               badgeCount: unread,
+              onPressed: () => context.push('/notifications'),
             ),
           ),
-        ),
-        // Universal: profile — the full avatar (no chip border), with a
-        // matching shadow.
-        if (_universal)
-        BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, state) {
-            final user = _userOf(state);
-            if (user == null) return const SizedBox(width: AppSpacing.sm);
-            return Padding(
-              padding: const EdgeInsets.only(
-                  left: AppSpacing.sm, right: AppSpacing.md),
-              child: Tooltip(
-                message: l.navProfileTooltip,
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () => context.push('/settings'),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .shadow
-                              .withValues(alpha: 0.2),
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: UserAvatar(
-                      displayName: user.displayName,
-                      iconCode: user.iconCode,
-                      size: 40,
+        // Profile — the full avatar (no chip border), with a matching
+        // shadow.
+        if (showUniversal)
+          BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, state) {
+              final user = _userOf(state);
+              if (user == null) return const SizedBox(width: AppSpacing.sm);
+              // The shadow + ripple follow the avatar's own shape (circle,
+              // squircle, leaf, …) the user picked for their icon.
+              final outline = IconShape.fromId(user.iconCode?.shape).radius(40);
+              return Padding(
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.sm,
+                  right: AppSpacing.md,
+                ),
+                child: Tooltip(
+                  message: l.navProfileTooltip,
+                  child: InkWell(
+                    customBorder: RoundedRectangleBorder(borderRadius: outline),
+                    onTap: () => context.push('/settings'),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: outline,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.shadow.withValues(alpha: 0.2),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: UserAvatar(
+                        displayName: user.displayName,
+                        iconCode: user.iconCode,
+                        size: 40,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
       ],
     );
   }
@@ -214,27 +170,21 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     if (context.canPop()) context.pop();
   }
 
-  /// A circular action chip ([AppIconButton]) with left spacing; destructive
-  /// actions render as a red labelled [ActionPill] instead.
-  Widget _actionChip(BuildContext context, AppBarAction a) {
+  /// A universal circular chip ([AppIconButton]) with left spacing.
+  Widget _chip({
+    required IconData icon,
+    required String tooltip,
+    required int badgeCount,
+    required VoidCallback onPressed,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(left: AppSpacing.sm),
-      child: a.destructive
-          ? Tooltip(
-              message: a.tooltip ?? '',
-              child: ActionPill(
-                icon: a.icon,
-                label: a.label ?? AppLocalizations.of(context)!.commonDelete,
-                destructive: true,
-                onTap: a.enabled ? a.onPressed : null,
-              ),
-            )
-          : AppIconButton(
-              icon: a.icon,
-              tooltip: a.tooltip,
-              badgeCount: a.badgeCount,
-              onPressed: a.enabled ? a.onPressed : null,
-            ),
+      child: AppIconButton(
+        icon: icon,
+        tooltip: tooltip,
+        badgeCount: badgeCount,
+        onPressed: onPressed,
+      ),
     );
   }
 }
@@ -297,23 +247,33 @@ class _LeftGroup extends StatelessWidget {
             if (crumb != null) ...[
               ConstrainedBox(
                 constraints: BoxConstraints(
-                    maxWidth: MediaQuery.sizeOf(context).width * 0.4),
+                  maxWidth: MediaQuery.sizeOf(context).width * 0.4,
+                ),
                 child: InkWell(
                   onTap: parentEnabled ? () => goToCrumb(context, crumb) : null,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md, AppSpacing.sm, AppSpacing.xs, AppSpacing.sm),
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                      AppSpacing.xs,
+                      AppSpacing.sm,
+                    ),
                     child: Text(
                       crumb.label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyMedium
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
               ),
-              Icon(AppIcons.chevronRight, size: 16, color: scheme.onSurfaceVariant),
+              Icon(
+                AppIcons.chevronRight,
+                size: 16,
+                color: scheme.onSurfaceVariant,
+              ),
             ],
             if (title != null)
               Flexible(

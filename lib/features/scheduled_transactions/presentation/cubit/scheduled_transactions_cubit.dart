@@ -12,28 +12,29 @@ class ScheduledTransactionsState extends Equatable {
   const ScheduledTransactionsState({
     this.entries = const [],
     this.status = ScheduledTransactionsStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final List<ScheduledTransaction> entries;
   final ScheduledTransactionsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   ScheduledTransactionsState copyWith({
     List<ScheduledTransaction>? entries,
     ScheduledTransactionsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return ScheduledTransactionsState(
       entries: entries ?? this.entries,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [entries, status, errorMessage];
+  List<Object?> get props => [entries, status, error];
 }
 
 enum ScheduledTransactionsStatus { initial, loading, loaded, error }
@@ -51,8 +52,8 @@ class ScheduledTransactionsCubit extends Cubit<ScheduledTransactionsState>
     with Clearable {
   ScheduledTransactionsCubit({
     required ScheduledTransactionsRepository repository,
-  })  : _repo = repository,
-        super(const ScheduledTransactionsState());
+  }) : _repo = repository,
+       super(const ScheduledTransactionsState());
 
   final ScheduledTransactionsRepository _repo;
 
@@ -68,22 +69,28 @@ class ScheduledTransactionsCubit extends Cubit<ScheduledTransactionsState>
   }
 
   Future<void> load() async {
-    emit(state.copyWith(
-      status: ScheduledTransactionsStatus.loading,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        status: ScheduledTransactionsStatus.loading,
+        clearError: true,
+      ),
+    );
     try {
       final list = await _repo.list();
-      emit(state.copyWith(
-        entries: list,
-        status: ScheduledTransactionsStatus.loaded,
-        clearError: true,
-      ));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: ScheduledTransactionsStatus.error,
-        errorMessage: e.message,
-      ));
+      emit(
+        state.copyWith(
+          entries: list,
+          status: ScheduledTransactionsStatus.loaded,
+          clearError: true,
+        ),
+      );
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: ScheduledTransactionsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -110,16 +117,18 @@ class ScheduledTransactionsCubit extends Cubit<ScheduledTransactionsState>
   Future<void> cancel(String id) async {
     final updated = await _repo.cancel(id);
     // Cancelled is terminal; drop from the active cache.
-    emit(state.copyWith(
-      entries: state.entries.where((e) => e.id != updated.id).toList(),
-    ));
+    emit(
+      state.copyWith(
+        entries: state.entries.where((e) => e.id != updated.id).toList(),
+      ),
+    );
   }
 
   Future<void> remove(String id) async {
     await _repo.delete(id);
-    emit(state.copyWith(
-      entries: state.entries.where((e) => e.id != id).toList(),
-    ));
+    emit(
+      state.copyWith(entries: state.entries.where((e) => e.id != id).toList()),
+    );
   }
 
   /// Manually trigger generation (spec §3.8). Phase 1c only — Phase 3+
@@ -141,9 +150,11 @@ class ScheduledTransactionsCubit extends Cubit<ScheduledTransactionsState>
           result.status.toJson() == 'paused') {
         _replace(patched);
       } else {
-        emit(state.copyWith(
-          entries: state.entries.where((e) => e.id != id).toList(),
-        ));
+        emit(
+          state.copyWith(
+            entries: state.entries.where((e) => e.id != id).toList(),
+          ),
+        );
       }
     }
     return result;
@@ -162,9 +173,13 @@ class ScheduledTransactionsCubit extends Cubit<ScheduledTransactionsState>
   }
 
   void _replace(ScheduledTransaction updated) {
-    emit(state.copyWith(entries: [
-      for (final e in state.entries)
-        if (e.id == updated.id) updated else e,
-    ]));
+    emit(
+      state.copyWith(
+        entries: [
+          for (final e in state.entries)
+            if (e.id == updated.id) updated else e,
+        ],
+      ),
+    );
   }
 }

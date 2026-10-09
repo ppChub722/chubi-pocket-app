@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../cubit/auth_cubit.dart';
 
@@ -64,10 +65,7 @@ class _SplashPageState extends State<SplashPage> {
                   children: [
                     _LogoMark(color: theme.colorScheme.primary),
                     const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'ChubiPocket',
-                      style: theme.textTheme.headlineMedium,
-                    ),
+                    Text('ChubiPocket', style: theme.textTheme.headlineMedium),
                     const SizedBox(height: AppSpacing.xl),
                     const SizedBox(
                       width: 32,
@@ -111,7 +109,7 @@ class _LogoMark extends StatelessWidget {
       height: 96,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
       ),
       alignment: Alignment.center,
       child: const Text(

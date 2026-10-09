@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app_colors.dart';
 import '../app_theme.dart';
+import '../module_colors.dart';
 
 const _mintPrimary = Color(0xFF00BFA6);
 const _mintPrimaryDark = Color(0xFF4DD6C1);
@@ -13,6 +14,17 @@ final mintTheme = AppTheme(
   nameKey: 'theme_mint',
   isPremium: false,
   previewSwatch: const [_mintPrimary, _deepTeal, Color(0xFFF7F8FA)],
+  // Feature groups — cool family: emerald · sky · indigo.
+  lightModules: const ModuleColors(
+    library: Color(0xFF10B981),
+    people: Color(0xFF0EA5E9),
+    planning: Color(0xFF6366F1),
+  ),
+  darkModules: const ModuleColors(
+    library: Color(0xFF34D399),
+    people: Color(0xFF38BDF8),
+    planning: Color(0xFF818CF8),
+  ),
   lightColors: const AppColors(
     brightness: Brightness.light,
     primary: _mintPrimary,

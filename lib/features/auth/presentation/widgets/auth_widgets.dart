@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -28,21 +29,28 @@ class AuthBrandHeader extends StatelessWidget {
           onUnlock: () => context.push('/dev'),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(size * 0.24),
-            child: Image.asset('assets/icon/logo.png',
-                width: size, height: size, fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/icon/logo.png',
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Text(l.appName,
-            style: (compact ? textTheme.titleLarge : textTheme.headlineSmall)
-                ?.copyWith(fontWeight: FontWeight.w800)),
+        Text(
+          l.appName,
+          style: (compact ? textTheme.titleLarge : textTheme.headlineSmall)
+              ?.copyWith(fontWeight: FontWeight.w800),
+        ),
         if (!compact) ...[
           const SizedBox(height: AppSpacing.xs),
           Text(
             l.authTagline,
             textAlign: TextAlign.center,
             style: textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ],
@@ -62,11 +70,12 @@ class AuthOrDivider extends StatelessWidget {
         Expanded(child: Divider(color: scheme.outlineVariant)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(AppLocalizations.of(context)!.authOr,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(color: scheme.onSurfaceVariant)),
+          child: Text(
+            AppLocalizations.of(context)!.authOr,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
         ),
         Expanded(child: Divider(color: scheme.outlineVariant)),
       ],
@@ -95,7 +104,8 @@ class GoogleSignInButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md)),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
           side: BorderSide(color: scheme.outline),
         ),
         child: Row(
@@ -110,11 +120,14 @@ class GoogleSignInButton extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: scheme.outline),
               ),
-              child: Text('G',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: scheme.onSurface)),
+              child: Text(
+                'G',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: scheme.onSurface,
+                ),
+              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Flexible(child: Text(l.authContinueWithGoogle)),
@@ -125,8 +138,9 @@ class GoogleSignInButton extends StatelessWidget {
             if (loading) ...[
               const SizedBox(width: AppSpacing.sm),
               const SizedBox.square(
-                  dimension: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
+                dimension: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ],
           ],
         ),
@@ -146,7 +160,8 @@ class AuthPrefsBar extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final code = context.watch<LocaleCubit>().state.languageCode;
     final mode = context.watch<ThemeModeCubit>().state;
-    final dark = mode == ThemeMode.dark ||
+    final dark =
+        mode == ThemeMode.dark ||
         (mode == ThemeMode.system &&
             MediaQuery.platformBrightnessOf(context) == Brightness.dark);
     return Row(
@@ -161,7 +176,7 @@ class AuthPrefsBar extends StatelessWidget {
           ],
           builder: (context, toggle) => FilterDropdownChip(
             label: l.authLanguage,
-            icon: Icons.language_outlined,
+            icon: AppIcons.language,
             valueLabel: _languages[code],
             active: false,
             onTap: toggle,
@@ -169,11 +184,11 @@ class AuthPrefsBar extends StatelessWidget {
         ),
         const SizedBox(width: AppSpacing.sm),
         AppIconButton(
-          icon: dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+          icon: dark ? AppIcons.lightMode : AppIcons.darkMode,
           tooltip: dark ? l.modeLight : l.modeDark,
-          onPressed: () => context
-              .read<ThemeModeCubit>()
-              .set(dark ? ThemeMode.light : ThemeMode.dark),
+          onPressed: () => context.read<ThemeModeCubit>().set(
+            dark ? ThemeMode.light : ThemeMode.dark,
+          ),
         ),
       ],
     );

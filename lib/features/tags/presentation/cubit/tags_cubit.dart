@@ -12,28 +12,29 @@ class TagsState extends Equatable {
   const TagsState({
     this.tags = const [],
     this.status = TagsStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final List<Tag> tags;
   final TagsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   TagsState copyWith({
     List<Tag>? tags,
     TagsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return TagsState(
       tags: tags ?? this.tags,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [tags, status, errorMessage];
+  List<Object?> get props => [tags, status, error];
 }
 
 enum TagsStatus { initial, loading, loaded, error }
@@ -48,8 +49,8 @@ enum TagsStatus { initial, loading, loaded, error }
 /// on failure so the form page can show a snackbar.
 class TagsCubit extends Cubit<TagsState> with Clearable {
   TagsCubit({required TagsRepository repository})
-      : _repo = repository,
-        super(const TagsState());
+    : _repo = repository,
+      super(const TagsState());
 
   final TagsRepository _repo;
 
@@ -68,16 +69,16 @@ class TagsCubit extends Cubit<TagsState> with Clearable {
     emit(state.copyWith(status: TagsStatus.loading, clearError: true));
     try {
       final list = await _repo.list();
-      emit(state.copyWith(
-        tags: list,
-        status: TagsStatus.loaded,
-        clearError: true,
-      ));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: TagsStatus.error,
-        errorMessage: e.message,
-      ));
+      emit(
+        state.copyWith(tags: list, status: TagsStatus.loaded, clearError: true),
+      );
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: TagsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -89,19 +90,19 @@ class TagsCubit extends Cubit<TagsState> with Clearable {
 
   Future<void> update(Tag tag) async {
     final updated = await _repo.update(tag);
-    emit(state.copyWith(
-      tags: [
-        for (final t in state.tags)
-          if (t.id == updated.id) updated else t,
-      ],
-    ));
+    emit(
+      state.copyWith(
+        tags: [
+          for (final t in state.tags)
+            if (t.id == updated.id) updated else t,
+        ],
+      ),
+    );
   }
 
   Future<void> remove(String id) async {
     await _repo.delete(id);
-    emit(state.copyWith(
-      tags: state.tags.where((t) => t.id != id).toList(),
-    ));
+    emit(state.copyWith(tags: state.tags.where((t) => t.id != id).toList()));
   }
 
   Tag? byId(String id) {

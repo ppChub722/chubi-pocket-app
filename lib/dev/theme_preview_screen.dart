@@ -5,6 +5,7 @@ import '../core/constants/app_radius.dart';
 import '../core/constants/app_spacing.dart';
 import '../core/fonts/font_registry.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/module_colors.dart';
 import '../core/theme/theme_registry.dart';
 import '../core/utils/currency_formatter.dart';
 import '../core/utils/date_formatter.dart';
@@ -31,9 +32,7 @@ class ThemePreviewScreen extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.previewTitle),
-      ),
+      appBar: AppBar(title: Text(l.previewTitle)),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
@@ -129,6 +128,11 @@ class ThemePreviewScreen extends StatelessWidget {
             child: _ColorSwatches(colors: colors),
           ),
           _Section(
+            title: 'Module group colours (ModuleColors)',
+            subtitle: 'เพิ่มเติม hub: คลัง · คน · วางแผน — one set per theme',
+            child: _ModuleSwatches(modules: ModuleColors.of(context)),
+          ),
+          _Section(
             title: l.sectionFormatters,
             child: _FormatterSamples(localeCode: locale.languageCode),
           ),
@@ -138,18 +142,9 @@ class ThemePreviewScreen extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                ElevatedButton(
-                  onPressed: () {},
-                  child: const Text('Elevated'),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text('Text button'),
-                ),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Outlined'),
-                ),
+                ElevatedButton(onPressed: () {}, child: const Text('Elevated')),
+                TextButton(onPressed: () {}, child: const Text('Text button')),
+                OutlinedButton(onPressed: () {}, child: const Text('Outlined')),
               ],
             ),
           ),
@@ -170,12 +165,16 @@ class ThemePreviewScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(l.monthlyBalance,
-                        style: Theme.of(context).textTheme.labelMedium),
+                    Text(
+                      l.monthlyBalance,
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      CurrencyFormatter.format(12450.75,
-                          locale: locale.toString()),
+                      CurrencyFormatter.format(
+                        12450.75,
+                        locale: locale.toString(),
+                      ),
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ],
@@ -204,16 +203,10 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
           if (subtitle != null) ...[
             const SizedBox(height: AppSpacing.xxs),
-            Text(
-              subtitle!,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
           ],
           const SizedBox(height: AppSpacing.sm),
           child,
@@ -232,10 +225,7 @@ class _SwatchDot extends StatelessWidget {
     return Container(
       width: 16,
       height: 16,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
@@ -283,19 +273,18 @@ class _ColorSwatches extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: entries
-          .map((e) => Container(
-                width: 110,
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: e.$2,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(color: colors.outlineSoft),
-                ),
-                child: Text(
-                  e.$1,
-                  style: TextStyle(color: e.$3, fontSize: 12),
-                ),
-              ))
+          .map(
+            (e) => Container(
+              width: 110,
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: e.$2,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: colors.outlineSoft),
+              ),
+              child: Text(e.$1, style: TextStyle(color: e.$3, fontSize: 12)),
+            ),
+          )
           .toList(),
     );
   }
@@ -312,17 +301,78 @@ class _FormatterSamples extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('currency: ${CurrencyFormatter.format(1234.56, locale: localeCode)}',
-            style: style),
         Text(
-            'compact:  ${CurrencyFormatter.compact(1234567, locale: localeCode)}',
-            style: style),
-        Text('date short:  ${DateFormatter.short(now, locale: localeCode)}',
-            style: style),
-        Text('date medium: ${DateFormatter.medium(now, locale: localeCode)}',
-            style: style),
-        Text('time:        ${DateFormatter.time(now, locale: localeCode)}',
-            style: style),
+          'currency: ${CurrencyFormatter.format(1234.56, locale: localeCode)}',
+          style: style,
+        ),
+        Text(
+          'compact:  ${CurrencyFormatter.compact(1234567, locale: localeCode)}',
+          style: style,
+        ),
+        Text(
+          'date short:  ${DateFormatter.short(now, locale: localeCode)}',
+          style: style,
+        ),
+        Text(
+          'date medium: ${DateFormatter.medium(now, locale: localeCode)}',
+          style: style,
+        ),
+        Text(
+          'time:        ${DateFormatter.time(now, locale: localeCode)}',
+          style: style,
+        ),
+      ],
+    );
+  }
+}
+
+/// The active theme's feature-group colours, drawn the way the เพิ่มเติม
+/// cards use them (wash + border + solid icon box).
+class _ModuleSwatches extends StatelessWidget {
+  const _ModuleSwatches({required this.modules});
+  final ModuleColors modules;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = <(String, Color)>[
+      ('library · คลัง', modules.library),
+      ('people · คน', modules.people),
+      ('planning · วางแผน', modules.planning),
+    ];
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final (name, c) in entries)
+          Container(
+            width: 150,
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: c.withValues(alpha: 0.25)),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [c.withValues(alpha: 0.16), c.withValues(alpha: 0.03)],
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: c,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(name, style: const TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }

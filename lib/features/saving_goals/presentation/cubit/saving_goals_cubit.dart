@@ -13,28 +13,29 @@ class SavingGoalsState extends Equatable {
   const SavingGoalsState({
     this.goals = const [],
     this.status = SavingGoalsStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final List<SavingGoal> goals;
   final SavingGoalsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   SavingGoalsState copyWith({
     List<SavingGoal>? goals,
     SavingGoalsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return SavingGoalsState(
       goals: goals ?? this.goals,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [goals, status, errorMessage];
+  List<Object?> get props => [goals, status, error];
 }
 
 enum SavingGoalsStatus { initial, loading, loaded, error }
@@ -52,8 +53,8 @@ enum SavingGoalsStatus { initial, loading, loaded, error }
 /// account changes.
 class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
   SavingGoalsCubit({required SavingGoalsRepository repository})
-      : _repo = repository,
-        super(const SavingGoalsState());
+    : _repo = repository,
+      super(const SavingGoalsState());
 
   final SavingGoalsRepository _repo;
 
@@ -72,16 +73,20 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
     emit(state.copyWith(status: SavingGoalsStatus.loading, clearError: true));
     try {
       final list = await _repo.list();
-      emit(state.copyWith(
-        goals: list,
-        status: SavingGoalsStatus.loaded,
-        clearError: true,
-      ));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: SavingGoalsStatus.error,
-        errorMessage: e.message,
-      ));
+      emit(
+        state.copyWith(
+          goals: list,
+          status: SavingGoalsStatus.loaded,
+          clearError: true,
+        ),
+      );
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: SavingGoalsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -92,19 +97,21 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
 
   Future<void> update(SavingGoal goal) async {
     final updated = await _repo.update(goal);
-    emit(state.copyWith(goals: [
-      for (final g in state.goals)
-        if (g.id == updated.id) updated else g,
-    ]));
+    emit(
+      state.copyWith(
+        goals: [
+          for (final g in state.goals)
+            if (g.id == updated.id) updated else g,
+        ],
+      ),
+    );
   }
 
   /// Archive (spec §3.6). The active list drops the archived row since
   /// `loadIfNeeded` only fetches active goals by default.
   Future<void> archive(String id) async {
     await _repo.archive(id);
-    emit(state.copyWith(
-      goals: state.goals.where((g) => g.id != id).toList(),
-    ));
+    emit(state.copyWith(goals: state.goals.where((g) => g.id != id).toList()));
   }
 
   /// Restore (spec §3.6). The server may reject with
@@ -119,9 +126,7 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
   /// untouched.
   Future<void> remove(String id) async {
     await _repo.delete(id);
-    emit(state.copyWith(
-      goals: state.goals.where((g) => g.id != id).toList(),
-    ));
+    emit(state.copyWith(goals: state.goals.where((g) => g.id != id).toList()));
   }
 
   /// Per-account allocation pie (spec §3.7). Not cached — see class

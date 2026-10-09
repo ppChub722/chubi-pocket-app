@@ -51,17 +51,25 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
     final debts = context.read<PersonalDebtsCubit>();
     setState(() => _linking = true);
     try {
-      final n = await context
-          .read<ContactsCubit>()
-          .absorb(contact.id, [widget.name]);
+      final n = await context.read<ContactsCubit>().absorb(contact.id, [
+        widget.name,
+      ]);
       await debts.load();
       if (!mounted) return;
-      showAppSnackBar(context, l.debtsPersonLinked(n, contact.effectiveName),
-          tone: Tone.success);
-      context.pushReplacement(Uri(
-        path: '/personal-debts/person',
-        queryParameters: {'contact': contact.id, 'name': contact.effectiveName},
-      ).toString());
+      showAppSnackBar(
+        context,
+        l.debtsPersonLinked(n, contact.effectiveName),
+        tone: Tone.success,
+      );
+      context.pushReplacement(
+        Uri(
+          path: '/personal-debts/person',
+          queryParameters: {
+            'contact': contact.id,
+            'name': contact.effectiveName,
+          },
+        ).toString(),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _linking = false);
@@ -69,96 +77,118 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
     }
   }
 
-  void _addDebt() => context.push('/personal-debts/new', extra: {
-        'contactId': widget.contactId,
-        'name': widget.name,
-      });
+  void _addDebt() => context.push(
+    '/personal-debts/new',
+    extra: {'contactId': widget.contactId, 'name': widget.name},
+  );
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppTopBar(title: widget.name, showBack: true),
+      extendBodyBehindAppBar: true,
       body: BlocBuilder<PersonalDebtsCubit, PersonalDebtsState>(
-        builder: (context, state) {
-          if (state.status == PersonalDebtsStatus.loading &&
-              state.debts.isEmpty) {
-            return const LoadingView();
-          }
-          final mine =
-              state.debts.where((d) => DebtPerson.keyOf(d) == _key).toList()
-                ..sort((a, b) => (b.createdAt ?? DateTime(0))
-                    .compareTo(a.createdAt ?? DateTime(0)));
-          final person = DebtPerson(
-            contactId: widget.contactId,
-            displayName: widget.name,
-            debts: mine,
-          );
-          final open = mine.where((d) => d.isOpen).toList();
-          final closed = mine.where((d) => !d.isOpen).toList();
-          return PullToRefresh(
-            onRefresh: () => context.read<PersonalDebtsCubit>().load(),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 96),
-              children: [
-                _Header(person: person),
-                const SizedBox(height: AppSpacing.lg),
-                if (open.isNotEmpty)
-                  SectionCard(
-                    title: l.debtsStatusOpen,
-                    children: [
-                      for (final (i, d) in open.indexed) ...[
-                        if (i > 0) const RowDivider(),
-                        DebtTile(debt: d),
-                      ],
-                    ],
-                  ),
-                const SizedBox(height: AppSpacing.sm),
-                AddTile(
-                  label: l.debtsPersonAdd,
-                  variant: AddTileVariant.row,
-                  onTap: _addDebt,
+        builder: (context, state) => AsyncStateView(
+          loading:
+              state.status == PersonalDebtsStatus.initial ||
+              state.status == PersonalDebtsStatus.loading,
+          error: state.error,
+          isEmpty: state.debts.isEmpty,
+          onRetry: context.read<PersonalDebtsCubit>().load,
+          // The generic skeleton is a padded list — clear the bar.
+          skeleton: Padding(
+            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+            child: const LoadingView(),
+          ),
+          // No debts with this person → the page's own empty sections.
+          builder: (context) {
+            final mine =
+                state.debts.where((d) => DebtPerson.keyOf(d) == _key).toList()
+                  ..sort(
+                    (a, b) => (b.createdAt ?? DateTime(0)).compareTo(
+                      a.createdAt ?? DateTime(0),
+                    ),
+                  );
+            final person = DebtPerson(
+              contactId: widget.contactId,
+              displayName: widget.name,
+              debts: mine,
+            );
+            final open = mine.where((d) => d.isOpen).toList();
+            final closed = mine.where((d) => !d.isOpen).toList();
+            return PullToRefresh(
+              onRefresh: () => context.read<PersonalDebtsCubit>().load(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                // Top: clear the floating top bar.
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                  AppSpacing.lg,
+                  96,
                 ),
-                if (widget.contactId == null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  DetailRow(
-                    leading: _linking
-                        ? const SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(AppIcons.link),
-                    label: l.debtsPersonLinkContact,
-                    helper: l.debtsPersonLinkContactHint,
-                    showChevron: true,
-                    onTap: _linking ? null : _linkToContact,
-                  ),
-                ],
-                if (closed.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Theme(
-                    // No divider lines from ExpansionTile.
-                    data: Theme.of(context)
-                        .copyWith(dividerColor: Colors.transparent),
-                    child: ExpansionTile(
-                      tilePadding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                      leading: const Icon(AppIcons.history),
-                      title: Text(l.debtsPersonHistory(closed.length)),
+                children: [
+                  _Header(person: person),
+                  const SizedBox(height: AppSpacing.lg),
+                  if (open.isNotEmpty)
+                    SectionCard(
+                      title: l.debtsStatusOpen,
                       children: [
-                        for (final (i, d) in closed.indexed) ...[
+                        for (final (i, d) in open.indexed) ...[
                           if (i > 0) const RowDivider(),
                           DebtTile(debt: d),
                         ],
                       ],
                     ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AddTile(
+                    label: l.debtsPersonAdd,
+                    variant: AddTileVariant.row,
+                    onTap: _addDebt,
                   ),
+                  if (widget.contactId == null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    DetailRow(
+                      leading: _linking
+                          ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(AppIcons.link),
+                      label: l.debtsPersonLinkContact,
+                      helper: l.debtsPersonLinkContactHint,
+                      showChevron: true,
+                      onTap: _linking ? null : _linkToContact,
+                    ),
+                  ],
+                  if (closed.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Theme(
+                      // No divider lines from ExpansionTile.
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
+                        leading: const Icon(AppIcons.history),
+                        title: Text(l.debtsPersonHistory(closed.length)),
+                        children: [
+                          for (final (i, d) in closed.indexed) ...[
+                            if (i > 0) const RowDivider(),
+                            DebtTile(debt: d),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -176,11 +206,19 @@ class _Header extends StatelessWidget {
     final symbol = Currencies.symbolOf(p.currency);
     final even = p.net.abs() < 0.005;
     return HeaderCard(
-      leading: DebtAvatar(contactId: p.contactId, name: p.displayName, size: 52),
+      leading: DebtAvatar(
+        contactId: p.contactId,
+        name: p.displayName,
+        size: 52,
+      ),
       title: Text(p.displayName),
-      subtitle: Text(even
-          ? l.debtsEven
-          : (p.net > 0 ? l.debtTheyOweYou(p.displayName) : l.debtYouOwe(p.displayName))),
+      subtitle: Text(
+        even
+            ? l.debtsEven
+            : (p.net > 0
+                  ? l.debtTheyOweYou(p.displayName)
+                  : l.debtYouOwe(p.displayName)),
+      ),
       trailing: p.contactId == null
           ? null
           : AppIconButton(
@@ -194,10 +232,9 @@ class _Header extends StatelessWidget {
               p.net.abs(),
               symbol: symbol,
               tone: p.net > 0 ? MoneyTone.income : MoneyTone.expense,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
     );
   }

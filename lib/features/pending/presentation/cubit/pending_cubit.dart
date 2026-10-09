@@ -12,36 +12,36 @@ class PendingState extends Equatable {
   const PendingState({
     this.items = const [],
     this.status = PendingStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final List<PendingTransaction> items;
   final PendingStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   int get count => items.length;
 
   PendingState copyWith({
     List<PendingTransaction>? items,
     PendingStatus? status,
-    String? errorMessage,
-  }) =>
-      PendingState(
-        items: items ?? this.items,
-        status: status ?? this.status,
-        errorMessage: errorMessage,
-      );
+    ApiException? error,
+  }) => PendingState(
+    items: items ?? this.items,
+    status: status ?? this.status,
+    error: error,
+  );
 
   @override
-  List<Object?> get props => [items, status, errorMessage];
+  List<Object?> get props => [items, status, error];
 }
 
 /// App-scoped drafts cache — the top-bar badge, the dashboard block and the
 /// รอยืนยัน page all read it. Mutations re-throw [ApiException].
 class PendingCubit extends Cubit<PendingState> with Clearable {
   PendingCubit({required PendingRepository repository})
-      : _repo = repository,
-        super(const PendingState());
+    : _repo = repository,
+      super(const PendingState());
 
   final PendingRepository _repo;
 
@@ -57,8 +57,13 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
     try {
       final items = await _repo.list();
       emit(PendingState(items: items, status: PendingStatus.loaded));
-    } on ApiException catch (e) {
-      emit(state.copyWith(status: PendingStatus.error, errorMessage: e.message));
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: PendingStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -70,9 +75,11 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
 
   Future<PendingTransaction> updateDraft(String id, PendingDraft draft) async {
     final updated = await _repo.update(id, draft);
-    emit(state.copyWith(items: [
-      for (final p in state.items) p.id == id ? updated : p,
-    ]));
+    emit(
+      state.copyWith(
+        items: [for (final p in state.items) p.id == id ? updated : p],
+      ),
+    );
     return updated;
   }
 
@@ -86,21 +93,25 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
   Future<PendingSubmitResult> submit(List<String> ids) async {
     final result = await _repo.submit(ids);
     final done = result.submitted.toSet();
-    emit(state.copyWith(items: [
-      for (final p in state.items)
-        if (!done.contains(p.id))
-          result.failed[p.id] == null
-              ? p
-              : PendingTransaction(
-                  id: p.id,
-                  source: p.source,
-                  kind: p.kind,
-                  draft: p.draft,
-                  createdAt: p.createdAt,
-                  sourceRef: p.sourceRef,
-                  lastError: result.failed[p.id],
-                ),
-    ]));
+    emit(
+      state.copyWith(
+        items: [
+          for (final p in state.items)
+            if (!done.contains(p.id))
+              result.failed[p.id] == null
+                  ? p
+                  : PendingTransaction(
+                      id: p.id,
+                      source: p.source,
+                      kind: p.kind,
+                      draft: p.draft,
+                      createdAt: p.createdAt,
+                      sourceRef: p.sourceRef,
+                      lastError: result.failed[p.id],
+                    ),
+        ],
+      ),
+    );
     return result;
   }
 }

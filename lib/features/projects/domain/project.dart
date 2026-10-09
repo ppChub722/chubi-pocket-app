@@ -142,18 +142,18 @@ class Project extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        ownerUserId,
-        name,
-        type,
-        description,
-        startDate,
-        endDate,
-        status,
-        membersCount,
-        iconCode,
-        plannedAmount,
-      ];
+    id,
+    ownerUserId,
+    name,
+    type,
+    description,
+    startDate,
+    endDate,
+    status,
+    membersCount,
+    iconCode,
+    plannedAmount,
+  ];
 }
 
 /// Post-migration 27: members are linked (userId set) or ad-hoc (userId null).
@@ -199,8 +199,15 @@ class ProjectMember extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, projectId, userId, displayName, role, status, iconCode];
+  List<Object?> get props => [
+    id,
+    projectId,
+    userId,
+    displayName,
+    role,
+    status,
+    iconCode,
+  ];
 }
 
 class ProjectTransaction extends Equatable {
@@ -217,8 +224,7 @@ class ProjectTransaction extends Equatable {
     this.parentProjectTransactionId,
     this.description,
     this.note,
-    this.categoryName,
-    this.categoryIconCode,
+    this.tags = const [],
   });
 
   final String id;
@@ -237,8 +243,9 @@ class ProjectTransaction extends Equatable {
   final String date;
   final String? description;
   final String? note;
-  final String? categoryName;
-  final IconCode? categoryIconCode;
+
+  /// Free labels shared by the project's members (replaced the category).
+  final List<String> tags;
 
   /// project_member ids who have flagged this row resolved on the board.
   final List<String> marks;
@@ -262,10 +269,9 @@ class ProjectTransaction extends Equatable {
       date: json['date'] as String,
       description: json['description'] as String?,
       note: json['note'] as String?,
-      categoryName: json['category_name'] as String?,
-      categoryIconCode: json['category_icon_code'] != null
-          ? IconCode.fromJson(json['category_icon_code'] as Map<String, dynamic>)
-          : null,
+      tags: ((json['tags'] as List?) ?? const [])
+          .map((e) => e as String)
+          .toList(growable: false),
       marks: ((json['marks'] as List?) ?? const [])
           .map((e) => e as String)
           .toList(growable: false),
@@ -274,21 +280,20 @@ class ProjectTransaction extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        projectId,
-        parentProjectTransactionId,
-        transactionMemberId,
-        recordUserId,
-        type,
-        amount,
-        currency,
-        date,
-        description,
-        note,
-        categoryName,
-        categoryIconCode,
-        marks,
-      ];
+    id,
+    projectId,
+    parentProjectTransactionId,
+    transactionMemberId,
+    recordUserId,
+    type,
+    amount,
+    currency,
+    date,
+    description,
+    note,
+    tags,
+    marks,
+  ];
 }
 
 /// One entry in the create/update transaction split list.
@@ -332,9 +337,7 @@ List<ProjectTxTree> buildProjectTxTree(List<ProjectTransaction> flat) {
     if (pt.isParent) {
       parents.add(pt);
     } else {
-      byParent
-          .putIfAbsent(pt.parentProjectTransactionId!, () => [])
-          .add(pt);
+      byParent.putIfAbsent(pt.parentProjectTransactionId!, () => []).add(pt);
     }
   }
   return [
@@ -399,16 +402,16 @@ class ProjectSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        projectId,
-        totalExpense,
-        totalIncome,
-        transactionCount,
-        memberCount,
-        plannedAmount,
-        spentNet,
-        remaining,
-        myPaid,
-        myShare,
-        myNet,
-      ];
+    projectId,
+    totalExpense,
+    totalIncome,
+    transactionCount,
+    memberCount,
+    plannedAmount,
+    spentNet,
+    remaining,
+    myPaid,
+    myShare,
+    myNet,
+  ];
 }

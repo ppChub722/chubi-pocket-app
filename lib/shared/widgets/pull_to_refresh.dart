@@ -27,6 +27,10 @@ class PullToRefresh extends StatelessWidget {
       onRefresh: onRefresh,
       color: scheme.primary,
       backgroundColor: scheme.surfaceContainerHigh,
+      // Pages float the top bar over their body (extendBodyBehindAppBar),
+      // which folds the bar height into the top padding — start the
+      // spinner below it instead of under the bar. 0 on pages without one.
+      edgeOffset: MediaQuery.paddingOf(context).top,
       child: child,
     );
   }

@@ -23,6 +23,7 @@ import '../widgets/add_member_sheet.dart';
 import '../widgets/project_common.dart';
 import '../widgets/project_dashboard_tab.dart';
 import '../widgets/project_tx_list_tab.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 
 enum _Tab { dashboard, transactions, resolve }
 
@@ -30,10 +31,15 @@ enum _Field { name, description, planned }
 
 /// `/projects/:id` (§12b). Header card (icon · name · status pill · type),
 /// a lock banner when the status restricts rows, then แดชบอร์ด / รายการ /
-/// เคลียร์ยอด. ✏️ edits the project info in place (owner only — the BE
-/// allows nobody else); status changes from the pill; 🗑 in edit mode.
+/// เคลียร์ยอด. ✏️ on the header card edits the project info in place (owner
+/// only — the BE allows nobody else); status changes from the pill; a
+/// delete row under the info in edit mode; "+ เพิ่มรายการ" in the รายการ tab.
 class ProjectDetailPage extends StatefulWidget {
-  const ProjectDetailPage({required this.id, this.startEditing = false, super.key});
+  const ProjectDetailPage({
+    required this.id,
+    this.startEditing = false,
+    super.key,
+  });
 
   final String id;
   final bool startEditing;
@@ -120,14 +126,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     sync(_Field.planned, working.planned);
   }
 
-  void _onText(_Field f, String v) => applyTextChange(
-        f,
-        switch (f) {
-          _Field.name => working.copyWith(name: v),
-          _Field.description => working.copyWith(description: v),
-          _Field.planned => working.copyWith(planned: v),
-        },
-      );
+  void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
+    _Field.name => working.copyWith(name: v),
+    _Field.description => working.copyWith(description: v),
+    _Field.planned => working.copyWith(planned: v),
+  });
 
   // ── Info save / delete ──────────────────────────────────────────────
 
@@ -141,14 +144,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     setSaving(true);
     try {
       await context.read<ProjectsCubit>().update(
-            widget.id,
-            name: w.name.trim(),
-            description: w.description.trim(),
-            iconCode: w.iconCode,
-            plannedAmount: planned,
-            // Blanked an existing plan → explicit null hides it (§10/4.23).
-            clearPlannedAmount: planned == null && hadPlan,
-          );
+        widget.id,
+        name: w.name.trim(),
+        description: w.description.trim(),
+        iconCode: w.iconCode,
+        plannedAmount: planned,
+        // Blanked an existing plan → explicit null hides it (§10/4.23).
+        clearPlannedAmount: planned == null && hadPlan,
+      );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(w);
@@ -212,7 +215,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       ],
     );
     if (next == null || next == current || !mounted) return;
-    final locks = next == ProjectStatus.cancelled || next == ProjectStatus.archived;
+    final locks =
+        next == ProjectStatus.cancelled || next == ProjectStatus.archived;
     if (locks) {
       final ok = await showConfirmDialog(
         context,
@@ -225,7 +229,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     try {
       await context.read<ProjectsCubit>().update(widget.id, status: next);
       if (!mounted) return;
-      showAppSnackBar(context, l.projectStatusChanged(projectStatusLabel(l, next)));
+      showAppSnackBar(
+        context,
+        l.projectStatusChanged(projectStatusLabel(l, next)),
+      );
       await _load();
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
@@ -246,8 +253,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   }
 
   Future<void> _addTx() async {
-    await context.push('/projects/${widget.id}/transactions/new');
-    if (mounted) await _load();
+    final view = _view;
+    if (view == null) return;
+    final saved = await showQuickCreateSheet(context, project: view);
+    if (saved && mounted) await _load();
   }
 
   // ── Build ───────────────────────────────────────────────────────────
@@ -259,9 +268,17 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     if (v == null) {
       return Scaffold(
         appBar: AppTopBar(title: l.navProjects, showBack: true),
+        extendBodyBehindAppBar: true,
         body: _error != null
             ? ErrorView(error: _error!, onRetry: _load)
-            : const LoadingView(),
+            : Builder(
+                builder: (context) => Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.paddingOf(context).top,
+                  ),
+                  child: const LoadingView(),
+                ),
+              ),
       );
     }
     final p = v.project;
@@ -269,110 +286,128 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final tabs = [
       AppTab(value: _Tab.dashboard, label: l.projectTabDashboard),
       AppTab(value: _Tab.transactions, label: l.projectTabTransactions),
-      if (p.isResolveReady) AppTab(value: _Tab.resolve, label: l.projectTabResolve),
+      if (p.isResolveReady)
+        AppTab(value: _Tab.resolve, label: l.projectTabResolve),
     ];
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: isEditing ? l.projectEditTitle : p.name,
-        showBack: true,
-        editing: isEditing,
-        onBack: handleBack,
-        actions: isEditing
-            ? [
-                AppBarAction(
-                  icon: AppIcons.delete,
-                  tooltip: l.commonDelete,
-                  destructive: true,
-                  enabled: !isSaving,
-                  onPressed: _delete,
-                ),
-              ]
-            : [
-                if (v.isOwner)
-                  AppBarAction(
-                    icon: AppIcons.edit,
-                    tooltip: l.commonEdit,
-                    onPressed: enterEdit,
-                  ),
-                if (v.canAddTx)
-                  AppBarAction(
-                    icon: AppIcons.add,
-                    tooltip: l.projectAddTransaction,
-                    onPressed: _addTx,
-                  ),
-              ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
-              child: _header(l, v),
-            ),
-            if (lock != null && !isEditing)
-              _LockBanner(message: lock),
-            const SizedBox(height: AppSpacing.sm),
-            Expanded(
-              child: LockedInEdit(
-                locked: isEditing,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppTabBar<_Tab>(
-                      selected: _tab,
-                      onChanged: (t) => setState(() => _tab = t),
-                      tabs: tabs,
-                    ),
-                    Expanded(child: _tabBody(l, v)),
-                  ],
-                ),
-              ),
-            ),
-          ],
+    return editScope(
+      Scaffold(
+        appBar: AppTopBar(
+          title: isEditing ? l.projectEditTitle : p.name,
+          showBack: true,
+          editing: isEditing,
+          onBack: handleBack,
         ),
+        extendBodyBehindAppBar: true,
+        body: Form(
+          key: _formKey,
+          // Builder: the bar height is only in the body's MediaQuery.
+          child: Builder(
+            builder: (context) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header (+ edit fields + delete) scrolls on its own and only
+                // takes the room it needs — when space runs short (keyboard
+                // up in edit mode on a small phone) it scrolls instead of
+                // overflowing; the tabs get the rest.
+                Flexible(
+                  flex: isEditing ? 3 : 1,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      MediaQuery.paddingOf(context).top + AppSpacing.sm,
+                      AppSpacing.lg,
+                      0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _header(l, v),
+                        // Delete sits under the edit-mode info (the tabs below
+                        // are locked while editing, so this is the page's last
+                        // live row).
+                        if (isEditing)
+                          DangerRow(
+                            icon: AppIcons.delete,
+                            label: l.projectDeleteThis,
+                            padding: const EdgeInsets.only(top: AppSpacing.md),
+                            onTap: isSaving ? null : _delete,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (lock != null && !isEditing) _LockBanner(message: lock),
+                const SizedBox(height: AppSpacing.sm),
+                Expanded(
+                  child: LockedInEdit(
+                    locked: isEditing,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppTabBar<_Tab>(
+                          selected: _tab,
+                          onChanged: (t) => setState(() => _tab = t),
+                          tabs: tabs,
+                        ),
+                        Expanded(child: _tabBody(l, v)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
-      bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
-    ));
+    );
   }
 
   Widget _tabBody(AppLocalizations l, ProjectView v) => switch (_tab) {
-        _Tab.dashboard => ProjectDashboardTab(
-            view: v,
-            onChanged: _load,
-            onSeeAll: () => setState(() => _tab = _Tab.transactions),
-            onOpenMembers: _openMembers,
-            onInvite: v.isOwner && v.project.status != ProjectStatus.archived
-                ? _invite
-                : null,
-          ),
-        _Tab.transactions => ProjectTxListTab(view: v, onChanged: _load),
-        _Tab.resolve => EmptyView(
-            icon: AppIcons.settle,
-            title: l.projectTabResolve,
-            message: l.projectResolveComingSoon,
-          ),
-      };
+    _Tab.dashboard => ProjectDashboardTab(
+      view: v,
+      onChanged: _load,
+      onSeeAll: () => setState(() => _tab = _Tab.transactions),
+      onAdd: v.canAddTx ? _addTx : null,
+      onOpenMembers: _openMembers,
+      onInvite: v.isOwner && v.project.status != ProjectStatus.archived
+          ? _invite
+          : null,
+    ),
+    _Tab.transactions => ProjectTxListTab(
+      view: v,
+      onChanged: _load,
+      onAdd: v.canAddTx ? _addTx : null,
+    ),
+    _Tab.resolve => EmptyView(
+      icon: AppIcons.settle,
+      title: l.projectTabResolve,
+      message: l.projectResolveComingSoon,
+    ),
+  };
 
   Widget _header(AppLocalizations l, ProjectView v) {
     final editing = isEditing;
     final project = v.project;
     return HeaderCard(
+      onEdit: v.isOwner && !editing ? enterEdit : null,
       leading: EditableCircle(
         size: 48,
         onTap: editing ? _openIconMaker : null,
         child: IconDisplay(
-            type: IconType.project, size: 48, iconCode: working.iconCode),
+          type: IconType.project,
+          size: 48,
+          iconCode: working.iconCode,
+        ),
       ),
       title: InlineTitleField(
         editing: editing,
         controller: _ctrl[_Field.name]!,
         focusNode: _focus[_Field.name],
         hint: l.projectNameLabel,
-        onEnterEdit:
-            v.isOwner ? () => enterEdit(focus: _focus[_Field.name]) : null,
+        onEnterEdit: v.isOwner
+            ? () => enterEdit(focus: _focus[_Field.name])
+            : null,
         onChanged: (t) => _onText(_Field.name, t),
         validator: (t) =>
             (t?.trim().isEmpty ?? true) ? l.projectNameRequired : null,
@@ -417,14 +452,18 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                         : null;
                   },
                 ),
-                Text(l.projectFormPlannedHelper,
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  l.projectFormPlannedHelper,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             )
           : (project.description?.isNotEmpty ?? false)
-              ? Text(project.description!,
-                  style: Theme.of(context).textTheme.bodyMedium)
-              : null,
+          ? Text(
+              project.description!,
+              style: Theme.of(context).textTheme.bodyMedium,
+            )
+          : null,
     );
   }
 }
@@ -439,9 +478,15 @@ class _LockBanner extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        0,
+      ),
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -451,11 +496,12 @@ class _LockBanner extends StatelessWidget {
           Icon(AppIcons.lock, size: 18, color: scheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(message,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: scheme.onSurfaceVariant)),
+            child: Text(
+              message,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
           ),
         ],
       ),
@@ -472,11 +518,13 @@ class _InfoDraft {
   });
 
   factory _InfoDraft.from(Project p) => _InfoDraft(
-        name: p.name,
-        description: p.description ?? '',
-        planned: p.plannedAmount == null ? '' : AmountField.format(p.plannedAmount!),
-        iconCode: p.iconCode,
-      );
+    name: p.name,
+    description: p.description ?? '',
+    planned: p.plannedAmount == null
+        ? ''
+        : AmountField.format(p.plannedAmount!),
+    iconCode: p.iconCode,
+  );
 
   final String name;
   final String description;
@@ -490,13 +538,12 @@ class _InfoDraft {
     String? description,
     String? planned,
     IconCode? iconCode,
-  }) =>
-      _InfoDraft(
-        name: name ?? this.name,
-        description: description ?? this.description,
-        planned: planned ?? this.planned,
-        iconCode: iconCode ?? this.iconCode,
-      );
+  }) => _InfoDraft(
+    name: name ?? this.name,
+    description: description ?? this.description,
+    planned: planned ?? this.planned,
+    iconCode: iconCode ?? this.iconCode,
+  );
 
   @override
   bool operator ==(Object other) =>

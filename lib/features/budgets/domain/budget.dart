@@ -115,7 +115,8 @@ class Budget extends Equatable {
         .toList();
     return Budget(
       id: json['id'] as String,
-      categoryId: (json['category_id'] as String?) ??
+      categoryId:
+          (json['category_id'] as String?) ??
           (category?['id'] as String? ?? ''),
       amount: (json['amount'] as num).toDouble(),
       period: BudgetPeriod.fromJson(json['period'] as String),
@@ -125,8 +126,7 @@ class Budget extends Equatable {
       projectId: json['project_id'] as String?,
       description: json['description'] as String?,
       note: json['note'] as String?,
-      category:
-          category != null ? BudgetCategoryRef.fromJson(category) : null,
+      category: category != null ? BudgetCategoryRef.fromJson(category) : null,
       currentPeriod: currentPeriod != null
           ? BudgetCurrentPeriod.fromJson(currentPeriod)
           : null,
@@ -147,10 +147,12 @@ class Budget extends Equatable {
     };
   }
 
-  /// Spec §3.4: `category_id`, `scope`, and `project_id` are NOT editable.
+  /// Spec §3.4: `scope` and `project_id` are NOT editable; `category_id` is
+  /// (since 2026-10-09).
   /// Status changes go through dedicated archive / restore endpoints.
   Map<String, dynamic> toUpdateJson() {
     return <String, dynamic>{
+      'category_id': categoryId,
       'amount': amount,
       'period': period.toJson(),
       'currency': currency,
@@ -161,20 +163,20 @@ class Budget extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        categoryId,
-        amount,
-        period,
-        scope,
-        currency,
-        status,
-        projectId,
-        description,
-        note,
-        category,
-        currentPeriod,
-        childBreakdown,
-      ];
+    id,
+    categoryId,
+    amount,
+    period,
+    scope,
+    currency,
+    status,
+    projectId,
+    description,
+    note,
+    category,
+    currentPeriod,
+    childBreakdown,
+  ];
 }
 
 /// Embedded category snapshot the BE returns on every Budget read. The
@@ -234,8 +236,14 @@ class BudgetCurrentPeriod extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [start, end, spent, remaining, utilizationPct, overLimit];
+  List<Object?> get props => [
+    start,
+    end,
+    spent,
+    remaining,
+    utilizationPct,
+    overLimit,
+  ];
 }
 
 class BudgetChildBreakdown extends Equatable {

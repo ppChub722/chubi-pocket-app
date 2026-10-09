@@ -70,7 +70,9 @@ class _ProjectFormPageState extends State<ProjectFormPage>
       title: l.projectIconLabel,
       initial: working.iconCode,
     );
-    if (r is IconMakerSelected) applyChange(working.copyWith(iconCode: r.iconCode));
+    if (r is IconMakerSelected) {
+      applyChange(working.copyWith(iconCode: r.iconCode));
+    }
   }
 
   Future<void> _save() async {
@@ -90,7 +92,9 @@ class _ProjectFormPageState extends State<ProjectFormPage>
         iconCode: w.iconCode,
       );
       // planned_amount is only accepted on PUT (API §10).
-      if (planned != null) await cubit.update(created.id, plannedAmount: planned);
+      if (planned != null) {
+        await cubit.update(created.id, plannedAmount: planned);
+      }
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(w);
@@ -105,78 +109,95 @@ class _ProjectFormPageState extends State<ProjectFormPage>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    void onText(_Field f, String v) => applyTextChange(f, working.withText(f, v));
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: l.projectNewTitle,
-        showBack: true,
-        editing: true,
-        onBack: handleBack,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            Row(
+    void onText(_Field f, String v) =>
+        applyTextChange(f, working.withText(f, v));
+    return editScope(
+      Scaffold(
+        appBar: AppTopBar(
+          title: l.projectNewTitle,
+          showBack: true,
+          editing: true,
+          onBack: handleBack,
+        ),
+        extendBodyBehindAppBar: true,
+        body: Form(
+          key: _formKey,
+          // Builder: the bar height is only in the body's MediaQuery.
+          child: Builder(
+            builder: (context) => ListView(
+              padding: const EdgeInsets.all(
+                AppSpacing.lg,
+              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
               children: [
-                EditableCircle(
-                  size: 56,
-                  onTap: _pickIcon,
-                  child: IconDisplay(
-                      type: IconType.project, size: 56, iconCode: working.iconCode),
+                Row(
+                  children: [
+                    EditableCircle(
+                      size: 56,
+                      onTap: _pickIcon,
+                      child: IconDisplay(
+                        type: IconType.project,
+                        size: 56,
+                        iconCode: working.iconCode,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: AppTextField(
+                        controller: _ctrl[_Field.name]!,
+                        label: l.projectNameLabel,
+                        autofocus: true,
+                        maxLength: 100,
+                        onChanged: (v) => onText(_Field.name, v),
+                        validator: (v) => (v?.trim().isEmpty ?? true)
+                            ? l.projectNameRequired
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: AppTextField(
-                    controller: _ctrl[_Field.name]!,
-                    label: l.projectNameLabel,
-                    autofocus: true,
-                    maxLength: 100,
-                    onChanged: (v) => onText(_Field.name, v),
-                    validator: (v) =>
-                        (v?.trim().isEmpty ?? true) ? l.projectNameRequired : null,
-                  ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _ctrl[_Field.type]!,
+                  label: l.projectTypeLabel,
+                  hint: l.projectTypeHint,
+                  prefixIcon: AppIcons.project,
+                  maxLength: 50,
+                  onChanged: (v) => onText(_Field.type, v),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _ctrl[_Field.description]!,
+                  label: l.projectDescriptionLabel,
+                  prefixIcon: AppIcons.note,
+                  maxLines: 3,
+                  maxLength: 500,
+                  onChanged: (v) => onText(_Field.description, v),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                AmountField(
+                  controller: _ctrl[_Field.planned]!,
+                  label: l.projectFormPlannedLabel,
+                  onChanged: (v) => onText(_Field.planned, v),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null;
+                    final n = AmountField.parse(v);
+                    return (n == null || n <= 0)
+                        ? l.projectFormPlannedInvalid
+                        : null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l.projectFormPlannedHelper,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              controller: _ctrl[_Field.type]!,
-              label: l.projectTypeLabel,
-              hint: l.projectTypeHint,
-              prefixIcon: AppIcons.project,
-              maxLength: 50,
-              onChanged: (v) => onText(_Field.type, v),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              controller: _ctrl[_Field.description]!,
-              label: l.projectDescriptionLabel,
-              prefixIcon: AppIcons.note,
-              maxLines: 3,
-              maxLength: 500,
-              onChanged: (v) => onText(_Field.description, v),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AmountField(
-              controller: _ctrl[_Field.planned]!,
-              label: l.projectFormPlannedLabel,
-              onChanged: (v) => onText(_Field.planned, v),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return null;
-                final n = AmountField.parse(v);
-                return (n == null || n <= 0) ? l.projectFormPlannedInvalid : null;
-              },
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(l.projectFormPlannedHelper,
-                style: Theme.of(context).textTheme.bodySmall),
-          ],
+          ),
         ),
+        bottomNavigationBar: editActionBar(onSave: _save),
       ),
-      bottomNavigationBar: editActionBar(onSave: _save),
-    ));
+    );
   }
 }
 
@@ -196,27 +217,27 @@ class _NewProject {
   final IconCode? iconCode;
 
   String text(_Field f) => switch (f) {
-        _Field.name => name,
-        _Field.type => type,
-        _Field.description => description,
-        _Field.planned => planned,
-      };
+    _Field.name => name,
+    _Field.type => type,
+    _Field.description => description,
+    _Field.planned => planned,
+  };
 
   _NewProject withText(_Field f, String v) => _NewProject(
-        name: f == _Field.name ? v : name,
-        type: f == _Field.type ? v : type,
-        description: f == _Field.description ? v : description,
-        planned: f == _Field.planned ? v : planned,
-        iconCode: iconCode,
-      );
+    name: f == _Field.name ? v : name,
+    type: f == _Field.type ? v : type,
+    description: f == _Field.description ? v : description,
+    planned: f == _Field.planned ? v : planned,
+    iconCode: iconCode,
+  );
 
   _NewProject copyWith({IconCode? iconCode}) => _NewProject(
-        name: name,
-        type: type,
-        description: description,
-        planned: planned,
-        iconCode: iconCode ?? this.iconCode,
-      );
+    name: name,
+    type: type,
+    description: description,
+    planned: planned,
+    iconCode: iconCode ?? this.iconCode,
+  );
 
   @override
   bool operator ==(Object other) =>

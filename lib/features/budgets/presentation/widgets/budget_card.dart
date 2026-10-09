@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
@@ -11,10 +12,23 @@ import '../../domain/budget.dart';
 import '../../domain/budget_period.dart';
 
 String budgetPeriodLabel(AppLocalizations l, BudgetPeriod p) => switch (p) {
-      BudgetPeriod.weekly => l.budgetPeriodWeekly,
-      BudgetPeriod.monthly => l.budgetPeriodMonthly,
-      BudgetPeriod.yearly => l.budgetPeriodYearly,
-    };
+  BudgetPeriod.weekly => l.budgetPeriodWeekly,
+  BudgetPeriod.monthly => l.budgetPeriodMonthly,
+  BudgetPeriod.yearly => l.budgetPeriodYearly,
+};
+
+/// "1 ต.ค. 2026 – 31 ต.ค. 2026" from the API's `YYYY-MM-DD` bounds (raw
+/// strings if they don't parse).
+String budgetPeriodRange(BuildContext context, String start, String end) {
+  final l = AppLocalizations.of(context)!;
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  String fmt(String raw) {
+    final d = DateFormatter.parseDay(raw);
+    return d == null ? raw : DateFormatter.medium(d, locale: locale);
+  }
+
+  return l.budgetDetailPeriodRange(fmt(start), fmt(end));
+}
 
 /// Bar colour: warning from 80 %, error once over the limit (spec §3).
 Color budgetAccent(BuildContext context, Budget b) {
@@ -60,23 +74,28 @@ class BudgetCard extends StatelessWidget {
               Row(
                 children: [
                   IconDisplay(
-                      type: IconType.category, size: 40, iconCode: budget.iconCode),
+                    type: IconType.category,
+                    size: 40,
+                    iconCode: budget.iconCode,
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium),
-                        Text(subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: scheme.onSurfaceVariant)),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
                       ],
                     ),
                   ),
@@ -89,8 +108,10 @@ class BudgetCard extends StatelessWidget {
                 color: budgetAccent(context, budget),
                 label: cp == null
                     ? moneyString(context, budget.amount)
-                    : l.budgetSpentLine(moneyString(context, cp.spent),
-                        moneyString(context, budget.amount)),
+                    : l.budgetSpentLine(
+                        moneyString(context, cp.spent),
+                        moneyString(context, budget.amount),
+                      ),
                 trailing: '${pct.toStringAsFixed(0)}%',
               ),
             ],

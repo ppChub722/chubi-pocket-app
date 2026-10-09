@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_radius.dart';
@@ -15,10 +16,7 @@ class ThemeBuilder {
   }) {
     final colors = theme.colorsFor(brightness);
     final colorScheme = colors.toColorScheme();
-    final textTheme = _buildTextTheme(
-      font: font,
-      onSurface: colors.onSurface,
-    );
+    final textTheme = _buildTextTheme(font: font, onSurface: colors.onSurface);
 
     return ThemeData(
       useMaterial3: true,
@@ -27,7 +25,7 @@ class ThemeBuilder {
       scaffoldBackgroundColor: colors.background,
       canvasColor: colors.background,
       textTheme: textTheme,
-      extensions: [colors],
+      extensions: [colors, ?theme.modulesFor(brightness)],
       appBarTheme: AppBarTheme(
         backgroundColor: colors.surface,
         foregroundColor: colors.onSurface,
@@ -35,6 +33,7 @@ class ThemeBuilder {
         scrolledUnderElevation: 0.5,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge,
+        systemOverlayStyle: systemBarsStyle(colors.background),
       ),
       cardTheme: CardThemeData(
         color: colors.surface,
@@ -95,14 +94,30 @@ class ThemeBuilder {
     );
   }
 
+  /// Status / nav bar icons contrast with the [background] that actually
+  /// shows behind them — not the top bar's colour: [AppTopBar] is
+  /// transparent, which Flutter reads as "dark" → white icons on our light
+  /// background. Light background → dark icons, dark → light.
+  static SystemUiOverlayStyle systemBarsStyle(Color background) {
+    final bg = ThemeData.estimateBrightnessForColor(background);
+    final icons = bg == Brightness.light ? Brightness.dark : Brightness.light;
+    return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: icons,
+      // iOS names the bar's background, not its icons.
+      statusBarBrightness: bg,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: icons,
+    );
+  }
+
   static TextTheme _buildTextTheme({
     required AppFont font,
     required Color onSurface,
   }) {
-    final base = ThemeData(brightness: Brightness.light).textTheme.apply(
-          bodyColor: onSurface,
-          displayColor: onSurface,
-        );
+    final base = ThemeData(
+      brightness: Brightness.light,
+    ).textTheme.apply(bodyColor: onSurface, displayColor: onSurface);
     return GoogleFonts.getTextTheme(font.family, base);
   }
 }

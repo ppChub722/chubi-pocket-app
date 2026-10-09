@@ -80,12 +80,16 @@ class _EditProfilePageState extends State<EditProfilePage>
       initial: working.iconCode,
       removeLabel: l.commonRemove,
       previewBuilder: (code) => UserProfilePreview(
-        displayName: working.name.trim().isEmpty ? _user.displayName : working.name,
+        displayName: working.name.trim().isEmpty
+            ? _user.displayName
+            : working.name,
         iconCode: code,
       ),
     );
     if (!mounted || r == null) return;
-    if (r is IconMakerSelected) applyChange(working.copyWith(iconCode: r.iconCode));
+    if (r is IconMakerSelected) {
+      applyChange(working.copyWith(iconCode: r.iconCode));
+    }
     if (r is IconMakerRemoved) applyChange(working.copyWith(clearIcon: true));
   }
 
@@ -104,11 +108,11 @@ class _EditProfilePageState extends State<EditProfilePage>
     setState(() => _emailError = null);
     try {
       final updated = await context.read<UsersRepository>().updateMe(
-            displayName: w.name.trim() != o.name ? w.name.trim() : null,
-            email: emailChanged ? email : null,
-            iconCode: iconChanged ? w.iconCode : null,
-            clearIconCode: iconChanged && w.iconCode == null,
-          );
+        displayName: w.name.trim() != o.name ? w.name.trim() : null,
+        email: emailChanged ? email : null,
+        iconCode: iconChanged ? w.iconCode : null,
+        clearIconCode: iconChanged && w.iconCode == null,
+      );
       auth.updateUser(updated);
       if (!mounted) return;
       HapticFeedback.mediumImpact();
@@ -130,99 +134,127 @@ class _EditProfilePageState extends State<EditProfilePage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final w = working;
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: l.editProfileTitle,
-        showBack: true,
-        editing: true,
-        onBack: handleBack,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
-          children: [
-            HeaderCard(
-              leading: EditableCircle(
-                size: 64,
-                onTap: _pickAvatar,
-                child: UserAvatar(
-                  displayName: w.name.trim().isEmpty ? _user.displayName : w.name,
-                  iconCode: w.iconCode,
-                  size: 64,
-                ),
+    return editScope(
+      Scaffold(
+        appBar: AppTopBar(
+          title: l.editProfileTitle,
+          showBack: true,
+          editing: true,
+          onBack: handleBack,
+        ),
+        extendBodyBehindAppBar: true,
+        body: Form(
+          key: _formKey,
+          // Builder: the floating bar's height is only visible inside the body.
+          child: Builder(
+            builder: (context) => ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.huge,
               ),
-              title: InlineTitleField(
-                editing: true,
-                controller: _nameCtrl,
-                hint: l.editProfileDisplayNameLabel,
-                onChanged: (v) =>
-                    applyTextChange(_Field.name, working.copyWith(name: v)),
-                validator: (v) {
-                  final s = v?.trim() ?? '';
-                  if (s.isEmpty) return l.commonRequired;
-                  if (s.length > 100) return l.authRegisterDisplayNameTooLong;
-                  return null;
-                },
-              ),
-              subtitle: Text('@${_user.username}'),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            SectionCard(
               children: [
-                DetailRow(
-                  leading: const Icon(AppIcons.lock),
-                  label: l.editProfileUsernameLabel,
-                  helper: l.profileUsernameLocked,
-                  trailing: Text('@${_user.username}'),
-                ),
-                const RowDivider(),
-                DetailStacked(
-                  label: l.editProfileEmailLabel,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      InlineField(
-                        editing: true,
-                        controller: _emailCtrl,
-                        maxLength: 255,
-                        keyboardType: TextInputType.emailAddress,
-                        onChanged: (v) {
-                          if (_emailError != null) setState(() => _emailError = null);
-                          applyTextChange(_Field.email, working.copyWith(email: v));
-                        },
-                        validator: (v) {
-                          if (_emailError != null) return _emailError;
-                          final s = v?.trim() ?? '';
-                          if (s.isEmpty) return null;
-                          if (s.length > 255) return l.editProfileEmailTooLong;
-                          return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
-                              ? null
-                              : l.editProfileEmailInvalid;
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(l.editProfileEmailHelper,
-                          style: Theme.of(context).textTheme.bodySmall),
-                    ],
+                HeaderCard(
+                  leading: EditableCircle(
+                    size: 64,
+                    onTap: _pickAvatar,
+                    child: UserAvatar(
+                      displayName: w.name.trim().isEmpty
+                          ? _user.displayName
+                          : w.name,
+                      iconCode: w.iconCode,
+                      size: 64,
+                    ),
                   ),
+                  title: InlineTitleField(
+                    editing: true,
+                    controller: _nameCtrl,
+                    hint: l.editProfileDisplayNameLabel,
+                    onChanged: (v) =>
+                        applyTextChange(_Field.name, working.copyWith(name: v)),
+                    validator: (v) {
+                      final s = v?.trim() ?? '';
+                      if (s.isEmpty) return l.commonRequired;
+                      if (s.length > 100) {
+                        return l.authRegisterDisplayNameTooLong;
+                      }
+                      return null;
+                    },
+                  ),
+                  subtitle: Text('@${_user.username}'),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                SectionCard(
+                  children: [
+                    DetailRow(
+                      leading: const Icon(AppIcons.lock),
+                      label: l.editProfileUsernameLabel,
+                      helper: l.profileUsernameLocked,
+                      trailing: Text('@${_user.username}'),
+                    ),
+                    const RowDivider(),
+                    DetailStacked(
+                      label: l.editProfileEmailLabel,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          InlineField(
+                            editing: true,
+                            controller: _emailCtrl,
+                            maxLength: 255,
+                            keyboardType: TextInputType.emailAddress,
+                            onChanged: (v) {
+                              if (_emailError != null) {
+                                setState(() => _emailError = null);
+                              }
+                              applyTextChange(
+                                _Field.email,
+                                working.copyWith(email: v),
+                              );
+                            },
+                            validator: (v) {
+                              if (_emailError != null) return _emailError;
+                              final s = v?.trim() ?? '';
+                              if (s.isEmpty) return null;
+                              if (s.length > 255) {
+                                return l.editProfileEmailTooLong;
+                              }
+                              return RegExp(
+                                    r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                  ).hasMatch(s)
+                                  ? null
+                                  : l.editProfileEmailInvalid;
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            l.editProfileEmailHelper,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
+        bottomNavigationBar: editActionBar(onSave: _save),
       ),
-      bottomNavigationBar: editActionBar(onSave: _save),
-    ));
+    );
   }
 }
 
 class _ProfileDraft {
   const _ProfileDraft({required this.name, required this.email, this.iconCode});
 
-  factory _ProfileDraft.from(User u) =>
-      _ProfileDraft(name: u.displayName, email: u.email ?? '', iconCode: u.iconCode);
+  factory _ProfileDraft.from(User u) => _ProfileDraft(
+    name: u.displayName,
+    email: u.email ?? '',
+    iconCode: u.iconCode,
+  );
 
   final String name;
   final String email;
@@ -233,12 +265,11 @@ class _ProfileDraft {
     String? email,
     IconCode? iconCode,
     bool clearIcon = false,
-  }) =>
-      _ProfileDraft(
-        name: name ?? this.name,
-        email: email ?? this.email,
-        iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
-      );
+  }) => _ProfileDraft(
+    name: name ?? this.name,
+    email: email ?? this.email,
+    iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
+  );
 
   @override
   bool operator ==(Object other) =>

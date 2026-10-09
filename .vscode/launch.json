@@ -1,17 +1,10 @@
 {
   "version": "0.2.0",
+  // Phone size (412×915): run ./run-web.sh instead. A `-d chrome` launch
+  // can't do it — `--web-browser-flag` splits "--window-size=412,915" on the
+  // comma (Chrome then opens http://0.0.3.147/), and a normal Chrome window
+  // on Windows can't go narrower than ~500px anyway.
   "configurations": [
-    {
-      "name": "chubiPocket · web (phone · VPS)",
-      "type": "dart",
-      "request": "launch",
-      "program": "lib/main.dart",
-      "deviceId": "chrome",
-      "toolArgs": [
-        "--web-browser-flag=--window-size=412,915",
-        "--dart-define=API_BASE_URL=https://chubipocket-api.ppforge.dev/api/v1"
-      ]
-    },
     {
       "name": "chubiPocket · web (full · VPS)",
       "type": "dart",

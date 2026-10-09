@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -31,14 +32,13 @@ class SplitDraft {
   double? owedAmount;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'person_name': personName.trim(),
-        if (contactId != null) 'contact_id': contactId,
-        'owed_amount': owedAmount ?? 0,
-        'split_type': 'fixed',
-      };
+    'person_name': personName.trim(),
+    if (contactId != null) 'contact_id': contactId,
+    'owed_amount': owedAmount ?? 0,
+    'split_type': 'fixed',
+  };
 
-  bool get isComplete =>
-      personName.trim().isNotEmpty && (owedAmount ?? 0) > 0;
+  bool get isComplete => personName.trim().isNotEmpty && (owedAmount ?? 0) > 0;
 
   bool get isWired => contactId != null;
 }
@@ -134,7 +134,7 @@ class _SplitsSectionState extends State<SplitsSection> {
               ),
             ),
             TextButton.icon(
-              icon: const Icon(Icons.balance, size: 18),
+              icon: const Icon(AppIcons.split, size: 18),
               label: Text(l.txSplitEqually),
               onPressed: widget.drafts.isEmpty || widget.totalAmount <= 0
                   ? null
@@ -142,7 +142,7 @@ class _SplitsSectionState extends State<SplitsSection> {
             ),
             IconButton(
               tooltip: l.txSplitCollapse,
-              icon: const Icon(Icons.close),
+              icon: const Icon(AppIcons.close),
               onPressed: () {
                 setState(() {
                   _expanded = false;
@@ -170,7 +170,7 @@ class _SplitsSectionState extends State<SplitsSection> {
         Row(
           children: [
             TextButton.icon(
-              icon: const Icon(Icons.add),
+              icon: const Icon(AppIcons.add),
               label: Text(l.txSplitAddPerson),
               onPressed: () {
                 widget.onChanged([...widget.drafts, SplitDraft()]);
@@ -188,11 +188,12 @@ class _SplitsSectionState extends State<SplitsSection> {
         ),
         if (overflow)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Text(
               l.txSplitOver,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.error),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
             ),
           ),
       ],
@@ -235,21 +236,19 @@ class _DraftRowState extends State<_DraftRow> {
   @override
   void initState() {
     super.initState();
-    _amount = TextEditingController(
-      text: widget.draft.owedAmount == null
-          ? ''
-          : widget.draft.owedAmount!.toStringAsFixed(2),
-    );
+    _amount = TextEditingController(text: _formatted(widget.draft.owedAmount));
   }
+
+  static String _formatted(double? v) => v == null ? '' : AmountField.format(v);
 
   @override
   void didUpdateWidget(covariant _DraftRow old) {
     super.didUpdateWidget(old);
-    final ext = widget.draft.owedAmount == null
-        ? ''
-        : widget.draft.owedAmount!.toStringAsFixed(2);
-    if (_amount.text != ext) {
-      _amount.text = ext;
+    // Sync only when the value changed from outside ("split equally") —
+    // comparing values, not text, so a half-typed "1,234." isn't clobbered.
+    final ext = widget.draft.owedAmount;
+    if (AmountField.parse(_amount.text) != ext) {
+      _amount.text = _formatted(ext);
     }
   }
 
@@ -286,9 +285,9 @@ class _DraftRowState extends State<_DraftRow> {
                   ? l.txSplitWiredContact
                   : l.txSplitFreeText,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                 child: Icon(
-                  draft.isWired ? Icons.contact_phone : Icons.person_outline,
+                  draft.isWired ? AppIcons.contact : AppIcons.profile,
                   color: draft.isWired
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -311,20 +310,17 @@ class _DraftRowState extends State<_DraftRow> {
                   });
                   widget.onChange();
                 },
-                fieldViewBuilder:
-                    (context, controller, focusNode, onSubmit) {
-                  return TextField(
+                fieldViewBuilder: (context, controller, focusNode, onSubmit) {
+                  return AppTextField(
                     controller: controller,
                     focusNode: focusNode,
-                    decoration: InputDecoration(
-                      labelText: l.txSplitName,
-                      isDense: true,
-                    ),
+                    label: l.txSplitName,
                     onChanged: (v) {
                       // Typing past or away from a picked contact clears
                       // the wire — otherwise the BE would receive a stale
                       // contact_id that no longer matches the name.
-                      final stale = draft.contactDisplayName != null &&
+                      final stale =
+                          draft.contactDisplayName != null &&
                           v != draft.contactDisplayName;
                       setState(() {
                         draft.personName = v;
@@ -345,7 +341,7 @@ class _DraftRowState extends State<_DraftRow> {
                     alignment: Alignment.topLeft,
                     child: Material(
                       elevation: 4,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(
                           maxHeight: 280,
@@ -359,24 +355,22 @@ class _DraftRowState extends State<_DraftRow> {
                             final c = list[i];
                             return ListTile(
                               dense: true,
-                              leading: CircleAvatar(
-                                radius: 14,
-                                child: Text(
-                                  c.effectiveName.isNotEmpty
-                                      ? c.effectiveName[0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
+                              leading: UserAvatar(
+                                displayName: c.effectiveName,
+                                iconCode: c.effectiveIconCode,
+                                size: 28,
                               ),
                               title: Text(c.effectiveName),
                               subtitle: c.email != null
                                   ? Text(
                                       c.email!,
-                                      style: const TextStyle(fontSize: 11),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     )
                                   : null,
                               trailing: c.isLinked
-                                  ? const Icon(Icons.link, size: 14)
+                                  ? const Icon(AppIcons.link, size: 14)
                                   : null,
                               onTap: () => onSelected(c),
                             );
@@ -391,23 +385,23 @@ class _DraftRowState extends State<_DraftRow> {
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               flex: 2,
-              child: TextField(
+              // Same thousands formatting / parsing as [AmountField].
+              child: AppTextField(
                 controller: _amount,
-                decoration: InputDecoration(
-                  labelText: l.txSplitOwes,
-                  isDense: true,
+                label: l.txSplitOwes,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [ThousandsInputFormatter()],
                 onChanged: (v) {
-                  draft.owedAmount = double.tryParse(v);
+                  draft.owedAmount = AmountField.parse(v);
                   widget.onChange();
                 },
               ),
             ),
             IconButton(
               tooltip: l.txSplitRemove,
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(AppIcons.delete),
               onPressed: widget.onRemove,
             ),
           ],

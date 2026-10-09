@@ -15,7 +15,7 @@ class DashboardState extends Equatable {
     this.status = DashboardStatus.initial,
     this.data,
     this.month,
-    this.errorMessage,
+    this.error,
   });
 
   final DashboardStatus status;
@@ -26,10 +26,11 @@ class DashboardState extends Equatable {
 
   /// Selected month (first day); null = current month.
   final DateTime? month;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   @override
-  List<Object?> get props => [status, data, month, errorMessage];
+  List<Object?> get props => [status, data, month, error];
 }
 
 /// Home screen state — one `GET /dashboard` per load. The page reloads it
@@ -95,14 +96,14 @@ class DashboardCubit extends Cubit<DashboardState> with Clearable {
           month: month,
         ),
       );
-    } on ApiException catch (e) {
+    } catch (e, st) {
       if (isClosed || seq != _seq) return;
       emit(
         DashboardState(
           status: DashboardStatus.error,
           data: state.data,
           month: month,
-          errorMessage: e.message,
+          error: ApiException.from(e, st),
         ),
       );
     }

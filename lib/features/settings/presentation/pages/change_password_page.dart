@@ -22,9 +22,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _newCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
 
-  bool _obscureCurrent = true;
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
   bool _submitting = false;
   ApiException? _error;
   String? _currentFieldError;
@@ -47,12 +44,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     });
     try {
       await context.read<AuthRepository>().changePassword(
-            currentPassword: _currentCtrl.text,
-            newPassword: _newCtrl.text,
-          );
+        currentPassword: _currentCtrl.text,
+        newPassword: _newCtrl.text,
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.changePasswordSnackSuccess)),
+      showAppSnackBar(
+        context,
+        l.changePasswordSnackSuccess,
+        tone: Tone.success,
       );
       context.pop();
     } on ApiException catch (e) {
@@ -80,105 +79,83 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         editing: true,
         onBack: () => context.pop(),
       ),
+      // No undo on a password form — the bar hides it (onUndo null).
       bottomNavigationBar: ModeActionBar(
-        canUndo: false,
         canSave: !_submitting,
         saving: _submitting,
         cancelLabel: l.commonCancel,
         saveLabel: l.changePasswordSubmit,
-        undoTooltip: l.commonUndo,
         onCancel: () => context.pop(),
-        onUndo: () {},
         onSave: _submit,
       ),
+      extendBodyBehindAppBar: true,
       body: SafeArea(
-        child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+        top: false,
+        // Builder: the floating bar's height is only visible inside the body.
+        child: Builder(
+          builder: (context) => SingleChildScrollView(
+            padding: const EdgeInsets.all(
+              AppSpacing.lg,
+            ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
             child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (_error != null) ...[
-                      _ErrorBanner(message: _bannerMessageFor(l, _error!)),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                    TextFormField(
-                      controller: _currentCtrl,
-                      enabled: !_submitting,
-                      obscureText: _obscureCurrent,
-                      autofillHints: const [AutofillHints.password],
-                      decoration: InputDecoration(
-                        labelText: l.changePasswordCurrentLabel,
-                        errorText: _currentFieldError,
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscureCurrent
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
-                          onPressed: () => setState(
-                              () => _obscureCurrent = !_obscureCurrent),
-                        ),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? l.commonRequired : null,
-                    ),
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_error != null) ...[
+                    MessageBanner(message: _bannerMessageFor(l, _error!)),
                     const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _newCtrl,
-                      enabled: !_submitting,
-                      obscureText: _obscureNew,
-                      autofillHints: const [AutofillHints.newPassword],
-                      decoration: InputDecoration(
-                        labelText: l.changePasswordNewLabel,
-                        helperText: l.changePasswordNewHelper,
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscureNew
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
-                          onPressed: () =>
-                              setState(() => _obscureNew = !_obscureNew),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.length < 8) {
-                          return l.authRegisterPasswordTooShort;
-                        }
-                        if (v.length > 128) {
-                          return l.authRegisterPasswordTooLong;
-                        }
-                        if (v == _currentCtrl.text) {
-                          return l.changePasswordNewMustDiffer;
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextFormField(
-                      controller: _confirmCtrl,
-                      enabled: !_submitting,
-                      obscureText: _obscureConfirm,
-                      onFieldSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: l.changePasswordConfirmLabel,
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscureConfirm
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
-                          onPressed: () => setState(
-                              () => _obscureConfirm = !_obscureConfirm),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v != _newCtrl.text) {
-                          return l.changePasswordConfirmMismatch;
-                        }
-                        return null;
-                      },
-                    ),
                   ],
-                ),
+                  AppTextField(
+                    controller: _currentCtrl,
+                    enabled: !_submitting,
+                    obscurable: true,
+                    autofillHints: const [AutofillHints.password],
+                    label: l.changePasswordCurrentLabel,
+                    errorText: _currentFieldError,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? l.commonRequired : null,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: _newCtrl,
+                    enabled: !_submitting,
+                    obscurable: true,
+                    autofillHints: const [AutofillHints.newPassword],
+                    label: l.changePasswordNewLabel,
+                    helper: l.changePasswordNewHelper,
+                    validator: (v) {
+                      if (v == null || v.length < 8) {
+                        return l.authRegisterPasswordTooShort;
+                      }
+                      if (v.length > 128) {
+                        return l.authRegisterPasswordTooLong;
+                      }
+                      if (v == _currentCtrl.text) {
+                        return l.changePasswordNewMustDiffer;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  AppTextField(
+                    controller: _confirmCtrl,
+                    enabled: !_submitting,
+                    obscurable: true,
+                    onSubmitted: (_) => _submit(),
+                    label: l.changePasswordConfirmLabel,
+                    validator: (v) {
+                      if (v != _newCtrl.text) {
+                        return l.changePasswordConfirmMismatch;
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
+            ),
+          ),
         ),
       ),
     );
@@ -189,32 +166,5 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       return l.errorBannerNoConnectionShort;
     }
     return e.message;
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: scheme.onErrorContainer),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(message,
-                style: TextStyle(color: scheme.onErrorContainer)),
-          ),
-        ],
-      ),
-    );
   }
 }

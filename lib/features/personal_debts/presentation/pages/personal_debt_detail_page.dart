@@ -97,14 +97,20 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
   // ── Actions ─────────────────────────────────────────────────────────
 
   Future<void> _pickCounterparty() async {
-    final r = await showContactPickerSheet(context,
-        selectedContactId: working.contactId);
+    final r = await showContactPickerSheet(
+      context,
+      selectedContactId: working.contactId,
+    );
     if (!mounted || r == null) return;
     applyChange(switch (r) {
       ContactPicked(:final contact) => working.copyWith(
-          contactId: contact.id, name: contact.effectiveName),
-      ContactNameTyped(:final name) =>
-        working.copyWith(clearContact: true, name: name),
+        contactId: contact.id,
+        name: contact.effectiveName,
+      ),
+      ContactNameTyped(:final name) => working.copyWith(
+        clearContact: true,
+        name: name,
+      ),
     });
   }
 
@@ -119,13 +125,13 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     setSaving(true);
     try {
       final updated = await context.read<PersonalDebtsCubit>().update(
-            debt.id,
-            amount: AmountField.parse(w.amount),
-            note: w.note.trim(),
-            counterpartyPersonName: counterpartyChanged ? w.name : null,
-            counterpartyContactId: counterpartyChanged ? w.contactId : null,
-            clearContact: counterpartyChanged && w.contactId == null,
-          );
+        debt.id,
+        amount: AmountField.parse(w.amount),
+        note: w.note.trim(),
+        counterpartyPersonName: counterpartyChanged ? w.name : null,
+        counterpartyContactId: counterpartyChanged ? w.contactId : null,
+        clearContact: counterpartyChanged && w.contactId == null,
+      );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(_DebtDraft.from(updated));
@@ -195,80 +201,91 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final debt = context.select<PersonalDebtsCubit, PersonalDebt?>(
-        (c) => _debt(c.state));
+      (c) => _debt(c.state),
+    );
 
     if (debt == null) {
       return Scaffold(
         appBar: AppTopBar(title: l.moreDebts, showBack: true),
+        extendBodyBehindAppBar: true,
         body: _error != null
             ? ErrorView(error: _error!, onRetry: _fetch)
-            : const LoadingView(),
+            // The generic skeleton is a padded list — clear the bar.
+            : Builder(
+                builder: (context) => Padding(
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.paddingOf(context).top,
+                  ),
+                  child: const LoadingView(),
+                ),
+              ),
       );
     }
 
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: isEditing ? l.debtEditTitle : debt.counterpartyPersonName,
-        showBack: true,
-        editing: isEditing,
-        onBack: handleBack,
-        actions: isEditing
-            ? [
-                AppBarAction(
-                  icon: AppIcons.delete,
-                  tooltip: l.commonDelete,
-                  destructive: true,
-                  enabled: !isSaving,
-                  onPressed: () => _delete(debt),
-                ),
-              ]
-            : [
-                AppBarAction(
-                  icon: AppIcons.edit,
-                  tooltip: l.commonEdit,
-                  onPressed: enterEdit,
-                ),
-              ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
-          children: [
-            LockedInEdit(locked: isEditing, child: _header(l, debt)),
-            if (debt.isOpen && !isEditing) ...[
-              const SizedBox(height: AppSpacing.md),
-              AppButton(
-                label: debt.isOwedToMe ? l.debtReceive : l.debtPay,
-                icon: AppIcons.settle,
-                size: AppButtonSize.large,
-                expand: true,
-                onPressed: () => _settle(debt),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.lg),
-            _rows(l, debt),
-            if (debt.isOpen) ...[
-              const SizedBox(height: AppSpacing.xl),
-              LockedInEdit(
-                locked: isEditing,
-                child: Center(
-                  child: AppButton(
-                    label: l.debtCancel,
-                    variant: AppButtonVariant.text,
-                    loading: _busy,
-                    onPressed: () => _cancelDebt(debt),
-                  ),
-                ),
-              ),
-            ],
-          ],
+    return editScope(
+      Scaffold(
+        appBar: AppTopBar(
+          title: isEditing ? l.debtEditTitle : debt.counterpartyPersonName,
+          showBack: true,
+          editing: isEditing,
+          onBack: handleBack,
         ),
+        extendBodyBehindAppBar: true,
+        body: Form(
+          key: _formKey,
+          // Builder: its context sees the floating bar's height.
+          child: Builder(
+            builder: (context) => ListView(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.huge,
+              ),
+              children: [
+                LockedInEdit(locked: isEditing, child: _header(l, debt)),
+                if (debt.isOpen && !isEditing) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  AppButton(
+                    label: debt.isOwedToMe ? l.debtReceive : l.debtPay,
+                    icon: AppIcons.settle,
+                    size: AppButtonSize.large,
+                    expand: true,
+                    onPressed: () => _settle(debt),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                _rows(l, debt),
+                if (debt.isOpen) ...[
+                  const SizedBox(height: AppSpacing.xl),
+                  LockedInEdit(
+                    locked: isEditing,
+                    child: Center(
+                      child: AppButton(
+                        label: l.debtCancel,
+                        variant: AppButtonVariant.text,
+                        loading: _busy,
+                        onPressed: () => _cancelDebt(debt),
+                      ),
+                    ),
+                  ),
+                ],
+                // Delete lives at the bottom in edit mode (no top-bar actions).
+                if (isEditing)
+                  DangerRow(
+                    icon: AppIcons.delete,
+                    label: l.debtDeleteThis,
+                    onTap: isSaving ? null : () => _delete(debt),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: isEditing
+            ? editActionBar(onSave: () => _save(debt))
+            : null,
       ),
-      bottomNavigationBar:
-          isEditing ? editActionBar(onSave: () => _save(debt)) : null,
-    ));
+    );
   }
 
   Widget _header(AppLocalizations l, PersonalDebt debt) {
@@ -276,9 +293,15 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     final textTheme = Theme.of(context).textTheme;
     final name = debt.counterpartyPersonName;
     return HeaderCard(
+      onEdit: isEditing ? null : enterEdit,
       leading: DebtAvatar(
-          contactId: debt.counterpartyContactId, name: name, size: 52),
-      title: Text(debt.isOwedToMe ? l.debtTheyOweYou(name) : l.debtYouOwe(name)),
+        contactId: debt.counterpartyContactId,
+        name: name,
+        size: 52,
+      ),
+      title: Text(
+        debt.isOwedToMe ? l.debtTheyOweYou(name) : l.debtYouOwe(name),
+      ),
       subtitle: Align(
         alignment: Alignment.centerLeft,
         child: debtStatusPill(context, debt.status, dense: true),
@@ -293,8 +316,9 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
             tone: debt.isOpen
                 ? (debt.isOwedToMe ? MoneyTone.income : MoneyTone.expense)
                 : MoneyTone.plain,
-            style: textTheme.headlineMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           ProgressRow(
@@ -316,9 +340,8 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     final (String source, String? sourceRoute) = debt.projectId != null
         ? (l.debtSourceProject, '/projects/${debt.projectId}')
         : debt.sourceTransactionId != null
-            ? (l.debtSourceTransaction,
-                '/transactions/${debt.sourceTransactionId}')
-            : (l.debtSourceManual, null);
+        ? (l.debtSourceTransaction, '/transactions/${debt.sourceTransactionId}')
+        : (l.debtSourceManual, null);
     return SectionCard(
       children: [
         if (editing)
@@ -334,7 +357,8 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
                 if (n == null || n <= 0) return l.debtAmountRequired;
                 if (n + 0.005 < debt.settledAmount) {
                   return l.debtAmountBelowSettled(
-                      moneyString(context, debt.settledAmount, symbol: symbol));
+                    moneyString(context, debt.settledAmount, symbol: symbol),
+                  );
                 }
                 return null;
               },
@@ -399,8 +423,12 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
             locked: editing,
             child: DetailRow(
               label: l.debtCreatedAt,
-              trailing: Text(DateFormatter.medium(debt.createdAt!,
-                  locale: Localizations.localeOf(context).toLanguageTag())),
+              trailing: Text(
+                DateFormatter.medium(
+                  debt.createdAt!,
+                  locale: Localizations.localeOf(context).toLanguageTag(),
+                ),
+              ),
             ),
           ),
         ],
@@ -410,14 +438,19 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
 }
 
 class _DebtDraft {
-  const _DebtDraft({this.amount = '', this.note = '', this.contactId, this.name = ''});
+  const _DebtDraft({
+    this.amount = '',
+    this.note = '',
+    this.contactId,
+    this.name = '',
+  });
 
   factory _DebtDraft.from(PersonalDebt d) => _DebtDraft(
-        amount: AmountField.format(d.amount),
-        note: d.note ?? '',
-        contactId: d.counterpartyContactId,
-        name: d.counterpartyPersonName,
-      );
+    amount: AmountField.format(d.amount),
+    note: d.note ?? '',
+    contactId: d.counterpartyContactId,
+    name: d.counterpartyPersonName,
+  );
 
   /// Formatted text, as in the field.
   final String amount;
@@ -431,13 +464,12 @@ class _DebtDraft {
     String? contactId,
     bool clearContact = false,
     String? name,
-  }) =>
-      _DebtDraft(
-        amount: amount ?? this.amount,
-        note: note ?? this.note,
-        contactId: clearContact ? null : (contactId ?? this.contactId),
-        name: name ?? this.name,
-      );
+  }) => _DebtDraft(
+    amount: amount ?? this.amount,
+    note: note ?? this.note,
+    contactId: clearContact ? null : (contactId ?? this.contactId),
+    name: name ?? this.name,
+  );
 
   @override
   bool operator ==(Object other) =>

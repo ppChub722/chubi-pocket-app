@@ -43,12 +43,12 @@ class _RegisterPageState extends State<RegisterPage> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthCubit>().register(
-          username: _usernameCtrl.text.trim(),
-          password: _passwordCtrl.text,
-          displayName: _displayNameCtrl.text.trim(),
-          email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
-          currency: _currency,
-        );
+      username: _usernameCtrl.text.trim(),
+      password: _passwordCtrl.text,
+      displayName: _displayNameCtrl.text.trim(),
+      email: _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
+      currency: _currency,
+    );
   }
 
   void _toLogin() =>
@@ -65,6 +65,7 @@ class _RegisterPageState extends State<RegisterPage> {
         showParent: false,
         onBack: _toLogin,
       ),
+      extendBodyBehindAppBar: true,
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final isSubmitting = state is AuthLoading;
@@ -73,8 +74,13 @@ class _RegisterPageState extends State<RegisterPage> {
             top: false,
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.lg,
-                    AppSpacing.md, AppSpacing.lg, AppSpacing.xl),
+                // Clear the floating top bar.
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.md,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
                   child: AutofillGroup(
@@ -104,10 +110,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                 label: l.authRegisterUsernameLabel,
                                 helper: l.authRegisterUsernameHint,
                                 prefixIcon: AppIcons.profile,
-                                errorText:
-                                    _fieldErrorFor(l, 'username', failure),
+                                errorText: _fieldErrorFor(
+                                  l,
+                                  'username',
+                                  failure,
+                                ),
                                 autofillHints: const [
-                                  AutofillHints.newUsername
+                                  AutofillHints.newUsername,
                                 ],
                                 inputFormatters: [_lowercase],
                                 textInputAction: TextInputAction.next,
@@ -129,7 +138,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 prefixIcon: AppIcons.lock,
                                 obscurable: true,
                                 autofillHints: const [
-                                  AutofillHints.newPassword
+                                  AutofillHints.newPassword,
                                 ],
                                 textInputAction: TextInputAction.next,
                                 validator: (v) {
@@ -182,7 +191,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 enabled: !isSubmitting,
                                 label: l.authRegisterEmailLabel,
                                 helper: l.authRegisterEmailHint,
-                                prefixIcon: Icons.mail_outline,
+                                prefixIcon: AppIcons.email,
                                 keyboardType: TextInputType.emailAddress,
                                 autofillHints: const [AutofillHints.email],
                                 errorText: _fieldErrorFor(l, 'email', failure),
@@ -239,8 +248,9 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   static final _lowercase = TextInputFormatter.withFunction(
-      (oldValue, newValue) =>
-          newValue.copyWith(text: newValue.text.toLowerCase()));
+    (oldValue, newValue) =>
+        newValue.copyWith(text: newValue.text.toLowerCase()),
+  );
 
   /// Top-banner message — used for non-field-specific failures.
   String _bannerMessageFor(AppLocalizations l, AuthFailure failure) {
@@ -257,7 +267,10 @@ class _RegisterPageState extends State<RegisterPage> {
   /// Field-level mapping. `USERNAME_EXISTS`/`EMAIL_EXISTS` show inline next to
   /// the offending field as well as in the top banner — per spec.
   String? _fieldErrorFor(
-      AppLocalizations l, String field, AuthFailure? failure) {
+    AppLocalizations l,
+    String field,
+    AuthFailure? failure,
+  ) {
     if (failure == null) return null;
     final c = failure.error.code;
     if (field == 'username' && c == 'USERNAME_EXISTS') {

@@ -8,19 +8,24 @@ import '../../domain/project.dart';
 import 'project_common.dart';
 import 'project_tx_tiles.dart';
 
-enum _Sort { time, amount, member, category }
+enum _Sort { time, amount, member, tag }
 
 /// "รายการ" tab (§12b): search, [ประเภท ▾] [เฉพาะฉัน] + sort, rows grouped
-/// under date headers when sorted by date.
+/// under date headers when sorted by date. A dashed "+ เพิ่มรายการ" tile
+/// heads the rows (and is the empty state's CTA) when [onAdd] is set.
 class ProjectTxListTab extends StatefulWidget {
   const ProjectTxListTab({
     required this.view,
     required this.onChanged,
+    this.onAdd,
     super.key,
   });
 
   final ProjectView view;
   final Future<void> Function() onChanged;
+
+  /// Adds a row to the project; null = the user can't (locked / viewer).
+  final VoidCallback? onAdd;
 
   @override
   State<ProjectTxListTab> createState() => _ProjectTxListTabState();
@@ -49,20 +54,24 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
       return [
         p.description,
         p.note,
-        p.categoryName,
+        ...p.tags,
         v.member(p.transactionMemberId).displayName,
       ].any((s) => s?.toLowerCase().contains(q) ?? false);
     }).toList();
-    list.sort((a, b) => switch (_sort) {
-          _Sort.time => b.parent.date.compareTo(a.parent.date),
-          _Sort.amount => b.parent.amount.compareTo(a.parent.amount),
-          _Sort.member => v
+    list.sort(
+      (a, b) => switch (_sort) {
+        _Sort.time => b.parent.date.compareTo(a.parent.date),
+        _Sort.amount => b.parent.amount.compareTo(a.parent.amount),
+        _Sort.member =>
+          v
               .member(a.parent.transactionMemberId)
               .displayName
               .compareTo(v.member(b.parent.transactionMemberId).displayName),
-          _Sort.category =>
-            (a.parent.categoryName ?? '').compareTo(b.parent.categoryName ?? ''),
-        });
+        _Sort.tag => (a.parent.tags.firstOrNull ?? '').compareTo(
+          b.parent.tags.firstOrNull ?? '',
+        ),
+      },
+    );
     return list;
   }
 
@@ -82,11 +91,13 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
         lastDate = t.parent.date;
         rows.add(DateGroupHeader(label: projectTxDateLabel(context, lastDate)));
       }
-      rows.add(ProjectTxTreeTile(
-        tree: t,
-        view: widget.view,
-        onChanged: widget.onChanged,
-      ));
+      rows.add(
+        ProjectTxTreeTile(
+          tree: t,
+          view: widget.view,
+          onChanged: widget.onChanged,
+        ),
+      );
     }
 
     return PullToRefresh(
@@ -130,7 +141,7 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
                 SortOption(_Sort.time, l.projectTxSortTime),
                 SortOption(_Sort.amount, l.projectTxSortAmount),
                 SortOption(_Sort.member, l.projectTxSortMember),
-                SortOption(_Sort.category, l.projectTxSortCategory),
+                SortOption(_Sort.tag, l.projectTxSortTag),
               ],
             ),
           ),
@@ -141,15 +152,37 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
                 icon: AppIcons.empty,
                 title: l.projectTxEmpty,
                 message: '',
+                cta: widget.onAdd == null
+                    ? null
+                    : AddTile(
+                        label: l.projectAddTransaction,
+                        onTap: widget.onAdd,
+                      ),
               ),
             )
-          else if (shown.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.xxl),
-              child: Text(l.projectTxNoMatch, textAlign: TextAlign.center),
-            )
-          else
-            ...rows,
+          else ...[
+            if (widget.onAdd != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                ),
+                child: AddTile(
+                  label: l.projectAddTransaction,
+                  variant: AddTileVariant.row,
+                  onTap: widget.onAdd,
+                ),
+              ),
+            if (shown.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.xxl),
+                child: Text(l.projectTxNoMatch, textAlign: TextAlign.center),
+              )
+            else
+              ...rows,
+          ],
         ],
       ),
     );

@@ -9,16 +9,17 @@ import '../../app/shell/main_shell.dart';
 import '../../app/shell/more_page.dart';
 import '../../app/shell/shell_chrome.dart';
 import '../../dev/dev_hub_screen.dart';
+import '../../dev/imports_lab_screen.dart';
 import '../../dev/logs_viewer_screen.dart';
 import '../../dev/state_widgets_preview_screen.dart';
 import '../../dev/theme_preview_screen.dart';
 import '../../dev/widget_gallery_screen.dart';
+import '../../app/shell/fade_branch_container.dart';
 import '../../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../../features/accounts/presentation/pages/archived_accounts_page.dart';
 import '../../features/transactions/data/transactions_repository.dart';
 import '../../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../../features/accounts/presentation/pages/account_detail_page.dart';
-import '../../features/accounts/presentation/pages/account_form_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
 import '../../features/accounts/presentation/pages/wallet_members_page.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
@@ -37,20 +38,15 @@ import '../../features/personal_debts/presentation/pages/personal_debts_page.dar
 import '../../features/projects/presentation/pages/project_detail_page.dart';
 import '../../features/projects/presentation/pages/project_form_page.dart';
 import '../../features/projects/presentation/pages/project_members_page.dart';
-import '../../features/projects/presentation/pages/project_transaction_form_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.dart';
-import '../../features/saving_goals/presentation/pages/saving_goal_form_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goals_list_page.dart';
 import '../../features/scheduled_transactions/presentation/pages/scheduled_transaction_detail_page.dart';
-import '../../features/scheduled_transactions/presentation/pages/scheduled_transaction_form_page.dart';
 import '../../features/scheduled_transactions/presentation/pages/scheduled_transactions_list_page.dart';
 import '../../features/tags/presentation/pages/tags_page.dart';
 import '../../features/transactions/presentation/pages/transaction_detail_page.dart';
-import '../../features/transactions/presentation/pages/transaction_form_page.dart';
 import '../../features/transactions/presentation/pages/transactions_list_page.dart';
 import '../../features/budgets/presentation/pages/budget_detail_page.dart';
-import '../../features/budgets/presentation/pages/budget_form_page.dart';
 import '../../features/budgets/presentation/pages/budgets_list_page.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -106,7 +102,13 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
       return null;
     },
     routes: [
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
+        // Same as `.indexedStack` but fades the selected tab in.
+        navigatorContainerBuilder: (context, navigationShell, children) =>
+            FadeBranchContainer(
+              currentIndex: navigationShell.currentIndex,
+              children: children,
+            ),
         builder: (context, state, navigationShell) {
           // BlocBuilder is essential here: when state transitions
           // AuthInitial → AuthAuthenticated, the router redirect returns
@@ -115,10 +117,7 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
           return BlocBuilder<AuthCubit, AuthState>(
             builder: (context, auth) {
               if (auth is AuthInitial) return const SplashPage();
-              return MainShell(
-                navigationShell: navigationShell,
-                currentPath: state.uri.path,
-              );
+              return MainShell(navigationShell: navigationShell);
             },
           );
         },
@@ -146,7 +145,8 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                       final month = p['month'];
                       return BlocProvider(
                         create: (ctx) => TransactionsCubit(
-                            repository: ctx.read<TransactionsRepository>()),
+                          repository: ctx.read<TransactionsRepository>(),
+                        ),
                         child: TransactionsListPage(
                           initialCategoryId: p['category'],
                           initialUncategorized: p['uncategorized'] == 'true',
@@ -180,8 +180,7 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                     path: 'notifications',
                     name: 'notifications',
                     parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) =>
-                        const NotificationsInboxPage(),
+                    builder: (context, state) => const NotificationsInboxPage(),
                   ),
                   GoRoute(
                     path: 'notifications/settings',
@@ -221,26 +220,15 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 path: '/transactions',
                 name: 'transactions',
                 builder: (context, state) => const TransactionsListPage(),
+                // Create and edit both open the quick create sheet — no
+                // form routes.
                 routes: [
-                  GoRoute(
-                    path: 'new',
-                    name: 'transaction-new',
-                    builder: (context, state) =>
-                        const ShellChromeHider(child: TransactionFormPage()),
-                  ),
                   GoRoute(
                     path: ':id',
                     name: 'transaction-detail',
                     builder: (context, state) => TransactionDetailPage(
                       transactionId: state.pathParameters['id']!,
                     ),
-                  ),
-                  GoRoute(
-                    path: ':id/edit',
-                    name: 'transaction-edit',
-                    builder: (context, state) => ShellChromeHider(
-                        child: TransactionFormPage(
-                            editingId: state.pathParameters['id'])),
                   ),
                 ],
               ),
@@ -257,8 +245,9 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                   GoRoute(
                     path: 'new',
                     name: 'account-new',
-                    builder: (context, state) =>
-                        const ShellChromeHider(child: AccountFormPage()),
+                    // One page for create / view / edit (EditModeMixin hides
+                    // the nav itself in edit mode).
+                    builder: (context, state) => const AccountDetailPage(),
                   ),
                   GoRoute(
                     path: 'archived',
@@ -282,7 +271,8 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                       final id = state.pathParameters['id']!;
                       return BlocProvider(
                         create: (ctx) => TransactionsCubit(
-                            repository: ctx.read<TransactionsRepository>()),
+                          repository: ctx.read<TransactionsRepository>(),
+                        ),
                         child: TransactionsListPage(
                           initialAccountId: id,
                           title: context.read<AccountsCubit>().byId(id)?.name,
@@ -293,17 +283,19 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                   GoRoute(
                     path: ':id/edit',
                     name: 'account-edit',
-                    builder: (context, state) => ShellChromeHider(
-                        child: AccountFormPage(
-                            editingId: state.pathParameters['id'])),
+                    builder: (context, state) => AccountDetailPage(
+                      accountId: state.pathParameters['id']!,
+                      startEditing: true,
+                    ),
                   ),
                   // Shared-wallet members (spec §14) — reached from the
-                  // wallet's settings sheet or the member avatar row.
+                  // wallet page's sharing section (members row).
                   GoRoute(
                     path: ':id/members',
                     name: 'account-members',
                     builder: (context, state) => WalletMembersPage(
-                        accountId: state.pathParameters['id']!),
+                      accountId: state.pathParameters['id']!,
+                    ),
                   ),
                 ],
               ),
@@ -342,20 +334,15 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 name: 'project-edit',
                 // Info is edited in place — open the detail in edit mode.
                 builder: (context, state) => ProjectDetailPage(
-                    id: state.pathParameters['id']!, startEditing: true),
+                  id: state.pathParameters['id']!,
+                  startEditing: true,
+                ),
               ),
               GoRoute(
                 path: '/projects/:id/members',
                 name: 'project-members',
-                builder: (context, state) => ProjectMembersPage(
-                    projectId: state.pathParameters['id']!),
-              ),
-              GoRoute(
-                path: '/projects/:id/transactions/new',
-                name: 'project-tx-new',
-                builder: (context, state) => ProjectTransactionFormPage(
-                  projectId: state.pathParameters['id']!,
-                ),
+                builder: (context, state) =>
+                    ProjectMembersPage(projectId: state.pathParameters['id']!),
               ),
               // Contacts (Phase 1b.1)
               GoRoute(
@@ -414,11 +401,12 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 name: 'budgets',
                 builder: (context, state) => const BudgetsListPage(),
               ),
+              // One page for create / view / edit (EditModeMixin hides the
+              // nav itself in edit mode).
               GoRoute(
                 path: '/budgets/new',
                 name: 'budget-new',
-                builder: (context, state) =>
-                    const ShellChromeHider(child: BudgetFormPage()),
+                builder: (context, state) => const BudgetDetailPage(),
               ),
               GoRoute(
                 path: '/budgets/:id',
@@ -429,11 +417,13 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/budgets/:id/edit',
                 name: 'budget-edit',
-                builder: (context, state) => ShellChromeHider(
-                    child: BudgetFormPage(
-                        editingId: state.pathParameters['id'])),
+                builder: (context, state) => BudgetDetailPage(
+                  id: state.pathParameters['id']!,
+                  startEditing: true,
+                ),
               ),
-              // Scheduled transactions (Phase 1c)
+              // Scheduled transactions (Phase 1c) — create / edit happen in the
+              // quick create sheet (`scheduled:` mode); no form routes.
               GoRoute(
                 path: '/scheduled-transactions',
                 name: 'scheduled-transactions',
@@ -441,53 +431,37 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                     const ScheduledTransactionsListPage(),
               ),
               GoRoute(
-                path: '/scheduled-transactions/new',
-                name: 'scheduled-transaction-new',
-                builder: (context, state) =>
-                    const ShellChromeHider(child: ScheduledTransactionFormPage()),
-              ),
-              GoRoute(
                 path: '/scheduled-transactions/:id',
                 name: 'scheduled-transaction-detail',
-                builder: (context, state) =>
-                    ScheduledTransactionDetailPage(
+                builder: (context, state) => ScheduledTransactionDetailPage(
                   id: state.pathParameters['id']!,
-                ),
-              ),
-              GoRoute(
-                path: '/scheduled-transactions/:id/edit',
-                name: 'scheduled-transaction-edit',
-                builder: (context, state) => ShellChromeHider(
-                  child: ScheduledTransactionFormPage(
-                    editingId: state.pathParameters['id'],
-                  ),
                 ),
               ),
               // Saving goals (Phase 1c)
               GoRoute(
                 path: '/saving-goals',
                 name: 'saving-goals',
-                builder: (context, state) =>
-                    const SavingGoalsListPage(),
+                builder: (context, state) => const SavingGoalsListPage(),
               ),
+              // One page for create / view / edit.
               GoRoute(
                 path: '/saving-goals/new',
                 name: 'saving-goal-new',
-                builder: (context, state) =>
-                    const ShellChromeHider(child: SavingGoalFormPage()),
+                builder: (context, state) => const SavingGoalDetailPage(),
               ),
               GoRoute(
                 path: '/saving-goals/:id',
                 name: 'saving-goal-detail',
-                builder: (context, state) => SavingGoalDetailPage(
-                    id: state.pathParameters['id']!),
+                builder: (context, state) =>
+                    SavingGoalDetailPage(id: state.pathParameters['id']!),
               ),
               GoRoute(
                 path: '/saving-goals/:id/edit',
                 name: 'saving-goal-edit',
-                builder: (context, state) => ShellChromeHider(
-                    child: SavingGoalFormPage(
-                        editingId: state.pathParameters['id'])),
+                builder: (context, state) => SavingGoalDetailPage(
+                  id: state.pathParameters['id']!,
+                  startEditing: true,
+                ),
               ),
               // Personal debts (bidirectional)
               GoRoute(
@@ -503,7 +477,9 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
                 builder: (context, state) {
                   final extra = state.extra;
                   return PersonalDebtFormPage(
-                    contactId: extra is Map ? extra['contactId'] as String? : null,
+                    contactId: extra is Map
+                        ? extra['contactId'] as String?
+                        : null,
                     name: extra is Map ? extra['name'] as String? : null,
                   );
                 },
@@ -519,8 +495,8 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/personal-debts/:id',
                 name: 'personal-debt-detail',
-                builder: (context, state) => PersonalDebtDetailPage(
-                    id: state.pathParameters['id']!),
+                builder: (context, state) =>
+                    PersonalDebtDetailPage(id: state.pathParameters['id']!),
               ),
               // Categories & tags
               GoRoute(
@@ -540,8 +516,8 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
               GoRoute(
                 path: '/categories/:id',
                 name: 'category-detail',
-                builder: (context, state) => CategoryDetailPage(
-                    editingId: state.pathParameters['id']),
+                builder: (context, state) =>
+                    CategoryDetailPage(editingId: state.pathParameters['id']),
               ),
               // Tags are managed inline on one page (name + icon only),
               // so there's no separate create/edit route.
@@ -583,6 +559,11 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
             path: 'logs',
             name: 'dev-logs',
             builder: (context, state) => const LogsViewerScreen(),
+          ),
+          GoRoute(
+            path: 'imports',
+            name: 'dev-imports',
+            builder: (context, state) => const ImportsLabScreen(),
           ),
           GoRoute(
             path: 'widgets',

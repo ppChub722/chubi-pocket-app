@@ -30,7 +30,11 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
   Future<void> _refresh() async {
     final f = _fetch();
     setState(() => _future = f);
-    await f;
+    try {
+      await f;
+    } catch (_) {
+      // The FutureBuilder renders the failure (AsyncStateView).
+    }
   }
 
   Future<void> _restore(Account a) async {
@@ -53,51 +57,62 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppTopBar(title: l.accountsArchivedTitle, showBack: true),
+      extendBodyBehindAppBar: true,
       body: FutureBuilder<List<Account>>(
         future: _future,
         builder: (context, snap) {
-          if (snap.connectionState != ConnectionState.done) {
-            return ListView(children: [
-              for (var i = 0; i < 3; i++) const SkeletonListTile(),
-            ]);
-          }
           final list = snap.data ?? const <Account>[];
-          if (list.isEmpty) {
-            return EmptyView(
+          return AsyncStateView(
+            loading: snap.connectionState != ConnectionState.done,
+            error: snap.hasError
+                ? ApiException.from(snap.error!, snap.stackTrace)
+                : null,
+            isEmpty: list.isEmpty,
+            onRetry: _refresh,
+            skeleton: ListView(
+              children: [for (var i = 0; i < 3; i++) const SkeletonListTile()],
+            ),
+            empty: EmptyView(
               icon: AppIcons.archive,
               title: l.accountsArchivedEmpty,
               message: '',
-            );
-          }
-          return PullToRefresh(
-            onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 96),
-              children: [
-                for (final a in list)
-                  ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    leading: Opacity(
-                      opacity: 0.6,
-                      child: IconDisplay(
-                          type: IconType.account, size: 40, iconCode: a.iconCode),
+            ),
+            builder: (context) => PullToRefresh(
+              onRefresh: _refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                // Clear the floating top bar (the skeleton's padding-less
+                // ListView gets it automatically).
+                padding: EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top,
+                  bottom: 96,
+                ),
+                children: [
+                  for (final a in list)
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      leading: Opacity(
+                        opacity: 0.6,
+                        child: IconDisplay(
+                          type: IconType.account,
+                          size: 40,
+                          iconCode: a.iconCode,
+                        ),
+                      ),
+                      title: Text(a.name),
+                      subtitle: MoneyText(a.balance),
+                      trailing: AppButton(
+                        label: l.accountRestore,
+                        icon: AppIcons.unarchive,
+                        variant: AppButtonVariant.tonal,
+                        loading: _busy.contains(a.id),
+                        onPressed: () => _restore(a),
+                      ),
                     ),
-                    title: Text(a.name),
-                    subtitle: MoneyText(a.balance),
-                    trailing: _busy.contains(a.id)
-                        ? const SizedBox.square(
-                            dimension: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : AppButton(
-                            label: l.accountRestore,
-                            icon: AppIcons.unarchive,
-                            variant: AppButtonVariant.tonal,
-                            onPressed: () => _restore(a),
-                          ),
-                  ),
-              ],
+                ],
+              ),
             ),
           );
         },

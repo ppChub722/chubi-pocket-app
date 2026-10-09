@@ -52,7 +52,10 @@ TopBarCrumb? defaultTopBarCrumb(BuildContext context) {
   };
   if (hit == null) return null;
   return TopBarCrumb(
-      label: hit.$1, path: '/${segments.first}', routeName: hit.$2);
+    label: hit.$1,
+    path: '/${segments.first}',
+    routeName: hit.$2,
+  );
 }
 
 /// Back to [crumb]: pop to it when it's below us in the stack, otherwise

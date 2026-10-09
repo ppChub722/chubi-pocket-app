@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import '../logger/app_logger.dart';
+
 /// Typed error raised by repositories after a failed API call.
 ///
 /// Thrown by Repository methods (which catch [DioException] and convert via
@@ -61,8 +63,7 @@ class ApiException implements Exception {
     final code = switch (e.type) {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
-      DioExceptionType.receiveTimeout =>
-        'NETWORK_TIMEOUT',
+      DioExceptionType.receiveTimeout => 'NETWORK_TIMEOUT',
       DioExceptionType.connectionError => 'NETWORK_ERROR',
       DioExceptionType.cancel => 'REQUEST_CANCELLED',
       _ => 'UNKNOWN_ERROR',
@@ -74,6 +75,22 @@ class ApiException implements Exception {
       statusCode: response?.statusCode,
       requestId: reqId,
     );
+  }
+
+  /// Any caught failure as an [ApiException] — as-is when it already is
+  /// one, else wrapped (a JSON shape mismatch, a bug) so a cubit's `load()`
+  /// still lands in its error state: retry UI instead of an endless
+  /// skeleton. Wrapped ones are logged, since nothing upstream saw them.
+  factory ApiException.from(Object error, [StackTrace? stack]) {
+    if (error is ApiException) return error;
+    AppLogger.instance.error(
+      'unexpected_error',
+      fields: {
+        'error': error.toString(),
+        if (stack != null) 'stack': stack.toString(),
+      },
+    );
+    return ApiException(code: 'UNEXPECTED_ERROR', message: error.toString());
   }
 
   /// Pull the request id from the response header first (BE may have
@@ -88,5 +105,6 @@ class ApiException implements Exception {
   }
 
   @override
-  String toString() => 'ApiException($code: $message${requestId != null ? " req=$requestId" : ""})';
+  String toString() =>
+      'ApiException($code: $message${requestId != null ? " req=$requestId" : ""})';
 }

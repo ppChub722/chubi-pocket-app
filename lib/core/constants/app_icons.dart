@@ -59,6 +59,16 @@ abstract final class AppIcons {
   static const split = Icons.call_split;
   static const link = Icons.link;
   static const unlink = Icons.link_off;
+  static const trendUp = Icons.arrow_upward;
+  static const trendDown = Icons.arrow_downward;
+  static const trendFlat = Icons.remove;
+
+  // ── Preferences / account ────────────────────────────────────────────
+  static const language = Icons.language_outlined;
+  static const font = Icons.text_fields_outlined;
+  static const lightMode = Icons.light_mode_outlined;
+  static const darkMode = Icons.dark_mode_outlined;
+  static const email = Icons.mail_outline;
 
   // ── Actions ──────────────────────────────────────────────────────────
   static const add = Icons.add;
@@ -77,14 +87,20 @@ abstract final class AppIcons {
   static const share = Icons.ios_share;
   static const copy = Icons.content_copy;
   static const send = Icons.send_outlined;
+  static const importSlip = Icons.document_scanner_outlined;
+  static const chat = Icons.chat_bubble_outline;
   static const logout = Icons.logout;
   static const iconPicker = Icons.interests_outlined;
   static const colorPicker = Icons.palette_outlined;
   static const eyedropper = Icons.colorize_outlined;
   static const useDefaultIcon = Icons.hide_image_outlined;
+  static const pause = Icons.pause_circle_outline;
+  static const resume = Icons.play_circle_outline;
+  static const stop = Icons.stop_circle_outlined;
 
   // ── Disclosure / selection ───────────────────────────────────────────
   static const chevronRight = Icons.chevron_right;
+  static const chevronLeft = Icons.chevron_left;
   static const dropdown = Icons.arrow_drop_down;
   static const expand = Icons.expand_more;
   static const check = Icons.check;
@@ -108,18 +124,31 @@ abstract final class AppIcons {
   /// **Add new icons here too** (same file, so it stays in sync).
   static const Map<String, Map<String, IconData>> catalog = {
     'Tabs / chrome': {
-      'dashboard': dashboard, 'dashboardActive': dashboardActive,
-      'transactions': transactions, 'transactionsActive': transactionsActive,
-      'wallet': wallet, 'walletActive': walletActive, 'more': more,
-      'back': back, 'close': close, 'notifications': notifications,
+      'dashboard': dashboard,
+      'dashboardActive': dashboardActive,
+      'transactions': transactions,
+      'transactionsActive': transactionsActive,
+      'wallet': wallet,
+      'walletActive': walletActive,
+      'more': more,
+      'back': back,
+      'close': close,
+      'notifications': notifications,
       'pending': pending,
       'settings': settings,
-      'markAllRead': markAllRead, 'profile': profile,
+      'markAllRead': markAllRead,
+      'profile': profile,
     },
     'Features': {
-      'category': category, 'tag': tag, 'contact': contact,
-      'project': project, 'debt': debt, 'budget': budget,
-      'savingGoal': savingGoal, 'scheduled': scheduled, 'member': member,
+      'category': category,
+      'tag': tag,
+      'contact': contact,
+      'project': project,
+      'debt': debt,
+      'budget': budget,
+      'savingGoal': savingGoal,
+      'scheduled': scheduled,
+      'member': member,
       'inviteMember': inviteMember,
       'addContact': addContact,
       'addDebt': addDebt,
@@ -127,30 +156,79 @@ abstract final class AppIcons {
       'history': history,
     },
     'Money / accounts': {
-      'bank': bank, 'cash': cash, 'eWallet': eWallet,
-      'creditCard': creditCard, 'payLater': payLater, 'income': income,
-      'expense': expense, 'transfer': transfer, 'noWallet': noWallet,
-      'currency': currency, 'date': date, 'note': note, 'split': split,
+      'bank': bank,
+      'cash': cash,
+      'eWallet': eWallet,
+      'creditCard': creditCard,
+      'payLater': payLater,
+      'income': income,
+      'expense': expense,
+      'transfer': transfer,
+      'noWallet': noWallet,
+      'currency': currency,
+      'date': date,
+      'note': note,
+      'split': split,
       'link': link,
       'unlink': unlink,
+      'trendUp': trendUp,
+      'trendDown': trendDown,
+      'trendFlat': trendFlat,
+    },
+    'Preferences / account': {
+      'language': language,
+      'font': font,
+      'lightMode': lightMode,
+      'darkMode': darkMode,
+      'email': email,
     },
     'Actions': {
-      'add': add, 'edit': edit, 'editBadge': editBadge, 'delete': delete,
-      'archive': archive, 'unarchive': unarchive, 'undo': undo,
-      'reset': reset, 'refresh': refresh, 'search': search, 'clear': clear,
-      'sort': sort, 'reorder': reorder, 'share': share, 'copy': copy,
-      'send': send, 'logout': logout, 'iconPicker': iconPicker,
-      'colorPicker': colorPicker, 'eyedropper': eyedropper,
+      'add': add,
+      'edit': edit,
+      'editBadge': editBadge,
+      'delete': delete,
+      'archive': archive,
+      'unarchive': unarchive,
+      'undo': undo,
+      'reset': reset,
+      'refresh': refresh,
+      'search': search,
+      'clear': clear,
+      'sort': sort,
+      'reorder': reorder,
+      'share': share,
+      'copy': copy,
+      'send': send,
+      'importSlip': importSlip,
+      'chat': chat,
+      'logout': logout,
+      'iconPicker': iconPicker,
+      'colorPicker': colorPicker,
+      'eyedropper': eyedropper,
       'useDefaultIcon': useDefaultIcon,
+      'pause': pause,
+      'resume': resume,
+      'stop': stop,
     },
     'Disclosure / selection': {
-      'chevronRight': chevronRight, 'dropdown': dropdown, 'expand': expand,
-      'check': check, 'none': none, 'lock': lock, 'visible': visible,
+      'chevronRight': chevronRight,
+      'chevronLeft': chevronLeft,
+      'dropdown': dropdown,
+      'expand': expand,
+      'check': check,
+      'none': none,
+      'lock': lock,
+      'visible': visible,
       'hidden': hidden,
     },
     'Feedback / states': {
-      'success': success, 'error': error, 'warning': warning, 'info': info,
-      'offline': offline, 'serverDown': serverDown, 'empty': empty,
+      'success': success,
+      'error': error,
+      'warning': warning,
+      'info': info,
+      'offline': offline,
+      'serverDown': serverDown,
+      'empty': empty,
     },
   };
 }

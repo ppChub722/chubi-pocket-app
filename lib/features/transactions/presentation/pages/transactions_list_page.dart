@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
@@ -21,6 +20,7 @@ import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../widgets/quick_create_sheet.dart';
 import '../widgets/transaction_tile.dart';
 
 /// [custom] = one specific month ([_TransactionsListPageState._month]),
@@ -332,12 +332,20 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
     };
 
     return Scaffold(
-      appBar: widget.title == null
-          ? null
-          : AppTopBar(title: widget.title, showBack: true),
+      // Tab root (no title passed) → the tab's own bar; pushed → back + title.
+      // Nothing scrolls under it here (search + filters are pinned), so the
+      // body doesn't extend behind it.
+      appBar: AppTopBar(
+        title: widget.title ?? l.navTransactions,
+        showBack: widget.title != null,
+      ),
       body: Column(
         children: [
-          AppSearchBar(controller: _search, onChanged: _onSearch),
+          AppSearchBar(
+            controller: _search,
+            onChanged: _onSearch,
+            hint: l.transactionsSearchHint,
+          ),
           FilterBar(
             chips: [
               OptionMenuAnchor<TransactionType?>(
@@ -404,57 +412,48 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
           ),
           Expanded(
             child: BlocBuilder<TransactionsCubit, TransactionsState>(
-              builder: (context, state) {
-                if (state.status == TransactionsStatus.loading &&
-                    state.transactions.isEmpty) {
-                  return ListView(
-                    children: [
-                      for (var i = 0; i < 8; i++) const SkeletonListTile(),
-                    ],
-                  );
-                }
-                if (state.status == TransactionsStatus.error &&
-                    state.transactions.isEmpty) {
-                  return EmptyView(
-                    icon: AppIcons.serverDown,
-                    title: state.errorMessage ?? l.errorUnknownMessage,
-                    message: '',
-                    cta: AppButton(
-                      label: l.transactionsListRetry,
-                      onPressed: _refetch,
-                    ),
-                  );
-                }
-                if (state.transactions.isEmpty) {
-                  return EmptyView(
-                    icon: AppIcons.empty,
-                    title: _filtered
-                        ? l.transactionsNoMatch
-                        : l.transactionsEmptyAccountTitle,
-                    message: _filtered ? '' : l.transactionsListEmptyMessage,
-                    cta: _filtered
-                        ? AppButton(
-                            label: l.transactionsClearFilters,
-                            variant: AppButtonVariant.tonal,
-                            onPressed: _clearFilters,
-                          )
-                        : AddTile(
-                            label: l.homeAddFirstTx,
-                            onTap: () => context.push('/transactions/new'),
-                          ),
-                  );
-                }
-                return PullToRefresh(
+              builder: (context, state) => AsyncStateView(
+                loading:
+                    state.status == TransactionsStatus.initial ||
+                    state.status == TransactionsStatus.loading,
+                error: state.error,
+                isEmpty: state.transactions.isEmpty,
+                onRetry: _refetch,
+                skeleton: ListView(
+                  children: [
+                    for (var i = 0; i < 8; i++) const SkeletonListTile(),
+                  ],
+                ),
+                // Filters on → "no match" + clear; off → first-tx CTA.
+                empty: EmptyView(
+                  icon: _filtered ? AppIcons.search : AppIcons.empty,
+                  title: _filtered
+                      ? l.transactionsNoMatch
+                      : l.transactionsEmptyAccountTitle,
+                  message: _filtered ? '' : l.transactionsListEmptyMessage,
+                  cta: _filtered
+                      ? AppButton(
+                          label: l.transactionsClearFilters,
+                          variant: AppButtonVariant.tonal,
+                          onPressed: _clearFilters,
+                        )
+                      : AddTile(
+                          label: l.homeAddFirstTx,
+                          // Same flow as the nav's +.
+                          onTap: () => showQuickCreateSheet(context),
+                        ),
+                ),
+                builder: (context) => PullToRefresh(
                   onRefresh: _refetch,
                   child: _DayGroupedList(
                     transactions: state.transactions,
                     controller: _scroll,
                     byDate: _sort.startsWith('date'),
-                    loadingMore: state.status == TransactionsStatus.loading,
+                    loadingMore: state.loadingMore,
                     hideAccount: _wallet is _OneWallet,
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
         ],
@@ -524,18 +523,14 @@ class _DayGroupedList extends StatelessWidget {
         );
       }
     }
+    // Next page in flight → row-shaped skeletons, never a spinner (§8.5).
     if (loadingMore) {
-      children.add(
-        const Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
+      children.addAll(const [SkeletonListTile(), SkeletonListTile()]);
     }
     return ListView(
       controller: controller,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 96),
+      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: 96),
       children: children,
     );
   }

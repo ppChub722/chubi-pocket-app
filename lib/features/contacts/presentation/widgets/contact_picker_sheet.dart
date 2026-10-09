@@ -34,18 +34,19 @@ Future<ContactPickResult?> showContactPickerSheet(
   bool allowFreeText = true,
   String? title,
 }) {
-  return showModalBottomSheet<ContactPickResult>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    useRootNavigator: true,
-    builder: (_) => SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.75,
+  return showAppSheet<ContactPickResult>(
+    context,
+    title: title ?? AppLocalizations.of(context)!.contactPickerTitle,
+    // Fixed height so the results list scrolls inside the sheet, under the
+    // title row; shrinks with the keyboard (the search field autofocuses).
+    builder: (ctx) => SizedBox(
+      height:
+          (MediaQuery.sizeOf(ctx).height -
+              MediaQuery.viewInsetsOf(ctx).bottom) *
+          0.7,
       child: _ContactPicker(
         selectedContactId: selectedContactId,
         allowFreeText: allowFreeText,
-        title: title,
       ),
     ),
   );
@@ -55,20 +56,19 @@ class _ContactPicker extends StatefulWidget {
   const _ContactPicker({
     required this.selectedContactId,
     required this.allowFreeText,
-    required this.title,
   });
 
   final String? selectedContactId;
   final bool allowFreeText;
-  final String? title;
 
   @override
   State<_ContactPicker> createState() => _ContactPickerState();
 }
 
 class _ContactPickerState extends State<_ContactPicker> {
-  late final Future<List<Contact>> _future =
-      context.read<ContactsRepository>().list(status: 'active');
+  late final Future<List<Contact>> _future = context
+      .read<ContactsRepository>()
+      .list(status: 'active');
   String _query = '';
 
   @override
@@ -80,12 +80,6 @@ class _ContactPickerState extends State<_ContactPicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
-          child: Text(widget.title ?? l.contactPickerTitle,
-              style: textTheme.titleLarge),
-        ),
         AppSearchBar(
           autofocus: true,
           hint: widget.allowFreeText ? l.contactPickerSearchHint : null,
@@ -108,14 +102,19 @@ class _ContactPickerState extends State<_ContactPicker> {
               final hits = lower.isEmpty
                   ? all
                   : all
-                      .where((c) =>
-                          c.effectiveName.toLowerCase().contains(lower) ||
-                          (c.effectiveEmail?.toLowerCase().contains(lower) ??
-                              false) ||
-                          (c.phone?.contains(lower) ?? false))
-                      .toList();
+                        .where(
+                          (c) =>
+                              c.effectiveName.toLowerCase().contains(lower) ||
+                              (c.effectiveEmail?.toLowerCase().contains(
+                                    lower,
+                                  ) ??
+                                  false) ||
+                              (c.phone?.contains(lower) ?? false),
+                        )
+                        .toList();
               final exact = all.any(
-                  (c) => c.effectiveName.toLowerCase() == lower);
+                (c) => c.effectiveName.toLowerCase() == lower,
+              );
               final offerName = widget.allowFreeText && q.isNotEmpty && !exact;
 
               return ListView(
@@ -129,8 +128,7 @@ class _ContactPickerState extends State<_ContactPicker> {
                       ),
                       title: Text(l.contactPickerUseName(q)),
                       subtitle: Text(l.contactPickerUseNameHint),
-                      onTap: () =>
-                          Navigator.pop(context, ContactNameTyped(q)),
+                      onTap: () => Navigator.pop(context, ContactNameTyped(q)),
                     ),
                   if (all.isEmpty && !offerName)
                     Padding(
@@ -138,8 +136,9 @@ class _ContactPickerState extends State<_ContactPicker> {
                       child: Text(
                         l.contactPickerEmpty,
                         textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   for (final c in hits)
@@ -156,8 +155,11 @@ class _ContactPickerState extends State<_ContactPicker> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (c.isLinked)
-                            Icon(AppIcons.link,
-                                size: 18, color: scheme.onSurfaceVariant),
+                            Icon(
+                              AppIcons.link,
+                              size: 18,
+                              color: scheme.onSurfaceVariant,
+                            ),
                           if (c.id == widget.selectedContactId) ...[
                             const SizedBox(width: AppSpacing.sm),
                             Icon(AppIcons.check, color: scheme.primary),

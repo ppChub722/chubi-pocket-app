@@ -32,25 +32,37 @@ class SettingsPage extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppTopBar(
-          title: l.settingsTitle, showBack: true, showUniversal: false),
+        title: l.settingsTitle,
+        showBack: true,
+        showUniversal: false,
+      ),
+      extendBodyBehindAppBar: true,
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final user = _userOf(state);
           if (user == null) return const SizedBox.shrink();
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.huge),
+            // Clear the floating top bar.
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              MediaQuery.paddingOf(context).top + AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.huge,
+            ),
             children: [
               HeaderCard(
                 leading: UserAvatar(
-                    displayName: user.displayName,
-                    iconCode: user.iconCode,
-                    size: 52),
+                  displayName: user.displayName,
+                  iconCode: user.iconCode,
+                  size: 52,
+                ),
                 title: Text(user.displayName),
-                subtitle: Text([
-                  '@${user.username}',
-                  if (user.email?.isNotEmpty ?? false) user.email!,
-                ].join(' · ')),
+                subtitle: Text(
+                  [
+                    '@${user.username}',
+                    if (user.email?.isNotEmpty ?? false) user.email!,
+                  ].join(' · '),
+                ),
                 trailing: const Icon(AppIcons.chevronRight),
                 onTap: () => context.push('/settings/profile'),
               ),
@@ -66,7 +78,9 @@ class SettingsPage extends StatelessWidget {
                   const RowDivider(),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
+                    ),
                     child: _CurrencyRow(user: user),
                   ),
                 ],
@@ -153,10 +167,13 @@ class _CurrencyRowState extends State<_CurrencyRow> {
     final auth = context.read<AuthCubit>();
     setState(() => _saving = true);
     try {
-      final updated =
-          await context.read<UsersRepository>().updateMe(currency: code);
+      final updated = await context.read<UsersRepository>().updateMe(
+        currency: code,
+      );
       auth.updateUser(updated);
-      if (mounted) showAppSnackBar(context, l.settingsCurrencySaved, tone: Tone.success);
+      if (mounted) {
+        showAppSnackBar(context, l.settingsCurrencySaved, tone: Tone.success);
+      }
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
     } finally {
@@ -177,8 +194,10 @@ class _CurrencyRowState extends State<_CurrencyRow> {
         ),
         Padding(
           padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: Text(l.settingsDefaultCurrencyHint,
-              style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            l.settingsDefaultCurrencyHint,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
       ],
     );
@@ -190,10 +209,10 @@ class _ThemeCards extends StatelessWidget {
   const _ThemeCards();
 
   static String _name(AppLocalizations l, AppTheme t) => switch (t.id) {
-        'mint' => l.settingsThemeMint,
-        'sweet' => l.settingsThemeSweet,
-        _ => t.id,
-      };
+    'mint' => l.settingsThemeMint,
+    'sweet' => l.settingsThemeSweet,
+    _ => t.id,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -232,13 +251,17 @@ class _ThemeCards extends StatelessWidget {
                                       height: 18,
                                       margin: const EdgeInsets.only(right: 4),
                                       decoration: BoxDecoration(
-                                          color: c, shape: BoxShape.circle),
+                                        color: c,
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
                                 ],
                               ),
                               const SizedBox(height: AppSpacing.sm),
-                              Text(_name(l, t),
-                                  style: Theme.of(context).textTheme.titleSmall),
+                              Text(
+                                _name(l, t),
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
                             ],
                           ),
                         ),
@@ -271,7 +294,11 @@ class _ThemeModeRow extends StatelessWidget {
     };
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.md),
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -281,7 +308,8 @@ class _ThemeModeRow extends StatelessWidget {
             selected: mode,
             onChanged: (m) => context.read<ThemeModeCubit>().set(m),
             tabs: [
-              for (final e in labels.entries) AppTab(value: e.key, label: e.value),
+              for (final e in labels.entries)
+                AppTab(value: e.key, label: e.value),
             ],
           ),
         ],
@@ -300,7 +328,7 @@ class _LanguageRow extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final code = context.watch<LocaleCubit>().state.languageCode;
     return DetailRow(
-      leading: const Icon(Icons.language_outlined),
+      leading: const Icon(AppIcons.language),
       label: l.settingsLanguage,
       trailing: Text(_names[code] ?? code),
       showChevron: true,
@@ -332,10 +360,11 @@ class _FontRow extends StatelessWidget {
     final lang = context.watch<LocaleCubit>().state.languageCode;
     final fontId = context.watch<FontIdCubit>().state;
     final available = FontRegistry.availableFor(lang);
-    final current = available.where((f) => f.id == fontId).firstOrNull ??
+    final current =
+        available.where((f) => f.id == fontId).firstOrNull ??
         (available.isNotEmpty ? available.first : null);
     return DetailRow(
-      leading: const Icon(Icons.text_fields_outlined),
+      leading: const Icon(AppIcons.font),
       label: l.settingsFont,
       trailing: Text(current?.family ?? '—'),
       showChevron: available.length > 1,
@@ -379,11 +408,13 @@ class _VersionRowState extends State<_VersionRow> {
   @override
   void initState() {
     super.initState();
-    PackageInfo.fromPlatform().then((info) {
-      if (mounted) {
-        setState(() => _version = '${info.version} (${info.buildNumber})');
-      }
-    }).catchError((Object _) {});
+    PackageInfo.fromPlatform()
+        .then((info) {
+          if (mounted) {
+            setState(() => _version = '${info.version} (${info.buildNumber})');
+          }
+        })
+        .catchError((Object _) {});
   }
 
   @override

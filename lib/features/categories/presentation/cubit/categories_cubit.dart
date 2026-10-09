@@ -16,7 +16,7 @@ class CategoriesState extends Equatable {
   const CategoriesState({
     this.categories = const [],
     this.status = CategoriesStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   /// Full list — system + user, all types. Consumers filter via the
@@ -28,25 +28,26 @@ class CategoriesState extends Equatable {
   /// so the page can surface a snackbar without resetting the list view.
   final CategoriesStatus status;
 
-  /// Last known error message from a failed `load()`. Cleared on next
+  /// Last failure from `load()`. Cleared on next
   /// successful load. Mutator failures don't set this.
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   CategoriesState copyWith({
     List<Category>? categories,
     CategoriesStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return CategoriesState(
       categories: categories ?? this.categories,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [categories, status, errorMessage];
+  List<Object?> get props => [categories, status, error];
 }
 
 enum CategoriesStatus { initial, loading, loaded, error }
@@ -69,8 +70,8 @@ enum CategoriesStatus { initial, loading, loaded, error }
 /// (round-trip undo via inverse API calls) is much more complex.
 class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   CategoriesCubit({required CategoriesRepository repository})
-      : _repo = repository,
-        super(const CategoriesState());
+    : _repo = repository,
+      super(const CategoriesState());
 
   final CategoriesRepository _repo;
 
@@ -101,27 +102,28 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
 
   /// Force-reload from the API. Used by an explicit refresh action.
   /// On failure preserves the previously loaded list (if any) and
-  /// surfaces an `errorMessage` while flipping status to `error`.
+  /// surfaces an `error` while flipping status to `error`.
   Future<void> load() async {
-    emit(state.copyWith(
-      status: CategoriesStatus.loading,
-      clearError: true,
-    ));
+    emit(state.copyWith(status: CategoriesStatus.loading, clearError: true));
     try {
       // Include system rows so other features (transactions) can
       // resolve Transfer/Adjustment/Opening when the list is shared.
       // The management page filters via [userCategories].
       final list = await _repo.list(includeSystem: true);
-      emit(state.copyWith(
-        categories: list,
-        status: CategoriesStatus.loaded,
-        clearError: true,
-      ));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: CategoriesStatus.error,
-        errorMessage: e.message,
-      ));
+      emit(
+        state.copyWith(
+          categories: list,
+          status: CategoriesStatus.loaded,
+          clearError: true,
+        ),
+      );
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: CategoriesStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -138,9 +140,7 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   /// Children of [parentId] (null = top-level), excluding system rows,
   /// sorted by `sort_order`.
   List<Category> childrenOf(String? parentId) {
-    return userCategories
-        .where((c) => c.parentId == parentId)
-        .toList()
+    return userCategories.where((c) => c.parentId == parentId).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
   }
 
@@ -165,20 +165,20 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
     if (!canAddMore) throw const CategoryLimitExceeded();
     final created = await _repo.create(draft);
     _pushUndo();
-    emit(state.copyWith(
-      categories: [...state.categories, created],
-    ));
+    emit(state.copyWith(categories: [...state.categories, created]));
   }
 
   Future<void> update(Category category) async {
     final updated = await _repo.update(category);
     _pushUndo();
-    emit(state.copyWith(
-      categories: [
-        for (final c in state.categories)
-          if (c.id == updated.id) updated else c,
-      ],
-    ));
+    emit(
+      state.copyWith(
+        categories: [
+          for (final c in state.categories)
+            if (c.id == updated.id) updated else c,
+        ],
+      ),
+    );
   }
 
   /// Real delete (see [CategoriesRepository.delete]). Reloads afterwards
@@ -190,8 +190,7 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   }
 
   /// Transactions / budgets a delete of [id] would affect.
-  Future<({int transactions, int budgets})> usage(String id) =>
-      _repo.usage(id);
+  Future<({int transactions, int budgets})> usage(String id) => _repo.usage(id);
 
   /// Saves the user's drag-and-drop reorder by sending the staged tree
   /// to `PATCH /v1/categories/reorder`. Server returns the user's full
@@ -202,11 +201,8 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
     final userOnly = staged.where((c) => !c.isSystem).toList();
     final result = await _repo.reorder(userOnly);
     _pushUndo();
-    final systemRows =
-        state.categories.where((c) => c.isSystem).toList();
-    emit(state.copyWith(
-      categories: [...systemRows, ...result],
-    ));
+    final systemRows = state.categories.where((c) => c.isSystem).toList();
+    emit(state.copyWith(categories: [...systemRows, ...result]));
   }
 
   // ── Undo ───────────────────────────────────────────────────────────

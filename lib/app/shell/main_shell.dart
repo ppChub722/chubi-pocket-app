@@ -1,42 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_icons.dart';
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
-import '../../l10n/gen/app_localizations.dart';
-import 'app_top_bar.dart';
 import 'main_bottom_nav.dart';
 import 'shell_chrome.dart';
 
 /// App chrome shared by every tab-layer screen.
 ///
-/// Bottom nav + the centred `+` quick-create FAB show on **every** page.
-/// Chrome adapts by depth:
-/// - **At a branch root** (`/`, `/transactions`, `/accounts`) — the shell
-///   also renders the [AppTopBar].
-/// - **Deeper pages** (`/accounts/:id`, `/contacts`, ...) — the page
-///   supplies its own [Scaffold] + top bar with a back button.
-/// - "More"-menu pages highlight the เพิ่มเติม slot.
-/// Settings / notifications are NOT here — they're the overlay layer on
-/// the root navigator (no nav, no FAB).
+/// The shell owns only the floating bottom nav (with its centred `+`
+/// quick-create button), shown on **every** page. Top bars belong to the
+/// pages: tab roots use [TabRootScaffold] (transparent bar, content scrolls
+/// under it), deeper pages bring their own [Scaffold] + back button — so
+/// pushing a page never changes the shell's layout mid-transition.
+/// "More"-menu pages highlight the เพิ่มเติม slot. Settings / notifications
+/// are NOT here — they're the overlay layer on the root navigator (no nav).
 ///
 /// A page can also **take over the bottom chrome** via [ShellChrome]: when
 /// it calls [ShellChromeController.hide] (e.g. categories' reorder mode),
-/// the shell drops its bottom nav + FAB so the page's own contextual
-/// action bar replaces them instead of stacking under them.
+/// the nav slides away so the page's own contextual action bar replaces it
+/// instead of stacking under it.
 class MainShell extends StatefulWidget {
-  const MainShell({
-    required this.navigationShell,
-    required this.currentPath,
-    super.key,
-  });
+  const MainShell({required this.navigationShell, super.key});
 
-  /// The branched navigation tree managed by
-  /// [StatefulShellRoute.indexedStack].
+  /// The branched navigation tree managed by [StatefulShellRoute].
   final StatefulNavigationShell navigationShell;
-
-  /// Current location path — drives the root-vs-deep chrome switch.
-  final String currentPath;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -45,17 +32,15 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   final ShellChromeController _chrome = ShellChromeController();
 
-  static const _branchRoots = {'/', '/transactions', '/accounts', '/more'};
-
   /// Branch index of the เพิ่มเติม tab (see app_router.dart).
   static const _moreBranch = 3;
 
   void _goBranch(int i) => widget.navigationShell.goBranch(
-        i,
-        // Re-tapping the active tab pops to the branch root, matching the
-        // behaviour users expect from native bottom nav.
-        initialLocation: i == widget.navigationShell.currentIndex,
-      );
+    i,
+    // Re-tapping the active tab pops to the branch root, matching the
+    // behaviour users expect from native bottom nav.
+    initialLocation: i == widget.navigationShell.currentIndex,
+  );
 
   @override
   void dispose() {
@@ -67,66 +52,43 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return ShellChrome(
       controller: _chrome,
-      // Only the chrome (nav + FAB) needs to rebuild when a page toggles
-      // the controller — the branch content underneath is untouched.
-      child: ListenableBuilder(
-        listenable: _chrome,
-        builder: (context, _) => _buildScaffold(context),
+      child: Scaffold(
+        body: widget.navigationShell,
+        // Only the nav rebuilds when a page toggles the controller — the
+        // branch content underneath is untouched.
+        bottomNavigationBar: ListenableBuilder(
+          listenable: _chrome,
+          builder: (context, _) => _animatedNav(context),
+        ),
       ),
     );
   }
 
-  Widget _buildScaffold(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final atRoot = _branchRoots.contains(widget.currentPath);
+  /// The nav slides down / back up instead of popping, so the body resizes
+  /// smoothly when a form or edit mode takes over the bottom.
+  Widget _animatedNav(BuildContext context) {
     final hidden = _chrome.hidden;
-
-    final bottomNav = hidden
-        ? null
-        : MainBottomNav(
-            currentIndex: widget.navigationShell.currentIndex,
-            moreSelected: widget.navigationShell.currentIndex == _moreBranch,
-            onTabSelected: _goBranch,
-            onAddPressed: () => showQuickCreateSheet(context),
-            onMorePressed: () => _goBranch(_moreBranch),
-          );
-
-    // The `+` quick-create FAB shows on every page, docked in the nav's
-    // notch; it leaves together with the nav in edit mode. Quick create
-    // event-from-bills lives INSIDE the + sheet (spec §10/4.24).
-    final fab = hidden
-        ? null
-        : FloatingActionButton(
-            tooltip: l.navAddTransaction,
-            onPressed: () => showQuickCreateSheet(context),
-            shape: const CircleBorder(),
-            child: const Icon(AppIcons.add),
-          );
-
-    return Scaffold(
-      // Tab roots get the shell's top bar; deeper pages bring their own.
-      appBar: atRoot
-          ? AppTopBar(title: _titleFor(l, widget.navigationShell.currentIndex))
-          : null,
-      body: widget.navigationShell,
-      floatingActionButton: fab,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: bottomNav,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) => SizeTransition(
+        sizeFactor: animation,
+        alignment: Alignment.topCenter,
+        child: FadeTransition(opacity: animation, child: child),
+      ),
+      child: hidden
+          ? const SizedBox(key: ValueKey('nav-hidden'), width: double.infinity)
+          : MainBottomNav(
+              key: const ValueKey('nav'),
+              currentIndex: widget.navigationShell.currentIndex,
+              moreSelected: widget.navigationShell.currentIndex == _moreBranch,
+              onTabSelected: _goBranch,
+              // Quick create event-from-bills lives INSIDE the + sheet
+              // (spec §10/4.24).
+              onAddPressed: () => showQuickCreateSheet(context),
+              onMorePressed: () => _goBranch(_moreBranch),
+            ),
     );
-  }
-
-  String _titleFor(AppLocalizations l, int index) {
-    switch (index) {
-      case 0:
-        return l.navDashboard;
-      case 1:
-        return l.navTransactions;
-      case 2:
-        return l.navAccounts;
-      case _moreBranch:
-        return l.navMore;
-      default:
-        return l.appName;
-    }
   }
 }

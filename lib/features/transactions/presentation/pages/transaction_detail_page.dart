@@ -17,11 +17,13 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../widgets/quick_create_sheet.dart';
 
 /// `/transactions/:id` (§9): header (category icon · name · date · big
-/// amount), a lock banner for system rows (opening balance / adjustment —
-/// no ✏️ / 🗑), then rows: wallet, category, balance after, tags, note,
-/// split, recorded by, source project.
+/// amount, ✏️ → quick-create sheet), a lock banner for system rows (opening
+/// balance / adjustment — no ✏️ / 🗑), then rows: wallet, category, balance
+/// after, tags, note, split, recorded by, source project, and a 🗑
+/// [DangerRow] last.
 class TransactionDetailPage extends StatefulWidget {
   const TransactionDetailPage({required this.transactionId, super.key});
 
@@ -48,17 +50,23 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       builder: (context, state) {
         final tx = context.read<TransactionsCubit>().byId(widget.transactionId);
         if (tx != null) return _Loaded(tx: tx);
-        final loading = state.status == TransactionsStatus.loading ||
-            state.status == TransactionsStatus.initial;
         return Scaffold(
           appBar: AppTopBar(title: l.navTransactions, showBack: true),
-          body: loading
-              ? const LoadingView()
-              : EmptyView(
-                  icon: AppIcons.empty,
-                  title: l.transactionDetailNotFound,
-                  message: l.transactionDetailNotFoundMessage,
-                ),
+          extendBodyBehindAppBar: true,
+          body: AsyncStateView.fallback(
+            loading:
+                state.status == TransactionsStatus.loading ||
+                state.status == TransactionsStatus.initial,
+            error: state.error,
+            // Not loaded (it failed) → loadIfNeeded refetches.
+            onRetry: context.read<TransactionsCubit>().loadIfNeeded,
+            skeleton: const LoadingView(),
+            notFound: EmptyView(
+              icon: AppIcons.empty,
+              title: l.transactionDetailNotFound,
+              message: l.transactionDetailNotFoundMessage,
+            ),
+          ),
         );
       },
     );
@@ -81,7 +89,8 @@ class _Loaded extends StatelessWidget {
     // Transfers carry a system category too but have their own cascade.
     final isSystemRow =
         tx.type != TransactionType.transfer && (cat?.isSystem ?? false);
-    final accent = cat?.iconCode?.accentColorFor(palette) ??
+    final accent =
+        cat?.iconCode?.accentColorFor(palette) ??
         switch (tx.type) {
           TransactionType.expense => palette.expense,
           TransactionType.income => palette.income,
@@ -90,166 +99,179 @@ class _Loaded extends StatelessWidget {
     final day = DateFormatter.parseDay(tx.date);
     final dateLabel = day == null
         ? tx.date
-        : DateFormatter.friendly(day,
+        : DateFormatter.friendly(
+            day,
             today: l.commonToday,
             yesterday: l.commonYesterday,
-            locale: Localizations.localeOf(context).languageCode);
+            locale: Localizations.localeOf(context).languageCode,
+          );
     final hasNote = tx.note?.isNotEmpty ?? false;
 
     return Scaffold(
-      appBar: AppTopBar(
-        title: _titleForType(l, tx.type),
-        showBack: true,
-        actions: isSystemRow
-            ? const []
-            : [
-                AppBarAction(
-                  icon: AppIcons.delete,
-                  tooltip: l.transactionDetailDelete,
-                  destructive: true,
-                  onPressed: () => _confirmDelete(context, l),
-                ),
-                AppBarAction(
-                  icon: AppIcons.edit,
-                  tooltip: l.transactionDetailEdit,
-                  onPressed: () => context.push('/transactions/${tx.id}/edit'),
-                ),
-              ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
-        children: [
-          HeaderCard(
-            accent: accent,
-            leading: IconBubble(
-              icon: IconRegistry.get(
-                cat?.iconCode?.icon,
-                fallback: switch (tx.type) {
-                  TransactionType.expense => AppIcons.expense,
-                  TransactionType.income => AppIcons.income,
-                  TransactionType.transfer => AppIcons.transfer,
-                },
-              ),
-              color: accent,
-              size: 44,
-            ),
-            title: Text(tx.category?.name ?? (hasNote ? tx.note! : '—')),
-            subtitle: Text(dateLabel),
-            footer: MoneyText(
-              tx.signedAmount,
-              tone: tx.type == TransactionType.transfer
-                  ? MoneyTone.plain
-                  : MoneyTone.signed,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.w800),
-            ),
+      appBar: AppTopBar(title: _titleForType(l, tx.type), showBack: true),
+      extendBodyBehindAppBar: true,
+      // Builder: the body's context sees the bar height in padding.top.
+      body: Builder(
+        builder: (context) => ListView(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            MediaQuery.paddingOf(context).top + AppSpacing.md,
+            AppSpacing.lg,
+            96,
           ),
-          if (isSystemRow) ...[
-            const SizedBox(height: AppSpacing.md),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+          children: [
+            HeaderCard(
+              accent: accent,
+              // No in-place edit here — ✏️ opens the quick-create sheet.
+              onEdit: isSystemRow
+                  ? null
+                  : () => showQuickCreateSheet(context, transaction: tx),
+              leading: IconBubble(
+                icon: IconRegistry.get(
+                  cat?.iconCode?.icon,
+                  fallback: switch (tx.type) {
+                    TransactionType.expense => AppIcons.expense,
+                    TransactionType.income => AppIcons.income,
+                    TransactionType.transfer => AppIcons.transfer,
+                  },
+                ),
+                color: accent,
+                size: 44,
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(AppIcons.lock, size: 18, color: scheme.onSurfaceVariant),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(l.transactionDetailSystemRowBanner,
-                        style: Theme.of(context).textTheme.bodySmall),
+              title: Text(tx.category?.name ?? (hasNote ? tx.note! : '—')),
+              subtitle: Text(dateLabel),
+              footer: MoneyText(
+                tx.signedAmount,
+                tone: tx.type == TransactionType.transfer
+                    ? MoneyTone.plain
+                    : MoneyTone.signed,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            if (isSystemRow) ...[
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      AppIcons.lock,
+                      size: 18,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        l.transactionDetailSystemRowBanner,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            SectionCard(
+              children: [
+                DetailRow(
+                  leading: Icon(
+                    tx.account == null ? AppIcons.noWallet : AppIcons.bank,
+                  ),
+                  label: tx.type == TransactionType.transfer && tx.isTransferIn
+                      ? l.txDetailTransferTo
+                      : l.txDetailAccount,
+                  trailing: Text(
+                    tx.account?.name ?? l.transactionFormAccountNone,
+                  ),
+                  showChevron: tx.account != null,
+                  onTap: tx.account == null
+                      ? null
+                      : () => context.push('/accounts/${tx.account!.id}'),
+                ),
+                if (tx.type != TransactionType.transfer) ...[
+                  const RowDivider(),
+                  DetailRow(
+                    leading: const Icon(AppIcons.category),
+                    label: l.txDetailCategory,
+                    trailing: Text(
+                      tx.category?.name ?? l.transactionFormCategoryNone,
+                    ),
                   ),
                 ],
-              ),
+                if (tx.accountBalanceAfter != null) ...[
+                  const RowDivider(),
+                  DetailRow(
+                    label: l.txDetailBalanceAfter,
+                    trailing: MoneyText(tx.accountBalanceAfter!),
+                  ),
+                ],
+                if (tx.tags.isNotEmpty) ...[
+                  const RowDivider(),
+                  DetailStacked(
+                    label: l.txDetailTags,
+                    child: Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        for (final t in tx.tags)
+                          AppBadge(label: t.name, icon: AppIcons.tag),
+                      ],
+                    ),
+                  ),
+                ],
+                if (hasNote) ...[
+                  const RowDivider(),
+                  DetailStacked(label: l.txDetailNote, child: Text(tx.note!)),
+                ],
+                if (tx.hasSplits) ...[
+                  const RowDivider(),
+                  DetailRow(
+                    leading: const Icon(AppIcons.split),
+                    label: l.txDetailSplits,
+                    trailing: Text(l.txDetailHasSplits),
+                  ),
+                ],
+                if (tx.createdBy != null) ...[
+                  const RowDivider(),
+                  DetailRow(
+                    leading: UserAvatar(
+                      displayName: tx.createdBy!.displayName,
+                      iconCode: tx.createdBy!.iconCode,
+                      size: 24,
+                    ),
+                    label: l.txDetailRecordedBy,
+                    trailing: Text(tx.createdBy!.displayName),
+                  ),
+                ],
+                if (tx.projectId != null) ...[
+                  const RowDivider(),
+                  DetailRow(
+                    leading: const Icon(AppIcons.project),
+                    label: l.txDetailSource,
+                    trailing: Text(l.txDetailSourceProject),
+                    showChevron: true,
+                    onTap: () => context.push('/projects/${tx.projectId}'),
+                  ),
+                ],
+              ],
             ),
-          ],
-          const SizedBox(height: AppSpacing.lg),
-          SectionCard(
-            children: [
-              DetailRow(
-                leading:
-                    Icon(tx.account == null ? AppIcons.noWallet : AppIcons.bank),
-                label: tx.type == TransactionType.transfer && tx.isTransferIn
-                    ? l.txDetailTransferTo
-                    : l.txDetailAccount,
-                trailing: Text(tx.account?.name ?? l.transactionFormAccountNone),
-                showChevron: tx.account != null,
-                onTap: tx.account == null
-                    ? null
-                    : () => context.push('/accounts/${tx.account!.id}'),
+            // No in-place edit mode, so delete is always the last row
+            // (system rows stay locked).
+            if (!isSystemRow)
+              DangerRow(
+                icon: AppIcons.delete,
+                label: l.transactionDeleteThis,
+                onTap: () => _confirmDelete(context, l),
               ),
-              if (tx.type != TransactionType.transfer) ...[
-                const RowDivider(),
-                DetailRow(
-                  leading: const Icon(AppIcons.category),
-                  label: l.txDetailCategory,
-                  trailing:
-                      Text(tx.category?.name ?? l.transactionFormCategoryNone),
-                ),
-              ],
-              if (tx.accountBalanceAfter != null) ...[
-                const RowDivider(),
-                DetailRow(
-                  label: l.txDetailBalanceAfter,
-                  trailing: MoneyText(tx.accountBalanceAfter!),
-                ),
-              ],
-              if (tx.tags.isNotEmpty) ...[
-                const RowDivider(),
-                DetailStacked(
-                  label: l.txDetailTags,
-                  child: Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    children: [
-                      for (final t in tx.tags)
-                        AppBadge(label: t.name, icon: AppIcons.tag),
-                    ],
-                  ),
-                ),
-              ],
-              if (hasNote) ...[
-                const RowDivider(),
-                DetailStacked(label: l.txDetailNote, child: Text(tx.note!)),
-              ],
-              if (tx.hasSplits) ...[
-                const RowDivider(),
-                DetailRow(
-                  leading: const Icon(AppIcons.split),
-                  label: l.txDetailSplits,
-                  trailing: Text(l.txDetailHasSplits),
-                ),
-              ],
-              if (tx.createdBy != null) ...[
-                const RowDivider(),
-                DetailRow(
-                  leading: UserAvatar(
-                    displayName: tx.createdBy!.displayName,
-                    iconCode: tx.createdBy!.iconCode,
-                    size: 24,
-                  ),
-                  label: l.txDetailRecordedBy,
-                  trailing: Text(tx.createdBy!.displayName),
-                ),
-              ],
-              if (tx.projectId != null) ...[
-                const RowDivider(),
-                DetailRow(
-                  leading: const Icon(AppIcons.project),
-                  label: l.txDetailSource,
-                  trailing: Text(l.txDetailSourceProject),
-                  showChevron: true,
-                  onTap: () => context.push('/projects/${tx.projectId}'),
-                ),
-              ],
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -280,13 +302,15 @@ class _Loaded extends StatelessWidget {
       }
       if (router.canPop()) router.pop();
     } on ApiException catch (e) {
-      if (context.mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (context.mounted) {
+        showAppSnackBar(context, e.message, tone: Tone.danger);
+      }
     }
   }
 }
 
 String _titleForType(AppLocalizations l, TransactionType t) => switch (t) {
-      TransactionType.expense => l.transactionTypeExpense,
-      TransactionType.income => l.transactionTypeIncome,
-      TransactionType.transfer => l.transactionTypeTransfer,
-    };
+  TransactionType.expense => l.transactionTypeExpense,
+  TransactionType.income => l.transactionTypeIncome,
+  TransactionType.transfer => l.transactionTypeTransfer,
+};

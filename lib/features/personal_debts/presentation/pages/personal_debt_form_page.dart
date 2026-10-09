@@ -80,15 +80,21 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
   }
 
   Future<void> _pickCounterparty() async {
-    final r = await showContactPickerSheet(context,
-        selectedContactId: working.contactId);
+    final r = await showContactPickerSheet(
+      context,
+      selectedContactId: working.contactId,
+    );
     if (!mounted || r == null) return;
     setState(() => _counterpartyError = null);
     applyChange(switch (r) {
-      ContactPicked(:final contact) =>
-        working.copyWith(contactId: contact.id, name: contact.effectiveName),
-      ContactNameTyped(:final name) =>
-        working.copyWith(clearContact: true, name: name),
+      ContactPicked(:final contact) => working.copyWith(
+        contactId: contact.id,
+        name: contact.effectiveName,
+      ),
+      ContactNameTyped(:final name) => working.copyWith(
+        clearContact: true,
+        name: name,
+      ),
     });
   }
 
@@ -97,20 +103,22 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
     final l = AppLocalizations.of(context)!;
     final formOk = _formKey.currentState?.validate() ?? false;
     final hasPerson = working.name.trim().isNotEmpty;
-    setState(() => _counterpartyError = hasPerson ? null : l.debtCounterpartyRequired);
+    setState(
+      () => _counterpartyError = hasPerson ? null : l.debtCounterpartyRequired,
+    );
     if (!formOk || !hasPerson) return;
     final w = working;
     FocusScope.of(context).unfocus();
     setSaving(true);
     try {
       final created = await context.read<PersonalDebtsCubit>().create(
-            direction: w.direction,
-            counterpartyPersonName: w.name.trim(),
-            counterpartyContactId: w.contactId,
-            amount: AmountField.parse(w.amount)!,
-            currency: w.currency,
-            note: w.note.trim().isEmpty ? null : w.note.trim(),
-          );
+        direction: w.direction,
+        counterpartyPersonName: w.name.trim(),
+        counterpartyContactId: w.contactId,
+        amount: AmountField.parse(w.amount)!,
+        currency: w.currency,
+        note: w.note.trim().isEmpty ? null : w.note.trim(),
+      );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(w);
@@ -127,82 +135,94 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
     final l = AppLocalizations.of(context)!;
     final palette = Theme.of(context).extension<AppColors>()!;
     final w = working;
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: l.debtNewTitle,
-        showBack: true,
-        editing: true,
-        onBack: handleBack,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            SelectCardGroup<DebtDirection>(
-              selected: w.direction,
-              onChanged: (d) => applyChange(w.copyWith(direction: d)),
-              options: [
-                SelectCardOption(
-                  value: DebtDirection.owedToMe,
-                  label: l.debtDirectionOwedToMe,
-                  description: l.debtDirectionOwedToMeDesc,
-                  icon: AppIcons.income,
-                  color: palette.income,
+    return editScope(
+      Scaffold(
+        appBar: AppTopBar(
+          title: l.debtNewTitle,
+          showBack: true,
+          editing: true,
+          onBack: handleBack,
+        ),
+        extendBodyBehindAppBar: true,
+        body: Form(
+          key: _formKey,
+          // Builder: its context sees the floating bar's height.
+          child: Builder(
+            builder: (context) => ListView(
+              padding: const EdgeInsets.all(
+                AppSpacing.lg,
+              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
+              children: [
+                SelectCardGroup<DebtDirection>(
+                  selected: w.direction,
+                  onChanged: (d) => applyChange(w.copyWith(direction: d)),
+                  options: [
+                    SelectCardOption(
+                      value: DebtDirection.owedToMe,
+                      label: l.debtDirectionOwedToMe,
+                      description: l.debtDirectionOwedToMeDesc,
+                      icon: AppIcons.income,
+                      color: palette.income,
+                    ),
+                    SelectCardOption(
+                      value: DebtDirection.iOwe,
+                      label: l.debtDirectionIOwe,
+                      description: l.debtDirectionIOweDesc,
+                      icon: AppIcons.expense,
+                      color: palette.expense,
+                    ),
+                  ],
                 ),
-                SelectCardOption(
-                  value: DebtDirection.iOwe,
-                  label: l.debtDirectionIOwe,
-                  description: l.debtDirectionIOweDesc,
-                  icon: AppIcons.expense,
-                  color: palette.expense,
+                const SizedBox(height: AppSpacing.lg),
+                AmountField(
+                  controller: _amountCtrl,
+                  autofocus: true,
+                  currencySymbol: Currencies.symbolOf(w.currency),
+                  accent: w.direction == DebtDirection.owedToMe
+                      ? palette.income
+                      : palette.expense,
+                  onChanged: (v) => applyTextChange(
+                    _Field.amount,
+                    working.copyWith(amount: v),
+                  ),
+                  validator: (v) {
+                    final n = AmountField.parse(v);
+                    return (n == null || n <= 0) ? l.debtAmountRequired : null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                PickerTile(
+                  label: l.debtCounterparty,
+                  value: w.name.isEmpty ? null : w.name,
+                  placeholder: l.debtCounterpartyPlaceholder,
+                  leading: Icon(
+                    w.contactId != null ? AppIcons.link : AppIcons.contact,
+                  ),
+                  errorText: _counterpartyError,
+                  onTap: _pickCounterparty,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                CurrencyTile(
+                  value: w.currency,
+                  onChanged: (c) => applyChange(w.copyWith(currency: c)),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                AppTextField(
+                  controller: _noteCtrl,
+                  label: l.debtNote,
+                  prefixIcon: AppIcons.note,
+                  maxLines: 3,
+                  maxLength: 500,
+                  onChanged: (v) =>
+                      applyTextChange(_Field.note, working.copyWith(note: v)),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
-            AmountField(
-              controller: _amountCtrl,
-              autofocus: true,
-              currencySymbol: Currencies.symbolOf(w.currency),
-              accent: w.direction == DebtDirection.owedToMe
-                  ? palette.income
-                  : palette.expense,
-              onChanged: (v) =>
-                  applyTextChange(_Field.amount, working.copyWith(amount: v)),
-              validator: (v) {
-                final n = AmountField.parse(v);
-                return (n == null || n <= 0) ? l.debtAmountRequired : null;
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            PickerTile(
-              label: l.debtCounterparty,
-              value: w.name.isEmpty ? null : w.name,
-              placeholder: l.debtCounterpartyPlaceholder,
-              leading: Icon(w.contactId != null ? AppIcons.link : AppIcons.contact),
-              errorText: _counterpartyError,
-              onTap: _pickCounterparty,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            CurrencyTile(
-              value: w.currency,
-              onChanged: (c) => applyChange(w.copyWith(currency: c)),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            AppTextField(
-              controller: _noteCtrl,
-              label: l.debtNote,
-              prefixIcon: AppIcons.note,
-              maxLines: 3,
-              maxLength: 500,
-              onChanged: (v) =>
-                  applyTextChange(_Field.note, working.copyWith(note: v)),
-            ),
-          ],
+          ),
         ),
+        bottomNavigationBar: editActionBar(onSave: _save),
       ),
-      bottomNavigationBar: editActionBar(onSave: _save),
-    ));
+    );
   }
 }
 
@@ -231,15 +251,14 @@ class _NewDebt {
     String? name,
     String? currency,
     String? note,
-  }) =>
-      _NewDebt(
-        direction: direction ?? this.direction,
-        amount: amount ?? this.amount,
-        contactId: clearContact ? null : (contactId ?? this.contactId),
-        name: name ?? this.name,
-        currency: currency ?? this.currency,
-        note: note ?? this.note,
-      );
+  }) => _NewDebt(
+    direction: direction ?? this.direction,
+    amount: amount ?? this.amount,
+    contactId: clearContact ? null : (contactId ?? this.contactId),
+    name: name ?? this.name,
+    currency: currency ?? this.currency,
+    note: note ?? this.note,
+  );
 
   @override
   bool operator ==(Object other) =>

@@ -5,6 +5,7 @@ import '../app/shell/app_top_bar.dart';
 import '../app/shell/top_bar_crumbs.dart';
 import '../core/constants/app_icons.dart';
 import '../core/constants/app_spacing.dart';
+import '../core/network/api_exception.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/date_formatter.dart';
 import '../features/accounts/domain/account.dart';
@@ -40,7 +41,18 @@ class WidgetGalleryScreen extends StatefulWidget {
   State<WidgetGalleryScreen> createState() => _WidgetGalleryScreenState();
 }
 
-enum _Section { buttons, inputs, chips, layout, feedback, data, domain, appIcons, icons, edit }
+enum _Section {
+  buttons,
+  inputs,
+  chips,
+  layout,
+  feedback,
+  data,
+  domain,
+  appIcons,
+  icons,
+  edit,
+}
 
 class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
   _Section _section = _Section.buttons;
@@ -57,55 +69,46 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
         onBack: editTab && _editing
             ? () => setState(() => _editing = false)
             : null,
-        actions: editTab && _editing
-            ? [
-                AppBarAction(
-                  icon: Icons.delete_outline,
-                  tooltip: 'ลบ',
-                  destructive: true,
-                  onPressed: () => _confirmDelete(context),
-                ),
-              ]
-            : [
-                AppBarAction(
-                  icon: Icons.brightness_6_outlined,
-                  tooltip: 'สลับธีม',
-                  onPressed: () => context.read<ThemeModeCubit>().toggle(),
-                ),
-                if (editTab)
-                  AppBarAction(
-                    icon: Icons.edit_outlined,
-                    tooltip: 'แก้ไข',
-                    onPressed: () => setState(() => _editing = true),
-                  ),
-              ],
+        // No page actions on the top bar (owner rule 2026-10-09): theme
+        // toggle sits next to the tabs; edit / delete live in the demo body.
       ),
       body: Column(
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: 10 * 96,
-              child: AppTabBar<_Section>(
-                selected: _section,
-                onChanged: (s) => setState(() {
-                  _section = s;
-                  _editing = false;
-                }),
-                tabs: const [
-                  AppTab(value: _Section.buttons, label: 'ปุ่ม'),
-                  AppTab(value: _Section.inputs, label: 'ช่องกรอก'),
-                  AppTab(value: _Section.chips, label: 'Chip'),
-                  AppTab(value: _Section.layout, label: 'Layout'),
-                  AppTab(value: _Section.feedback, label: 'Feedback'),
-                  AppTab(value: _Section.data, label: 'ข้อมูล'),
-                  AppTab(value: _Section.domain, label: 'โดเมน'),
-                  AppTab(value: _Section.appIcons, label: 'ไอคอน'),
-                  AppTab(value: _Section.icons, label: 'Icon maker'),
-                  AppTab(value: _Section.edit, label: 'โหมดแก้ไข'),
-                ],
+          Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 10 * 96,
+                    child: AppTabBar<_Section>(
+                      selected: _section,
+                      onChanged: (s) => setState(() {
+                        _section = s;
+                        _editing = false;
+                      }),
+                      tabs: const [
+                        AppTab(value: _Section.buttons, label: 'ปุ่ม'),
+                        AppTab(value: _Section.inputs, label: 'ช่องกรอก'),
+                        AppTab(value: _Section.chips, label: 'Chip'),
+                        AppTab(value: _Section.layout, label: 'Layout'),
+                        AppTab(value: _Section.feedback, label: 'Feedback'),
+                        AppTab(value: _Section.data, label: 'ข้อมูล'),
+                        AppTab(value: _Section.domain, label: 'โดเมน'),
+                        AppTab(value: _Section.appIcons, label: 'ไอคอน'),
+                        AppTab(value: _Section.icons, label: 'Icon maker'),
+                        AppTab(value: _Section.edit, label: 'โหมดแก้ไข'),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+              IconButton(
+                tooltip: 'สลับธีม',
+                icon: const Icon(Icons.brightness_6_outlined),
+                onPressed: () => context.read<ThemeModeCubit>().toggle(),
+              ),
+            ],
           ),
           Expanded(
             child: switch (_section) {
@@ -119,9 +122,10 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
               _Section.appIcons => const _AppIconsDemo(),
               _Section.icons => const _IconMakerDemo(),
               _Section.edit => _EditModeDemo(
-                  editing: _editing,
-                  onEnterEdit: () => setState(() => _editing = true),
-                ),
+                editing: _editing,
+                onEnterEdit: () => setState(() => _editing = true),
+                onDelete: () => _confirmDelete(context),
+              ),
             },
           ),
         ],
@@ -175,7 +179,11 @@ class _Demo extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -183,9 +191,9 @@ class _Demo extends StatelessWidget {
           Text(
             name,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: scheme.primary,
-                  fontFamily: 'monospace',
-                ),
+              color: scheme.primary,
+              fontFamily: 'monospace',
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           child,
@@ -212,6 +220,7 @@ class _ButtonsDemo extends StatefulWidget {
 class _ButtonsDemoState extends State<_ButtonsDemo> {
   bool _loading = false;
   bool _disabled = false;
+  IconChipActivity _chipActivity = IconChipActivity.progress;
 
   Future<void> _fakeLoad() async {
     setState(() => _loading = true);
@@ -240,27 +249,32 @@ class _ButtonsDemoState extends State<_ButtonsDemo> {
             children: [
               AppButton(label: 'Primary', onPressed: tap('primary')),
               AppButton(
-                  label: 'Tonal',
-                  variant: AppButtonVariant.tonal,
-                  onPressed: tap('tonal')),
+                label: 'Tonal',
+                variant: AppButtonVariant.tonal,
+                onPressed: tap('tonal'),
+              ),
               AppButton(
-                  label: 'Outlined',
-                  variant: AppButtonVariant.outlined,
-                  onPressed: tap('outlined')),
+                label: 'Outlined',
+                variant: AppButtonVariant.outlined,
+                onPressed: tap('outlined'),
+              ),
               AppButton(
-                  label: 'Text',
-                  variant: AppButtonVariant.text,
-                  onPressed: tap('text')),
+                label: 'Text',
+                variant: AppButtonVariant.text,
+                onPressed: tap('text'),
+              ),
               AppButton(
-                  label: 'ลบ',
-                  icon: Icons.delete_outline,
-                  variant: AppButtonVariant.destructive,
-                  onPressed: tap('destructive')),
+                label: 'ลบ',
+                icon: Icons.delete_outline,
+                variant: AppButtonVariant.destructive,
+                onPressed: tap('destructive'),
+              ),
               AppButton(
-                  label: 'ออกจากระบบ',
-                  icon: Icons.logout,
-                  variant: AppButtonVariant.destructiveOutlined,
-                  onPressed: tap('destructiveOutlined')),
+                label: 'ออกจากระบบ',
+                icon: Icons.logout,
+                variant: AppButtonVariant.destructiveOutlined,
+                onPressed: tap('destructiveOutlined'),
+              ),
             ],
           ),
         ),
@@ -294,22 +308,95 @@ class _ButtonsDemoState extends State<_ButtonsDemo> {
           child: Row(
             children: [
               AppIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: 'แก้ไข',
-                  onPressed: tap('edit')),
+                icon: Icons.edit_outlined,
+                tooltip: 'แก้ไข',
+                onPressed: tap('edit'),
+              ),
               const SizedBox(width: AppSpacing.sm),
               AppIconButton(
-                  icon: Icons.notifications_outlined,
-                  badgeCount: 3,
-                  onPressed: tap('bell')),
+                icon: Icons.notifications_outlined,
+                badgeCount: 3,
+                onPressed: tap('bell'),
+              ),
               const SizedBox(width: AppSpacing.sm),
               AppIconButton(
-                  icon: Icons.delete_outline,
-                  destructive: true,
-                  onPressed: tap('delete')),
+                icon: Icons.delete_outline,
+                destructive: true,
+                onPressed: tap('delete'),
+              ),
               const SizedBox(width: AppSpacing.sm),
-              const AppIconButton(icon: Icons.palette_outlined, onPressed: null),
+              const AppIconButton(
+                icon: Icons.palette_outlined,
+                onPressed: null,
+              ),
             ],
+          ),
+        ),
+        _Demo(
+          title:
+              'ไอคอนที่มีงานเบื้องหลัง (เช่น ชิป Pending ตอนอ่านสลิป): ปกติ · กำลังทำ · เสร็จ',
+          name: 'AppIconButton(activity: none | progress | done)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SegmentedButton<IconChipActivity>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: IconChipActivity.none,
+                    label: Text('ปกติ'),
+                  ),
+                  ButtonSegment(
+                    value: IconChipActivity.progress,
+                    label: Text('กำลังอ่าน'),
+                  ),
+                  ButtonSegment(
+                    value: IconChipActivity.done,
+                    label: Text('เสร็จ'),
+                  ),
+                ],
+                selected: {_chipActivity},
+                onSelectionChanged: (s) =>
+                    setState(() => _chipActivity = s.first),
+              ),
+              const _Gap(),
+              Row(
+                children: [
+                  AppIconButton(
+                    icon: AppIcons.pending,
+                    badgeCount: 5,
+                    activity: _chipActivity,
+                    progress: 0.4,
+                    onPressed: () =>
+                        setState(() => _chipActivity = IconChipActivity.none),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  const Expanded(
+                    child: Text(
+                      'กำลังอ่าน: ซ่อน badge + แถบความคืบหน้าใต้ไอคอน · เสร็จ: ติ๊ก + badge กลับมา · กดชิป = กลับเป็นปกติ',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'ปุ่มลอยที่เปิดเป็นช่องพิมพ์แบบแชต (ยังไม่ทำอะไรตอนกดส่ง)',
+          name: 'ChatDial',
+          child: SizedBox(
+            height: 72,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: ChatDial(
+                hint: 'เช่น กาแฟ 65',
+                tooltip: 'พิมพ์เอง',
+                sendTooltip: 'ส่ง',
+                closeTooltip: 'ปิด',
+                openWidth: 300,
+                onSend: (t) => showAppSnackBar(context, 'ส่ง: $t'),
+              ),
+            ),
           ),
         ),
         _Demo(
@@ -345,7 +432,8 @@ class _ButtonsDemoState extends State<_ButtonsDemo> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant),
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text('แตะตรงนี้เร็วๆ 5 ครั้ง'),
@@ -375,6 +463,7 @@ class _InputsDemoState extends State<_InputsDemo> {
   Category? _category;
   DateTime _date = DateTime.now();
   _Dir _dir = _Dir.owedToMe;
+  AccountType _walletType = AccountType.bank;
   final Set<int> _checks = {1};
 
   static const _sampleAccounts = [
@@ -417,10 +506,12 @@ class _InputsDemoState extends State<_InputsDemo> {
       allowNone: true,
     );
     if (r == null) return;
-    setState(() => _account = switch (r) {
-          AccountPickerSelected(:final account) => account,
-          AccountPickerCleared() => null,
-        });
+    setState(
+      () => _account = switch (r) {
+        AccountPickerSelected(:final account) => account,
+        AccountPickerCleared() => null,
+      },
+    );
   }
 
   Future<void> _pickCategory() async {
@@ -429,8 +520,11 @@ class _InputsDemoState extends State<_InputsDemo> {
     if (!mounted) return;
     final cats = cubit.state.categories;
     if (cats.isEmpty) {
-      showAppSnackBar(context, 'ยังไม่มีหมวดหมู่ — ต้องล็อกอินก่อน',
-          tone: Tone.warning);
+      showAppSnackBar(
+        context,
+        'ยังไม่มีหมวดหมู่ — ต้องล็อกอินก่อน',
+        tone: Tone.warning,
+      );
       return;
     }
     final r = await showCategoryPickerSheet(
@@ -440,10 +534,12 @@ class _InputsDemoState extends State<_InputsDemo> {
       selected: _category,
     );
     if (r == null) return;
-    setState(() => _category = switch (r) {
-          CategoryPickerSelected(:final category) => category,
-          CategoryPickerCleared() => null,
-        });
+    setState(
+      () => _category = switch (r) {
+        CategoryPickerSelected(:final category) => category,
+        CategoryPickerCleared() => null,
+      },
+    );
   }
 
   @override
@@ -484,16 +580,21 @@ class _InputsDemoState extends State<_InputsDemo> {
                   value: _checks.isEmpty
                       ? false
                       : (_checks.length == 3 ? true : null),
-                  onTap: () => setState(() => _checks.length == 3
-                      ? _checks.clear()
-                      : _checks.addAll([0, 1, 2])),
+                  onTap: () => setState(
+                    () => _checks.length == 3
+                        ? _checks.clear()
+                        : _checks.addAll([0, 1, 2]),
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.lg),
                 for (var i = 0; i < 3; i++)
                   SelectCheck(
                     value: _checks.contains(i),
-                    onTap: () => setState(() =>
-                        _checks.contains(i) ? _checks.remove(i) : _checks.add(i)),
+                    onTap: () => setState(
+                      () => _checks.contains(i)
+                          ? _checks.remove(i)
+                          : _checks.add(i),
+                    ),
                   ),
               ],
             ),
@@ -521,6 +622,25 @@ class _InputsDemoState extends State<_InputsDemo> {
             ),
           ),
           _Demo(
+            title: 'เลือกประเภท (การ์ดใหญ่ แบบตาราง 3+2)',
+            name: 'SelectCardGroup(columns: 3)',
+            child: SelectCardGroup<AccountType>(
+              columns: 3,
+              selected: _walletType,
+              onChanged: (v) => setState(() => _walletType = v),
+              options: [
+                for (final (t, label) in const [
+                  (AccountType.cash, 'เงินสด'),
+                  (AccountType.bank, 'ธนาคาร'),
+                  (AccountType.eWallet, 'อีวอลเล็ท'),
+                  (AccountType.creditCard, 'บัตรเครดิต'),
+                  (AccountType.payLater, 'ผ่อนทีหลัง'),
+                ])
+                  SelectCardOption(value: t, label: label, icon: t.icon),
+              ],
+            ),
+          ),
+          _Demo(
             title: 'ช่องจำนวนเงิน + ปุ่มลัด',
             name: 'AmountField(quickFills: …)',
             child: AmountField(
@@ -540,8 +660,10 @@ class _InputsDemoState extends State<_InputsDemo> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Text('ค่าที่อ่านได้: AmountField.parse → '
-                '${AmountField.parse(_amount.text)}'),
+            child: Text(
+              'ค่าที่อ่านได้: AmountField.parse → '
+              '${AmountField.parse(_amount.text)}',
+            ),
           ),
           _Demo(
             title: 'Tile เลือกค่า',
@@ -557,9 +679,11 @@ class _InputsDemoState extends State<_InputsDemo> {
                       : IconDisplay(
                           type: IconType.account,
                           size: 28,
-                          iconCode: _account!.iconCode),
-                  trailing:
-                      _account == null ? null : MoneyText(_account!.balance),
+                          iconCode: _account!.iconCode,
+                        ),
+                  trailing: _account == null
+                      ? null
+                      : MoneyText(_account!.balance),
                   onTap: _pickAccount,
                 ),
                 const _Gap(),
@@ -573,14 +697,18 @@ class _InputsDemoState extends State<_InputsDemo> {
                       : IconDisplay(
                           type: IconType.category,
                           size: 28,
-                          iconCode: _category!.iconCode),
+                          iconCode: _category!.iconCode,
+                        ),
                   onTap: _pickCategory,
                 ),
                 const _Gap(),
                 PickerTile(
                   label: 'วันที่',
-                  value: DateFormatter.friendly(_date,
-                      today: 'วันนี้', yesterday: 'เมื่อวาน'),
+                  value: DateFormatter.friendly(
+                    _date,
+                    today: 'วันนี้',
+                    yesterday: 'เมื่อวาน',
+                  ),
                   leading: const Icon(Icons.calendar_today_outlined),
                   onTap: () async {
                     final d = await showDatePicker(
@@ -599,6 +727,54 @@ class _InputsDemoState extends State<_InputsDemo> {
                   leading: Icon(Icons.lock_outline),
                   readOnly: true,
                   onTap: null,
+                ),
+              ],
+            ),
+          ),
+          _Demo(
+            title: 'การ์ดเลือกค่า (quick create · งบประมาณ)',
+            name: 'PickCard',
+            child: Column(
+              children: [
+                PickCard(
+                  label: 'หมวดหมู่',
+                  value: _category?.name,
+                  placeholder: 'ไม่ระบุหมวด',
+                  leading: IconDisplay(
+                    type: IconType.category,
+                    size: 40,
+                    iconCode: _category?.iconCode,
+                  ),
+                  accent: _category?.iconCode?.accentColorFor(
+                    Theme.of(context).extension<AppColors>()!,
+                  ),
+                  onTap: _pickCategory,
+                ),
+                const _Gap(),
+                PickCard(
+                  label: 'กระเป๋า',
+                  value: _account?.name,
+                  placeholder: 'ไม่มีกระเป๋า',
+                  leading: IconDisplay(
+                    type: IconType.account,
+                    size: 40,
+                    iconCode: _account?.iconCode,
+                  ),
+                  subtitle: _account == null
+                      ? null
+                      : MoneyText(_account!.balance),
+                  accent: _account?.iconCode?.accentColorFor(
+                    Theme.of(context).extension<AppColors>()!,
+                  ),
+                  onTap: _pickAccount,
+                ),
+                const _Gap(),
+                PickCard(
+                  label: 'หมวดหมู่ (บังคับ)',
+                  placeholder: 'เลือกหมวดหมู่',
+                  leading: const Icon(AppIcons.category),
+                  errorText: 'กรุณาเลือกหมวดหมู่',
+                  onTap: _pickCategory,
                 ),
               ],
             ),
@@ -677,7 +853,8 @@ class _ChipsDemoState extends State<_ChipsDemo> {
       children: [
         _Demo(
           title: 'แถวตัวกรอง + เรียงลำดับ (popover)',
-          name: 'FilterBar · FilterDropdownChip · PopoverAnchor · '
+          name:
+              'FilterBar · FilterDropdownChip · PopoverAnchor · '
               'MultiOptionMenuAnchor · OptionMenuAnchor · SortChip',
           child: FilterBar(
             chips: [
@@ -692,8 +869,11 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 contentBuilder: (context, close) => ColorSwatchGrid(
                   colors: _swatches,
                   selected: _colors,
-                  onToggle: (i) => setState(() =>
-                      _colors.contains(i) ? _colors.remove(i) : _colors.add(i)),
+                  onToggle: (i) => setState(
+                    () => _colors.contains(i)
+                        ? _colors.remove(i)
+                        : _colors.add(i),
+                  ),
                   onClear: () => setState(_colors.clear),
                 ),
               ),
@@ -703,17 +883,20 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 onChanged: (v) => setState(() => _icons = v),
                 options: const [
                   SheetOption(
-                      value: 'sell',
-                      label: 'ป้าย',
-                      leading: Icon(Icons.sell_outlined, size: 18)),
+                    value: 'sell',
+                    label: 'ป้าย',
+                    leading: Icon(Icons.sell_outlined, size: 18),
+                  ),
                   SheetOption(
-                      value: 'work',
-                      label: 'งาน',
-                      leading: Icon(Icons.work_outline, size: 18)),
+                    value: 'work',
+                    label: 'งาน',
+                    leading: Icon(Icons.work_outline, size: 18),
+                  ),
                   SheetOption(
-                      value: 'swap',
-                      label: 'โอน',
-                      leading: Icon(Icons.swap_horiz, size: 18)),
+                    value: 'swap',
+                    label: 'โอน',
+                    leading: Icon(Icons.swap_horiz, size: 18),
+                  ),
                 ],
                 builder: (context, toggle) => FilterDropdownChip(
                   label: 'ไอคอน',
@@ -791,7 +974,10 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 options: const [
                   SheetOption(value: 'THB', label: 'THB', subtitle: 'บาทไทย'),
                   SheetOption(
-                      value: 'USD', label: 'USD', subtitle: 'ดอลลาร์สหรัฐ'),
+                    value: 'USD',
+                    label: 'USD',
+                    subtitle: 'ดอลลาร์สหรัฐ',
+                  ),
                   SheetOption(value: 'JPY', label: 'JPY', subtitle: 'เยน'),
                 ],
               ),
@@ -807,20 +993,23 @@ class _ChipsDemoState extends State<_ChipsDemo> {
               Text('3', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(width: AppSpacing.sm),
               ActionPill(
-                  icon: AppIcons.colorPicker,
-                  label: 'สี',
-                  onTap: () => showAppSnackBar(context, 'เปลี่ยนสี')),
+                icon: AppIcons.colorPicker,
+                label: 'สี',
+                onTap: () => showAppSnackBar(context, 'เปลี่ยนสี'),
+              ),
               const SizedBox(width: AppSpacing.sm),
               ActionPill(
-                  icon: AppIcons.iconPicker,
-                  label: 'ไอคอน',
-                  onTap: () => showAppSnackBar(context, 'เปลี่ยนไอคอน')),
+                icon: AppIcons.iconPicker,
+                label: 'ไอคอน',
+                onTap: () => showAppSnackBar(context, 'เปลี่ยนไอคอน'),
+              ),
               const SizedBox(width: AppSpacing.sm),
               ActionPill(
-                  icon: AppIcons.delete,
-                  label: 'ลบ',
-                  destructive: true,
-                  onTap: () => showAppSnackBar(context, 'ลบ')),
+                icon: AppIcons.delete,
+                label: 'ลบ',
+                destructive: true,
+                onTap: () => showAppSnackBar(context, 'ลบ'),
+              ),
             ],
           ),
         ),
@@ -839,7 +1028,10 @@ class _ChipsDemoState extends State<_ChipsDemo> {
               StatusPill(label: 'info', tone: Tone.info),
               StatusPill(label: 'รายรับ', tone: Tone.income, icon: Icons.add),
               StatusPill(
-                  label: 'รายจ่าย', tone: Tone.expense, icon: Icons.remove),
+                label: 'รายจ่าย',
+                tone: Tone.expense,
+                icon: Icons.remove,
+              ),
               StatusPill(label: 'dense', tone: Tone.primary, dense: true),
             ],
           ),
@@ -867,10 +1059,10 @@ class _Dot extends StatelessWidget {
   final Color color;
   @override
   Widget build(BuildContext context) => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      );
+    width: 10,
+    height: 10,
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  );
 }
 
 // ── Layout ─────────────────────────────────────────────────────────────
@@ -897,9 +1089,10 @@ class _LayoutDemo extends StatelessWidget {
                   showBack: true,
                   showUniversal: false,
                   parent: TopBarCrumb(
-                      label: 'โปรเจกต์ & อีเวนต์',
-                      path: '/projects',
-                      routeName: 'projects'),
+                    label: 'โปรเจกต์ & อีเวนต์',
+                    path: '/projects',
+                    routeName: 'projects',
+                  ),
                 ),
               ),
               SizedBox(
@@ -909,7 +1102,10 @@ class _LayoutDemo extends StatelessWidget {
                   showBack: true,
                   editing: true,
                   parent: TopBarCrumb(
-                      label: 'ผู้ติดต่อ', path: '/contacts', routeName: 'contacts'),
+                    label: 'ผู้ติดต่อ',
+                    path: '/contacts',
+                    routeName: 'contacts',
+                  ),
                 ),
               ),
             ],
@@ -923,8 +1119,7 @@ class _LayoutDemo extends StatelessWidget {
             leading: const UserAvatar(displayName: 'Aom Chan', size: 44),
             title: const Text('Aom ติดคุณ'),
             subtitle: const Text('2 รายการค้างอยู่'),
-            trailing:
-                const StatusPill(label: 'ค้างอยู่', tone: Tone.warning),
+            trailing: const StatusPill(label: 'ค้างอยู่', tone: Tone.warning),
             footer: const ProgressRow(
               value: 0.6,
               label: 'คืนแล้ว ฿300 จาก ฿500',
@@ -973,7 +1168,10 @@ class _LayoutDemo extends StatelessWidget {
                   label: 'ชื่อผู้ใช้',
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [Text('@ppond '), Icon(Icons.lock_outline, size: 16)],
+                    children: [
+                      Text('@ppond '),
+                      Icon(Icons.lock_outline, size: 16),
+                    ],
                   ),
                 ),
                 const RowDivider(),
@@ -1074,10 +1272,14 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
               ),
               const _Gap(),
               const MessageBanner(
-                  message: 'ไม่มีการเชื่อมต่อ', tone: Tone.warning),
+                message: 'ไม่มีการเชื่อมต่อ',
+                tone: Tone.warning,
+              ),
               const _Gap(),
               const MessageBanner(
-                  message: 'ยังไม่ได้ยืนยันอีเมล', tone: Tone.info),
+                message: 'ยังไม่ได้ยืนยันอีเมล',
+                tone: Tone.info,
+              ),
             ],
           ),
         ),
@@ -1091,10 +1293,12 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
                 label: 'ยืนยันปกติ',
                 variant: AppButtonVariant.outlined,
                 onPressed: () async {
-                  final ok = await showConfirmDialog(context,
-                      title: 'เปลี่ยนเป็นเสร็จสิ้น?',
-                      message: 'จะเพิ่มรายการไม่ได้อีก',
-                      confirmLabel: 'ยืนยัน');
+                  final ok = await showConfirmDialog(
+                    context,
+                    title: 'เปลี่ยนเป็นเสร็จสิ้น?',
+                    message: 'จะเพิ่มรายการไม่ได้อีก',
+                    confirmLabel: 'ยืนยัน',
+                  );
                   if (context.mounted) showAppSnackBar(context, 'ผล: $ok');
                 },
               ),
@@ -1102,11 +1306,13 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
                 label: 'ยืนยันลบ',
                 variant: AppButtonVariant.destructiveOutlined,
                 onPressed: () async {
-                  final ok = await showConfirmDialog(context,
-                      title: 'ลบผู้ติดต่อ?',
-                      message: 'การลบไม่สามารถย้อนกลับได้',
-                      confirmLabel: 'ลบ',
-                      destructive: true);
+                  final ok = await showConfirmDialog(
+                    context,
+                    title: 'ลบผู้ติดต่อ?',
+                    message: 'การลบไม่สามารถย้อนกลับได้',
+                    confirmLabel: 'ลบ',
+                    destructive: true,
+                  );
                   if (context.mounted) showAppSnackBar(context, 'ผล: $ok');
                 },
               ),
@@ -1125,7 +1331,7 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
                 Tone.success,
                 Tone.danger,
                 Tone.warning,
-                Tone.info
+                Tone.info,
               ])
                 AppButton(
                   label: t.name,
@@ -1198,7 +1404,10 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
                 options: const [
                   SheetOption(value: 'THB', label: 'THB', subtitle: 'บาทไทย'),
                   SheetOption(
-                      value: 'USD', label: 'USD', subtitle: 'ดอลลาร์สหรัฐ'),
+                    value: 'USD',
+                    label: 'USD',
+                    subtitle: 'ดอลลาร์สหรัฐ',
+                  ),
                   SheetOption(value: 'JPY', label: 'JPY', subtitle: 'เยน'),
                   SheetOption(value: 'EUR', label: 'EUR', subtitle: 'ยูโร'),
                 ],
@@ -1219,6 +1428,104 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
               title: 'ยังไม่มีผู้ติดต่อ',
               message: 'คนที่คุณเพิ่มจะแสดงที่นี่',
               cta: AddTile(label: 'เพิ่มผู้ติดต่อคนแรก', onTap: null),
+            ),
+          ),
+        ),
+        const _Demo(
+          title: 'โหลด / error + ลองอีกครั้ง / ว่าง / มีข้อมูล (ทุกหน้า list)',
+          name: 'AsyncStateView · ErrorView',
+          child: _AsyncStateDemo(),
+        ),
+      ],
+    );
+  }
+}
+
+enum _AsyncCase { loading, network, server, empty, data }
+
+class _AsyncStateDemo extends StatefulWidget {
+  const _AsyncStateDemo();
+
+  @override
+  State<_AsyncStateDemo> createState() => _AsyncStateDemoState();
+}
+
+class _AsyncStateDemoState extends State<_AsyncStateDemo> {
+  _AsyncCase _case = _AsyncCase.server;
+  ApiException? _refreshError;
+
+  static const _network = ApiException(
+    code: 'NETWORK_ERROR',
+    message: 'No connection',
+  );
+  static const _server = ApiException(
+    code: 'INTERNAL_ERROR',
+    message: 'List failed',
+    statusCode: 500,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final hasData = _case == _AsyncCase.data;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [
+            for (final c in _AsyncCase.values)
+              ChoiceChip(
+                label: Text(c.name),
+                selected: _case == c,
+                onSelected: (_) => setState(() {
+                  _case = c;
+                  _refreshError = null;
+                }),
+              ),
+          ],
+        ),
+        if (hasData)
+          TextButton(
+            // A fresh instance each tap → the snackbar fires each time.
+            onPressed: () => setState(
+              () => _refreshError = ApiException(
+                code: _server.code,
+                message: _server.message,
+                statusCode: _server.statusCode,
+              ),
+            ),
+            child: const Text('จำลอง refresh ไม่สำเร็จ → snackbar'),
+          ),
+        SizedBox(
+          height: 360,
+          child: AsyncStateView(
+            loading: _case == _AsyncCase.loading,
+            error: switch (_case) {
+              _AsyncCase.network => _network,
+              _AsyncCase.server => _server,
+              _AsyncCase.data => _refreshError,
+              _ => null,
+            },
+            isEmpty: !hasData,
+            onRetry: () => setState(() => _case = _AsyncCase.loading),
+            skeleton: ListView(
+              children: [for (var i = 0; i < 4; i++) const SkeletonListTile()],
+            ),
+            empty: const EmptyView(
+              icon: Icons.handshake_outlined,
+              title: 'ยังไม่มีหนี้',
+              message: 'แต่ละหน้าส่ง empty ของตัวเองมา',
+              cta: AddTile(label: 'บันทึกหนี้', onTap: null),
+            ),
+            builder: (context) => ListView(
+              children: [
+                for (final n in ['Aom', 'Bank', 'Cat'])
+                  ListTile(
+                    title: Text(n),
+                    subtitle: const Text('ค้าง 1 รายการ'),
+                  ),
+              ],
             ),
           ),
         ),
@@ -1255,9 +1562,12 @@ class _DataDemo extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    MoneyText(1999818,
-                        style: textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    MoneyText(
+                      1999818,
+                      style: textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const MoneyText(2000, tone: MoneyTone.income),
                     const MoneyText(182, tone: MoneyTone.expense),
                     const MoneyText(-540, tone: MoneyTone.signed),
@@ -1290,7 +1600,9 @@ class _DataDemo extends StatelessWidget {
                 const DateGroupHeader(label: 'วันนี้', total: -540),
                 MoneyListTile(
                   leading: IconBubble(
-                      icon: Icons.delivery_dining, color: palette.warning),
+                    icon: Icons.delivery_dining,
+                    color: palette.warning,
+                  ),
                   title: 'Food Delivery',
                   subtitle: const Row(
                     children: [
@@ -1303,18 +1615,24 @@ class _DataDemo extends StatelessWidget {
                   onTap: () {},
                 ),
                 MoneyListTile(
-                  leading: IconBubble(icon: Icons.restaurant, color: palette.info),
+                  leading: IconBubble(
+                    icon: Icons.restaurant,
+                    color: palette.info,
+                  ),
                   title: 'ข้าวซอย',
-                  subtitle: const Row(children: [
-                    AppBadge(label: 'ไม่มีกระเป๋า'),
-                  ]),
+                  subtitle: const Row(
+                    children: [AppBadge(label: 'ไม่มีกระเป๋า')],
+                  ),
                   amount: -358,
                   amountCaption: 'หาร 3',
                   onTap: () {},
                 ),
                 const DateGroupHeader(label: 'เมื่อวาน', total: 2000000),
                 MoneyListTile(
-                  leading: IconBubble(icon: Icons.flag_outlined, color: palette.income),
+                  leading: IconBubble(
+                    icon: Icons.flag_outlined,
+                    color: palette.income,
+                  ),
                   title: 'Opening Balance',
                   subtitle: const Text('โดราเอมอน'),
                   amount: 2000000,
@@ -1349,9 +1667,10 @@ class _DataDemo extends StatelessWidget {
             children: [
               CornerBadge(
                 badge: IconBubble(
-                    icon: Icons.receipt_long_outlined,
-                    color: palette.primary,
-                    size: 20),
+                  icon: Icons.receipt_long_outlined,
+                  color: palette.primary,
+                  size: 20,
+                ),
                 child: const UserAvatar(displayName: 'Aom Chan', size: 44),
               ),
               const SizedBox(width: AppSpacing.lg),
@@ -1408,7 +1727,8 @@ class _AppIconsDemoState extends State<_AppIconsDemo> {
                       Container(
                         width: 96,
                         padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.sm),
+                          vertical: AppSpacing.sm,
+                        ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: scheme.outlineVariant),
@@ -1421,9 +1741,7 @@ class _AppIconsDemoState extends State<_AppIconsDemo> {
                               e.key,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
+                              style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(fontFamily: 'monospace'),
                             ),
                           ],
@@ -1469,31 +1787,132 @@ class _MakerPreset {
 
 /// Every layer combination + edit-scope variant, opened directly.
 const _modePresets = [
-  _MakerPreset(label: 'ไอคอน + พื้น + ขอบ', note: 'ค่าเริ่มต้น', type: IconType.category),
-  _MakerPreset(label: 'ไอคอน + พื้น', note: 'showBorder: false', type: IconType.category, layers: IconMakerLayers.iconBackground),
-  _MakerPreset(label: 'ไอคอน + ขอบ', note: 'showBackground: false', type: IconType.category, layers: IconMakerLayers.iconBorder),
-  _MakerPreset(label: 'พื้น + ขอบ', note: 'showIcon: false', type: IconType.category, layers: IconMakerLayers.backgroundBorder),
-  _MakerPreset(label: 'ไอคอนอย่างเดียว', note: 'showBackground/showBorder: false', type: IconType.category, layers: IconMakerLayers.iconOnly),
-  _MakerPreset(label: 'พื้นอย่างเดียว', note: 'showIcon/showBorder: false', type: IconType.category, layers: IconMakerLayers.backgroundOnly),
-  _MakerPreset(label: 'ขอบอย่างเดียว', note: 'showIcon/showBackground: false', type: IconType.category, layers: IconMakerLayers.borderOnly),
-  _MakerPreset(label: 'รูปแบบอย่างเดียว (ไม่แก้สี)', note: 'showColorPicker: false', type: IconType.category, colorPicker: false),
-  _MakerPreset(label: 'สีอย่างเดียว (ไม่แก้รูปแบบ)', note: 'showIconPicker: false', type: IconType.category, iconPicker: false),
-  _MakerPreset(label: 'มีปุ่มลบไอคอน', note: 'removeLabel', type: IconType.category, removable: true),
+  _MakerPreset(
+    label: 'ไอคอน + พื้น + ขอบ',
+    note: 'ค่าเริ่มต้น',
+    type: IconType.category,
+  ),
+  _MakerPreset(
+    label: 'ไอคอน + พื้น',
+    note: 'showBorder: false',
+    type: IconType.category,
+    layers: IconMakerLayers.iconBackground,
+  ),
+  _MakerPreset(
+    label: 'ไอคอน + ขอบ',
+    note: 'showBackground: false',
+    type: IconType.category,
+    layers: IconMakerLayers.iconBorder,
+  ),
+  _MakerPreset(
+    label: 'พื้น + ขอบ',
+    note: 'showIcon: false',
+    type: IconType.category,
+    layers: IconMakerLayers.backgroundBorder,
+  ),
+  _MakerPreset(
+    label: 'ไอคอนอย่างเดียว',
+    note: 'showBackground/showBorder: false',
+    type: IconType.category,
+    layers: IconMakerLayers.iconOnly,
+  ),
+  _MakerPreset(
+    label: 'พื้นอย่างเดียว',
+    note: 'showIcon/showBorder: false',
+    type: IconType.category,
+    layers: IconMakerLayers.backgroundOnly,
+  ),
+  _MakerPreset(
+    label: 'ขอบอย่างเดียว',
+    note: 'showIcon/showBackground: false',
+    type: IconType.category,
+    layers: IconMakerLayers.borderOnly,
+  ),
+  _MakerPreset(
+    label: 'รูปแบบอย่างเดียว (ไม่แก้สี)',
+    note: 'showColorPicker: false',
+    type: IconType.category,
+    colorPicker: false,
+  ),
+  _MakerPreset(
+    label: 'สีอย่างเดียว (ไม่แก้รูปแบบ)',
+    note: 'showIconPicker: false',
+    type: IconType.category,
+    iconPicker: false,
+  ),
+  _MakerPreset(
+    label: 'มีปุ่มลบไอคอน',
+    note: 'removeLabel',
+    type: IconType.category,
+    removable: true,
+  ),
 ];
 
 /// The real call sites — same type + flags as the page that opens it.
 const _usagePresets = [
-  _MakerPreset(label: 'กระเป๋า', note: 'account_form_page · saving_goal_form_page', type: IconType.account),
-  _MakerPreset(label: 'หมวดหมู่', note: 'category_detail_page (หมวดลูกล็อกสีตามหมวดแม่)', type: IconType.category),
-  _MakerPreset(label: 'หมวดหมู่ย่อย (สีล็อก)', note: 'category_detail_page · showColorSection: false', type: IconType.category, colorSection: false),
-  _MakerPreset(label: 'รายการตั้งเวลา', note: 'scheduled_transaction_form_page', type: IconType.category),
-  _MakerPreset(label: 'โปรเจกต์', note: 'project_form_page', type: IconType.project),
-  _MakerPreset(label: 'รายการในโปรเจกต์', note: 'project_transaction_form/edit_page', type: IconType.projectTransaction),
-  _MakerPreset(label: 'โปรไฟล์', note: 'edit_profile_page · useThis + remove', type: IconType.userProfile, removable: true, useThisLabel: 'ใช้รูปนี้'),
-  _MakerPreset(label: 'แท็ก (แก้ทีละอัน)', note: 'tags_page · ไอคอน+สี ไม่มีพื้น/ขอบ', type: IconType.tag, layers: IconMakerLayers.iconOnly),
-  _MakerPreset(label: 'แท็ก · เปลี่ยนสีหลายอัน', note: 'tags_page bulk · showIconPicker: false', type: IconType.tag, layers: IconMakerLayers.iconOnly, iconPicker: false),
-  _MakerPreset(label: 'แท็ก · เปลี่ยนไอคอนหลายอัน', note: 'tags_page bulk · showColorPicker: false', type: IconType.tag, layers: IconMakerLayers.iconOnly, colorPicker: false),
-  _MakerPreset(label: 'ผู้ติดต่อ (แผน)', note: 'contact detail ใหม่ · pack_contact', type: IconType.contact),
+  _MakerPreset(
+    label: 'กระเป๋า',
+    note: 'account_detail_page · saving_goal_detail_page',
+    type: IconType.account,
+  ),
+  _MakerPreset(
+    label: 'หมวดหมู่',
+    note: 'category_detail_page (หมวดลูกล็อกสีตามหมวดแม่)',
+    type: IconType.category,
+  ),
+  _MakerPreset(
+    label: 'หมวดหมู่ย่อย (สีล็อก)',
+    note: 'category_detail_page · showColorSection: false',
+    type: IconType.category,
+    colorSection: false,
+  ),
+  _MakerPreset(
+    label: 'รายการตั้งเวลา',
+    note: 'quick create · scheduled mode',
+    type: IconType.category,
+  ),
+  _MakerPreset(
+    label: 'โปรเจกต์',
+    note: 'project_form_page',
+    type: IconType.project,
+  ),
+  _MakerPreset(
+    label: 'รายการในโปรเจกต์',
+    note: 'project_transaction_form/edit_page',
+    type: IconType.projectTransaction,
+  ),
+  _MakerPreset(
+    label: 'โปรไฟล์',
+    note: 'edit_profile_page · useThis + remove',
+    type: IconType.userProfile,
+    removable: true,
+    useThisLabel: 'ใช้รูปนี้',
+  ),
+  _MakerPreset(
+    label: 'แท็ก (แก้ทีละอัน)',
+    note: 'tags_page · ไอคอน+สี ไม่มีพื้น/ขอบ',
+    type: IconType.tag,
+    layers: IconMakerLayers.iconOnly,
+  ),
+  _MakerPreset(
+    label: 'แท็ก · เปลี่ยนสีหลายอัน',
+    note: 'tags_page bulk · showIconPicker: false',
+    type: IconType.tag,
+    layers: IconMakerLayers.iconOnly,
+    iconPicker: false,
+  ),
+  _MakerPreset(
+    label: 'แท็ก · เปลี่ยนไอคอนหลายอัน',
+    note: 'tags_page bulk · showColorPicker: false',
+    type: IconType.tag,
+    layers: IconMakerLayers.iconOnly,
+    colorPicker: false,
+  ),
+  _MakerPreset(
+    label: 'ผู้ติดต่อ (แผน)',
+    note: 'contact detail ใหม่ · pack_contact',
+    type: IconType.contact,
+  ),
 ];
 
 class _IconMakerDemo extends StatefulWidget {
@@ -1520,10 +1939,12 @@ class _IconMakerDemoState extends State<_IconMakerDemo> {
       removeLabel: p.removable ? 'ลบไอคอน' : null,
     );
     if (!mounted || r == null) return;
-    setState(() => _results[p] = switch (r) {
-          IconMakerSelected(:final iconCode) => iconCode,
-          IconMakerRemoved() => null,
-        });
+    setState(
+      () => _results[p] = switch (r) {
+        IconMakerSelected(:final iconCode) => iconCode,
+        IconMakerRemoved() => null,
+      },
+    );
   }
 
   Widget _rows(List<_MakerPreset> presets) {
@@ -1577,8 +1998,10 @@ class _IconMakerDemoState extends State<_IconMakerDemo> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    Text(s.label(AppLocalizations.of(context)!),
-                        style: Theme.of(context).textTheme.labelSmall),
+                    Text(
+                      s.label(AppLocalizations.of(context)!),
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
                   ],
                 ),
             ],
@@ -1586,7 +2009,8 @@ class _IconMakerDemoState extends State<_IconMakerDemo> {
         ),
         _Demo(
           title: 'ทุกโหมด (แตะเพื่อเปิด)',
-          name: 'showIconMakerSheet(showIcon / showBackground / showBorder · '
+          name:
+              'showIconMakerSheet(showIcon / showBackground / showBorder · '
               'showIconPicker / showColorPicker · removeLabel)',
           child: _rows(_modePresets),
         ),
@@ -1603,10 +2027,15 @@ class _IconMakerDemoState extends State<_IconMakerDemo> {
 // ── Edit mode ──────────────────────────────────────────────────────────
 
 class _EditModeDemo extends StatefulWidget {
-  const _EditModeDemo({required this.editing, required this.onEnterEdit});
+  const _EditModeDemo({
+    required this.editing,
+    required this.onEnterEdit,
+    required this.onDelete,
+  });
 
   final bool editing;
   final VoidCallback onEnterEdit;
+  final VoidCallback onDelete;
 
   @override
   State<_EditModeDemo> createState() => _EditModeDemoState();
@@ -1630,19 +2059,25 @@ class _EditModeDemoState extends State<_EditModeDemo> {
     final editing = widget.editing;
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.huge,
+      ),
       children: [
         Text(
           editing
-              ? 'โหมดแก้ไข: top bar เป็น ✕ · ไม่มี 🔔👤 · ส่วนที่แก้ไม่ได้จาง · แถบล่างเป็น ยกเลิก/↶/บันทึก'
-              : 'โหมดดู: กด ✏️ บน top bar หรือกดค้างที่ช่องข้อความเพื่อเข้าโหมดแก้ไข',
+              ? 'โหมดแก้ไข: top bar เป็น ✕ (ไม่มีปุ่มของหน้า) · ส่วนที่แก้ไม่ได้จาง · ลบอยู่แถวแดงท้ายหน้า · แถบล่างเป็น ยกเลิก/↶/บันทึก'
+              : 'โหมดดู: กด ✏️ บนการ์ดหัว (HeaderCard onEdit) หรือกดค้างที่ช่องข้อความเพื่อเข้าโหมดแก้ไข',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: AppSpacing.md),
         HeaderCard(
           leading: EditableCircle(
             size: 44,
-            onTap: editing ? () => showAppSnackBar(context, 'เปิด icon maker') : null,
+            onTap: editing
+                ? () => showAppSnackBar(context, 'เปิด icon maker')
+                : null,
             child: const UserAvatar(displayName: 'Aom Chan', size: 44),
           ),
           title: InlineTitleField(
@@ -1652,6 +2087,8 @@ class _EditModeDemoState extends State<_EditModeDemo> {
             hint: 'ชื่อ',
           ),
           subtitle: const Text('เชื่อมบัญชีแล้ว 🔗'),
+          // The page's way into edit mode (no ✏️ on the top bar).
+          onEdit: editing ? null : widget.onEnterEdit,
         ),
         const SizedBox(height: AppSpacing.lg),
         SectionCard(
@@ -1709,6 +2146,13 @@ class _EditModeDemoState extends State<_EditModeDemo> {
             ],
           ),
         ),
+        // Delete lives here, only in edit mode (no 🗑 on the top bar).
+        if (editing)
+          DangerRow(
+            icon: AppIcons.delete,
+            label: 'ลบรายการนี้',
+            onTap: widget.onDelete,
+          ),
       ],
     );
   }
@@ -1738,7 +2182,10 @@ class _DomainDemoState extends State<_DomainDemo> {
       account: EmbeddedRef(id: 'a1', name: 'KBank'),
       category: EmbeddedRef(id: 'c-food', name: 'อาหาร'),
       note: 'ข้าวมันไก่',
-      tags: [EmbeddedTag(id: 't1', name: 'งาน'), EmbeddedTag(id: 't2', name: 'กิน')],
+      tags: [
+        EmbeddedTag(id: 't1', name: 'งาน'),
+        EmbeddedTag(id: 't2', name: 'กิน'),
+      ],
     ),
     Transaction(
       id: 'demo-2',
@@ -1769,8 +2216,10 @@ class _DomainDemoState extends State<_DomainDemo> {
   ];
 
   Future<void> _pickContact() async {
-    final r = await showContactPickerSheet(context,
-        selectedContactId: _pickedId);
+    final r = await showContactPickerSheet(
+      context,
+      selectedContactId: _pickedId,
+    );
     if (r == null || !mounted) return;
     setState(() {
       switch (r) {
@@ -1800,7 +2249,11 @@ class _DomainDemoState extends State<_DomainDemo> {
                 onChanged: (c) => setState(() => _currency = c),
               ),
               const _Gap(),
-              CurrencyTile(value: _currency, onChanged: null, label: 'อ่านอย่างเดียว'),
+              CurrencyTile(
+                value: _currency,
+                onChanged: null,
+                label: 'อ่านอย่างเดียว',
+              ),
             ],
           ),
         ),
@@ -1882,10 +2335,7 @@ class _ChartsDemoState extends State<_ChartsDemo> {
             onTap: () => setState(() => _slices = (_slices + 1) % 6),
             child: Row(
               children: [
-                DonutChart(
-                  segments: segments,
-                  center: Text('$_slices ชิ้น'),
-                ),
+                DonutChart(segments: segments, center: Text('$_slices ชิ้น')),
                 const SizedBox(width: AppSpacing.lg),
                 Expanded(
                   child: Wrap(

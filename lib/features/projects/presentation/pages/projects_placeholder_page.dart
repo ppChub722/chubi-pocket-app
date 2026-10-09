@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/empty_view.dart';
 
@@ -14,7 +15,7 @@ class ProjectsPlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return EmptyView(
-      icon: Icons.groups_outlined,
+      icon: AppIcons.project,
       title: l.projectsPlaceholderTitle,
       message: l.projectsPlaceholderMessage,
     );

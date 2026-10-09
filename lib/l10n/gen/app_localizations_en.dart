@@ -139,9 +139,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get offlineBanner => 'You\'re offline';
 
   @override
-  String get authLoginTitle => 'Log in';
-
-  @override
   String get authLoginIdentifierLabel => 'Username or email';
 
   @override
@@ -262,20 +259,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navProfileTooltip => 'Profile & settings';
 
   @override
-  String get addTransactionComingSoon =>
-      'Logging transactions ships in Phase 1a';
-
-  @override
-  String get notificationsComingSoon =>
-      'The notifications inbox ships in Phase 1b';
-
-  @override
-  String get accountsPlaceholderTitle => 'No wallets yet';
-
-  @override
-  String get accountsPlaceholderMessage => 'Adding wallets ships in Phase 1a.';
-
-  @override
   String get accountsAddNew => 'Add wallet';
 
   @override
@@ -310,16 +293,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This wallet may have been archived or deleted.';
 
   @override
-  String get accountDetailEdit => 'Edit';
-
-  @override
   String get accountDetailAdjustBalance => 'Adjust balance';
 
   @override
   String get accountDetailArchive => 'Archive';
-
-  @override
-  String get accountDetailActionComingSoon => 'This action ships in Phase 1a';
 
   @override
   String accountDetailCreditAvailable(String available, String limit) {
@@ -351,9 +328,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accountDetailBillingTitle => 'Billing';
-
-  @override
   String get accountDetailStatementDate => 'Statement date';
 
   @override
@@ -371,23 +345,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountDetailTransactionsTitle => 'Transactions';
 
   @override
-  String get accountDetailTransactionsEmptyTitle => 'No transactions yet';
-
-  @override
-  String get accountDetailTransactionsEmptyMessage =>
-      'Logging transactions ships in Phase 1a.';
-
-  @override
   String get accountFormTitle => 'New wallet';
 
   @override
   String get accountFormTitleEdit => 'Edit wallet';
-
-  @override
-  String get accountFormSaveEdit => 'Save changes';
-
-  @override
-  String get accountFormPreviewLabel => 'Preview';
 
   @override
   String get accountFormTypeLabel => 'Type';
@@ -408,17 +369,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormColorLabel => 'Color';
 
   @override
-  String get accountFormUploadLogo => 'Upload custom logo (Phase 2)';
-
-  @override
   String get accountFormBalanceLabel => 'Opening balance';
 
   @override
   String get accountFormBalanceHelper =>
       'Money already in this wallet on the day you start tracking.';
-
-  @override
-  String get accountFormCreditSection => 'Credit details';
 
   @override
   String get accountFormCreditLimitLabel => 'Credit limit';
@@ -445,23 +400,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormDayInvalid => 'Must be 1–31';
 
   @override
-  String get accountFormSave => 'Save wallet';
-
-  @override
-  String get accountFormDiscardTitle => 'Discard new wallet?';
-
-  @override
-  String get accountFormDiscardBody => 'Your changes will be lost.';
-
-  @override
-  String get accountFormDiscardTitleEdit => 'Discard changes?';
-
-  @override
   String get accountAdjustBalanceTitle => 'Adjust balance';
-
-  @override
-  String get accountAdjustBalanceBody =>
-      'Set a new balance. The difference will be recorded as an Adjustment transaction so the history stays consistent.';
 
   @override
   String get accountAdjustBalanceCurrentLabel => 'Current balance';
@@ -473,14 +412,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountAdjustBalanceNoteLabel => 'Note (optional)';
 
   @override
-  String get accountAdjustBalanceInvalidAmount => 'Enter a number';
-
-  @override
   String get accountAdjustBalanceNoChange =>
       'New balance must differ from the current balance.';
-
-  @override
-  String get accountAdjustBalanceConfirm => 'Adjust';
 
   @override
   String get accountArchiveConfirmTitle => 'Archive this wallet?';
@@ -493,51 +426,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountArchiveConfirmAction => 'Archive';
 
   @override
-  String get accountFormCurrencyLabel => 'Currency';
-
-  @override
-  String get accountFormCurrencyPhase2 => 'Multi-currency ships in Phase 2';
-
-  @override
-  String get accountFormPhase2Badge => 'Phase 2';
-
-  @override
-  String get accountFormDescriptionLabel => 'Description';
-
-  @override
   String get accountFormDescriptionHelper =>
       'What this wallet is for. Visible to you only.';
-
-  @override
-  String get accountFormDescriptionTooLong => 'Max 200 characters';
-
-  @override
-  String get accountFormNoteLabel => 'Note';
 
   @override
   String get accountFormNoteHelper =>
       'Personal scratch note (e.g. \"Travel money for Japan trip\").';
 
   @override
-  String get accountFormNoteTooLong => 'Max 200 characters';
-
-  @override
-  String get iconPickerSectionStyle => 'Style';
-
-  @override
-  String get iconPickerSectionColor => 'Color';
-
-  @override
   String get iconPickerUseThis => 'Use this';
-
-  @override
-  String get iconPickerRemove => 'Remove';
-
-  @override
-  String get iconPickerUploadComingSoon => 'Upload (Phase 2)';
-
-  @override
-  String get iconPickerCropComingSoon => 'Crop (Phase 2)';
 
   @override
   String get iconMakerRoleIcon => 'Icon';
@@ -549,32 +446,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iconMakerRoleBorder => 'Border';
 
   @override
-  String get iconMakerColor => 'Colour';
-
-  @override
-  String get iconMakerColorEditing => 'Editing colour';
-
-  @override
-  String get iconMakerColorHint =>
-      'Tap a colour below to change the selected slot';
-
-  @override
-  String get iconMakerRecentCustom => 'Recent · Custom';
-
-  @override
   String get iconMakerThemeColors => 'Theme';
 
   @override
-  String get iconMakerPresetColors => 'Preset';
-
-  @override
-  String get iconMakerHex => 'Hex';
-
-  @override
   String get iconMakerReset => 'Reset to default';
-
-  @override
-  String get iconMakerPresetLabel => 'preset';
 
   @override
   String get iconMakerTitle => 'Icon';
@@ -590,9 +465,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get iconMakerPattern => 'Pattern';
-
-  @override
-  String get iconMakerNone => 'None';
 
   @override
   String get iconMakerCommonColors => 'Common';
@@ -621,9 +493,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get iconMakerPickColor => 'Pick a color';
-
-  @override
-  String get iconMakerHexInvalid => 'Use #RRGGBB';
 
   @override
   String get iconMakerResetConfirmTitle => 'Reset icon?';
@@ -664,21 +533,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectsPlaceholderMessage => 'Shared projects ship in Phase 1b.';
-
-  @override
-  String get moreSheetTitle => 'More';
-
-  @override
-  String get morePhase1aHeader => 'Phase 1a — coming soon';
-
-  @override
-  String get morePhase1bHeader => 'Phase 1b — coming soon';
-
-  @override
-  String get morePhase1cHeader => 'Phase 1c — coming soon';
-
-  @override
-  String get moreTransactions => 'Transactions';
 
   @override
   String get moreCategories => 'Categories';
@@ -1045,9 +899,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtDeleted => 'Debt deleted';
 
   @override
-  String get debtNotFound => 'Debt not found';
-
-  @override
   String get debtNewTitle => 'Record a debt';
 
   @override
@@ -1245,7 +1096,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectDashWhoPaid => 'Who paid';
 
   @override
-  String get projectDashTopCategories => 'Top categories';
+  String get projectDashTopTags => 'Top tags';
 
   @override
   String get projectDashRecent => 'Recent';
@@ -1293,7 +1144,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectTxSortMember => 'Who paid';
 
   @override
-  String get projectTxSortCategory => 'Category';
+  String get projectTxSortTag => 'Tag';
 
   @override
   String get projectTxEmpty => 'No transactions in this project yet';
@@ -1495,25 +1346,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectTxReceivedBy => 'Received by';
 
   @override
-  String get projectTxDescription => 'Description';
-
-  @override
-  String get projectTxDescriptionRequired => 'Description is required';
-
-  @override
-  String get projectTxDate => 'Date';
-
-  @override
   String get projectTxNote => 'Note';
 
   @override
-  String get projectTxCategory => 'Category';
+  String get projectTxTags => 'Tags';
 
   @override
-  String get projectTxCategoryRequired => 'Name the category and pick an icon';
+  String get projectTxAddTag => 'New tag';
 
   @override
-  String get projectTxCategoryName => 'Category name';
+  String get projectTxTagHint => 'Tag name';
+
+  @override
+  String get projectTxDescriptionHint => 'Description';
+
+  @override
+  String projectTxDescriptionUse(String text) {
+    return 'Use \"$text\"';
+  }
+
+  @override
+  String get projectTxDescriptionPast => 'Used before in this project';
+
+  @override
+  String get projectTxSplitMember => 'Who';
 
   @override
   String get projectTxSplits => 'Split with';
@@ -1575,9 +1431,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsMarkAllRead => 'Mark all as read';
-
-  @override
-  String get notificationsSettingsTooltip => 'Notification settings';
 
   @override
   String get notificationsEmptyTitle => 'You are all caught up';
@@ -1894,9 +1747,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionsClearFilters => 'Clear filters';
 
   @override
-  String get txDetailDate => 'Date';
-
-  @override
   String get txDetailAccount => 'Wallet';
 
   @override
@@ -1921,26 +1771,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txDetailSource => 'From';
 
   @override
-  String get txDetailSourceDebt => 'Debt payment';
-
-  @override
   String get txDetailSourceProject => 'Project';
-
-  @override
-  String get txDetailSystemLocked =>
-      'System transaction: cannot be edited or deleted';
 
   @override
   String get txDetailTransferTo => 'To';
 
   @override
   String get txDetailBalanceAfter => 'Balance after';
-
-  @override
-  String get txDeleteTitle => 'Delete this transaction?';
-
-  @override
-  String get txDeleteBody => 'The wallet balance is adjusted back.';
 
   @override
   String get txDeleted => 'Transaction deleted';
@@ -2025,10 +1862,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authLanguage => 'Language';
 
   @override
-  String get accountsTotalMine => 'Mine';
+  String get accountsTotalShared => 'Shared pot';
 
   @override
-  String get accountsTotalShared => 'Shared pot';
+  String get accountsSummaryNet => 'My net balance';
+
+  @override
+  String get accountsSummaryAssets => 'Money on hand';
+
+  @override
+  String get accountsSummaryDebt => 'Card / pay-later debt';
+
+  @override
+  String accountsSummaryCreditUsed(int pct, String left) {
+    return 'Credit used $pct% · $left left';
+  }
+
+  @override
+  String accountsSummaryWalletCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count wallets',
+      one: '1 wallet',
+    );
+    return '$_temp0';
+  }
 
   @override
   String accountsArchivedLink(int count) {
@@ -2059,9 +1918,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountDetailNote => 'Note';
 
   @override
-  String get accountDetailMembers => 'Members';
-
-  @override
   String get accountArchiveHasMembers =>
       'A wallet with other members cannot be archived. Remove them first.';
 
@@ -2089,9 +1945,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreScheduled => 'Scheduled transactions';
-
-  @override
-  String get moreComingSoonBadge => 'Soon';
 
   @override
   String get moreGroupLibrary => 'Library';
@@ -2154,22 +2007,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get moreComingInPhase1a => 'Ships in Phase 1a';
-
-  @override
-  String get moreComingInPhase1b => 'Ships in Phase 1b';
-
-  @override
-  String get moreComingInPhase1c => 'Ships in Phase 1c';
-
-  @override
   String get categoriesTitle => 'Categories';
-
-  @override
-  String get categoriesSectionExpense => 'Expense';
-
-  @override
-  String get categoriesSectionIncome => 'Income';
 
   @override
   String get categoriesEmptyTitle => 'No categories yet';
@@ -2177,6 +2015,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get categoriesEmptyMessage =>
       'Add your first category to start organizing transactions.';
+
+  @override
+  String get categoryDetailNotFound => 'Category not found';
+
+  @override
+  String get categoryDetailNotFoundMessage =>
+      'This category may have been deleted.';
 
   @override
   String get categoriesLimitReached =>
@@ -2196,12 +2041,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryFormTitleEdit => 'Edit category';
-
-  @override
-  String get categoryFormBadge => 'Category';
-
-  @override
-  String get categoryFormPreviewLabel => 'Preview';
 
   @override
   String get categoryFormNameLabel => 'Name';
@@ -2230,10 +2069,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryFormParentNone => 'None';
 
   @override
-  String get categoryFormParentDepthHint =>
-      'Categories can nest up to 3 levels deep.';
-
-  @override
   String get categoryFormIconLabel => 'Icon';
 
   @override
@@ -2243,18 +2078,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryFormDescriptionLabel => 'Description';
 
   @override
-  String get categoryFormDescriptionHelper =>
-      'What this category is for. Visible to you only.';
-
-  @override
   String get categoryFormDescriptionTooLong => 'Max 200 characters';
 
   @override
   String get categoryFormNoteLabel => 'Note';
-
-  @override
-  String get categoryFormNoteHelper =>
-      'Personal scratch note (e.g. \"Don\'t use for snacks\").';
 
   @override
   String get categoryFormNoteTooLong => 'Max 200 characters';
@@ -2265,15 +2092,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get categoryFormIncludeInReportHelper =>
       'Off = transactions in this category are excluded from totals and charts.';
-
-  @override
-  String get categoryFormSave => 'Save category';
-
-  @override
-  String get categoryFormDiscardTitle => 'Discard changes?';
-
-  @override
-  String get categoryFormDiscardBody => 'Your edits will be lost.';
 
   @override
   String get categoriesAddNew => 'Add category';
@@ -2326,6 +2144,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonDelete => 'Delete';
 
   @override
+  String get budgetDeleteThis => 'Delete this budget';
+
+  @override
+  String get savingGoalDeleteThis => 'Delete this goal';
+
+  @override
+  String get contactDeleteThis => 'Delete this contact';
+
+  @override
+  String get debtDeleteThis => 'Delete this debt';
+
+  @override
+  String get projectDeleteThis => 'Delete this project';
+
+  @override
+  String get scheduledDeleteThis => 'Delete this schedule';
+
+  @override
+  String get transactionDeleteThis => 'Delete this transaction';
+
+  @override
   String get categoriesReorderEnter => 'Reorder';
 
   @override
@@ -2335,19 +2174,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoriesReorderDiscard => 'Discard';
 
   @override
-  String get categoriesReorderHint =>
-      'Drag to reorder. Drop near another category to move under its parent.';
-
-  @override
   String get categoriesUndo => 'Undo';
-
-  @override
-  String get categoriesReorderTooDeep =>
-      'That move would exceed the 3-level limit';
-
-  @override
-  String get categoriesReorderCycle =>
-      'Can\'t drop a category into its own descendant';
 
   @override
   String get categoriesReorderCancel => 'Cancel';
@@ -2384,9 +2211,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagsBulkIcon => 'Change icon';
 
   @override
-  String get tagsDeleteSelected => 'Delete selected';
-
-  @override
   String get tagsFiltersClearedForError =>
       'Filters cleared to show a tag that needs fixing';
 
@@ -2413,13 +2237,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagDeleteConfirmAction => 'Delete';
 
   @override
-  String get tagFormTitleNew => 'New tag';
-
-  @override
   String get tagFormTitleEdit => 'Edit tag';
-
-  @override
-  String get tagFormPreviewLabel => 'Preview';
 
   @override
   String get tagFormNameLabel => 'Name';
@@ -2438,15 +2256,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagFormColorLabel => 'Color';
-
-  @override
-  String get tagFormSave => 'Save tag';
-
-  @override
-  String get tagFormDiscardTitle => 'Discard changes?';
-
-  @override
-  String get tagFormDiscardBody => 'Your edits will be lost.';
 
   @override
   String get settingsTitle => 'Settings';
@@ -2498,20 +2307,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfileDisplayNameLabel => 'Display name';
 
   @override
-  String get editProfileCurrencyLabel => 'Default currency';
-
-  @override
-  String get editProfileCurrencyHelper =>
-      'Used as default for new transactions. Existing transactions keep their original currency.';
-
-  @override
-  String get editProfileAvatarUrlLabel => 'Avatar URL (optional)';
-
-  @override
-  String get editProfileAvatarUrlHelper =>
-      'Phase 0: paste a URL or leave blank for initials.';
-
-  @override
   String get editProfileUsernameLabel => 'Username';
 
   @override
@@ -2532,25 +2327,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'That email is already registered to another account.';
 
   @override
-  String get editProfileReadOnlyHelper => 'Cannot be changed in this version';
-
-  @override
-  String get editProfileEmailNone => '—';
-
-  @override
   String get editProfileSnackSuccess => 'Profile updated';
-
-  @override
-  String get editProfileDiscardTitle => 'Discard changes?';
-
-  @override
-  String get editProfileDiscardBody => 'Your edits will be lost.';
-
-  @override
-  String get editProfileDiscardKeep => 'Keep editing';
-
-  @override
-  String get editProfileDiscardConfirm => 'Discard';
 
   @override
   String get changePasswordTitle => 'Change password';
@@ -2581,54 +2358,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get changePasswordSnackSuccess => 'Password updated';
-
-  @override
-  String get avatarPickerStyleLabel => 'Style';
-
-  @override
-  String get avatarPickerColorLabel => 'Color';
-
-  @override
-  String get avatarPickerUseThis => 'Use this';
-
-  @override
-  String get avatarPickerUploadDisabled => 'Upload (Phase 2)';
-
-  @override
-  String get avatarPickerCropDisabled => 'Crop (Phase 2)';
-
-  @override
-  String get avatarPresetInitials => 'Initials';
-
-  @override
-  String get avatarPresetMale => 'Male';
-
-  @override
-  String get avatarPresetFemale => 'Female';
-
-  @override
-  String get avatarPresetChubby => 'Chubby';
-
-  @override
-  String get avatarPresetSnacker => 'Snacker';
-
-  @override
-  String get avatarPresetStrong => 'Strong';
-
-  @override
-  String get avatarColorRed => 'Red';
-
-  @override
-  String get avatarColorGreen => 'Green';
-
-  @override
-  String get avatarColorBlue => 'Blue';
-
-  @override
-  String get avatarColorTeal => 'Teal';
-
-  @override
-  String get avatarColorPink => 'Pink';
 
   @override
   String get previewTitle => 'Core Preview';
@@ -2776,8 +2505,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingTooltip => 'Pending';
 
   @override
-  String get pendingSubtitle =>
-      'Not counted yet · edit anything before confirming';
+  String get pendingImportSlip => 'Import slips';
+
+  @override
+  String get pendingTypeIt => 'Type a draft';
+
+  @override
+  String get pendingChatHint => 'e.g. coffee 65';
+
+  @override
+  String get pendingChatSend => 'Send';
+
+  @override
+  String get pendingChatClose => 'Close';
+
+  @override
+  String get pendingScanning => 'Reading slips…';
+
+  @override
+  String get pendingScanDone => 'Slips imported';
 
   @override
   String get pendingSelectAll => 'Select all';
@@ -2877,10 +2623,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingAddRow => 'Add a row';
 
   @override
-  String get pendingBatchMoreHint =>
-      'Need a transfer, a split or tags? Open the draft on the Pending page to edit it in full.';
-
-  @override
   String pendingSaveAsDrafts(int count) {
     return 'Save $count as drafts';
   }
@@ -2972,48 +2714,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionFormAccountLabel => 'Wallet';
 
   @override
-  String get transactionFormFromAccountLabel => 'From wallet';
-
-  @override
-  String get transactionFormToAccountLabel => 'To wallet';
-
-  @override
-  String get transactionFormAccountRequired => 'Pick a wallet';
-
-  @override
-  String get transactionFormAccountSameError =>
-      'Source and destination must differ';
-
-  @override
   String get transactionFormCategoryLabel => 'Category';
 
   @override
   String get transactionFormCategoryNone => 'Uncategorized';
 
   @override
-  String get transactionFormTransferCategoryHint =>
-      'Auto-set to Transfer In/Out';
-
-  @override
-  String get transactionFormDateLabel => 'Date';
-
-  @override
   String get transactionFormAmountLabel => 'Amount';
-
-  @override
-  String get transactionFormAmountRequired => 'Required';
-
-  @override
-  String get transactionFormAmountInvalid => 'Enter a valid number';
-
-  @override
-  String get transactionFormAmountTooSmall => 'Must be greater than 0';
-
-  @override
-  String get transactionFormNoteLabel => 'Note (optional)';
-
-  @override
-  String get transactionFormNoteAddLabel => '+ Add note';
 
   @override
   String get transactionFormTagsLabel => 'Tags';
@@ -3026,16 +2733,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionFormSave => 'Save';
 
   @override
-  String get transactionFormSaveAndAddAnother => 'Save & add another';
-
-  @override
-  String get transactionFormSavedAddedAnother => 'Saved. Add another below.';
-
-  @override
   String get transactionFormAccountNone => 'No wallet';
-
-  @override
-  String get transactionFormMoveTransferTitle => 'Move wallets';
 
   @override
   String get transactionFormAccountPickerTitle => 'Pick a wallet';
@@ -3053,21 +2751,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get transactionFormCategoryPickerEmpty =>
       'No categories of this type yet.';
-
-  @override
-  String get transactionFormDiscardTitle => 'Discard transaction?';
-
-  @override
-  String get transactionFormDiscardTitleEdit => 'Discard changes?';
-
-  @override
-  String get transactionFormDiscardBody => 'Your changes will be lost.';
-
-  @override
-  String get transactionDetailEdit => 'Edit';
-
-  @override
-  String get transactionDetailDelete => 'Delete';
 
   @override
   String get transactionDetailNotFound => 'Transaction not found';
@@ -3095,10 +2778,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionDetailDeleteConfirmAction => 'Delete';
 
   @override
-  String get transactionDetailTransferReadonlyHint =>
-      'To change wallets, delete and create a new transfer.';
-
-  @override
   String get transactionDetailSystemRowBanner =>
       'Auto-created — to change this, use the matching wallet-level action (wallet edit, or Adjust balance).';
 
@@ -3121,26 +2800,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionsEmptyAccountMessage => 'Tap the + button to add one.';
 
   @override
-  String get transactionsListTitle => 'Transactions';
-
-  @override
   String get transactionsListFilterAll => 'All';
-
-  @override
-  String get transactionsListFilterCategoryAll => 'All categories';
 
   @override
   String get transactionsListEmptyMessage =>
       'No transactions match these filters.';
-
-  @override
-  String get transactionsListRetry => 'Retry';
-
-  @override
-  String get transactionsListDateToday => 'Today';
-
-  @override
-  String get transactionsListDateYesterday => 'Yesterday';
 
   @override
   String get accountAdjustBalanceViewTransaction => 'View';
@@ -3176,12 +2840,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savingGoalFormTitleEdit => 'Edit saving goal';
 
   @override
-  String get savingGoalFormSave => 'Create goal';
-
-  @override
-  String get savingGoalFormSaveEdit => 'Save changes';
-
-  @override
   String get savingGoalFormIconLabel => 'Icon';
 
   @override
@@ -3194,14 +2852,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savingGoalFormLinkedAccountLabel => 'Linked wallet';
 
   @override
-  String get savingGoalFormLinkedAccountHelper =>
-      'Progress = wallet balance × allocation %';
-
-  @override
-  String get savingGoalFormLinkedAccountLockedHelper =>
-      'Linked wallet can\'t be changed. Delete and recreate to switch wallets.';
-
-  @override
   String get savingGoalFormAccountRequired => 'Pick a linked wallet';
 
   @override
@@ -3212,10 +2862,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingGoalFormAllocationLabel => 'Allocation';
-
-  @override
-  String get savingGoalFormAllocationHelper =>
-      'Leave blank to let the server suggest a default. Total per wallet ≤ 100%.';
 
   @override
   String get savingGoalFormAllocationInvalid => 'Must be between 0 and 100';
@@ -3237,13 +2883,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This saving goal may have been deleted or archived.';
 
   @override
-  String get savingGoalDetailEdit => 'Edit';
-
-  @override
   String get savingGoalDetailArchive => 'Archive';
-
-  @override
-  String get savingGoalDetailDelete => 'Delete';
 
   @override
   String savingGoalDetailOfTarget(String target) {
@@ -3251,13 +2891,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get savingGoalDetailAllocation => 'Allocation';
-
-  @override
   String get savingGoalDetailRemaining => 'Remaining';
-
-  @override
-  String get savingGoalDetailDeadline => 'Deadline';
 
   @override
   String get savingGoalDetailDaysRemaining => 'Days remaining';
@@ -3330,37 +2964,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetFormTitleEdit => 'Edit budget';
 
   @override
-  String get budgetFormSave => 'Create budget';
-
-  @override
-  String get budgetFormSaveEdit => 'Save changes';
-
-  @override
   String get budgetFormCategoryLabel => 'Category';
 
   @override
   String get budgetFormCategoryPlaceholder => 'Pick a category';
 
   @override
-  String get budgetFormCategoryHelper =>
-      'Only expense categories. Picking a parent tracks all its sub-categories.';
-
-  @override
-  String get budgetFormCategoryLockedHelper =>
-      'Category can\'t be changed. Delete and recreate to switch categories.';
-
-  @override
   String get budgetFormCategoryRequired => 'Pick a category';
-
-  @override
-  String get budgetFormDescriptionLabel => 'Description';
-
-  @override
-  String get budgetFormDescriptionHelper =>
-      'Optional. Shown as the budget\'s title; falls back to the category name when blank.';
-
-  @override
-  String get budgetFormDescriptionTooLong => 'Max 200 characters';
 
   @override
   String get budgetFormAmountLabel => 'Limit per period';
@@ -3375,10 +2985,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetFormNoteLabel => 'Note';
 
   @override
-  String get budgetFormNoteHelper =>
-      'Optional. Longer free-form note shown on the detail page.';
-
-  @override
   String get budgetDetailNotFound => 'Budget not found';
 
   @override
@@ -3389,13 +2995,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get budgetDetailFallbackTitle => 'Budget';
 
   @override
-  String get budgetDetailEdit => 'Edit';
-
-  @override
   String get budgetDetailArchive => 'Archive';
-
-  @override
-  String get budgetDetailDelete => 'Delete';
 
   @override
   String budgetDetailOfLimit(String limit) {
@@ -3462,12 +3062,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledVariantLoan => 'Loan';
 
   @override
-  String get scheduledTypeExpense => 'Expense';
-
-  @override
-  String get scheduledTypeIncome => 'Income';
-
-  @override
   String get scheduledCycleDaily => 'Daily';
 
   @override
@@ -3502,25 +3096,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get scheduledFormTitle => 'New scheduled';
-
-  @override
-  String get scheduledFormTitleEdit => 'Edit scheduled';
-
-  @override
   String get scheduledFormSave => 'Create';
 
   @override
-  String get scheduledFormSaveEdit => 'Save changes';
-
-  @override
   String get scheduledFormIconLabel => 'Icon';
-
-  @override
-  String get scheduledFormVariantLabel => 'Type';
-
-  @override
-  String get scheduledFormTypeLabel => 'Direction';
 
   @override
   String get scheduledFormNameLabel => 'Name';
@@ -3601,9 +3180,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This scheduled entry may have been deleted or cancelled.';
 
   @override
-  String get scheduledDetailEdit => 'Edit';
-
-  @override
   String get scheduledDetailPause => 'Pause';
 
   @override
@@ -3611,9 +3187,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduledDetailCancel => 'Cancel';
-
-  @override
-  String get scheduledDetailDelete => 'Delete';
 
   @override
   String scheduledDetailNextDue(String date) {
@@ -3712,15 +3285,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectFormPlannedInvalid => 'Enter a positive amount';
 
   @override
-  String get projectFormPlannedClearTooltip => 'Clear';
-
-  @override
   String projectMetaPlanned(String amount) {
     return 'Budget $amount';
   }
-
-  @override
-  String get projectPlannedRemainingCardLabel => 'Remaining';
 
   @override
   String projectPlannedLine(String planned, String remaining) {
@@ -3730,28 +3297,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String projectPlannedOverLine(String over) {
     return '🔴 Over budget by $over';
-  }
-
-  @override
-  String get projectSummaryPlannedLabel => 'Planned';
-
-  @override
-  String get projectSummarySpentLabel => 'Spent (net)';
-
-  @override
-  String get projectSummaryRemainingLabel => 'Left';
-
-  @override
-  String get projectSummaryOverLabel => 'Over budget';
-
-  @override
-  String walletsHeaderMine(String amount) {
-    return 'Mine $amount';
-  }
-
-  @override
-  String walletsHeaderShared(String amount) {
-    return 'Shared $amount';
   }
 
   @override
@@ -3868,9 +3413,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletTransferOwnershipSuccess => 'Ownership transferred';
 
   @override
-  String get walletSettingsTitle => 'Wallet settings';
-
-  @override
   String get walletSettingsMembersSubtitlePersonal =>
       'Invite someone to share this wallet';
 
@@ -3943,9 +3485,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'That user is already a member of this wallet.';
 
   @override
-  String get quickCreateToggle => 'Create an event from this bill...';
-
-  @override
   String get transactionSplitWithTitle => 'Split with…';
 
   @override
@@ -3953,52 +3492,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Share with… (I owe them their part)';
 
   @override
-  String get quickCreateOldBillsSection =>
-      'Add past bills to this event (optional)';
-
-  @override
-  String get quickCreateOldBillsHint =>
-      'Your loose bills from the last 90 days — tick any to bring them onto the event board.';
-
-  @override
-  String get quickCreateSearchHint => 'Search past bills';
-
-  @override
-  String get quickCreateOldBillsEmpty =>
-      'No loose bills from the last 90 days.';
-
-  @override
-  String get quickCreateOldBillsSearchEmpty => 'No bills match your search.';
-
-  @override
-  String get quickCreateOldBillsLoadMore => 'Load more';
-
-  @override
-  String get quickCreateOldBillsRetry => 'Retry';
-
-  @override
-  String quickCreateSelectedCount(int count) {
-    return '$count selected';
-  }
-
-  @override
   String get quickCreateNameSection => 'Event name';
-
-  @override
-  String get quickCreateNameLabel => 'Event name';
-
-  @override
-  String get quickCreateNameRequired => 'Please enter an event name';
-
-  @override
-  String quickCreateDefaultName(String members, String date) {
-    return '$members · $date';
-  }
-
-  @override
-  String quickCreateDefaultNameSolo(String date) {
-    return 'Event · $date';
-  }
 
   @override
   String get quickCreateSubmit => 'Create event';
@@ -4014,4 +3508,56 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get quickCreateErrorValidation =>
       'Something\'s not right — check the form and try again.';
+
+  @override
+  String get budgetNameLabel => 'Budget name';
+
+  @override
+  String budgetsOverviewSpent(String spent, String total) {
+    return 'Spent $spent of $total';
+  }
+
+  @override
+  String budgetsOverviewOverCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count budgets over',
+      one: '1 budget over',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get transactionsSearchHint => 'Search note · category · wallet';
+
+  @override
+  String get savingGoalAllocationAuto => 'Auto';
+
+  @override
+  String get accountSharingSectionTitle => 'Sharing & reports';
+
+  @override
+  String get accountFormOpeningDebtLabel => 'Opening outstanding balance';
+
+  @override
+  String get accountFormOpeningDebtHelper =>
+      'What you still owe on it on the day you start tracking (0 if nothing)';
+
+  @override
+  String get accountAdjustBalanceNewDebtLabel => 'New outstanding balance';
+
+  @override
+  String get accountAdjustBalanceDiffLabel => 'Difference';
+
+  @override
+  String accountAdjustBalanceWillCreate(String amount) {
+    return 'This adds an \"Adjust balance\" transaction of $amount, dated today.';
+  }
+
+  @override
+  String get scheduledSheetTitleNew => 'New scheduled entry';
+
+  @override
+  String get scheduledSheetTitleEdit => 'Edit scheduled entry';
 }

@@ -22,14 +22,15 @@ import '../../l10n/gen/app_localizations.dart';
 /// );
 /// ```
 class ErrorView extends StatelessWidget {
-  const ErrorView({
-    super.key,
-    required this.error,
-    this.onRetry,
-  });
+  const ErrorView({super.key, required this.error, this.onRetry});
 
   final ApiException error;
   final VoidCallback? onRetry;
+
+  /// Short localized headline for [e] — the same text the full view shows,
+  /// for snackbars (a failed refresh while data is already on screen).
+  static String titleFor(AppLocalizations l, ApiException e) =>
+      _titleFor(l, _variantFor(e));
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +58,9 @@ class ErrorView extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               Text(
                 _messageFor(l, variant),
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: scheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               if (onRetry != null) ...[
@@ -90,20 +92,20 @@ _ErrorVariant _variantFor(ApiException e) {
 
 extension _ErrorVariantIcon on _ErrorVariant {
   IconData get icon => switch (this) {
-        _ErrorVariant.network => AppIcons.offline,
-        _ErrorVariant.server => AppIcons.serverDown,
-        _ErrorVariant.unknown => AppIcons.error,
-      };
+    _ErrorVariant.network => AppIcons.offline,
+    _ErrorVariant.server => AppIcons.serverDown,
+    _ErrorVariant.unknown => AppIcons.error,
+  };
 }
 
 String _titleFor(AppLocalizations l, _ErrorVariant v) => switch (v) {
-      _ErrorVariant.network => l.errorNetworkTitle,
-      _ErrorVariant.server => l.errorServerTitle,
-      _ErrorVariant.unknown => l.errorUnknownTitle,
-    };
+  _ErrorVariant.network => l.errorNetworkTitle,
+  _ErrorVariant.server => l.errorServerTitle,
+  _ErrorVariant.unknown => l.errorUnknownTitle,
+};
 
 String _messageFor(AppLocalizations l, _ErrorVariant v) => switch (v) {
-      _ErrorVariant.network => l.errorNetworkMessage,
-      _ErrorVariant.server => l.errorServerMessage,
-      _ErrorVariant.unknown => l.errorUnknownMessage,
-    };
+  _ErrorVariant.network => l.errorNetworkMessage,
+  _ErrorVariant.server => l.errorServerMessage,
+  _ErrorVariant.unknown => l.errorUnknownMessage,
+};

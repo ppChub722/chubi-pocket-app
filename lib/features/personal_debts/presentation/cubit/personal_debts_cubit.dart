@@ -15,36 +15,37 @@ class PersonalDebtsState extends Equatable {
   const PersonalDebtsState({
     this.debts = const [],
     this.status = PersonalDebtsStatus.initial,
-    this.errorMessage,
+    this.error,
   });
 
   final List<PersonalDebt> debts;
   final PersonalDebtsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
 
   List<DebtPerson> get people => DebtPerson.group(debts);
 
   PersonalDebtsState copyWith({
     List<PersonalDebt>? debts,
     PersonalDebtsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     bool clearError = false,
   }) {
     return PersonalDebtsState(
       debts: debts ?? this.debts,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props => [debts, status, errorMessage];
+  List<Object?> get props => [debts, status, error];
 }
 
 class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
   PersonalDebtsCubit({required PersonalDebtsRepository repository})
-      : _repo = repository,
-        super(const PersonalDebtsState());
+    : _repo = repository,
+      super(const PersonalDebtsState());
 
   final PersonalDebtsRepository _repo;
 
@@ -56,11 +57,13 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
     try {
       final all = await _repo.listAll();
       emit(state.copyWith(debts: all, status: PersonalDebtsStatus.loaded));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: PersonalDebtsStatus.error,
-        errorMessage: e.message,
-      ));
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: PersonalDebtsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -126,9 +129,7 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
 
   Future<void> delete(String id) async {
     await _repo.delete(id);
-    emit(state.copyWith(
-      debts: state.debts.where((d) => d.id != id).toList(),
-    ));
+    emit(state.copyWith(debts: state.debts.where((d) => d.id != id).toList()));
   }
 
   Future<PersonalDebt> settle(
@@ -137,18 +138,24 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
     double? amount,
     String? date,
   }) async {
-    final res = await _repo.settle(id,
-        accountId: accountId, amount: amount, date: date);
+    final res = await _repo.settle(
+      id,
+      accountId: accountId,
+      amount: amount,
+      date: date,
+    );
     _replace(res.debt);
     return res.debt;
   }
 
   void _replace(PersonalDebt d) {
     final exists = state.debts.any((e) => e.id == d.id);
-    emit(state.copyWith(
-      debts: exists
-          ? [for (final e in state.debts) e.id == d.id ? d : e]
-          : [d, ...state.debts],
-    ));
+    emit(
+      state.copyWith(
+        debts: exists
+            ? [for (final e in state.debts) e.id == d.id ? d : e]
+            : [d, ...state.debts],
+      ),
+    );
   }
 }

@@ -35,10 +35,7 @@ class ProjectsRepository {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/projects',
-        queryParameters: <String, dynamic>{
-          'status': ?status,
-          'type': ?type,
-        },
+        queryParameters: <String, dynamic>{'status': ?status, 'type': ?type},
       );
       final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
       return data.map(Project.fromJson).toList();
@@ -86,7 +83,8 @@ class ProjectsRepository {
   /// pass [plannedAmount] to set the plan, set [clearPlannedAmount] to
   /// send an explicit `null` (turns the plan display off), leave both
   /// unset to keep the column unchanged.
-  Future<Project> update(String id, {
+  Future<Project> update(
+    String id, {
     String? name,
     String? type,
     String? description,
@@ -231,7 +229,8 @@ class ProjectsRepository {
   ///
   /// "Add my contact X": resolve the contact's `linkedUserId` locally first,
   /// then call this with the contact's email (if any), or fall back to ad-hoc.
-  Future<ProjectMember> addMember(String projectId, {
+  Future<ProjectMember> addMember(
+    String projectId, {
     String? email,
     String? displayName,
     MemberRole role = MemberRole.contributor,
@@ -254,7 +253,10 @@ class ProjectsRepository {
   }
 
   Future<ProjectMember> updateMemberRole(
-      String projectId, String memberId, MemberRole role) async {
+    String projectId,
+    String memberId,
+    MemberRole role,
+  ) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/projects/$projectId/members/$memberId',
@@ -288,8 +290,11 @@ class ProjectsRepository {
 
   // --- Project transactions ---
 
-  Future<List<ProjectTransaction>> listTransactions(String projectId,
-      {int page = 1, int perPage = 20}) async {
+  Future<List<ProjectTransaction>> listTransactions(
+    String projectId, {
+    int page = 1,
+    int perPage = 20,
+  }) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/projects/$projectId/transactions',
@@ -314,8 +319,7 @@ class ProjectsRepository {
     required String date,
     String? description,
     String? note,
-    String? categoryName,
-    IconCode? categoryIconCode,
+    List<String> tags = const [],
     List<ProjectSplitInput> splits = const [],
   }) async {
     try {
@@ -329,9 +333,7 @@ class ProjectsRepository {
           'date': date,
           'description': ?description,
           'note': ?note,
-          'category_name': ?categoryName,
-          if (categoryIconCode != null)
-            'category_icon_code': categoryIconCode.toJson(),
+          if (tags.isNotEmpty) 'tags': tags,
           if (splits.isNotEmpty)
             'splits': splits.map((s) => s.toJson()).toList(),
         },
@@ -351,8 +353,7 @@ class ProjectsRepository {
     String? date,
     String? description,
     String? note,
-    String? categoryName,
-    IconCode? categoryIconCode,
+    List<String>? tags,
     List<ProjectSplitInput>? splits,
   }) async {
     try {
@@ -363,9 +364,7 @@ class ProjectsRepository {
           'date': ?date,
           'description': ?description,
           'note': ?note,
-          'category_name': ?categoryName,
-          if (categoryIconCode != null)
-            'category_icon_code': categoryIconCode.toJson(),
+          'tags': ?tags,
           if (splits != null) 'splits': splits.map((s) => s.toJson()).toList(),
         },
       );
@@ -403,13 +402,31 @@ class ProjectsRepository {
   }
 
   Future<ProjectTransaction> toggleMark(
-      String projectId, String ptId, bool marked) async {
+    String projectId,
+    String ptId,
+    bool marked,
+  ) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/projects/$projectId/project-transactions/$ptId/mark',
         data: <String, dynamic>{'marked': marked},
       );
       return ProjectTransaction.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `GET /projects/:id/tags` — names in use on the project's rows, most
+  /// used first.
+  Future<List<String>> listTags(String projectId) async {
+    try {
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/projects/$projectId/tags',
+      );
+      return ((res.data!['data'] as List?) ?? const [])
+          .map((e) => (e as Map<String, dynamic>)['name'] as String)
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

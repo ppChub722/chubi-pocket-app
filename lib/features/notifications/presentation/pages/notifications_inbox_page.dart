@@ -77,146 +77,212 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
 
   String _dayLabel(BuildContext context, DateTime d) {
     final l = AppLocalizations.of(context)!;
-    return DateFormatter.friendly(d,
-        today: l.commonToday,
-        yesterday: l.commonYesterday,
-        locale: Localizations.localeOf(context).languageCode);
+    return DateFormatter.friendly(
+      d,
+      today: l.commonToday,
+      yesterday: l.commonYesterday,
+      locale: Localizations.localeOf(context).languageCode,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    void openSettings() => context.push('/notifications/settings');
     return Scaffold(
       appBar: AppTopBar(
         title: l.notificationsTitle,
         showBack: true,
         showUniversal: false,
-        actions: [
-          AppBarAction(
-            icon: AppIcons.markAllRead,
-            tooltip: l.notificationsMarkAllRead,
-            onPressed: () =>
-                context.read<NotificationsInboxCubit>().markReadAll(),
-          ),
-          AppBarAction(
-            icon: AppIcons.settings,
-            tooltip: l.notificationsSettingsTooltip,
-            onPressed: () => context.push('/notifications/settings'),
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          AppTabBar<bool>(
-            selected: _unreadOnly,
-            onChanged: _setTab,
-            tabs: [
-              AppTab(value: false, label: l.notificationsTabAll),
-              AppTab(value: true, label: l.notificationsTabUnread),
+      extendBodyBehindAppBar: true,
+      // Pinned tabs clear the floating bar; the list below them must not
+      // add the bar height again.
+      body: Builder(
+        builder: (context) => MediaQuery.removePadding(
+          context: context,
+          removeTop: true,
+          child: Column(
+            children: [
+              SizedBox(height: MediaQuery.paddingOf(context).top),
+              AppTabBar<bool>(
+                selected: _unreadOnly,
+                onChanged: _setTab,
+                tabs: [
+                  AppTab(value: false, label: l.notificationsTabAll),
+                  AppTab(value: true, label: l.notificationsTabUnread),
+                ],
+              ),
+              Expanded(
+                child: BlocConsumer<NotificationsInboxCubit, InboxState>(
+                  listenWhen: (a, b) =>
+                      a.unreadCount != b.unreadCount || a.error != b.error,
+                  listener: (ctx, state) {
+                    ctx.read<UnreadBadgeCubit>().refresh();
+                    // Row actions (accept / mark read …) fail without leaving
+                    // `loaded`; load failures are AsyncStateView's.
+                    if (state.error != null &&
+                        state.status != InboxStatus.error) {
+                      showAppSnackBar(
+                        ctx,
+                        state.errorMessage!,
+                        tone: Tone.danger,
+                      );
+                    }
+                  },
+                  builder: (ctx, state) {
+                    // Dismissed rows are hidden for good; actioned requests
+                    // stay so the post-accept flow is still reachable.
+                    final visible = state.notifications
+                        .where((n) => n.dismissedAt == null)
+                        .toList();
+                    return AsyncStateView(
+                      loading:
+                          state.status == InboxStatus.initial ||
+                          state.status == InboxStatus.loading,
+                      error: state.status == InboxStatus.error
+                          ? state.error
+                          : null,
+                      isEmpty: visible.isEmpty,
+                      onRetry: () => ctx.read<NotificationsInboxCubit>().load(
+                        unreadOnly: _unreadOnly,
+                      ),
+                      empty: EmptyView(
+                        icon: AppIcons.notifications,
+                        title: _unreadOnly
+                            ? l.notificationsEmptyUnread
+                            : l.notificationsEmptyTitle,
+                        message: _unreadOnly ? '' : l.notificationsEmptyMessage,
+                        // Settings stay reachable with an empty inbox.
+                        cta: TextButton.icon(
+                          onPressed: openSettings,
+                          icon: const Icon(AppIcons.settings, size: 18),
+                          label: Text(l.notifSettingsTitle),
+                        ),
+                      ),
+                      builder: (context) {
+                        final rows = <Widget>[
+                          // Head of the list: only while something is unread.
+                          if (state.unreadCount > 0)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                ),
+                                child: TextButton.icon(
+                                  onPressed: () => ctx
+                                      .read<NotificationsInboxCubit>()
+                                      .markReadAll(),
+                                  icon: const Icon(
+                                    AppIcons.markAllRead,
+                                    size: 18,
+                                  ),
+                                  label: Text(l.notificationsMarkAllRead),
+                                ),
+                              ),
+                            ),
+                        ];
+                        String? lastDay;
+                        for (final n in visible) {
+                          final local = n.createdAt.toLocal();
+                          final day =
+                              '${local.year}-${local.month}-${local.day}';
+                          if (day != lastDay) {
+                            lastDay = day;
+                            rows.add(
+                              DateGroupHeader(label: _dayLabel(ctx, local)),
+                            );
+                          }
+                          rows.add(
+                            Dismissible(
+                              key: ValueKey('notif_${n.id}'),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(
+                                  right: AppSpacing.xl,
+                                ),
+                                color: Theme.of(
+                                  ctx,
+                                ).colorScheme.surfaceContainerHighest,
+                                child: const Icon(AppIcons.hidden),
+                              ),
+                              onDismissed: (_) {
+                                ctx
+                                    .read<NotificationsInboxCubit>()
+                                    .markDismissed(n.id);
+                                showAppSnackBar(ctx, l.notifHidden);
+                              },
+                              child: NotificationTile(
+                                notification: n,
+                                onTap: (notif) => _onTap(ctx, notif),
+                                onAccept: (id) => switch (n.type) {
+                                  NotificationType.accountInvite =>
+                                    _onAcceptWalletInvite(ctx, id),
+                                  NotificationType.splitCreated =>
+                                    _onAcceptSplit(ctx, id),
+                                  NotificationType.splitPaid =>
+                                    _onRecordReceipt(ctx, n),
+                                  NotificationType.projectTxRecordedForYou =>
+                                    _onCopyToBook(ctx, n),
+                                  NotificationType.projectTxChanged =>
+                                    _onUpdateCopy(ctx, n),
+                                  _ => _onAcceptLinkRequest(ctx, id),
+                                },
+                                onReject: (id) => switch (n.type) {
+                                  NotificationType.accountInvite =>
+                                    _onRejectWalletInvite(ctx, id),
+                                  NotificationType.contactLinkRequest =>
+                                    _onRejectLinkRequest(ctx, id),
+                                  // One-tap actions: "skip" just hides the row.
+                                  _ =>
+                                    ctx
+                                        .read<NotificationsInboxCubit>()
+                                        .markDismissed(id),
+                                },
+                              ),
+                            ),
+                          );
+                        }
+                        if (state.hasMore) {
+                          // Load-more placeholder: skeleton rows, no spinner.
+                          rows.addAll(const [
+                            SkeletonListTile(),
+                            SkeletonListTile(),
+                          ]);
+                        }
+                        // Notification settings close the list.
+                        rows.add(
+                          DetailRow(
+                            leading: const Icon(AppIcons.settings),
+                            label: l.notifSettingsTitle,
+                            showChevron: true,
+                            onTap: openSettings,
+                          ),
+                        );
+                        return PullToRefresh(
+                          onRefresh: () => ctx
+                              .read<NotificationsInboxCubit>()
+                              .load(unreadOnly: _unreadOnly),
+                          child: NotificationListenerWidget(
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.huge,
+                              ),
+                              children: rows,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
-          Expanded(
-            child: BlocConsumer<NotificationsInboxCubit, InboxState>(
-              listenWhen: (a, b) =>
-                  a.unreadCount != b.unreadCount ||
-                  a.errorMessage != b.errorMessage,
-              listener: (ctx, state) {
-                ctx.read<UnreadBadgeCubit>().refresh();
-                if (state.errorMessage != null) {
-                  showAppSnackBar(ctx, state.errorMessage!, tone: Tone.danger);
-                }
-              },
-              builder: (ctx, state) {
-                if (state.status == InboxStatus.loading &&
-                    state.notifications.isEmpty) {
-                  return ListView(children: [
-                    for (var i = 0; i < 6; i++) const SkeletonListTile(),
-                  ]);
-                }
-                // Dismissed rows are hidden for good; actioned requests
-                // stay so the post-accept flow is still reachable.
-                final visible = state.notifications
-                    .where((n) => n.dismissedAt == null)
-                    .toList();
-                if (visible.isEmpty) {
-                  return EmptyView(
-                    icon: AppIcons.notifications,
-                    title: _unreadOnly
-                        ? l.notificationsEmptyUnread
-                        : l.notificationsEmptyTitle,
-                    message: _unreadOnly ? '' : l.notificationsEmptyMessage,
-                  );
-                }
-                final rows = <Widget>[];
-                String? lastDay;
-                for (final n in visible) {
-                  final local = n.createdAt.toLocal();
-                  final day = '${local.year}-${local.month}-${local.day}';
-                  if (day != lastDay) {
-                    lastDay = day;
-                    rows.add(DateGroupHeader(label: _dayLabel(ctx, local)));
-                  }
-                  rows.add(Dismissible(
-                    key: ValueKey('notif_${n.id}'),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: AppSpacing.xl),
-                      color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-                      child: const Icon(AppIcons.hidden),
-                    ),
-                    onDismissed: (_) {
-                      ctx.read<NotificationsInboxCubit>().markDismissed(n.id);
-                      showAppSnackBar(ctx, l.notifHidden);
-                    },
-                    child: NotificationTile(
-                      notification: n,
-                      onTap: (notif) => _onTap(ctx, notif),
-                      onAccept: (id) => switch (n.type) {
-                        NotificationType.accountInvite =>
-                          _onAcceptWalletInvite(ctx, id),
-                        NotificationType.splitCreated =>
-                          _onAcceptSplit(ctx, id),
-                        NotificationType.splitPaid => _onRecordReceipt(ctx, n),
-                        NotificationType.projectTxRecordedForYou =>
-                          _onCopyToBook(ctx, n),
-                        NotificationType.projectTxChanged =>
-                          _onUpdateCopy(ctx, n),
-                        _ => _onAcceptLinkRequest(ctx, id),
-                      },
-                      onReject: (id) => switch (n.type) {
-                        NotificationType.accountInvite =>
-                          _onRejectWalletInvite(ctx, id),
-                        NotificationType.contactLinkRequest =>
-                          _onRejectLinkRequest(ctx, id),
-                        // One-tap actions: "skip" just hides the row.
-                        _ => ctx.read<NotificationsInboxCubit>().markDismissed(id),
-                      },
-                    ),
-                  ));
-                }
-                if (state.hasMore) {
-                  rows.add(const Padding(
-                    padding: EdgeInsets.all(AppSpacing.lg),
-                    child: Center(child: CircularProgressIndicator()),
-                  ));
-                }
-                return PullToRefresh(
-                  onRefresh: () => ctx
-                      .read<NotificationsInboxCubit>()
-                      .load(unreadOnly: _unreadOnly),
-                  child: NotificationListenerWidget(
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.only(bottom: AppSpacing.huge),
-                      children: rows,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -266,9 +332,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       await repo.acceptLinkRequest(id);
       await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
     } on ApiException catch (e) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
     }
   }
 
@@ -283,9 +347,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       await repo.rejectLinkRequest(id);
       await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
     } on ApiException catch (e) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
     }
   }
 
@@ -303,15 +365,12 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       unawaited(debtsCubit.load());
       if (ctx.mounted) pushFromOverlay(ctx, '/personal-debts/${debt.id}');
     } on ApiException catch (e) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
     }
   }
 
-  void _showError(ScaffoldMessengerState messenger, ApiException e) => messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(e.message)));
+  void _showError(ScaffoldMessengerState messenger, ApiException e) =>
+      showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
 
   /// "บันทึกรับเงิน" on split_paid — my settle sheet for my side of the
   /// debt, pre-filled with what they paid. Saved → the row is actioned.
@@ -323,8 +382,11 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     try {
       final debt = await ctx.read<PersonalDebtsRepository>().get(debtId);
       if (!ctx.mounted) return;
-      final saved = await showSettleDebtSheet(ctx, debt,
-          amount: (n.payload['amount'] as num?)?.toDouble());
+      final saved = await showSettleDebtSheet(
+        ctx,
+        debt,
+        amount: (n.payload['amount'] as num?)?.toDouble(),
+      );
       if (saved) await inboxCubit.markActioned(n.id);
     } on ApiException catch (e) {
       _showError(messenger, e);
@@ -341,9 +403,10 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final txCubit = ctx.read<TransactionsCubit>();
     final messenger = ScaffoldMessenger.of(ctx);
     try {
-      final txId = await ctx
-          .read<ProjectsRepository>()
-          .copyToPersonal(projectId, ptId);
+      final txId = await ctx.read<ProjectsRepository>().copyToPersonal(
+        projectId,
+        ptId,
+      );
       await inboxCubit.markActioned(n.id);
       unawaited(txCubit.load());
       if (ctx.mounted) pushFromOverlay(ctx, '/transactions/$txId');
@@ -362,11 +425,11 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final messenger = ScaffoldMessenger.of(ctx);
     try {
       await ctx.read<TransactionsCubit>().updateTransaction(
-            id: txId,
-            amount: (s['amount'] as num?)?.toDouble(),
-            date: s['date'] as String?,
-            note: s['note'] as String?,
-          );
+        id: txId,
+        amount: (s['amount'] as num?)?.toDouble(),
+        date: s['date'] as String?,
+        note: s['note'] as String?,
+      );
       await inboxCubit.markActioned(n.id);
     } on ApiException catch (e) {
       _showError(messenger, e);
@@ -387,9 +450,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
       await accountsCubit.load();
     } on ApiException catch (e) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(walletErrorMessage(l, e))));
+      showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
     }
   }
 
@@ -404,9 +465,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       await repo.rejectInvite(id);
       await inboxCubit.load(unreadOnly: inboxCubit.state.filterUnreadOnly);
     } on ApiException catch (e) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(walletErrorMessage(l, e))));
+      showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
     }
   }
 
@@ -415,7 +474,9 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
   ///   2. unlinked email-match exists → /contacts/{id}/edit (link-pending)
   ///   3. otherwise → /contacts/new (link-create) with locked prefill
   Future<void> _onTapActionedLinkRequest(
-      BuildContext ctx, AppNotification n) async {
+    BuildContext ctx,
+    AppNotification n,
+  ) async {
     final senderUserId = _senderUserIdOf(n);
     if (senderUserId == null) return;
 
@@ -449,9 +510,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
       senderName = profile.displayName;
       senderEmail = profile.email;
     } on ApiException catch (e) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(e.message)));
+      showAppSnackBarOn(messenger, e.message, tone: Tone.danger);
       return;
     }
 
@@ -470,18 +529,22 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     }
     if (!ctx.mounted) return;
     if (emailMatch != null) {
-      open('/contacts/${emailMatch.id}/edit', extra: <String, String?>{
-        'linkRequestId': n.id,
-      });
+      open(
+        '/contacts/${emailMatch.id}/edit',
+        extra: <String, String?>{'linkRequestId': n.id},
+      );
       return;
     }
 
     // 3. No match — create form in link-create mode with locked prefill.
-    open('/contacts/new', extra: <String, String?>{
-      'linkRequestId': n.id,
-      'lockedDisplayName': senderName,
-      'lockedEmail': senderEmail,
-    });
+    open(
+      '/contacts/new',
+      extra: <String, String?>{
+        'linkRequestId': n.id,
+        'lockedDisplayName': senderName,
+        'lockedEmail': senderEmail,
+      },
+    );
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────

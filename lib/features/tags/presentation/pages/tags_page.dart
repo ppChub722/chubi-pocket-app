@@ -28,7 +28,8 @@ enum _SortBy { name, usage, color, icon }
 /// Tags — one page, no detail (`ux-overhaul-plan.md` §5). A 2-column grid
 /// in both modes with a dashed "+ เพิ่มแท็ก" tile at the end.
 ///
-/// View: search + colour/icon filters + sort. Edit: a batch editor over
+/// View: search + colour/icon filters + sort + an ✏️ pill into edit. Edit: a
+/// batch editor over
 /// *all* tags (rename, recolour, re-icon, delete, add) with multi-select;
 /// search/filters keep working, under four rules:
 ///  1. Save validates every row, including filtered-out ones — a hidden
@@ -102,8 +103,10 @@ class _TagsPageState extends State<TagsPage>
 
   // ── Helpers ─────────────────────────────────────────────────────────
 
-  TextEditingController _controllerFor(_TagDraft d) =>
-      _controllers.putIfAbsent(d.key, () => TextEditingController(text: d.name));
+  TextEditingController _controllerFor(_TagDraft d) => _controllers.putIfAbsent(
+    d.key,
+    () => TextEditingController(text: d.name),
+  );
   FocusNode _focusFor(String key) => _focus.putIfAbsent(key, FocusNode.new);
   GlobalKey _tileKey(String key) => _tileKeys.putIfAbsent(key, GlobalKey.new);
 
@@ -136,15 +139,22 @@ class _TagsPageState extends State<TagsPage>
     final list = List<Tag>.of(all);
     switch (_sort) {
       case _SortBy.name:
-        list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        list.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
       case _SortBy.usage:
         list.sort((a, b) => b.usageCount.compareTo(a.usageCount));
       case _SortBy.color:
-        list.sort((a, b) =>
-            (_colorOf(a.iconCode) ?? '').compareTo(_colorOf(b.iconCode) ?? ''));
+        list.sort(
+          (a, b) => (_colorOf(a.iconCode) ?? '').compareTo(
+            _colorOf(b.iconCode) ?? '',
+          ),
+        );
       case _SortBy.icon:
-        list.sort((a, b) =>
-            (_iconOf(a.iconCode) ?? '').compareTo(_iconOf(b.iconCode) ?? ''));
+        list.sort(
+          (a, b) =>
+              (_iconOf(a.iconCode) ?? '').compareTo(_iconOf(b.iconCode) ?? ''),
+        );
     }
     return list;
   }
@@ -197,10 +207,17 @@ class _TagsPageState extends State<TagsPage>
   void _beginEdit({String? focusKey, bool openIcon = false}) {
     if (!isEditing) {
       final all = _sorted(context.read<TagsCubit>().state.tags);
-      resetDraft(_TagsDraft([
-        for (final t in all)
-          _TagDraft(key: t.id, serverId: t.id, name: t.name, iconCode: t.iconCode),
-      ]));
+      resetDraft(
+        _TagsDraft([
+          for (final t in all)
+            _TagDraft(
+              key: t.id,
+              serverId: t.id,
+              name: t.name,
+              iconCode: t.iconCode,
+            ),
+        ]),
+      );
       _selected.clear();
       _stickyIds = null;
     }
@@ -228,7 +245,8 @@ class _TagsPageState extends State<TagsPage>
   }
 
   void _toggleSelect(String key) => setState(
-      () => _selected.contains(key) ? _selected.remove(key) : _selected.add(key));
+    () => _selected.contains(key) ? _selected.remove(key) : _selected.add(key),
+  );
 
   void _toggleSelectAll(List<_TagDraft> visible) {
     setState(() {
@@ -255,12 +273,16 @@ class _TagsPageState extends State<TagsPage>
       previewBuilder: (iconCode) => Align(
         alignment: Alignment.centerLeft,
         child: TagChip(
-            tag: Tag(id: 'preview', name: draft.name, iconCode: iconCode)),
+          tag: Tag(id: 'preview', name: draft.name, iconCode: iconCode),
+        ),
       ),
     );
     if (!mounted || result is! IconMakerSelected) return;
-    applyChange(working.map(
-        (d) => d.key == draft.key ? d.copyWith(iconCode: result.iconCode) : d));
+    applyChange(
+      working.map(
+        (d) => d.key == draft.key ? d.copyWith(iconCode: result.iconCode) : d,
+      ),
+    );
   }
 
   // ── Bulk (selected rows) ────────────────────────────────────────────
@@ -276,15 +298,24 @@ class _TagsPageState extends State<TagsPage>
       showIconPicker: false,
       previewBuilder: (iconCode) => Align(
         alignment: Alignment.centerLeft,
-        child: TagChip(tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode)),
+        child: TagChip(
+          tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode),
+        ),
       ),
     );
     if (!mounted || result is! IconMakerSelected) return;
     final colors = result.iconCode.iconColors;
-    applyChange(working.map((d) => _selected.contains(d.key)
-        ? d.copyWith(
-            iconCode: (d.iconCode ?? const IconCode()).copyWith(iconColors: colors))
-        : d));
+    applyChange(
+      working.map(
+        (d) => _selected.contains(d.key)
+            ? d.copyWith(
+                iconCode: (d.iconCode ?? const IconCode()).copyWith(
+                  iconColors: colors,
+                ),
+              )
+            : d,
+      ),
+    );
   }
 
   Future<void> _bulkIcon() async {
@@ -298,14 +329,24 @@ class _TagsPageState extends State<TagsPage>
       showColorPicker: false,
       previewBuilder: (iconCode) => Align(
         alignment: Alignment.centerLeft,
-        child: TagChip(tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode)),
+        child: TagChip(
+          tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode),
+        ),
       ),
     );
     if (!mounted || result is! IconMakerSelected) return;
     final glyph = result.iconCode.icon;
-    applyChange(working.map((d) => _selected.contains(d.key)
-        ? d.copyWith(iconCode: (d.iconCode ?? const IconCode()).copyWith(icon: glyph))
-        : d));
+    applyChange(
+      working.map(
+        (d) => _selected.contains(d.key)
+            ? d.copyWith(
+                iconCode: (d.iconCode ?? const IconCode()).copyWith(
+                  icon: glyph,
+                ),
+              )
+            : d,
+      ),
+    );
   }
 
   Future<void> _bulkDelete() async {
@@ -318,8 +359,11 @@ class _TagsPageState extends State<TagsPage>
       destructive: true,
     );
     if (!ok || !mounted) return;
-    applyChange(_TagsDraft(
-        working.items.where((d) => !_selected.contains(d.key)).toList()));
+    applyChange(
+      _TagsDraft(
+        working.items.where((d) => !_selected.contains(d.key)).toList(),
+      ),
+    );
     setState(_selected.clear);
   }
 
@@ -330,16 +374,20 @@ class _TagsPageState extends State<TagsPage>
     if (name.isEmpty) return l.tagFormNameRequired;
     if (name.length > 50) return l.tagFormNameTooLong;
     final lower = name.toLowerCase();
-    final dup = working.items
-        .any((d) => d.key != key && d.name.trim().toLowerCase() == lower);
+    final dup = working.items.any(
+      (d) => d.key != key && d.name.trim().toLowerCase() == lower,
+    );
     return dup ? l.tagFormNameDuplicate : null;
   }
 
   void _scrollTo(String key) {
     final ctx = _tileKeys[key]?.currentContext;
     if (ctx != null) {
-      Scrollable.ensureVisible(ctx,
-          alignment: 0.3, duration: const Duration(milliseconds: 250));
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.3,
+        duration: const Duration(milliseconds: 250),
+      );
     }
   }
 
@@ -355,7 +403,11 @@ class _TagsPageState extends State<TagsPage>
       final visible = _visibleDrafts().any((d) => d.key == invalid.key);
       if (!visible) {
         setState(_clearFilters);
-        showAppSnackBar(context, l.tagsFiltersClearedForError, tone: Tone.warning);
+        showAppSnackBar(
+          context,
+          l.tagsFiltersClearedForError,
+          tone: Tone.warning,
+        );
       }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -383,13 +435,16 @@ class _TagsPageState extends State<TagsPage>
       for (final d in working.items) {
         final name = d.name.trim();
         if (d.serverId == null) {
-          final created =
-              await cubit.add(Tag(id: 'draft', name: name, iconCode: d.iconCode));
+          final created = await cubit.add(
+            Tag(id: 'draft', name: name, iconCode: d.iconCode),
+          );
           resultIds.add(created.id);
         } else {
           final orig = origById[d.serverId]!;
           if (orig.name != name || orig.iconCode != d.iconCode) {
-            await cubit.update(Tag(id: d.serverId!, name: name, iconCode: d.iconCode));
+            await cubit.update(
+              Tag(id: d.serverId!, name: name, iconCode: d.iconCode),
+            );
           }
           resultIds.add(d.serverId!);
         }
@@ -412,65 +467,71 @@ class _TagsPageState extends State<TagsPage>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: isEditing ? l.tagFormTitleEdit : l.tagsTitle,
-        showBack: true,
-        editing: isEditing,
-        onBack: isEditing ? handleBack : null,
-        actions: isEditing
-            ? const <AppBarAction>[]
-            : [
-                AppBarAction(
-                  icon: AppIcons.edit,
-                  tooltip: l.commonEdit,
-                  onPressed: _beginEdit,
-                ),
-              ],
-      ),
-      body: BlocBuilder<TagsCubit, TagsState>(
-        builder: (context, state) {
-          if (state.status == TagsStatus.loading && state.tags.isEmpty) {
-            return const LoadingView(skeleton: TagsListSkeleton());
-          }
-          if (!isEditing && state.tags.isEmpty) {
-            return EmptyView(
+    return editScope(
+      Scaffold(
+        // The bar floats over the body; the pinned column below starts with a
+        // spacer of its height.
+        extendBodyBehindAppBar: true,
+        appBar: AppTopBar(
+          title: isEditing ? l.tagFormTitleEdit : l.tagsTitle,
+          showBack: true,
+          editing: isEditing,
+          onBack: isEditing ? handleBack : null,
+        ),
+        body: BlocBuilder<TagsCubit, TagsState>(
+          builder: (context, state) => AsyncStateView(
+            loading:
+                state.status == TagsStatus.initial ||
+                state.status == TagsStatus.loading,
+            error: state.error,
+            // Edit mode shows its drafts grid even before the first tag.
+            isEmpty: !isEditing && state.tags.isEmpty,
+            onRetry: context.read<TagsCubit>().load,
+            skeleton: Padding(
+              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+              child: const LoadingView(skeleton: TagsListSkeleton()),
+            ),
+            empty: EmptyView(
               icon: AppIcons.tag,
               title: l.tagsEmptyTitle,
               message: l.tagsEmptyMessage,
               cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
-            );
-          }
-          final visible = isEditing ? _visibleDrafts() : null;
-          return Column(
-            children: [
-              AppSearchBar(
-                controller: _searchController,
-                hint: l.tagsSearchHint,
-                onChanged: (v) => _onFilterChanged(() => _query = v),
-              ),
-              SizedBox(
-                height: 48,
-                child: _toolRow(l, state.tags, visible),
-              ),
-              Expanded(
-                child: isEditing
-                    ? _editGrid(l, visible!)
-                    : _viewGrid(l, state.tags),
-              ),
-            ],
-          );
-        },
+            ),
+            builder: (context) {
+              final visible = isEditing ? _visibleDrafts() : null;
+              return Column(
+                children: [
+                  // Clear the transparent top bar.
+                  SizedBox(height: MediaQuery.paddingOf(context).top),
+                  AppSearchBar(
+                    controller: _searchController,
+                    hint: l.tagsSearchHint,
+                    onChanged: (v) => _onFilterChanged(() => _query = v),
+                  ),
+                  SizedBox(height: 48, child: _toolRow(l, state.tags, visible)),
+                  Expanded(
+                    child: isEditing
+                        ? _editGrid(l, visible!)
+                        : _viewGrid(l, state.tags),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
-      bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
-    ));
+    );
   }
 
   // Row 2 — same height in both modes so the grid never jumps.
-  //   view: [สี▾][ไอคอน▾] … [เรียง▾]
-  //   edit: [☐ n] [สี▾][ไอคอน▾]
+  //   view: [สี▾][ไอคอน▾] … [เรียง▾][✏️ แก้ไข]
+  //   edit: [☐ n] [สี▾][ไอคอน▾] … [สี][ไอคอน][ลบ]
   Widget _toolRow(
-      AppLocalizations l, List<Tag> tags, List<_TagDraft>? visible) {
+    AppLocalizations l,
+    List<Tag> tags,
+    List<_TagDraft>? visible,
+  ) {
     final codes = isEditing
         ? working.items.map((d) => d.iconCode)
         : tags.map((t) => t.iconCode);
@@ -478,7 +539,11 @@ class _TagsPageState extends State<TagsPage>
     final icons = {for (final c in codes) ?_iconOf(c)}.toList()..sort();
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Row(
         children: [
           if (isEditing) ...[
@@ -511,7 +576,8 @@ class _TagsPageState extends State<TagsPage>
             const SizedBox(width: AppSpacing.sm),
             ConstrainedBox(
               constraints: BoxConstraints(
-                  maxWidth: MediaQuery.sizeOf(context).width * 0.62),
+                maxWidth: MediaQuery.sizeOf(context).width * 0.62,
+              ),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 reverse: true,
@@ -552,6 +618,14 @@ class _TagsPageState extends State<TagsPage>
                 SortOption(_SortBy.icon, l.tagFormIconLabel),
               ],
             ),
+            // The way into batch edit (the top bar carries no page actions;
+            // long-pressing a tile works too).
+            const SizedBox(width: AppSpacing.xs),
+            ActionPill(
+              icon: AppIcons.edit,
+              label: l.commonEdit,
+              onTap: _beginEdit,
+            ),
           ],
         ],
       ),
@@ -576,9 +650,11 @@ class _TagsPageState extends State<TagsPage>
           },
           onToggle: (i) {
             final t = tokens[i];
-            _onFilterChanged(() => _filterColors.contains(t)
-                ? _filterColors.remove(t)
-                : _filterColors.add(t));
+            _onFilterChanged(
+              () => _filterColors.contains(t)
+                  ? _filterColors.remove(t)
+                  : _filterColors.add(t),
+            );
             setPopover(() {});
           },
           onClear: () {
@@ -603,9 +679,11 @@ class _TagsPageState extends State<TagsPage>
           glyphs: glyphs,
           selected: _filterIcons,
           onToggle: (g) {
-            _onFilterChanged(() => _filterIcons.contains(g)
-                ? _filterIcons.remove(g)
-                : _filterIcons.add(g));
+            _onFilterChanged(
+              () => _filterIcons.contains(g)
+                  ? _filterIcons.remove(g)
+                  : _filterIcons.add(g),
+            );
             setPopover(() {});
           },
           onClear: () {
@@ -662,7 +740,9 @@ class _TagsPageState extends State<TagsPage>
               focusNode: _focusFor(d.key),
               onIconTap: () => _openIconMaker(d),
               onNameChanged: (v) => applyTextChange(
-                  d.key, working.map((e) => e.key == d.key ? e.copyWith(name: v) : e)),
+                d.key,
+                working.map((e) => e.key == d.key ? e.copyWith(name: v) : e),
+              ),
               validator: (v) => _validateName(l, d.key, v),
             ),
           if (visible.isEmpty && _hasFilter) _GridMessage(text: l.tagsNoMatch),
@@ -696,7 +776,11 @@ class _Grid extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           // Bottom room for the shell's FAB.
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, 96),
+            AppSpacing.lg,
+            AppSpacing.xs,
+            AppSpacing.lg,
+            96,
+          ),
           child: Wrap(
             spacing: _gap,
             runSpacing: _gap,
@@ -734,7 +818,8 @@ class _GridMessage extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -760,7 +845,7 @@ class _SelectAllBox extends StatelessWidget {
     final value = n == 0 ? false : (n == visible.length ? true : null);
     return InkWell(
       onTap: visible.isEmpty ? null : onTap,
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Padding(
         padding: const EdgeInsets.only(right: AppSpacing.sm),
         child: Row(
@@ -817,8 +902,11 @@ class _IconSwatchGrid extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 16,
                       backgroundColor: scheme.surfaceContainerHighest,
-                      child: Icon(IconRegistry.get(g, fallback: AppIcons.tag),
-                          size: 18, color: scheme.onSurface),
+                      child: Icon(
+                        IconRegistry.get(g, fallback: AppIcons.tag),
+                        size: 18,
+                        color: scheme.onSurface,
+                      ),
                     ),
                   ),
                 ),
@@ -881,9 +969,9 @@ class _TagTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     OutlineInputBorder border(Color c) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: c),
-        );
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      borderSide: BorderSide(color: c),
+    );
 
     final field = TextFormField(
       controller: editing ? controller : null,
@@ -899,8 +987,10 @@ class _TagTile extends StatelessWidget {
         counterText: '',
         filled: false,
         errorMaxLines: 2,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 8,
+        ),
         enabledBorder: border(editing ? scheme.outline : Colors.transparent),
         focusedBorder: border(scheme.primary),
         border: border(editing ? scheme.outline : Colors.transparent),
@@ -911,7 +1001,11 @@ class _TagTile extends StatelessWidget {
     final tile = Container(
       constraints: const BoxConstraints(minHeight: _tileMinHeight),
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.sm, AppSpacing.sm, AppSpacing.xs, AppSpacing.sm),
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.xs,
+        AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -934,7 +1028,11 @@ class _TagTile extends StatelessWidget {
             child: EditableCircle(
               size: 32,
               onTap: editing ? onIconTap : null,
-              child: IconDisplay(type: IconType.tag, size: 32, iconCode: iconCode),
+              child: IconDisplay(
+                type: IconType.tag,
+                size: 32,
+                iconCode: iconCode,
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -958,8 +1056,9 @@ class _TagTile extends StatelessWidget {
                         ? Text(
                             usage!,
                             textAlign: TextAlign.center,
-                            style: textTheme.labelSmall
-                                ?.copyWith(color: scheme.onSurfaceVariant),
+                            style: textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           )
                         : null,
                   ),
@@ -1018,11 +1117,11 @@ class _TagDraft {
   final IconCode? iconCode;
 
   _TagDraft copyWith({String? name, IconCode? iconCode}) => _TagDraft(
-        key: key,
-        serverId: serverId,
-        name: name ?? this.name,
-        iconCode: iconCode ?? this.iconCode,
-      );
+    key: key,
+    serverId: serverId,
+    name: name ?? this.name,
+    iconCode: iconCode ?? this.iconCode,
+  );
 
   @override
   bool operator ==(Object other) =>

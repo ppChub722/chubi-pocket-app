@@ -7,8 +7,10 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
+import '../../../categories/domain/category_tree.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
@@ -17,8 +19,9 @@ import '../../domain/transaction_type.dart';
 /// transactions tab, account detail, …) — built on [MoneyListTile] so
 /// metrics, colours and the 👁 privacy toggle match every money row.
 ///
-/// Leading: the category's icon tinted with its accent (falls back to a
-/// type glyph). Title: category name, else the note. Subtitle: the context
+/// Leading: the category's icon exactly as on the categories page (L2/L3
+/// inherit their top-level parent's icon code); no category → a type glyph
+/// tinted expense / income. Title: category name, else the note. Subtitle: the context
 /// the current screen doesn't already show — toggle with [showAccount] /
 /// [showDate] (e.g. hide the account on that account's own page, hide the
 /// date under a date header) — plus tag count / split markers.
@@ -45,17 +48,26 @@ class TransactionTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
 
-    final cat = tx.category != null
-        ? context.watch<CategoriesCubit>().byId(tx.category!.id)
-        : null;
-    final fallbackColor = switch (tx.type) {
-      TransactionType.expense => palette.expense,
-      TransactionType.income => palette.income,
-      TransactionType.transfer => scheme.onSurfaceVariant,
-    };
-    final iconColor = cat?.iconCode?.accentColorFor(palette) ?? fallbackColor;
-    final iconData =
-        IconRegistry.get(cat?.iconCode?.icon, fallback: _typeIcon(tx.type));
+    final categories = context.watch<CategoriesCubit>();
+    final cat = tx.category != null ? categories.byId(tx.category!.id) : null;
+    final Widget leading = cat != null
+        ? IconDisplay(
+            type: IconType.category,
+            size: 36,
+            iconCode: CategoryTree.resolveIconCode(
+              cat,
+              categories.state.categories,
+            ),
+          )
+        : IconBubble(
+            icon: _typeIcon(tx.type),
+            color: switch (tx.type) {
+              TransactionType.expense => palette.expense,
+              TransactionType.income => palette.income,
+              TransactionType.transfer => scheme.onSurfaceVariant,
+            },
+            size: 36,
+          );
 
     final categoryName = tx.category?.name ?? '';
     final title = categoryName.isNotEmpty
@@ -69,7 +81,7 @@ class TransactionTile extends StatelessWidget {
     ];
 
     return MoneyListTile(
-      leading: IconBubble(icon: iconData, color: iconColor, size: 36),
+      leading: leading,
       title: title,
       amount: tx.signedAmount,
       subtitle: Row(
@@ -107,8 +119,8 @@ class TransactionTile extends StatelessWidget {
   }
 
   static IconData _typeIcon(TransactionType t) => switch (t) {
-        TransactionType.expense => AppIcons.expense,
-        TransactionType.income => AppIcons.income,
-        TransactionType.transfer => AppIcons.transfer,
-      };
+    TransactionType.expense => AppIcons.expense,
+    TransactionType.income => AppIcons.income,
+    TransactionType.transfer => AppIcons.transfer,
+  };
 }

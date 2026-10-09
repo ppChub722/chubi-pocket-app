@@ -35,31 +35,35 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
-      body: BlocConsumer<SavingGoalsCubit, SavingGoalsState>(
-        listenWhen: (a, b) =>
-            a.errorMessage != b.errorMessage && b.errorMessage != null,
-        listener: (ctx, s) =>
-            showAppSnackBar(ctx, s.errorMessage!, tone: Tone.danger),
-        builder: (context, state) {
-          if (state.status == SavingGoalsStatus.loading && state.goals.isEmpty) {
-            return ListView(children: [
-              for (var i = 0; i < 3; i++) const SkeletonListTile(),
-            ]);
-          }
-          if (state.goals.isEmpty) {
-            return EmptyView(
-              icon: AppIcons.savingGoal,
-              title: l.savingGoalsEmptyTitle,
-              message: l.savingGoalsEmptyMessage,
-              cta: AddTile(label: l.savingGoalsAddNew, onTap: _add),
-            );
-          }
-          return PullToRefresh(
+      extendBodyBehindAppBar: true,
+      body: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(
+        builder: (context, state) => AsyncStateView(
+          loading:
+              state.status == SavingGoalsStatus.initial ||
+              state.status == SavingGoalsStatus.loading,
+          error: state.error,
+          isEmpty: state.goals.isEmpty,
+          onRetry: context.read<SavingGoalsCubit>().load,
+          skeleton: ListView(
+            children: [for (var i = 0; i < 3; i++) const SkeletonListTile()],
+          ),
+          empty: EmptyView(
+            icon: AppIcons.savingGoal,
+            title: l.savingGoalsEmptyTitle,
+            message: l.savingGoalsEmptyMessage,
+            cta: AddTile(label: l.savingGoalsAddNew, onTap: _add),
+          ),
+          builder: (context) => PullToRefresh(
             onRefresh: () => context.read<SavingGoalsCubit>().load(),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
+              // Top: clear the floating top bar.
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.md,
+                AppSpacing.lg,
+                96,
+              ),
               children: [
                 for (final g in state.goals) ...[
                   SavingGoalCard(
@@ -71,8 +75,8 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
                 AddTile(label: l.savingGoalsAddNew, onTap: _add),
               ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

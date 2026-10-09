@@ -13,40 +13,40 @@ class ProjectsState extends Equatable {
   const ProjectsState({
     this.projects = const [],
     this.status = ProjectsStatus.initial,
-    this.errorMessage,
+    this.error,
     this.statusFilter = 'active',
   });
 
   final List<Project> projects;
   final ProjectsStatus status;
-  final String? errorMessage;
+  final ApiException? error;
+  String? get errorMessage => error?.message;
   final String statusFilter;
 
   ProjectsState copyWith({
     List<Project>? projects,
     ProjectsStatus? status,
-    String? errorMessage,
+    ApiException? error,
     String? statusFilter,
     bool clearError = false,
   }) {
     return ProjectsState(
       projects: projects ?? this.projects,
       status: status ?? this.status,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      error: clearError ? null : (error ?? this.error),
       statusFilter: statusFilter ?? this.statusFilter,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [projects, status, errorMessage, statusFilter];
+  List<Object?> get props => [projects, status, error, statusFilter];
 }
 
 /// Projects store backed by [ProjectsRepository].
 class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   ProjectsCubit({required ProjectsRepository repository})
-      : _repo = repository,
-        super(const ProjectsState());
+    : _repo = repository,
+      super(const ProjectsState());
 
   final ProjectsRepository _repo;
 
@@ -54,19 +54,23 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   void clear() => emit(const ProjectsState());
 
   Future<void> load({String? statusFilter}) async {
-    emit(state.copyWith(
-      status: ProjectsStatus.loading,
-      statusFilter: statusFilter,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        status: ProjectsStatus.loading,
+        statusFilter: statusFilter,
+        clearError: true,
+      ),
+    );
     try {
       final list = await _repo.list(status: state.statusFilter);
       emit(state.copyWith(projects: list, status: ProjectsStatus.loaded));
-    } on ApiException catch (e) {
-      emit(state.copyWith(
-        status: ProjectsStatus.error,
-        errorMessage: e.message,
-      ));
+    } catch (e, st) {
+      emit(
+        state.copyWith(
+          status: ProjectsStatus.error,
+          error: ApiException.from(e, st),
+        ),
+      );
     }
   }
 
@@ -112,7 +116,8 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   /// `plannedAmount` / `clearPlannedAmount` follow the repository's
   /// presence semantics (spec §10/4.23 — set a number to enable the
   /// plan display, explicit null to hide it).
-  Future<Project> update(String id, {
+  Future<Project> update(
+    String id, {
     String? name,
     String? description,
     ProjectStatus? status,
@@ -135,17 +140,21 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
 
   Future<void> delete(String id) async {
     await _repo.delete(id);
-    emit(state.copyWith(
-      projects: state.projects.where((p) => p.id != id).toList(),
-    ));
+    emit(
+      state.copyWith(
+        projects: state.projects.where((p) => p.id != id).toList(),
+      ),
+    );
   }
 
   void _replace(Project p) {
-    emit(state.copyWith(
-      projects: [
-        for (final existing in state.projects)
-          if (existing.id == p.id) p else existing,
-      ],
-    ));
+    emit(
+      state.copyWith(
+        projects: [
+          for (final existing in state.projects)
+            if (existing.id == p.id) p else existing,
+        ],
+      ),
+    );
   }
 }

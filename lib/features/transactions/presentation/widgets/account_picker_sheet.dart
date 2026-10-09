@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -36,16 +37,15 @@ Future<AccountPickerResult?> showAccountPickerSheet({
   String? title,
   bool allowNone = false,
 }) {
-  return showModalBottomSheet<AccountPickerResult>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    useSafeArea: true,
+  return showAppSheet<AccountPickerResult>(
+    context,
+    title:
+        title ??
+        AppLocalizations.of(context)!.transactionFormAccountPickerTitle,
     builder: (_) => _AccountPickerBody(
       accounts: accounts,
       selected: selected,
       excludeId: excludeId,
-      title: title,
       allowNone: allowNone,
     ),
   );
@@ -56,14 +56,12 @@ class _AccountPickerBody extends StatelessWidget {
     required this.accounts,
     required this.selected,
     required this.excludeId,
-    required this.title,
     required this.allowNone,
   });
 
   final List<Account> accounts;
   final Account? selected;
   final String? excludeId;
-  final String? title;
   final bool allowNone;
 
   @override
@@ -94,36 +92,40 @@ class _AccountPickerBody extends StatelessWidget {
         ),
     ];
 
-    return AppSheetScaffold(
-      title: title ?? l.transactionFormAccountPickerTitle,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
-        child: tiles.isEmpty
-            ? Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Text(
-                  l.transactionFormAccountPickerEmpty,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant),
-                ),
-              )
-            : GridView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: AppSpacing.xs,
-                  crossAxisSpacing: AppSpacing.xs,
-                  // Fixed height: vertical AccountCard (icon · name · type ·
-                  // balance + optional credit bar) + the selection ring.
-                  mainAxisExtent: 156,
-                ),
-                children: tiles,
-              ),
+    // Chrome (title row, drag handle, scrolling) comes from [showAppSheet].
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.md,
       ),
+      child: tiles.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Text(
+                l.transactionFormAccountPickerEmpty,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          : GridView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                // Same columns as the wallets page.
+                crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600
+                    ? 3
+                    : 2,
+                mainAxisSpacing: AppSpacing.xs,
+                crossAxisSpacing: AppSpacing.xs,
+                // Fixed height: vertical AccountCard (icon · name · type ·
+                // balance + optional credit bar) + the selection ring.
+                mainAxisExtent: 156,
+              ),
+              children: tiles,
+            ),
     );
   }
 }
@@ -152,14 +154,13 @@ class _NoneTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.money_off_outlined,
-                  size: 32, color: scheme.onSurfaceVariant),
+              Icon(AppIcons.noWallet, size: 32, color: scheme.onSurfaceVariant),
               const Spacer(),
               Text(
                 label,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

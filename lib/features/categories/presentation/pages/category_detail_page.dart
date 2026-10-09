@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -70,9 +71,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } else {
       _persisted = context.read<CategoriesCubit>().byId(widget.editingId!);
       _notFound = _persisted == null;
-      initDraft(_persisted == null
-          ? const _CategoryDraft()
-          : _CategoryDraft.fromCategory(_persisted!));
+      initDraft(
+        _persisted == null
+            ? const _CategoryDraft()
+            : _CategoryDraft.fromCategory(_persisted!),
+      );
     }
     onDraftRestored();
   }
@@ -109,14 +112,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     sync(_noteController, working.note);
   }
 
-  void _onText(_TextField field, String v) => applyTextChange(
-        field,
-        switch (field) {
-          _TextField.name => working.copyWith(name: v),
-          _TextField.description => working.copyWith(description: v),
-          _TextField.note => working.copyWith(note: v),
-        },
-      );
+  void _onText(_TextField field, String v) =>
+      applyTextChange(field, switch (field) {
+        _TextField.name => working.copyWith(name: v),
+        _TextField.description => working.copyWith(description: v),
+        _TextField.note => working.copyWith(note: v),
+      });
 
   void _enterEditThenOpenMaker() {
     enterEdit();
@@ -145,16 +146,18 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     setSaving(true);
     try {
       if (widget.isCreate) {
-        await cubit.add(Category(
-          id: 'draft',
-          name: w.name.trim(),
-          type: w.type,
-          iconCode: w.iconCode,
-          parentId: w.parentId,
-          description: description.isEmpty ? null : description,
-          note: note.isEmpty ? null : note,
-          includeInReport: w.includeInReport,
-        ));
+        await cubit.add(
+          Category(
+            id: 'draft',
+            name: w.name.trim(),
+            type: w.type,
+            iconCode: w.iconCode,
+            parentId: w.parentId,
+            description: description.isEmpty ? null : description,
+            note: note.isEmpty ? null : note,
+            includeInReport: w.includeInReport,
+          ),
+        );
       } else {
         final next = _persisted!.copyWith(
           name: w.name.trim(),
@@ -212,7 +215,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       title: l.categoryDeleteTitle(c.name),
       message: [
         l.categoryDeleteBody,
-        if (usage.transactions > 0) l.categoryDeleteTxImpact(usage.transactions),
+        if (usage.transactions > 0)
+          l.categoryDeleteTxImpact(usage.transactions),
         if (usage.budgets > 0) l.categoryDeleteBudgetImpact(usage.budgets),
       ].join('\n'),
       confirmLabel: l.commonDelete,
@@ -223,8 +227,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     try {
       await cubit.remove(c.id);
       if (!mounted) return;
-      showAppSnackBar(context, l.categoryDeletedResult(c.name),
-          tone: Tone.success);
+      showAppSnackBar(
+        context,
+        l.categoryDeletedResult(c.name),
+        tone: Tone.success,
+      );
       // Pop without the discard prompt — the row is gone.
       commitSaved(working);
       leavePage();
@@ -238,13 +245,13 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   // ── Derived display ─────────────────────────────────────────────────
 
   Category _previewCategory() => Category(
-        id: _persisted?.id ?? 'preview',
-        name: working.name,
-        type: working.type,
-        iconCode: _resolvedDisplayIconCode(),
-        parentId: working.parentId,
-        includeInReport: working.includeInReport,
-      );
+    id: _persisted?.id ?? 'preview',
+    name: working.name,
+    type: working.type,
+    iconCode: _resolvedDisplayIconCode(),
+    parentId: working.parentId,
+    includeInReport: working.includeInReport,
+  );
 
   /// L1 shows its own colours; L2/L3 inherit the L1 ancestor's (as the
   /// list does).
@@ -297,8 +304,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       applyChange(working.copyWith(iconCode: result.iconCode));
     } else {
       // L2/L3: keep own colours, take only the glyph.
-      final next = (working.iconCode ?? const IconCode())
-          .copyWith(icon: result.iconCode.icon);
+      final next = (working.iconCode ?? const IconCode()).copyWith(
+        icon: result.iconCode.icon,
+      );
       applyChange(working.copyWith(iconCode: next));
     }
   }
@@ -306,8 +314,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   Future<void> _openParentPicker(List<Category> all) async {
     final l = AppLocalizations.of(context)!;
     final cubit = context.read<CategoriesCubit>();
-    final selectedParent =
-        working.parentId == null ? null : cubit.byId(working.parentId!);
+    final selectedParent = working.parentId == null
+        ? null
+        : cubit.byId(working.parentId!);
     // Can't parent into yourself or your own subtree (would cycle).
     final exclude = _persisted == null
         ? const <String>{}
@@ -339,49 +348,41 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
     if (_notFound) {
       return Scaffold(
+        extendBodyBehindAppBar: true,
         appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
         body: EmptyView(
-          icon: AppIcons.category,
-          title: l.categoriesEmptyTitle,
-          message: l.categoriesEmptyMessage,
+          icon: AppIcons.empty,
+          title: l.categoryDetailNotFound,
+          message: l.categoryDetailNotFoundMessage,
         ),
       );
     }
 
-    final canDelete = !widget.isCreate && !(_persisted?.isSystem ?? true);
-    return editScope(Scaffold(
-      appBar: AppTopBar(
-        title: _title(l),
-        showBack: true,
-        editing: isEditing,
-        onBack: handleBack,
-        actions: isEditing
-            ? [
-                if (canDelete)
-                  AppBarAction(
-                    icon: AppIcons.delete,
-                    tooltip: l.categoryDelete,
-                    destructive: true,
-                    enabled: !isSaving,
-                    onPressed: _delete,
-                  ),
-              ]
-            : [
-                AppBarAction(
-                  icon: AppIcons.edit,
-                  tooltip: l.commonEdit,
-                  onPressed: enterEdit,
-                ),
-              ],
-      ),
-      body: BlocBuilder<CategoriesCubit, CategoriesState>(
-        builder: (context, state) => Form(
-          key: _formKey,
-          child: _body(l, state.categories),
+    return editScope(
+      Scaffold(
+        // The bar floats over the list; its first item is padded below it.
+        extendBodyBehindAppBar: true,
+        appBar: AppTopBar(
+          title: _title(l),
+          showBack: true,
+          editing: isEditing,
+          onBack: handleBack,
         ),
+        body: BlocBuilder<CategoriesCubit, CategoriesState>(
+          // This context sits inside the Scaffold body, so it sees the bar
+          // height in its top padding.
+          builder: (context, state) => Form(
+            key: _formKey,
+            child: _body(
+              l,
+              state.categories,
+              topInset: MediaQuery.paddingOf(context).top,
+            ),
+          ),
+        ),
+        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
-      bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
-    ));
+    );
   }
 
   String _title(AppLocalizations l) {
@@ -390,18 +391,30 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return working.name.isEmpty ? l.categoriesTitle : working.name;
   }
 
-  Widget _body(AppLocalizations l, List<Category> all) {
+  /// [topInset] clears the transparent top bar (read from a context inside
+  /// the Scaffold body).
+  Widget _body(
+    AppLocalizations l,
+    List<Category> all, {
+    required double topInset,
+  }) {
     final editing = isEditing;
     final preview = _previewCategory();
     final breadcrumb = _parentBreadcrumb(all);
+    final canDelete = !widget.isCreate && !(_persisted?.isSystem ?? true);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.huge),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        topInset + AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.huge,
+      ),
       children: [
         _Header(
           category: preview,
           parentPath: breadcrumb,
           editing: editing,
+          onEdit: editing ? null : enterEdit,
           nameField: InlineTitleField(
             editing: editing,
             controller: _nameController,
@@ -420,7 +433,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             // Type is immutable once created (spec §3.4).
             DetailRow(
               label: l.categoryFormTypeLabel,
-              helper: widget.isCreate ? null : l.categoryFormTypeImmutableHelper,
+              helper: widget.isCreate
+                  ? null
+                  : l.categoryFormTypeImmutableHelper,
               trailing: _typeTrailing(),
             ),
             const RowDivider(),
@@ -431,9 +446,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 iconCode: working.parentId == null
                     ? null
                     : context
-                        .read<CategoriesCubit>()
-                        .byId(working.parentId!)
-                        ?.iconCode,
+                          .read<CategoriesCubit>()
+                          .byId(working.parentId!)
+                          ?.iconCode,
                 noneLabel: l.categoryFormParentNone,
                 onTap: () => _openParentPicker(all),
               ),
@@ -463,8 +478,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 maxLines: 2,
                 onEnterEdit: () => enterEdit(focus: _noteFocus),
                 onChanged: (v) => _onText(_TextField.note, v),
-                validator: (v) =>
-                    (v != null && v.length > 200) ? l.categoryFormNoteTooLong : null,
+                validator: (v) => (v != null && v.length > 200)
+                    ? l.categoryFormNoteTooLong
+                    : null,
               ),
             ),
             const RowDivider(),
@@ -479,6 +495,14 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             ),
           ],
         ),
+        // Delete lives at the bottom of the body in edit mode (the top bar
+        // carries no page actions).
+        if (editing && canDelete)
+          DangerRow(
+            icon: AppIcons.delete,
+            label: l.categoryDelete,
+            onTap: isSaving ? null : _delete,
+          ),
       ],
     );
   }
@@ -504,10 +528,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final isIncome = working.type == CategoryType.income;
     if (!widget.isCreate) return TypeIndicator(isIncome: isIncome);
     Widget pill(CategoryType t) => _TypePill(
-          isIncome: t == CategoryType.income,
-          selected: working.type == t,
-          onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
-        );
+      isIncome: t == CategoryType.income,
+      selected: working.type == t,
+      onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
+    );
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -521,7 +545,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
 // ────────────────────────────────────────────────────────────────────
 // Header — kit HeaderCard with the category's accent border. View mode:
-// long-press the icon → edit + maker. Edit mode: tap the icon → maker.
+// ✏️ chip → edit; long-press the icon → edit + maker. Edit mode: tap the
+// icon → maker.
 // ────────────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
@@ -532,6 +557,7 @@ class _Header extends StatelessWidget {
     required this.nameField,
     required this.onIconTap,
     required this.onIconLongPress,
+    this.onEdit,
   });
 
   final Category category;
@@ -541,6 +567,9 @@ class _Header extends StatelessWidget {
   final VoidCallback onIconTap;
   final VoidCallback onIconLongPress;
 
+  /// The ✏️ chip (view mode → edit); null while editing.
+  final VoidCallback? onEdit;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -548,6 +577,7 @@ class _Header extends StatelessWidget {
     final hasPath = parentPath != null && parentPath!.isNotEmpty;
     return HeaderCard(
       accent: category.iconCode?.accentColorFor(palette) ?? palette.primary,
+      onEdit: onEdit,
       // EditableCircle keeps a constant footprint with or without onTap,
       // so the name column never shifts between modes.
       leading: GestureDetector(
@@ -568,8 +598,11 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (hasPath)
-                  Text(parentPath!,
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    parentPath!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 if (!category.includeInReport)
                   Text(
                     l.categoryHiddenFromReport,
@@ -598,7 +631,7 @@ class _TypePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Opacity(
         opacity: selected ? 1 : 0.4,
         child: TypeIndicator(isIncome: isIncome),
@@ -630,7 +663,9 @@ class _ParentBox extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           border: Border.all(color: scheme.outline),
           borderRadius: BorderRadius.circular(10),
@@ -639,7 +674,11 @@ class _ParentBox extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!isNone && iconCode != null) ...[
-              IconDisplay(type: IconType.category, size: 20, iconCode: iconCode),
+              IconDisplay(
+                type: IconType.category,
+                size: 20,
+                iconCode: iconCode,
+              ),
               const SizedBox(width: AppSpacing.sm),
             ],
             Flexible(
@@ -683,21 +722,21 @@ class _CategoryDraft {
   final bool includeInReport;
 
   factory _CategoryDraft.fromCategory(Category c) => _CategoryDraft(
-        name: c.name,
-        type: c.type,
-        parentId: c.parentId,
-        iconCode: c.iconCode,
-        description: c.description ?? '',
-        note: c.note ?? '',
-        includeInReport: c.includeInReport,
-      );
+    name: c.name,
+    type: c.type,
+    parentId: c.parentId,
+    iconCode: c.iconCode,
+    description: c.description ?? '',
+    note: c.note ?? '',
+    includeInReport: c.includeInReport,
+  );
 
   /// What the server stores (text trimmed) — the post-save baseline.
   _CategoryDraft trimmed() => copyWith(
-        name: name.trim(),
-        description: description.trim(),
-        note: note.trim(),
-      );
+    name: name.trim(),
+    description: description.trim(),
+    note: note.trim(),
+  );
 
   _CategoryDraft copyWith({
     String? name,
@@ -733,5 +772,12 @@ class _CategoryDraft {
 
   @override
   int get hashCode => Object.hash(
-      name, type, parentId, iconCode, description, note, includeInReport);
+    name,
+    type,
+    parentId,
+    iconCode,
+    description,
+    note,
+    includeInReport,
+  );
 }

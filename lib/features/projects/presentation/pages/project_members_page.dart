@@ -90,31 +90,41 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
           ListTile(
             leading: ProjectMemberAvatar(member: m, size: 40),
             title: Text(m.displayName),
-            subtitle: Text(m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc),
+            subtitle: Text(
+              m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc,
+            ),
           ),
           const Divider(height: 1),
           // Viewer = read-only (contract §6b); toggles back to member.
           ListTile(
-            leading: Icon(m.role == MemberRole.viewer
-                ? Icons.edit_outlined
-                : Icons.visibility_outlined),
-            title: Text(m.role == MemberRole.viewer
-                ? l.projectMemberMakeContributor
-                : l.projectMemberMakeViewer),
+            leading: Icon(
+              m.role == MemberRole.viewer ? AppIcons.edit : AppIcons.visible,
+            ),
+            title: Text(
+              m.role == MemberRole.viewer
+                  ? l.projectMemberMakeContributor
+                  : l.projectMemberMakeViewer,
+            ),
             onTap: () => Navigator.pop(sheet, 'role'),
           ),
           ListTile(
             leading: const Icon(AppIcons.member),
             title: Text(l.projectMemberTransfer),
-            subtitle: m.isLinked ? null : Text(l.projectMemberTransferNeedsAccount),
+            subtitle: m.isLinked
+                ? null
+                : Text(l.projectMemberTransferNeedsAccount),
             enabled: m.isLinked && m.status == MemberStatus.active,
             onTap: () => Navigator.pop(sheet, 'transfer'),
           ),
           ListTile(
-            leading: Icon(AppIcons.delete,
-                color: Theme.of(context).colorScheme.error),
-            title: Text(l.projectMemberRemove,
-                style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            leading: Icon(
+              AppIcons.delete,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              l.projectMemberRemove,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
             onTap: () => Navigator.pop(sheet, 'remove'),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -125,13 +135,15 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     final repo = context.read<ProjectsRepository>();
     if (action == 'role') {
       await _run(
-          () => repo.updateMemberRole(
-              widget.projectId,
-              m.id,
-              m.role == MemberRole.viewer
-                  ? MemberRole.contributor
-                  : MemberRole.viewer),
-          done: l.projectMemberRoleChanged);
+        () => repo.updateMemberRole(
+          widget.projectId,
+          m.id,
+          m.role == MemberRole.viewer
+              ? MemberRole.contributor
+              : MemberRole.viewer,
+        ),
+        done: l.projectMemberRoleChanged,
+      );
     } else if (action == 'remove') {
       final ok = await showConfirmDialog(
         context,
@@ -140,8 +152,10 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         destructive: true,
       );
       if (!ok) return;
-      await _run(() => repo.removeMember(widget.projectId, m.id),
-          done: l.projectMemberRemoved);
+      await _run(
+        () => repo.removeMember(widget.projectId, m.id),
+        done: l.projectMemberRemoved,
+      );
     } else if (action == 'transfer') {
       final ok = await showConfirmDialog(
         context,
@@ -150,8 +164,10 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         confirmLabel: l.projectMemberTransfer,
       );
       if (!ok) return;
-      await _run(() => repo.transferOwnership(widget.projectId, m.userId!),
-          done: l.projectMemberTransferred);
+      await _run(
+        () => repo.transferOwnership(widget.projectId, m.userId!),
+        done: l.projectMemberTransferred,
+      );
     }
   }
 
@@ -175,7 +191,10 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     }
   }
 
-  Future<void> _run(Future<void> Function() action, {required String done}) async {
+  Future<void> _run(
+    Future<void> Function() action, {
+    required String done,
+  }) async {
     try {
       await action();
       if (!mounted) return;
@@ -191,79 +210,100 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     final l = AppLocalizations.of(context)!;
     final p = _project;
     Widget body;
+    // Builders below: the floating bar's height is only in the body's
+    // MediaQuery, not this State's context.
     if (_loading) {
-      body = const LoadingView();
+      body = Builder(
+        builder: (context) => Padding(
+          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+          child: const LoadingView(),
+        ),
+      );
     } else if (_error != null && p == null) {
       body = ErrorView(error: _error!, onRetry: _load);
     } else {
       final readOnly = p!.status == ProjectStatus.archived;
       final groups = <(String, List<ProjectMember>)>[
-        (l.projectMembersTitle,
-            _members.where((m) => m.status == MemberStatus.active).toList()),
-        (l.projectMembersPending,
-            _members.where((m) => m.status == MemberStatus.pending).toList()),
-        (l.projectMembersLeft,
-            _members.where((m) => m.status == MemberStatus.left).toList()),
+        (
+          l.projectMembersTitle,
+          _members.where((m) => m.status == MemberStatus.active).toList(),
+        ),
+        (
+          l.projectMembersPending,
+          _members.where((m) => m.status == MemberStatus.pending).toList(),
+        ),
+        (
+          l.projectMembersLeft,
+          _members.where((m) => m.status == MemberStatus.left).toList(),
+        ),
       ];
       final amMember = _members.any((m) => m.userId == _uid);
-      body = PullToRefresh(
-        onRefresh: _load,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 96),
-          children: [
-            for (final (title, list) in groups)
-              if (list.isNotEmpty) ...[
-                SectionHeader(title: title, count: list.length),
-                for (final m in list)
-                  Opacity(
-                    opacity: m.status == MemberStatus.active ? 1 : 0.6,
-                    child: ListTile(
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                      leading: ProjectMemberAvatar(member: m, size: 40),
-                      title: Text(m.displayName),
-                      subtitle: Text(m.isLinked
-                          ? l.projectMemberLinked
-                          : l.projectMemberAdHoc),
-                      trailing: StatusPill(
-                        label: m.isOwner
-                            ? l.projectRoleOwner
-                            : m.role == MemberRole.viewer
-                                ? l.projectRoleViewer
-                                : l.projectRoleMember,
-                        tone: m.isOwner ? Tone.primary : Tone.neutral,
-                        dense: true,
+      body = Builder(
+        builder: (context) => PullToRefresh(
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(
+              top: MediaQuery.paddingOf(context).top,
+              bottom: 96,
+            ),
+            children: [
+              for (final (title, list) in groups)
+                if (list.isNotEmpty) ...[
+                  SectionHeader(title: title, count: list.length),
+                  for (final m in list)
+                    Opacity(
+                      opacity: m.status == MemberStatus.active ? 1 : 0.6,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
+                        leading: ProjectMemberAvatar(member: m, size: 40),
+                        title: Text(m.displayName),
+                        subtitle: Text(
+                          m.isLinked
+                              ? l.projectMemberLinked
+                              : l.projectMemberAdHoc,
+                        ),
+                        trailing: StatusPill(
+                          label: m.isOwner
+                              ? l.projectRoleOwner
+                              : m.role == MemberRole.viewer
+                              ? l.projectRoleViewer
+                              : l.projectRoleMember,
+                          tone: m.isOwner ? Tone.primary : Tone.neutral,
+                          dense: true,
+                        ),
+                        // Owner manages everyone but themself.
+                        onTap: _isOwner && !readOnly && !m.isOwner
+                            ? () => _memberActions(m)
+                            : null,
                       ),
-                      // Owner manages everyone but themself.
-                      onTap: _isOwner && !readOnly && !m.isOwner
-                          ? () => _memberActions(m)
-                          : null,
                     ),
+                ],
+              if (_isOwner && !readOnly)
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: AddTile(
+                    label: l.projectMembersInvite,
+                    variant: AddTileVariant.row,
+                    icon: AppIcons.inviteMember,
+                    onTap: _invite,
                   ),
-              ],
-            if (_isOwner && !readOnly)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: AddTile(
-                  label: l.projectMembersInvite,
-                  variant: AddTileVariant.row,
-                  icon: AppIcons.inviteMember,
-                  onTap: _invite,
                 ),
-              ),
-            if (!_isOwner && amMember)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: AppButton(
-                  label: l.projectLeave,
-                  icon: AppIcons.logout,
-                  variant: AppButtonVariant.destructive,
-                  expand: true,
-                  onPressed: _leave,
+              if (!_isOwner && amMember)
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: AppButton(
+                    label: l.projectLeave,
+                    icon: AppIcons.logout,
+                    variant: AppButtonVariant.destructive,
+                    expand: true,
+                    onPressed: _leave,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -280,6 +320,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                 routeName: 'project-detail',
               ),
       ),
+      extendBodyBehindAppBar: true,
       body: body,
     );
   }

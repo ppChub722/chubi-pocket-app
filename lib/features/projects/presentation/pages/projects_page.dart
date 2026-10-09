@@ -39,10 +39,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
   List<Project> _shown(List<Project> all) {
     final q = _query.trim().toLowerCase();
     final list = all
-        .where((p) =>
-            q.isEmpty ||
-            p.name.toLowerCase().contains(q) ||
-            (p.type?.toLowerCase().contains(q) ?? false))
+        .where(
+          (p) =>
+              q.isEmpty ||
+              p.name.toLowerCase().contains(q) ||
+              (p.type?.toLowerCase().contains(q) ?? false),
+        )
         .toList();
     if (_sort == _Sort.name) {
       list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -69,17 +71,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
     };
     return Scaffold(
       appBar: AppTopBar(title: l.navProjects, showBack: true),
-      body: BlocConsumer<ProjectsCubit, ProjectsState>(
-        listenWhen: (a, b) =>
-            a.errorMessage != b.errorMessage && b.errorMessage != null,
-        listener: (ctx, s) =>
-            showAppSnackBar(ctx, s.errorMessage!, tone: Tone.danger),
+      extendBodyBehindAppBar: true,
+      body: BlocBuilder<ProjectsCubit, ProjectsState>(
         builder: (ctx, state) {
-          final loading =
-              state.status == ProjectsStatus.loading && state.projects.isEmpty;
           final shown = _shown(state.projects);
           return Column(
             children: [
+              // Clear the floating top bar (ctx is inside the body).
+              SizedBox(height: MediaQuery.paddingOf(ctx).top),
               AppSearchBar(
                 hint: l.projectsSearchHint,
                 onChanged: (v) => setState(() => _query = v),
@@ -112,38 +111,60 @@ class _ProjectsPageState extends State<ProjectsPage> {
                 ),
               ),
               Expanded(
-                child: loading
-                    ? ListView(children: [
-                        for (var i = 0; i < 5; i++) const SkeletonListTile(),
-                      ])
-                    : state.projects.isEmpty && state.statusFilter == 'active'
-                        ? EmptyView(
-                            icon: AppIcons.project,
-                            title: l.projectsEmptyTitle,
-                            message: l.projectsEmptyMessage,
-                            cta: AddTile(label: l.projectsCreateNew, onTap: _create),
-                          )
-                        : PullToRefresh(
-                            onRefresh: () => ctx.read<ProjectsCubit>().load(),
-                            child: ListView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(
-                                  AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, 96),
-                              children: [
-                                if (shown.isEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.all(AppSpacing.xl),
-                                    child: Text(l.projectsNoMatch,
-                                        textAlign: TextAlign.center),
-                                  ),
-                                for (final p in shown) ...[
-                                  _ProjectCard(project: p, onTap: () => _open(p)),
-                                  const SizedBox(height: AppSpacing.sm),
-                                ],
-                                AddTile(label: l.projectsCreateNew, onTap: _create),
-                              ],
+                child: AsyncStateView(
+                  loading:
+                      state.status == ProjectsStatus.initial ||
+                      state.status == ProjectsStatus.loading,
+                  error: state.error,
+                  isEmpty: state.projects.isEmpty,
+                  onRetry: ctx.read<ProjectsCubit>().load,
+                  // Zero padding: the bar is already cleared above.
+                  skeleton: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      for (var i = 0; i < 5; i++) const SkeletonListTile(),
+                    ],
+                  ),
+                  // Another status filter with no rows → the list's no-match.
+                  empty: state.statusFilter == 'active'
+                      ? EmptyView(
+                          icon: AppIcons.project,
+                          title: l.projectsEmptyTitle,
+                          message: l.projectsEmptyMessage,
+                          cta: AddTile(
+                            label: l.projectsCreateNew,
+                            onTap: _create,
+                          ),
+                        )
+                      : null,
+                  builder: (context) => PullToRefresh(
+                    onRefresh: () => ctx.read<ProjectsCubit>().load(),
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.xs,
+                        AppSpacing.lg,
+                        96,
+                      ),
+                      children: [
+                        if (shown.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(AppSpacing.xl),
+                            child: Text(
+                              l.projectsNoMatch,
+                              textAlign: TextAlign.center,
                             ),
                           ),
+                        for (final p in shown) ...[
+                          _ProjectCard(project: p, onTap: () => _open(p)),
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
+                        AddTile(label: l.projectsCreateNew, onTap: _create),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           );
@@ -182,25 +203,31 @@ class _ProjectCard extends StatelessWidget {
               Opacity(
                 opacity: p.isLocked ? 0.6 : 1,
                 child: IconDisplay(
-                    type: IconType.project, size: 44, iconCode: p.iconCode),
+                  type: IconType.project,
+                  size: 44,
+                  iconCode: p.iconCode,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      p.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 2),
-                    Text(meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: scheme.onSurfaceVariant)),
+                    Text(
+                      meta,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ),

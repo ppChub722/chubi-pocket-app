@@ -20,6 +20,7 @@ class ProjectDashboardTab extends StatelessWidget {
     required this.onSeeAll,
     required this.onOpenMembers,
     required this.onInvite,
+    this.onAdd,
     super.key,
   });
 
@@ -30,6 +31,10 @@ class ProjectDashboardTab extends StatelessWidget {
 
   /// Null = can't invite (not owner / locked).
   final VoidCallback? onInvite;
+
+  /// Add a transaction (quick create); null = can't add (locked / not a
+  /// member who may add).
+  final VoidCallback? onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -45,20 +50,23 @@ class ProjectDashboardTab extends StatelessWidget {
     final expenses = v.trees.where((t) => t.parent.type == 'expense');
     final paidBy = <String, double>{};
     for (final t in expenses) {
-      paidBy.update(t.parent.transactionMemberId, (a) => a + t.parent.amount,
-          ifAbsent: () => t.parent.amount);
+      paidBy.update(
+        t.parent.transactionMemberId,
+        (a) => a + t.parent.amount,
+        ifAbsent: () => t.parent.amount,
+      );
     }
     final totalPaid = paidBy.values.fold<double>(0, (a, b) => a + b);
     final payers = paidBy.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    // Top categories — by snapshot name.
+    // Top tags — a row with several tags counts under each.
     final byCat = <String, (double, ProjectTransaction)>{};
     for (final t in expenses) {
-      final name = t.parent.categoryName;
-      if (name == null || name.isEmpty) continue;
-      final prev = byCat[name];
-      byCat[name] = ((prev?.$1 ?? 0) + t.parent.amount, prev?.$2 ?? t.parent);
+      for (final name in t.parent.tags) {
+        final prev = byCat[name];
+        byCat[name] = ((prev?.$1 ?? 0) + t.parent.amount, prev?.$2 ?? t.parent);
+      }
     }
     final cats = byCat.entries.toList()
       ..sort((a, b) => b.value.$1.compareTo(a.value.$1));
@@ -71,7 +79,11 @@ class ProjectDashboardTab extends StatelessWidget {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 96),
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          96,
+        ),
         children: [
           Card(
             margin: EdgeInsets.zero,
@@ -80,16 +92,20 @@ class ProjectDashboardTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SummaryStats(stats: [
-                    SummaryStat(
+                  SummaryStats(
+                    stats: [
+                      SummaryStat(
                         label: l.projectDashTotalExpense,
                         amount: s?.totalExpense ?? 0,
-                        tone: MoneyTone.expense),
-                    SummaryStat(
+                        tone: MoneyTone.expense,
+                      ),
+                      SummaryStat(
                         label: l.projectDashTotalIncome,
                         amount: s?.totalIncome ?? 0,
-                        tone: MoneyTone.income),
-                  ]),
+                        tone: MoneyTone.income,
+                      ),
+                    ],
+                  ),
                   if (s != null && s.hasPlan) ...[
                     const SizedBox(height: AppSpacing.md),
                     ProgressRow(
@@ -97,14 +113,25 @@ class ProjectDashboardTab extends StatelessWidget {
                           ? 0
                           : (s.spentNet ?? 0) / s.plannedAmount!,
                       label: s.isOverPlan
-                          ? l.projectPlannedOverLine(moneyString(
-                              context, (s.remaining ?? 0).abs(),
-                              symbol: symbol))
+                          ? l.projectPlannedOverLine(
+                              moneyString(
+                                context,
+                                (s.remaining ?? 0).abs(),
+                                symbol: symbol,
+                              ),
+                            )
                           : l.projectPlannedLine(
-                              moneyString(context, s.plannedAmount!,
-                                  symbol: symbol),
-                              moneyString(context, s.remaining ?? 0,
-                                  symbol: symbol)),
+                              moneyString(
+                                context,
+                                s.plannedAmount!,
+                                symbol: symbol,
+                              ),
+                              moneyString(
+                                context,
+                                s.remaining ?? 0,
+                                symbol: symbol,
+                              ),
+                            ),
                     ),
                   ],
                   // Caller's standing, computed by the BE (contract §6a).
@@ -115,20 +142,29 @@ class ProjectDashboardTab extends StatelessWidget {
                         Expanded(
                           child: Text(
                             l.projectMyPosition(
-                                moneyString(context, s!.myPaid ?? 0,
-                                    symbol: symbol),
-                                moneyString(context, s.myShare ?? 0,
-                                    symbol: symbol)),
+                              moneyString(
+                                context,
+                                s!.myPaid ?? 0,
+                                symbol: symbol,
+                              ),
+                              moneyString(
+                                context,
+                                s.myShare ?? 0,
+                                symbol: symbol,
+                              ),
+                            ),
                             style: textTheme.bodySmall,
                           ),
                         ),
-                        Text('${l.projectMyNet} ',
-                            style: textTheme.bodySmall),
-                        MoneyText(s.myNet!,
-                            tone: MoneyTone.signed,
-                            symbol: symbol,
-                            style: textTheme.labelLarge
-                                ?.copyWith(fontWeight: FontWeight.w700)),
+                        Text('${l.projectMyNet} ', style: textTheme.bodySmall),
+                        MoneyText(
+                          s.myNet!,
+                          tone: MoneyTone.signed,
+                          symbol: symbol,
+                          style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -141,6 +177,17 @@ class ProjectDashboardTab extends StatelessWidget {
               ),
             ),
           ),
+          // Add a bill right from the first tab (same handler as the
+          // รายการ tab's tile).
+          if (onAdd != null)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: AddTile(
+                label: l.projectAddTransaction,
+                variant: AddTileVariant.row,
+                onTap: onAdd,
+              ),
+            ),
           SectionHeader(
             title: l.projectDashMembers,
             count: members.length,
@@ -173,7 +220,7 @@ class ProjectDashboardTab extends StatelessWidget {
               ),
           ],
           if (cats.isNotEmpty) ...[
-            SectionHeader(title: l.projectDashTopCategories),
+            SectionHeader(title: l.projectDashTopTags),
             for (final e in cats.take(5))
               _BarRow(
                 leading: ProjectTxIcon(tx: e.value.$2, size: 28),
@@ -239,8 +286,11 @@ class _BarRow extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(label,
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     MoneyText(amount, symbol: symbol),
                   ],

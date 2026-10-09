@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -32,7 +33,10 @@ class TagChip extends StatelessWidget {
     final color = tag.iconCode?.accentColorFor(palette) ?? palette.primary;
     final scheme = Theme.of(context).colorScheme;
     final usageLabel = l.tagsUsageCount(tag.usageCount);
-    final iconData = IconRegistry.get(tag.iconCode?.icon, fallback: Icons.label_outline);
+    final iconData = IconRegistry.get(
+      tag.iconCode?.icon,
+      fallback: AppIcons.tag,
+    );
 
     final body = Row(
       mainAxisSize: MainAxisSize.min,
@@ -52,18 +56,18 @@ class TagChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface,
-                  fontWeight: FontWeight.w500,
-                ),
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         if (usageLabel.isNotEmpty) ...[
           const SizedBox(width: AppSpacing.xs),
           Text(
             usageLabel,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
       ],

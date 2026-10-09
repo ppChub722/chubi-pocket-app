@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 /// Lets the page currently shown inside [MainShell] temporarily take
@@ -13,19 +14,32 @@ import 'package:flutter/widgets.dart';
 class ShellChromeController extends ChangeNotifier {
   bool _hidden = false;
 
-  /// True while a page has asked the shell to drop its bottom nav + FAB.
+  /// True while a page has asked the shell to drop its bottom nav.
   bool get hidden => _hidden;
 
   void hide() {
     if (_hidden) return;
     _hidden = true;
-    notifyListeners();
+    _notify();
   }
 
   void show() {
     if (!_hidden) return;
     _hidden = false;
-    notifyListeners();
+    _notify();
+  }
+
+  /// Pages call [hide]/[show] from `dispose` too, which runs while the tree
+  /// is locked — rebuilding the shell then throws (debug) and the nav never
+  /// comes back. Mid-frame calls are deferred to the end of the frame.
+  void _notify() {
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.persistentCallbacks ||
+        phase == SchedulerPhase.midFrameMicrotasks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    } else {
+      notifyListeners();
+    }
   }
 }
 
@@ -48,8 +62,8 @@ class _ShellChromeHiderState extends State<ShellChromeHider> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_controller != null) return;
-    final element =
-        context.getElementForInheritedWidgetOfExactType<ShellChrome>();
+    final element = context
+        .getElementForInheritedWidgetOfExactType<ShellChrome>();
     final controller = (element?.widget as ShellChrome?)?.notifier;
     if (controller == null) return; // outside the shell (overlay, tests)
     _controller = controller;
@@ -81,8 +95,8 @@ class ShellChrome extends InheritedNotifier<ShellChromeController> {
   /// callers toggle it from event handlers, not from `build`, so they
   /// don't want to rebuild when it changes.
   static ShellChromeController of(BuildContext context) {
-    final element =
-        context.getElementForInheritedWidgetOfExactType<ShellChrome>();
+    final element = context
+        .getElementForInheritedWidgetOfExactType<ShellChrome>();
     assert(
       element != null,
       'ShellChrome.of() called with no ShellChrome ancestor.',

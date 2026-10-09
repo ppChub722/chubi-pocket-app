@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -33,7 +34,7 @@ class CategoryPreviewCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       color: scheme.surfaceContainer,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         side: BorderSide(color: accent, width: 1.5),
       ),
       child: Padding(
@@ -70,8 +71,8 @@ class CategoryPreviewCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                   if (!category.includeInReport) ...[
@@ -79,9 +80,9 @@ class CategoryPreviewCard extends StatelessWidget {
                     Text(
                       l.categoryHiddenFromReport,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
+                        color: scheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ],
                 ],

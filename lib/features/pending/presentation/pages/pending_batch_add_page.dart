@@ -6,24 +6,19 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
-import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../categories/domain/category.dart';
-import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../categories/presentation/widgets/category_picker_sheet.dart';
-import '../../../transactions/domain/transaction_type.dart';
+import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
-import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
-import '../../domain/pending_transaction.dart';
+import '../../../transactions/presentation/widgets/draft_form.dart';
 import '../cubit/pending_cubit.dart';
 
 /// `/pending/new` — jot several drafts at once (owner design 2026-10-08).
-/// A row needs only an amount; category / wallet / date are optional chips
-/// and the rest (transfer, splits, tags) is done later by opening the draft.
+/// Every row is the same [DraftForm] the `+` quick create uses (type, amount,
+/// category + wallet cards, date, note, and the closed "รายละเอียดเพิ่ม"
+/// section for tags / splits); a row only needs an amount.
 /// "เก็บเป็นร่าง" parks them in รอยืนยัน; "ยืนยันเลยทั้งหมด" also submits.
 class PendingBatchAddPage extends StatefulWidget {
   const PendingBatchAddPage({super.key});
@@ -32,33 +27,21 @@ class PendingBatchAddPage extends StatefulWidget {
   State<PendingBatchAddPage> createState() => _PendingBatchAddPageState();
 }
 
-class _Row {
-  _Row() : date = DateTime.now();
-  final amount = TextEditingController();
-  final note = TextEditingController();
-  bool income = false;
-  Category? category;
-  Account? account;
-  bool accountPicked = false;
-  DateTime date;
-
-  void dispose() {
-    amount.dispose();
-    note.dispose();
-  }
-}
-
 class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
-  final List<_Row> _rows = [_Row()];
+  final List<DraftFormController> _rows = [DraftFormController()];
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
+    for (final r in _rows) {
+      r.addListener(_onChanged);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<AccountsCubit>().loadIfNeeded();
       context.read<CategoriesCubit>().loadIfNeeded();
+      context.read<TagsCubit>().loadIfNeeded();
     });
   }
 
@@ -70,23 +53,23 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
     super.dispose();
   }
 
-  List<_Row> get _filled =>
-      _rows.where((r) => (AmountField.parse(r.amount.text) ?? 0) > 0).toList();
-
-  String _ymd(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-  PendingDraft _draftOf(_Row r) {
-    final note = r.note.text.trim();
-    return PendingDraft(
-      type: r.income ? TransactionType.income : TransactionType.expense,
-      amount: AmountField.parse(r.amount.text),
-      accountId: r.account?.id,
-      categoryId: r.category?.id,
-      date: _ymd(r.date),
-      note: note.isEmpty ? null : note,
-    );
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
+
+  void _addRow() => setState(() {
+    _rows.add(DraftFormController()..addListener(_onChanged));
+  });
+
+  void _removeRow(int i) {
+    final removed = _rows.removeAt(i);
+    setState(() {});
+    // After this frame — the row's form is still listening until it unmounts.
+    WidgetsBinding.instance.addPostFrameCallback((_) => removed.dispose());
+  }
+
+  List<DraftFormController> get _filled =>
+      _rows.where((r) => r.amountValue > 0).toList();
 
   Future<void> _save({required bool submit}) async {
     final l = AppLocalizations.of(context)!;
@@ -102,19 +85,19 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      final created = await pending.add([for (final r in rows) _draftOf(r)]);
+      final created = await pending.add([for (final r in rows) r.toDraft()]);
       var msg = l.pendingSavedCount(created.length);
+      var tone = Tone.success;
       if (submit) {
         final r = await pending.submit([for (final p in created) p.id]);
         if (r.submitted.isNotEmpty) {
           await Future.wait([accounts.load(), txCubit.load()]);
         }
         msg = l.pendingResult(r.submitted.length, r.failed.length);
+        if (r.failed.isNotEmpty) tone = Tone.warning;
       }
       navigator.pop(true);
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(msg)));
+      showAppSnackBarOn(messenger, msg, tone: tone);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -125,7 +108,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final accounts = context.watch<AccountsCubit>().state.accounts;
+    final scheme = Theme.of(context).colorScheme;
     final n = _filled.length;
     return Scaffold(
       appBar: AppTopBar(
@@ -133,53 +116,65 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
         showBack: true,
         showUniversal: false,
       ),
+      extendBodyBehindAppBar: true,
       body: Column(
         children: [
+          // Clear the floating top bar (read inside the body to see it).
+          Builder(
+            builder: (context) =>
+                SizedBox(height: MediaQuery.paddingOf(context).top),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
-            child: Text(l.pendingBatchHint,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: Text(
+              l.pendingBatchHint,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
           ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.xxl),
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
               children: [
                 for (var i = 0; i < _rows.length; i++) ...[
                   _RowCard(
                     key: ObjectKey(_rows[i]),
-                    row: _rows[i],
+                    controller: _rows[i],
                     autofocus: i == _rows.length - 1,
-                    defaultAccount: accounts.firstOrNull,
-                    onChanged: () => setState(() {}),
-                    onRemove: _rows.length == 1
-                        ? null
-                        : () => setState(() => _rows.removeAt(i).dispose()),
+                    onRemove: _rows.length == 1 ? null : () => _removeRow(i),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                 ],
                 AddTile(
                   label: l.pendingAddRow,
                   variant: AddTileVariant.row,
-                  onTap: () => setState(() => _rows.add(_Row())),
+                  onTap: _addRow,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(l.pendingBatchMoreHint,
-                    style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
           Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              border: Border(
-                  top: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant)),
+              color: scheme.surface,
+              border: Border(top: BorderSide(color: scheme.outlineVariant)),
             ),
-            padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm,
-                AppSpacing.lg, AppSpacing.sm + MediaQuery.paddingOf(context).bottom),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              AppSpacing.sm + MediaQuery.paddingOf(context).bottom,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -190,7 +185,9 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                   onPressed: n == 0 ? null : () => _save(submit: false),
                 ),
                 TextButton(
-                  onPressed: _saving || n == 0 ? null : () => _save(submit: true),
+                  onPressed: _saving || n == 0
+                      ? null
+                      : () => _save(submit: true),
                   child: Text(l.pendingSubmitAllNow(n)),
                 ),
               ],
@@ -202,65 +199,23 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
   }
 }
 
+/// One draft in the list: the shared form in a card, ✕ to drop the row.
 class _RowCard extends StatelessWidget {
   const _RowCard({
-    required this.row,
+    required this.controller,
     required this.autofocus,
-    required this.defaultAccount,
-    required this.onChanged,
     required this.onRemove,
     super.key,
   });
 
-  final _Row row;
+  final DraftFormController controller;
   final bool autofocus;
-  final Account? defaultAccount;
-  final VoidCallback onChanged;
   final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    if (!row.accountPicked) row.account = defaultAccount;
-
-    Future<void> pickCategory() async {
-      final r = await showCategoryPickerSheet(
-        context: context,
-        categories: context.read<CategoriesCubit>().state.categories,
-        type: row.income ? CategoryType.income : CategoryType.expense,
-        selected: row.category,
-      );
-      if (r == null) return;
-      row.category = r is CategoryPickerSelected ? r.category : null;
-      onChanged();
-    }
-
-    Future<void> pickAccount() async {
-      final r = await showAccountPickerSheet(
-        context: context,
-        accounts: context.read<AccountsCubit>().state.accounts,
-        selected: row.account,
-        allowNone: true,
-      );
-      if (r == null) return;
-      row.accountPicked = true;
-      row.account = r is AccountPickerSelected ? r.account : null;
-      onChanged();
-    }
-
-    Future<void> pickDate() async {
-      final d = await showDatePicker(
-        context: context,
-        initialDate: row.date,
-        firstDate: DateTime(2000),
-        lastDate: DateTime.now().add(const Duration(days: 365)),
-      );
-      if (d == null) return;
-      row.date = d;
-      onChanged();
-    }
-
     return Container(
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
@@ -271,85 +226,20 @@ class _RowCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              SegmentedButton<bool>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(value: false, label: const Text('−'), tooltip: l.transactionTypeExpense),
-                  ButtonSegment(value: true, label: const Text('+'), tooltip: l.transactionTypeIncome),
-                ],
-                selected: {row.income},
-                onSelectionChanged: (s) {
-                  row.income = s.first;
-                  row.category = null; // a category belongs to one type
-                  onChanged();
-                },
+          if (onRemove != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                tooltip: l.pendingRemoveRow,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(AppIcons.close, size: 18),
+                onPressed: onRemove,
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: TextField(
-                  controller: row.amount,
-                  autofocus: autofocus,
-                  textAlign: TextAlign.right,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [ThousandsInputFormatter()],
-                  onChanged: (_) => onChanged(),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontFeatures: const [FontFeature.tabularFigures()]),
-                  decoration: InputDecoration(
-                    hintText: '0.00',
-                    isDense: true,
-                    labelText: l.transactionFormAmountLabel,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md)),
-                  ),
-                ),
-              ),
-              if (onRemove != null)
-                IconButton(
-                  tooltip: l.pendingRemoveRow,
-                  icon: const Icon(AppIcons.close, size: 18),
-                  onPressed: onRemove,
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          TextField(
-            controller: row.note,
-            decoration: InputDecoration(
-              hintText: l.quickNoteHint,
-              isDense: true,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md)),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
-              ActionChip(
-                avatar: const Icon(AppIcons.category, size: 16),
-                label: Text(row.category?.name ?? l.transactionFormCategoryLabel),
-                onPressed: pickCategory,
-              ),
-              ActionChip(
-                avatar: Icon(row.account == null ? AppIcons.noWallet : AppIcons.wallet,
-                    size: 16),
-                label: Text(row.account?.name ?? l.transactionFormAccountNone),
-                onPressed: pickAccount,
-              ),
-              ActionChip(
-                avatar: const Icon(AppIcons.date, size: 16),
-                label: Text(DateFormatter.friendly(row.date,
-                    today: l.commonToday,
-                    yesterday: l.commonYesterday,
-                    locale: Localizations.localeOf(context).languageCode)),
-                onPressed: pickDate,
-              ),
-            ],
+          DraftForm(
+            controller: controller,
+            compact: true,
+            autofocus: autofocus,
           ),
         ],
       ),

@@ -19,17 +19,17 @@ extension SummaryPeriodRange on SummaryPeriod {
     final today = DateTime(now.year, now.month, now.day);
     return switch (this) {
       SummaryPeriod.week => (
-          from: fmt(today.subtract(Duration(days: today.weekday - 1))),
-          to: fmt(today.add(Duration(days: 7 - today.weekday))),
-        ),
+        from: fmt(today.subtract(Duration(days: today.weekday - 1))),
+        to: fmt(today.add(Duration(days: 7 - today.weekday))),
+      ),
       SummaryPeriod.month => (
-          from: fmt(DateTime(now.year, now.month, 1)),
-          to: fmt(DateTime(now.year, now.month + 1, 0)),
-        ),
+        from: fmt(DateTime(now.year, now.month, 1)),
+        to: fmt(DateTime(now.year, now.month + 1, 0)),
+      ),
       SummaryPeriod.year => (
-          from: fmt(DateTime(now.year, 1, 1)),
-          to: fmt(DateTime(now.year, 12, 31)),
-        ),
+        from: fmt(DateTime(now.year, 1, 1)),
+        to: fmt(DateTime(now.year, 12, 31)),
+      ),
       // The summary API needs a range; a far-past start = "everything".
       SummaryPeriod.all => (from: '1970-01-01', to: fmt(today)),
     };
@@ -66,10 +66,10 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
   Future<TransactionsSummary> _fetch() {
     final r = _period.rangeFrom(DateTime.now());
     return context.read<TransactionsRepository>().summary(
-          from: r.from,
-          to: r.to,
-          accountId: widget.accountId,
-        );
+      from: r.from,
+      to: r.to,
+      accountId: widget.accountId,
+    );
   }
 
   @override
@@ -106,8 +106,10 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
             Row(
               children: [
                 Expanded(
-                  child: Text(widget.title ?? l.accountDetailSummaryTitle,
-                      style: textTheme.titleMedium),
+                  child: Text(
+                    widget.title ?? l.accountDetailSummaryTitle,
+                    style: textTheme.titleMedium,
+                  ),
                 ),
                 OptionMenuAnchor<SummaryPeriod>(
                   selected: _period,
@@ -143,9 +145,12 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                   return Row(
                     children: [
                       Expanded(
-                        child: Text(l.errorUnknownMessage,
-                            style: textTheme.bodySmall
-                                ?.copyWith(color: scheme.error)),
+                        child: Text(
+                          l.errorUnknownMessage,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.error,
+                          ),
+                        ),
                       ),
                       AppButton(
                         label: l.commonRetry,
@@ -159,25 +164,31 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SummaryStats(stats: [
-                      SummaryStat(
+                    SummaryStats(
+                      stats: [
+                        SummaryStat(
                           label: l.accountDetailSummaryIncome,
                           amount: s.totalIncome,
-                          tone: MoneyTone.income),
-                      SummaryStat(
+                          tone: MoneyTone.income,
+                        ),
+                        SummaryStat(
                           label: l.accountDetailSummaryExpense,
                           amount: s.totalExpense,
-                          tone: MoneyTone.expense),
-                      SummaryStat(
+                          tone: MoneyTone.expense,
+                        ),
+                        SummaryStat(
                           label: l.accountDetailSummaryNet,
                           amount: s.net,
-                          tone: MoneyTone.signed),
-                    ]),
+                          tone: MoneyTone.signed,
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       l.accountDetailSummaryTransactions(s.transactionCount),
-                      style: textTheme.bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 );

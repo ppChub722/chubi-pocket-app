@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_icons.dart';
+import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../domain/category.dart';
+import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 
 /// Result returned by [showCategoryPickerSheet]. Distinct from `null`
@@ -49,17 +54,16 @@ Future<CategoryPickerResult?> showCategoryPickerSheet({
   int maxDepth = 2,
   Set<String> excludeIds = const <String>{},
 }) {
-  return showModalBottomSheet<CategoryPickerResult>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    useSafeArea: true,
+  return showAppSheet<CategoryPickerResult>(
+    context,
+    title:
+        title ??
+        AppLocalizations.of(context)!.transactionFormCategoryPickerTitle,
     builder: (_) => _CategoryPickerBody(
       categories: categories,
       type: type,
       selected: selected,
       allowNone: allowNone,
-      title: title,
       noneLabel: noneLabel,
       maxDepth: maxDepth,
       excludeIds: excludeIds,
@@ -73,7 +77,6 @@ class _CategoryPickerBody extends StatefulWidget {
     required this.type,
     required this.selected,
     required this.allowNone,
-    required this.title,
     required this.noneLabel,
     required this.maxDepth,
     required this.excludeIds,
@@ -83,7 +86,6 @@ class _CategoryPickerBody extends StatefulWidget {
   final CategoryType type;
   final Category? selected;
   final bool allowNone;
-  final String? title;
   final String? noneLabel;
   final int maxDepth;
   final Set<String> excludeIds;
@@ -102,60 +104,49 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
     final scheme = Theme.of(context).colorScheme;
 
     final pool = widget.categories
-        .where((c) =>
-            !c.isSystem &&
-            c.type == widget.type &&
-            !widget.excludeIds.contains(c.id))
+        .where(
+          (c) =>
+              !c.isSystem &&
+              c.type == widget.type &&
+              !widget.excludeIds.contains(c.id),
+        )
         .toList();
     final roots = pool.where((c) => c.parentId == null).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
     final rows = <Widget>[];
     if (widget.allowNone) {
-      rows.add(_NoneRow(
-        label: widget.noneLabel ?? l.transactionFormCategoryPickerNoneOption,
-        selected: widget.selected == null,
-        onTap: () => Navigator.of(context).pop(const CategoryPickerCleared()),
-      ));
+      rows.add(
+        _NoneRow(
+          label: widget.noneLabel ?? l.transactionFormCategoryPickerNoneOption,
+          selected: widget.selected == null,
+          onTap: () => Navigator.of(context).pop(const CategoryPickerCleared()),
+        ),
+      );
     }
     for (final root in roots) {
       _collectRows(rows, root, pool, depth: 0);
     }
 
-    return SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    // [AppSheetScaffold] (title row + drag handle) scrolls the body.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (roots.isEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Text(
-              widget.title ?? l.transactionFormCategoryPickerTitle,
-              style: Theme.of(context).textTheme.titleMedium,
+              l.transactionFormCategoryPickerEmpty,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
-          ),
-          if (roots.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Text(
-                l.transactionFormCategoryPickerEmpty,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-              ),
-            )
-          else
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: rows,
-              ),
-            ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-      ),
+          )
+        else
+          ...rows,
+        const SizedBox(height: AppSpacing.md),
+      ],
     );
   }
 
@@ -172,27 +163,30 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
     final hasChildren = children.isNotEmpty && canDescend;
     final isExpanded = _expanded.contains(category.id);
 
-    out.add(_CategoryRow(
-      category: category,
-      depth: depth,
-      isSelected: widget.selected?.id == category.id,
-      hasChildren: hasChildren,
-      isExpanded: isExpanded,
-      onTap: () {
-        Navigator.of(context).pop(CategoryPickerSelected(category));
-      },
-      onToggleExpand: hasChildren
-          ? () {
-              setState(() {
-                if (isExpanded) {
-                  _expanded.remove(category.id);
-                } else {
-                  _expanded.add(category.id);
-                }
-              });
-            }
-          : null,
-    ));
+    out.add(
+      _CategoryRow(
+        category: category,
+        iconCode: CategoryTree.resolveIconCode(category, widget.categories),
+        depth: depth,
+        isSelected: widget.selected?.id == category.id,
+        hasChildren: hasChildren,
+        isExpanded: isExpanded,
+        onTap: () {
+          Navigator.of(context).pop(CategoryPickerSelected(category));
+        },
+        onToggleExpand: hasChildren
+            ? () {
+                setState(() {
+                  if (isExpanded) {
+                    _expanded.remove(category.id);
+                  } else {
+                    _expanded.add(category.id);
+                  }
+                });
+              }
+            : null,
+      ),
+    );
 
     if (hasChildren && isExpanded) {
       for (final child in children) {
@@ -202,9 +196,14 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
   }
 }
 
+/// Background of the picked row — the "this one" highlight (no ✓).
+Color _selectedTint(BuildContext context) =>
+    Theme.of(context).colorScheme.primary.withValues(alpha: 0.12);
+
 class _CategoryRow extends StatelessWidget {
   const _CategoryRow({
     required this.category,
+    required this.iconCode,
     required this.depth,
     required this.isSelected,
     required this.hasChildren,
@@ -214,6 +213,9 @@ class _CategoryRow extends StatelessWidget {
   });
 
   final Category category;
+
+  /// Inherited from the top-level parent, as on the categories page.
+  final IconCode? iconCode;
   final int depth;
   final bool isSelected;
   final bool hasChildren;
@@ -223,45 +225,55 @@ class _CategoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.lg + depth * AppSpacing.xxl,
-          AppSpacing.sm,
-          AppSpacing.sm,
-          AppSpacing.sm,
-        ),
-        child: Row(
-          children: [
-            IconDisplay(
-              type: IconType.category,
-              size: 32,
-              iconCode: category.iconCode,
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Material(
+        color: isSelected ? _selectedTint(context) : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.sm + depth * AppSpacing.xxl,
+              AppSpacing.sm,
+              0,
+              AppSpacing.sm,
             ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Text(
-                category.name,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ),
-            if (isSelected)
-              Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.sm),
-                child: Icon(Icons.check, color: scheme.primary, size: 20),
-              ),
-            if (hasChildren)
-              IconButton(
-                icon: AnimatedRotation(
-                  turns: isExpanded ? 0.25 : 0,
-                  duration: const Duration(milliseconds: 160),
-                  child: const Icon(Icons.chevron_right),
+            child: Row(
+              children: [
+                IconDisplay(
+                  type: IconType.category,
+                  size: 32,
+                  iconCode: iconCode,
                 ),
-                onPressed: onToggleExpand,
-              ),
-          ],
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    category.name,
+                    style: isSelected
+                        ? textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          )
+                        : textTheme.bodyLarge,
+                  ),
+                ),
+                if (hasChildren)
+                  IconButton(
+                    icon: AnimatedRotation(
+                      turns: isExpanded ? 0.25 : 0,
+                      duration: const Duration(milliseconds: 160),
+                      child: const Icon(AppIcons.chevronRight),
+                    ),
+                    onPressed: onToggleExpand,
+                  )
+                else
+                  // Keep names aligned with expandable rows.
+                  const SizedBox(width: 48, height: 40),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -282,11 +294,47 @@ class _NoneRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return ListTile(
-      leading: Icon(Icons.label_off_outlined, color: scheme.onSurfaceVariant),
-      title: Text(label),
-      trailing: selected ? Icon(Icons.check, color: scheme.primary) : null,
-      onTap: onTap,
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      child: Material(
+        color: selected ? _selectedTint(context) : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    AppIcons.category,
+                    size: 18,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: selected ? FontWeight.w700 : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
