@@ -43,6 +43,38 @@ class ShellChromeController extends ChangeNotifier {
   }
 }
 
+/// Runs [action] once [route] has finished sliding in — right away if it
+/// already has (or there's no route). If it's popped first, never.
+///
+/// Pages that open in edit mode (create / forms) hide the shell nav; doing
+/// that while the page is still sliding in collapses the nav *during* the
+/// transition, re-laying out the whole tab (both pages) every frame — the
+/// "slight stutter when a create page comes in" (owner 2026-10-09) — and
+/// stretches the top bar's hero flight. After the transition it's one
+/// smooth slide of its own.
+void whenRouteSettled(ModalRoute<dynamic>? route, VoidCallback action) {
+  // A just-pushed route spends its first frame offstage (heroes measure
+  // it) with its animation pinned to "complete" — ask again after that.
+  if (route != null && route.offstage) {
+    SchedulerBinding.instance.addPostFrameCallback(
+      (_) => whenRouteSettled(route, action),
+    );
+    return;
+  }
+  final animation = route?.animation;
+  if (animation == null || animation.isCompleted) {
+    action();
+    return;
+  }
+  void listener(AnimationStatus status) {
+    if (status == AnimationStatus.forward) return;
+    animation.removeStatusListener(listener);
+    if (status == AnimationStatus.completed) action();
+  }
+
+  animation.addStatusListener(listener);
+}
+
 /// Hides the shell's bottom nav + FAB for as long as [child] is on screen —
 /// wrap whole-page forms with it (app rule: forms are edit mode). Pages
 /// with an in-place edit mode toggle the controller themselves instead.
@@ -67,9 +99,14 @@ class _ShellChromeHiderState extends State<ShellChromeHider> {
     final controller = (element?.widget as ShellChrome?)?.notifier;
     if (controller == null) return; // outside the shell (overlay, tests)
     _controller = controller;
-    // Defer: hiding notifies the shell, which must not rebuild mid-build.
+    // Not mid-build (hiding rebuilds the shell), and not mid page
+    // transition either — see [whenRouteSettled].
+    final route = ModalRoute.of(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) controller.hide();
+      if (!mounted) return;
+      whenRouteSettled(route, () {
+        if (mounted) controller.hide();
+      });
     });
   }
 

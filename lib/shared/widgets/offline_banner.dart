@@ -43,8 +43,7 @@ class _Banner extends StatelessWidget {
         bottom: false,
         child: Container(
           height: 48,
-          padding:
-              const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           alignment: Alignment.centerLeft,
           child: Row(
             children: [

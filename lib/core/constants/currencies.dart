@@ -16,11 +16,11 @@ abstract final class Currencies {
   static String symbolOf(String code) => symbols[code] ?? code;
 
   static String nameOf(AppLocalizations l, String code) => switch (code) {
-        'THB' => l.currencyNameTHB,
-        'USD' => l.currencyNameUSD,
-        'EUR' => l.currencyNameEUR,
-        'GBP' => l.currencyNameGBP,
-        'JPY' => l.currencyNameJPY,
-        _ => code,
-      };
+    'THB' => l.currencyNameTHB,
+    'USD' => l.currencyNameUSD,
+    'EUR' => l.currencyNameEUR,
+    'GBP' => l.currencyNameGBP,
+    'JPY' => l.currencyNameJPY,
+    _ => code,
+  };
 }

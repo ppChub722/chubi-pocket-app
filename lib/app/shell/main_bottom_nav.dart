@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_icons.dart';
-import '../../core/constants/app_radius.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../l10n/gen/app_localizations.dart';
 
-/// Floating pill bottom navigation:
+/// Floating rounded-rect bottom navigation:
 ///
 /// `( [Dashboard] [Transactions] [ + ] [Accounts] [☰ More] )`
 ///
 /// Four tab destinations (Dashboard=0 / Transactions=1 / Accounts=2 /
-/// More=3) switch the [StatefulNavigationShell] branch on tap; the selected
-/// one expands into an icon + label capsule while the rest stay icon-only.
+/// More=3) switch the [StatefulNavigationShell] branch on tap. Every tab is
+/// an icon over a small label; the selected one's whole block is tinted
+/// (owner 2026-10-09: the expanding capsule shifted the bar).
 /// The centre `+` is an oversized button centred on the bar (it pokes out
 /// above and below, ringed in the page colour) and opens the
 /// QuickAdd transaction modal. More is a real tab whose root is the card hub
@@ -43,6 +43,18 @@ class MainBottomNav extends StatelessWidget {
   /// Bar height, and the `+` button's outer size (ring included) — larger
   /// than the bar so it pokes out evenly above and below, centred on it.
   static const double _barHeight = 64;
+
+  /// The selected tab's highlight corner. Must stay ≤ its half-height
+  /// (`_barHeight / 2 - _tabInset`) or it clamps to a pill.
+  static const double _radius = 24;
+
+  /// Gap between the bar's edge and a tab's highlight, on every side.
+  static const double _tabInset = 6;
+
+  /// The bar's corner = highlight + gap, so the two curves look the same
+  /// (owner 2026-10-09: an equal radius made the outer one read tighter).
+  static const double _barRadius = _radius + _tabInset;
+  static const double _tabGap = 2;
   static const double _addSize = 76;
 
   @override
@@ -70,49 +82,26 @@ class MainBottomNav extends StatelessWidget {
                 elevation: 8,
                 shadowColor: scheme.shadow.withValues(alpha: 0.35),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(_barRadius),
                   side: BorderSide(color: scheme.outlineVariant),
                 ),
                 child: SizedBox(
                   height: _barHeight,
                   child: Padding(
+                    // + each tab's own [_tabGap] = [_tabInset] at the ends.
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xs,
+                      horizontal: _tabInset - _tabGap,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _NavItem(
-                          icon: AppIcons.dashboard,
-                          iconSelected: AppIcons.dashboardActive,
-                          label: l.navDashboard,
-                          selected: !moreSelected && currentIndex == 0,
-                          onTap: () => onTabSelected(0),
-                        ),
-                        _NavItem(
-                          icon: AppIcons.transactions,
-                          iconSelected: AppIcons.transactionsActive,
-                          label: l.navTransactions,
-                          selected: !moreSelected && currentIndex == 1,
-                          onTap: () => onTabSelected(1),
-                        ),
-                        // Room for the `+` stacked on top.
-                        const SizedBox(width: _addSize),
-                        _NavItem(
-                          icon: AppIcons.wallet,
-                          iconSelected: AppIcons.walletActive,
-                          label: l.navAccounts,
-                          selected: !moreSelected && currentIndex == 2,
-                          onTap: () => onTabSelected(2),
-                        ),
-                        _NavItem(
-                          icon: AppIcons.more,
-                          iconSelected: AppIcons.more,
-                          label: l.navMore,
-                          selected: moreSelected,
-                          onTap: onMorePressed,
-                        ),
-                      ],
+                    child: LayoutBuilder(
+                      builder: (context, box) => Stack(
+                        children: [
+                          _SlidingHighlight(
+                            slot: _selectedSlot,
+                            width: box.maxWidth,
+                          ),
+                          _tabs(l),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -123,6 +112,89 @@ class MainBottomNav extends StatelessWidget {
                 onPressed: onAddPressed,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 0 dashboard · 1 transactions · 2 wallets · 3 more; null = none.
+  int? get _selectedSlot => moreSelected
+      ? 3
+      : currentIndex >= 0 && currentIndex <= 2
+      ? currentIndex
+      : null;
+
+  Widget _tabs(AppLocalizations l) {
+    return Row(
+      children: [
+        _NavItem(
+          icon: AppIcons.dashboard,
+          iconSelected: AppIcons.dashboardActive,
+          label: l.navDashboard,
+          selected: !moreSelected && currentIndex == 0,
+          onTap: () => onTabSelected(0),
+        ),
+        _NavItem(
+          icon: AppIcons.transactions,
+          iconSelected: AppIcons.transactionsActive,
+          label: l.navTransactions,
+          selected: !moreSelected && currentIndex == 1,
+          onTap: () => onTabSelected(1),
+        ),
+        // Room for the `+` stacked on top.
+        const SizedBox(width: _addSize),
+        _NavItem(
+          icon: AppIcons.wallet,
+          iconSelected: AppIcons.walletActive,
+          label: l.navAccounts,
+          selected: !moreSelected && currentIndex == 2,
+          onTap: () => onTabSelected(2),
+        ),
+        _NavItem(
+          icon: AppIcons.more,
+          iconSelected: AppIcons.more,
+          label: l.navMore,
+          selected: moreSelected,
+          onTap: onMorePressed,
+        ),
+      ],
+    );
+  }
+}
+
+/// The selected tab's tint — one block that slides between tab slots
+/// (crossing under the `+`) instead of each tab fading its own.
+class _SlidingHighlight extends StatelessWidget {
+  const _SlidingHighlight({required this.slot, required this.width});
+
+  final int? slot;
+
+  /// The tab row's width (bar minus its side padding).
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = MainBottomNav._tabGap;
+    final tabWidth = (width - MainBottomNav._addSize) / 4;
+    // Slots 2 and 3 sit past the `+` gap.
+    double slotLeft(int s) =>
+        s * tabWidth + (s >= 2 ? MainBottomNav._addSize : 0);
+    final s = slot ?? 0;
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      left: slotLeft(s) + gap,
+      width: tabWidth - gap * 2,
+      top: MainBottomNav._tabInset,
+      bottom: MainBottomNav._tabInset,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: slot == null ? 0 : 1,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(MainBottomNav._radius),
           ),
         ),
       ),
@@ -178,8 +250,10 @@ class _AddButton extends StatelessWidget {
   }
 }
 
-/// Single tab — icon-only when idle; when [selected] a tinted capsule grows
-/// around the icon and the label slides in beside it.
+/// Single tab — icon over a small label, always both. The tint behind the
+/// selected one is [_SlidingHighlight]; here [selected] only recolours
+/// (animated) and bolds the label. Nothing changes width, so the bar never
+/// shifts when switching tabs.
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
@@ -200,50 +274,44 @@ class _NavItem extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final fg = selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant;
 
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: Tooltip(
-        message: label,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            height: 44,
-            padding: EdgeInsets.symmetric(
-              horizontal: selected ? AppSpacing.md : AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: selected ? scheme.primaryContainer : Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadius.xxl),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(selected ? iconSelected : icon, size: 24, color: fg),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.centerLeft,
-                  child: selected
-                      ? Padding(
-                          padding: const EdgeInsets.only(left: AppSpacing.xs),
-                          child: Text(
-                            label,
-                            maxLines: 1,
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  color: fg,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
+    return Expanded(
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        excludeSemantics: true,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: MainBottomNav._tabGap,
+            vertical: MainBottomNav._tabInset,
+          ),
+          // No ink ripple (owner 2026-10-09) — the sliding highlight is the
+          // tap feedback.
+          child: GestureDetector(
+            onTap: onTap,
+            behavior: HitTestBehavior.opaque,
+            child: TweenAnimationBuilder<Color?>(
+              tween: ColorTween(end: fg),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              builder: (context, color, _) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(selected ? iconSelected : icon, size: 28, color: color),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontSize: 10,
+                      height: 1.2,
+                      color: color,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

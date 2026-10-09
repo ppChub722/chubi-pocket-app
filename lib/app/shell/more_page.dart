@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_icons.dart';
-import '../../core/constants/app_radius.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/theme/module_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -209,74 +208,35 @@ class _MoreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: tint.withValues(alpha: 0.25)),
-      ),
-      child: DecoratedBox(
-        // Each feature gets its own colour: a soft wash from the top-left.
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              tint.withValues(alpha: 0.16),
-              tint.withValues(alpha: 0.03),
-            ],
-          ),
-        ),
-        child: InkWell(
-          onTap: () => context.push(entry.route),
-          child: Stack(
-            children: [
-              // Large faded glyph in the corner — depth without clutter.
-              Positioned(
-                right: -14,
-                bottom: -18,
-                child: Icon(
-                  entry.icon,
-                  size: 88,
-                  color: tint.withValues(alpha: 0.10),
-                ),
+    // Each feature gets its group colour (shared look: TintedCard).
+    return TintedCard(
+      tint: tint,
+      glyph: entry.icon,
+      onTap: () => context.push(entry.route),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TintedIconBadge(icon: entry.icon, tint: tint),
+            const Spacer(),
+            Text(
+              entry.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: tint,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: Icon(entry.icon, size: 22, color: Colors.white),
-                    ),
-                    const Spacer(),
-                    Text(
-                      entry.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      entry.subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+            Text(
+              entry.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

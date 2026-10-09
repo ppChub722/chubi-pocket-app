@@ -45,9 +45,7 @@ class PickerTile extends StatelessWidget {
       color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.md),
-        side: hasError
-            ? BorderSide(color: scheme.error)
-            : BorderSide.none,
+        side: hasError ? BorderSide(color: scheme.error) : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -56,13 +54,17 @@ class PickerTile extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 56),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             child: Row(
               children: [
                 if (leading != null) ...[
                   IconTheme.merge(
                     data: IconThemeData(
-                        color: scheme.onSurfaceVariant, size: 24),
+                      color: scheme.onSurfaceVariant,
+                      size: 24,
+                    ),
                     child: leading!,
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -74,8 +76,9 @@ class PickerTile extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: textTheme.labelMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                        style: textTheme.labelMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                       Text(
                         value ?? placeholder ?? '',
@@ -91,8 +94,9 @@ class PickerTile extends StatelessWidget {
                 if (trailing != null) ...[
                   const SizedBox(width: AppSpacing.sm),
                   DefaultTextStyle.merge(
-                    style: textTheme.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                     child: trailing!,
                   ),
                 ],
@@ -112,7 +116,11 @@ class PickerTile extends StatelessWidget {
         tile,
         Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.xs, AppSpacing.md, 0),
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            0,
+          ),
           child: Text(
             errorText!,
             style: textTheme.bodySmall?.copyWith(color: scheme.error),

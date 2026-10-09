@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../cubit/auth_cubit.dart';
 
 /// Cold-launch screen: `AuthCubit.init()` resolves the stored token while we
@@ -67,10 +68,25 @@ class _SplashPageState extends State<SplashPage> {
                     const SizedBox(height: AppSpacing.lg),
                     Text('ChubiPocket', style: theme.textTheme.headlineMedium),
                     const SizedBox(height: AppSpacing.xl),
-                    const SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: CircularProgressIndicator(strokeWidth: 3),
+                    // Couldn't reach the server → why + retry (the stored
+                    // token is kept); otherwise the spinner.
+                    BlocBuilder<AuthCubit, AuthState>(
+                      builder: (context, state) {
+                        final error = state is AuthInitial
+                            ? state.startupError
+                            : null;
+                        if (error == null) {
+                          return const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(strokeWidth: 3),
+                          );
+                        }
+                        return ErrorView(
+                          error: error,
+                          onRetry: context.read<AuthCubit>().init,
+                        );
+                      },
                     ),
                   ],
                 ),

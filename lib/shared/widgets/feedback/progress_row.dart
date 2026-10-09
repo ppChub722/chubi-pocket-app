@@ -33,11 +33,12 @@ class ProgressRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final over = value > 1;
-    final barColor = over ? (overColor ?? scheme.error) : (color ?? scheme.primary);
-    final captionStyle = Theme.of(context)
-        .textTheme
-        .bodySmall
-        ?.copyWith(color: scheme.onSurfaceVariant);
+    final barColor = over
+        ? (overColor ?? scheme.error)
+        : (color ?? scheme.primary);
+    final captionStyle = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -62,10 +63,12 @@ class ProgressRow extends StatelessWidget {
             children: [
               if (label != null)
                 Expanded(
-                  child: Text(label!,
-                      style: captionStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    label!,
+                    style: captionStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )
               else
                 const Spacer(),

@@ -49,8 +49,8 @@ class BudgetOverview extends Equatable {
       totalBudget: (json['total_budget'] as num).toDouble(),
       totalSpent: (json['total_spent'] as num).toDouble(),
       totalRemaining: (json['total_remaining'] as num).toDouble(),
-      overallUtilizationPct:
-          (json['overall_utilization_pct'] as num).toDouble(),
+      overallUtilizationPct: (json['overall_utilization_pct'] as num)
+          .toDouble(),
       budgetsOverLimit: json['budgets_over_limit'] as int? ?? 0,
       budgets: lines,
     );
@@ -58,18 +58,18 @@ class BudgetOverview extends Equatable {
 
   @override
   List<Object?> get props => [
-        period,
-        periodStart,
-        periodEnd,
-        scope,
-        projectId,
-        totalBudget,
-        totalSpent,
-        totalRemaining,
-        overallUtilizationPct,
-        budgetsOverLimit,
-        budgets,
-      ];
+    period,
+    periodStart,
+    periodEnd,
+    scope,
+    projectId,
+    totalBudget,
+    totalSpent,
+    totalRemaining,
+    overallUtilizationPct,
+    budgetsOverLimit,
+    budgets,
+  ];
 }
 
 class BudgetOverviewLine extends Equatable {
@@ -101,6 +101,12 @@ class BudgetOverviewLine extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, categoryName, amount, spent, overLimit, utilizationPct];
+  List<Object?> get props => [
+    id,
+    categoryName,
+    amount,
+    spent,
+    overLimit,
+    utilizationPct,
+  ];
 }

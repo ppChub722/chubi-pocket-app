@@ -31,11 +31,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppTopBar(
-        title: l.settingsTitle,
-        showBack: true,
-        showUniversal: false,
-      ),
+      appBar: AppTopBar(title: l.settingsTitle, showBack: true),
       extendBodyBehindAppBar: true,
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {

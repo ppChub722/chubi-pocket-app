@@ -36,24 +36,23 @@ class NotificationTile extends StatelessWidget {
   /// One-tap actions (contract §5) — "skip" just hides the row. Auto-run
   /// ones arrive already actioned and show "ทำแล้ว".
   bool get _hasAction => switch (notification.type) {
-        NotificationType.splitCreated ||
-        NotificationType.splitPaid ||
-        NotificationType.projectTxRecordedForYou =>
-          true,
-        // Only when I have a personal copy to update.
-        NotificationType.projectTxChanged =>
-          notification.payload['personal_transaction_id'] != null &&
-              notification.payload['suggested'] != null,
-        _ => false,
-      };
+    NotificationType.splitCreated ||
+    NotificationType.splitPaid ||
+    NotificationType.projectTxRecordedForYou => true,
+    // Only when I have a personal copy to update.
+    NotificationType.projectTxChanged =>
+      notification.payload['personal_transaction_id'] != null &&
+          notification.payload['suggested'] != null,
+    _ => false,
+  };
 
   String _actionLabel(AppLocalizations l) => switch (notification.type) {
-        NotificationType.splitCreated => l.notifActionAddDebt,
-        NotificationType.splitPaid => l.notifActionRecordReceipt,
-        NotificationType.projectTxRecordedForYou => l.notifActionCopyToBook,
-        NotificationType.projectTxChanged => l.notifActionUpdateCopy,
-        _ => l.notificationAccept,
-      };
+    NotificationType.splitCreated => l.notifActionAddDebt,
+    NotificationType.splitPaid => l.notifActionRecordReceipt,
+    NotificationType.projectTxRecordedForYou => l.notifActionCopyToBook,
+    NotificationType.projectTxChanged => l.notifActionUpdateCopy,
+    _ => l.notificationAccept,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +74,9 @@ class NotificationTile extends StatelessWidget {
         onTap: () => onTap(n),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -91,26 +92,33 @@ class NotificationTile extends StatelessWidget {
                     Text(
                       _title(l, n, actor),
                       style: textTheme.bodyMedium?.copyWith(
-                          fontWeight:
-                              n.isUnread ? FontWeight.w600 : FontWeight.w400),
+                        fontWeight: n.isUnread
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       [
-                        DateFormatter.time(n.createdAt.toLocal(),
-                            locale: Localizations.localeOf(context)
-                                .toLanguageTag()),
+                        DateFormatter.time(
+                          n.createdAt.toLocal(),
+                          locale: Localizations.localeOf(
+                            context,
+                          ).toLanguageTag(),
+                        ),
                         ?amount,
                       ].join(' · '),
-                      style: textTheme.bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                     if (accepted) ...[
                       const SizedBox(height: AppSpacing.xs),
                       AppBadge(
-                          label: _isRequest ? l.notifAccepted : l.notifActionDone,
-                          icon: AppIcons.success,
-                          tone: Tone.success),
+                        label: _isRequest ? l.notifAccepted : l.notifActionDone,
+                        icon: AppIcons.success,
+                        tone: Tone.success,
+                      ),
                     ],
                     if (pending) ...[
                       const SizedBox(height: AppSpacing.sm),
@@ -148,7 +156,9 @@ class NotificationTile extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                        color: scheme.primary, shape: BoxShape.circle),
+                      color: scheme.primary,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
             ],
@@ -178,34 +188,40 @@ class NotificationTile extends StatelessWidget {
   }
 
   static IconData _iconFor(NotificationType t) => switch (t) {
-        NotificationType.splitCreated ||
-        NotificationType.splitPaid ||
-        NotificationType.splitReceived =>
-          AppIcons.split,
-        NotificationType.projectTxRecordedForYou ||
-        NotificationType.projectTxChanged ||
-        NotificationType.projectInvite ||
-        NotificationType.projectAdded =>
-          AppIcons.project,
-        NotificationType.contactLinkRequest => AppIcons.link,
-        NotificationType.accountInvite => AppIcons.bank,
-        NotificationType.unknown => AppIcons.notifications,
-      };
+    NotificationType.splitCreated ||
+    NotificationType.splitPaid ||
+    NotificationType.splitReceived => AppIcons.split,
+    NotificationType.projectTxRecordedForYou ||
+    NotificationType.projectTxChanged ||
+    NotificationType.projectInvite ||
+    NotificationType.projectAdded => AppIcons.project,
+    NotificationType.contactLinkRequest => AppIcons.link,
+    NotificationType.accountInvite => AppIcons.bank,
+    NotificationType.unknown => AppIcons.notifications,
+  };
 
   static String _title(AppLocalizations l, AppNotification n, String actor) =>
       switch (n.type) {
         NotificationType.splitCreated => l.notifSplitCreated(actor),
         NotificationType.splitPaid => l.notifSplitPaid(actor),
         NotificationType.splitReceived => l.notifSplitReceived(actor),
-        NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(actor),
+        NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(
+          actor,
+        ),
         NotificationType.projectTxChanged => l.notifProjectTxChanged(actor),
         NotificationType.projectInvite => l.notifProjectInvite(
-            actor, (n.payload['project_name'] as String?) ?? ''),
+          actor,
+          (n.payload['project_name'] as String?) ?? '',
+        ),
         NotificationType.contactLinkRequest => l.notifContactLink(actor),
         NotificationType.projectAdded => l.notifProjectAdded(
-            actor, (n.payload['project_name'] as String?) ?? ''),
+          actor,
+          (n.payload['project_name'] as String?) ?? '',
+        ),
         NotificationType.accountInvite => l.notificationWalletInviteTitle(
-            actor, (n.payload['account_name'] as String?) ?? ''),
+          actor,
+          (n.payload['account_name'] as String?) ?? '',
+        ),
         NotificationType.unknown => l.notifUnknown,
       };
 }

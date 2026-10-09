@@ -20,11 +20,7 @@ const commonBaseBackgrounds = <IconPackItem>[
   // 3 hard-banded diagonal stripes.
   IconPackItem(
     id: 'stripedPatternDi',
-    colors: [
-      '@presetThemeColor1',
-      '@presetThemeColor2',
-      '@presetThemeColor3',
-    ],
+    colors: ['@presetThemeColor1', '@presetThemeColor2', '@presetThemeColor3'],
   ),
   // Preset sweep through ROYGBIV — no user-selectable colors.
   IconPackItem(id: 'rainbow', colors: []),

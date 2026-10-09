@@ -87,20 +87,20 @@ class LogConfig {
 
     final defaults = switch (env) {
       AppEnv.local => const _Defaults(
-          minLevel: LogLevel.debug,
-          logBodies: true,
-          fileSink: true,
-        ),
+        minLevel: LogLevel.debug,
+        logBodies: true,
+        fileSink: true,
+      ),
       AppEnv.staging => const _Defaults(
-          minLevel: LogLevel.info,
-          logBodies: false,
-          fileSink: true,
-        ),
+        minLevel: LogLevel.info,
+        logBodies: false,
+        fileSink: true,
+      ),
       AppEnv.prod => const _Defaults(
-          minLevel: LogLevel.warn,
-          logBodies: false,
-          fileSink: true,
-        ),
+        minLevel: LogLevel.warn,
+        logBodies: false,
+        fileSink: true,
+      ),
     };
 
     const lvlRaw = String.fromEnvironment('LOG_LEVEL', defaultValue: '');

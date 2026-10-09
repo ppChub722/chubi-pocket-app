@@ -235,49 +235,58 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
           key: _formKey,
           // Builder: its context sees the floating bar's height.
           child: Builder(
-            builder: (context) => ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              children: [
-                LockedInEdit(locked: isEditing, child: _header(l, debt)),
-                if (debt.isOpen && !isEditing) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  AppButton(
-                    label: debt.isOwedToMe ? l.debtReceive : l.debtPay,
-                    icon: AppIcons.settle,
-                    size: AppButtonSize.large,
-                    expand: true,
-                    onPressed: () => _settle(debt),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.lg),
-                _rows(l, debt),
-                if (debt.isOpen) ...[
-                  const SizedBox(height: AppSpacing.xl),
-                  LockedInEdit(
-                    locked: isEditing,
-                    child: Center(
-                      child: AppButton(
-                        label: l.debtCancel,
-                        variant: AppButtonVariant.text,
-                        loading: _busy,
-                        onPressed: () => _cancelDebt(debt),
+            // Not while editing: a reload rebases the draft.
+            builder: (context) => PullToRefresh(
+              enabled: !isEditing,
+              onRefresh: () => Future.wait([
+                context.read<PersonalDebtsCubit>().load(),
+                _fetch(),
+              ]),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.huge,
+                ),
+                children: [
+                  LockedInEdit(locked: isEditing, child: _header(l, debt)),
+                  if (debt.isOpen && !isEditing) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    AppButton(
+                      label: debt.isOwedToMe ? l.debtReceive : l.debtPay,
+                      icon: AppIcons.settle,
+                      size: AppButtonSize.large,
+                      expand: true,
+                      onPressed: () => _settle(debt),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.lg),
+                  _rows(l, debt),
+                  if (debt.isOpen) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    LockedInEdit(
+                      locked: isEditing,
+                      child: Center(
+                        child: AppButton(
+                          label: l.debtCancel,
+                          variant: AppButtonVariant.text,
+                          loading: _busy,
+                          onPressed: () => _cancelDebt(debt),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
+                  // Delete lives at the bottom in edit mode (no top-bar actions).
+                  if (isEditing)
+                    DangerRow(
+                      icon: AppIcons.delete,
+                      label: l.debtDeleteThis,
+                      onTap: isSaving ? null : () => _delete(debt),
+                    ),
                 ],
-                // Delete lives at the bottom in edit mode (no top-bar actions).
-                if (isEditing)
-                  DangerRow(
-                    icon: AppIcons.delete,
-                    label: l.debtDeleteThis,
-                    onTap: isSaving ? null : () => _delete(debt),
-                  ),
-              ],
+              ),
             ),
           ),
         ),

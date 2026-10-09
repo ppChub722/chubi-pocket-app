@@ -25,16 +25,16 @@ enum IconType {
 
 extension IconTypeX on IconType {
   IconData get fallbackIcon => switch (this) {
-        IconType.account => Icons.account_balance_wallet_outlined,
-        IconType.userProfile => Icons.person_outline,
-        IconType.category => Icons.category_outlined,
-        IconType.tag => Icons.label_outline,
-        IconType.project => Icons.folder_outlined,
-        IconType.contact => Icons.contacts_outlined,
-        IconType.projectMember => Icons.person_outline,
-        IconType.projectTransaction => Icons.receipt_outlined,
-        IconType.transaction => Icons.receipt_outlined,
-      };
+    IconType.account => Icons.account_balance_wallet_outlined,
+    IconType.userProfile => Icons.person_outline,
+    IconType.category => Icons.category_outlined,
+    IconType.tag => Icons.label_outline,
+    IconType.project => Icons.folder_outlined,
+    IconType.contact => Icons.contacts_outlined,
+    IconType.projectMember => Icons.person_outline,
+    IconType.projectTransaction => Icons.receipt_outlined,
+    IconType.transaction => Icons.receipt_outlined,
+  };
 
   /// Whether this type has an IconMaker picker.
   /// [transaction] is display-only — no picker.
@@ -46,12 +46,9 @@ extension IconTypeX on IconType {
   /// preserved in storage but suppressed everywhere they're rendered.
   /// All other types render the code as-is.
   IconCode applyDisplayRules(IconCode code) => switch (this) {
-        IconType.tag => IconCode(
-            icon: code.icon,
-            iconColors: code.iconColors,
-          ),
-        _ => code,
-      };
+    IconType.tag => IconCode(icon: code.icon, iconColors: code.iconColors),
+    _ => code,
+  };
 
   /// Per-type default for the picker's hide-toggles row.
   ///
@@ -60,7 +57,7 @@ extension IconTypeX on IconType {
   /// For tags, bg + border default to hidden so the preview matches what
   /// will actually appear on screens once saved.
   ({bool icon, bool bg, bool border}) get defaultPreviewHides => switch (this) {
-        IconType.tag => (icon: false, bg: true, border: true),
-        _ => (icon: false, bg: false, border: false),
-      };
+    IconType.tag => (icon: false, bg: true, border: true),
+    _ => (icon: false, bg: false, border: false),
+  };
 }

@@ -39,9 +39,7 @@ class BudgetsRepository {
 
   Future<Budget> getById(String id) async {
     try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/budgets/$id',
-      );
+      final res = await _client.dio.get<Map<String, dynamic>>('/budgets/$id');
       return Budget.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

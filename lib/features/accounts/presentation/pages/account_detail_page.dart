@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../core/constants/app_durations.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -18,10 +19,10 @@ import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/skeleton_box.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../../transactions/domain/transaction.dart';
+import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/period_summary_card.dart';
-import '../../../transactions/presentation/widgets/transaction_tile.dart';
+import '../../../transactions/presentation/pages/transactions_list_page.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import '../../domain/wallet_member.dart';
@@ -150,12 +151,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         _AccountDraft.from(a),
         editing: widget.startEditing && _isOwner,
       );
-      // The global list is shared — scope it to this wallet for the preview.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.read<TransactionsCubit>().load(accountId: a.id);
-        }
-      });
     }
     onDraftRestored();
   }
@@ -187,6 +182,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       c.dispose();
     }
     _nameFocus.dispose();
+    _pages.dispose();
     _descriptionFocus.dispose();
     _noteFocus.dispose();
     super.dispose();
@@ -480,22 +476,36 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
   }
 
+  /// Bumped on pull-to-refresh — rebuilds the summary card, which fetches
+  /// on its own.
+  int _refreshes = 0;
+
   Future<void> _refresh() async {
-    final id = widget.account!.id;
-    await Future.wait([
-      context.read<AccountsCubit>().load(),
-      context.read<TransactionsCubit>().load(accountId: id),
-    ]);
+    setState(() => _refreshes++);
+    await context.read<AccountsCubit>().load();
   }
+
+  // ── Tabs ─────────────────────────────────────────────────────────────
+
+  /// ภาพรวม · รายการ — swipe or tap (owner 2026-10-09). The header card
+  /// stays above both.
+  final _pages = PageController();
+  _Tab _tab = _Tab.overview;
+
+  void _goTab(_Tab t) => setState(() => _tab = t);
 
   // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final a = widget.account;
+    // Edit mode lives on ภาพรวม (the list has nothing to edit) — the pager
+    // slides back on its own.
+    if (isEditing) _tab = _Tab.overview;
     return editScope(
       Scaffold(
-        // The bar floats over the list; its first item is padded below it.
+        // The bar floats over the page; the header is padded below it.
         extendBodyBehindAppBar: true,
         appBar: AppTopBar(
           title: _title(l),
@@ -509,18 +519,94 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           // the bar height in its top padding.
           child: Builder(
             builder: (context) {
-              final list = ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
+              final header = Padding(
                 padding: EdgeInsets.fromLTRB(
                   AppSpacing.lg,
                   MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   AppSpacing.lg,
+                  0,
+                ),
+                child: _header(l),
+              );
+              final overview = ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
                   AppSpacing.huge,
                 ),
-                children: _children(l),
+                children: _overview(l),
               );
-              if (_isCreate) return list;
-              return PullToRefresh(onRefresh: _refresh, child: list);
+              if (a == null) {
+                return Column(
+                  children: [
+                    header,
+                    Expanded(child: overview),
+                  ],
+                );
+              }
+              return Column(
+                children: [
+                  header,
+                  AnimatedSize(
+                    duration: AppDurations.chrome,
+                    curve: AppDurations.chromeCurve,
+                    child: isEditing
+                        ? const SizedBox(width: double.infinity)
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.lg,
+                              AppSpacing.sm,
+                              AppSpacing.lg,
+                              0,
+                            ),
+                            child: AppTabBar<_Tab>(
+                              selected: _tab,
+                              onChanged: _goTab,
+                              pager: _pages,
+                              tabs: [
+                                AppTab(
+                                  value: _Tab.overview,
+                                  label: l.accountDetailTabOverview,
+                                ),
+                                AppTab(
+                                  value: _Tab.transactions,
+                                  label: l.accountDetailTransactionsTitle,
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                  Expanded(
+                    child: AppTabPager<_Tab>(
+                      controller: _pages,
+                      values: _Tab.values,
+                      selected: _tab,
+                      onChanged: _goTab,
+                      enabled: !isEditing,
+                      builder: (context, t) => switch (t) {
+                        _Tab.overview => PullToRefresh(
+                          enabled: !isEditing,
+                          onRefresh: _refresh,
+                          child: overview,
+                        ),
+                        // The full list — search, filters, paging — on its
+                        // own cubit, so the global one isn't narrowed.
+                        _Tab.transactions => BlocProvider(
+                          create: (ctx) => TransactionsCubit(
+                            repository: ctx.read<TransactionsRepository>(),
+                          ),
+                          child: TransactionsListPage(
+                            embedded: true,
+                            lockedAccount: a,
+                          ),
+                        ),
+                      },
+                    ),
+                  ),
+                ],
+              );
             },
           ),
         ),
@@ -535,25 +621,21 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return widget.account!.name;
   }
 
-  List<Widget> _children(AppLocalizations l) {
+  /// The ภาพรวม tab (and the whole body while creating). Transactions moved
+  /// to their own tab.
+  List<Widget> _overview(AppLocalizations l) {
     final editing = isEditing;
     final a = widget.account;
     return [
-      _header(l),
-      if (a != null) ...[
-        const SizedBox(height: AppSpacing.lg),
-        LockedInEdit(
-          locked: editing,
-          child: PeriodSummaryCard(accountId: a.id),
-        ),
+      // The summary has nothing to edit — hidden in edit mode.
+      if (a != null && !editing) ...[
+        PeriodSummaryCard(key: ValueKey(_refreshes), accountId: a.id),
+        const SizedBox(height: AppSpacing.md),
       ],
-      const SizedBox(height: AppSpacing.md),
       _infoSection(l),
       if (a != null) ...[
         const SizedBox(height: AppSpacing.md),
         LockedInEdit(locked: editing, child: _sharingSection(l, a)),
-        const SizedBox(height: AppSpacing.md),
-        LockedInEdit(locked: editing, child: _recentSection(l, a)),
       ],
       // Archive lives at the bottom of the body in edit mode (the top bar
       // carries no page actions).
@@ -570,6 +652,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final editing = isEditing;
     final owner = _isOwner;
     final viewing = !editing && !_isCreate;
+    final scheme = Theme.of(context).colorScheme;
+    final hasDescription = working.description.trim().isNotEmpty;
     return _HeroHeader(
       account: _preview(l),
       symbol: Currencies.symbolOf(_currency),
@@ -578,6 +662,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         controller: _nameController,
         focusNode: _nameFocus,
         hint: l.accountFormNameLabel,
+        maxLines: 2,
         onEnterEdit: _enterOn(_nameFocus),
         onChanged: (v) => _onText(_Field.name, v),
         validator: (v) {
@@ -587,10 +672,32 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           return null;
         },
       ),
-      onEdit: viewing && owner ? enterEdit : null,
+      // The description lives here now, edited in place (owner
+      // 2026-10-09) — no separate row below. The owner always gets the line
+      // (empty = the dim hint) so entering edit doesn't grow the card;
+      // others only see one that's set.
+      descriptionField: editing || hasDescription || owner
+          ? InlineTitleField(
+              editing: editing,
+              controller: _descriptionController,
+              focusNode: _descriptionFocus,
+              hint: l.accountFormDescriptionHelper,
+              maxLength: 280,
+              maxLines: 3,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurface.withValues(alpha: 0.75),
+              ),
+              onEnterEdit: owner ? _enterOn(_descriptionFocus) : null,
+              onChanged: (v) => _onText(_Field.description, v),
+            )
+          : null,
+      // Create has no actions; otherwise they stay in the layout and only
+      // fade out while editing, so the name never reflows.
+      onEdit: !_isCreate && owner ? enterEdit : null,
       onIconTap: editing ? _openIconMaker : null,
       onIconLongPress: viewing && owner ? _enterEditThenOpenMaker : null,
-      onAdjust: viewing ? _adjustBalance : null,
+      onAdjust: _isCreate ? null : _adjustBalance,
+      actionsActive: viewing,
     );
   }
 
@@ -600,6 +707,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final w = working;
     final symbol = Currencies.symbolOf(_currency);
     final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    // The type's picked look follows the wallet's own colour.
+    final accent = w.iconCode?.accentColorFor(palette) ?? palette.primary;
     // Non-owners can't fill an empty field, so don't show it.
     bool show(String v) => editing || owner || v.trim().isNotEmpty;
     return SectionCard(
@@ -608,7 +718,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           DetailStacked(
             label: l.accountFormTypeLabel,
             child: Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: SelectCardGroup<AccountType>(
                 columns: 3,
                 selected: w.type,
@@ -619,6 +729,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                       value: t,
                       label: accountTypeLabel(context, t),
                       icon: t.icon,
+                      color: accent,
                     ),
                 ],
               ),
@@ -627,14 +738,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         else
           DetailRow(
             label: l.accountFormTypeLabel,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(w.type.icon, size: 20, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.sm),
-                Flexible(child: Text(accountTypeLabel(context, w.type))),
-              ],
-            ),
+            trailing: _TypeChip(type: w.type, accent: accent),
           ),
         if (_isCreate) ...[
           const RowDivider(),
@@ -662,22 +766,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-        if (show(w.description)) ...[
-          const RowDivider(),
-          DetailStacked(
-            label: l.accountDetailDescription,
-            child: InlineField(
-              editing: editing,
-              controller: _descriptionController,
-              focusNode: _descriptionFocus,
-              maxLines: 3,
-              maxLength: 280,
-              hint: l.accountFormDescriptionHelper,
-              onEnterEdit: _enterOn(_descriptionFocus),
-              onChanged: (v) => _onText(_Field.description, v),
             ),
           ),
         ],
@@ -842,45 +930,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       ],
     );
   }
-
-  Widget _recentSection(AppLocalizations l, Account a) {
-    final rows = context.select<TransactionsCubit, List<Transaction>>(
-      (c) => c.forAccount(a.id).take(5).toList(),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SectionHeader(
-          title: l.accountDetailTransactionsTitle,
-          actionLabel: rows.isEmpty ? null : l.accountDetailSeeAll,
-          onAction: () => context.push('/accounts/${a.id}/transactions'),
-        ),
-        Card(
-          margin: EdgeInsets.zero,
-          clipBehavior: Clip.antiAlias,
-          child: rows.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Text(
-                    l.transactionsEmptyAccountMessage,
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : Column(
-                  children: [
-                    for (final t in rows)
-                      TransactionTile(
-                        transaction: t,
-                        showAccount: false,
-                        showDate: true,
-                      ),
-                  ],
-                ),
-        ),
-      ],
-    );
-  }
 }
+
+enum _Tab { overview, transactions }
 
 // ────────────────────────────────────────────────────────────────────
 // Header — the wallet's grid card, enlarged. View mode: ✏️ → edit,
@@ -893,10 +945,12 @@ class _HeroHeader extends StatelessWidget {
     required this.account,
     required this.symbol,
     required this.nameField,
+    this.descriptionField,
     this.onEdit,
     this.onIconTap,
     this.onIconLongPress,
     this.onAdjust,
+    this.actionsActive = true,
   });
 
   /// The draft as a wallet (live preview).
@@ -904,26 +958,27 @@ class _HeroHeader extends StatelessWidget {
   final String symbol;
   final Widget nameField;
 
-  /// The ✏️ chip (view mode, owner); null hides it.
+  /// Under the name; null hides it (a non-owner viewing, no description).
+  final Widget? descriptionField;
+
+  /// The ✏️ chip (owner); null leaves it out.
   final VoidCallback? onEdit;
   final VoidCallback? onIconTap;
   final VoidCallback? onIconLongPress;
 
-  /// The ปรับยอด button (view mode); null hides it.
+  /// The ปรับยอด button; null leaves it out (create).
   final VoidCallback? onAdjust;
+
+  /// false (edit mode) fades ✏️ / ปรับยอด out but keeps their space, so
+  /// the name column — and the card — keep their size between modes.
+  final bool actionsActive;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent = account.iconCode?.accentColorFor(palette) ?? palette.primary;
-    final desc = account.description;
-    final subtitle = [
-      desc ?? accountTypeLabel(context, account.type),
-      if (account.isShared) l.walletSharedLabel,
-    ].join(' · ');
     final utilization = account.creditUtilization;
     final limit = account.creditLimit ?? 0;
     return AccountCardSurface(
@@ -936,6 +991,8 @@ class _HeroHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Icon · name over description · actions (owner 2026-10-09:
+            // name beside the icon; ปรับยอด next to ✏️).
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -949,56 +1006,62 @@ class _HeroHeader extends StatelessWidget {
                     onTap: onIconTap,
                   ),
                 ),
-                const Spacer(),
-                if (account.isShared)
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [nameField, ?descriptionField],
+                  ),
+                ),
+                if (account.isShared) ...[
+                  const SizedBox(width: AppSpacing.sm),
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.xs),
                     child: OtherMembersStack(account: account, size: 24),
                   ),
-                if (onEdit != null) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  AppIconButton(
-                    icon: AppIcons.edit,
-                    size: 32,
-                    tooltip: l.commonEdit,
-                    onPressed: onEdit,
-                  ),
                 ],
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            nameField,
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: MoneyText(
-                    account.balance,
-                    symbol: symbol,
-                    style: textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: accent,
+                if (onAdjust != null || onEdit != null)
+                  IgnorePointer(
+                    ignoring: !actionsActive,
+                    child: AnimatedOpacity(
+                      duration: AppDurations.chrome,
+                      curve: AppDurations.chromeCurve,
+                      opacity: actionsActive ? 1 : 0,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (onAdjust != null) ...[
+                            const SizedBox(width: AppSpacing.sm),
+                            _PillButton(
+                              icon: AppIcons.reset,
+                              label: l.accountDetailAdjustBalance,
+                              onPressed: onAdjust!,
+                            ),
+                          ],
+                          if (onEdit != null) ...[
+                            const SizedBox(width: AppSpacing.sm),
+                            AppIconButton(
+                              icon: AppIcons.edit,
+                              size: 32,
+                              tooltip: l.commonEdit,
+                              onPressed: onEdit,
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                if (onAdjust != null) ...[
-                  const SizedBox(width: AppSpacing.sm),
-                  AppButton(
-                    label: l.accountDetailAdjustBalance,
-                    icon: AppIcons.reset,
-                    variant: AppButtonVariant.tonal,
-                    onPressed: onAdjust,
-                  ),
-                ],
               ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            MoneyText(
+              account.balance,
+              symbol: symbol,
+              style: textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: accent,
+              ),
             ),
             if (utilization != null) ...[
               const SizedBox(height: AppSpacing.sm),
@@ -1018,6 +1081,97 @@ class _HeroHeader extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A compact labelled chip beside the header's ✏️ — same look as
+/// [AppIconButton] (32 high), with room for a word.
+class _PillButton extends StatelessWidget {
+  const _PillButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerHigh,
+      elevation: 1.5,
+      shadowColor: scheme.shadow.withValues(alpha: 0.2),
+      shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        child: SizedBox(
+          height: 32,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: scheme.primary),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The wallet type as a tinted chip (view mode) — icon + label in the
+/// wallet's accent.
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({required this.type, required this.accent});
+
+  final AccountType type;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs + 2,
+      ),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(type.icon, size: 18, color: accent),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              accountTypeLabel(context, type),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

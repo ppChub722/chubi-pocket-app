@@ -424,6 +424,21 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return null;
   }
 
+  /// Re-fetches one row in place (the detail page's pull to refresh) —
+  /// a full [load] would re-run the list's filters, which may not include
+  /// this row. Re-throws [ApiException].
+  Future<void> refreshOne(String id) async {
+    final fresh = await _repo.get(id);
+    final known = state.transactions.any((t) => t.id == id);
+    _emitWrite(
+      state.copyWith(
+        transactions: known
+            ? _patch(state.transactions, [fresh])
+            : [fresh, ...state.transactions],
+      ),
+    );
+  }
+
   /// Server returns transactions in date_desc order; this is just a
   /// view filter, not a re-sort.
   List<Transaction> forAccount(String accountId) =>

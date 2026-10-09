@@ -17,12 +17,12 @@ enum LogLevel {
   /// Single-character tag used in the human-readable view. Compact so
   /// long lines don't wrap on a phone screen.
   String get tag => switch (this) {
-        LogLevel.debug => 'D',
-        LogLevel.info => 'I',
-        LogLevel.warn => 'W',
-        LogLevel.error => 'E',
-        LogLevel.critical => 'C',
-      };
+    LogLevel.debug => 'D',
+    LogLevel.info => 'I',
+    LogLevel.warn => 'W',
+    LogLevel.error => 'E',
+    LogLevel.critical => 'C',
+  };
 
   /// Wire string for JSON sink — matches slog level names so a
   /// log-aggregator can colourize FE + BE lines uniformly.
@@ -30,12 +30,12 @@ enum LogLevel {
 
   /// Numeric severity for filtering. Higher = more severe.
   int get severity => switch (this) {
-        LogLevel.debug => 0,
-        LogLevel.info => 1,
-        LogLevel.warn => 2,
-        LogLevel.error => 3,
-        LogLevel.critical => 4,
-      };
+    LogLevel.debug => 0,
+    LogLevel.info => 1,
+    LogLevel.warn => 2,
+    LogLevel.error => 3,
+    LogLevel.critical => 4,
+  };
 
   static LogLevel? parse(String? raw) {
     if (raw == null) return null;
@@ -67,13 +67,13 @@ class LogEntry {
   /// NDJSON-style line — one entry per JSON object. Trailing newline NOT
   /// included; the file sink adds it.
   String toJsonLine() => jsonEncode(<String, Object?>{
-        'ts': timestamp.toUtc().toIso8601String(),
-        'level': level.wire,
-        'msg': message,
-        if (requestId != null) 'request_id': requestId,
-        if (userId != null) 'user_id': userId,
-        if (fields.isNotEmpty) 'fields': fields,
-      });
+    'ts': timestamp.toUtc().toIso8601String(),
+    'level': level.wire,
+    'msg': message,
+    if (requestId != null) 'request_id': requestId,
+    if (userId != null) 'user_id': userId,
+    if (fields.isNotEmpty) 'fields': fields,
+  });
 
   /// Parse one NDJSON line back into a [LogEntry]. Used by the dev
   /// viewer page when re-reading the file. Returns null on malformed

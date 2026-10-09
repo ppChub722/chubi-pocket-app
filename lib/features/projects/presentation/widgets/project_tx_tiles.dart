@@ -230,63 +230,50 @@ class ProjectTxTreeTile extends StatelessWidget {
     final marked = my != null && tx.isMarkedBy(my);
     final editable = isParent && !view.rowsLocked;
     final canResolve = !view.rowsLocked && _canResolve(tx, isParent: isParent);
-    final action = await showAppSheet<String>(
+    final action = await showActionSheet<String>(
       context,
-      builder: (sheet) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            leading: ProjectTxIcon(tx: tx),
-            title: Text(tx.description ?? tx.tags.firstOrNull ?? '—'),
-            subtitle: Text(
-              [
-                view.member(tx.transactionMemberId).displayName,
-                projectTxDateLabel(context, tx.date),
-                if (tx.note?.isNotEmpty ?? false) tx.note!,
-              ].join(' · '),
-            ),
-            trailing: MoneyText(
-              tx.type == 'expense' ? -tx.amount : tx.amount,
-              symbol: Currencies.symbolOf(tx.currency),
-              tone: MoneyTone.signed,
-            ),
-          ),
-          const Divider(height: 1),
-          if (marked && !view.rowsLocked)
-            ListTile(
-              leading: const Icon(AppIcons.undo),
-              title: Text(l.projectTxUnmark),
-              onTap: () => Navigator.pop(sheet, 'unmark'),
-            ),
-          if (canResolve)
-            ListTile(
-              leading: const Icon(AppIcons.settle),
-              title: Text(l.projectTxResolve),
-              subtitle: Text(l.projectTxResolveHint),
-              onTap: () => Navigator.pop(sheet, 'resolve'),
-            ),
-          if (editable)
-            ListTile(
-              leading: const Icon(AppIcons.edit),
-              title: Text(l.projectTxEdit),
-              onTap: () => Navigator.pop(sheet, 'edit'),
-            ),
-          if (editable)
-            ListTile(
-              leading: Icon(
-                AppIcons.delete,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              title: Text(
-                l.projectTxDelete,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-              onTap: () => Navigator.pop(sheet, 'delete'),
-            ),
-          const SizedBox(height: AppSpacing.md),
-        ],
+      header: ActionSheetHeader(
+        leading: ProjectTxIcon(tx: tx),
+        title: tx.description ?? tx.tags.firstOrNull ?? '—',
+        subtitle: [
+          view.member(tx.transactionMemberId).displayName,
+          projectTxDateLabel(context, tx.date),
+          if (tx.note?.isNotEmpty ?? false) tx.note!,
+        ].join(' · '),
+        trailing: MoneyText(
+          tx.type == 'expense' ? -tx.amount : tx.amount,
+          symbol: Currencies.symbolOf(tx.currency),
+          tone: MoneyTone.signed,
+        ),
       ),
+      actions: [
+        if (marked && !view.rowsLocked)
+          SheetAction(
+            value: 'unmark',
+            icon: AppIcons.undo,
+            label: l.projectTxUnmark,
+          ),
+        if (canResolve)
+          SheetAction(
+            value: 'resolve',
+            icon: AppIcons.settle,
+            label: l.projectTxResolve,
+            subtitle: l.projectTxResolveHint,
+          ),
+        if (editable) ...[
+          SheetAction(
+            value: 'edit',
+            icon: AppIcons.edit,
+            label: l.projectTxEdit,
+          ),
+          SheetAction(
+            value: 'delete',
+            icon: AppIcons.delete,
+            label: l.projectTxDelete,
+            destructive: true,
+          ),
+        ],
+      ],
     );
     if (!context.mounted) return;
     switch (action) {

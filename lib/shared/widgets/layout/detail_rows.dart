@@ -32,13 +32,17 @@ class SectionCard extends StatelessWidget {
         if (title != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
             child: Text(
               title!,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: scheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ...children,
@@ -97,10 +101,9 @@ class DetailRow extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     helper!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ],
@@ -176,6 +179,6 @@ class RowDivider extends StatelessWidget {
 /// Bold label style shared by [DetailRow] / [DetailStacked].
 TextStyle? detailLabelStyle(BuildContext context) =>
     Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.onSurface,
-        );
+      fontWeight: FontWeight.bold,
+      color: Theme.of(context).colorScheme.onSurface,
+    );

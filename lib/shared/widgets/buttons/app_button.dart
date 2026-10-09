@@ -81,8 +81,10 @@ class AppButton extends StatelessWidget {
       case AppButtonVariant.outlined:
         button = OutlinedButton(
           onPressed: callback,
-          style:
-              OutlinedButton.styleFrom(minimumSize: minSize, padding: padding),
+          style: OutlinedButton.styleFrom(
+            minimumSize: minSize,
+            padding: padding,
+          ),
           child: _content(scheme.primary),
         );
       case AppButtonVariant.text:

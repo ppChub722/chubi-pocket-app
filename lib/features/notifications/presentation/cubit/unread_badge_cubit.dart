@@ -11,9 +11,9 @@ class UnreadBadgeCubit extends Cubit<int> with Clearable {
   UnreadBadgeCubit({
     required NotificationsRepository repository,
     Duration interval = const Duration(seconds: 30),
-  })  : _repo = repository,
-        _interval = interval,
-        super(0);
+  }) : _repo = repository,
+       _interval = interval,
+       super(0);
 
   /// On logout: stop polling AND wipe the cached count so the bell
   /// doesn't briefly show the previous user's number after re-login.

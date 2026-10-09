@@ -43,8 +43,8 @@ class ApiClient {
     required SecureTokenStorage tokenStorage,
     Dio? dio,
     String? baseUrl,
-  })  : _tokenStorage = tokenStorage,
-        _dio = dio ?? Dio() {
+  }) : _tokenStorage = tokenStorage,
+       _dio = dio ?? Dio() {
     _dio.options
       ..baseUrl = baseUrl ?? _devBaseUrl()
       ..connectTimeout = const Duration(seconds: 10)
@@ -75,23 +75,23 @@ class ApiClient {
   Stream<void> get onUnauthorized => _unauthorizedController.stream;
 
   Interceptor _authInterceptor() => InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await _tokenStorage.readAuthToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-      );
+    onRequest: (options, handler) async {
+      final token = await _tokenStorage.readAuthToken();
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+      handler.next(options);
+    },
+  );
 
   Interceptor _unauthorizedNotifier() => InterceptorsWrapper(
-        onError: (e, handler) {
-          if (e.response?.statusCode == 401) {
-            _unauthorizedController.add(null);
-          }
-          handler.next(e);
-        },
-      );
+    onError: (e, handler) {
+      if (e.response?.statusCode == 401) {
+        _unauthorizedController.add(null);
+      }
+      handler.next(e);
+    },
+  );
 
   Future<void> dispose() async {
     await _unauthorizedController.close();

@@ -4,10 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/storage_keys.dart';
 
-const List<Locale> supportedLocales = [
-  Locale('th'),
-  Locale('en'),
-];
+const List<Locale> supportedLocales = [Locale('th'), Locale('en')];
 
 const Locale defaultLocale = Locale('th');
 

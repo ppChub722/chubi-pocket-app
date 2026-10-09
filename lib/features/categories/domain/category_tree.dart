@@ -140,11 +140,13 @@ class CategoryTree {
   }) {
     final lower = name.trim().toLowerCase();
     if (lower.isEmpty) return false;
-    return all.any((c) =>
-        c.id != excludeId &&
-        c.parentId == parentId &&
-        c.type == type &&
-        c.name.trim().toLowerCase() == lower);
+    return all.any(
+      (c) =>
+          c.id != excludeId &&
+          c.parentId == parentId &&
+          c.type == type &&
+          c.name.trim().toLowerCase() == lower,
+    );
   }
 
   static Category? _byId(String id, List<Category> all) {

@@ -68,16 +68,16 @@ class TransactionsSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        from,
-        to,
-        totalIncome,
-        totalExpense,
-        net,
-        transactionCount,
-        currency,
-        accountId,
-        groups,
-      ];
+    from,
+    to,
+    totalIncome,
+    totalExpense,
+    net,
+    transactionCount,
+    currency,
+    accountId,
+    groups,
+  ];
 }
 
 /// One `group_by` bucket. `income` / `expense` are the typed split from
@@ -103,13 +103,13 @@ class SummaryGroup extends Equatable {
   double get spent => expense ?? total;
 
   factory SummaryGroup.fromJson(Map<String, dynamic> json) => SummaryGroup(
-        key: json['key'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        total: (json['total'] as num?)?.toDouble() ?? 0,
-        count: (json['count'] as num?)?.toInt() ?? 0,
-        income: (json['income'] as num?)?.toDouble(),
-        expense: (json['expense'] as num?)?.toDouble(),
-      );
+    key: json['key'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    total: (json['total'] as num?)?.toDouble() ?? 0,
+    count: (json['count'] as num?)?.toInt() ?? 0,
+    income: (json['income'] as num?)?.toDouble(),
+    expense: (json['expense'] as num?)?.toDouble(),
+  );
 
   @override
   List<Object?> get props => [key, name, total, count, income, expense];

@@ -4,6 +4,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../icon_maker/icon_registry.dart';
 import '../layout/selectable_frame.dart';
 import '../sheets/option_sheet.dart';
 
@@ -16,8 +17,8 @@ import '../sheets/option_sheet.dart';
 /// Every anchor takes a `builder(context, toggle)`: render your trigger
 /// (a `FilterDropdownChip`, `StatusPill`, button…) and call `toggle` on tap.
 
-typedef PopoverTriggerBuilder = Widget Function(
-    BuildContext context, VoidCallback toggle);
+typedef PopoverTriggerBuilder =
+    Widget Function(BuildContext context, VoidCallback toggle);
 
 MenuStyle _menuStyle(BuildContext context) {
   final scheme = Theme.of(context).colorScheme;
@@ -28,7 +29,8 @@ MenuStyle _menuStyle(BuildContext context) {
       RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
     ),
     padding: const WidgetStatePropertyAll(
-        EdgeInsets.symmetric(vertical: AppSpacing.xs)),
+      EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    ),
   );
 }
 
@@ -55,7 +57,9 @@ class _PopoverItem extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs + 2, vertical: 2),
+        horizontal: AppSpacing.xs + 2,
+        vertical: 2,
+      ),
       child: MenuItemButton(
         closeOnActivate: closeOnActivate,
         onPressed: option.enabled ? onPressed : null,
@@ -88,10 +92,9 @@ class _PopoverItem extends StatelessWidget {
             if (option.subtitle != null)
               Text(
                 option.subtitle!,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: scheme.onSurfaceVariant),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
           ],
         ),
@@ -229,7 +232,7 @@ class PopoverAnchor extends StatelessWidget {
 
   final PopoverTriggerBuilder builder;
   final Widget Function(BuildContext context, VoidCallback close)
-      contentBuilder;
+  contentBuilder;
   final double maxWidth;
 
   @override
@@ -245,7 +248,9 @@ class PopoverAnchor extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: maxWidth),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
                 child: contentBuilder(ctx, () => controller?.close()),
               ),
             );
@@ -314,11 +319,81 @@ class ColorSwatchGrid extends StatelessWidget {
               child: Container(
                 width: size,
                 height: size,
-                decoration:
-                    BoxDecoration(color: colors[i], shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: colors[i],
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// Icon-swatch grid for [PopoverAnchor] — the [ColorSwatchGrid] of glyphs
+/// (an icon filter): multi-select circles by icon id, ring-highlighted when
+/// picked, + the same "ล้าง" row once something is selected ([onClear]).
+class IconSwatchGrid extends StatelessWidget {
+  const IconSwatchGrid({
+    required this.glyphs,
+    required this.selected,
+    required this.onToggle,
+    this.onClear,
+    this.clearLabel,
+    this.fallback = AppIcons.category,
+    this.size = 32,
+    super.key,
+  });
+
+  /// Icon ids ([IconRegistry] keys).
+  final List<String> glyphs;
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
+
+  /// Clears the selection; null hides the "ล้าง" row.
+  final VoidCallback? onClear;
+  final String? clearLabel;
+
+  /// Shown for an id the registry doesn't know.
+  final IconData fallback;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final grid = Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final g in glyphs)
+          InkResponse(
+            onTap: () => onToggle(g),
+            radius: size / 2 + 6,
+            child: SelectableFrame(
+              selected: selected.contains(g),
+              radius: size / 2,
+              gap: 2,
+              child: CircleAvatar(
+                radius: size / 2,
+                backgroundColor: scheme.surfaceContainerHighest,
+                child: Icon(
+                  IconRegistry.get(g, fallback: fallback),
+                  size: size * 0.56,
+                  color: scheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+    if (onClear == null || selected.isEmpty) return grid;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        grid,
+        PopoverClearItem(label: clearLabel, onPressed: onClear!),
       ],
     );
   }

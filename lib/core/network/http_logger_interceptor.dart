@@ -24,7 +24,7 @@ import '../logger/log_entry.dart';
 /// insensitive substring) get their values replaced with `[REDACTED]`.
 class HttpLoggerInterceptor extends Interceptor {
   HttpLoggerInterceptor({AppLogger? logger})
-      : _logger = logger ?? AppLogger.instance;
+    : _logger = logger ?? AppLogger.instance;
 
   final AppLogger _logger;
 
@@ -72,7 +72,9 @@ class HttpLoggerInterceptor extends Interceptor {
 
   @override
   void onResponse(
-      Response<dynamic> response, ResponseInterceptorHandler handler) {
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
     final reqId = response.requestOptions.extra[_requestIdExtra] as String?;
     final latencyMs = _latencyMs(response.requestOptions);
     final fields = <String, Object?>{
@@ -113,9 +115,7 @@ class HttpLoggerInterceptor extends Interceptor {
     }
 
     final status = err.response?.statusCode ?? 0;
-    final level = status >= 500 || status == 0
-        ? LogLevel.error
-        : LogLevel.warn;
+    final level = status >= 500 || status == 0 ? LogLevel.error : LogLevel.warn;
     _emit(level, 'http.error', requestId: reqId, fields: fields);
 
     handler.next(err);
@@ -123,8 +123,12 @@ class HttpLoggerInterceptor extends Interceptor {
 
   // ── helpers ──────────────────────────────────────────────────────
 
-  void _emit(LogLevel level, String msg,
-      {String? requestId, Map<String, Object?>? fields}) {
+  void _emit(
+    LogLevel level,
+    String msg, {
+    String? requestId,
+    Map<String, Object?>? fields,
+  }) {
     switch (level) {
       case LogLevel.debug:
         _logger.debug(msg, requestId: requestId, fields: fields);

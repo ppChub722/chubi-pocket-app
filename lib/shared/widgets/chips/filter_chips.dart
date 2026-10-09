@@ -53,7 +53,8 @@ class FilterDropdownChip extends StatelessWidget {
             : Colors.transparent,
         shape: StadiumBorder(
           side: BorderSide(
-              color: isActive ? scheme.primary : scheme.outlineVariant),
+            color: isActive ? scheme.primary : scheme.outlineVariant,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -62,7 +63,9 @@ class FilterDropdownChip extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 36),
             child: Padding(
               padding: const EdgeInsets.only(
-                  left: AppSpacing.md, right: AppSpacing.xs),
+                left: AppSpacing.md,
+                right: AppSpacing.xs,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -73,9 +76,9 @@ class FilterDropdownChip extends StatelessWidget {
                   Text(
                     text,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: isActive ? scheme.primary : null,
-                          fontWeight: isActive ? FontWeight.w600 : null,
-                        ),
+                      color: isActive ? scheme.primary : null,
+                      fontWeight: isActive ? FontWeight.w600 : null,
+                    ),
                   ),
                   Icon(AppIcons.dropdown, size: 20, color: fg),
                 ],
@@ -133,8 +136,10 @@ class SortChip<T> extends StatelessWidget {
               children: [
                 Icon(AppIcons.sort, size: 18, color: scheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.xs),
-                Text(current.label,
-                    style: Theme.of(context).textTheme.labelLarge),
+                Text(
+                  current.label,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 Icon(AppIcons.dropdown, color: scheme.onSurfaceVariant),
               ],
             ),
@@ -157,7 +162,11 @@ class FilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.xs, AppSpacing.md, AppSpacing.xs),
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -209,7 +218,9 @@ class ActionPill extends StatelessWidget {
       opacity: onTap != null ? 1 : 0.4,
       child: Material(
         color: fg.withValues(alpha: 0.10),
-        shape: StadiumBorder(side: BorderSide(color: fg.withValues(alpha: 0.5))),
+        shape: StadiumBorder(
+          side: BorderSide(color: fg.withValues(alpha: 0.5)),
+        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -227,7 +238,9 @@ class ActionPill extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: fg, fontWeight: FontWeight.w600),
+                      color: fg,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),

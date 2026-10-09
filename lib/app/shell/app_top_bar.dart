@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_durations.dart';
 import '../../core/constants/app_icons.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../features/auth/domain/user.dart';
@@ -12,6 +13,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../../shared/widgets/buttons/app_icon_button.dart';
 import '../../shared/icon_maker/icon_shape.dart';
 import '../../shared/widgets/user_avatar.dart';
+import 'fade_branch_container.dart';
 import 'top_bar_crumbs.dart';
 
 /// Universal top bar — the top-chrome counterpart to `MainBottomNav`.
@@ -34,11 +36,22 @@ import 'top_bar_crumbs.dart';
 ///
 /// Modes:
 /// - **[editing]** (edit / reorder mode, forms): ← becomes ✕ (= cancel,
-///   asks before discarding) and the breadcrumb parent stops being a link.
-///   The universal chips stay — opening them pushes an overlay page, so the
-///   edit in progress is still there on return.
-/// - **[showUniversal] false** (overlay layer: settings, notifications):
-///   hides the chips since the layer was opened from them.
+///   asks before discarding), the breadcrumb parent stops being a link and
+///   the universal chips slide up out of view (owner 2026-10-09).
+/// - **[showUniversal] false**: hides the chips — only where they can't
+///   work (signed out) or on a whole-page form. The overlay pages they open
+///   (รอยืนยัน, inbox, settings) show them too (owner 2026-10-09); a chip
+///   for the page you're on does nothing, and from its sub-page it goes
+///   back to it.
+///
+/// Motion (owner 2026-10-09 — the bar must not move between pages):
+/// - Both halves are [Hero]es, so on push / back they stay put while the
+///   page slides underneath. The left group cross-fades old → new (title,
+///   breadcrumb, ← / ✕ / none).
+/// - Hidden chips aren't removed: they're parked above the screen. Going
+///   to such a page flies them up and out; coming back flies them down.
+/// - Within one page (entering edit mode) the same changes animate in
+///   place.
 ///
 /// Implements [PreferredSizeWidget] so it drops straight into
 /// `Scaffold.appBar`.
@@ -76,98 +89,405 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
+  static const _leftTag = 'app-top-bar-left';
+  static const _chipsTag = 'app-top-bar-chips';
+
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-
+    final left = _LeftData(
+      showBack: showBack || editing,
+      backIcon: editing ? AppIcons.close : AppIcons.back,
+      title: title,
+      parent: showParent ? (parent ?? defaultTopBarCrumb(context)) : null,
+      // Editing: leave only via ✕ (it asks before discarding).
+      parentEnabled: !editing,
+      onBack: onBack ?? () => _defaultBack(context),
+    );
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       automaticallyImplyLeading: false,
+      // The toolbar clips by default — chips sliding up would be cut at its
+      // top edge instead of leaving the screen.
+      clipBehavior: Clip.none,
       titleSpacing: AppSpacing.md,
-      title: _LeftGroup(
-        showBack: showBack || editing,
-        backIcon: editing ? AppIcons.close : AppIcons.back,
-        title: title,
-        parent: showParent ? (parent ?? defaultTopBarCrumb(context)) : null,
-        // Editing: leave only via ✕ (it asks before discarding).
-        parentEnabled: !editing,
-        onBack: onBack ?? () => _defaultBack(context),
+      title: Align(
+        alignment: Alignment.centerLeft,
+        child: _LeftSlot(data: left),
       ),
-      actions: [
-        if (!showUniversal) const SizedBox(width: AppSpacing.md),
-        // Pending drafts (รอยืนยัน), next to the inbox.
-        if (showUniversal)
-          BlocBuilder<PendingCubit, PendingState>(
-            buildWhen: (a, b) => a.count != b.count,
-            builder: (context, pending) => _chip(
-              icon: AppIcons.pending,
-              tooltip: l.pendingTooltip,
-              badgeCount: pending.count,
-              onPressed: () => context.push('/pending'),
-            ),
-          ),
-        // Notification inbox.
-        if (showUniversal)
-          BlocBuilder<UnreadBadgeCubit, int>(
-            builder: (context, unread) => _chip(
-              icon: AppIcons.notifications,
-              tooltip: l.navNotificationsTooltip,
-              badgeCount: unread,
-              onPressed: () => context.push('/notifications'),
-            ),
-          ),
-        // Profile — the full avatar (no chip border), with a matching
-        // shadow.
-        if (showUniversal)
-          BlocBuilder<AuthCubit, AuthState>(
-            builder: (context, state) {
-              final user = _userOf(state);
-              if (user == null) return const SizedBox(width: AppSpacing.sm);
-              // The shadow + ripple follow the avatar's own shape (circle,
-              // squircle, leaf, …) the user picked for their icon.
-              final outline = IconShape.fromId(user.iconCode?.shape).radius(40);
-              return Padding(
-                padding: const EdgeInsets.only(
-                  left: AppSpacing.sm,
-                  right: AppSpacing.md,
-                ),
-                child: Tooltip(
-                  message: l.navProfileTooltip,
-                  child: InkWell(
-                    customBorder: RoundedRectangleBorder(borderRadius: outline),
-                    onTap: () => context.push('/settings'),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: outline,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.shadow.withValues(alpha: 0.2),
-                            blurRadius: 3,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: UserAvatar(
-                        displayName: user.displayName,
-                        iconCode: user.iconCode,
-                        size: 40,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+      actions: [_ChipsSlot(hidden: editing || !showUniversal)],
+    );
+  }
+
+  /// Left group in flight: the old one fades out while the new one fades
+  /// in, each at its own size, pinned left — so a longer / shorter title or
+  /// a ← appearing reads as a morph, not a jump. To / from a parked
+  /// placeholder there's nothing to cross-fade: the real group just rides
+  /// the flight ([_ParkingHero] fades it).
+  static Widget _crossFadeShuttle(
+    BuildContext flightContext,
+    Animation<double> animation,
+    HeroFlightDirection direction,
+    BuildContext fromContext,
+    BuildContext toContext,
+  ) {
+    final toward = _towardDestination(animation, direction);
+    Widget sized(BuildContext heroContext) =>
+        _pinned(heroContext, (heroContext.widget as Hero).child);
+
+    if (_Parked.of(fromContext)) return sized(toContext);
+    if (_Parked.of(toContext)) return sized(fromContext);
+    return Stack(
+      alignment: Alignment.topLeft,
+      clipBehavior: Clip.none,
+      children: [
+        FadeTransition(
+          opacity: ReverseAnimation(toward),
+          child: sized(fromContext),
+        ),
+        FadeTransition(opacity: toward, child: sized(toContext)),
       ],
     );
   }
 
+  /// [child] at its hero's own size, pinned to the shuttle's top-left.
+  ///
+  /// A flight places its shuttle by top *and* bottom offsets taken from the
+  /// navigator's size when it starts. Opening an edit / create page hides
+  /// the shell's bottom nav mid-flight, the navigator grows, and the
+  /// shuttle box stretches with it — anything centred in it sank by half
+  /// the nav's height, then snapped back up on landing (owner 2026-10-09:
+  /// "เลื่อนลงแล้วเลื่อนขึ้น"). Pinned top-left it stays where the bar is.
+  static Widget _pinned(BuildContext heroContext, Widget child) {
+    final box = heroContext.findRenderObject() as RenderBox?;
+    return OverflowBox(
+      alignment: Alignment.topLeft,
+      minWidth: 0,
+      maxWidth: box?.size.width ?? double.infinity,
+      minHeight: 0,
+      maxHeight: box?.size.height ?? double.infinity,
+      child: child,
+    );
+  }
+
+  /// A flight's progress from its source to its destination, 0 → 1. (Pop
+  /// drives it with the popped route's animation, which runs 1 → 0.)
+  static Animation<double> _towardDestination(
+    Animation<double> animation,
+    HeroFlightDirection direction,
+  ) => direction == HeroFlightDirection.push
+      ? animation
+      : ReverseAnimation(animation);
+
   void _defaultBack(BuildContext context) {
     if (context.canPop()) context.pop();
+  }
+}
+
+/// The one way a top-bar part comes and goes (owner 2026-10-09: same
+/// motion everywhere). A part that isn't shown is **parked** — lifted past
+/// the top of the screen and faded out — never removed. Then:
+/// - **push / back**: it's a [Hero], so it flies between where it sits on
+///   each page — up and out, or down and in, when one page parks it;
+/// - **in place** (edit mode on / off): it animates to / from parked;
+/// - **tab switch**: `_LeftSlot` runs [park] off the shell's animation.
+///
+/// All three use [AppDurations.chrome] / [AppDurations.chromeCurve] and the
+/// same lift + fade, so they look the same.
+class _ParkingHero extends StatelessWidget {
+  const _ParkingHero({
+    required this.tag,
+    required this.parked,
+    required this.child,
+    this.shuttle,
+  });
+
+  final Object tag;
+  final bool parked;
+  final Widget child;
+
+  /// What flies; defaults to the destination's [child].
+  final HeroFlightShuttleBuilder? shuttle;
+
+  /// Lifts [child] by [p] of the way to parked (0 = in place, 1 = parked)
+  /// and fades it to match.
+  static Widget park(BuildContext context, double p, Widget child) {
+    return Transform.translate(
+      offset: Offset(0, -_lift(context) * p),
+      child: Opacity(opacity: (1 - p).clamp(0.0, 1.0), child: child),
+    );
+  }
+
+  /// Past the status bar and the bar itself.
+  static double _lift(BuildContext context) =>
+      MediaQuery.viewPaddingOf(context).top + kToolbarHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final hero = _Parked(
+      parked: parked,
+      child: Hero(
+        tag: tag,
+        transitionOnUserGestures: true,
+        flightShuttleBuilder: _shuttle,
+        child: child,
+      ),
+    );
+    return IgnorePointer(
+      ignoring: parked,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: parked ? 1 : 0),
+        duration: AppDurations.chrome,
+        curve: AppDurations.chromeCurve,
+        // The lift sits above the Hero, so a flight starts / ends at the
+        // parked spot.
+        builder: (context, p, hero) => park(context, p, hero!),
+        child: hero,
+      ),
+    );
+  }
+
+  Widget _shuttle(
+    BuildContext flightContext,
+    Animation<double> animation,
+    HeroFlightDirection direction,
+    BuildContext fromContext,
+    BuildContext toContext,
+  ) {
+    final flying =
+        shuttle?.call(
+          flightContext,
+          animation,
+          direction,
+          fromContext,
+          toContext,
+        ) ??
+        AppTopBar._pinned(toContext, (toContext.widget as Hero).child);
+    final from = _Parked.of(fromContext) ? 0.0 : 1.0;
+    final to = _Parked.of(toContext) ? 0.0 : 1.0;
+    return Material(
+      // The navigator overlay has no Material for the parts' ink.
+      type: MaterialType.transparency,
+      child: from == to
+          ? flying
+          : FadeTransition(
+              opacity: AppTopBar._towardDestination(animation, direction)
+                  .drive(CurveTween(curve: AppDurations.chromeCurve))
+                  .drive(Tween(begin: from, end: to)),
+              child: flying,
+            ),
+    );
+  }
+}
+
+/// Tells a flight whether its end is parked.
+class _Parked extends InheritedWidget {
+  const _Parked({required this.parked, required super.child});
+
+  final bool parked;
+
+  static bool of(BuildContext heroContext) =>
+      heroContext.getInheritedWidgetOfExactType<_Parked>()?.parked ?? false;
+
+  @override
+  bool updateShouldNotify(_Parked old) => parked != old.parked;
+}
+
+/// What the left group shows — also what a branch reports to the shell so
+/// the next tab can animate against it.
+class _LeftData {
+  const _LeftData({
+    required this.showBack,
+    required this.backIcon,
+    required this.title,
+    required this.parent,
+    required this.parentEnabled,
+    required this.onBack,
+  });
+
+  final bool showBack;
+  final IconData backIcon;
+  final String? title;
+  final TopBarCrumb? parent;
+  final bool parentEnabled;
+  final VoidCallback onBack;
+
+  /// No ← and no title (the เพิ่มเติม hub) — nothing to show.
+  bool get isEmpty => !showBack && title == null;
+
+  _LeftGroup toWidget() => _LeftGroup(
+    showBack: showBack,
+    backIcon: backIcon,
+    title: title,
+    parent: parent,
+    parentEnabled: parentEnabled,
+    onBack: onBack,
+  );
+}
+
+/// The left group as a [Hero], plus its motion when it appears / goes:
+/// - **Empty** (เพิ่มเติม): parked above the screen, so a push / back to a
+///   page that has one flies it down / up.
+/// - **Tab switch** (no route change, so no hero): coming from a tab with
+///   no group, this one drops in; going to one, the previous tab's group
+///   rises out. Two tabs that both have one just swap.
+class _LeftSlot extends StatelessWidget {
+  const _LeftSlot({required this.data});
+
+  final _LeftData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget slot = _ParkingHero(
+      tag: AppTopBar._leftTag,
+      parked: data.isEmpty,
+      shuttle: AppTopBar._crossFadeShuttle,
+      child: data.isEmpty
+          ? const SizedBox(width: 0, height: 40)
+          : data.toWidget(),
+    );
+
+    final scope = TabSwitchScope.maybeOf(context);
+    final branch = TabSwitchScope.branchOf(context);
+    if (scope == null || branch == null) return slot;
+    // Only the bar on top of its branch speaks for it.
+    if (ModalRoute.of(context)?.isCurrent ?? true) {
+      scope.reportTopBar(branch, data);
+    }
+    final previous = scope.previous;
+    if (branch != scope.current || previous == null) return slot;
+    final before = scope.topBarOf(previous);
+    final beforeEmpty = before is! _LeftData || before.isEmpty;
+    if (beforeEmpty == data.isEmpty) return slot;
+
+    return AnimatedBuilder(
+      animation: scope.animation,
+      builder: (context, _) {
+        final t = scope.animation.value;
+        if (t >= 1) return slot;
+        // Drop in from parked.
+        if (beforeEmpty) return _ParkingHero.park(context, 1 - t, slot);
+        // Rise out: the previous tab's group, leaving.
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            slot,
+            IgnorePointer(
+              child: _ParkingHero.park(context, t, before.toWidget()),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// The ⏳ / 🔔 / 👤 slot — parked (see [_ParkingHero]) when [hidden].
+class _ChipsSlot extends StatelessWidget {
+  const _ChipsSlot({required this.hidden});
+
+  final bool hidden;
+
+  @override
+  Widget build(BuildContext context) => _ParkingHero(
+    tag: AppTopBar._chipsTag,
+    parked: hidden,
+    child: const _UniversalChips(),
+  );
+}
+
+/// The universal chips themselves.
+class _UniversalChips extends StatelessWidget {
+  const _UniversalChips();
+
+  /// Opens a chip's page. Already there → nothing (no duplicate on the
+  /// stack); on one of its sub-pages (inbox › settings) → back to it.
+  static void _open(BuildContext context, String path) {
+    String? here;
+    try {
+      here = GoRouterState.of(context).uri.path;
+    } catch (_) {
+      here = null; // outside the router (tests, dev previews)
+    }
+    if (here == path) return;
+    if (here != null && here.startsWith('$path/')) {
+      context.pop();
+      return;
+    }
+    context.push(path);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Pending drafts (รอยืนยัน), next to the inbox.
+        BlocBuilder<PendingCubit, PendingState>(
+          buildWhen: (a, b) => a.count != b.count,
+          builder: (context, pending) => _chip(
+            icon: AppIcons.pending,
+            tooltip: l.pendingTooltip,
+            badgeCount: pending.count,
+            onPressed: () => _open(context, '/pending'),
+          ),
+        ),
+        // Notification inbox.
+        BlocBuilder<UnreadBadgeCubit, int>(
+          builder: (context, unread) => _chip(
+            icon: AppIcons.notifications,
+            tooltip: l.navNotificationsTooltip,
+            badgeCount: unread,
+            onPressed: () => _open(context, '/notifications'),
+          ),
+        ),
+        // Profile — the full avatar (no chip border), with a matching
+        // shadow.
+        BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            final user = _userOf(state);
+            if (user == null) return const SizedBox(width: AppSpacing.sm);
+            // The shadow + ripple follow the avatar's own shape (circle,
+            // squircle, leaf, …) the user picked for their icon.
+            final outline = IconShape.fromId(user.iconCode?.shape).radius(40);
+            return Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.sm,
+                right: AppSpacing.md,
+              ),
+              child: Tooltip(
+                message: l.navProfileTooltip,
+                child: InkWell(
+                  customBorder: RoundedRectangleBorder(borderRadius: outline),
+                  onTap: () => _open(context, '/settings'),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: outline,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.shadow.withValues(alpha: 0.2),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: UserAvatar(
+                      displayName: user.displayName,
+                      iconCode: user.iconCode,
+                      size: 40,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   /// A universal circular chip ([AppIconButton]) with left spacing.
@@ -224,77 +544,111 @@ class _LeftGroup extends StatelessWidget {
         side: BorderSide(color: scheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 40),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (showBack) ...[
-              InkWell(
-                onTap: onBack,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                  ),
-                  child: Icon(backIcon, size: 20),
-                ),
-              ),
-              Container(width: 1, height: 20, color: scheme.outlineVariant),
-            ],
-            if (crumb != null) ...[
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.sizeOf(context).width * 0.4,
-                ),
-                child: InkWell(
-                  onTap: parentEnabled ? () => goToCrumb(context, crumb) : null,
+      // In-page changes (← ↔ ✕ ↔ none, new title) resize smoothly; the
+      // clip makes a ← appearing read as sliding out of the chip.
+      child: AnimatedSize(
+        duration: AppDurations.chrome,
+        curve: AppDurations.chromeCurve,
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 40),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (showBack) ...[
+                InkWell(
+                  onTap: onBack,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.md,
                       AppSpacing.sm,
-                      AppSpacing.xs,
+                      AppSpacing.sm,
                       AppSpacing.sm,
                     ),
-                    child: Text(
-                      crumb.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                    child: AnimatedSwitcher(
+                      duration: AppDurations.chrome,
+                      switchInCurve: AppDurations.chromeCurve,
+                      switchOutCurve: AppDurations.chromeCurve,
+                      transitionBuilder: (child, a) => FadeTransition(
+                        opacity: a,
+                        child: RotationTransition(
+                          turns: Tween<double>(
+                            begin: -0.125,
+                            end: 0,
+                          ).animate(a),
+                          child: child,
+                        ),
+                      ),
+                      child: Icon(backIcon, key: ValueKey(backIcon), size: 20),
+                    ),
+                  ),
+                ),
+                Container(width: 1, height: 20, color: scheme.outlineVariant),
+              ],
+              if (crumb != null) ...[
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.sizeOf(context).width * 0.4,
+                  ),
+                  child: InkWell(
+                    onTap: parentEnabled
+                        ? () => goToCrumb(context, crumb)
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.md,
+                        AppSpacing.sm,
+                        AppSpacing.xs,
+                        AppSpacing.sm,
+                      ),
+                      child: Text(
+                        crumb.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              Icon(
-                AppIcons.chevronRight,
-                size: 16,
-                color: scheme.onSurfaceVariant,
-              ),
-            ],
-            if (title != null)
-              Flexible(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    crumb != null ? AppSpacing.xs : AppSpacing.md,
-                    AppSpacing.sm,
-                    AppSpacing.md,
-                    AppSpacing.sm,
-                  ),
-                  child: Text(
-                    title!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleMedium,
-                  ),
+                Icon(
+                  AppIcons.chevronRight,
+                  size: 16,
+                  color: scheme.onSurfaceVariant,
                 ),
-              )
-            else
-              const SizedBox(width: AppSpacing.xs),
-          ],
+              ],
+              if (title != null)
+                Flexible(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      crumb != null ? AppSpacing.xs : AppSpacing.md,
+                      AppSpacing.sm,
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: AppDurations.chrome,
+                      switchInCurve: AppDurations.chromeCurve,
+                      switchOutCurve: AppDurations.chromeCurve,
+                      layoutBuilder: (current, previous) => Stack(
+                        alignment: Alignment.centerLeft,
+                        children: [...previous, ?current],
+                      ),
+                      child: Text(
+                        title!,
+                        key: ValueKey(title),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(width: AppSpacing.xs),
+            ],
+          ),
         ),
       ),
     );

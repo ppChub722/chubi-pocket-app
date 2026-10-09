@@ -78,10 +78,12 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
     final visible = q.isEmpty
         ? widget.options
         : widget.options
-            .where((o) =>
-                o.label.toLowerCase().contains(q) ||
-                (o.subtitle?.toLowerCase().contains(q) ?? false))
-            .toList();
+              .where(
+                (o) =>
+                    o.label.toLowerCase().contains(q) ||
+                    (o.subtitle?.toLowerCase().contains(q) ?? false),
+              )
+              .toList();
     return AppSheetScaffold(
       title: widget.title,
       child: Column(
@@ -93,8 +95,9 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
           for (final o in visible)
             ListTile(
               enabled: o.enabled,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+              ),
               leading: o.leading,
               title: Text(o.label, style: o.labelStyle),
               subtitle: o.subtitle == null ? null : Text(o.subtitle!),

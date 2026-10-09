@@ -12,7 +12,9 @@ class PendingRepository {
 
   Future<List<PendingTransaction>> list() async {
     try {
-      final res = await _client.dio.get<Map<String, dynamic>>('/pending-transactions');
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/pending-transactions',
+      );
       return ((res.data!['data'] as List?) ?? const [])
           .cast<Map<String, dynamic>>()
           .map(PendingTransaction.fromJson)

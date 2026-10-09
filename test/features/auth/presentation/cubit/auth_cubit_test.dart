@@ -33,6 +33,11 @@ const _user = User(
 const _token = AuthToken(accessToken: 'tok', expiresIn: 2592000);
 
 const _networkErr = ApiException(code: 'NETWORK_ERROR', message: 'no net');
+const _unauthorizedErr = ApiException(
+  code: 'UNAUTHORIZED',
+  message: 'Unauthorized',
+  statusCode: 401,
+);
 
 void main() {
   late _MockAuthRepository repo;
@@ -56,11 +61,8 @@ void main() {
     await unauthorizedCtrl.close();
   });
 
-  AuthCubit build() => AuthCubit(
-        repository: repo,
-        tokenStorage: tokens,
-        apiClient: apiClient,
-      );
+  AuthCubit build() =>
+      AuthCubit(repository: repo, tokenStorage: tokens, apiClient: apiClient);
 
   group('init()', () {
     blocTest<AuthCubit, AuthState>(
@@ -85,10 +87,10 @@ void main() {
     );
 
     blocTest<AuthCubit, AuthState>(
-      'valid token but repo throws → clears token + AuthUnauthenticated',
+      'token rejected (401) → clears token + AuthUnauthenticated',
       build: () {
         when(() => tokens.readAuthToken()).thenAnswer((_) async => 'stale');
-        when(() => repo.getCurrentUser()).thenThrow(_networkErr);
+        when(() => repo.getCurrentUser()).thenThrow(_unauthorizedErr);
         return build();
       },
       act: (c) => c.init(),
@@ -97,16 +99,44 @@ void main() {
         verify(() => tokens.clearAuthToken()).called(1);
       },
     );
+
+    blocTest<AuthCubit, AuthState>(
+      'offline → keeps the token, stays on splash with the error',
+      build: () {
+        when(() => tokens.readAuthToken()).thenAnswer((_) async => 'tok');
+        when(() => repo.getCurrentUser()).thenThrow(_networkErr);
+        return build();
+      },
+      act: (c) => c.init(),
+      expect: () => [const AuthInitial(startupError: _networkErr)],
+      verify: (_) {
+        verifyNever(() => tokens.clearAuthToken());
+      },
+    );
+
+    blocTest<AuthCubit, AuthState>(
+      'retry after an offline start → spinner, then AuthAuthenticated',
+      build: () {
+        when(() => tokens.readAuthToken()).thenAnswer((_) async => 'tok');
+        when(() => repo.getCurrentUser()).thenAnswer((_) async => _user);
+        return build();
+      },
+      seed: () => const AuthInitial(startupError: _networkErr),
+      act: (c) => c.init(),
+      expect: () => [const AuthInitial(), const AuthAuthenticated(_user)],
+    );
   });
 
   group('login()', () {
     blocTest<AuthCubit, AuthState>(
       'success → [Loading, Authenticated]; writes token',
       build: () {
-        when(() => repo.login(
-              identifier: any(named: 'identifier'),
-              password: any(named: 'password'),
-            )).thenAnswer((_) async => (user: _user, token: _token));
+        when(
+          () => repo.login(
+            identifier: any(named: 'identifier'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => (user: _user, token: _token));
         return build();
       },
       act: (c) => c.login(identifier: 'alice', password: 'pw'),
@@ -122,13 +152,14 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'failure → [Loading, Failure(prev=Initial)]; no token write',
       build: () {
-        when(() => repo.login(
-              identifier: any(named: 'identifier'),
-              password: any(named: 'password'),
-            )).thenThrow(const ApiException(
-          code: 'INVALID_CREDENTIALS',
-          message: 'bad',
-        ));
+        when(
+          () => repo.login(
+            identifier: any(named: 'identifier'),
+            password: any(named: 'password'),
+          ),
+        ).thenThrow(
+          const ApiException(code: 'INVALID_CREDENTIALS', message: 'bad'),
+        );
         return build();
       },
       act: (c) => c.login(identifier: 'alice', password: 'wrong'),
@@ -148,20 +179,19 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'success → [Loading, Authenticated]',
       build: () {
-        when(() => repo.register(
-              username: any(named: 'username'),
-              password: any(named: 'password'),
-              displayName: any(named: 'displayName'),
-              email: any(named: 'email'),
-              currency: any(named: 'currency'),
-            )).thenAnswer((_) async => (user: _user, token: _token));
+        when(
+          () => repo.register(
+            username: any(named: 'username'),
+            password: any(named: 'password'),
+            displayName: any(named: 'displayName'),
+            email: any(named: 'email'),
+            currency: any(named: 'currency'),
+          ),
+        ).thenAnswer((_) async => (user: _user, token: _token));
         return build();
       },
-      act: (c) => c.register(
-        username: 'alice',
-        password: 'pw',
-        displayName: 'Alice',
-      ),
+      act: (c) =>
+          c.register(username: 'alice', password: 'pw', displayName: 'Alice'),
       expect: () => [
         const AuthLoading(AuthInitial()),
         const AuthAuthenticated(_user),
@@ -171,27 +201,28 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'USERNAME_EXISTS → [Loading, Failure]',
       build: () {
-        when(() => repo.register(
-              username: any(named: 'username'),
-              password: any(named: 'password'),
-              displayName: any(named: 'displayName'),
-              email: any(named: 'email'),
-              currency: any(named: 'currency'),
-            )).thenThrow(const ApiException(
-          code: 'USERNAME_EXISTS',
-          message: 'taken',
-        ));
+        when(
+          () => repo.register(
+            username: any(named: 'username'),
+            password: any(named: 'password'),
+            displayName: any(named: 'displayName'),
+            email: any(named: 'email'),
+            currency: any(named: 'currency'),
+          ),
+        ).thenThrow(
+          const ApiException(code: 'USERNAME_EXISTS', message: 'taken'),
+        );
         return build();
       },
-      act: (c) => c.register(
-        username: 'alice',
-        password: 'pw',
-        displayName: 'Alice',
-      ),
+      act: (c) =>
+          c.register(username: 'alice', password: 'pw', displayName: 'Alice'),
       expect: () => [
         const AuthLoading(AuthInitial()),
-        isA<AuthFailure>()
-            .having((f) => f.error.code, 'code', 'USERNAME_EXISTS'),
+        isA<AuthFailure>().having(
+          (f) => f.error.code,
+          'code',
+          'USERNAME_EXISTS',
+        ),
       ],
     );
   });
@@ -219,10 +250,12 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'success → restores previous Authenticated state',
       build: () {
-        when(() => repo.changePassword(
-              currentPassword: any(named: 'currentPassword'),
-              newPassword: any(named: 'newPassword'),
-            )).thenAnswer((_) async {});
+        when(
+          () => repo.changePassword(
+            currentPassword: any(named: 'currentPassword'),
+            newPassword: any(named: 'newPassword'),
+          ),
+        ).thenAnswer((_) async {});
         return build();
       },
       seed: () => const AuthAuthenticated(_user),
@@ -237,13 +270,14 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'WRONG_PASSWORD → [Loading, Failure]; identity preserved',
       build: () {
-        when(() => repo.changePassword(
-              currentPassword: any(named: 'currentPassword'),
-              newPassword: any(named: 'newPassword'),
-            )).thenThrow(const ApiException(
-          code: 'WRONG_PASSWORD',
-          message: 'wrong',
-        ));
+        when(
+          () => repo.changePassword(
+            currentPassword: any(named: 'currentPassword'),
+            newPassword: any(named: 'newPassword'),
+          ),
+        ).thenThrow(
+          const ApiException(code: 'WRONG_PASSWORD', message: 'wrong'),
+        );
         return build();
       },
       seed: () => const AuthAuthenticated(_user),
@@ -253,8 +287,11 @@ void main() {
         const AuthLoading(AuthAuthenticated(_user)),
         isA<AuthFailure>()
             .having((f) => f.error.code, 'code', 'WRONG_PASSWORD')
-            .having((f) => f.previous, 'previous',
-                const AuthAuthenticated(_user))
+            .having(
+              (f) => f.previous,
+              'previous',
+              const AuthAuthenticated(_user),
+            )
             .having((f) => f.isAuthenticated, 'isAuthenticated', true),
       ],
     );

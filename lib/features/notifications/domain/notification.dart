@@ -116,18 +116,18 @@ class AppNotification extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        recipientUserId,
-        type,
-        actorUserId,
-        actorDisplayName,
-        payload,
-        deepLink,
-        readAt,
-        actionedAt,
-        dismissedAt,
-        createdAt,
-      ];
+    id,
+    recipientUserId,
+    type,
+    actorUserId,
+    actorDisplayName,
+    payload,
+    deepLink,
+    readAt,
+    actionedAt,
+    dismissedAt,
+    createdAt,
+  ];
 }
 
 DateTime? _parseDate(Object? raw) {
@@ -166,8 +166,9 @@ class NotificationSettings extends Equatable {
   bool isAuto(NotificationType t) => autoTypes.contains(t.wire);
 
   factory NotificationSettings.fromJson(Map<String, dynamic> json) {
-    Set<String> set(String k) =>
-        {...((json[k] as List?) ?? const []).cast<String>()};
+    Set<String> set(String k) => {
+      ...((json[k] as List?) ?? const []).cast<String>(),
+    };
     return NotificationSettings(
       userId: json['user_id'] as String,
       mutedTypes: set('muted_types'),
@@ -198,6 +199,11 @@ class NotificationSettings extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [userId, mutedTypes, autoTypes, defaultAccountId, autoResolveOwnInProjects];
+  List<Object?> get props => [
+    userId,
+    mutedTypes,
+    autoTypes,
+    defaultAccountId,
+    autoResolveOwnInProjects,
+  ];
 }

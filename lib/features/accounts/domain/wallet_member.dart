@@ -92,6 +92,14 @@ class WalletMember extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, userId, displayName, role, iconCode, joinedAt, leftAt, pending];
+  List<Object?> get props => [
+    id,
+    userId,
+    displayName,
+    role,
+    iconCode,
+    joinedAt,
+    leftAt,
+    pending,
+  ];
 }

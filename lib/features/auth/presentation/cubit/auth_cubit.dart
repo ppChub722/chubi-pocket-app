@@ -29,10 +29,20 @@ sealed class AuthState extends Equatable {
 }
 
 /// Cold-start, before [AuthCubit.init] resolves the stored token.
+///
+/// [startupError] set = the check couldn't reach the server (offline,
+/// timeout, 5xx). The token is kept; the splash shows the error and a
+/// retry that calls [AuthCubit.init] again.
 class AuthInitial extends AuthState {
-  const AuthInitial();
+  const AuthInitial({this.startupError});
+
+  final ApiException? startupError;
+
   @override
   bool get isAuthenticated => false;
+
+  @override
+  List<Object?> get props => [startupError];
 }
 
 /// An auth action is in flight (login / register / logout / changePassword
@@ -92,10 +102,12 @@ class AuthCubit extends Cubit<AuthState> {
     required AuthRepository repository,
     required SecureTokenStorage tokenStorage,
     required ApiClient apiClient,
-  })  : _repo = repository,
-        _tokens = tokenStorage,
-        super(const AuthInitial()) {
-    _unauthorizedSub = apiClient.onUnauthorized.listen((_) => _onUnauthorized());
+  }) : _repo = repository,
+       _tokens = tokenStorage,
+       super(const AuthInitial()) {
+    _unauthorizedSub = apiClient.onUnauthorized.listen(
+      (_) => _onUnauthorized(),
+    );
   }
 
   final AuthRepository _repo;
@@ -107,26 +119,42 @@ class AuthCubit extends Cubit<AuthState> {
   /// own spinner is the loading indicator. This keeps the router's "is auth
   /// resolved?" check to a single state type.
   ///
-  /// Catches everything: any failure (network, malformed response, parse
-  /// error) drops us to [AuthUnauthenticated] so the router can redirect.
+  /// Only a rejected token (401 / 403) logs out and clears it. Anything
+  /// else — offline, timeout, server error, a malformed response — keeps
+  /// the token (it may well still be good) and stays on the splash with
+  /// [AuthInitial.startupError]; calling [init] again retries (owner
+  /// 2026-10-09: opening the app without signal used to log you out).
   /// A 12 s wall-clock cap is the last line of defence against a hang.
   Future<void> init() async {
-    if (state is! AuthInitial) return;
+    final s = state;
+    if (s is! AuthInitial) return;
+    // Retry → back to the plain spinner while it runs.
+    if (s.startupError != null) emit(const AuthInitial());
     try {
       final token = await _tokens.readAuthToken();
       if (token == null || token.isEmpty) {
         emit(const AuthUnauthenticated());
         return;
       }
-      final user = await _repo
-          .getCurrentUser()
-          .timeout(const Duration(seconds: 12));
+      final user = await _repo.getCurrentUser().timeout(
+        const Duration(seconds: 12),
+      );
       emit(AuthAuthenticated(user));
-    } catch (_) {
-      // Token invalid, parse error, or timeout: treat as unauth.
+    } catch (e, st) {
+      final error = e is TimeoutException
+          ? const ApiException(code: 'NETWORK_TIMEOUT', message: 'timeout')
+          : ApiException.from(e, st);
+      final rejected = error.statusCode == 401 || error.statusCode == 403;
+      if (!rejected) {
+        AppLogger.instance.warn('auth.startup_check_failed code=${error.code}');
+        emit(AuthInitial(startupError: error));
+        return;
+      }
       try {
         await _tokens.clearAuthToken();
-      } catch (_) {/* best-effort */}
+      } catch (_) {
+        /* best-effort */
+      }
       emit(const AuthUnauthenticated());
     }
   }
@@ -141,15 +169,20 @@ class AuthCubit extends Cubit<AuthState> {
       final res = await _repo.login(identifier: identifier, password: password);
       await _tokens.writeAuthToken(res.token.accessToken);
       AppLogger.instance.setUserId(res.user.id);
-      AppLogger.instance.info('auth.login_success',
-          fields: {'user_id': res.user.id, 'username': res.user.username});
+      AppLogger.instance.info(
+        'auth.login_success',
+        fields: {'user_id': res.user.id, 'username': res.user.username},
+      );
       emit(AuthAuthenticated(res.user));
     } on ApiException catch (e) {
-      AppLogger.instance.warn('auth.login_failed', fields: {
-        'identifier': identifier,
-        'code': e.code,
-        'status': e.statusCode,
-      });
+      AppLogger.instance.warn(
+        'auth.login_failed',
+        fields: {
+          'identifier': identifier,
+          'code': e.code,
+          'status': e.statusCode,
+        },
+      );
       emit(AuthFailure(error: e, previous: previous));
     }
   }
@@ -173,15 +206,16 @@ class AuthCubit extends Cubit<AuthState> {
       );
       await _tokens.writeAuthToken(res.token.accessToken);
       AppLogger.instance.setUserId(res.user.id);
-      AppLogger.instance.info('auth.register_success',
-          fields: {'user_id': res.user.id, 'username': res.user.username});
+      AppLogger.instance.info(
+        'auth.register_success',
+        fields: {'user_id': res.user.id, 'username': res.user.username},
+      );
       emit(AuthAuthenticated(res.user));
     } on ApiException catch (e) {
-      AppLogger.instance.warn('auth.register_failed', fields: {
-        'username': username,
-        'code': e.code,
-        'status': e.statusCode,
-      });
+      AppLogger.instance.warn(
+        'auth.register_failed',
+        fields: {'username': username, 'code': e.code, 'status': e.statusCode},
+      );
       emit(AuthFailure(error: e, previous: previous));
     }
   }

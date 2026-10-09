@@ -23,11 +23,14 @@ class _PageState extends State<_Page> with EditModeMixin<_Page, String> {
   void onDraftRestored() => restored++;
 
   @override
-  Widget build(BuildContext context) => editScope(Scaffold(
-        body: Text(working),
-        bottomNavigationBar:
-            isEditing ? editActionBar(onSave: () => commitSaved(working)) : null,
-      ));
+  Widget build(BuildContext context) => editScope(
+    Scaffold(
+      body: Text(working),
+      bottomNavigationBar: isEditing
+          ? editActionBar(onSave: () => commitSaved(working))
+          : null,
+    ),
+  );
 }
 
 void main() {
@@ -35,16 +38,19 @@ void main() {
 
   Future<_PageState> pump(WidgetTester t) async {
     chrome = ShellChromeController();
-    await t.pumpWidget(MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: ShellChrome(controller: chrome, child: const _Page()),
-    ));
+    await t.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ShellChrome(controller: chrome, child: const _Page()),
+      ),
+    );
     return t.state<_PageState>(find.byType(_Page));
   }
 
-  testWidgets('discrete changes undo step by step, back to view mode',
-      (t) async {
+  testWidgets('discrete changes undo step by step, back to view mode', (
+    t,
+  ) async {
     final s = await pump(t);
     s.applyChange('b');
     s.applyChange('c');

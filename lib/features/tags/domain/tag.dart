@@ -34,10 +34,7 @@ class Tag extends Equatable {
   }
 
   Map<String, dynamic> toUpdateJson() {
-    return <String, dynamic>{
-      'name': name,
-      'icon_code': iconCode?.toJson(),
-    };
+    return <String, dynamic>{'name': name, 'icon_code': iconCode?.toJson()};
   }
 
   Tag copyWith({

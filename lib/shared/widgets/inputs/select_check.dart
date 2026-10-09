@@ -49,6 +49,8 @@ class SelectCheck extends StatelessWidget {
       radius: size,
       child: Padding(padding: const EdgeInsets.all(4), child: check),
     );
-    return tooltip == null ? tappable : Tooltip(message: tooltip!, child: tappable);
+    return tooltip == null
+        ? tappable
+        : Tooltip(message: tooltip!, child: tappable);
   }
 }

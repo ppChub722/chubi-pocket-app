@@ -1,9 +1,11 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_radius.dart';
 import '../fonts/app_font.dart';
+import 'app_page_transitions.dart';
 import 'app_theme.dart';
 
 class ThemeBuilder {
@@ -26,6 +28,15 @@ class ThemeBuilder {
       canvasColor: colors.background,
       textTheme: textTheme,
       extensions: [colors, ?theme.modulesFor(brightness)],
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: AppPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: ZoomPageTransitionsBuilder(),
+          TargetPlatform.linux: ZoomPageTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: colors.surface,
         foregroundColor: colors.onSurface,

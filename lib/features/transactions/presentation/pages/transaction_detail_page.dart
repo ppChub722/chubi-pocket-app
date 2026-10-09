@@ -14,6 +14,7 @@ import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
@@ -34,12 +35,27 @@ class TransactionDetailPage extends StatefulWidget {
 }
 
 class _TransactionDetailPageState extends State<TransactionDetailPage> {
+  /// Fetching just this row — it isn't in the global cache.
+  bool _fetchingOne = false;
+
   @override
   void initState() {
     super.initState();
     // Deep links: make sure the cache is there.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<TransactionsCubit>().loadIfNeeded();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final cubit = context.read<TransactionsCubit>();
+      await cubit.loadIfNeeded();
+      // Opened from a list on its own cubit (a wallet's รายการ tab) or
+      // beyond the loaded pages → fetch the row itself.
+      if (!mounted || cubit.byId(widget.transactionId) != null) return;
+      setState(() => _fetchingOne = true);
+      try {
+        await cubit.refreshOne(widget.transactionId);
+      } on ApiException {
+        // Falls through to the not-found view.
+      }
+      if (mounted) setState(() => _fetchingOne = false);
     });
   }
 
@@ -55,6 +71,7 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
           extendBodyBehindAppBar: true,
           body: AsyncStateView.fallback(
             loading:
+                _fetchingOne ||
                 state.status == TransactionsStatus.loading ||
                 state.status == TransactionsStatus.initial,
             error: state.error,
@@ -112,165 +129,177 @@ class _Loaded extends StatelessWidget {
       extendBodyBehindAppBar: true,
       // Builder: the body's context sees the bar height in padding.top.
       body: Builder(
-        builder: (context) => ListView(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            MediaQuery.paddingOf(context).top + AppSpacing.md,
-            AppSpacing.lg,
-            96,
-          ),
-          children: [
-            HeaderCard(
-              accent: accent,
-              // No in-place edit here — ✏️ opens the quick-create sheet.
-              onEdit: isSystemRow
-                  ? null
-                  : () => showQuickCreateSheet(context, transaction: tx),
-              leading: IconBubble(
-                icon: IconRegistry.get(
-                  cat?.iconCode?.icon,
-                  fallback: switch (tx.type) {
-                    TransactionType.expense => AppIcons.expense,
-                    TransactionType.income => AppIcons.income,
-                    TransactionType.transfer => AppIcons.transfer,
-                  },
-                ),
-                color: accent,
-                size: 44,
-              ),
-              title: Text(tx.category?.name ?? (hasNote ? tx.note! : '—')),
-              subtitle: Text(dateLabel),
-              footer: MoneyText(
-                tx.signedAmount,
-                tone: tx.type == TransactionType.transfer
-                    ? MoneyTone.plain
-                    : MoneyTone.signed,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+        builder: (context) => PullToRefresh(
+          onRefresh: () async {
+            try {
+              await context.read<TransactionsCubit>().refreshOne(tx.id);
+            } on ApiException catch (e) {
+              if (context.mounted) {
+                showAppSnackBar(context, e.message, tone: Tone.danger);
+              }
+            }
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              MediaQuery.paddingOf(context).top + AppSpacing.md,
+              AppSpacing.lg,
+              96,
             ),
-            if (isSystemRow) ...[
-              const SizedBox(height: AppSpacing.md),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+            children: [
+              HeaderCard(
+                accent: accent,
+                // No in-place edit here — ✏️ opens the quick-create sheet.
+                onEdit: isSystemRow
+                    ? null
+                    : () => showQuickCreateSheet(context, transaction: tx),
+                leading: IconBubble(
+                  icon: IconRegistry.get(
+                    cat?.iconCode?.icon,
+                    fallback: switch (tx.type) {
+                      TransactionType.expense => AppIcons.expense,
+                      TransactionType.income => AppIcons.income,
+                      TransactionType.transfer => AppIcons.transfer,
+                    },
+                  ),
+                  color: accent,
+                  size: 44,
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      AppIcons.lock,
-                      size: 18,
-                      color: scheme.onSurfaceVariant,
+                title: Text(tx.category?.name ?? (hasNote ? tx.note! : '—')),
+                subtitle: Text(dateLabel),
+                footer: MoneyText(
+                  tx.signedAmount,
+                  tone: tx.type == TransactionType.transfer
+                      ? MoneyTone.plain
+                      : MoneyTone.signed,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (isSystemRow) ...[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        AppIcons.lock,
+                        size: 18,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          l.transactionDetailSystemRowBanner,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.lg),
+              SectionCard(
+                children: [
+                  DetailRow(
+                    leading: Icon(
+                      tx.account == null ? AppIcons.noWallet : AppIcons.bank,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        l.transactionDetailSystemRowBanner,
-                        style: Theme.of(context).textTheme.bodySmall,
+                    label:
+                        tx.type == TransactionType.transfer && tx.isTransferIn
+                        ? l.txDetailTransferTo
+                        : l.txDetailAccount,
+                    trailing: Text(
+                      tx.account?.name ?? l.transactionFormAccountNone,
+                    ),
+                    showChevron: tx.account != null,
+                    onTap: tx.account == null
+                        ? null
+                        : () => context.push('/accounts/${tx.account!.id}'),
+                  ),
+                  if (tx.type != TransactionType.transfer) ...[
+                    const RowDivider(),
+                    DetailRow(
+                      leading: const Icon(AppIcons.category),
+                      label: l.txDetailCategory,
+                      trailing: Text(
+                        tx.category?.name ?? l.transactionFormCategoryNone,
                       ),
                     ),
                   ],
-                ),
+                  if (tx.accountBalanceAfter != null) ...[
+                    const RowDivider(),
+                    DetailRow(
+                      label: l.txDetailBalanceAfter,
+                      trailing: MoneyText(tx.accountBalanceAfter!),
+                    ),
+                  ],
+                  if (tx.tags.isNotEmpty) ...[
+                    const RowDivider(),
+                    DetailStacked(
+                      label: l.txDetailTags,
+                      child: Wrap(
+                        spacing: AppSpacing.xs,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          for (final t in tx.tags) TagChip(tag: t.asTag),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (hasNote) ...[
+                    const RowDivider(),
+                    DetailStacked(label: l.txDetailNote, child: Text(tx.note!)),
+                  ],
+                  if (tx.hasSplits) ...[
+                    const RowDivider(),
+                    DetailRow(
+                      leading: const Icon(AppIcons.split),
+                      label: l.txDetailSplits,
+                      trailing: Text(l.txDetailHasSplits),
+                    ),
+                  ],
+                  if (tx.createdBy != null) ...[
+                    const RowDivider(),
+                    DetailRow(
+                      leading: UserAvatar(
+                        displayName: tx.createdBy!.displayName,
+                        iconCode: tx.createdBy!.iconCode,
+                        size: 24,
+                      ),
+                      label: l.txDetailRecordedBy,
+                      trailing: Text(tx.createdBy!.displayName),
+                    ),
+                  ],
+                  if (tx.projectId != null) ...[
+                    const RowDivider(),
+                    DetailRow(
+                      leading: const Icon(AppIcons.project),
+                      label: l.txDetailSource,
+                      trailing: Text(l.txDetailSourceProject),
+                      showChevron: true,
+                      onTap: () => context.push('/projects/${tx.projectId}'),
+                    ),
+                  ],
+                ],
               ),
+              // No in-place edit mode, so delete is always the last row
+              // (system rows stay locked).
+              if (!isSystemRow)
+                DangerRow(
+                  icon: AppIcons.delete,
+                  label: l.transactionDeleteThis,
+                  onTap: () => _confirmDelete(context, l),
+                ),
             ],
-            const SizedBox(height: AppSpacing.lg),
-            SectionCard(
-              children: [
-                DetailRow(
-                  leading: Icon(
-                    tx.account == null ? AppIcons.noWallet : AppIcons.bank,
-                  ),
-                  label: tx.type == TransactionType.transfer && tx.isTransferIn
-                      ? l.txDetailTransferTo
-                      : l.txDetailAccount,
-                  trailing: Text(
-                    tx.account?.name ?? l.transactionFormAccountNone,
-                  ),
-                  showChevron: tx.account != null,
-                  onTap: tx.account == null
-                      ? null
-                      : () => context.push('/accounts/${tx.account!.id}'),
-                ),
-                if (tx.type != TransactionType.transfer) ...[
-                  const RowDivider(),
-                  DetailRow(
-                    leading: const Icon(AppIcons.category),
-                    label: l.txDetailCategory,
-                    trailing: Text(
-                      tx.category?.name ?? l.transactionFormCategoryNone,
-                    ),
-                  ),
-                ],
-                if (tx.accountBalanceAfter != null) ...[
-                  const RowDivider(),
-                  DetailRow(
-                    label: l.txDetailBalanceAfter,
-                    trailing: MoneyText(tx.accountBalanceAfter!),
-                  ),
-                ],
-                if (tx.tags.isNotEmpty) ...[
-                  const RowDivider(),
-                  DetailStacked(
-                    label: l.txDetailTags,
-                    child: Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
-                      children: [
-                        for (final t in tx.tags)
-                          AppBadge(label: t.name, icon: AppIcons.tag),
-                      ],
-                    ),
-                  ),
-                ],
-                if (hasNote) ...[
-                  const RowDivider(),
-                  DetailStacked(label: l.txDetailNote, child: Text(tx.note!)),
-                ],
-                if (tx.hasSplits) ...[
-                  const RowDivider(),
-                  DetailRow(
-                    leading: const Icon(AppIcons.split),
-                    label: l.txDetailSplits,
-                    trailing: Text(l.txDetailHasSplits),
-                  ),
-                ],
-                if (tx.createdBy != null) ...[
-                  const RowDivider(),
-                  DetailRow(
-                    leading: UserAvatar(
-                      displayName: tx.createdBy!.displayName,
-                      iconCode: tx.createdBy!.iconCode,
-                      size: 24,
-                    ),
-                    label: l.txDetailRecordedBy,
-                    trailing: Text(tx.createdBy!.displayName),
-                  ),
-                ],
-                if (tx.projectId != null) ...[
-                  const RowDivider(),
-                  DetailRow(
-                    leading: const Icon(AppIcons.project),
-                    label: l.txDetailSource,
-                    trailing: Text(l.txDetailSourceProject),
-                    showChevron: true,
-                    onTap: () => context.push('/projects/${tx.projectId}'),
-                  ),
-                ],
-              ],
-            ),
-            // No in-place edit mode, so delete is always the last row
-            // (system rows stay locked).
-            if (!isSystemRow)
-              DangerRow(
-                icon: AppIcons.delete,
-                label: l.transactionDeleteThis,
-                onTap: () => _confirmDelete(context, l),
-              ),
-          ],
+          ),
         ),
       ),
     );

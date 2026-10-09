@@ -244,6 +244,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAddTransaction => 'Add transaction';
 
   @override
+  String get appExitTitle => 'Close the app?';
+
+  @override
+  String get appExitConfirm => 'Close';
+
+  @override
   String get navProjects => 'Projects & Events';
 
   @override
@@ -343,6 +349,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountDetailTransactionsTitle => 'Transactions';
+
+  @override
+  String get accountDetailTabOverview => 'Overview';
 
   @override
   String get accountFormTitle => 'New wallet';
@@ -575,6 +584,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactsNoMatch => 'No matching contacts';
 
   @override
+  String get contactsNoMatchMessage =>
+      'Try another search or change the status filter';
+
+  @override
+  String get contactsArchivedEmptyTitle => 'No archived contacts';
+
+  @override
+  String get contactsArchivedEmptyMessage =>
+      'Archived contacts show up here — hidden from pickers, history kept';
+
+  @override
   String get contactTitleNew => 'New contact';
 
   @override
@@ -585,6 +605,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contactNameLabel => 'Name';
+
+  @override
+  String get contactNameHint => 'Name (required)';
+
+  @override
+  String get contactEmailHint => 'Optional · name@example.com';
+
+  @override
+  String get contactPhoneHint => 'Optional · 081-234-5678';
+
+  @override
+  String get contactNotesHint => 'Optional · e.g. a work friend';
 
   @override
   String get contactNameRequired => 'Name is required';
@@ -1909,12 +1941,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accountDetailSeeAll => 'See all';
-
-  @override
-  String get accountDetailDescription => 'Description';
-
-  @override
   String get accountDetailNote => 'Note';
 
   @override
@@ -2434,9 +2460,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickMore => 'More details';
 
   @override
-  String get quickAllCategories => 'All';
-
-  @override
   String get quickFrom => 'From';
 
   @override
@@ -2795,9 +2818,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionsEmptyAccountTitle => 'No transactions yet';
-
-  @override
-  String get transactionsEmptyAccountMessage => 'Tap the + button to add one.';
 
   @override
   String get transactionsListFilterAll => 'All';
@@ -3490,12 +3510,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get transactionSplitShareTitle =>
       'Share with… (I owe them their part)';
-
-  @override
-  String get quickCreateNameSection => 'Event name';
-
-  @override
-  String get quickCreateSubmit => 'Create event';
 
   @override
   String get quickCreateErrorTxNotFound =>

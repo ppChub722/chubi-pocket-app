@@ -57,6 +57,37 @@ class _ContactsPageState extends State<ContactsPage> {
     child: AddTile(label: l.contactsAddNew, onTap: _add),
   );
 
+  /// Nothing to show under the current search / status — the same
+  /// [EmptyView] look as the first-run empty state, scrollable so
+  /// pull-to-refresh still fires.
+  Widget _noResults(AppLocalizations l, String statusFilter) {
+    final searching = _query.trim().isNotEmpty;
+    final archived = !searching && statusFilter == 'archived';
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 96),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: box.maxHeight - 96),
+          child: EmptyView(
+            icon: searching
+                ? AppIcons.search
+                : (archived ? AppIcons.archive : AppIcons.contact),
+            title: searching
+                ? l.contactsNoMatch
+                : (archived ? l.contactsArchivedEmptyTitle : l.contactsNoMatch),
+            message: searching
+                ? l.contactsNoMatchMessage
+                : (archived ? l.contactsArchivedEmptyMessage : ''),
+            cta: archived
+                ? null
+                : AddTile(label: l.contactsAddNew, onTap: _add),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -92,6 +123,14 @@ class _ContactsPageState extends State<ContactsPage> {
                   onChanged: (v) => setState(() => _query = v),
                 ),
                 FilterBar(
+                  // Add is also the dashed tile at the end of the list; this
+                  // one is always in reach.
+                  trailing: AppIconButton(
+                    icon: AppIcons.add,
+                    size: 36,
+                    tooltip: l.contactsAddNew,
+                    onPressed: _add,
+                  ),
                   chips: [
                     OptionMenuAnchor<String>(
                       selected: state.statusFilter,
@@ -124,24 +163,7 @@ class _ContactsPageState extends State<ContactsPage> {
                       : PullToRefresh(
                           onRefresh: () => ctx.read<ContactsCubit>().load(),
                           child: shown.isEmpty
-                              ? ListView(
-                                  physics:
-                                      const AlwaysScrollableScrollPhysics(),
-                                  // Explicit: the bar inset is already above.
-                                  padding: const EdgeInsets.only(bottom: 96),
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(
-                                        AppSpacing.xxl,
-                                      ),
-                                      child: Text(
-                                        l.contactsNoMatch,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    _addTile(l),
-                                  ],
-                                )
+                              ? _noResults(l, state.statusFilter)
                               : ListView.separated(
                                   physics:
                                       const AlwaysScrollableScrollPhysics(),

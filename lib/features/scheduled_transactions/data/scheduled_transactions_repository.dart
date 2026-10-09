@@ -10,7 +10,7 @@ import '../domain/scheduled_upcoming.dart';
 /// Thin Dio wrapper for `/v1/scheduled-transactions` (spec §11/§3).
 class ScheduledTransactionsRepository {
   ScheduledTransactionsRepository({required ApiClient client})
-      : _client = client;
+    : _client = client;
 
   final ApiClient _client;
 
@@ -87,12 +87,9 @@ class ScheduledTransactionsRepository {
     }
   }
 
-  Future<ScheduledTransaction> pause(String id) =>
-      _transition(id, 'pause');
-  Future<ScheduledTransaction> resume(String id) =>
-      _transition(id, 'resume');
-  Future<ScheduledTransaction> cancel(String id) =>
-      _transition(id, 'cancel');
+  Future<ScheduledTransaction> pause(String id) => _transition(id, 'pause');
+  Future<ScheduledTransaction> resume(String id) => _transition(id, 'resume');
+  Future<ScheduledTransaction> cancel(String id) => _transition(id, 'cancel');
 
   /// Private dispatcher for the three lifecycle endpoints. Server may
   /// return `400 INVALID_TRANSITION` if the current status doesn't allow

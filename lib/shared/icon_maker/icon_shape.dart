@@ -26,20 +26,26 @@ enum IconShape {
       IconShape.rounded => BorderRadius.all(r(0.2)),
       IconShape.square => BorderRadius.all(r(0.06)),
       IconShape.leaf => BorderRadius.only(
-          topLeft: r(0.5), topRight: r(0.08),
-          bottomRight: r(0.5), bottomLeft: r(0.08)),
+        topLeft: r(0.5),
+        topRight: r(0.08),
+        bottomRight: r(0.5),
+        bottomLeft: r(0.08),
+      ),
       IconShape.drop => BorderRadius.only(
-          topLeft: r(0.5), topRight: r(0.5),
-          bottomRight: r(0.5), bottomLeft: r(0.08)),
+        topLeft: r(0.5),
+        topRight: r(0.5),
+        bottomRight: r(0.5),
+        bottomLeft: r(0.08),
+      ),
     };
   }
 
   String label(AppLocalizations l) => switch (this) {
-        IconShape.circle => l.iconShapeCircle,
-        IconShape.squircle => l.iconShapeSquircle,
-        IconShape.rounded => l.iconShapeRounded,
-        IconShape.square => l.iconShapeSquare,
-        IconShape.leaf => l.iconShapeLeaf,
-        IconShape.drop => l.iconShapeDrop,
-      };
+    IconShape.circle => l.iconShapeCircle,
+    IconShape.squircle => l.iconShapeSquircle,
+    IconShape.rounded => l.iconShapeRounded,
+    IconShape.square => l.iconShapeSquare,
+    IconShape.leaf => l.iconShapeLeaf,
+    IconShape.drop => l.iconShapeDrop,
+  };
 }

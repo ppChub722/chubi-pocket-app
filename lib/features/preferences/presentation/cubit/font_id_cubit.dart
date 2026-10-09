@@ -14,10 +14,10 @@ import 'locale_cubit.dart';
 /// not support, switches to the default font for that locale.
 class FontIdCubit extends Cubit<String> {
   FontIdCubit(this._prefs, LocaleCubit localeCubit)
-      : super(
-          _prefs.getString(StorageKeys.fontId) ??
-              FontRegistry.defaultIdFor(localeCubit.state.languageCode),
-        ) {
+    : super(
+        _prefs.getString(StorageKeys.fontId) ??
+            FontRegistry.defaultIdFor(localeCubit.state.languageCode),
+      ) {
     _localeSub = localeCubit.stream.listen((locale) {
       final current = FontRegistry.byId(state);
       if (!current.supports(locale.languageCode)) {

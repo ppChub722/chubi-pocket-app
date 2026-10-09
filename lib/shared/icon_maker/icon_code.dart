@@ -90,15 +90,15 @@ class IconCode extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'icon': icon,
-        'iconColors': iconColors,
-        'background': background,
-        'bgColors': bgColors,
-        'border': border,
-        'borderColors': borderColors,
-        // Omitted for circles so untouched codes stay byte-identical.
-        if (shape != null) 'shape': shape,
-      };
+    'icon': icon,
+    'iconColors': iconColors,
+    'background': background,
+    'bgColors': bgColors,
+    'border': border,
+    'borderColors': borderColors,
+    // Omitted for circles so untouched codes stay byte-identical.
+    if (shape != null) 'shape': shape,
+  };
 
   IconCode copyWith({
     String? icon,
@@ -121,6 +121,13 @@ class IconCode extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [icon, iconColors, background, bgColors, border, borderColors, shape];
+  List<Object?> get props => [
+    icon,
+    iconColors,
+    background,
+    bgColors,
+    border,
+    borderColors,
+    shape,
+  ];
 }

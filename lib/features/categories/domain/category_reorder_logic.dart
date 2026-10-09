@@ -69,15 +69,16 @@ class CategoryReorderLogic {
   /// User-visible flat list of categories of [type] in DFS tree order
   /// (parent then children, sorted by sort_order). System categories are
   /// excluded — they never appear in the management UI.
-  static List<CategoryFlatRow> flatten(
-      List<Category> all, CategoryType type) {
+  static List<CategoryFlatRow> flatten(List<Category> all, CategoryType type) {
     final result = <CategoryFlatRow>[];
     void visit(String? parentId, int level) {
-      final children = all
-          .where((c) =>
-              c.parentId == parentId && c.type == type && !c.isSystem)
-          .toList()
-        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      final children =
+          all
+              .where(
+                (c) => c.parentId == parentId && c.type == type && !c.isSystem,
+              )
+              .toList()
+            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
       for (final c in children) {
         result.add(CategoryFlatRow(c, level));
         visit(c.id, level + 1);
@@ -160,10 +161,7 @@ class CategoryReorderLogic {
     ];
 
     // Cut subtree out of the flat list.
-    final remaining = [
-      ...flat.sublist(0, draggedIdx),
-      ...flat.sublist(endIdx),
-    ];
+    final remaining = [...flat.sublist(0, draggedIdx), ...flat.sublist(endIdx)];
 
     // Find insert position: right after anchor in `remaining`.
     int insertIdx;
@@ -178,8 +176,9 @@ class CategoryReorderLogic {
       // also points to the same slot in `remaining`.
       insertIdx = draggedIdx;
     } else {
-      final anchorIdxInRemaining =
-          remaining.indexWhere((r) => r.category.id == anchor.id);
+      final anchorIdxInRemaining = remaining.indexWhere(
+        (r) => r.category.id == anchor.id,
+      );
       insertIdx = anchorIdxInRemaining < 0
           ? remaining.length
           : anchorIdxInRemaining + 1;

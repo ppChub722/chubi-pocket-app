@@ -65,11 +65,14 @@ class MoneyListTile extends StatelessWidget {
     required this.title,
     required this.amount,
     this.subtitle,
+    this.footer,
     this.tone = MoneyTone.signed,
     this.amountCaption,
     this.onTap,
     this.padding = const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+      horizontal: AppSpacing.lg,
+      vertical: AppSpacing.sm,
+    ),
     super.key,
   });
 
@@ -78,6 +81,10 @@ class MoneyListTile extends StatelessWidget {
 
   /// Free-form second line (text + small badges / icons).
   final Widget? subtitle;
+
+  /// Optional third line under the subtitle (e.g. a row's short tags),
+  /// same small text style.
+  final Widget? footer;
   final num amount;
   final MoneyTone tone;
 
@@ -111,15 +118,25 @@ class MoneyListTile extends StatelessWidget {
                   ),
                   if (subtitle != null)
                     DefaultTextStyle.merge(
-                      style: textTheme.bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       child: IconTheme.merge(
                         data: IconThemeData(
-                            size: 12, color: scheme.onSurfaceVariant),
+                          size: 12,
+                          color: scheme.onSurfaceVariant,
+                        ),
                         child: subtitle!,
                       ),
+                    ),
+                  if (footer != null)
+                    DefaultTextStyle.merge(
+                      style: textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      child: footer!,
                     ),
                 ],
               ),
@@ -132,14 +149,16 @@ class MoneyListTile extends StatelessWidget {
                 MoneyText(
                   amount,
                   tone: tone,
-                  style: textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 if (amountCaption != null)
                   Text(
                     amountCaption!,
-                    style: textTheme.labelSmall
-                        ?.copyWith(color: scheme.onSurfaceVariant),
+                    style: textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
               ],
             ),
@@ -162,13 +181,16 @@ class DateGroupHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(context)
-        .textTheme
-        .labelLarge
-        ?.copyWith(color: scheme.onSurfaceVariant);
+    final style = Theme.of(
+      context,
+    ).textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.xs),
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.xs,
+      ),
       child: Row(
         children: [
           Expanded(child: Text(label, style: style)),

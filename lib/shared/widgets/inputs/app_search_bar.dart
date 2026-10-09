@@ -14,7 +14,11 @@ class AppSearchBar extends StatefulWidget {
     this.hint,
     this.autofocus = false,
     this.padding = const EdgeInsets.fromLTRB(
-        AppSpacing.lg, AppSpacing.xs, AppSpacing.lg, AppSpacing.xs),
+      AppSpacing.lg,
+      AppSpacing.xs,
+      AppSpacing.lg,
+      AppSpacing.xs,
+    ),
     super.key,
   });
 
@@ -32,7 +36,8 @@ class AppSearchBar extends StatefulWidget {
 
 class _AppSearchBarState extends State<AppSearchBar> {
   TextEditingController? _own;
-  TextEditingController get _controller => widget.controller ?? (_own ??= TextEditingController());
+  TextEditingController get _controller =>
+      widget.controller ?? (_own ??= TextEditingController());
 
   @override
   void dispose() {
@@ -58,8 +63,9 @@ class _AppSearchBarState extends State<AppSearchBar> {
             suffixIcon: value.text.isEmpty
                 ? null
                 : IconButton(
-                    tooltip: MaterialLocalizations.of(context)
-                        .deleteButtonTooltip,
+                    tooltip: MaterialLocalizations.of(
+                      context,
+                    ).deleteButtonTooltip,
                     icon: const Icon(AppIcons.close),
                     onPressed: () {
                       _controller.clear();

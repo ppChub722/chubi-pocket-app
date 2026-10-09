@@ -9,7 +9,10 @@ import 'package:flutter/material.dart';
 class IconRegistry {
   IconRegistry._();
 
-  static IconData get(String? id, {IconData fallback = Icons.category_outlined}) {
+  static IconData get(
+    String? id, {
+    IconData fallback = Icons.category_outlined,
+  }) {
     if (id == null) return fallback;
     return _all[id] ?? fallback;
   }

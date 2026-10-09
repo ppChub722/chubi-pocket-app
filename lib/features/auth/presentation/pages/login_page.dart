@@ -34,9 +34,9 @@ class _LoginPageState extends State<LoginPage> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthCubit>().login(
-          identifier: _identifierCtrl.text.trim(),
-          password: _passwordCtrl.text,
-        );
+      identifier: _identifierCtrl.text.trim(),
+      password: _passwordCtrl.text,
+    );
   }
 
   @override
@@ -51,7 +51,9 @@ class _LoginPageState extends State<LoginPage> {
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.xl,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
                   child: AutofillGroup(

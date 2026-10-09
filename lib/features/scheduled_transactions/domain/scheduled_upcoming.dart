@@ -55,6 +55,5 @@ class ScheduledUpcomingEntry extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, name, nextBillingDate, amount, daysUntil];
+  List<Object?> get props => [id, name, nextBillingDate, amount, daysUntil];
 }

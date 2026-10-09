@@ -7,7 +7,7 @@ import '../../../../core/constants/storage_keys.dart';
 /// opening the app in public). `true` = hidden. Persisted locally.
 class MoneyVisibilityCubit extends Cubit<bool> {
   MoneyVisibilityCubit(this._prefs)
-      : super(_prefs.getBool(StorageKeys.hideAmounts) ?? false);
+    : super(_prefs.getBool(StorageKeys.hideAmounts) ?? false);
 
   final SharedPreferences _prefs;
 

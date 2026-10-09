@@ -6,7 +6,10 @@ import '../../../shared/icon_maker/icon_code.dart';
 import '../domain/contact.dart';
 
 class ContactCreateResult {
-  const ContactCreateResult({required this.contact, required this.absorbedCount});
+  const ContactCreateResult({
+    required this.contact,
+    required this.absorbedCount,
+  });
   final Contact contact;
   final int absorbedCount;
 }
@@ -74,7 +77,8 @@ class ContactsRepository {
     }
   }
 
-  Future<Contact> update(String id, {
+  Future<Contact> update(
+    String id, {
     String? displayName,
     String? email,
     String? phone,
@@ -104,7 +108,9 @@ class ContactsRepository {
 
   Future<int> delete(String id) async {
     try {
-      final res = await _client.dio.delete<Map<String, dynamic>>('/contacts/$id');
+      final res = await _client.dio.delete<Map<String, dynamic>>(
+        '/contacts/$id',
+      );
       return (res.data?['splits_restored'] as num?)?.toInt() ?? 0;
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
@@ -190,10 +196,7 @@ class ContactsRepository {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/contacts/link-requests/$notificationId/create-linked-contact',
-        data: <String, dynamic>{
-          'phone': ?phone,
-          'notes': ?notes,
-        },
+        data: <String, dynamic>{'phone': ?phone, 'notes': ?notes},
       );
       return Contact.fromJson(res.data!);
     } on DioException catch (e) {
@@ -217,10 +220,7 @@ class ContactsRepository {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/contacts/link-requests/$notificationId/link-existing-contact/$contactId',
-        data: <String, dynamic>{
-          'phone': ?phone,
-          'notes': ?notes,
-        },
+        data: <String, dynamic>{'phone': ?phone, 'notes': ?notes},
       );
       return Contact.fromJson(res.data!);
     } on DioException catch (e) {

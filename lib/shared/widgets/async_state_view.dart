@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
@@ -5,6 +7,7 @@ import '../../l10n/gen/app_localizations.dart';
 import 'chips/tone.dart';
 import 'error_view.dart';
 import 'feedback/app_snackbar.dart';
+import 'pull_to_refresh.dart';
 import 'skeletons.dart';
 
 /// One rule for every async-loaded screen (design-sheet §8.5) — pages only
@@ -12,12 +15,14 @@ import 'skeletons.dart';
 ///
 /// | nothing to show yet + | shows                                  |
 /// |-----------------------|----------------------------------------|
-/// | [loading]             | [skeleton]                             |
+/// | first [loading]       | [skeleton]                             |
 /// | [error]               | [ErrorView] + retry                    |
 /// | neither               | [empty] (or [builder] when it's null)  |
 ///
 /// With data on screen, [builder] always wins; a failed refresh then shows
-/// a snackbar instead of hiding the data.
+/// a snackbar instead of hiding the data. Only the first load shows the
+/// skeleton — reloading an empty page keeps the empty view. Error / empty
+/// views are pull-to-refresh through [onRetry].
 ///
 /// ```dart
 /// AsyncStateView(
@@ -70,7 +75,10 @@ class AsyncStateView extends StatefulWidget {
   /// Nothing to show — the list is empty / the item wasn't found.
   final bool isEmpty;
 
-  final VoidCallback onRetry;
+  /// Reloads. Backs the error view's retry button **and** pull-to-refresh
+  /// on the error / empty / not-found views (owner 2026-10-09: empty pages
+  /// refresh too). Return the load's future so the coin waits for it.
+  final FutureOr<void> Function() onRetry;
 
   /// The content. Also used for the empty case when [empty] is null (pages
   /// whose empty state lives inside their own layout, e.g. under tabs).
@@ -89,6 +97,12 @@ class AsyncStateView extends StatefulWidget {
 }
 
 class _AsyncStateViewState extends State<AsyncStateView> {
+  /// A load has finished at least once. After that a reload (pull to
+  /// refresh) keeps the current view instead of flashing the skeleton —
+  /// it did on an empty page, whose "nothing to show" looked like a first
+  /// load.
+  bool _settled = false;
+
   @override
   void didUpdateWidget(AsyncStateView old) {
     super.didUpdateWidget(old);
@@ -109,16 +123,35 @@ class _AsyncStateViewState extends State<AsyncStateView> {
   @override
   Widget build(BuildContext context) {
     final w = widget;
+    if (!w.loading) _settled = true;
     if (!w.isEmpty) return w.builder(context);
-    if (w.loading) {
+    if (w.loading && !_settled) {
       return w.skeleton ??
           ListView(
             children: [for (var i = 0; i < 6; i++) const SkeletonListTile()],
           );
     }
     if (w.error != null) {
-      return ErrorView(error: w.error!, onRetry: w.onRetry);
+      return _pullable(ErrorView(error: w.error!, onRetry: w.onRetry));
     }
-    return w.empty ?? w.builder(context);
+    final empty = w.empty;
+    return empty == null ? w.builder(context) : _pullable(empty);
+  }
+
+  /// A centred, non-scrolling view made pullable: scrollable at least the
+  /// page's height (so the pull fires), refreshing through [onRetry].
+  Widget _pullable(Widget view) {
+    return PullToRefresh(
+      onRefresh: () async => widget.onRetry(),
+      child: LayoutBuilder(
+        builder: (context, box) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: box.maxHeight),
+            child: view,
+          ),
+        ),
+      ),
+    );
   }
 }

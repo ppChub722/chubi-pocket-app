@@ -21,14 +21,12 @@ class UserProfilePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       child: Row(
         children: [
-          UserAvatar(
-            displayName: displayName,
-            iconCode: iconCode,
-            size: size,
-          ),
+          UserAvatar(displayName: displayName, iconCode: iconCode, size: size),
           const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Text(

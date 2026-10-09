@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../l10n/gen/app_localizations.dart';
+import '../../shared/widgets/feedback/confirm_dialog.dart';
 
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
 import 'main_bottom_nav.dart';
@@ -48,12 +52,75 @@ class _MainShellState extends State<MainShell> {
     super.dispose();
   }
 
+  /// A fling this fast (px/s) sideways moves to the neighbouring tab.
+  static const _minFlingVelocity = 300.0;
+
+  /// Swipe between tabs (owner 2026-10-09) — only on a tab's root page
+  /// (nothing pushed in that tab) and not while a page has taken over the
+  /// bottom chrome (edit / reorder). Anything inside that wants a sideways
+  /// drag — an in-page tab pager, a horizontal chip row, swipe-to-dismiss —
+  /// is deeper in the gesture arena and wins, so this only fires where
+  /// nothing else claims the gesture.
+  void _onFling(DragEndDetails d) {
+    final v = d.primaryVelocity ?? 0;
+    if (v.abs() < _minFlingVelocity || _chrome.hidden) return;
+    final shell = widget.navigationShell;
+    final branchNav = shell.route.branches[shell.currentIndex].navigatorKey;
+    if (branchNav.currentState?.canPop() ?? true) return;
+    // Swipe left (negative) → the tab to the right.
+    final next = shell.currentIndex + (v < 0 ? 1 : -1);
+    if (next < 0 || next >= shell.route.branches.length) return;
+    HapticFeedback.selectionClick();
+    _goBranch(next);
+  }
+
+  /// Branch index of the dashboard (หน้าแรก).
+  static const _homeBranch = 0;
+
+  bool _askingExit = false;
+
+  /// Back with nothing left to pop (a tab's root page — pushed pages,
+  /// sheets and the overlay layer pop before this is reached): another tab
+  /// → the dashboard; the dashboard → "ปิดแอป?" (owner 2026-10-09).
+  Future<void> _onBackAtRoot() async {
+    if (widget.navigationShell.currentIndex != _homeBranch) {
+      _goBranch(_homeBranch);
+      return;
+    }
+    if (_askingExit) return;
+    _askingExit = true;
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.appExitTitle,
+      confirmLabel: l.appExitConfirm,
+    );
+    _askingExit = false;
+    if (ok) await SystemNavigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      // The shell is the root navigator's only page, so a back that reaches
+      // it would close the app — handle it instead.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBackAtRoot();
+      },
+      child: _shell(context),
+    );
+  }
+
+  Widget _shell(BuildContext context) {
     return ShellChrome(
       controller: _chrome,
       child: Scaffold(
-        body: widget.navigationShell,
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onHorizontalDragEnd: _onFling,
+          child: widget.navigationShell,
+        ),
         // Only the nav rebuilds when a page toggles the controller — the
         // branch content underneath is untouched.
         bottomNavigationBar: ListenableBuilder(

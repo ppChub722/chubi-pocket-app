@@ -15,59 +15,68 @@ Future<void> main() async {
   // logged + surfaced as a visible error screen instead of the infinite
   // white screen we shipped once (missing INTERNET permission killed the
   // font preload before runApp; nobody could see why).
-  await runZonedGuarded<Future<void>>(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+  await runZonedGuarded<Future<void>>(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-    // Logger first — every line below this should be capturable. The
-    // active config is resolved from APP_ENV / dart-defines; defaults
-    // mirror the BE plan (debug+bodies in local, info in staging,
-    // warn-only in prod).
-    await AppLogger.instance.init();
+      // Logger first — every line below this should be capturable. The
+      // active config is resolved from APP_ENV / dart-defines; defaults
+      // mirror the BE plan (debug+bodies in local, info in staging,
+      // warn-only in prod).
+      await AppLogger.instance.init();
 
-    // Framework errors → logger (release builds otherwise swallow them).
-    FlutterError.onError = (details) {
-      AppLogger.instance.error(
-        'flutter.error',
-        fields: {
-          'exception': details.exceptionAsString(),
-          'stack': details.stack?.toString(),
-        },
-      );
-      FlutterError.presentError(details);
-    };
-    // Uncaught async platform errors → logger, don't crash the app.
-    PlatformDispatcher.instance.onError = (error, stack) {
-      AppLogger.instance.error(
-        'platform.error',
-        fields: {'exception': '$error', 'stack': '$stack'},
-      );
-      return true;
-    };
+      // Framework errors → logger (release builds otherwise swallow them).
+      FlutterError.onError = (details) {
+        AppLogger.instance.error(
+          'flutter.error',
+          fields: {
+            'exception': details.exceptionAsString(),
+            'stack': details.stack?.toString(),
+          },
+        );
+        FlutterError.presentError(details);
+      };
+      // Uncaught async platform errors → logger, don't crash the app.
+      PlatformDispatcher.instance.onError = (error, stack) {
+        AppLogger.instance.error(
+          'platform.error',
+          fields: {'exception': '$error', 'stack': '$stack'},
+        );
+        return true;
+      };
 
-    await _setHighRefreshRate();
+      await _setHighRefreshRate();
 
-    final prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
 
-    // Font preload is a nice-to-have — never let it block or kill boot
-    // (it downloads from the network via google_fonts; offline/slow
-    // devices fall back to system fonts and the app must still open).
-    try {
-      await FontPreloader.preloadAll().timeout(const Duration(seconds: 8));
-    } catch (e) {
-      AppLogger.instance.warn('fonts.preload_failed',
-          fields: {'error': '$e', 'fallback': 'system fonts'});
-    }
+      // Font preload is a nice-to-have — never let it block or kill boot
+      // (it downloads from the network via google_fonts; offline/slow
+      // devices fall back to system fonts and the app must still open).
+      try {
+        await FontPreloader.preloadAll().timeout(const Duration(seconds: 8));
+      } catch (e) {
+        AppLogger.instance.warn(
+          'fonts.preload_failed',
+          fields: {'error': '$e', 'fallback': 'system fonts'},
+        );
+      }
 
-    runApp(ChubiPocketApp(prefs: prefs));
-  }, (error, stack) {
-    // Best-effort logging — the logger may or may not be up yet.
-    try {
-      AppLogger.instance.error('boot.failed',
-          fields: {'exception': '$error', 'stack': '$stack'});
-    } catch (_) {/* logging must never mask the boot error */}
-    debugPrint('BOOT FAILED: $error\n$stack');
-    runApp(BootErrorApp(error: error, stackTrace: stack));
-  });
+      runApp(ChubiPocketApp(prefs: prefs));
+    },
+    (error, stack) {
+      // Best-effort logging — the logger may or may not be up yet.
+      try {
+        AppLogger.instance.error(
+          'boot.failed',
+          fields: {'exception': '$error', 'stack': '$stack'},
+        );
+      } catch (_) {
+        /* logging must never mask the boot error */
+      }
+      debugPrint('BOOT FAILED: $error\n$stack');
+      runApp(BootErrorApp(error: error, stackTrace: stack));
+    },
+  );
 }
 
 /// Opt in to the highest refresh rate the screen supports (e.g. 120Hz on

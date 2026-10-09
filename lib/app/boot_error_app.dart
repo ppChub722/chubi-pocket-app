@@ -71,7 +71,9 @@ class BootErrorApp extends StatelessWidget {
                     maxLines: 6,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 12, fontFamily: 'monospace'),
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -80,12 +82,10 @@ class BootErrorApp extends StatelessWidget {
                     icon: const Icon(Icons.copy, size: 18),
                     label: const Text('คัดลอกรายละเอียด / Copy details'),
                     onPressed: () async {
-                      await Clipboard.setData(
-                          ClipboardData(text: _report()));
+                      await Clipboard.setData(ClipboardData(text: _report()));
                       if (ctx.mounted) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(
-                              content: Text('คัดลอกแล้ว / Copied')),
+                          const SnackBar(content: Text('คัดลอกแล้ว / Copied')),
                         );
                       }
                     },

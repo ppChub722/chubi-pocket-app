@@ -55,11 +55,12 @@ class MoneyText extends StatelessWidget {
       MoneyTone.plain => (null, ''),
       MoneyTone.income => (palette.income, '+'),
       MoneyTone.expense => (palette.expense, '−'),
-      MoneyTone.signed => amount > 0
-          ? (palette.income, '+')
-          : amount < 0
-              ? (palette.expense, '−')
-              : (null, ''),
+      MoneyTone.signed =>
+        amount > 0
+            ? (palette.income, '+')
+            : amount < 0
+            ? (palette.expense, '−')
+            : (null, ''),
     };
     final magnitude = tone == MoneyTone.plain ? amount : amount.abs();
     final text = hidden
@@ -83,14 +84,18 @@ class MoneyText extends StatelessWidget {
 /// ฿500") — honours the 👁 privacy toggle like [MoneyText].
 String moneyString(BuildContext context, num amount, {String symbol = '฿'}) =>
     isMoneyHidden(context)
-        ? '$symbol••••'
-        : CurrencyFormatter.format(amount, symbol: symbol);
+    ? '$symbol••••'
+    : CurrencyFormatter.format(amount, symbol: symbol);
 
 /// True when the privacy toggle is on. Safe when no
 /// [MoneyVisibilityCubit] is provided (tests, dev previews) → visible.
+///
+/// `watch`, not `select`: page helpers pass the State's context while a
+/// nested Builder is the one building, and `select` asserts on that. The
+/// state is a single bool, so `watch` rebuilds just as rarely.
 bool isMoneyHidden(BuildContext context) {
   try {
-    return context.select<MoneyVisibilityCubit, bool>((c) => c.state);
+    return context.watch<MoneyVisibilityCubit>().state;
   } on ProviderNotFoundException {
     return false;
   }

@@ -90,11 +90,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
     final l = AppLocalizations.of(context)!;
     void openSettings() => context.push('/notifications/settings');
     return Scaffold(
-      appBar: AppTopBar(
-        title: l.notificationsTitle,
-        showBack: true,
-        showUniversal: false,
-      ),
+      appBar: AppTopBar(title: l.notificationsTitle, showBack: true),
       extendBodyBehindAppBar: true,
       // Pinned tabs clear the floating bar; the list below them must not
       // add the bar height again.

@@ -31,8 +31,12 @@ class MessageBanner extends StatelessWidget {
       _ => AppIcons.info,
     };
     return Container(
-      padding: EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm,
-          onClose == null ? AppSpacing.md : AppSpacing.xs, AppSpacing.sm),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        onClose == null ? AppSpacing.md : AppSpacing.xs,
+        AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -43,8 +47,7 @@ class MessageBanner extends StatelessWidget {
           Icon(icon, color: color, size: 20),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(message,
-                style: Theme.of(context).textTheme.bodyMedium),
+            child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
           ),
           if (onClose != null)
             IconButton(

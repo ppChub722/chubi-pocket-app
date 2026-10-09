@@ -12,7 +12,14 @@ class CategoriesListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Indent pattern roughly matching a parent → child tree.
-    const rows = <double>[0, AppSpacing.xxl, AppSpacing.xxl, 0, AppSpacing.xxl, 0];
+    const rows = <double>[
+      0,
+      AppSpacing.xxl,
+      AppSpacing.xxl,
+      0,
+      AppSpacing.xxl,
+      0,
+    ];
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       physics: const NeverScrollableScrollPhysics(),

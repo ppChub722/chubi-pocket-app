@@ -67,8 +67,7 @@ class Contact extends Equatable {
 
   /// Display rule: when linked, use the linked user's current
   /// `display_name`; otherwise use the contact's own stored copy.
-  String get effectiveDisplayName =>
-      linkedUserDisplayName ?? displayName;
+  String get effectiveDisplayName => linkedUserDisplayName ?? displayName;
 
   /// Same rule as [effectiveDisplayName] for email.
   String? get effectiveEmail => linkedUserEmail ?? email;
@@ -91,7 +90,8 @@ class Contact extends Equatable {
       linkedUserId: json['linked_user_id'] as String?,
       linkedUserIconCode: json['linked_user_icon_code'] != null
           ? IconCode.fromJson(
-              json['linked_user_icon_code'] as Map<String, dynamic>)
+              json['linked_user_icon_code'] as Map<String, dynamic>,
+            )
           : null,
       linkedUserDisplayName: json['linked_user_display_name'] as String?,
       linkedUserEmail: json['linked_user_email'] as String?,
@@ -126,8 +126,9 @@ class Contact extends Equatable {
       phone: phone ?? this.phone,
       notes: notes ?? this.notes,
       iconCode: iconCode ?? this.iconCode,
-      linkedUserId:
-          clearLinkedUserId ? null : (linkedUserId ?? this.linkedUserId),
+      linkedUserId: clearLinkedUserId
+          ? null
+          : (linkedUserId ?? this.linkedUserId),
       linkedUserIconCode: clearLinkedUserId
           ? null
           : (linkedUserIconCode ?? this.linkedUserIconCode),
@@ -144,20 +145,20 @@ class Contact extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        displayName,
-        email,
-        phone,
-        notes,
-        iconCode,
-        linkedUserId,
-        linkedUserIconCode,
-        linkedUserDisplayName,
-        linkedUserEmail,
-        status,
-        lastUsedAt,
-      ];
+    id,
+    userId,
+    displayName,
+    email,
+    phone,
+    notes,
+    iconCode,
+    linkedUserId,
+    linkedUserIconCode,
+    linkedUserDisplayName,
+    linkedUserEmail,
+    status,
+    lastUsedAt,
+  ];
 }
 
 class UnlinkedName extends Equatable {
@@ -206,4 +207,3 @@ class SenderProfile extends Equatable {
   @override
   List<Object?> get props => [id, displayName, email, iconCode];
 }
-

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../app/shell/app_top_bar.dart';
 import '../app/shell/top_bar_crumbs.dart';
 import '../core/constants/app_icons.dart';
+import '../core/theme/module_colors.dart';
 import '../core/constants/app_spacing.dart';
 import '../core/network/api_exception.dart';
 import '../core/theme/app_colors.dart';
@@ -17,6 +18,8 @@ import '../features/categories/presentation/widgets/category_picker_sheet.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../features/contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../features/transactions/presentation/widgets/account_picker_sheet.dart';
+import '../features/tags/domain/tag.dart';
+import '../features/tags/presentation/widgets/tag_chip.dart';
 import '../features/transactions/domain/transaction.dart';
 import '../features/transactions/domain/transaction_type.dart';
 import '../features/transactions/presentation/widgets/period_summary_card.dart';
@@ -822,9 +825,18 @@ enum _Sort { name, usage, color }
 class _ChipsDemoState extends State<_ChipsDemo> {
   final Set<int> _colors = {};
   Set<String> _icons = {};
+  final Set<String> _glyphs = {};
+  int _tab = 0;
+  final _tabPages = PageController();
   String? _status;
   _Sort _sort = _Sort.name;
   String _projectStatus = 'active';
+
+  @override
+  void dispose() {
+    _tabPages.dispose();
+    super.dispose();
+  }
 
   static const _swatches = [
     Color(0xFFE57373),
@@ -932,6 +944,75 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 SortOption(_Sort.color, 'สี'),
               ],
             ),
+          ),
+        ),
+        const _Gap(),
+        _Demo(
+          title: 'ตัวกรองไอคอน (popover แบบช่องไอคอน — แท็ก / หมวดหมู่)',
+          name: 'PopoverAnchor + IconSwatchGrid',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: PopoverAnchor(
+              builder: (context, toggle) => FilterDropdownChip(
+                label: 'ไอคอน',
+                icon: AppIcons.iconPicker,
+                count: _glyphs.length,
+                onTap: toggle,
+              ),
+              contentBuilder: (context, close) => StatefulBuilder(
+                builder: (context, setPopover) => IconSwatchGrid(
+                  glyphs: const ['label', 'flag', 'star', 'bolt', 'savings'],
+                  selected: _glyphs,
+                  onToggle: (g) {
+                    setState(
+                      () => _glyphs.contains(g)
+                          ? _glyphs.remove(g)
+                          : _glyphs.add(g),
+                    );
+                    setPopover(() {});
+                  },
+                  onClear: () {
+                    setState(_glyphs.clear);
+                    setPopover(() {});
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+        const _Gap(),
+        _Demo(
+          title:
+              'แท็บ — ปัดเนื้อหาตามนิ้ว · เส้นใต้เลื่อนตาม · แตะ = ช้า-เร็ว-ช้า',
+          name: 'AppTabBar(pager:) + AppTabPager',
+          child: Column(
+            children: [
+              AppTabBar<int>(
+                selected: _tab,
+                onChanged: (v) => setState(() => _tab = v),
+                pager: _tabPages,
+                tabs: const [
+                  AppTab(value: 0, label: 'รายจ่าย'),
+                  AppTab(value: 1, label: 'รายรับ'),
+                  AppTab(value: 2, label: 'โอน', badgeCount: 2),
+                ],
+              ),
+              SizedBox(
+                height: 96,
+                child: AppTabPager<int>(
+                  controller: _tabPages,
+                  values: const [0, 1, 2],
+                  selected: _tab,
+                  onChanged: (v) => setState(() => _tab = v),
+                  builder: (context, v) => Center(
+                    child: Text(
+                      'เนื้อหาแท็บ ${v + 1} — ปัดตรงนี้',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const _Gap(),
@@ -1079,36 +1160,81 @@ class _LayoutDemo extends StatelessWidget {
         const _Demo(
           title: 'Top bar breadcrumb (หน้าแม่ › หน้านี้)',
           name: 'AppTopBar(parent: TopBarCrumb(…)) · ค่าเริ่มต้นหาจาก route',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: kToolbarHeight,
-                child: AppTopBar(
-                  title: 'ทริปญี่ปุ่น',
-                  showBack: true,
-                  showUniversal: false,
-                  parent: TopBarCrumb(
-                    label: 'โปรเจกต์ & อีเวนต์',
-                    path: '/projects',
-                    routeName: 'projects',
+          // The bar's parts are Heroes — demos beside the page's own bar
+          // would share their tags.
+          child: HeroMode(
+            enabled: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: kToolbarHeight,
+                  child: AppTopBar(
+                    title: 'ทริปญี่ปุ่น',
+                    showBack: true,
+                    showUniversal: false,
+                    parent: TopBarCrumb(
+                      label: 'โปรเจกต์ & อีเวนต์',
+                      path: '/projects',
+                      routeName: 'projects',
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                height: kToolbarHeight,
-                child: AppTopBar(
-                  title: 'ชื่อยาวมากจนต้องตัดด้วยจุดสามจุดตรงท้าย',
-                  showBack: true,
-                  editing: true,
-                  parent: TopBarCrumb(
-                    label: 'ผู้ติดต่อ',
-                    path: '/contacts',
-                    routeName: 'contacts',
+                SizedBox(
+                  height: kToolbarHeight,
+                  child: AppTopBar(
+                    title: 'ชื่อยาวมากจนต้องตัดด้วยจุดสามจุดตรงท้าย',
+                    showBack: true,
+                    editing: true,
+                    parent: TopBarCrumb(
+                      label: 'ผู้ติดต่อ',
+                      path: '/contacts',
+                      routeName: 'contacts',
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'การ์ดสีกลุ่ม (กระเป๋า · เพิ่มเติม · แดชบอร์ด)',
+          name: 'TintedCard(tint, glyph, onTap) · TintedIconBadge',
+          child: Builder(
+            builder: (context) {
+              final groups = ModuleColors.of(context);
+              Widget card(Color tint, IconData icon, String label) => Expanded(
+                child: SizedBox(
+                  height: 110,
+                  child: TintedCard(
+                    tint: tint,
+                    glyph: icon,
+                    glyphSize: 64,
+                    onTap: () => showAppSnackBar(context, label),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TintedIconBadge(icon: icon, tint: tint, size: 28),
+                          TintedIconBadge.gap,
+                          Text(label),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+              return Row(
+                children: [
+                  card(groups.library, AppIcons.category, 'คลัง'),
+                  const SizedBox(width: AppSpacing.sm),
+                  card(groups.people, AppIcons.debt, 'คน'),
+                  const SizedBox(width: AppSpacing.sm),
+                  card(groups.planning, AppIcons.budget, 'วางแผน'),
+                ],
+              );
+            },
           ),
         ),
         _Demo(
@@ -1246,6 +1372,37 @@ const _sampleStats = [
 
 // ── Feedback ───────────────────────────────────────────────────────────
 
+/// [CoinDropIndicator]'s refreshing loop, running forever.
+class _CoinLoopDemo extends StatefulWidget {
+  const _CoinLoopDemo();
+  @override
+  State<_CoinLoopDemo> createState() => _CoinLoopDemoState();
+}
+
+class _CoinLoopDemoState extends State<_CoinLoopDemo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _c,
+    // Refreshing rests 24 px down — pull it back into the box.
+    builder: (context, _) => Transform.translate(
+      offset: const Offset(0, -24),
+      child: CoinDropIndicator(pull: 1, drop: _c.value),
+    ),
+  );
+}
+
 class _FeedbackDemo extends StatefulWidget {
   const _FeedbackDemo();
   @override
@@ -1260,6 +1417,52 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
     return ListView(
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
+        _Demo(
+          title: 'Pull to refresh — เหรียญ ฿ หย่อนลงกระเป๋า',
+          name: 'PullToRefresh(onRefresh, enabled) · CoinDropIndicator',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Pull phases, frozen (dy offset zeroed by pull = 0.5).
+                  SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: CoinDropIndicator(pull: 0.5),
+                  ),
+                  SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: CoinDropIndicator(pull: 0.75),
+                  ),
+                  SizedBox(width: 64, height: 64, child: _CoinLoopDemo()),
+                ],
+              ),
+              const _Gap(),
+              // The real thing — pull this box down.
+              SizedBox(
+                height: 200,
+                child: ClipRect(
+                  child: PullToRefresh(
+                    onRefresh: () =>
+                        Future<void>.delayed(const Duration(seconds: 2)),
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [
+                        SizedBox(
+                          height: 200,
+                          child: Center(child: Text('ดึงกล่องนี้ลง ↓')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         _Demo(
           title: 'แถบข้อความในหน้า (เหนือฟอร์ม)',
           name: 'MessageBanner(tone, onClose)',
@@ -1317,6 +1520,75 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
                 },
               ),
             ],
+          ),
+        ),
+        _Demo(
+          title: 'Dialog หลายทางเลือก (> 2 ปุ่ม)',
+          name: 'showChoiceDialog(choices: [DialogChoice…])',
+          child: AppButton(
+            label: 'ปิดฟอร์มที่มีของค้าง',
+            variant: AppButtonVariant.outlined,
+            onPressed: () async {
+              final r = await showChoiceDialog<String>(
+                context,
+                title: 'ทิ้งรายการนี้?',
+                message: 'ยังไม่ได้บันทึก',
+                choices: const [
+                  DialogChoice(
+                    value: 'draft',
+                    label: 'เก็บเป็นร่าง',
+                    variant: AppButtonVariant.primary,
+                  ),
+                  DialogChoice(value: 'keep', label: 'แก้ต่อ'),
+                  DialogChoice(
+                    value: 'discard',
+                    label: 'ทิ้ง',
+                    variant: AppButtonVariant.destructive,
+                  ),
+                ],
+              );
+              if (context.mounted) showAppSnackBar(context, 'ผล: $r');
+            },
+          ),
+        ),
+        _Demo(
+          title: 'Sheet เมนูของสิ่งที่แตะ',
+          name:
+              'showActionSheet(header: ActionSheetHeader, actions: [SheetAction…])',
+          child: AppButton(
+            label: 'แตะแถวสมาชิก',
+            variant: AppButtonVariant.outlined,
+            onPressed: () async {
+              final r = await showActionSheet<String>(
+                context,
+                header: const ActionSheetHeader(
+                  leading: CircleAvatar(child: Text('ก')),
+                  title: 'กุ้ง',
+                  subtitle: 'มีบัญชีในแอป',
+                ),
+                actions: const [
+                  SheetAction(
+                    value: 'role',
+                    icon: AppIcons.visible,
+                    label: 'ให้ดูอย่างเดียว',
+                  ),
+                  SheetAction(
+                    value: 'transfer',
+                    icon: AppIcons.member,
+                    label: 'โอนความเป็นเจ้าของ',
+                    subtitle: 'ต้องมีบัญชีในแอปก่อน',
+                    enabled: false,
+                  ),
+                  SheetAction(
+                    value: 'remove',
+                    icon: AppIcons.delete,
+                    label: 'นำออกจากโปรเจกต์',
+                    destructive: true,
+                  ),
+                ],
+              );
+              if (context.mounted) showAppSnackBar(context, 'ผล: $r');
+            },
           ),
         ),
         _Demo(
@@ -2183,8 +2455,16 @@ class _DomainDemoState extends State<_DomainDemo> {
       category: EmbeddedRef(id: 'c-food', name: 'อาหาร'),
       note: 'ข้าวมันไก่',
       tags: [
-        EmbeddedTag(id: 't1', name: 'งาน'),
-        EmbeddedTag(id: 't2', name: 'กิน'),
+        EmbeddedTag(
+          id: 't1',
+          name: 'งาน',
+          iconCode: IconCode(icon: 'work_outline', iconColors: ['#0EA5E9']),
+        ),
+        EmbeddedTag(
+          id: 't2',
+          name: 'กิน',
+          iconCode: IconCode(icon: 'favorite', iconColors: ['#EF4444']),
+        ),
       ],
     ),
     Transaction(
@@ -2271,6 +2551,39 @@ class _DomainDemoState extends State<_DomainDemo> {
                   ),
               ],
             ),
+          ),
+        ),
+        _Demo(
+          title: 'แท็ก — แบบเต็ม · ตัวเลือก (เลือก/ไม่เลือก) · แบบย่อ',
+          name: 'TagChip · TagShortList',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  for (final t in _txs.first.tags) TagChip(tag: t.asTag),
+                  const TagChip(
+                    tag: Tag(id: 't0', name: 'ไม่มีไอคอน'),
+                  ),
+                ],
+              ),
+              const _Gap(),
+              Wrap(
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  for (final (i, t) in _txs.first.tags.indexed)
+                    TagChip(tag: t.asTag, selected: i == 0, onTap: () {}),
+                ],
+              ),
+              const _Gap(),
+              TagShortList(
+                tags: [for (final t in _txs.first.tags) t.asTag],
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ),
         ),
         const _Demo(

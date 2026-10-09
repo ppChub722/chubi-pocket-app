@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_top_bar.dart';
+import 'fade_branch_container.dart';
 
 /// Scaffold for a tab's root page (dashboard, transactions, wallets, more).
 ///
@@ -27,7 +28,8 @@ class TabRootScaffold extends StatelessWidget {
     return Scaffold(
       appBar: topBar ?? AppTopBar(title: title),
       extendBodyBehindAppBar: true,
-      body: body,
+      // Only the body animates on a tab switch — the bar stays put.
+      body: TabSwitchBody(child: body),
     );
   }
 }

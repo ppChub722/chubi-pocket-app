@@ -64,12 +64,12 @@ void main() {
 
   group('AuthRepository.register', () {
     test('returns parsed user + token on 201', () async {
-      when(() => dio.post<Map<String, dynamic>>(
-            '/auth/register',
-            data: any(named: 'data'),
-          )).thenAnswer(
-        (_) async => ok({'user': userJson, 'token': tokenJson}),
-      );
+      when(
+        () => dio.post<Map<String, dynamic>>(
+          '/auth/register',
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer((_) async => ok({'user': userJson, 'token': tokenJson}));
 
       final res = await repo.register(
         username: 'alice',
@@ -83,42 +83,42 @@ void main() {
     });
 
     test('USERNAME_EXISTS → ApiException with envelope code', () async {
-      when(() => dio.post<Map<String, dynamic>>(
-            '/auth/register',
-            data: any(named: 'data'),
-          )).thenThrow(
+      when(
+        () => dio.post<Map<String, dynamic>>(
+          '/auth/register',
+          data: any(named: 'data'),
+        ),
+      ).thenThrow(
         dioErr(
           status: 409,
           body: {
             'error': {
               'code': 'USERNAME_EXISTS',
-              'message': 'Username already registered'
-            }
+              'message': 'Username already registered',
+            },
           },
         ),
       );
 
       await expectLater(
-        repo.register(
-          username: 'alice',
-          password: 'pw',
-          displayName: 'Alice',
+        repo.register(username: 'alice', password: 'pw', displayName: 'Alice'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.code, 'code', 'USERNAME_EXISTS')
+              .having((e) => e.statusCode, 'status', 409),
         ),
-        throwsA(isA<ApiException>()
-            .having((e) => e.code, 'code', 'USERNAME_EXISTS')
-            .having((e) => e.statusCode, 'status', 409)),
       );
     });
   });
 
   group('AuthRepository.login', () {
     test('returns parsed user + token on 200', () async {
-      when(() => dio.post<Map<String, dynamic>>(
-            '/auth/login',
-            data: any(named: 'data'),
-          )).thenAnswer(
-        (_) async => ok({'user': userJson, 'token': tokenJson}),
-      );
+      when(
+        () => dio.post<Map<String, dynamic>>(
+          '/auth/login',
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer((_) async => ok({'user': userJson, 'token': tokenJson}));
 
       final res = await repo.login(identifier: 'alice', password: 'pw');
 
@@ -127,57 +127,64 @@ void main() {
     });
 
     test('401 INVALID_CREDENTIALS → ApiException', () async {
-      when(() => dio.post<Map<String, dynamic>>(
-            '/auth/login',
-            data: any(named: 'data'),
-          )).thenThrow(
+      when(
+        () => dio.post<Map<String, dynamic>>(
+          '/auth/login',
+          data: any(named: 'data'),
+        ),
+      ).thenThrow(
         dioErr(
           status: 401,
           body: {
             'error': {
               'code': 'INVALID_CREDENTIALS',
               'message': 'Invalid credentials',
-            }
+            },
           },
         ),
       );
 
       await expectLater(
         repo.login(identifier: 'alice', password: 'wrong'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.code, 'code', 'INVALID_CREDENTIALS')
-            .having((e) => e.statusCode, 'status', 401)),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.code, 'code', 'INVALID_CREDENTIALS')
+              .having((e) => e.statusCode, 'status', 401),
+        ),
       );
     });
 
     test('connection error → ApiException(NETWORK_ERROR)', () async {
-      when(() => dio.post<Map<String, dynamic>>(
-            '/auth/login',
-            data: any(named: 'data'),
-          )).thenThrow(dioErr(type: DioExceptionType.connectionError));
+      when(
+        () => dio.post<Map<String, dynamic>>(
+          '/auth/login',
+          data: any(named: 'data'),
+        ),
+      ).thenThrow(dioErr(type: DioExceptionType.connectionError));
 
       await expectLater(
         repo.login(identifier: 'alice', password: 'pw'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.code, 'code', 'NETWORK_ERROR')),
+        throwsA(
+          isA<ApiException>().having((e) => e.code, 'code', 'NETWORK_ERROR'),
+        ),
       );
     });
   });
 
   group('AuthRepository.logout', () {
     test('returns normally on 200', () async {
-      when(() => dio.post<void>('/auth/logout'))
-          .thenAnswer((_) async => Response<void>(
-                requestOptions: RequestOptions(path: ''),
-                statusCode: 200,
-              ));
+      when(() => dio.post<void>('/auth/logout')).thenAnswer(
+        (_) async => Response<void>(
+          requestOptions: RequestOptions(path: ''),
+          statusCode: 200,
+        ),
+      );
 
       await expectLater(repo.logout(), completes);
     });
 
     test('swallows server errors (best-effort logout)', () async {
-      when(() => dio.post<void>('/auth/logout'))
-          .thenThrow(dioErr(status: 500));
+      when(() => dio.post<void>('/auth/logout')).thenThrow(dioErr(status: 500));
 
       // Should NOT throw — server-side logout is best-effort in Phase 0/1.
       await expectLater(repo.logout(), completes);
@@ -186,11 +193,14 @@ void main() {
 
   group('AuthRepository.changePassword', () {
     test('returns normally on success', () async {
-      when(() => dio.put<void>('/auth/password', data: any(named: 'data')))
-          .thenAnswer((_) async => Response<void>(
-                requestOptions: RequestOptions(path: ''),
-                statusCode: 200,
-              ));
+      when(
+        () => dio.put<void>('/auth/password', data: any(named: 'data')),
+      ).thenAnswer(
+        (_) async => Response<void>(
+          requestOptions: RequestOptions(path: ''),
+          statusCode: 200,
+        ),
+      );
 
       await expectLater(
         repo.changePassword(currentPassword: 'old', newPassword: 'new12345'),
@@ -199,28 +209,31 @@ void main() {
     });
 
     test('WRONG_PASSWORD → ApiException', () async {
-      when(() => dio.put<void>('/auth/password', data: any(named: 'data')))
-          .thenThrow(
+      when(
+        () => dio.put<void>('/auth/password', data: any(named: 'data')),
+      ).thenThrow(
         dioErr(
           status: 401,
           body: {
-            'error': {'code': 'WRONG_PASSWORD', 'message': 'Wrong password'}
+            'error': {'code': 'WRONG_PASSWORD', 'message': 'Wrong password'},
           },
         ),
       );
 
       await expectLater(
         repo.changePassword(currentPassword: 'wrong', newPassword: 'new12345'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.code, 'code', 'WRONG_PASSWORD')),
+        throwsA(
+          isA<ApiException>().having((e) => e.code, 'code', 'WRONG_PASSWORD'),
+        ),
       );
     });
   });
 
   group('AuthRepository.getCurrentUser', () {
     test('returns parsed user on 200', () async {
-      when(() => dio.get<Map<String, dynamic>>('/users/me'))
-          .thenAnswer((_) async => ok(userJson));
+      when(
+        () => dio.get<Map<String, dynamic>>('/users/me'),
+      ).thenAnswer((_) async => ok(userJson));
 
       final user = await repo.getCurrentUser();
 
@@ -235,17 +248,19 @@ void main() {
           body: {
             'error': {
               'code': 'UNAUTHORIZED',
-              'message': 'Authorization header required'
-            }
+              'message': 'Authorization header required',
+            },
           },
         ),
       );
 
       await expectLater(
         repo.getCurrentUser(),
-        throwsA(isA<ApiException>()
-            .having((e) => e.code, 'code', 'UNAUTHORIZED')
-            .having((e) => e.statusCode, 'status', 401)),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.code, 'code', 'UNAUTHORIZED')
+              .having((e) => e.statusCode, 'status', 401),
+        ),
       );
     });
   });

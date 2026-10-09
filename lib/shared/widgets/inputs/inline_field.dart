@@ -45,6 +45,8 @@ class InlineField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       readOnly: !editing,
+      // Grows up to [maxLines] — an empty field is one line, not a box.
+      minLines: 1,
       maxLines: maxLines,
       maxLength: maxLength,
       keyboardType: keyboardType,
@@ -55,8 +57,8 @@ class InlineField extends StatelessWidget {
         hintText: editing
             ? hint
             : (onEnterEdit != null
-                ? AppLocalizations.of(context)!.commonLongPressToEdit
-                : null),
+                  ? AppLocalizations.of(context)!.commonLongPressToEdit
+                  : null),
         hintStyle: textTheme.bodyLarge?.copyWith(
           color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
         ),
@@ -64,7 +66,9 @@ class InlineField extends StatelessWidget {
         isDense: true,
         counterText: '',
         contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: 10),
+          horizontal: AppSpacing.md,
+          vertical: 10,
+        ),
         enabledBorder: _border(editing ? scheme.outline : Colors.transparent),
         focusedBorder: _border(scheme.primary),
         border: _border(editing ? scheme.outline : Colors.transparent),
@@ -79,13 +83,14 @@ class InlineField extends StatelessWidget {
   }
 
   static OutlineInputBorder _border(Color c) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: c),
-      );
+    borderRadius: BorderRadius.circular(10),
+    borderSide: BorderSide(color: c),
+  );
 }
 
 /// The header-card name field: plain text in view mode, underlined input in
-/// edit mode — identical height in both, so the card never grows.
+/// edit mode — identical height in both, so the card never grows. Also the
+/// header's subtitle line (a description) via [style] / [maxLines].
 class InlineTitleField extends StatelessWidget {
   const InlineTitleField({
     required this.editing,
@@ -96,6 +101,8 @@ class InlineTitleField extends StatelessWidget {
     this.validator,
     this.hint,
     this.maxLength = 100,
+    this.maxLines = 1,
+    this.style,
     super.key,
   });
 
@@ -108,22 +115,36 @@ class InlineTitleField extends StatelessWidget {
   final String? hint;
   final int maxLength;
 
+  /// > 1 wraps (grows from one line up to this).
+  final int maxLines;
+
+  /// Defaults to `titleMedium`.
+  final TextStyle? style;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textStyle = style ?? Theme.of(context).textTheme.titleMedium;
     final field = TextFormField(
       controller: controller,
       focusNode: focusNode,
       readOnly: !editing,
       maxLength: maxLength,
-      style: Theme.of(context).textTheme.titleMedium,
+      minLines: 1,
+      maxLines: maxLines,
+      style: textStyle,
       decoration: InputDecoration(
         filled: false,
         isDense: true,
         counterText: '',
         contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         hintText: hint,
-        enabledBorder: _underline(editing ? scheme.outline : Colors.transparent),
+        hintStyle: textStyle?.copyWith(
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+        ),
+        enabledBorder: _underline(
+          editing ? scheme.outline : Colors.transparent,
+        ),
         focusedBorder: _underline(scheme.primary),
         border: _underline(editing ? scheme.outline : Colors.transparent),
       ),

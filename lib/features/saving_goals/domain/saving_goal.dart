@@ -125,7 +125,8 @@ class SavingGoal extends Equatable {
       id: json['id'] as String,
       name: json['name'] as String,
       targetAmount: (json['target_amount'] as num).toDouble(),
-      linkedAccountId: (json['linked_account_id'] as String?) ??
+      linkedAccountId:
+          (json['linked_account_id'] as String?) ??
           (embedded?['id'] as String? ?? ''),
       allocationPct: (json['allocation_pct'] as num).toDouble(),
       currency: json['currency'] as String,
@@ -176,23 +177,23 @@ class SavingGoal extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        targetAmount,
-        linkedAccountId,
-        allocationPct,
-        currency,
-        status,
-        deadline,
-        iconCode,
-        note,
-        linkedAccount,
-        currentAmount,
-        progressPct,
-        isCompleted,
-        remainingAmount,
-        daysRemaining,
-      ];
+    id,
+    name,
+    targetAmount,
+    linkedAccountId,
+    allocationPct,
+    currency,
+    status,
+    deadline,
+    iconCode,
+    note,
+    linkedAccount,
+    currentAmount,
+    progressPct,
+    isCompleted,
+    remainingAmount,
+    daysRemaining,
+  ];
 }
 
 /// Embedded linked-account ref returned alongside each saving goal so the

@@ -542,6 +542,18 @@ abstract class AppLocalizations {
   /// **'Add transaction'**
   String get navAddTransaction;
 
+  /// No description provided for @appExitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the app?'**
+  String get appExitTitle;
+
+  /// No description provided for @appExitConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get appExitConfirm;
+
   /// No description provided for @navProjects.
   ///
   /// In en, this message translates to:
@@ -709,6 +721,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Transactions'**
   String get accountDetailTransactionsTitle;
+
+  /// No description provided for @accountDetailTabOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get accountDetailTabOverview;
 
   /// No description provided for @accountFormTitle.
   ///
@@ -1148,6 +1166,24 @@ abstract class AppLocalizations {
   /// **'No matching contacts'**
   String get contactsNoMatch;
 
+  /// No description provided for @contactsNoMatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another search or change the status filter'**
+  String get contactsNoMatchMessage;
+
+  /// No description provided for @contactsArchivedEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived contacts'**
+  String get contactsArchivedEmptyTitle;
+
+  /// No description provided for @contactsArchivedEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived contacts show up here — hidden from pickers, history kept'**
+  String get contactsArchivedEmptyMessage;
+
   /// No description provided for @contactTitleNew.
   ///
   /// In en, this message translates to:
@@ -1171,6 +1207,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Name'**
   String get contactNameLabel;
+
+  /// No description provided for @contactNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (required)'**
+  String get contactNameHint;
+
+  /// No description provided for @contactEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · name@example.com'**
+  String get contactEmailHint;
+
+  /// No description provided for @contactPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · 081-234-5678'**
+  String get contactPhoneHint;
+
+  /// No description provided for @contactNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · e.g. a work friend'**
+  String get contactNotesHint;
 
   /// No description provided for @contactNameRequired.
   ///
@@ -3404,18 +3464,6 @@ abstract class AppLocalizations {
   /// **'Restored {name}'**
   String accountRestored(String name);
 
-  /// No description provided for @accountDetailSeeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'See all'**
-  String get accountDetailSeeAll;
-
-  /// No description provided for @accountDetailDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get accountDetailDescription;
-
   /// No description provided for @accountDetailNote.
   ///
   /// In en, this message translates to:
@@ -4328,12 +4376,6 @@ abstract class AppLocalizations {
   /// **'More details'**
   String get quickMore;
 
-  /// No description provided for @quickAllCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'All'**
-  String get quickAllCategories;
-
   /// No description provided for @quickFrom.
   ///
   /// In en, this message translates to:
@@ -4957,12 +4999,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No transactions yet'**
   String get transactionsEmptyAccountTitle;
-
-  /// No description provided for @transactionsEmptyAccountMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap the + button to add one.'**
-  String get transactionsEmptyAccountMessage;
 
   /// No description provided for @transactionsListFilterAll.
   ///
@@ -6157,18 +6193,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Share with… (I owe them their part)'**
   String get transactionSplitShareTitle;
-
-  /// No description provided for @quickCreateNameSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Event name'**
-  String get quickCreateNameSection;
-
-  /// No description provided for @quickCreateSubmit.
-  ///
-  /// In en, this message translates to:
-  /// **'Create event'**
-  String get quickCreateSubmit;
 
   /// No description provided for @quickCreateErrorTxNotFound.
   ///

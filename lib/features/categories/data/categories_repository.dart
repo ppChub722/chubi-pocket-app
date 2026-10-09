@@ -81,8 +81,9 @@ class CategoriesRepository {
   /// What a delete would touch, from `GET /v1/categories/:id`.
   Future<({int transactions, int budgets})> usage(String id) async {
     try {
-      final res =
-          await _client.dio.get<Map<String, dynamic>>('/categories/$id');
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/categories/$id',
+      );
       final d = res.data!;
       return (
         transactions: (d['transaction_count'] as num?)?.toInt() ?? 0,

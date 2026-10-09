@@ -418,39 +418,44 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           key: _formKey,
           // Builder: its context sees the floating bar's height.
           child: Builder(
-            builder: (context) => ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              children: [
-                _header(l, goal),
-                const SizedBox(height: AppSpacing.lg),
-                _wallet(l, goal),
-                const SizedBox(height: AppSpacing.md),
-                _fields(l, goal),
-                if (goal != null) ...[
+            builder: (context) => PullToRefresh(
+              enabled: !widget.isCreate,
+              onRefresh: context.read<SavingGoalsCubit>().load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.huge,
+                ),
+                children: [
+                  _header(l, goal),
                   const SizedBox(height: AppSpacing.lg),
-                  LockedInEdit(locked: editing, child: _stats(l, goal)),
+                  _wallet(l, goal),
+                  const SizedBox(height: AppSpacing.md),
+                  _fields(l, goal),
+                  if (goal != null) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    LockedInEdit(locked: editing, child: _stats(l, goal)),
+                  ],
+                  // Archive · delete — edit only, always last (the top bar
+                  // carries no page actions).
+                  if (editing && goal != null) ...[
+                    DangerRow(
+                      icon: AppIcons.archive,
+                      label: l.savingGoalDetailArchive,
+                      onTap: isSaving ? null : () => _archive(goal),
+                    ),
+                    DangerRow(
+                      icon: AppIcons.delete,
+                      label: l.savingGoalDeleteThis,
+                      onTap: isSaving ? null : () => _delete(goal),
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    ),
+                  ],
                 ],
-                // Archive · delete — edit only, always last (the top bar
-                // carries no page actions).
-                if (editing && goal != null) ...[
-                  DangerRow(
-                    icon: AppIcons.archive,
-                    label: l.savingGoalDetailArchive,
-                    onTap: isSaving ? null : () => _archive(goal),
-                  ),
-                  DangerRow(
-                    icon: AppIcons.delete,
-                    label: l.savingGoalDeleteThis,
-                    onTap: isSaving ? null : () => _delete(goal),
-                    padding: const EdgeInsets.only(top: AppSpacing.sm),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),

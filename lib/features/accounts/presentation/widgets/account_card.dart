@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
+import '../../../../shared/widgets/layout/tinted_card.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/data/money_text.dart';
@@ -85,43 +85,13 @@ class AccountCardSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent = account.iconCode?.accentColorFor(palette) ?? palette.primary;
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return TintedCard(
+      tint: accent,
+      glyph: showGlyph ? account.type.icon : null,
+      glyphSize: glyphSize,
+      onTap: onTap,
       margin: margin,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: accent.withValues(alpha: 0.25)),
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              accent.withValues(alpha: 0.16),
-              accent.withValues(alpha: 0.03),
-            ],
-          ),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          child: Stack(
-            children: [
-              if (showGlyph)
-                Positioned(
-                  right: -glyphSize * 0.16,
-                  bottom: -glyphSize * 0.2,
-                  child: Icon(
-                    account.type.icon,
-                    size: glyphSize,
-                    color: accent.withValues(alpha: 0.10),
-                  ),
-                ),
-              child,
-            ],
-          ),
-        ),
-      ),
+      child: child,
     );
   }
 }

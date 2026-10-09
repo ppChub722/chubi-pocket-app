@@ -33,7 +33,9 @@ class DebtAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final contacts = context.select<ContactsCubit, List>((c) => c.state.contacts);
+    final contacts = context.select<ContactsCubit, List>(
+      (c) => c.state.contacts,
+    );
     final match = contactId == null
         ? null
         : contacts.where((c) => c.id == contactId).firstOrNull;
@@ -46,15 +48,27 @@ class DebtAvatar extends StatelessWidget {
 }
 
 /// "ค้างอยู่ / คืนครบแล้ว / ยกเลิก".
-StatusPill debtStatusPill(BuildContext context, DebtStatus s, {bool dense = false}) {
+StatusPill debtStatusPill(
+  BuildContext context,
+  DebtStatus s, {
+  bool dense = false,
+}) {
   final l = AppLocalizations.of(context)!;
   return switch (s) {
-    DebtStatus.open =>
-      StatusPill(label: l.debtsStatusOpen, tone: Tone.warning, dense: dense),
-    DebtStatus.settled =>
-      StatusPill(label: l.debtStatusSettled, tone: Tone.success, dense: dense),
-    DebtStatus.cancelled =>
-      StatusPill(label: l.debtStatusCancelled, dense: dense),
+    DebtStatus.open => StatusPill(
+      label: l.debtsStatusOpen,
+      tone: Tone.warning,
+      dense: dense,
+    ),
+    DebtStatus.settled => StatusPill(
+      label: l.debtStatusSettled,
+      tone: Tone.success,
+      dense: dense,
+    ),
+    DebtStatus.cancelled => StatusPill(
+      label: l.debtStatusCancelled,
+      dense: dense,
+    ),
   };
 }
 
@@ -86,7 +100,9 @@ class DebtTile extends StatelessWidget {
       onTap: () => context.push('/personal-debts/${debt.id}'),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -112,7 +128,8 @@ class DebtTile extends StatelessWidget {
                       ? (debt.isOwedToMe ? MoneyTone.income : MoneyTone.expense)
                       : MoneyTone.plain,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: debt.isOpen ? null : scheme.onSurfaceVariant),
+                    color: debt.isOpen ? null : scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -142,8 +159,11 @@ class DebtTile extends StatelessWidget {
 /// transaction — income for owed_to_me, expense for i_owe (contract §7).
 /// [amount] pre-fills the field (e.g. from a "จ่ายแล้ว" notification).
 /// Returns true when saved.
-Future<bool> showSettleDebtSheet(BuildContext context, PersonalDebt debt,
-    {double? amount}) async {
+Future<bool> showSettleDebtSheet(
+  BuildContext context,
+  PersonalDebt debt, {
+  double? amount,
+}) async {
   final l = AppLocalizations.of(context)!;
   final accounts = context.read<AccountsCubit>();
   if (accounts.state.accounts.isEmpty) await accounts.load();
@@ -171,9 +191,13 @@ class _SettleSheet extends StatefulWidget {
 class _SettleSheetState extends State<_SettleSheet> {
   final _formKey = GlobalKey<FormState>();
   late final _amount = TextEditingController(
-      text: AmountField.format(
-          (widget.amount ?? widget.debt.outstanding)
-              .clamp(0, widget.debt.outstanding)));
+    text: AmountField.format(
+      (widget.amount ?? widget.debt.outstanding).clamp(
+        0,
+        widget.debt.outstanding,
+      ),
+    ),
+  );
 
   /// null = no wallet (a floating transaction).
   Account? _account;
@@ -251,8 +275,12 @@ class _SettleSheetState extends State<_SettleSheet> {
     return Form(
       key: _formKey,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg,
-            AppSpacing.lg + MediaQuery.viewInsetsOf(context).bottom),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -264,14 +292,17 @@ class _SettleSheetState extends State<_SettleSheet> {
               quickFills: [
                 AmountQuickFill(label: l.debtSettleAll, amount: out),
                 AmountQuickFill(
-                    label: l.debtSettleHalf,
-                    amount: (out / 2 * 100).roundToDouble() / 100),
+                  label: l.debtSettleHalf,
+                  amount: (out / 2 * 100).roundToDouble() / 100,
+                ),
               ],
               validator: (v) {
                 final n = AmountField.parse(v);
                 if (n == null || n <= 0) return l.debtAmountRequired;
                 if (n > out + 0.005) {
-                  return l.debtSettleOver(moneyString(context, out, symbol: symbol));
+                  return l.debtSettleOver(
+                    moneyString(context, out, symbol: symbol),
+                  );
                 }
                 return null;
               },
@@ -280,7 +311,9 @@ class _SettleSheetState extends State<_SettleSheet> {
             PickerTile(
               label: l.debtSettleAccount,
               value: _account?.name ?? l.transactionFormAccountNone,
-              leading: Icon(_account == null ? AppIcons.noWallet : AppIcons.bank),
+              leading: Icon(
+                _account == null ? AppIcons.noWallet : AppIcons.bank,
+              ),
               onTap: _pickAccount,
             ),
             const SizedBox(height: AppSpacing.sm),

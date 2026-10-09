@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/shell/tab_root_scaffold.dart';
+import '../../../../core/constants/app_durations.dart';
 import '../../../../core/constants/app_icons.dart';
+import '../../../../core/theme/module_colors.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -147,10 +149,8 @@ class _HomeView extends StatelessWidget {
                     96,
                   ),
                   children: [
-                    _MonthBar(
-                      month: d.month,
-                      loading: state.status == DashboardStatus.loading,
-                    ),
+                    _MonthBar(month: d.month),
+                    const SizedBox(height: AppSpacing.sm),
                     if (state.status == DashboardStatus.error) ...[
                       MessageBanner(
                         message: l.homeLoadError,
@@ -158,17 +158,30 @@ class _HomeView extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.md),
                     ],
-                    _NetWorthCard(netWorth: d.netWorth),
-                    const _PendingBlock(),
-                    const SizedBox(height: AppSpacing.md),
-                    _MonthCard(current: d.summary, previous: d.previous),
-                    if (d.upcoming.items.isNotEmpty)
-                      _ComingUp(block: d.upcoming),
-                    _WhereItWent(d: d),
-                    _Trend(points: d.trend),
-                    const SizedBox(height: AppSpacing.lg),
-                    _Tiles(d: d),
-                    _Recent(d: d),
+                    // Loading another month (or refreshing): the old
+                    // numbers dim instead of a spinner beside the month.
+                    AnimatedOpacity(
+                      duration: AppDurations.fast,
+                      opacity: state.status == DashboardStatus.loading
+                          ? 0.5
+                          : 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _NetWorthCard(netWorth: d.netWorth),
+                          const _PendingBlock(),
+                          const SizedBox(height: AppSpacing.md),
+                          _MonthCard(current: d.summary, previous: d.previous),
+                          if (d.upcoming.items.isNotEmpty)
+                            _ComingUp(block: d.upcoming),
+                          _WhereItWent(d: d),
+                          _Trend(points: d.trend),
+                          const SizedBox(height: AppSpacing.lg),
+                          _Tiles(d: d),
+                          _Recent(d: d),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -185,11 +198,12 @@ String _locale(BuildContext context) =>
 
 // ── Month picker ──────────────────────────────────────────────────────
 
+/// ‹ month › as round chips (the top bar's look) + 👁. No spinner — the
+/// content below dims while a month loads.
 class _MonthBar extends StatelessWidget {
-  const _MonthBar({required this.month, required this.loading});
+  const _MonthBar({required this.month});
 
   final DateTime month;
-  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -199,28 +213,28 @@ class _MonthBar extends StatelessWidget {
     final isCurrent = month.year == now.year && month.month == now.month;
     return Row(
       children: [
-        IconButton(
+        AppIconButton(
+          icon: AppIcons.chevronLeft,
+          size: 36,
           tooltip: l.homePrevMonth,
-          icon: const Icon(AppIcons.chevronLeft),
           onPressed: () => cubit.shiftMonth(-1),
         ),
-        Text(
-          DateFormat.yMMMM(_locale(context)).format(month),
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        Expanded(
+          child: Text(
+            DateFormat.yMMMM(_locale(context)).format(month),
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
         ),
-        IconButton(
+        AppIconButton(
+          icon: AppIcons.chevronRight,
+          size: 36,
           tooltip: l.homeNextMonth,
-          icon: const Icon(AppIcons.chevronRight),
           onPressed: isCurrent ? null : () => cubit.shiftMonth(1),
         ),
-        if (loading)
-          const SizedBox.square(
-            dimension: 14,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        const Spacer(),
+        const SizedBox(width: AppSpacing.sm),
         const MoneyVisibilityToggle(),
       ],
     );
@@ -238,44 +252,47 @@ class _NetWorthCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final textTheme = Theme.of(context).textTheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
     final muted = textTheme.bodySmall?.copyWith(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
     );
-    return Card(
+    // The wallet-card look (owner 2026-10-09) — the page's lead card.
+    return TintedCard(
+      tint: palette.primary,
+      glyph: AppIcons.wallet,
+      glyphSize: 132,
       margin: EdgeInsets.zero,
-      color: Theme.of(context).colorScheme.surfaceContainer,
-      child: InkWell(
-        onTap: () => context.go('/accounts'),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l.homeNetWorthLabel, style: textTheme.labelLarge),
-              MoneyText(
-                netWorth.total,
-                style: textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+      onTap: () => context.go('/accounts'),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.homeNetWorthLabel, style: textTheme.labelLarge),
+            MoneyText(
+              netWorth.total,
+              style: textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: palette.primary,
               ),
-              const SizedBox(height: AppSpacing.xs),
-              Row(
-                children: [
-                  Text('${l.homeAssets} ', style: muted),
-                  MoneyText(netWorth.assets, style: muted),
-                  if (netWorth.liabilities > 0) ...[
-                    Text('  ·  ${l.homeLiabilities} ', style: muted),
-                    MoneyText(netWorth.liabilities, style: muted),
-                  ],
-                  const Spacer(),
-                  Text(
-                    l.homeNetWorthAccountCount(netWorth.accountsCount),
-                    style: muted,
-                  ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: [
+                Text('${l.homeAssets} ', style: muted),
+                MoneyText(netWorth.assets, style: muted),
+                if (netWorth.liabilities > 0) ...[
+                  Text('  ·  ${l.homeLiabilities} ', style: muted),
+                  MoneyText(netWorth.liabilities, style: muted),
                 ],
-              ),
-            ],
-          ),
+                const Spacer(),
+                Text(
+                  l.homeNetWorthAccountCount(netWorth.accountsCount),
+                  style: muted,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -531,11 +548,9 @@ class _WhereItWent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(
-          title: l.homeWhereMoneyWent,
-          actionLabel: l.homeRecentViewAll,
-          onAction: () => context.go('/transactions'),
-        ),
+        // No "ดูทั้งหมด" here (owner 2026-10-09) — each slice links to its
+        // own rows; the recent list below keeps the one way to the full list.
+        SectionHeader(title: l.homeWhereMoneyWent),
         Card(
           margin: EdgeInsets.zero,
           child: Padding(
@@ -727,6 +742,9 @@ class _Tiles extends StatelessWidget {
     final b = d.budgets;
     final debts = d.debts;
     final goals = d.savingGoals;
+    // The เพิ่มเติม hub's group colours + icons, so a tile reads as the same
+    // feature there (owner 2026-10-09).
+    final groups = ModuleColors.of(context);
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -734,6 +752,8 @@ class _Tiles extends StatelessWidget {
           Expanded(
             child: _Tile(
               title: l.moreBudgets,
+              icon: AppIcons.budget,
+              tint: groups.planning,
               route: '/budgets',
               value: b.count == 0
                   ? null
@@ -753,6 +773,8 @@ class _Tiles extends StatelessWidget {
           Expanded(
             child: _Tile(
               title: l.moreDebts,
+              icon: AppIcons.debt,
+              tint: groups.people,
               route: '/personal-debts',
               value: debts.openCount == 0
                   ? null
@@ -766,6 +788,8 @@ class _Tiles extends StatelessWidget {
           Expanded(
             child: _Tile(
               title: l.moreSavingGoals,
+              icon: AppIcons.savingGoal,
+              tint: groups.planning,
               route: '/saving-goals',
               value: goals.count == 0
                   ? null
@@ -785,6 +809,8 @@ class _Tiles extends StatelessWidget {
 class _Tile extends StatelessWidget {
   const _Tile({
     required this.title,
+    required this.icon,
+    required this.tint,
     required this.route,
     this.value,
     this.progress,
@@ -793,6 +819,10 @@ class _Tile extends StatelessWidget {
   });
 
   final String title;
+  final IconData icon;
+
+  /// The feature's group colour (ModuleColors).
+  final Color tint;
   final String route;
   final Widget? value;
 
@@ -806,47 +836,49 @@ class _Tile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
-    return Card(
+    return TintedCard(
+      tint: tint,
+      glyph: icon,
+      glyphSize: 64,
       margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push(route),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      onTap: () => context.push(route),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TintedIconBadge(icon: icon, tint: tint, size: 28),
+            TintedIconBadge.gap,
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.labelMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            if (value != null)
+              DefaultTextStyle.merge(
+                style: textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+                child: value!,
+              ),
+            if (progress != null) ...[
+              const SizedBox(height: AppSpacing.xs),
+              ProgressRow(value: progress!, height: 4, color: tint),
+            ],
+            const Spacer(),
+            if (caption != null)
               Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
+                caption!,
+                maxLines: 2,
+                style: textTheme.labelSmall?.copyWith(
+                  color: alert ? palette.expense : scheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
-              if (value != null)
-                DefaultTextStyle.merge(
-                  style: textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                  child: value!,
-                ),
-              if (progress != null) ...[
-                const SizedBox(height: AppSpacing.xs),
-                ProgressRow(value: progress!, height: 4),
-              ],
-              const Spacer(),
-              if (caption != null)
-                Text(
-                  caption!,
-                  maxLines: 2,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: alert ? palette.expense : scheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -898,6 +930,15 @@ class _Recent extends StatelessWidget {
                   ],
                 ),
         ),
+        // Add right under the list — same as a wallet's รายการ tab.
+        if (d.recent.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.sm),
+          AddTile(
+            label: l.navAddTransaction,
+            variant: AddTileVariant.row,
+            onTap: () => showQuickCreateSheet(context),
+          ),
+        ],
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -61,8 +62,18 @@ class TransactionsListPage extends StatefulWidget {
     this.initialUncategorized = false,
     this.initialMonth,
     this.title,
+    this.embedded = false,
+    this.lockedAccount,
     super.key,
   });
+
+  /// Just the search · filters · list, no Scaffold / top bar — a tab of
+  /// another page (a wallet's รายการ). Give it its own [TransactionsCubit].
+  final bool embedded;
+
+  /// Pinned to this wallet: no wallet filter, everything added from here
+  /// presets it, and the list ends in an add tile.
+  final Account? lockedAccount;
 
   final String? initialAccountId;
   final String? initialCategoryId;
@@ -106,8 +117,13 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final locked = widget.lockedAccount;
+      if (locked != null) {
+        _wallet = _OneWallet(locked);
+        _range = _Range.all;
+      }
       final id = widget.initialAccountId;
-      if (id != null) {
+      if (id != null && locked == null) {
         final a = context
             .read<AccountsCubit>()
             .state
@@ -331,6 +347,137 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
       _OneWallet(:final account) => account.name,
     };
 
+    final locked = widget.lockedAccount;
+    final content = Column(
+      children: [
+        AppSearchBar(
+          controller: _search,
+          onChanged: _onSearch,
+          hint: l.transactionsSearchHint,
+        ),
+        FilterBar(
+          chips: [
+            OptionMenuAnchor<TransactionType?>(
+              selected: _type,
+              onSelected: (t) => _set(() {
+                _type = t;
+                // A category belongs to one type.
+                _category = null;
+                _uncategorized = false;
+              }),
+              options: [
+                for (final e in typeLabels.entries)
+                  SheetOption(value: e.key, label: e.value),
+              ],
+              builder: (context, toggle) => FilterDropdownChip(
+                label: l.transactionsFilterType,
+                valueLabel: _type == null ? null : typeLabels[_type],
+                onTap: toggle,
+              ),
+            ),
+            OptionMenuAnchor<_Range>(
+              selected: _range,
+              onSelected: (r) => _set(() => _range = r),
+              options: [
+                for (final e in rangeLabels.entries)
+                  SheetOption(value: e.key, label: e.value),
+              ],
+              builder: (context, toggle) => FilterDropdownChip(
+                label: l.transactionsFilterRange,
+                valueLabel: rangeLabels[_range],
+                active: _range != _Range.month,
+                onTap: toggle,
+              ),
+            ),
+            if (locked == null)
+              FilterDropdownChip(
+                label: l.transactionsFilterAccount,
+                valueLabel: walletLabel,
+                onTap: _pickWallet,
+              ),
+            if (categoryEnabled)
+              FilterDropdownChip(
+                label: l.transactionsFilterCategory,
+                valueLabel: _uncategorized
+                    ? l.homeUncategorized
+                    : _category?.name,
+                onTap: _pickCategory,
+              ),
+            FilterDropdownChip(
+              label: l.transactionsFilterTag,
+              valueLabel: _tag?.name,
+              onTap: _pickTag,
+            ),
+          ],
+          trailing: SortChip<String>(
+            selected: _sort,
+            onSelected: (s) => _set(() => _sort = s),
+            options: [
+              SortOption('date_desc', l.transactionsSortNewest),
+              SortOption('date_asc', l.transactionsSortOldest),
+              SortOption('amount_desc', l.transactionsSortAmountHigh),
+              SortOption('amount_asc', l.transactionsSortAmountLow),
+            ],
+          ),
+        ),
+        Expanded(
+          child: BlocBuilder<TransactionsCubit, TransactionsState>(
+            builder: (context, state) => AsyncStateView(
+              loading:
+                  state.status == TransactionsStatus.initial ||
+                  state.status == TransactionsStatus.loading,
+              error: state.error,
+              isEmpty: state.transactions.isEmpty,
+              onRetry: _refetch,
+              skeleton: ListView(
+                children: [
+                  for (var i = 0; i < 8; i++) const SkeletonListTile(),
+                ],
+              ),
+              // Filters on → "no match" + clear; off → first-tx CTA.
+              empty: EmptyView(
+                icon: _filtered ? AppIcons.search : AppIcons.empty,
+                title: _filtered
+                    ? l.transactionsNoMatch
+                    : l.transactionsEmptyAccountTitle,
+                message: _filtered ? '' : l.transactionsListEmptyMessage,
+                cta: _filtered
+                    ? AppButton(
+                        label: l.transactionsClearFilters,
+                        variant: AppButtonVariant.tonal,
+                        onPressed: _clearFilters,
+                      )
+                    : AddTile(
+                        label: l.homeAddFirstTx,
+                        // Same flow as the nav's +.
+                        onTap: () =>
+                            showQuickCreateSheet(context, account: locked),
+                      ),
+              ),
+              builder: (context) => PullToRefresh(
+                onRefresh: _refetch,
+                child: _DayGroupedList(
+                  transactions: state.transactions,
+                  controller: _scroll,
+                  byDate: _sort.startsWith('date'),
+                  loadingMore: state.loadingMore,
+                  hideAccount: _wallet is _OneWallet,
+                  footer: locked == null
+                      ? null
+                      : AddTile(
+                          label: l.navAddTransaction,
+                          variant: AddTileVariant.row,
+                          onTap: () =>
+                              showQuickCreateSheet(context, account: locked),
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+    if (widget.embedded) return content;
     return Scaffold(
       // Tab root (no title passed) → the tab's own bar; pushed → back + title.
       // Nothing scrolls under it here (search + filters are pinned), so the
@@ -339,125 +486,8 @@ class _TransactionsListPageState extends State<TransactionsListPage> {
         title: widget.title ?? l.navTransactions,
         showBack: widget.title != null,
       ),
-      body: Column(
-        children: [
-          AppSearchBar(
-            controller: _search,
-            onChanged: _onSearch,
-            hint: l.transactionsSearchHint,
-          ),
-          FilterBar(
-            chips: [
-              OptionMenuAnchor<TransactionType?>(
-                selected: _type,
-                onSelected: (t) => _set(() {
-                  _type = t;
-                  // A category belongs to one type.
-                  _category = null;
-                  _uncategorized = false;
-                }),
-                options: [
-                  for (final e in typeLabels.entries)
-                    SheetOption(value: e.key, label: e.value),
-                ],
-                builder: (context, toggle) => FilterDropdownChip(
-                  label: l.transactionsFilterType,
-                  valueLabel: _type == null ? null : typeLabels[_type],
-                  onTap: toggle,
-                ),
-              ),
-              OptionMenuAnchor<_Range>(
-                selected: _range,
-                onSelected: (r) => _set(() => _range = r),
-                options: [
-                  for (final e in rangeLabels.entries)
-                    SheetOption(value: e.key, label: e.value),
-                ],
-                builder: (context, toggle) => FilterDropdownChip(
-                  label: l.transactionsFilterRange,
-                  valueLabel: rangeLabels[_range],
-                  active: _range != _Range.month,
-                  onTap: toggle,
-                ),
-              ),
-              FilterDropdownChip(
-                label: l.transactionsFilterAccount,
-                valueLabel: walletLabel,
-                onTap: _pickWallet,
-              ),
-              if (categoryEnabled)
-                FilterDropdownChip(
-                  label: l.transactionsFilterCategory,
-                  valueLabel: _uncategorized
-                      ? l.homeUncategorized
-                      : _category?.name,
-                  onTap: _pickCategory,
-                ),
-              FilterDropdownChip(
-                label: l.transactionsFilterTag,
-                valueLabel: _tag?.name,
-                onTap: _pickTag,
-              ),
-            ],
-            trailing: SortChip<String>(
-              selected: _sort,
-              onSelected: (s) => _set(() => _sort = s),
-              options: [
-                SortOption('date_desc', l.transactionsSortNewest),
-                SortOption('date_asc', l.transactionsSortOldest),
-                SortOption('amount_desc', l.transactionsSortAmountHigh),
-                SortOption('amount_asc', l.transactionsSortAmountLow),
-              ],
-            ),
-          ),
-          Expanded(
-            child: BlocBuilder<TransactionsCubit, TransactionsState>(
-              builder: (context, state) => AsyncStateView(
-                loading:
-                    state.status == TransactionsStatus.initial ||
-                    state.status == TransactionsStatus.loading,
-                error: state.error,
-                isEmpty: state.transactions.isEmpty,
-                onRetry: _refetch,
-                skeleton: ListView(
-                  children: [
-                    for (var i = 0; i < 8; i++) const SkeletonListTile(),
-                  ],
-                ),
-                // Filters on → "no match" + clear; off → first-tx CTA.
-                empty: EmptyView(
-                  icon: _filtered ? AppIcons.search : AppIcons.empty,
-                  title: _filtered
-                      ? l.transactionsNoMatch
-                      : l.transactionsEmptyAccountTitle,
-                  message: _filtered ? '' : l.transactionsListEmptyMessage,
-                  cta: _filtered
-                      ? AppButton(
-                          label: l.transactionsClearFilters,
-                          variant: AppButtonVariant.tonal,
-                          onPressed: _clearFilters,
-                        )
-                      : AddTile(
-                          label: l.homeAddFirstTx,
-                          // Same flow as the nav's +.
-                          onTap: () => showQuickCreateSheet(context),
-                        ),
-                ),
-                builder: (context) => PullToRefresh(
-                  onRefresh: _refetch,
-                  child: _DayGroupedList(
-                    transactions: state.transactions,
-                    controller: _scroll,
-                    byDate: _sort.startsWith('date'),
-                    loadingMore: state.loadingMore,
-                    hideAccount: _wallet is _OneWallet,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      // Tab switch animates the body only — the bar stays put.
+      body: TabSwitchBody(child: content),
     );
   }
 }
@@ -471,6 +501,7 @@ class _DayGroupedList extends StatelessWidget {
     required this.byDate,
     required this.loadingMore,
     required this.hideAccount,
+    this.footer,
   });
 
   final List<Transaction> transactions;
@@ -478,6 +509,9 @@ class _DayGroupedList extends StatelessWidget {
   final bool byDate;
   final bool loadingMore;
   final bool hideAccount;
+
+  /// After the last row (once every page is in).
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -526,6 +560,18 @@ class _DayGroupedList extends StatelessWidget {
     // Next page in flight → row-shaped skeletons, never a spinner (§8.5).
     if (loadingMore) {
       children.addAll(const [SkeletonListTile(), SkeletonListTile()]);
+    } else if (footer != null) {
+      children.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            0,
+          ),
+          child: footer,
+        ),
+      );
     }
     return ListView(
       controller: controller,

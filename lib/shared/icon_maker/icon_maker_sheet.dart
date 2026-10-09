@@ -66,8 +66,10 @@ Future<IconMakerResult?> showIconMakerSheet({
   bool showColorPicker = true,
   List<String> grantedPackIds = const [],
 }) {
-  assert(showIcon || showBackground || showBorder,
-      'showIconMakerSheet needs at least one editable layer.');
+  assert(
+    showIcon || showBackground || showBorder,
+    'showIconMakerSheet needs at least one editable layer.',
+  );
   final packs = PackRegistry.packs(type: type, grantedPackIds: grantedPackIds);
   final isWide = MediaQuery.sizeOf(context).width >= 600;
   final body = _Sheet(
@@ -91,7 +93,9 @@ Future<IconMakerResult?> showIconMakerSheet({
       context: context,
       builder: (_) => Dialog(
         insetPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.xl,
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 680, maxHeight: 720),
           child: Padding(
@@ -110,10 +114,8 @@ Future<IconMakerResult?> showIconMakerSheet({
     showDragHandle: true,
     useSafeArea: true,
     useRootNavigator: true,
-    builder: (ctx) => SizedBox(
-      height: MediaQuery.sizeOf(ctx).height * 0.88,
-      child: body,
-    ),
+    builder: (ctx) =>
+        SizedBox(height: MediaQuery.sizeOf(ctx).height * 0.88, child: body),
   );
 }
 
@@ -211,10 +213,10 @@ class _Sheet extends StatefulWidget {
 
   /// Editable layers, in display order.
   List<_Role> get roles => [
-        if (showIcon) _Role.icon,
-        if (showBackground) _Role.background,
-        if (showBorder) _Role.border,
-      ];
+    if (showIcon) _Role.icon,
+    if (showBackground) _Role.background,
+    if (showBorder) _Role.border,
+  ];
 
   @override
   State<_Sheet> createState() => _SheetState();
@@ -245,7 +247,7 @@ class _SheetState extends State<_Sheet> {
   bool _hexInvalid = false;
 
   // Picker focus state
-  _Role? _focusedRole;   // which element the colour picker edits
+  _Role? _focusedRole; // which element the colour picker edits
   int _focusedSlotIndex = 0;
 
   // Recent custom hex picks — persists across sheet opens within the app session.
@@ -282,11 +284,13 @@ class _SheetState extends State<_Sheet> {
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   List<IconPackItem> _allItems(_Role role) => widget.packs
-      .expand((p) => switch (role) {
-            _Role.icon => p.icons,
-            _Role.background => p.backgrounds,
-            _Role.border => p.borders,
-          })
+      .expand(
+        (p) => switch (role) {
+          _Role.icon => p.icons,
+          _Role.background => p.backgrounds,
+          _Role.border => p.borders,
+        },
+      )
       .toList();
 
   IconPackItem? _findItem(_Role role, String id) {
@@ -303,10 +307,10 @@ class _SheetState extends State<_Sheet> {
   }
 
   List<String> _colorsFor(_Role role) => switch (role) {
-        _Role.icon => _iconColors,
-        _Role.background => _bgColors,
-        _Role.border => _borderColors,
-      };
+    _Role.icon => _iconColors,
+    _Role.background => _bgColors,
+    _Role.border => _borderColors,
+  };
 
   /// True if the focused slot's current spec equals [spec] (case-insensitive).
   /// Used to draw the ✓ on theme/common swatches.
@@ -353,24 +357,26 @@ class _SheetState extends State<_Sheet> {
   }
 
   String _roleLabel(AppLocalizations l, _Role role) => switch (role) {
-        _Role.icon => l.iconMakerRoleIcon,
-        _Role.background => l.iconMakerRoleBackground,
-        _Role.border => l.iconMakerRoleBorder,
-      };
+    _Role.icon => l.iconMakerRoleIcon,
+    _Role.background => l.iconMakerRoleBackground,
+    _Role.border => l.iconMakerRoleBorder,
+  };
 
   // ── Undo ─────────────────────────────────────────────────────────────────
 
   /// Capture the current state before any mutation. Cap at [_undoLimit].
   void _pushSnapshot() {
-    _undoStack.add(_Snapshot(
-      iconId: _iconId,
-      iconColors: List.of(_iconColors),
-      bgId: _bgId,
-      bgColors: List.of(_bgColors),
-      borderId: _borderId,
-      borderColors: List.of(_borderColors),
-      shape: _shape,
-    ));
+    _undoStack.add(
+      _Snapshot(
+        iconId: _iconId,
+        iconColors: List.of(_iconColors),
+        bgId: _bgId,
+        bgColors: List.of(_bgColors),
+        borderId: _borderId,
+        borderColors: List.of(_borderColors),
+        shape: _shape,
+      ),
+    );
     if (_undoStack.length > _undoLimit) _undoStack.removeAt(0);
   }
 
@@ -390,14 +396,14 @@ class _SheetState extends State<_Sheet> {
   }
 
   IconCode get _current => IconCode(
-        icon: _iconId,
-        iconColors: _effectiveColors(_Role.icon),
-        background: _bgId,
-        bgColors: _effectiveColors(_Role.background),
-        border: _borderId,
-        borderColors: _effectiveColors(_Role.border),
-        shape: _shape,
-      );
+    icon: _iconId,
+    iconColors: _effectiveColors(_Role.icon),
+    background: _bgId,
+    bgColors: _effectiveColors(_Role.background),
+    border: _borderId,
+    borderColors: _effectiveColors(_Role.border),
+    shape: _shape,
+  );
 
   // ── Initialisation ───────────────────────────────────────────────────────
 
@@ -433,7 +439,11 @@ class _SheetState extends State<_Sheet> {
     // background; an existing code keeps its ids exactly, including `null`.
     final firstIconId = allIcons.firstOrNull?.id ?? 'category';
     _iconId = ic == null ? firstIconId : ic.icon;
-    _bgId = ic == null ? allBgs.firstOrNull?.id : ic.background;
+    // No default bg when the bg layer isn't editable (tags: icon + colour
+    // only) — it would be invisible yet win as the code's accent colour.
+    _bgId = ic == null
+        ? (widget.showBackground ? allBgs.firstOrNull?.id : null)
+        : ic.background;
     _borderId = ic?.border;
     _shape = ic?.shape;
 
@@ -509,8 +519,9 @@ class _SheetState extends State<_Sheet> {
     // the slot currently holds a `@presetTheme*` token, the user sees the
     // colour they're editing.
     final palette = Theme.of(context).extension<AppColors>()!;
-    final eff =
-        _focusedRole != null ? _effectiveColors(_focusedRole!) : const <String>[];
+    final eff = _focusedRole != null
+        ? _effectiveColors(_focusedRole!)
+        : const <String>[];
     final currentSpec = _focusedSlotIndex < eff.length
         ? eff[_focusedSlotIndex]
         : '#FFFFFF';
@@ -533,10 +544,10 @@ class _SheetState extends State<_Sheet> {
   _Role get _role => _focusedRole ?? widget.roles.first;
 
   String? _assetId(_Role role) => switch (role) {
-        _Role.icon => _iconId,
-        _Role.background => _bgId,
-        _Role.border => _borderId,
-      };
+    _Role.icon => _iconId,
+    _Role.background => _bgId,
+    _Role.border => _borderId,
+  };
 
   /// Which picker is showing — forced when the caller allows only one.
   _Tab get _activeTab => !widget.showIconPicker
@@ -562,7 +573,11 @@ class _SheetState extends State<_Sheet> {
           if (showTabs)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                0,
+              ),
               child: AppTabBar<_Tab>(
                 selected: _tab,
                 onChanged: (t) => setState(() => _tab = t),
@@ -576,7 +591,11 @@ class _SheetState extends State<_Sheet> {
             child: SingleChildScrollView(
               controller: _scroll,
               padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
               child: _activeTab == _Tab.style
                   ? _buildStyleTab(context, l)
                   : _buildColorTab(context, l),
@@ -591,8 +610,9 @@ class _SheetState extends State<_Sheet> {
             saveLabel: widget.useThisLabel ?? l.iconPickerUseThis,
             onCancel: () => Navigator.of(context).pop<IconMakerResult>(null),
             onUndo: _undo,
-            onSave: () => Navigator.of(context)
-                .pop<IconMakerResult>(IconMakerSelected(_current)),
+            onSave: () => Navigator.of(
+              context,
+            ).pop<IconMakerResult>(IconMakerSelected(_current)),
           ),
         ],
       ),
@@ -604,7 +624,11 @@ class _SheetState extends State<_Sheet> {
   Widget _buildHeader(BuildContext context, AppLocalizations l) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xl, 0, AppSpacing.sm, AppSpacing.xs),
+        AppSpacing.xl,
+        0,
+        AppSpacing.sm,
+        AppSpacing.xs,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -628,8 +652,9 @@ class _SheetState extends State<_Sheet> {
                 );
                 if (ok && mounted) _resetToDefault();
               } else if (v == 'default' && context.mounted) {
-                Navigator.of(context)
-                    .pop<IconMakerResult>(const IconMakerRemoved());
+                Navigator.of(
+                  context,
+                ).pop<IconMakerResult>(const IconMakerRemoved());
               }
             },
             itemBuilder: (_) => [
@@ -722,7 +747,9 @@ class _SheetState extends State<_Sheet> {
     final active = _role == role;
     final off = _assetId(role) == null;
     return Material(
-      color: active ? scheme.primary.withValues(alpha: 0.12) : Colors.transparent,
+      color: active
+          ? scheme.primary.withValues(alpha: 0.12)
+          : Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(11),
         side: active
@@ -741,7 +768,11 @@ class _SheetState extends State<_Sheet> {
                 width: 20,
                 height: 20,
                 child: off
-                    ? Icon(AppIcons.none, size: 18, color: scheme.onSurfaceVariant)
+                    ? Icon(
+                        AppIcons.none,
+                        size: 18,
+                        color: scheme.onSurfaceVariant,
+                      )
                     : _layerMini(role, 20),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -751,9 +782,9 @@ class _SheetState extends State<_Sheet> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: active ? scheme.primary : null,
-                        fontWeight: active ? FontWeight.w600 : null,
-                      ),
+                    color: active ? scheme.primary : null,
+                    fontWeight: active ? FontWeight.w600 : null,
+                  ),
                 ),
               ),
             ],
@@ -768,19 +799,25 @@ class _SheetState extends State<_Sheet> {
     final code = _current;
     return switch (role) {
       _Role.icon => _onContrast(
-          IconCode(icon: code.icon, iconColors: code.iconColors), size),
+        IconCode(icon: code.icon, iconColors: code.iconColors),
+        size,
+      ),
       _Role.background => IconCodeWidget(
-          iconCode: IconCode(
-              background: code.background,
-              bgColors: code.bgColors,
-              shape: code.shape),
-          size: size),
+        iconCode: IconCode(
+          background: code.background,
+          bgColors: code.bgColors,
+          shape: code.shape,
+        ),
+        size: size,
+      ),
       _Role.border => IconCodeWidget(
-          iconCode: IconCode(
-              border: code.border,
-              borderColors: code.borderColors,
-              shape: code.shape),
-          size: size),
+        iconCode: IconCode(
+          border: code.border,
+          borderColors: code.borderColors,
+          shape: code.shape,
+        ),
+        size: size,
+      ),
     };
   }
 
@@ -795,8 +832,10 @@ class _SheetState extends State<_Sheet> {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration:
-          BoxDecoration(shape: BoxShape.circle, color: _contrastTileBg(fg)),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: _contrastTileBg(fg),
+      ),
       child: IconCodeWidget(iconCode: glyph, size: size * 0.66),
     );
   }
@@ -819,64 +858,70 @@ class _SheetState extends State<_Sheet> {
   // ── Style tab ─────────────────────────────────────────────────────────────
 
   Widget _section(String text) => Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
-      );
+    padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
 
   Widget _buildStyleTab(BuildContext context, AppLocalizations l) {
     final role = _role;
     final children = <Widget>[];
 
     if (role == _Role.icon) {
-      children.add(AppSearchBar(
-        padding: EdgeInsets.zero,
-        hint: l.iconMakerSearchHint,
-        onChanged: (q) => setState(() => _query = q),
-      ));
+      children.add(
+        AppSearchBar(
+          padding: EdgeInsets.zero,
+          hint: l.iconMakerSearchHint,
+          onChanged: (q) => setState(() => _query = q),
+        ),
+      );
     }
     // Pack chips only when there's more than one pack (base + DLC).
     if (widget.packs.length > 1) {
-      children.add(Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.sm),
-        child: Wrap(
-          spacing: AppSpacing.sm,
-          children: [
-            ChoiceChip(
-              label: Text(l.transactionsRangeAll),
-              selected: _packFilter == null,
-              onSelected: (_) => setState(() => _packFilter = null),
-            ),
-            for (final p in widget.packs)
+      children.add(
+        Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            children: [
               ChoiceChip(
-                label: Text(p.id),
-                selected: _packFilter == p.id,
-                onSelected: (_) => setState(() => _packFilter = p.id),
+                label: Text(l.transactionsRangeAll),
+                selected: _packFilter == null,
+                onSelected: (_) => setState(() => _packFilter = null),
               ),
-          ],
+              for (final p in widget.packs)
+                ChoiceChip(
+                  label: Text(p.id),
+                  selected: _packFilter == p.id,
+                  onSelected: (_) => setState(() => _packFilter = p.id),
+                ),
+            ],
+          ),
         ),
-      ));
+      );
     }
 
     if (role == _Role.background) {
       // Background = shape × pattern.
       children.add(_section(l.iconMakerShape));
-      children.add(_grid([
-        for (final s in IconShape.values)
-          _StyleTile(
-            selected: IconShape.fromId(_shape) == s,
-            preview: IconCodeWidget(
-              iconCode: _current.copyWith(shape: s.name),
-              size: 40,
+      children.add(
+        _grid([
+          for (final s in IconShape.values)
+            _StyleTile(
+              selected: IconShape.fromId(_shape) == s,
+              preview: IconCodeWidget(
+                iconCode: _current.copyWith(shape: s.name),
+                size: 40,
+              ),
+              label: s.label(l),
+              onTap: () => _selectShape(s),
             ),
-            label: s.label(l),
-            onTap: () => _selectShape(s),
-          ),
-      ], withLabels: true));
+        ], withLabels: true),
+      );
       children.add(_section(l.iconMakerPattern));
     } else {
       children.add(const SizedBox(height: AppSpacing.md));
@@ -895,36 +940,43 @@ class _SheetState extends State<_Sheet> {
     ].where((i) => !filtering || i.id.toLowerCase().contains(q)).toList();
 
     if (items.isEmpty && filtering) {
-      children.add(Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-        child: Text(
-          l.iconMakerNoMatch(_query.trim()),
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+      children.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+          child: Text(
+            l.iconMakerNoMatch(_query.trim()),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ),
-      ));
+      );
     } else {
       final currentId = _assetId(role);
-      children.add(_grid([
-        // "ไม่มี" first — hides the layer, remembers its look.
-        if (!filtering && _packFilter == null)
-          _StyleTile(
-            selected: currentId == null,
-            preview: Icon(AppIcons.none,
-                size: 28, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            dots: const [],
-            onTap: () => _selectAsset(role, null),
-          ),
-        for (final item in items)
-          _StyleTile(
-            selected: currentId == item.id,
-            preview: _tilePreview(role, item),
-            dots: _reflectColors(role, item),
-            onTap: () => _selectAsset(role, item.id),
-          ),
-      ]));
+      children.add(
+        _grid([
+          // "ไม่มี" first — hides the layer, remembers its look.
+          if (!filtering && _packFilter == null)
+            _StyleTile(
+              selected: currentId == null,
+              preview: Icon(
+                AppIcons.none,
+                size: 28,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              dots: const [],
+              onTap: () => _selectAsset(role, null),
+            ),
+          for (final item in items)
+            _StyleTile(
+              selected: currentId == item.id,
+              preview: _tilePreview(role, item),
+              dots: _reflectColors(role, item),
+              onTap: () => _selectAsset(role, item.id),
+            ),
+        ]),
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -939,7 +991,8 @@ class _SheetState extends State<_Sheet> {
     _pushSnapshot();
     setState(() {
       _shape = s == IconShape.circle ? null : s.name;
-      _bgId ??= _lastIds[_Role.background] ??
+      _bgId ??=
+          _lastIds[_Role.background] ??
           _allItems(_Role.background).firstOrNull?.id;
     });
   }
@@ -948,12 +1001,20 @@ class _SheetState extends State<_Sheet> {
   /// has chosen, so they see the result before tapping.
   Widget _tilePreview(_Role role, IconPackItem item) {
     final colors = _reflectColors(role, item);
-    final code = switch (role) {
+    var code = switch (role) {
       _Role.icon => _current.copyWith(icon: item.id, iconColors: colors),
-      _Role.background =>
-        _current.copyWith(background: item.id, bgColors: colors),
+      _Role.background => _current.copyWith(
+        background: item.id,
+        bgColors: colors,
+      ),
       _Role.border => _current.copyWith(border: item.id, borderColors: colors),
     };
+    // Icon-only types (tags) never show a bg / border — the tile is the bare
+    // glyph in its colour, on the sheet surface (no disc behind it).
+    if (!widget.showBackground && !widget.showBorder) {
+      code = IconCode(icon: code.icon, iconColors: code.iconColors);
+      return IconCodeWidget(iconCode: code, size: 40);
+    }
     if (code.background == null && role == _Role.icon) {
       return _onContrast(code, 40);
     }
@@ -962,23 +1023,25 @@ class _SheetState extends State<_Sheet> {
 
   /// 6-column grid; row height follows the column width.
   Widget _grid(List<Widget> tiles, {bool withLabels = false}) {
-    return LayoutBuilder(builder: (context, c) {
-      const cols = 6;
-      const gap = 6.0;
-      final w = (c.maxWidth - gap * (cols - 1)) / cols;
-      return GridView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: cols,
-          crossAxisSpacing: gap,
-          mainAxisSpacing: gap,
-          mainAxisExtent: w + (withLabels ? 18 : 12),
-        ),
-        children: tiles,
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        const cols = 6;
+        const gap = 6.0;
+        final w = (c.maxWidth - gap * (cols - 1)) / cols;
+        return GridView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            crossAxisSpacing: gap,
+            mainAxisSpacing: gap,
+            mainAxisExtent: w + (withLabels ? 18 : 12),
+          ),
+          children: tiles,
+        );
+      },
+    );
   }
 
   // ── Colour tab ────────────────────────────────────────────────────────────
@@ -1007,13 +1070,9 @@ class _SheetState extends State<_Sheet> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _section(l.iconMakerThemeColors),
-              _swatchRow([
-                for (final s in _themeRowSpecs) _swatch(s, colors),
-              ]),
+              _swatchRow([for (final s in _themeRowSpecs) _swatch(s, colors)]),
               _section(l.iconMakerCommonColors),
-              _swatchRow([
-                for (final s in _commonRowSpecs) _swatch(s, colors),
-              ]),
+              _swatchRow([for (final s in _commonRowSpecs) _swatch(s, colors)]),
               _section(l.iconMakerCustomColors),
               _swatchRow([
                 _pickerButton(l),
@@ -1031,8 +1090,14 @@ class _SheetState extends State<_Sheet> {
 
   /// Top row: the current art's colour slots (tap = choose which to edit,
   /// hex under each) | hex field for the focused slot + reset-to-default.
-  Widget _buildSlotRow(BuildContext context, AppLocalizations l, _Role role,
-      List<String> colors, bool off, int slot) {
+  Widget _buildSlotRow(
+    BuildContext context,
+    AppLocalizations l,
+    _Role role,
+    List<String> colors,
+    bool off,
+    int slot,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final Widget content;
@@ -1040,7 +1105,9 @@ class _SheetState extends State<_Sheet> {
       content = Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         child: Text(
-          off ? l.iconMakerLayerOff(_roleLabel(l, role)) : l.iconMakerNotRecolorable,
+          off
+              ? l.iconMakerLayerOff(_roleLabel(l, role))
+              : l.iconMakerNotRecolorable,
           style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
       );
@@ -1075,7 +1142,9 @@ class _SheetState extends State<_Sheet> {
                     _hexOf(colors[i]),
                     style: textTheme.labelSmall?.copyWith(
                       fontFeatures: const [FontFeature.tabularFigures()],
-                      color: i == slot ? scheme.primary : scheme.onSurfaceVariant,
+                      color: i == slot
+                          ? scheme.primary
+                          : scheme.onSurfaceVariant,
                       fontWeight: i == slot ? FontWeight.w600 : null,
                     ),
                   ),
@@ -1091,8 +1160,9 @@ class _SheetState extends State<_Sheet> {
               focusNode: _hexFocus,
               maxLength: 7,
               textCapitalization: TextCapitalization.characters,
-              style: textTheme.bodyMedium
-                  ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
+              style: textTheme.bodyMedium?.copyWith(
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
               decoration: InputDecoration(
                 isDense: true,
                 counterText: '',
@@ -1100,11 +1170,14 @@ class _SheetState extends State<_Sheet> {
                 fillColor: scheme.surface,
                 hintText: '#RRGGBB',
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm, vertical: 10),
+                  horizontal: AppSpacing.sm,
+                  vertical: 10,
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                      color: _hexInvalid ? scheme.error : scheme.outlineVariant),
+                    color: _hexInvalid ? scheme.error : scheme.outlineVariant,
+                  ),
                 ),
               ),
               onChanged: (_) {
@@ -1131,7 +1204,9 @@ class _SheetState extends State<_Sheet> {
     }
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
@@ -1153,53 +1228,60 @@ class _SheetState extends State<_Sheet> {
   }
 
   Widget _swatchRow(List<Widget> cells) => Row(
-        children: [
-          for (var i = 0; i < cells.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.sm),
-            Expanded(child: AspectRatio(aspectRatio: 1, child: cells[i])),
-          ],
-        ],
-      );
+    children: [
+      for (var i = 0; i < cells.length; i++) ...[
+        if (i > 0) const SizedBox(width: AppSpacing.sm),
+        Expanded(child: AspectRatio(aspectRatio: 1, child: cells[i])),
+      ],
+    ],
+  );
 
   Widget _swatch(String spec, List<String> colors) {
-    return LayoutBuilder(builder: (context, c) {
-      final d = c.maxWidth;
-      return InkResponse(
-        onTap: () => _applyColor(spec, isCustom: false),
-        radius: d / 2,
-        child: SelectableFrame(
-          selected: _isCurrentSlotSpec(colors, spec),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final d = c.maxWidth;
+        return InkResponse(
+          onTap: () => _applyColor(spec, isCustom: false),
           radius: d / 2,
-          gap: 2,
-          child: _Dot(spec: spec, size: double.infinity),
-        ),
-      );
-    });
+          child: SelectableFrame(
+            selected: _isCurrentSlotSpec(colors, spec),
+            radius: d / 2,
+            gap: 2,
+            child: _Dot(spec: spec, size: double.infinity),
+          ),
+        );
+      },
+    );
   }
 
   Widget _pickerButton(AppLocalizations l) {
     final scheme = Theme.of(context).colorScheme;
-    return LayoutBuilder(builder: (context, c) {
-      final d = c.maxWidth;
-      return Tooltip(
-        message: l.iconMakerPickColor,
-        child: InkResponse(
-          onTap: _pickCustomHex,
-          radius: d / 2,
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: DashedRectBorder(
-              color: scheme.primary,
-              borderRadius: Radius.circular(d / 2),
-              child: Center(
-                child: Icon(AppIcons.eyedropper,
-                    size: d * 0.4, color: scheme.primary),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final d = c.maxWidth;
+        return Tooltip(
+          message: l.iconMakerPickColor,
+          child: InkResponse(
+            onTap: _pickCustomHex,
+            radius: d / 2,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: DashedRectBorder(
+                color: scheme.primary,
+                borderRadius: Radius.circular(d / 2),
+                child: Center(
+                  child: Icon(
+                    AppIcons.eyedropper,
+                    size: d * 0.4,
+                    color: scheme.primary,
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -1228,7 +1310,11 @@ Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
     builder: (ctx) => AlertDialog(
       title: Text(l.colorPickerTitle),
       contentPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
       content: SingleChildScrollView(
         child: ColorPicker(
           pickerColor: seed,
@@ -1274,7 +1360,9 @@ class _Dot extends StatelessWidget {
         shape: BoxShape.circle,
         color: resolveColor(spec, palette),
         border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant, width: 0.5),
+          color: Theme.of(context).colorScheme.outlineVariant,
+          width: 0.5,
+        ),
       ),
     );
   }
@@ -1286,16 +1374,18 @@ class _EmptySwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      return Padding(
-        padding: const EdgeInsets.all(4),
-        child: DashedRectBorder(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          borderRadius: Radius.circular(c.maxWidth / 2),
-          child: const SizedBox.expand(),
-        ),
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        return Padding(
+          padding: const EdgeInsets.all(4),
+          child: DashedRectBorder(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            borderRadius: Radius.circular(c.maxWidth / 2),
+            child: const SizedBox.expand(),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -1346,10 +1436,9 @@ class _StyleTile extends StatelessWidget {
             label!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: scheme.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
           )
         else
           SizedBox(
@@ -1365,8 +1454,10 @@ class _StyleTile extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: resolveColor(spec, palette),
-                      border:
-                          Border.all(color: scheme.outlineVariant, width: 0.5),
+                      border: Border.all(
+                        color: scheme.outlineVariant,
+                        width: 0.5,
+                      ),
                     ),
                   ),
               ],

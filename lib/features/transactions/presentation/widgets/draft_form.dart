@@ -18,7 +18,9 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/widgets/category_pick_card.dart';
 import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../../pending/domain/pending_transaction.dart';
+import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
+import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../../../projects/domain/project.dart';
@@ -879,11 +881,10 @@ class _TagsBlock extends StatelessWidget {
             runSpacing: AppSpacing.xs,
             children: [
               for (final t in tags)
-                FilterChip(
-                  label: Text('#${t.name}'),
+                TagChip(
+                  tag: t,
                   selected: selected.contains(t.id),
-                  showCheckmark: false,
-                  onSelected: (_) => onToggle(t.id),
+                  onTap: () => onToggle(t.id),
                 ),
             ],
           ),

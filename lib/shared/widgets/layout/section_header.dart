@@ -12,7 +12,11 @@ class SectionHeader extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.padding = const EdgeInsets.fromLTRB(
-        AppSpacing.lg, AppSpacing.md, AppSpacing.sm, AppSpacing.xs),
+      AppSpacing.lg,
+      AppSpacing.md,
+      AppSpacing.sm,
+      AppSpacing.xs,
+    ),
     super.key,
   });
 
@@ -35,15 +39,18 @@ class SectionHeader extends StatelessWidget {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           if (count != null) ...[
             const SizedBox(width: AppSpacing.xs),
             Text(
               '· $count',
-              style: textTheme.titleMedium
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+              style: textTheme.titleMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ],
           const Spacer(),

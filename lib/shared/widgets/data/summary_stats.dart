@@ -39,20 +39,28 @@ class SummaryStats extends StatelessWidget {
             for (var i = 0; i < stats.length; i++) ...[
               if (i > 0)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                  child: Text('·',
-                      style: textTheme.bodySmall
-                          ?.copyWith(color: scheme.onSurfaceVariant)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                  child: Text(
+                    '·',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
-              Text('${stats[i].label} ',
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant)),
+              Text(
+                '${stats[i].label} ',
+                style: textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
               MoneyText(
                 stats[i].amount,
                 tone: stats[i].tone,
-                style: textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ],
@@ -69,15 +77,17 @@ class SummaryStats extends StatelessWidget {
               children: [
                 Text(
                   s.label,
-                  style: textTheme.labelMedium
-                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  style: textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 MoneyText(
                   s.amount,
                   tone: s.tone,
-                  style: textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

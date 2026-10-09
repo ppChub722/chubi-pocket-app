@@ -37,8 +37,7 @@ Color? _parseHex(String hex) {
   return Color(0xFF000000 | value);
 }
 
-final _tokenRegex =
-    RegExp(r'^presetThemeColor(\w+?)(Darker|Lighter)?(\d+)?$');
+final _tokenRegex = RegExp(r'^presetThemeColor(\w+?)(Darker|Lighter)?(\d+)?$');
 
 Color _resolveToken(String token, AppColors p) {
   final stripped = token.substring(1); // drop leading '@'

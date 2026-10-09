@@ -84,6 +84,9 @@ String _eventErrorMessage(AppLocalizations l, ApiException e) {
 /// entry (title "แก้รายการประจำ"; variant and type fixed). One save button;
 /// saves through [ScheduledTransactionsCubit].
 ///
+/// [account] presets the wallet of a new transaction (adding from a
+/// wallet's page) instead of the last-used one.
+///
 /// Returns true when something was saved.
 Future<bool> showQuickCreateSheet(
   BuildContext context, {
@@ -93,6 +96,7 @@ Future<bool> showQuickCreateSheet(
   ProjectTxTree? projectRow,
   bool scheduled = false,
   ScheduledTransaction? scheduledEntry,
+  Account? account,
 }) async {
   assert(
     [
@@ -131,6 +135,7 @@ Future<bool> showQuickCreateSheet(
       projectRow: projectRow,
       scheduled: scheduled,
       scheduledEntry: scheduledEntry,
+      account: account,
     ),
   );
   return saved ?? false;
@@ -166,8 +171,12 @@ class _QuickCreateSheet extends StatefulWidget {
     this.projectRow,
     this.scheduled = false,
     this.scheduledEntry,
+    this.account,
   });
   final SharedPreferences prefs;
+
+  /// Preset wallet for a new transaction (else the last-used one).
+  final Account? account;
 
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
@@ -529,6 +538,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// Wallet default: the one used last, else the first — re-evaluated until
   /// the user picks one, so a cold cache doesn't leave it empty.
   Account? _defaultAccount(List<Account> accounts) {
+    final preset = widget.account;
+    if (preset != null) {
+      // The cached row when there is one (fresher balance).
+      return accounts.where((a) => a.id == preset.id).firstOrNull ?? preset;
+    }
     if (accounts.isEmpty) return null;
     final last = widget.prefs.getString(_kLastAccount);
     return accounts.where((a) => a.id == last).firstOrNull ?? accounts.first;
@@ -572,36 +586,29 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// throw it away. (Editing a draft: keep editing or drop the changes.)
   Future<void> _confirmClose() async {
     final l = AppLocalizations.of(context)!;
-    final choice = await showDialog<_CloseChoice>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          _editingDraft ? l.pendingDropEditsTitle : l.quickDiscardTitle,
-        ),
-        content: Text(
-          _editingDraft ? l.pendingDropEditsMessage : l.quickDiscardMessage,
-        ),
-        actionsOverflowDirection: VerticalDirection.down,
-        actionsOverflowButtonSpacing: AppSpacing.sm,
-        actions: [
-          if (!_editingDraft && !_editingTx && !_isEvent && !_isScheduled)
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, _CloseChoice.draft),
-              child: Text(l.pendingKeepAsDraft),
-            ),
-          OutlinedButton(
-            onPressed: () => Navigator.pop(ctx, _CloseChoice.keepEditing),
-            child: Text(l.quickDiscardKeep),
+    final choice = await showChoiceDialog<_CloseChoice>(
+      context,
+      title: _editingDraft ? l.pendingDropEditsTitle : l.quickDiscardTitle,
+      message: _editingDraft
+          ? l.pendingDropEditsMessage
+          : l.quickDiscardMessage,
+      choices: [
+        if (!_editingDraft && !_editingTx && !_isEvent && !_isScheduled)
+          DialogChoice(
+            value: _CloseChoice.draft,
+            label: l.pendingKeepAsDraft,
+            variant: AppButtonVariant.primary,
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, _CloseChoice.discard),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(ctx).colorScheme.error,
-            ),
-            child: Text(l.quickDiscardConfirm),
-          ),
-        ],
-      ),
+        DialogChoice(
+          value: _CloseChoice.keepEditing,
+          label: l.quickDiscardKeep,
+        ),
+        DialogChoice(
+          value: _CloseChoice.discard,
+          label: l.quickDiscardConfirm,
+          variant: AppButtonVariant.destructive,
+        ),
+      ],
     );
     if (!mounted) return;
     switch (choice) {

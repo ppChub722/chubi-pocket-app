@@ -7,10 +7,7 @@ class ThemeRegistry {
 
   static const String defaultThemeId = 'mint';
 
-  static final List<AppTheme> all = [
-    mintTheme,
-    sweetTheme,
-  ];
+  static final List<AppTheme> all = [mintTheme, sweetTheme];
 
   static AppTheme byId(String id) {
     return all.firstWhere(

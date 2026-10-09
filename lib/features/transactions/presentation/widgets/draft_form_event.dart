@@ -210,27 +210,28 @@ class _EventTags extends StatelessWidget {
   Future<void> _addNew(BuildContext context) async {
     final l = AppLocalizations.of(context)!;
     final text = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.projectTxAddTag),
-        content: TextField(
+    // The app's sheet + field, like the other pickers (was a raw dialog).
+    final name = await showAppSheet<String>(
+      context,
+      title: l.projectTxAddTag,
+      builder: (sheet) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: AppTextField(
           controller: text,
           autofocus: true,
           maxLength: 40,
-          decoration: InputDecoration(hintText: l.projectTxTagHint),
-          onSubmitted: (v) => Navigator.pop(ctx, v),
+          hint: l.projectTxTagHint,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (v) => Navigator.pop(sheet, v),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, text.text),
-            child: Text(l.commonSave),
-          ),
-        ],
+      ),
+      // Builder: pop the sheet's route, not the caller's navigator.
+      footer: Builder(
+        builder: (sheet) => AppButton(
+          label: l.commonSave,
+          expand: true,
+          onPressed: () => Navigator.pop(sheet, text.text),
+        ),
       ),
     );
     text.dispose();
@@ -253,6 +254,7 @@ class _EventTags extends StatelessWidget {
     ];
     bool isOn(String t) =>
         controller.tagNames.any((x) => x.toLowerCase() == t.toLowerCase());
+    final mine = context.watch<TagsCubit>().state.tags;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -272,11 +274,16 @@ class _EventTags extends StatelessWidget {
           runSpacing: AppSpacing.xs,
           children: [
             for (final t in all)
-              FilterChip(
-                label: Text('#$t'),
+              TagChip(
+                // Project tags are plain names — borrow the look of the
+                // user's own tag of the same name, if any.
+                tag:
+                    mine
+                        .where((m) => m.name.toLowerCase() == t.toLowerCase())
+                        .firstOrNull ??
+                    Tag(id: t, name: t),
                 selected: isOn(t),
-                showCheckmark: false,
-                onSelected: (_) => controller.toggleTagName(t),
+                onTap: () => controller.toggleTagName(t),
               ),
             ActionChip(
               avatar: const Icon(AppIcons.add, size: 16),

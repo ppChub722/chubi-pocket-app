@@ -67,8 +67,7 @@ class ScheduledTransaction extends Equatable {
 
   /// Spec §4.2: an installment with positive interest is shown as "Loan".
   bool get isLoan =>
-      entryType == ScheduledEntryType.installment &&
-      (interestRate ?? 0) > 0;
+      entryType == ScheduledEntryType.installment && (interestRate ?? 0) > 0;
 
   bool get isInstallment => entryType == ScheduledEntryType.installment;
 
@@ -133,25 +132,23 @@ class ScheduledTransaction extends Equatable {
       id: json['id'] as String,
       name: json['name'] as String,
       type: ScheduledTransactionType.fromJson(json['type'] as String),
-      entryType:
-          ScheduledEntryType.fromJson(json['entry_type'] as String),
+      entryType: ScheduledEntryType.fromJson(json['entry_type'] as String),
       amount: (json['amount'] as num).toDouble(),
-      accountId: (json['account_id'] as String?) ??
-          (account?['id'] as String? ?? ''),
-      categoryId: json['category_id'] as String? ??
-          (category?['id'] as String?),
-      billingCycle:
-          BillingCycle.fromJson(json['billing_cycle'] as String),
+      accountId:
+          (json['account_id'] as String?) ?? (account?['id'] as String? ?? ''),
+      categoryId:
+          json['category_id'] as String? ?? (category?['id'] as String?),
+      billingCycle: BillingCycle.fromJson(json['billing_cycle'] as String),
       nextBillingDate: json['next_billing_date'] as String,
       status: ScheduledStatus.fromJson(json['status'] as String),
       note: json['note'] as String?,
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
-      account:
-          account != null ? ScheduledAccountRef.fromJson(account) : null,
-      category:
-          category != null ? ScheduledCategoryRef.fromJson(category) : null,
+      account: account != null ? ScheduledAccountRef.fromJson(account) : null,
+      category: category != null
+          ? ScheduledCategoryRef.fromJson(category)
+          : null,
       totalAmount: (json['total_amount'] as num?)?.toDouble(),
       downPayment: (json['down_payment'] as num?)?.toDouble(),
       totalInstallments: json['total_installments'] as int?,
@@ -207,27 +204,27 @@ class ScheduledTransaction extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        type,
-        entryType,
-        amount,
-        accountId,
-        categoryId,
-        billingCycle,
-        nextBillingDate,
-        status,
-        note,
-        iconCode,
-        account,
-        category,
-        totalAmount,
-        downPayment,
-        totalInstallments,
-        remainingInstallments,
-        interestRate,
-        dayOfMonth,
-      ];
+    id,
+    name,
+    type,
+    entryType,
+    amount,
+    accountId,
+    categoryId,
+    billingCycle,
+    nextBillingDate,
+    status,
+    note,
+    iconCode,
+    account,
+    category,
+    totalAmount,
+    downPayment,
+    totalInstallments,
+    remainingInstallments,
+    interestRate,
+    dayOfMonth,
+  ];
 }
 
 class ScheduledAccountRef extends Equatable {

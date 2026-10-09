@@ -82,54 +82,36 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
 
   Future<void> _memberActions(ProjectMember m) async {
     final l = AppLocalizations.of(context)!;
-    final action = await showAppSheet<String>(
+    final action = await showActionSheet<String>(
       context,
-      builder: (sheet) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: ProjectMemberAvatar(member: m, size: 40),
-            title: Text(m.displayName),
-            subtitle: Text(
-              m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc,
-            ),
-          ),
-          const Divider(height: 1),
-          // Viewer = read-only (contract §6b); toggles back to member.
-          ListTile(
-            leading: Icon(
-              m.role == MemberRole.viewer ? AppIcons.edit : AppIcons.visible,
-            ),
-            title: Text(
-              m.role == MemberRole.viewer
-                  ? l.projectMemberMakeContributor
-                  : l.projectMemberMakeViewer,
-            ),
-            onTap: () => Navigator.pop(sheet, 'role'),
-          ),
-          ListTile(
-            leading: const Icon(AppIcons.member),
-            title: Text(l.projectMemberTransfer),
-            subtitle: m.isLinked
-                ? null
-                : Text(l.projectMemberTransferNeedsAccount),
-            enabled: m.isLinked && m.status == MemberStatus.active,
-            onTap: () => Navigator.pop(sheet, 'transfer'),
-          ),
-          ListTile(
-            leading: Icon(
-              AppIcons.delete,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            title: Text(
-              l.projectMemberRemove,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            onTap: () => Navigator.pop(sheet, 'remove'),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
+      header: ActionSheetHeader(
+        leading: ProjectMemberAvatar(member: m, size: 40),
+        title: m.displayName,
+        subtitle: m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc,
       ),
+      actions: [
+        // Viewer = read-only (contract §6b); toggles back to member.
+        SheetAction(
+          value: 'role',
+          icon: m.role == MemberRole.viewer ? AppIcons.edit : AppIcons.visible,
+          label: m.role == MemberRole.viewer
+              ? l.projectMemberMakeContributor
+              : l.projectMemberMakeViewer,
+        ),
+        SheetAction(
+          value: 'transfer',
+          icon: AppIcons.member,
+          label: l.projectMemberTransfer,
+          subtitle: m.isLinked ? null : l.projectMemberTransferNeedsAccount,
+          enabled: m.isLinked && m.status == MemberStatus.active,
+        ),
+        SheetAction(
+          value: 'remove',
+          icon: AppIcons.delete,
+          label: l.projectMemberRemove,
+          destructive: true,
+        ),
+      ],
     );
     if (!mounted) return;
     final repo = context.read<ProjectsRepository>();

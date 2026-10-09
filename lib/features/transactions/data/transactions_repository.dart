@@ -154,10 +154,7 @@ class TransactionsRepository {
     String? transferToAccountId,
   }) async {
     try {
-      final body = <String, dynamic>{
-        'amount': ?amount,
-        'date': ?date,
-      };
+      final body = <String, dynamic>{'amount': ?amount, 'date': ?date};
       if (categoryId != null) {
         body['category_id'] = categoryId;
       } else if (clearCategory) {
@@ -215,14 +212,7 @@ class TransactionsRepository {
       final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
       // The Tag shape from /v1/tags is a superset of EmbeddedTag —
       // pulling only the fields we care about.
-      return data
-          .map((j) => EmbeddedTag(
-                id: j['id'] as String,
-                name: j['name'] as String,
-                color: j['color'] as String?,
-                icon: j['icon'] as String?,
-              ))
-          .toList();
+      return data.map(EmbeddedTag.fromJson).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -285,10 +275,7 @@ class TransactionsRepository {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/accounts/$accountId/summary',
-        queryParameters: <String, dynamic>{
-          'from': ?from,
-          'to': ?to,
-        },
+        queryParameters: <String, dynamic>{'from': ?from, 'to': ?to},
       );
       return TransactionsSummary.fromAccountJson(res.data!);
     } on DioException catch (e) {

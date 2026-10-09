@@ -137,8 +137,9 @@ class MemberStrip extends StatelessWidget {
                 child: SizedBox(
                   width: itemWidth,
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -161,8 +162,9 @@ class MemberStrip extends StatelessWidget {
                             members[i].caption!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: textTheme.labelSmall
-                                ?.copyWith(color: scheme.onSurfaceVariant),
+                            style: textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
                       ],
                     ),
@@ -174,7 +176,8 @@ class MemberStrip extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: AddTile(
-                label: inviteLabel ?? AppLocalizations.of(context)!.commonInvite,
+                label:
+                    inviteLabel ?? AppLocalizations.of(context)!.commonInvite,
                 onTap: onInvite,
                 variant: AddTileVariant.circle,
                 circleSize: avatarSize,

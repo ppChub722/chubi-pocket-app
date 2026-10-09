@@ -37,11 +37,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppTopBar(
-        title: l.notifSettingsTitle,
-        showBack: true,
-        showUniversal: false,
-      ),
+      appBar: AppTopBar(title: l.notifSettingsTitle, showBack: true),
       extendBodyBehindAppBar: true,
       body: BlocConsumer<NotificationSettingsCubit, SettingsState>(
         // Save failures only — a failed first load is the ErrorView below.

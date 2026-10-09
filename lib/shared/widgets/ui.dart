@@ -42,6 +42,7 @@ export 'layout/header_card.dart';
 export 'layout/locked_in_edit.dart';
 export 'layout/section_header.dart';
 export 'layout/selectable_frame.dart';
+export 'layout/tinted_card.dart';
 export 'mode_action_bar.dart';
 
 // Feedback
@@ -49,6 +50,7 @@ export 'async_state_view.dart';
 export 'empty_view.dart';
 export 'error_view.dart';
 export 'feedback/app_snackbar.dart';
+export 'feedback/choice_dialog.dart';
 export 'feedback/confirm_dialog.dart';
 export 'feedback/message_banner.dart';
 export 'feedback/progress_row.dart';
@@ -58,6 +60,7 @@ export 'skeletons.dart';
 
 // Popovers (short lists) & sheets (long / searchable lists)
 export 'menus/option_menu.dart';
+export 'sheets/action_sheet.dart';
 export 'sheets/app_sheet.dart';
 export 'sheets/option_sheet.dart';
 

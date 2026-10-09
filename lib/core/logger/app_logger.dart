@@ -84,8 +84,10 @@ class AppLogger {
     _initialised = true;
     _config = config ?? LogConfig.fromEnv();
     if (kIsWeb || !_config.fileSink) {
-      info('logger.init',
-          fields: {'sink': 'memory-only', 'config': _config.toString()});
+      info(
+        'logger.init',
+        fields: {'sink': 'memory-only', 'config': _config.toString()},
+      );
       return;
     }
     try {
@@ -96,12 +98,15 @@ class AppLogger {
       if (!f.existsSync()) f.createSync();
       _file = f;
       _bytes = await f.length();
-      info('logger.init', fields: {
-        'sink': 'file',
-        'path': f.path,
-        'bytes': _bytes,
-        'config': _config.toString(),
-      });
+      info(
+        'logger.init',
+        fields: {
+          'sink': 'file',
+          'path': f.path,
+          'bytes': _bytes,
+          'config': _config.toString(),
+        },
+      );
     } catch (e, st) {
       // swallow — disable file sink, keep ring buffer
       _file = null;
@@ -121,8 +126,9 @@ class AppLogger {
     final dir = f.parent;
     final files = <File>[];
     for (var i = _maxFiles - 1; i >= 0; i--) {
-      final candidate =
-          File(i == 0 ? '${dir.path}/app.log' : '${dir.path}/app.log.$i');
+      final candidate = File(
+        i == 0 ? '${dir.path}/app.log' : '${dir.path}/app.log.$i',
+      );
       if (candidate.existsSync()) files.add(candidate);
     }
     final buf = StringBuffer();
@@ -143,24 +149,35 @@ class AppLogger {
   void warn(String msg, {Map<String, Object?>? fields, String? requestId}) =>
       _emit(LogLevel.warn, msg, fields, requestId, _currentUserId);
 
-  void error(String msg,
-          {Map<String, Object?>? fields,
-          String? requestId,
-          String? userId}) =>
-      _emit(LogLevel.error, msg, fields, requestId,
-          userId ?? _currentUserId);
+  void error(
+    String msg, {
+    Map<String, Object?>? fields,
+    String? requestId,
+    String? userId,
+  }) => _emit(LogLevel.error, msg, fields, requestId, userId ?? _currentUserId);
 
-  void critical(String msg,
-          {Map<String, Object?>? fields,
-          String? requestId,
-          String? userId}) =>
-      _emit(LogLevel.critical, msg, fields, requestId,
-          userId ?? _currentUserId);
+  void critical(
+    String msg, {
+    Map<String, Object?>? fields,
+    String? requestId,
+    String? userId,
+  }) => _emit(
+    LogLevel.critical,
+    msg,
+    fields,
+    requestId,
+    userId ?? _currentUserId,
+  );
 
   // ── internals ────────────────────────────────────────────────────
 
-  void _emit(LogLevel level, String msg, Map<String, Object?>? fields,
-      String? requestId, String? userId) {
+  void _emit(
+    LogLevel level,
+    String msg,
+    Map<String, Object?>? fields,
+    String? requestId,
+    String? userId,
+  ) {
     // Drop sub-threshold entries entirely — neither ring nor file sees
     // them. This is the hot path; cheap integer compare.
     if (level.severity < _config.minLevel.severity) return;
@@ -213,7 +230,8 @@ class AppLogger {
       // Shift app.log.(N-2) → .(N-1), .1 → .2, app.log → .1
       for (var i = _maxFiles - 1; i >= 1; i--) {
         final src = File(
-            i == 1 ? '${dir.path}/app.log' : '${dir.path}/app.log.${i - 1}');
+          i == 1 ? '${dir.path}/app.log' : '${dir.path}/app.log.${i - 1}',
+        );
         final dst = File('${dir.path}/app.log.$i');
         if (src.existsSync()) {
           if (dst.existsSync()) await dst.delete();

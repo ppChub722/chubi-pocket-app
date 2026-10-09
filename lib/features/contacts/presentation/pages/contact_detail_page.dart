@@ -76,7 +76,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       _error = null;
     });
     try {
-      final c = await context.read<ContactsRepository>().get(widget.id!);
+      final c = await context.read<ContactsRepository>().get(_id!);
       if (!mounted) return;
       setState(() {
         _contact = c;
@@ -96,10 +96,15 @@ class _ContactDetailPageState extends State<ContactDetailPage>
 
   bool get _linked => _contact?.isLinked ?? false;
 
+  /// The contact's id — the route's, or the one just created here (create
+  /// turns into the saved contact in place, see [_save]).
+  String? get _id => _contact?.id ?? widget.id;
+  bool get _isCreate => _id == null;
+
   // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
-  bool get leaveOnCancel => widget.isCreate;
+  bool get leaveOnCancel => _isCreate;
 
   @override
   void leavePage() {
@@ -135,7 +140,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     FocusScope.of(context).unfocus();
     setSaving(true);
     try {
-      if (widget.isCreate) {
+      if (_isCreate) {
         final created = await cubit.create(
           displayName: w.name,
           email: w.email.isEmpty ? null : w.email,
@@ -145,8 +150,16 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         );
         if (!mounted) return;
         HapticFeedback.mediumImpact();
-        commitSaved(w);
-        context.pushReplacement('/contacts/${created.id}');
+        // Become the saved contact right here — edit → view in place, like
+        // any other save. (A route swap flashed view mode, slid a new page
+        // in and showed a loading skeleton first.) `replace` only fixes the
+        // URL: same page key, so no transition and this state is kept.
+        setState(() {
+          _contact = created;
+          _actionsVersion++;
+        });
+        commitSaved(_ContactDraft.from(created));
+        context.replace('/contacts/${created.id}');
         return;
       }
       // Empty strings clear a field (the API keeps omitted ones as-is).
@@ -269,7 +282,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    if (!widget.isCreate && _contact == null) {
+    if (!_isCreate && _contact == null) {
       return Scaffold(
         appBar: AppTopBar(title: l.moreContacts, showBack: true),
         extendBodyBehindAppBar: true,
@@ -296,7 +309,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     return editScope(
       Scaffold(
         appBar: AppTopBar(
-          title: widget.isCreate
+          title: _isCreate
               ? l.contactTitleNew
               : isEditing
               ? l.contactTitleEdit
@@ -310,29 +323,35 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           key: _formKey,
           // Builder: its context sees the floating bar's height.
           child: Builder(
-            builder: (context) => ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              children: [
-                _header(l),
-                const SizedBox(height: AppSpacing.lg),
-                _fields(l),
-                if (!widget.isCreate) ...[
+            // Not while editing: a reload resets the draft.
+            builder: (context) => PullToRefresh(
+              enabled: !_isCreate && !isEditing,
+              onRefresh: _load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.huge,
+                ),
+                children: [
+                  _header(l),
                   const SizedBox(height: AppSpacing.lg),
-                  LockedInEdit(locked: isEditing, child: _actions(l)),
+                  _fields(l),
+                  if (!_isCreate) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    LockedInEdit(locked: isEditing, child: _actions(l)),
+                  ],
+                  // Delete lives at the bottom in edit mode (no top-bar actions).
+                  if (isEditing && !_isCreate)
+                    DangerRow(
+                      icon: AppIcons.delete,
+                      label: l.contactDeleteThis,
+                      onTap: isSaving ? null : _delete,
+                    ),
                 ],
-                // Delete lives at the bottom in edit mode (no top-bar actions).
-                if (isEditing && !widget.isCreate)
-                  DangerRow(
-                    icon: AppIcons.delete,
-                    label: l.contactDeleteThis,
-                    onTap: isSaving ? null : _delete,
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -371,7 +390,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         editing: editing && !_linked,
         controller: _ctrl[_Field.name]!,
         focusNode: _focus[_Field.name],
-        hint: l.contactNameLabel,
+        hint: l.contactNameHint,
         onEnterEdit: _linked
             ? null
             : () => enterEdit(focus: _focus[_Field.name]),
@@ -410,6 +429,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     Widget field(
       _Field f,
       String label, {
+      String? hint,
       bool locked = false,
       int maxLines = 1,
       int? maxLength,
@@ -425,6 +445,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           maxLines: maxLines,
           maxLength: maxLength,
           keyboardType: keyboard,
+          // Edit mode: say what goes here and that it's optional (the
+          // name, in the header, is the only required one).
+          hint: hint,
           onEnterEdit: locked ? null : () => enterEdit(focus: _focus[f]),
           onChanged: (v) => _onText(f, v),
           validator: validator,
@@ -437,6 +460,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         field(
           _Field.email,
           l.contactEmailLabel,
+          hint: l.contactEmailHint,
           locked: _linked,
           maxLength: 255,
           keyboard: TextInputType.emailAddress,
@@ -467,11 +491,18 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         field(
           _Field.phone,
           l.contactPhoneLabel,
+          hint: l.contactPhoneHint,
           maxLength: 50,
           keyboard: TextInputType.phone,
         ),
         const RowDivider(),
-        field(_Field.notes, l.contactNotesLabel, maxLines: 3, maxLength: 500),
+        field(
+          _Field.notes,
+          l.contactNotesLabel,
+          hint: l.contactNotesHint,
+          maxLines: 3,
+          maxLength: 500,
+        ),
       ],
     );
   }

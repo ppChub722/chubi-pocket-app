@@ -64,12 +64,12 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
       // New members start as members; the owner can make them view-only
       // from the members page (contract §6b).
       await context.read<ProjectsRepository>().addMember(
-            widget.projectId,
-            displayName: name,
-            email: email.isEmpty ? null : email,
-            role: MemberRole.contributor,
-            adHoc: email.isEmpty,
-          );
+        widget.projectId,
+        displayName: name,
+        email: email.isEmpty ? null : email,
+        role: MemberRole.contributor,
+        adHoc: email.isEmpty,
+      );
       if (mounted) Navigator.pop(context, name);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -84,8 +84,12 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
     return Form(
       key: _formKey,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg,
-            AppSpacing.lg + MediaQuery.viewInsetsOf(context).bottom),
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

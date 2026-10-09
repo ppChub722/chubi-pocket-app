@@ -16,8 +16,10 @@ enum PendingSource {
   const PendingSource(this.wire);
   final String wire;
 
-  static PendingSource parse(String? s) => PendingSource.values
-      .firstWhere((v) => v.wire == s && v != other, orElse: () => other);
+  static PendingSource parse(String? s) => PendingSource.values.firstWhere(
+    (v) => v.wire == s && v != other,
+    orElse: () => other,
+  );
 
   bool get isManual => this == manual;
 }
@@ -80,22 +82,29 @@ class PendingDraft extends Equatable {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'type': ?type?.toJson(),
-        'amount': ?amount,
-        'account_id': ?accountId,
-        'category_id': ?categoryId,
-        'date': ?date,
-        'note': ?note,
-        'transfer_to_account_id': ?transferToAccountId,
-        if (tagIds.isNotEmpty) 'tag_ids': tagIds,
-        if (splits.isNotEmpty) 'splits': splits,
-      };
+    'type': ?type?.toJson(),
+    'amount': ?amount,
+    'account_id': ?accountId,
+    'category_id': ?categoryId,
+    'date': ?date,
+    'note': ?note,
+    'transfer_to_account_id': ?transferToAccountId,
+    if (tagIds.isNotEmpty) 'tag_ids': tagIds,
+    if (splits.isNotEmpty) 'splits': splits,
+  };
 
   @override
   List<Object?> get props => [
-        type, amount, accountId, categoryId, date, note, transferToAccountId,
-        tagIds, splits,
-      ];
+    type,
+    amount,
+    accountId,
+    categoryId,
+    date,
+    note,
+    transferToAccountId,
+    tagIds,
+    splits,
+  ];
 }
 
 class PendingError extends Equatable {
@@ -104,9 +113,9 @@ class PendingError extends Equatable {
   final String message;
 
   factory PendingError.fromJson(Map<String, dynamic> json) => PendingError(
-        code: json['code'] as String? ?? '',
-        message: json['message'] as String? ?? '',
-      );
+    code: json['code'] as String? ?? '',
+    message: json['message'] as String? ?? '',
+  );
 
   @override
   List<Object?> get props => [code, message];
@@ -143,16 +152,26 @@ class PendingTransaction extends Equatable {
       source: PendingSource.parse(json['source'] as String?),
       kind: PendingKind.parse(json['kind'] as String?),
       draft: PendingDraft.fromJson(
-          (json['draft'] as Map?)?.cast<String, dynamic>() ?? const {}),
+        (json['draft'] as Map?)?.cast<String, dynamic>() ?? const {},
+      ),
       createdAt: DateTime.parse(json['created_at'] as String),
-      lastError: err is Map ? PendingError.fromJson(err.cast<String, dynamic>()) : null,
+      lastError: err is Map
+          ? PendingError.fromJson(err.cast<String, dynamic>())
+          : null,
       sourceRef: ref is Map ? ref.cast<String, dynamic>() : null,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [id, source, kind, draft, createdAt, lastError, sourceRef];
+  List<Object?> get props => [
+    id,
+    source,
+    kind,
+    draft,
+    createdAt,
+    lastError,
+    sourceRef,
+  ];
 }
 
 /// One submit call's outcome: ids that went through, and why the rest didn't.
@@ -164,15 +183,18 @@ class PendingSubmitResult {
   factory PendingSubmitResult.fromJson(Map<String, dynamic> json) =>
       PendingSubmitResult(
         submitted: [
-          for (final s in ((json['submitted'] as List?) ?? const [])
-              .cast<Map<String, dynamic>>())
+          for (final s
+              in ((json['submitted'] as List?) ?? const [])
+                  .cast<Map<String, dynamic>>())
             s['id'] as String,
         ],
         failed: {
-          for (final f in ((json['failed'] as List?) ?? const [])
-              .cast<Map<String, dynamic>>())
+          for (final f
+              in ((json['failed'] as List?) ?? const [])
+                  .cast<Map<String, dynamic>>())
             f['id'] as String: PendingError.fromJson(
-                (f['error'] as Map).cast<String, dynamic>()),
+              (f['error'] as Map).cast<String, dynamic>(),
+            ),
         },
       );
 }

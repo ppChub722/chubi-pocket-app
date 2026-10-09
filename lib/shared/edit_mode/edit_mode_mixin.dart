@@ -112,8 +112,8 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final element =
-        context.getElementForInheritedWidgetOfExactType<ShellChrome>();
+    final element = context
+        .getElementForInheritedWidgetOfExactType<ShellChrome>();
     _shellChrome = (element?.widget as ShellChrome?)?.notifier;
   }
 
@@ -199,12 +199,9 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     }
     setState(() => _working = next);
     _debounce?.cancel();
-    _debounce = Timer(
-      const Duration(milliseconds: 500),
-      () {
-        if (mounted) setState(commitTextSession);
-      },
-    );
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) setState(commitTextSession);
+    });
   }
 
   /// Close the open typing burst into a single undo step. Call before save.
@@ -293,10 +290,20 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   void _syncShellChrome() {
     if (_chromeHiddenFor == _editing) return;
     _chromeHiddenFor = _editing;
+    // Called from build, so the route lookup is safe here.
+    final route = ModalRoute.of(context);
     // Deferred: toggling notifies the shell, which can't rebuild mid-build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _editing ? _shellChrome?.hide() : _shellChrome?.show();
+      if (!_editing) {
+        _shellChrome?.show();
+        return;
+      }
+      // A page that opens in edit mode (create) hides the nav only once it
+      // has slid in — see [whenRouteSettled].
+      whenRouteSettled(route, () {
+        if (mounted && _editing) _shellChrome?.hide();
+      });
     });
   }
 }

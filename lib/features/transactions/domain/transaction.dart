@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../shared/icon_maker/icon_code.dart';
+import '../../tags/domain/tag.dart';
 import 'transaction_type.dart';
 
 /// Denormalized author of a shared-wallet row — API §14 pinned
@@ -64,10 +65,7 @@ class EmbeddedRef extends Equatable {
   final String name;
 
   factory EmbeddedRef.fromJson(Map<String, dynamic> json) {
-    return EmbeddedRef(
-      id: json['id'] as String,
-      name: json['name'] as String,
-    );
+    return EmbeddedRef(id: json['id'] as String, name: json['name'] as String);
   }
 
   @override
@@ -76,31 +74,29 @@ class EmbeddedRef extends Equatable {
 
 /// Tag ref enriched with color + icon so the FE can render chips
 /// inline without consulting the tags cache. Mirrors the BE
-/// `EmbeddedTag` (id / name / color / icon) on every transaction
+/// `EmbeddedTag` (id / name / icon_code) on every transaction
 /// response.
 class EmbeddedTag extends Equatable {
-  const EmbeddedTag({
-    required this.id,
-    required this.name,
-    this.color,
-    this.icon,
-  });
+  const EmbeddedTag({required this.id, required this.name, this.iconCode});
   final String id;
   final String name;
-  final String? color;
-  final String? icon;
+  final IconCode? iconCode;
 
   factory EmbeddedTag.fromJson(Map<String, dynamic> json) {
     return EmbeddedTag(
       id: json['id'] as String,
       name: json['name'] as String,
-      color: json['color'] as String?,
-      icon: json['icon'] as String?,
+      iconCode: json['icon_code'] is Map<String, dynamic>
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
     );
   }
 
+  /// As a [Tag], for the shared tag widgets (`TagChip`, `TagShortList`).
+  Tag get asTag => Tag(id: id, name: name, iconCode: iconCode);
+
   @override
-  List<Object?> get props => [id, name, color, icon];
+  List<Object?> get props => [id, name, iconCode];
 }
 
 /// One transaction row — mirror of `TransactionDetail` from
@@ -196,8 +192,10 @@ class Transaction extends Equatable {
   final bool isLocked;
   final bool canEditCategory;
 
-  bool get isTransferOut => type == TransactionType.transfer && _isTransferOutCategory;
-  bool get isTransferIn => type == TransactionType.transfer && !_isTransferOutCategory;
+  bool get isTransferOut =>
+      type == TransactionType.transfer && _isTransferOutCategory;
+  bool get isTransferIn =>
+      type == TransactionType.transfer && !_isTransferOutCategory;
 
   /// Heuristic: BE assigns the OUT category to the source-side row.
   /// Without the system_kind on the wire we fall back to the embedded
@@ -220,9 +218,9 @@ class Transaction extends Equatable {
     final rawTags = json['tags'];
     final tags = rawTags is List
         ? rawTags
-            .cast<Map<String, dynamic>>()
-            .map(EmbeddedTag.fromJson)
-            .toList()
+              .cast<Map<String, dynamic>>()
+              .map(EmbeddedTag.fromJson)
+              .toList()
         : <EmbeddedTag>[];
     return Transaction(
       id: json['id'] as String,
@@ -244,15 +242,16 @@ class Transaction extends Equatable {
       hasSplits: (json['has_splits'] as bool?) ?? false,
       isRecurring: (json['is_recurring'] as bool?) ?? false,
       isResolve: (json['is_resolve'] as bool?) ?? false,
-      accountBalanceAfter:
-          (json['account_balance_after'] as num?)?.toDouble(),
+      accountBalanceAfter: (json['account_balance_after'] as num?)?.toDouble(),
       createdBy: json['created_by'] is Map<String, dynamic>
           ? TransactionAuthor.fromJson(
-              json['created_by'] as Map<String, dynamic>)
+              json['created_by'] as Map<String, dynamic>,
+            )
           : null,
       categoryRender: json['category_render'] is Map<String, dynamic>
           ? CategoryRender.fromJson(
-              json['category_render'] as Map<String, dynamic>)
+              json['category_render'] as Map<String, dynamic>,
+            )
           : null,
       isLocked: (json['is_locked'] as bool?) ?? false,
       canEditCategory: (json['can_edit_category'] as bool?) ?? true,
@@ -307,27 +306,27 @@ class Transaction extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        accountId,
-        type,
-        amount,
-        date,
-        categoryId,
-        account,
-        category,
-        tags,
-        note,
-        projectId,
-        transferGroupId,
-        hasSplits,
-        isRecurring,
-        isResolve,
-        accountBalanceAfter,
-        createdBy,
-        categoryRender,
-        isLocked,
-        canEditCategory,
-      ];
+    id,
+    accountId,
+    type,
+    amount,
+    date,
+    categoryId,
+    account,
+    category,
+    tags,
+    note,
+    projectId,
+    transferGroupId,
+    hasSplits,
+    isRecurring,
+    isResolve,
+    accountBalanceAfter,
+    createdBy,
+    categoryRender,
+    isLocked,
+    canEditCategory,
+  ];
 }
 
 /// Polymorphic shape of `POST /v1/transactions` and the transfer branch
@@ -335,11 +334,11 @@ class Transaction extends Equatable {
 /// income) or [transfer] is set (transfer pair) — never both.
 class TransactionMutationResult {
   const TransactionMutationResult.single(Transaction tx)
-      : single = tx,
-        transfer = null;
+    : single = tx,
+      transfer = null;
   const TransactionMutationResult.transfer(TransferResult result)
-      : single = null,
-        transfer = result;
+    : single = null,
+      transfer = result;
 
   final Transaction? single;
   final TransferResult? transfer;

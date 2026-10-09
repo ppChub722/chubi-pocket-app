@@ -66,10 +66,7 @@ class FontRegistry {
       defaultsByLanguage[languageCode] ?? all.first.id;
 
   static AppFont byId(String id) {
-    return all.firstWhere(
-      (f) => f.id == id,
-      orElse: () => all.first,
-    );
+    return all.firstWhere((f) => f.id == id, orElse: () => all.first);
   }
 
   static List<AppFont> availableFor(String languageCode) =>

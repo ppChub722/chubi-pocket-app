@@ -12,6 +12,7 @@ import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../categories/domain/category_tree.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 
@@ -24,7 +25,8 @@ import '../../domain/transaction_type.dart';
 /// tinted expense / income. Title: category name, else the note. Subtitle: the context
 /// the current screen doesn't already show — toggle with [showAccount] /
 /// [showDate] (e.g. hide the account on that account's own page, hide the
-/// date under a date header) — plus tag count / split markers.
+/// date under a date header) — plus a split marker. Tags, if any, take a
+/// third line in their short form ([TagShortList]).
 class TransactionTile extends StatelessWidget {
   const TransactionTile({
     required this.transaction,
@@ -91,18 +93,16 @@ class TransactionTile extends StatelessWidget {
             if (parts.isNotEmpty) const SizedBox(width: AppSpacing.xs),
           ],
           if (parts.isNotEmpty) Flexible(child: Text(parts.join(' · '))),
-          if (tx.tags.isNotEmpty) ...[
-            const SizedBox(width: AppSpacing.sm),
-            const Icon(AppIcons.tag),
-            const SizedBox(width: 2),
-            Text('${tx.tags.length}'),
-          ],
           if (tx.hasSplits) ...[
             const SizedBox(width: AppSpacing.sm),
             const Icon(AppIcons.split),
           ],
         ],
       ),
+      // Third line: the short tags (`#name` in each tag's colour).
+      footer: tx.tags.isEmpty
+          ? null
+          : TagShortList(tags: [for (final t in tx.tags) t.asTag]),
       onTap: onTap ?? () => context.push('/transactions/${tx.id}'),
     );
   }

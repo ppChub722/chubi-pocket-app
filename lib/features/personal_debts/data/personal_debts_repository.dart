@@ -74,7 +74,6 @@ class PersonalDebtsRepository {
     }
   }
 
-
   /// `POST /v1/personal-debts/split-requests/:notification_id/accept` —
   /// "add to my debts" on a split someone shared with me (contract §5).
   Future<PersonalDebt> acceptSplitRequest(String notificationId) async {
@@ -87,6 +86,7 @@ class PersonalDebtsRepository {
       throw ApiException.fromDioException(e);
     }
   }
+
   Future<PersonalDebt> create({
     required DebtDirection direction,
     required String counterpartyPersonName,
@@ -127,7 +127,8 @@ class PersonalDebtsRepository {
 
   /// [clearContact] sends an explicit `counterparty_contact_id: null`
   /// (switching to a typed name) — contract §7.
-  Future<PersonalDebt> update(String id, {
+  Future<PersonalDebt> update(
+    String id, {
     double? amount,
     double? settledAmount,
     String? note,
@@ -179,7 +180,8 @@ class PersonalDebtsRepository {
   /// Settle a debt: always records a transaction (income for owed_to_me,
   /// expense for i_owe) — into [accountId], or a floating (no-wallet) row
   /// when it's null — and bumps settled_amount. Write-offs use cancel.
-  Future<SettleResult> settle(String id, {
+  Future<SettleResult> settle(
+    String id, {
     String? accountId,
     double? amount,
     String? date,
@@ -198,7 +200,8 @@ class PersonalDebtsRepository {
       );
       return SettleResult(
         debt: PersonalDebt.fromJson(
-            (res.data!['debt'] as Map).cast<String, dynamic>()),
+          (res.data!['debt'] as Map).cast<String, dynamic>(),
+        ),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

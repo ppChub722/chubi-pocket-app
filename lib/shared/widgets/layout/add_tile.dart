@@ -42,10 +42,9 @@ class AddTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final color = onTap == null ? scheme.outline : scheme.primary;
-    final labelStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w600,
-        );
+    final labelStyle = Theme.of(
+      context,
+    ).textTheme.titleSmall?.copyWith(color: color, fontWeight: FontWeight.w600);
 
     switch (variant) {
       case AddTileVariant.circle:
@@ -71,10 +70,9 @@ class AddTile extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(color: color),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: color),
                 ),
               ],
             ),
@@ -96,7 +94,9 @@ class AddTile extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: isCard ? 64 : 48),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

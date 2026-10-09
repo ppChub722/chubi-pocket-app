@@ -243,6 +243,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get navAddTransaction => 'เพิ่มรายการ';
 
   @override
+  String get appExitTitle => 'ปิดแอป?';
+
+  @override
+  String get appExitConfirm => 'ปิดแอป';
+
+  @override
   String get navProjects => 'โปรเจกต์ & อีเวนต์';
 
   @override
@@ -341,6 +347,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountDetailTransactionsTitle => 'รายการ';
+
+  @override
+  String get accountDetailTabOverview => 'ภาพรวม';
 
   @override
   String get accountFormTitle => 'กระเป๋าใหม่';
@@ -572,6 +581,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactsNoMatch => 'ไม่พบผู้ติดต่อที่ค้นหา';
 
   @override
+  String get contactsNoMatchMessage => 'ลองคำค้นอื่น หรือเปลี่ยนตัวกรองสถานะ';
+
+  @override
+  String get contactsArchivedEmptyTitle => 'ไม่มีผู้ติดต่อที่เก็บถาวร';
+
+  @override
+  String get contactsArchivedEmptyMessage =>
+      'ผู้ติดต่อที่เก็บถาวรจะแสดงที่นี่ — ซ่อนจากตัวเลือก แต่ข้อมูลเดิมยังอยู่';
+
+  @override
   String get contactTitleNew => 'ผู้ติดต่อใหม่';
 
   @override
@@ -582,6 +601,18 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get contactNameLabel => 'ชื่อ';
+
+  @override
+  String get contactNameHint => 'ชื่อ (จำเป็น)';
+
+  @override
+  String get contactEmailHint => 'ไม่บังคับ · name@example.com';
+
+  @override
+  String get contactPhoneHint => 'ไม่บังคับ · 081-234-5678';
+
+  @override
+  String get contactNotesHint => 'ไม่บังคับ · เช่น เพื่อนที่ทำงาน';
 
   @override
   String get contactNameRequired => 'ต้องใส่ชื่อ';
@@ -1880,12 +1911,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get accountDetailSeeAll => 'ดูทั้งหมด';
-
-  @override
-  String get accountDetailDescription => 'คำอธิบาย';
-
-  @override
   String get accountDetailNote => 'บันทึก';
 
   @override
@@ -2385,9 +2410,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickMore => 'รายละเอียดเพิ่ม';
 
   @override
-  String get quickAllCategories => 'ทั้งหมด';
-
-  @override
   String get quickFrom => 'จาก';
 
   @override
@@ -2727,9 +2749,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transactionsEmptyAccountTitle => 'ยังไม่มีรายการ';
-
-  @override
-  String get transactionsEmptyAccountMessage => 'กดปุ่ม + เพื่อเพิ่มรายการ';
 
   @override
   String get transactionsListFilterAll => 'ทั้งหมด';
@@ -3414,12 +3433,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transactionSplitShareTitle => 'แบ่งให้... (เราติดเงินเขา)';
-
-  @override
-  String get quickCreateNameSection => 'ชื่ออีเวนต์';
-
-  @override
-  String get quickCreateSubmit => 'สร้างอีเวนต์';
 
   @override
   String get quickCreateErrorTxNotFound =>

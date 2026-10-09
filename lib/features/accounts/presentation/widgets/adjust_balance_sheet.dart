@@ -22,12 +22,8 @@ Future<({double balance, String? note})?> showAdjustBalanceSheet(
   BuildContext context,
   Account account,
 ) {
-  return showModalBottomSheet<({double balance, String? note})>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    useRootNavigator: true,
+  return showAppSheetCustom<({double balance, String? note})>(
+    context,
     builder: (_) => _AdjustBalanceSheet(account: account),
   );
 }

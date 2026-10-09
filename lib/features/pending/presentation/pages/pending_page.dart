@@ -15,9 +15,11 @@ import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
+import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
+import '../../data/slip_qr_reader.dart';
 import '../../domain/pending_transaction.dart';
 import '../cubit/pending_cubit.dart';
 import '../pending_errors.dart';
@@ -123,20 +125,20 @@ class _PendingPageState extends State<PendingPage> {
     final others = all.length - manual;
     final pickedVisible = visible.where((p) => _selected.contains(p.id)).length;
     final result = _lastResult;
-    // UI only for now — the slip scan itself isn't wired yet.
-    final importSlip = AddTile(
-      label: l.pendingImportSlip,
-      icon: AppIcons.importSlip,
-      variant: AddTileVariant.row,
-      onTap: () {},
-    );
+    // UI only for now — the slip scan itself isn't wired yet. Phone only:
+    // no button at all on web (ML Kit has no web build).
+    final importSlip = SlipQrReader.isSupported
+        ? AddTile(
+            label: l.pendingImportSlip,
+            icon: AppIcons.importSlip,
+            variant: AddTileVariant.row,
+            onTap: () {},
+          )
+        : null;
+    final lead = importSlip == null ? 0 : 1;
 
     return Scaffold(
-      appBar: AppTopBar(
-        title: l.pendingTitle,
-        showBack: true,
-        showUniversal: false,
-      ),
+      appBar: AppTopBar(title: l.pendingTitle, showBack: true),
       extendBodyBehindAppBar: true,
       // UI only for now — typing a draft in words isn't wired yet.
       floatingActionButton: ChatDial(
@@ -241,8 +243,10 @@ class _PendingPageState extends State<PendingPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        importSlip,
-                        const SizedBox(height: AppSpacing.sm),
+                        if (importSlip != null) ...[
+                          importSlip,
+                          const SizedBox(height: AppSpacing.sm),
+                        ],
                         AddTile(
                           label: l.pendingAdd,
                           onTap: () => context.push('/pending/new'),
@@ -260,20 +264,20 @@ class _PendingPageState extends State<PendingPage> {
                         AppSpacing.lg,
                         96,
                       ),
-                      itemCount: visible.length + 2,
+                      itemCount: visible.length + lead + 1,
                       separatorBuilder: (_, _) =>
                           const SizedBox(height: AppSpacing.sm),
                       itemBuilder: (context, i) {
                         // "นำเข้าสลิป" opens the list, "เพิ่มร่าง" closes it.
-                        if (i == 0) return importSlip;
-                        if (i == visible.length + 1) {
+                        if (i == 0 && importSlip != null) return importSlip;
+                        if (i == visible.length + lead) {
                           return AddTile(
                             label: l.pendingAdd,
                             variant: AddTileVariant.row,
                             onTap: () => context.push('/pending/new'),
                           );
                         }
-                        final p = visible[i - 1];
+                        final p = visible[i - lead];
                         return _PendingCard(
                           item: p,
                           selected: _selected.contains(p.id),
@@ -391,10 +395,10 @@ class _PendingCard extends StatelessWidget {
         ?category?.name,
         wallet?.name ?? l.transactionFormAccountNone,
       ],
-      for (final id in d.tagIds)
-        if (tags.where((t) => t.id == id).firstOrNull case final t?)
-          '#${t.name}',
     ].join(' · ');
+    final rowTags = [
+      for (final id in d.tagIds) ?tags.where((t) => t.id == id).firstOrNull,
+    ];
     final date = DateTime.tryParse(d.date ?? '');
     final warn = item.lastError != null
         ? pendingErrorText(l, item.lastError!)
@@ -499,6 +503,8 @@ class _PendingCard extends StatelessWidget {
                           color: scheme.onSurfaceVariant,
                         ),
                       ),
+                    if (rowTags.isNotEmpty)
+                      TagShortList(tags: rowTags, style: textTheme.bodySmall),
                     if (warn != null) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Row(

@@ -373,10 +373,14 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           // height in its top padding.
           builder: (context, state) => Form(
             key: _formKey,
-            child: _body(
-              l,
-              state.categories,
-              topInset: MediaQuery.paddingOf(context).top,
+            child: PullToRefresh(
+              enabled: !widget.isCreate,
+              onRefresh: context.read<CategoriesCubit>().load,
+              child: _body(
+                l,
+                state.categories,
+                topInset: MediaQuery.paddingOf(context).top,
+              ),
             ),
           ),
         ),
@@ -403,6 +407,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final breadcrumb = _parentBreadcrumb(all);
     final canDelete = !widget.isCreate && !(_persisted?.isSystem ?? true);
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
         topInset + AppSpacing.lg,

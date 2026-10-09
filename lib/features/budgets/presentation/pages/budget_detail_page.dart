@@ -361,49 +361,54 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           key: _formKey,
           // Builder: its context sees the floating bar's height.
           child: Builder(
-            builder: (context) => ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.huge,
-              ),
-              children: [
-                _header(l, budget, category, all),
-                const SizedBox(height: AppSpacing.lg),
-                _fields(l, all, category),
-                if (budget != null && budget.childBreakdown.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  LockedInEdit(
-                    locked: isEditing,
-                    child: SectionCard(
-                      title: l.budgetDetailBreakdownTitle,
-                      children: [
-                        for (final row in budget.childBreakdown)
-                          DetailRow(
-                            label: row.name,
-                            trailing: MoneyText(row.spent),
-                          ),
-                      ],
+            builder: (context) => PullToRefresh(
+              enabled: !widget.isCreate,
+              onRefresh: context.read<BudgetsCubit>().load,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.huge,
+                ),
+                children: [
+                  _header(l, budget, category, all),
+                  const SizedBox(height: AppSpacing.lg),
+                  _fields(l, all, category),
+                  if (budget != null && budget.childBreakdown.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    LockedInEdit(
+                      locked: isEditing,
+                      child: SectionCard(
+                        title: l.budgetDetailBreakdownTitle,
+                        children: [
+                          for (final row in budget.childBreakdown)
+                            DetailRow(
+                              label: row.name,
+                              trailing: MoneyText(row.spent),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
+                  // Archive · delete — edit mode only, always last (the top
+                  // bar carries no page actions).
+                  if (isEditing && budget != null) ...[
+                    DangerRow(
+                      icon: AppIcons.archive,
+                      label: l.budgetDetailArchive,
+                      onTap: isSaving ? null : () => _archive(budget),
+                    ),
+                    DangerRow(
+                      icon: AppIcons.delete,
+                      label: l.budgetDeleteThis,
+                      onTap: isSaving ? null : () => _delete(budget),
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                    ),
+                  ],
                 ],
-                // Archive · delete — edit mode only, always last (the top
-                // bar carries no page actions).
-                if (isEditing && budget != null) ...[
-                  DangerRow(
-                    icon: AppIcons.archive,
-                    label: l.budgetDetailArchive,
-                    onTap: isSaving ? null : () => _archive(budget),
-                  ),
-                  DangerRow(
-                    icon: AppIcons.delete,
-                    label: l.budgetDeleteThis,
-                    onTap: isSaving ? null : () => _delete(budget),
-                    padding: const EdgeInsets.only(top: AppSpacing.sm),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),

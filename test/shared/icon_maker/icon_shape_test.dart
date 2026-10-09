@@ -12,8 +12,10 @@ void main() {
     });
 
     test('circle radius is half the size (renders exactly as before)', () {
-      expect(IconShape.circle.radius(40),
-          const BorderRadius.all(Radius.circular(20)));
+      expect(
+        IconShape.circle.radius(40),
+        const BorderRadius.all(Radius.circular(20)),
+      );
     });
   });
 

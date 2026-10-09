@@ -11,8 +11,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// right now") this is good enough. Reachability checks are Phase 2+ polish.
 class ConnectivityCubit extends Cubit<bool> {
   ConnectivityCubit({Connectivity? connectivity})
-      : _connectivity = connectivity ?? Connectivity(),
-        super(true) {
+    : _connectivity = connectivity ?? Connectivity(),
+      super(true) {
     _bootstrap();
   }
 
@@ -33,7 +33,8 @@ class ConnectivityCubit extends Cubit<bool> {
   }
 
   bool _isOnline(List<ConnectivityResult> result) {
-    return result.isNotEmpty && !result.every((r) => r == ConnectivityResult.none);
+    return result.isNotEmpty &&
+        !result.every((r) => r == ConnectivityResult.none);
   }
 
   @override

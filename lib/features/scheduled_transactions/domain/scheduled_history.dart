@@ -98,11 +98,11 @@ class GenerateNowResult extends Equatable {
 
   @override
   List<Object?> get props => [
-        generatedTransactionId,
-        generatedAmount,
-        generatedDate,
-        nextBillingDate,
-        status,
-        remainingInstallments,
-      ];
+    generatedTransactionId,
+    generatedAmount,
+    generatedDate,
+    nextBillingDate,
+    status,
+    remainingInstallments,
+  ];
 }

@@ -51,20 +51,20 @@ class _StateWidgetsPreviewScreenState extends State<StateWidgetsPreviewScreen> {
                     ),
                   ],
                   selected: {_variant},
-                  onSelectionChanged: (s) =>
-                      setState(() => _variant = s.first),
+                  onSelectionChanged: (s) => setState(() => _variant = s.first),
                 ),
                 if (_variant == _Variant.error) ...[
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.sm,
                     children: _ErrorKind.values
-                        .map((k) => ChoiceChip(
-                              label: Text(k.name),
-                              selected: _errorKind == k,
-                              onSelected: (_) =>
-                                  setState(() => _errorKind = k),
-                            ))
+                        .map(
+                          (k) => ChoiceChip(
+                            label: Text(k.name),
+                            selected: _errorKind == k,
+                            onSelected: (_) => setState(() => _errorKind = k),
+                          ),
+                        )
                         .toList(),
                   ),
                 ],
@@ -76,14 +76,14 @@ class _StateWidgetsPreviewScreenState extends State<StateWidgetsPreviewScreen> {
       body: switch (_variant) {
         _Variant.loading => LoadingView(skeleton: _listSkeleton()),
         _Variant.error => ErrorView(
-            error: _errorKind.toException(),
-            onRetry: () => setState(() {}),
-          ),
+          error: _errorKind.toException(),
+          onRetry: () => setState(() {}),
+        ),
         _Variant.empty => const EmptyView(
-            icon: Icons.receipt_long_outlined,
-            title: 'No transactions yet',
-            message: 'Log your first one to get started.',
-          ),
+          icon: Icons.receipt_long_outlined,
+          title: 'No transactions yet',
+          message: 'Log your first one to get started.',
+        ),
       },
     );
   }
@@ -137,18 +137,18 @@ enum _ErrorKind { network, server, unknown }
 
 extension on _ErrorKind {
   ApiException toException() => switch (this) {
-        _ErrorKind.network => const ApiException(
-            code: 'NETWORK_ERROR',
-            message: 'No connection',
-          ),
-        _ErrorKind.server => const ApiException(
-            code: 'INTERNAL_ERROR',
-            message: 'Internal server error',
-            statusCode: 500,
-          ),
-        _ErrorKind.unknown => const ApiException(
-            code: 'WHATEVER',
-            message: 'Something odd happened',
-          ),
-      };
+    _ErrorKind.network => const ApiException(
+      code: 'NETWORK_ERROR',
+      message: 'No connection',
+    ),
+    _ErrorKind.server => const ApiException(
+      code: 'INTERNAL_ERROR',
+      message: 'Internal server error',
+      statusCode: 500,
+    ),
+    _ErrorKind.unknown => const ApiException(
+      code: 'WHATEVER',
+      message: 'Something odd happened',
+    ),
+  };
 }

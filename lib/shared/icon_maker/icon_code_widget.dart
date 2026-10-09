@@ -12,10 +12,7 @@ import 'icon_shape.dart';
 /// layer should appear at full fidelity.
 /// Use [compact] in list rows and small avatars — border is suppressed
 /// even when the [IconCode] has one set, keeping dense UIs uncluttered.
-enum IconDisplayMode {
-  full,
-  compact,
-}
+enum IconDisplayMode { full, compact }
 
 /// Renders an [IconCode] as a fixed-diameter widget.
 ///
@@ -78,8 +75,11 @@ class IconCodeWidget extends StatelessWidget {
         : (hasBg ? palette.onPrimary : fallbackColor);
 
     Widget glyph(double s) => hasIcon
-        ? Icon(IconRegistry.get(ic.icon, fallback: fallbackIcon),
-            size: s, color: iconColor)
+        ? Icon(
+            IconRegistry.get(ic.icon, fallback: fallbackIcon),
+            size: s,
+            color: iconColor,
+          )
         : const SizedBox.shrink();
 
     // null background → glyph only (no fill). A border, if set, still renders
@@ -112,79 +112,82 @@ class IconCodeWidget extends StatelessWidget {
   }
 
   BoxDecoration _buildDecoration(
-      IconCode ic, AppColors palette, BorderRadius radius) {
+    IconCode ic,
+    AppColors palette,
+    BorderRadius radius,
+  ) {
     final border = _buildBorder(ic, palette);
     final colors = ic.bgColors;
     Color c(int i) => resolveColor(colors[i], palette);
 
     return switch (ic.background) {
       'superGradientA' when colors.length >= 2 => BoxDecoration(
-          borderRadius: radius,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [c(0), c(1)],
-          ),
-          border: border,
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [c(0), c(1)],
         ),
+        border: border,
+      ),
       'radialGlow' when colors.length >= 2 => BoxDecoration(
-          borderRadius: radius,
-          gradient: RadialGradient(
-            center: const Alignment(-0.4, -0.4),
-            radius: 1.2,
-            colors: [c(0), c(1)],
-          ),
-          border: border,
+        borderRadius: radius,
+        gradient: RadialGradient(
+          center: const Alignment(-0.4, -0.4),
+          radius: 1.2,
+          colors: [c(0), c(1)],
         ),
+        border: border,
+      ),
       'stripedPatternDi' when colors.length >= 3 => BoxDecoration(
-          borderRadius: radius,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [c(0), c(0), c(1), c(1), c(2), c(2)],
-            stops: const [0.0, 0.33, 0.33, 0.66, 0.66, 1.0],
-          ),
-          border: border,
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [c(0), c(0), c(1), c(1), c(2), c(2)],
+          stops: const [0.0, 0.33, 0.33, 0.66, 0.66, 1.0],
         ),
+        border: border,
+      ),
       'rainbow' => BoxDecoration(
-          borderRadius: radius,
-          gradient: const SweepGradient(
-            colors: [
-              Color(0xFFEF4444),
-              Color(0xFFF59E0B),
-              Color(0xFFFCD34D),
-              Color(0xFF22C55E),
-              Color(0xFF3B82F6),
-              Color(0xFF6366F1),
-              Color(0xFFA855F7),
-              Color(0xFFEF4444),
-            ],
-          ),
-          border: border,
+        borderRadius: radius,
+        gradient: const SweepGradient(
+          colors: [
+            Color(0xFFEF4444),
+            Color(0xFFF59E0B),
+            Color(0xFFFCD34D),
+            Color(0xFF22C55E),
+            Color(0xFF3B82F6),
+            Color(0xFF6366F1),
+            Color(0xFFA855F7),
+            Color(0xFFEF4444),
+          ],
         ),
+        border: border,
+      ),
       // Preset backgrounds — no user-controlled colors.
       // True textures (patterns, illustrations) are deferred; placeholder color used for now.
       'snowflake' => BoxDecoration(
-          borderRadius: radius,
-          color: const Color(0xFFDBEAFE),
-          border: border,
-        ),
+        borderRadius: radius,
+        color: const Color(0xFFDBEAFE),
+        border: border,
+      ),
       'wreath' => BoxDecoration(
-          borderRadius: radius,
-          color: const Color(0xFF15803D),
-          border: border,
-        ),
+        borderRadius: radius,
+        color: const Color(0xFF15803D),
+        border: border,
+      ),
       'starburst' => BoxDecoration(
-          borderRadius: radius,
-          color: const Color(0xFF15803D),
-          border: border,
-        ),
+        borderRadius: radius,
+        color: const Color(0xFF15803D),
+        border: border,
+      ),
       // 'solid' or any unrecognised id → use bgColors[0]
       _ => BoxDecoration(
-          borderRadius: radius,
-          color: colors.isNotEmpty ? c(0) : fallbackColor,
-          border: border,
-        ),
+        borderRadius: radius,
+        color: colors.isNotEmpty ? c(0) : fallbackColor,
+        border: border,
+      ),
     };
   }
 

@@ -43,14 +43,14 @@ class SavingAllocationSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        accountId,
-        accountBalance,
-        currency,
-        activeGoals,
-        allocatedPct,
-        unallocatedPct,
-        unallocatedAmount,
-      ];
+    accountId,
+    accountBalance,
+    currency,
+    activeGoals,
+    allocatedPct,
+    unallocatedPct,
+    unallocatedAmount,
+  ];
 }
 
 class SavingAllocationSlice extends Equatable {

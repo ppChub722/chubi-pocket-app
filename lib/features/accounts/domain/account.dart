@@ -112,9 +112,9 @@ class Account extends Equatable {
       minimumPayment: (json['minimum_payment'] as num?)?.toDouble(),
       members: json['members'] is List
           ? (json['members'] as List)
-              .cast<Map<String, dynamic>>()
-              .map(WalletMember.fromJson)
-              .toList()
+                .cast<Map<String, dynamic>>()
+                .map(WalletMember.fromJson)
+                .toList()
           : const [],
       myReportScope: json['my_report_scope'] != null
           ? WalletReportScopeWire.parse(json['my_report_scope'] as String)
@@ -160,20 +160,20 @@ class Account extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        type,
-        balance,
-        currency,
-        iconCode,
-        description,
-        note,
-        creditLimit,
-        statementDate,
-        paymentDueDate,
-        minimumPayment,
-        members,
-        myReportScope,
-        isShared,
-      ];
+    id,
+    name,
+    type,
+    balance,
+    currency,
+    iconCode,
+    description,
+    note,
+    creditLimit,
+    statementDate,
+    paymentDueDate,
+    minimumPayment,
+    members,
+    myReportScope,
+    isShared,
+  ];
 }

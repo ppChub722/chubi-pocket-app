@@ -34,10 +34,11 @@ class StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = tone.color(context);
-    final textStyle = (dense
-            ? Theme.of(context).textTheme.labelSmall
-            : Theme.of(context).textTheme.labelLarge)
-        ?.copyWith(color: color, fontWeight: FontWeight.w600);
+    final textStyle =
+        (dense
+                ? Theme.of(context).textTheme.labelSmall
+                : Theme.of(context).textTheme.labelLarge)
+            ?.copyWith(color: color, fontWeight: FontWeight.w600);
     final pill = Container(
       padding: EdgeInsets.symmetric(
         horizontal: dense ? AppSpacing.sm : AppSpacing.md,

@@ -45,25 +45,30 @@ class SavingGoalCard extends StatelessWidget {
                   GestureDetector(
                     onTap: onIconTap,
                     child: IconDisplay(
-                        type: IconType.account, size: 44, iconCode: goal.iconCode),
+                      type: IconType.account,
+                      size: 44,
+                      iconCode: goal.iconCode,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(goal.name,
+                        Text(
+                          goal.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (wallet != null)
+                          Text(
+                            wallet,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium),
-                        if (wallet != null)
-                          Text(wallet,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: scheme.onSurfaceVariant)),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
                       ],
                     ),
                   ),

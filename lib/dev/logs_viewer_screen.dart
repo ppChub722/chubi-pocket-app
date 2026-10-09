@@ -48,18 +48,20 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
     final all = AppLogger.instance.recent;
     final q = _searchCtrl.text.trim().toLowerCase();
     final minSev = _minFilter?.severity ?? -1;
-    final filtered = all.where((e) {
-      if (e.level.severity < minSev) return false;
-      if (q.isEmpty) return true;
-      if (e.message.toLowerCase().contains(q)) return true;
-      if ((e.requestId ?? '').toLowerCase().contains(q)) return true;
-      if ((e.userId ?? '').toLowerCase().contains(q)) return true;
-      for (final entry in e.fields.entries) {
-        if (entry.key.toLowerCase().contains(q)) return true;
-        if ('${entry.value}'.toLowerCase().contains(q)) return true;
-      }
-      return false;
-    }).toList(growable: false);
+    final filtered = all
+        .where((e) {
+          if (e.level.severity < minSev) return false;
+          if (q.isEmpty) return true;
+          if (e.message.toLowerCase().contains(q)) return true;
+          if ((e.requestId ?? '').toLowerCase().contains(q)) return true;
+          if ((e.userId ?? '').toLowerCase().contains(q)) return true;
+          for (final entry in e.fields.entries) {
+            if (entry.key.toLowerCase().contains(q)) return true;
+            if ('${entry.value}'.toLowerCase().contains(q)) return true;
+          }
+          return false;
+        })
+        .toList(growable: false);
     if (_newestFirst) {
       return filtered.reversed.toList(growable: false);
     }
@@ -94,9 +96,9 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
         actions: [
           IconButton(
             tooltip: _newestFirst ? 'Newest first' : 'Oldest first',
-            icon: Icon(_newestFirst
-                ? Icons.arrow_downward
-                : Icons.arrow_upward),
+            icon: Icon(
+              _newestFirst ? Icons.arrow_downward : Icons.arrow_upward,
+            ),
             onPressed: () => setState(() => _newestFirst = !_newestFirst),
           ),
           IconButton(
@@ -115,7 +117,11 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0),
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -126,8 +132,8 @@ class _LogsViewerScreenState extends State<LogsViewerScreen> {
                   'file=${config.fileSink}'
                   '${_filePath != null ? "\n${_filePath!}" : ""}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 TextField(
@@ -225,30 +231,40 @@ class _EntryTile extends StatelessWidget {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md, vertical: 8),
+          horizontal: AppSpacing.md,
+          vertical: 8,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
               width: 18,
-              child: Text(entry.level.tag,
-                  style: TextStyle(
-                      color: color, fontWeight: FontWeight.w700)),
+              child: Text(
+                entry.level.tag,
+                style: TextStyle(color: color, fontWeight: FontWeight.w700),
+              ),
             ),
             const SizedBox(width: 8),
             SizedBox(
               width: 56,
-              child: Text(ts,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant)),
+              child: Text(
+                ts,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
             ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.message,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500, color: color)),
+                  Text(
+                    entry.message,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: color,
+                    ),
+                  ),
                   if (entry.requestId != null || entry.fields.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
@@ -264,10 +280,9 @@ class _EntryTile extends StatelessWidget {
                         ].join('  '),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                 ],
@@ -297,23 +312,28 @@ class _EntryDetailSheet extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(entry.message,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(
+                      entry.message,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.copy),
                     tooltip: 'Copy JSON',
                     onPressed: () {
                       Clipboard.setData(
-                          ClipboardData(text: entry.toJsonLine()));
+                        ClipboardData(text: entry.toJsonLine()),
+                      );
                       Navigator.pop(context);
                     },
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              SelectableText(entry.toJsonLine(),
-                  style: Theme.of(context).textTheme.bodySmall),
+              SelectableText(
+                entry.toJsonLine(),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ],
           ),
         ),

@@ -15,7 +15,6 @@ import '../../../../shared/icon_maker/color_token.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/tag.dart';
@@ -28,10 +27,10 @@ enum _SortBy { name, usage, color, icon }
 /// Tags — one page, no detail (`ux-overhaul-plan.md` §5). A 2-column grid
 /// in both modes with a dashed "+ เพิ่มแท็ก" tile at the end.
 ///
-/// View: search + colour/icon filters + sort + an ✏️ pill into edit. Edit: a
+/// View: search + colour/icon filters + sort + a round ✏️ into edit. Edit: a
 /// batch editor over
 /// *all* tags (rename, recolour, re-icon, delete, add) with multi-select;
-/// search/filters keep working, under four rules:
+/// search keeps working (the colour/icon filters don't), under four rules:
 ///  1. Save validates every row, including filtered-out ones — a hidden
 ///     invalid row clears the filters and scrolls to it.
 ///  2. Rows changed or added this session always stay visible.
@@ -117,14 +116,16 @@ class _TagsPageState extends State<TagsPage>
   /// Bulk actions show in edit mode always, dimmed until ≥1 is selected.
   bool get _canBulk => _selected.isNotEmpty && !isSaving;
 
+  /// Colour / icon filters are view-only — edit mode ignores them (and
+  /// shows no filter chips); they're back as they were on exit.
   bool get _hasFilter =>
       _query.trim().isNotEmpty ||
-      _filterColors.isNotEmpty ||
-      _filterIcons.isNotEmpty;
+      (!isEditing && (_filterColors.isNotEmpty || _filterIcons.isNotEmpty));
 
   bool _matches(String name, IconCode? iconCode) {
     final q = _query.trim().toLowerCase();
     if (q.isNotEmpty && !name.toLowerCase().contains(q)) return false;
+    if (isEditing) return true;
     if (_filterColors.isNotEmpty &&
         !_filterColors.contains(_colorOf(iconCode))) {
       return false;
@@ -270,8 +271,7 @@ class _TagsPageState extends State<TagsPage>
       initial: draft.iconCode,
       showBackground: false,
       showBorder: false,
-      previewBuilder: (iconCode) => Align(
-        alignment: Alignment.centerLeft,
+      previewBuilder: (iconCode) => Center(
         child: TagChip(
           tag: Tag(id: 'preview', name: draft.name, iconCode: iconCode),
         ),
@@ -296,8 +296,7 @@ class _TagsPageState extends State<TagsPage>
       showBackground: false,
       showBorder: false,
       showIconPicker: false,
-      previewBuilder: (iconCode) => Align(
-        alignment: Alignment.centerLeft,
+      previewBuilder: (iconCode) => Center(
         child: TagChip(
           tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode),
         ),
@@ -327,8 +326,7 @@ class _TagsPageState extends State<TagsPage>
       showBackground: false,
       showBorder: false,
       showColorPicker: false,
-      previewBuilder: (iconCode) => Align(
-        alignment: Alignment.centerLeft,
+      previewBuilder: (iconCode) => Center(
         child: TagChip(
           tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode),
         ),
@@ -525,16 +523,14 @@ class _TagsPageState extends State<TagsPage>
   }
 
   // Row 2 — same height in both modes so the grid never jumps.
-  //   view: [สี▾][ไอคอน▾] … [เรียง▾][✏️ แก้ไข]
-  //   edit: [☐ n] [สี▾][ไอคอน▾] … [สี][ไอคอน][ลบ]
+  //   view: [สี▾][ไอคอน▾] … [เรียง▾](✏️)
+  //   edit: [☐ n] … [สี][ไอคอน][ลบ]
   Widget _toolRow(
     AppLocalizations l,
     List<Tag> tags,
     List<_TagDraft>? visible,
   ) {
-    final codes = isEditing
-        ? working.items.map((d) => d.iconCode)
-        : tags.map((t) => t.iconCode);
+    final codes = tags.map((t) => t.iconCode);
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
     final icons = {for (final c in codes) ?_iconOf(c)}.toList()..sort();
     return Padding(
@@ -555,29 +551,26 @@ class _TagsPageState extends State<TagsPage>
             ),
             const SizedBox(width: AppSpacing.sm),
           ],
-          // Filters always on the left (scroll sideways if the selection
-          // actions leave too little room).
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _colorFilter(l, colors),
-                  const SizedBox(width: AppSpacing.sm),
-                  _iconFilter(l, icons),
-                ],
+          // View: colour / icon filters on the left (scroll sideways on a
+          // narrow phone). Edit has no filters — search only.
+          if (!isEditing)
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _colorFilter(l, colors),
+                    const SizedBox(width: AppSpacing.sm),
+                    _iconFilter(l, icons),
+                  ],
+                ),
               ),
             ),
-          ),
           // Edit: labelled actions on the selection, right-aligned, dimmed
-          // until something is selected. Capped at ~62% of the row (scrolls on
-          // a narrow phone) so the filters keep a foothold.
+          // until something is selected (scrolls on a narrow phone).
           if (isEditing) ...[
             const SizedBox(width: AppSpacing.sm),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.62,
-              ),
+            Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 reverse: true,
@@ -619,12 +612,13 @@ class _TagsPageState extends State<TagsPage>
               ],
             ),
             // The way into batch edit (the top bar carries no page actions;
-            // long-pressing a tile works too).
-            const SizedBox(width: AppSpacing.xs),
-            ActionPill(
+            // long-pressing a tile works too) — the app's round ✏️ chip.
+            const SizedBox(width: AppSpacing.sm),
+            AppIconButton(
               icon: AppIcons.edit,
-              label: l.commonEdit,
-              onTap: _beginEdit,
+              size: 36,
+              tooltip: l.commonEdit,
+              onPressed: _beginEdit,
             ),
           ],
         ],
@@ -675,7 +669,8 @@ class _TagsPageState extends State<TagsPage>
         onTap: glyphs.isEmpty ? null : toggle,
       ),
       contentBuilder: (context, close) => StatefulBuilder(
-        builder: (context, setPopover) => _IconSwatchGrid(
+        builder: (context, setPopover) => IconSwatchGrid(
+          fallback: AppIcons.tag,
           glyphs: glyphs,
           selected: _filterIcons,
           onToggle: (g) {
@@ -865,63 +860,6 @@ class _SelectAllBox extends StatelessWidget {
   }
 }
 
-/// Icon filter popover — glyph swatches with the selection ring, + ล้าง.
-class _IconSwatchGrid extends StatelessWidget {
-  const _IconSwatchGrid({
-    required this.glyphs,
-    required this.selected,
-    required this.onToggle,
-    required this.onClear,
-  });
-
-  final List<String> glyphs;
-  final Set<String> selected;
-  final ValueChanged<String> onToggle;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              for (final g in glyphs)
-                SelectableFrame(
-                  selected: selected.contains(g),
-                  radius: 999,
-                  child: InkWell(
-                    onTap: () => onToggle(g),
-                    customBorder: const CircleBorder(),
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: scheme.surfaceContainerHighest,
-                      child: Icon(
-                        IconRegistry.get(g, fallback: AppIcons.tag),
-                        size: 18,
-                        color: scheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          if (selected.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.sm),
-            PopoverClearItem(onPressed: onClear),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 /// Tile height without a validation error — the add tile matches it.
 const double _tileMinHeight = 58;
 
@@ -968,6 +906,9 @@ class _TagTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    // The tag look (see [TagChip]): tint + border + icon + name all in the
+    // tag's colour.
+    final color = tagColor(iconCode, Theme.of(context).extension<AppColors>()!);
     OutlineInputBorder border(Color c) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.sm),
       borderSide: BorderSide(color: c),
@@ -979,7 +920,10 @@ class _TagTile extends StatelessWidget {
       focusNode: editing ? focusNode : null,
       readOnly: !editing,
       maxLength: 50,
-      style: textTheme.bodyLarge,
+      style: textTheme.bodyLarge?.copyWith(
+        color: color,
+        fontWeight: FontWeight.w600,
+      ),
       onChanged: editing ? onNameChanged : null,
       validator: editing ? validator : null,
       decoration: InputDecoration(
@@ -991,9 +935,13 @@ class _TagTile extends StatelessWidget {
           horizontal: AppSpacing.sm,
           vertical: 8,
         ),
-        enabledBorder: border(editing ? scheme.outline : Colors.transparent),
-        focusedBorder: border(scheme.primary),
-        border: border(editing ? scheme.outline : Colors.transparent),
+        enabledBorder: border(
+          editing ? color.withValues(alpha: 0.5) : Colors.transparent,
+        ),
+        focusedBorder: border(color),
+        border: border(
+          editing ? color.withValues(alpha: 0.5) : Colors.transparent,
+        ),
       ),
     );
 
@@ -1007,9 +955,9 @@ class _TagTile extends StatelessWidget {
         AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
+        color: Color.alphaBlend(color.withValues(alpha: 0.12), scheme.surface),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: scheme.outlineVariant),
+        border: Border.all(color: color, width: 1.5),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1056,9 +1004,7 @@ class _TagTile extends StatelessWidget {
                         ? Text(
                             usage!,
                             textAlign: TextAlign.center,
-                            style: textTheme.labelSmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
+                            style: textTheme.labelSmall?.copyWith(color: color),
                           )
                         : null,
                   ),

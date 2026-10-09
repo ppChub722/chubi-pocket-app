@@ -10,9 +10,9 @@ import '../../../../core/theme/theme_registry.dart';
 /// Phase 1+ will sync the value to `user_preferences.theme_id` on the server.
 class ThemeIdCubit extends Cubit<String> {
   ThemeIdCubit(this._prefs)
-      : super(
-          _prefs.getString(StorageKeys.themeId) ?? ThemeRegistry.defaultThemeId,
-        );
+    : super(
+        _prefs.getString(StorageKeys.themeId) ?? ThemeRegistry.defaultThemeId,
+      );
 
   final SharedPreferences _prefs;
 

@@ -94,9 +94,7 @@ class _AppTextFieldState extends State<AppTextField> {
         prefixIcon: w.prefixIcon == null ? null : Icon(w.prefixIcon),
         suffixIcon: w.obscurable
             ? IconButton(
-                icon: Icon(_obscured
-                    ? AppIcons.visible
-                    : AppIcons.hidden),
+                icon: Icon(_obscured ? AppIcons.visible : AppIcons.hidden),
                 onPressed: () => setState(() => _obscured = !_obscured),
               )
             : w.suffix,

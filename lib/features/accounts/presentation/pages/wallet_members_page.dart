@@ -198,12 +198,8 @@ class _WalletMembersPageState extends State<WalletMembersPage> {
   // ─── Invite flow ─────────────────────────────────────────────────────
 
   Future<void> _onInvitePressed(AppLocalizations l) async {
-    final email = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      useRootNavigator: true,
+    final email = await showAppSheetCustom<String>(
+      context,
       builder: (_) => const _InviteEmailSheet(),
     );
     if (email == null || !mounted) return;

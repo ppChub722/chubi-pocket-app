@@ -67,9 +67,9 @@ class TypeIndicator extends StatelessWidget {
               Text(
                 text,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

@@ -102,27 +102,29 @@ class PersonalDebt extends Equatable {
       currency: json['currency'] as String,
       status: DebtStatusWire.parse(json['status'] as String?),
       note: json['note'] as String?,
-      createdAt: DateTime.tryParse((json['created_at'] as String?) ?? '')?.toLocal(),
+      createdAt: DateTime.tryParse(
+        (json['created_at'] as String?) ?? '',
+      )?.toLocal(),
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        direction,
-        counterpartyContactId,
-        counterpartyPersonName,
-        sourceTransactionId,
-        sourceProjectTransactionId,
-        projectId,
-        amount,
-        settledAmount,
-        currency,
-        status,
-        note,
-        createdAt,
-      ];
+    id,
+    userId,
+    direction,
+    counterpartyContactId,
+    counterpartyPersonName,
+    sourceTransactionId,
+    sourceProjectTransactionId,
+    projectId,
+    amount,
+    settledAmount,
+    currency,
+    status,
+    note,
+    createdAt,
+  ];
 }
 
 /// Person row from `GET /personal-debts/people` — aggregated by counterparty.
@@ -159,8 +161,14 @@ class PersonRow extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [contactId, displayName, owedToMeOpen, iOweOpen, netPosition, openCount];
+  List<Object?> get props => [
+    contactId,
+    displayName,
+    owedToMeOpen,
+    iOweOpen,
+    netPosition,
+    openCount,
+  ];
 }
 
 class PeopleResponse extends Equatable {
@@ -192,8 +200,13 @@ class PeopleResponse extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [data, totalOwedToMe, totalIOwe, netPosition, currency];
+  List<Object?> get props => [
+    data,
+    totalOwedToMe,
+    totalIOwe,
+    netPosition,
+    currency,
+  ];
 }
 
 /// Everything with one counterparty, grouped the way the BE's `/people`
@@ -201,7 +214,11 @@ class PeopleResponse extends Equatable {
 /// (case-insensitive). A linked row and a typed row with the same name are
 /// two different people until the name is absorbed into the contact.
 class DebtPerson {
-  DebtPerson({required this.contactId, required this.displayName, required this.debts});
+  DebtPerson({
+    required this.contactId,
+    required this.displayName,
+    required this.debts,
+  });
 
   final String? contactId;
   final String displayName;
@@ -245,11 +262,10 @@ class DebtPerson {
           .debts
           .add(d);
     }
-    return byKey.values.toList()
-      ..sort((a, b) {
-        final byOpen = (b.openCount > 0 ? 1 : 0) - (a.openCount > 0 ? 1 : 0);
-        if (byOpen != 0) return byOpen;
-        return b.net.abs().compareTo(a.net.abs());
-      });
+    return byKey.values.toList()..sort((a, b) {
+      final byOpen = (b.openCount > 0 ? 1 : 0) - (a.openCount > 0 ? 1 : 0);
+      if (byOpen != 0) return byOpen;
+      return b.net.abs().compareTo(a.net.abs());
+    });
   }
 }

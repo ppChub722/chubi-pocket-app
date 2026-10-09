@@ -65,8 +65,7 @@ class _DashedRectPainter extends CustomPainter {
     // dashes regardless of corner curvature. This keeps dashes evenly spaced
     // around corners — naive per-side drawing would visibly skip them.
     final rect = Offset.zero & size;
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(rect, radius));
+    final path = Path()..addRRect(RRect.fromRectAndRadius(rect, radius));
 
     for (final metric in path.computeMetrics()) {
       var distance = 0.0;

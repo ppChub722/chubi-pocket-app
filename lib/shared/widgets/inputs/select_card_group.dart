@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 
@@ -116,7 +117,29 @@ class SelectCardGroup<T> extends StatelessWidget {
               color: scheme.onSurfaceVariant,
             ),
           );
-    final iconColor = active ? accent : scheme.onSurfaceVariant;
+    // Ink that reads on the accent fill.
+    final onAccent =
+        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
+        ? Colors.white
+        : Colors.black87;
+    // The icon sits in a disc: filled with the accent once picked.
+    final disc = stacked ? 44.0 : 36.0;
+    final iconDisc = o.icon == null
+        ? null
+        : AnimatedContainer(
+            duration: _motion,
+            width: disc,
+            height: disc,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: active ? accent : scheme.surfaceContainerHighest,
+            ),
+            child: Icon(
+              o.icon,
+              size: stacked ? 24 : 20,
+              color: active ? onAccent : scheme.onSurfaceVariant,
+            ),
+          );
 
     final Widget content;
     if (stacked) {
@@ -124,9 +147,9 @@ class SelectCardGroup<T> extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (o.icon != null) ...[
-            Icon(o.icon, size: 28, color: iconColor),
-            const SizedBox(height: AppSpacing.xs),
+          if (iconDisc != null) ...[
+            iconDisc,
+            const SizedBox(height: AppSpacing.sm),
           ],
           label,
           ?description,
@@ -135,8 +158,8 @@ class SelectCardGroup<T> extends StatelessWidget {
     } else {
       content = Row(
         children: [
-          if (o.icon != null) ...[
-            Icon(o.icon, color: iconColor),
+          if (iconDisc != null) ...[
+            iconDisc,
             const SizedBox(width: AppSpacing.sm),
           ],
           Expanded(
@@ -150,15 +173,25 @@ class SelectCardGroup<T> extends StatelessWidget {
       );
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
+    final card = AnimatedContainer(
+      duration: _motion,
       decoration: BoxDecoration(
-        color: active ? accent.withValues(alpha: 0.14) : Colors.transparent,
+        color: active
+            ? accent.withValues(alpha: 0.10)
+            : scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: active ? accent : scheme.outlineVariant,
-          width: active ? 1.5 : 1,
+          width: active ? 2 : 1,
         ),
+        boxShadow: [
+          if (active)
+            BoxShadow(
+              color: accent.withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+        ],
       ),
       child: Material(
         type: MaterialType.transparency,
@@ -175,5 +208,31 @@ class SelectCardGroup<T> extends StatelessWidget {
         ),
       ),
     );
+    // ✓ in the corner of the picked one.
+    return Stack(
+      // Passthrough: the row stretches the card to equal heights.
+      fit: StackFit.passthrough,
+      clipBehavior: Clip.none,
+      children: [
+        card,
+        Positioned(
+          top: AppSpacing.xs + 2,
+          right: AppSpacing.xs + 2,
+          child: AnimatedScale(
+            duration: _motion,
+            curve: Curves.easeOutBack,
+            scale: active ? 1 : 0,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+              child: Icon(AppIcons.check, size: 12, color: onAccent),
+            ),
+          ),
+        ),
+      ],
+    );
   }
+
+  static const _motion = Duration(milliseconds: 200);
 }

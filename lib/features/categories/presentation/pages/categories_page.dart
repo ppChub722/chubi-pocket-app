@@ -15,6 +15,9 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../widgets/categories_list_skeleton.dart';
 import '../../../../shared/widgets/reorder_drop_line.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/icon_maker/color_token.dart';
+import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/reorder_mode_tilt.dart';
@@ -27,6 +30,10 @@ import '../cubit/categories_cubit.dart';
 /// Categories management with smart drag-and-drop reorder.
 ///
 /// **Browse mode**:
+/// - Expense / income tabs; swipe sideways to switch ([AppTabPager] —
+///   the content follows the finger).
+/// - Search + colour / icon filters, with ✏️ (reorder) and + on the
+///   filter row's right.
 /// - Tap row → edit form. Long-press → enter reorder mode.
 /// - Chevron toggles collapse/expand for parents with children.
 /// - A dashed "+ เพิ่มหมวดหมู่" tile ends the list (also the empty CTA).
@@ -99,13 +106,52 @@ class _CategoriesPageState extends State<CategoriesPage> {
   /// ValueNotifier.
   DateTime _lastHoverUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 
-  final ScrollController _scrollController = ScrollController();
+  /// The tabs, in bar order — one [AppTabPager] page each.
+  static const _types = [CategoryType.expense, CategoryType.income];
+  late final PageController _pages = PageController(
+    initialPage: _types.indexOf(_listType),
+  );
+
+  /// One per tab: both pages are built side by side, and a controller
+  /// can't drive two lists. Auto-scroll during a reorder drag uses the
+  /// selected tab's ([_scrollController]).
+  final Map<CategoryType, ScrollController> _scrollControllers = {
+    for (final t in _types) t: ScrollController(),
+  };
+  ScrollController get _scrollController => _scrollControllers[_listType]!;
   Timer? _autoScrollTimer;
   double _autoScrollSpeed = 0;
 
   /// Browse-mode search. Non-empty → the tree shows only matches plus
   /// their ancestors (auto-expanded) and long-press reorder is off.
   String _query = '';
+
+  /// Browse-mode colour / icon filters (the filter row under the search).
+  /// Keyed on what a row *shows* — L2/L3 inherit their L1's icon code.
+  final Set<String> _filterColors = {};
+  final Set<String> _filterIcons = {};
+
+  bool get _filtering =>
+      _query.trim().isNotEmpty ||
+      _filterColors.isNotEmpty ||
+      _filterIcons.isNotEmpty;
+
+  /// A row's colour key: its accent slot (bg first, else the glyph tint).
+  static String? _colorOf(IconCode? c) {
+    if (c == null) return null;
+    if (c.bgColors.isNotEmpty) return c.bgColors.first;
+    return c.iconColors.isNotEmpty ? c.iconColors.first : null;
+  }
+
+  void _setListType(CategoryType t) {
+    if (t == _listType) return;
+    setState(() {
+      _listType = t;
+      // The other tab has its own colours / icons.
+      _filterColors.clear();
+      _filterIcons.clear();
+    });
+  }
 
   @override
   void initState() {
@@ -117,15 +163,23 @@ class _CategoriesPageState extends State<CategoriesPage> {
     });
   }
 
-  /// Ids to show while searching: every match plus all its ancestors, so
-  /// results keep their place in the tree. Null = not searching.
+  /// Ids to show while searching / filtering: every match plus all its
+  /// ancestors, so results keep their place in the tree. Null = showing
+  /// everything.
   Set<String>? _visibleIds(List<Category> users) {
+    if (!_filtering) return null;
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return null;
     final byId = {for (final c in users) c.id: c};
     final visible = <String>{};
     for (final c in users) {
-      if (!c.name.toLowerCase().contains(q)) continue;
+      if (q.isNotEmpty && !c.name.toLowerCase().contains(q)) continue;
+      final code = CategoryTree.resolveIconCode(c, users);
+      if (_filterColors.isNotEmpty && !_filterColors.contains(_colorOf(code))) {
+        continue;
+      }
+      if (_filterIcons.isNotEmpty && !_filterIcons.contains(code?.icon)) {
+        continue;
+      }
       Category? cursor = c;
       while (cursor != null && visible.add(cursor.id)) {
         cursor = cursor.parentId == null ? null : byId[cursor.parentId];
@@ -146,7 +200,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
     // restore the shell's chrome so the nav doesn't stay hidden.
     if (_reorderMode) _shellChrome?.show();
     _hover.dispose();
-    _scrollController.dispose();
+    for (final c in _scrollControllers.values) {
+      c.dispose();
+    }
+    _pages.dispose();
     _autoScrollTimer?.cancel();
     super.dispose();
   }
@@ -517,7 +574,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   SizedBox(height: MediaQuery.paddingOf(context).top),
                   AppTabBar<CategoryType>(
                     selected: _listType,
-                    onChanged: (t) => setState(() => _listType = t),
+                    onChanged: _setListType,
+                    pager: _pages,
                     tabs: [
                       AppTab(
                         value: CategoryType.expense,
@@ -536,7 +594,34 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       hint: l.categoriesSearchHint,
                       onChanged: (v) => setState(() => _query = v),
                     ),
-                  Expanded(child: _listOrEmpty(l, typeUsers, all, visible)),
+                  // [สี▾][ไอคอน▾] … (✏️)(+) — same row as the other list
+                  // pages. Hidden with the search in reorder mode.
+                  if (!_reorderMode) _filterRow(l, typeUsers, all),
+                  Expanded(
+                    // Swipe sideways = the other tab, following the finger
+                    // (off while reordering — a sideways drag there picks
+                    // a depth lane; paging stops via physics only).
+                    child: AppTabPager<CategoryType>(
+                      controller: _pages,
+                      values: _types,
+                      selected: _listType,
+                      onChanged: _setListType,
+                      enabled: !_reorderMode,
+                      builder: (context, t) {
+                        if (t == _listType) {
+                          return _listOrEmpty(l, typeUsers, all, visible, t);
+                        }
+                        final other = users.where((c) => c.type == t).toList();
+                        return _listOrEmpty(
+                          l,
+                          other,
+                          all,
+                          _reorderMode ? null : _visibleIds(other),
+                          t,
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -561,11 +646,114 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
+  /// `[สี▾][ไอคอน▾] … (✏️)(+)` — filters left, page actions right (the top
+  /// bar carries none). ✏️ = reorder mode, same as long-pressing a row.
+  Widget _filterRow(
+    AppLocalizations l,
+    List<Category> typeUsers,
+    List<Category> all,
+  ) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final codes = [
+      for (final c in typeUsers) CategoryTree.resolveIconCode(c, typeUsers),
+    ];
+    final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
+    final icons = {for (final c in codes) ?c?.icon}.toList()..sort();
+    return FilterBar(
+      chips: [
+        PopoverAnchor(
+          builder: (context, toggle) => FilterDropdownChip(
+            label: l.iconMakerTabColor,
+            icon: AppIcons.colorPicker,
+            count: _filterColors.length,
+            onTap: colors.isEmpty ? null : toggle,
+          ),
+          contentBuilder: (context, close) => StatefulBuilder(
+            builder: (context, setPopover) => ColorSwatchGrid(
+              colors: [for (final t in colors) resolveColor(t, palette)],
+              selected: {
+                for (final (i, t) in colors.indexed)
+                  if (_filterColors.contains(t)) i,
+              },
+              onToggle: (i) {
+                final t = colors[i];
+                setState(
+                  () => _filterColors.contains(t)
+                      ? _filterColors.remove(t)
+                      : _filterColors.add(t),
+                );
+                setPopover(() {});
+              },
+              onClear: () {
+                setState(_filterColors.clear);
+                setPopover(() {});
+              },
+            ),
+          ),
+        ),
+        PopoverAnchor(
+          builder: (context, toggle) => FilterDropdownChip(
+            label: l.iconMakerRoleIcon,
+            icon: AppIcons.iconPicker,
+            count: _filterIcons.length,
+            onTap: icons.isEmpty ? null : toggle,
+          ),
+          contentBuilder: (context, close) => StatefulBuilder(
+            builder: (context, setPopover) => IconSwatchGrid(
+              glyphs: icons,
+              selected: _filterIcons,
+              onToggle: (g) {
+                setState(
+                  () => _filterIcons.contains(g)
+                      ? _filterIcons.remove(g)
+                      : _filterIcons.add(g),
+                );
+                setPopover(() {});
+              },
+              onClear: () {
+                setState(_filterIcons.clear);
+                setPopover(() {});
+              },
+            ),
+          ),
+        ),
+      ],
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIconButton(
+            icon: AppIcons.edit,
+            size: 36,
+            tooltip: l.categoriesReorderEnter,
+            onPressed: typeUsers.length < 2
+                ? null
+                : () {
+                    // Reorder shows the whole tree — drop search / filters
+                    // (the search field goes away with them).
+                    _query = '';
+                    _filterColors.clear();
+                    _filterIcons.clear();
+                    _enterReorder(all);
+                  },
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          AppIconButton(
+            icon: AppIcons.add,
+            size: 36,
+            tooltip: l.categoriesAddNew,
+            onPressed: () => _add(l),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _listOrEmpty(
     AppLocalizations l,
     List<Category> typeUsers,
     List<Category> all,
     Set<String>? visible,
+    CategoryType type,
   ) {
     if (typeUsers.isEmpty) {
       return EmptyView(
@@ -586,7 +774,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     }
     final body = _ListBody(
       users: typeUsers,
-      type: _listType,
+      type: type,
       reorderMode: _reorderMode,
       visibleIds: visible,
       collapsedIds: _collapsedIds,
@@ -594,7 +782,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
       draggedDescendantIds: _draggedDescendantIds,
       dragsAsBlock: _dragsAsBlock,
       hover: _hover,
-      scrollController: _scrollController,
+      scrollController: _scrollControllers[type]!,
       onLongPressEnter: () => _enterReorder(all),
       onToggleCollapse: _toggleCollapse,
       onDragStarted: _onDragStarted,
