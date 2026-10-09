@@ -48,6 +48,12 @@ dependencies:
   package_info_plus: ^8.1.2
   flutter_colorpicker: ^1.1.0
 
+  # Slip import (0.3.1, Android only): pick slips from the gallery and read
+  # their QR on the phone. ML Kit has no web build — the import UI is hidden
+  # on web (SlipQrReader.isSupported).
+  image_picker: ^1.2.4
+  google_mlkit_barcode_scanning: ^0.16.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

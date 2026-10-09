@@ -4,22 +4,27 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../core/constants/app_spacing.dart';
 import '../core/network/api_client.dart';
+import '../features/pending/data/slip_qr_reader.dart';
 
+part 'imports_lab_real_slip.dart';
 part 'imports_lab_slip_flow.dart';
 
 /// `/dev/imports` — fire the 0.3.0 import endpoints by hand and see exactly
 /// what went out and what came back (status, time, pretty JSON).
 ///
-/// The BE side is still a stub (logs + echoes), so this is where the slip /
-/// chat flows get exercised before the real UI calls them:
+/// Where the slip / chat flows get exercised before the real UI calls them:
+/// - real slips from the gallery → QR on the phone → scan-slip, with the OCR
+///   text drawn over the slip (0.3.1; phone only)
 /// - `POST /pending-transactions/parse-text` — the chat box
 /// - the slip flow, step by step: send the gallery file names to
 ///   `POST /slip-imports/check` → see which came back new / already seen →
 ///   upload only the new ones to `POST /pending-transactions/scan-slip`
-///   (a 1×1 test PNG each). `DELETE /slip-imports` forgets them again.
+///   (a 1×1 test PNG each — OCR finds nothing on it; the flow is what
+///   this card shows). `DELETE /slip-imports` forgets them again.
 class ImportsLabScreen extends StatelessWidget {
   const ImportsLabScreen({super.key});
 
@@ -30,6 +35,8 @@ class ImportsLabScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: const [
+          _RealSlipCard(),
+          SizedBox(height: AppSpacing.md),
           _ParseTextCard(),
           SizedBox(height: AppSpacing.md),
           _SlipFlowCard(),

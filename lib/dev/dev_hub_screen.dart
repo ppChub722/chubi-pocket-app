@@ -14,6 +14,13 @@ class DevHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = <_DevEntry>[
       _DevEntry(
+        title: 'Imports lab',
+        subtitle:
+            'Real slips → QR + OCR (phone only) · slip check flow · chat text',
+        route: '/dev/imports',
+        icon: Icons.document_scanner_outlined,
+      ),
+      _DevEntry(
         title: 'Widget gallery',
         subtitle:
             'Shared UI kit — buttons, inputs, chips, sheets, detail rows, edit mode',
@@ -55,7 +62,9 @@ class DevHubScreen extends StatelessWidget {
               title: Text(e.title),
               subtitle: Text(e.subtitle),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.go(e.route),
+              // push, not go — go would replace the whole stack and leave
+              // no way back to the app from the hub.
+              onTap: () => context.push(e.route),
             ),
           );
         },
