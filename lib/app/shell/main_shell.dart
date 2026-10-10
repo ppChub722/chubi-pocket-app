@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -119,11 +121,18 @@ class _MainShellState extends State<MainShell>
   }
 
   /// The body trails the finger, damped so it only ever moves a little —
-  /// half as far toward an end with no tab past it.
+  /// half as far toward an end with no tab past it. Not when the page takes
+  /// the swipe itself (the dashboard's month): moving the whole tab would
+  /// read as a tab switch — the page gives its own feedback instead. Not
+  /// at all under reduced motion.
   void _onDragUpdate(DragUpdateDetails d) {
     if (!_swiping) return;
     _dragDx += d.primaryDelta ?? 0;
-    final max = _neighbour(_dragDx) == null ? _maxNudge / 2 : _maxNudge;
+    if (_pageSwipes(_dragDx) || MediaQuery.disableAnimationsOf(context)) {
+      _nudge.value = 0;
+      return;
+    }
+    final max = _neighbour(_dragDx) != null ? _maxNudge : _maxNudge / 2;
     final u = _dragDx / (max * 3);
     _nudge.value = max * u / (1 + u.abs());
   }
@@ -132,13 +141,27 @@ class _MainShellState extends State<MainShell>
     if (!_swiping) return;
     _swiping = false;
     final v = d.primaryVelocity ?? 0;
+    if (v.abs() < _minFlingVelocity) return _settle();
+    // The page first (the dashboard's month); the tab once it's at its end.
+    if (_pageSwipes(v)) {
+      HapticFeedback.selectionClick();
+      _swipeHandlers[_current]!.onSwipe(v < 0 ? 1 : -1);
+      return _settle();
+    }
     final next = _neighbour(v);
-    if (v.abs() < _minFlingVelocity || next == null) return _settle();
+    if (next == null) return _settle();
     // The new tab brings its own entry slide (TabSwitchBody).
     _nudge.value = 0;
     HapticFeedback.selectionClick();
     _goBranch(next);
   }
+
+  /// Tab roots that use the sideways swipe themselves ([ShellSwipeScope]).
+  final Map<ShellTab, ShellSwipeHandler> _swipeHandlers = {};
+
+  /// Whether the current tab's page takes a swipe toward [dx]'s sign.
+  bool _pageSwipes(double dx) =>
+      _swipeHandlers[_current]?.canSwipe(dx < 0 ? 1 : -1) ?? false;
 
   void _onDragCancel() {
     if (!_swiping) return;
@@ -197,7 +220,13 @@ class _MainShellState extends State<MainShell>
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _onBackAtRoot();
       },
-      child: ShellBackScope(onBack: _onBackAtRoot, child: _shell(context)),
+      child: ShellBackScope(
+        onBack: _onBackAtRoot,
+        child: ShellSwipeScope(
+          handlers: _swipeHandlers,
+          child: _shell(context),
+        ),
+      ),
     );
   }
 
@@ -205,13 +234,20 @@ class _MainShellState extends State<MainShell>
     return ShellChrome(
       controller: _chrome,
       child: Scaffold(
-        body: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onHorizontalDragStart: _onDragStart,
-          onHorizontalDragUpdate: _onDragUpdate,
-          onHorizontalDragEnd: _onDragEnd,
-          onHorizontalDragCancel: _onDragCancel,
-          child: TabSwipeNudge(offset: _nudge, child: widget.navigationShell),
+        // Pages run on under the floating nav (owner 2026-10-10: no solid
+        // strip behind it). Scaffold folds the nav's height into
+        // `MediaQuery.paddingOf(context).bottom` — scrollables pad their
+        // last item with it, like the top bar's height at the top.
+        extendBody: true,
+        body: _NavClearance(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragStart: _onDragStart,
+            onHorizontalDragUpdate: _onDragUpdate,
+            onHorizontalDragEnd: _onDragEnd,
+            onHorizontalDragCancel: _onDragCancel,
+            child: TabSwipeNudge(offset: _nudge, child: widget.navigationShell),
+          ),
         ),
         // Only the nav rebuilds when a page toggles the controller — the
         // branch content underneath is untouched.
@@ -224,11 +260,14 @@ class _MainShellState extends State<MainShell>
   }
 
   /// The nav slides down / back up instead of popping, so the body resizes
-  /// smoothly when a form or edit mode takes over the bottom.
+  /// smoothly when a form or edit mode takes over the bottom (instantly
+  /// under reduced motion).
   Widget _animatedNav(BuildContext context) {
     final hidden = _chrome.hidden;
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 240),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 240),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) => SizeTransition(
@@ -248,6 +287,25 @@ class _MainShellState extends State<MainShell>
               onAddPressed: () => showQuickCreateSheet(context),
               onMorePressed: () => _goBranch(_moreBranch),
             ),
+    );
+  }
+}
+
+/// `extendBody` only grows `MediaQuery.padding.bottom` by the nav's height;
+/// a page's FAB is placed by `viewPadding`, so it would sit under the nav.
+/// Grow `viewPadding` the same way — FABs float above the nav again.
+class _NavClearance extends StatelessWidget {
+  const _NavClearance({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final bottom = math.max(mq.viewPadding.bottom, mq.padding.bottom);
+    return MediaQuery(
+      data: mq.copyWith(viewPadding: mq.viewPadding.copyWith(bottom: bottom)),
+      child: child,
     );
   }
 }

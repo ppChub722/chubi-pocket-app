@@ -57,6 +57,7 @@ class ProjectsRepository {
     required String name,
     String? type,
     String? description,
+    String? note,
     String? startDate,
     String? endDate,
     IconCode? iconCode,
@@ -68,6 +69,7 @@ class ProjectsRepository {
           'name': name,
           'type': ?type,
           'description': ?description,
+          'note': ?note,
           'start_date': ?startDate,
           'end_date': ?endDate,
           if (iconCode != null) 'icon_code': iconCode.toJson(),
@@ -82,12 +84,14 @@ class ProjectsRepository {
   /// `planned_amount` (API §10, spec §10/4.23) uses presence semantics:
   /// pass [plannedAmount] to set the plan, set [clearPlannedAmount] to
   /// send an explicit `null` (turns the plan display off), leave both
-  /// unset to keep the column unchanged.
+  /// unset to keep the column unchanged. [description] / [note]: null =
+  /// unchanged, `''` = clear (migration 51).
   Future<Project> update(
     String id, {
     String? name,
     String? type,
     String? description,
+    String? note,
     String? startDate,
     String? endDate,
     ProjectStatus? status,
@@ -102,6 +106,7 @@ class ProjectsRepository {
           'name': ?name,
           'type': ?type,
           'description': ?description,
+          'note': ?note,
           'start_date': ?startDate,
           'end_date': ?endDate,
           'status': ?status?.wire,

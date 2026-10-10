@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_icons.dart';
-import '../../../core/constants/app_spacing.dart';
+import 'pill.dart';
 import 'tone.dart';
 
-/// Rounded status pill ("● ใช้งาน", "ค้างอยู่", "เจ้าของ").
+/// Status pill — `● label` in a [tone] ("● ใช้งาน", "ค้างอยู่"). The
+/// status role of the pill family (see [PillSize]); `ProjectStatusPill`
+/// and every page's status are this.
 ///
 /// Pass [onTap] to make it a picker trigger — it then shows a `⌄` and
 /// should open `showStatusSheet` / `showOptionSheet`. Wrap in
@@ -17,6 +19,7 @@ class StatusPill extends StatelessWidget {
     this.showDot = true,
     this.onTap,
     this.dense = false,
+    this.size,
     super.key,
   });
 
@@ -28,53 +31,37 @@ class StatusPill extends StatelessWidget {
   final bool showDot;
   final VoidCallback? onTap;
 
-  /// Smaller paddings — for list rows.
+  /// Shorthand for [PillSize.small] — list rows.
   final bool dense;
+
+  /// Overrides [dense]. Default [PillSize.medium].
+  final PillSize? size;
 
   @override
   Widget build(BuildContext context) {
     final color = tone.color(context);
-    final textStyle =
-        (dense
-                ? Theme.of(context).textTheme.labelSmall
-                : Theme.of(context).textTheme.labelLarge)
-            ?.copyWith(color: color, fontWeight: FontWeight.w600);
-    final pill = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: dense ? AppSpacing.sm : AppSpacing.md,
-        vertical: dense ? 2 : AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: dense ? 12 : 16, color: color),
-            const SizedBox(width: AppSpacing.xs),
-          ] else if (showDot) ...[
-            Container(
-              width: dense ? 6 : 8,
-              height: dense ? 6 : 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-          ],
-          Text(label, style: textStyle),
-          if (onTap != null) ...[
-            const SizedBox(width: 2),
-            Icon(AppIcons.expand, size: dense ? 14 : 18, color: color),
-          ],
-        ],
-      ),
-    );
-    if (onTap == null) return pill;
-    return InkWell(
+    final s = size ?? (dense ? PillSize.small : PillSize.medium);
+    return PillShell(
+      size: s,
+      background: color.withValues(alpha: 0.14),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: pill,
+      child: PillContent(
+        label: label,
+        color: color,
+        size: s,
+        leading: icon != null
+            ? Icon(icon, size: s.icon, color: color)
+            : showDot
+            ? Container(
+                width: s.dot,
+                height: s.dot,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              )
+            : null,
+        trailing: onTap == null
+            ? null
+            : Icon(AppIcons.expand, size: s.icon + 2, color: color),
+      ),
     );
   }
 }

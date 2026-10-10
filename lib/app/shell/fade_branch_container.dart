@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../core/constants/app_durations.dart';
 import 'tab_nav.dart';
@@ -8,11 +9,13 @@ import 'tab_nav.dart';
 /// [IndexedStack] (state + scroll preserved) and runs a fade / slide each
 /// time the selected tab changes.
 ///
-/// The container itself doesn't animate anything — that would move the
-/// top bar too (owner 2026-10-09: the bar must stay put across tabs). It
-/// only publishes a [TabSwitchScope]: [TabSwitchBody] (used by tab-root
-/// bodies) fades the page under the bar, and `AppTopBar` uses it to slide
-/// its left group in / out when one tab has it and the other doesn't.
+/// A tab root's switch is animated by the page, not here — that would move
+/// the top bar too (owner 2026-10-09: the bar must stay put across tabs).
+/// The container publishes a [TabSwitchScope]: [TabSwitchBody] (used by
+/// tab-root bodies) fades the page under the bar, and `AppTopBar` uses it
+/// to slide its left group in / out when one tab has it and the other
+/// doesn't. Only a tab that lands on a page with no [TabSwitchBody] (a
+/// detail page — history restore, an `openPage` jump) is faded whole here.
 class FadeBranchContainer extends StatefulWidget {
   const FadeBranchContainer({
     required this.currentIndex,
@@ -43,11 +46,18 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
   /// What each branch's visible top bar shows — written by the bars.
   final Map<int, Object?> _topBars = {};
 
+  /// Branches whose visible page animates the switch itself
+  /// ([TabSwitchBody]) — re-claimed on every switch.
+  final Set<int> _claimed = {};
+
   @override
   void didUpdateWidget(FadeBranchContainer old) {
     super.didUpdateWidget(old);
     if (old.currentIndex != widget.currentIndex) {
       _previous = old.currentIndex;
+      // The arriving tab's page claims it again while this frame builds
+      // (TabSwitchBody depends on the scope, so it rebuilds now).
+      _claimed.remove(widget.currentIndex);
       _ctrl.forward(from: 0);
     }
   }
@@ -65,6 +75,7 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
       current: widget.currentIndex,
       previous: _previous,
       topBars: _topBars,
+      claimed: _claimed,
       child: IndexedStack(
         index: widget.currentIndex,
         children: [
@@ -80,7 +91,11 @@ class _FadeBranchContainerState extends State<FadeBranchContainer>
                 excluding: i != widget.currentIndex,
                 child: HeroMode(
                   enabled: i == widget.currentIndex,
-                  child: _BranchIndex(index: i, child: widget.children[i]),
+                  child: _UnclaimedFade(
+                    animation: _curve,
+                    claimed: () => _claimed.contains(i),
+                    child: _BranchIndex(index: i, child: widget.children[i]),
+                  ),
                 ),
               ),
             ),
@@ -97,8 +112,10 @@ class TabSwitchScope extends InheritedWidget {
     required this.current,
     required this.previous,
     required Map<int, Object?> topBars,
+    required Set<int> claimed,
     required super.child,
-  }) : _topBars = topBars;
+  }) : _topBars = topBars,
+       _claimed = claimed;
 
   /// 0 → 1 after each switch; sits at 1 otherwise.
   final Animation<double> animation;
@@ -108,6 +125,7 @@ class TabSwitchScope extends InheritedWidget {
   final int? previous;
 
   final Map<int, Object?> _topBars;
+  final Set<int> _claimed;
 
   /// Null outside the shell (tests, dev previews).
   static TabSwitchScope? maybeOf(BuildContext context) =>
@@ -124,6 +142,10 @@ class TabSwitchScope extends InheritedWidget {
   /// on the next switch.
   void reportTopBar(int branch, Object? state) => _topBars[branch] = state;
 
+  /// The visible page of [branch] animates the switch itself — the
+  /// container leaves that tab alone. No rebuild.
+  void claimSwitch(int branch) => _claimed.add(branch);
+
   @override
   bool updateShouldNotify(TabSwitchScope old) =>
       animation != old.animation ||
@@ -138,6 +160,76 @@ class _BranchIndex extends InheritedWidget {
 
   @override
   bool updateShouldNotify(_BranchIndex old) => index != old.index;
+}
+
+/// Fades its branch in on a switch unless the visible page [claimed] it.
+/// Decided at paint time, after the arriving page has built and claimed —
+/// so a tab root never fades its top bar, and a detail page never snaps.
+class _UnclaimedFade extends SingleChildRenderObjectWidget {
+  const _UnclaimedFade({
+    required this.animation,
+    required this.claimed,
+    super.child,
+  });
+
+  final Animation<double> animation;
+  final bool Function() claimed;
+
+  @override
+  _RenderUnclaimedFade createRenderObject(BuildContext context) =>
+      _RenderUnclaimedFade(animation, claimed);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderUnclaimedFade r) => r
+    ..animation = animation
+    ..claimed = claimed;
+}
+
+class _RenderUnclaimedFade extends RenderProxyBox {
+  _RenderUnclaimedFade(this._animation, this.claimed);
+
+  Animation<double> _animation;
+  bool Function() claimed;
+
+  set animation(Animation<double> value) {
+    if (value == _animation) return;
+    if (attached) _animation.removeListener(markNeedsPaint);
+    _animation = value;
+    if (attached) _animation.addListener(markNeedsPaint);
+    markNeedsPaint();
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _animation.addListener(markNeedsPaint);
+  }
+
+  @override
+  void detach() {
+    _animation.removeListener(markNeedsPaint);
+    super.detach();
+  }
+
+  // It may push an opacity layer on any frame of a switch.
+  @override
+  bool get alwaysNeedsCompositing => child != null;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final opacity = claimed() ? 1.0 : _animation.value;
+    if (opacity >= 1) {
+      layer = null;
+      super.paint(context, offset);
+      return;
+    }
+    layer = context.pushOpacity(
+      offset,
+      (opacity * 255).round(),
+      super.paint,
+      oldLayer: layer as OpacityLayer?,
+    );
+  }
 }
 
 /// How far (px) the visible tab body trails the finger during a sideways
@@ -171,6 +263,16 @@ class TabSwitchBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final scope = TabSwitchScope.maybeOf(context);
     if (scope == null) return child;
+    // The page on top of its tab animates the switch — the container
+    // keeps its hands off (it fades only pages without one).
+    final branch = TabSwitchScope.branchOf(context);
+    if (branch != null && (ModalRoute.isCurrentOf(context) ?? true)) {
+      scope.claimSwitch(branch);
+    }
+    // Reduced motion (system setting): a plain fade — no slide, no nudge.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return FadeTransition(opacity: scope.animation, child: child);
+    }
     final previous = scope.previous;
     // Tabs sit in rows (ShellRow), so within one the new body comes in
     // from the side it lies on — a tab to the right slides in from the

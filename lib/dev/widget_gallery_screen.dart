@@ -24,6 +24,7 @@ import '../features/transactions/domain/transaction.dart';
 import '../features/transactions/domain/transaction_type.dart';
 import '../features/transactions/presentation/widgets/period_summary_card.dart';
 import '../features/transactions/presentation/widgets/transaction_tile.dart';
+import '../features/transactions/presentation/widgets/tx_hero_card.dart';
 import '../shared/icon_maker/icon_code.dart';
 import '../shared/icon_maker/icon_display.dart';
 import '../shared/icon_maker/icon_code_widget.dart';
@@ -31,6 +32,7 @@ import '../shared/icon_maker/icon_maker_sheet.dart';
 import '../shared/icon_maker/icon_shape.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../shared/icon_maker/icon_type.dart';
+import '../shared/widgets/type_indicator.dart';
 import '../shared/widgets/ui.dart';
 
 /// `/dev/widgets` — live catalogue of the shared UI kit
@@ -465,6 +467,7 @@ class _InputsDemoState extends State<_InputsDemo> {
   Account? _account;
   Category? _category;
   DateTime _date = DateTime.now();
+  DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
   _Dir _dir = _Dir.owedToMe;
   AccountType _walletType = AccountType.bank;
   final Set<int> _checks = {1};
@@ -575,14 +578,13 @@ class _InputsDemoState extends State<_InputsDemo> {
             ),
           ),
           _Demo(
-            title: 'เลือกหลายรายการ (วงกลม · แถวบน = เลือกทั้งหมด)',
-            name: 'SelectCheck',
+            title: 'เลือกหลายรายการ (สี่เหลี่ยมมน · ซ้าย = เลือกทั้งหมด n/N)',
+            name: 'SelectCheck · SelectAllCount',
             child: Row(
               children: [
-                SelectCheck(
-                  value: _checks.isEmpty
-                      ? false
-                      : (_checks.length == 3 ? true : null),
+                SelectAllCount(
+                  selected: _checks.length,
+                  total: 3,
                   onTap: () => setState(
                     () => _checks.length == 3
                         ? _checks.clear()
@@ -780,6 +782,17 @@ class _InputsDemoState extends State<_InputsDemo> {
                   onTap: _pickCategory,
                 ),
               ],
+            ),
+          ),
+          _Demo(
+            title: 'เลือกเดือน (dashboard) — แตะชื่อเดือนเปิดตัวเลือก',
+            name: 'MonthPill · showMonthPicker(last: now)',
+            child: Center(
+              child: MonthPill(
+                month: _month,
+                last: DateTime.now(),
+                onChanged: (m) => setState(() => _month = m),
+              ),
             ),
           ),
           const _Demo(
@@ -1130,6 +1143,171 @@ class _ChipsDemoState extends State<_ChipsDemo> {
             ],
           ),
         ),
+        // ── The pill family (owner 2026-10-10) ─────────────────────────
+        _Demo(
+          title: 'ตระกูล pill — ขนาด (mini · small · medium · large)',
+          name: 'PillSize · StatusPill · LabelPill · ActionPill · TagPill',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final s in PillSize.values) ...[
+                Text(
+                  '${s.name} · ${s.height.toInt()}',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    StatusPill(label: 'ค้างอยู่', tone: Tone.warning, size: s),
+                    LabelPill(label: 'ผ่อน', size: s),
+                    ActionPill(
+                      label: 'ปรับยอด',
+                      icon: AppIcons.reset,
+                      size: s,
+                      onTap: () => showAppSnackBar(context, 'ปรับยอด'),
+                    ),
+                    TagPill(
+                      name: 'เที่ยว',
+                      color: const Color(0xFF26A69A),
+                      size: s,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'Label pill — บอกว่าเป็นอะไร (ไม่มีจุด)',
+          name: 'LabelPill(tone | color, outlined, icon) · TypeIndicator',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              const LabelPill(label: 'ผ่อน', size: PillSize.small),
+              const LabelPill(label: 'กู้ยืม', size: PillSize.small),
+              const LabelPill(label: 'ประจำ', tone: Tone.info),
+              // Wallet type — the wallet's own accent, outlined.
+              const LabelPill(
+                label: 'ธนาคาร',
+                icon: AppIcons.bank,
+                color: Color(0xFF5C6BC0),
+                outlined: true,
+                size: PillSize.large,
+              ),
+              const TypeIndicator(isIncome: false),
+              const TypeIndicator(isIncome: true),
+              // Category create: the one not picked dims.
+              Opacity(
+                opacity: 0.4,
+                child: TypeIndicator(
+                  isIncome: true,
+                  size: PillSize.medium,
+                  label: AppLocalizations.of(context)!.categoryTypeIncome,
+                ),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'Action pill — ปุ่มเล็ก',
+          name: 'ActionPill(style: tinted | raised, destructive, size)',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              ActionPill(
+                label: 'สี',
+                icon: Icons.palette_outlined,
+                onTap: () => showAppSnackBar(context, 'สี'),
+              ),
+              ActionPill(
+                label: 'ลบ',
+                icon: AppIcons.delete,
+                destructive: true,
+                onTap: () => showAppSnackBar(context, 'ลบ'),
+              ),
+              ActionPill(
+                label: 'ปรับยอด',
+                icon: AppIcons.reset,
+                style: ActionPillStyle.raised,
+                size: PillSize.medium,
+                onTap: () => showAppSnackBar(context, 'ปรับยอด'),
+              ),
+              const ActionPill(label: 'ปิดอยู่', onTap: null),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'Tag pill — สีของแท็ก · ไอคอน (ถ้ามี) · #ชื่อ',
+          name: 'TagPill · PillOverflowRow(maxVisible)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final (name, color, glyph) in _demoTags)
+                    TagPill(
+                      name: name,
+                      color: color,
+                      glyph: glyph,
+                      size: PillSize.small,
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                width: 240,
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: PillOverflowRow(
+                        pills: [
+                          for (final (name, color, _) in _demoTags)
+                            TagPill(name: name, color: color),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'แท็กบนแถวรายการ — เลือกแบบไหน?',
+          name: 'today: #tag text line · try: mini TagPill + "+n"',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (label, tags) in [
+                ('1 แท็ก', _demoTags.take(1).toList()),
+                ('2 แท็ก', _demoTags.take(2).toList()),
+                ('5 แท็ก', _demoTags),
+              ]) ...[
+                Text(label, style: Theme.of(context).textTheme.labelSmall),
+                _MockTxRow(caption: 'ตอนนี้ · ข้อความ #แท็ก', tags: tags),
+                _MockTxRow(
+                  caption: 'ลอง · pill เล็ก สูงสุด 2',
+                  tags: tags,
+                  pills: 2,
+                ),
+                _MockTxRow(
+                  caption: 'ลอง · pill เล็ก สูงสุด 3',
+                  tags: tags,
+                  pills: 3,
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -1271,41 +1449,89 @@ class _LayoutDemo extends StatelessWidget {
         ),
         _Demo(
           title: 'แถวรายละเอียด',
-          name: 'SectionCard · DetailRow · DetailStacked · RowDivider',
-          child: Card(
-            child: SectionCard(
-              title: 'การรับเงิน',
-              children: [
-                DetailRow(
-                  label: 'บันทึกรับเงินอัตโนมัติ',
-                  helper: 'เมื่อมีคนแจ้งว่าจ่ายแล้ว',
-                  trailing: Switch(value: true, onChanged: (_) {}),
-                ),
-                const RowDivider(),
-                DetailRow(
-                  label: 'กระเป๋าที่รับเงิน',
-                  leading: const Icon(Icons.account_balance_wallet_outlined),
-                  trailing: const Text('โดราเอมอน'),
-                  showChevron: true,
-                  onTap: () => showAppSnackBar(context, 'เปิดตัวเลือก'),
-                ),
-                const RowDivider(),
-                const DetailRow(
-                  label: 'ชื่อผู้ใช้',
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+          name:
+              'SectionCard(first, title, trailing, locked) · DetailRow · '
+              'DetailStacked · DetailAddRow · SectionBand',
+          // Clipped to the demo box, padded like a detail page, so the band
+          // shows how it reaches the screen edges.
+          child: ClipRect(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Hairlines between rows come from the section itself.
+                  SectionCard(
+                    first: true,
+                    title: 'การรับเงิน',
+                    trailing: AppIconButton(
+                      icon: AppIcons.share,
+                      size: 32,
+                      tooltip: 'แชร์',
+                      onPressed: () => showAppSnackBar(context, 'แชร์'),
+                    ),
                     children: [
-                      Text('@ppond '),
-                      Icon(Icons.lock_outline, size: 16),
+                      DetailRow(
+                        label: 'บันทึกรับเงินอัตโนมัติ',
+                        helper: 'เมื่อมีคนแจ้งว่าจ่ายแล้ว',
+                        trailing: Switch(value: true, onChanged: (_) {}),
+                      ),
+                      DetailRow(
+                        label: 'กระเป๋าที่รับเงิน',
+                        leading: const Icon(
+                          Icons.account_balance_wallet_outlined,
+                        ),
+                        trailing: const Text('โดราเอมอน'),
+                        showChevron: true,
+                        onTap: () => showAppSnackBar(context, 'เปิดตัวเลือก'),
+                      ),
+                      const DetailStacked(
+                        label: 'บันทึก',
+                        child: Text('ข้อความยาวจะอยู่ใต้ label เต็มความกว้าง'),
+                      ),
+                      DetailAddRow(
+                        label: 'เพิ่มกระเป๋ารับเงิน',
+                        onTap: () => showAppSnackBar(context, 'เพิ่ม'),
+                      ),
                     ],
                   ),
-                ),
-                const RowDivider(),
-                const DetailStacked(
-                  label: 'บันทึก',
-                  child: Text('ข้อความยาวจะอยู่ใต้ label เต็มความกว้าง'),
-                ),
-              ],
+                  // Not first → a tinted band above it. locked = edit mode.
+                  SectionCard(
+                    title: 'การจัดการ (locked)',
+                    locked: true,
+                    children: [
+                      const DetailRow(
+                        label: 'ชื่อผู้ใช้',
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('@ppond '),
+                            Icon(Icons.lock_outline, size: 16),
+                          ],
+                        ),
+                      ),
+                      DetailRow(
+                        leading: const Icon(Icons.archive_outlined),
+                        label: 'เก็บถาวร',
+                        onTap: () => showAppSnackBar(context, 'เก็บถาวร'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'แถบปุ่มติดล่าง',
+          name: 'PinnedBar(bottomGap, keyboardGap)',
+          // Clears the gesture bar on a real phone; sits just above the
+          // keyboard while it's open.
+          child: PinnedBar(
+            child: AppButton(
+              label: 'บันทึก',
+              expand: true,
+              onPressed: () => showAppSnackBar(context, 'บันทึก'),
             ),
           ),
         ),
@@ -1826,7 +2052,7 @@ class _DataDemo extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
         _Demo(
-          title: 'ยอดเงิน + ปุ่มซ่อนยอด 👁 (ใช้ทั้งแอป)',
+          title: 'ยอดเงิน + ปุ่มซ่อนยอด 👁 (ปิดอยู่ — kMoneyPrivacyEnabled)',
           name: 'MoneyText · MoneyVisibilityToggle',
           child: Row(
             children: [
@@ -2222,21 +2448,20 @@ class _IconMakerDemoState extends State<_IconMakerDemo> {
   Widget _rows(List<_MakerPreset> presets) {
     return Card(
       child: SectionCard(
+        first: true,
         children: [
-          for (var i = 0; i < presets.length; i++) ...[
-            if (i > 0) const RowDivider(),
+          for (final p in presets)
             DetailRow(
-              label: presets[i].label,
-              helper: presets[i].note,
+              label: p.label,
+              helper: p.note,
               leading: IconDisplay(
-                type: presets[i].type,
+                type: p.type,
                 size: 40,
-                iconCode: _results[presets[i]],
+                iconCode: _results[p],
               ),
               showChevron: true,
-              onTap: () => _open(presets[i]),
+              onTap: () => _open(p),
             ),
-          ],
         ],
       ),
     );
@@ -2364,6 +2589,7 @@ class _EditModeDemoState extends State<_EditModeDemo> {
         ),
         const SizedBox(height: AppSpacing.lg),
         SectionCard(
+          first: true,
           children: [
             DetailStacked(
               label: 'อีเมล',
@@ -2374,7 +2600,6 @@ class _EditModeDemoState extends State<_EditModeDemo> {
                 keyboardType: TextInputType.emailAddress,
               ),
             ),
-            const RowDivider(),
             DetailStacked(
               label: 'บันทึก',
               child: InlineField(
@@ -2386,37 +2611,32 @@ class _EditModeDemoState extends State<_EditModeDemo> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.lg),
-        LockedInEdit(
+        SectionCard(
           locked: editing,
-          child: SectionCard(
-            title: 'การดำเนินการ',
-            children: [
-              DetailRow(
-                label: 'เชื่อมกับบัญชีผู้ใช้',
-                leading: const Icon(Icons.link),
-                trailing: AppButton(
-                  label: 'ส่งคำขอ',
-                  variant: AppButtonVariant.text,
-                  onPressed: () => showAppSnackBar(context, 'ส่งคำขอแล้ว'),
-                ),
+          title: 'การดำเนินการ',
+          children: [
+            DetailRow(
+              label: 'เชื่อมกับบัญชีผู้ใช้',
+              leading: const Icon(Icons.link),
+              trailing: AppButton(
+                label: 'ส่งคำขอ',
+                variant: AppButtonVariant.text,
+                onPressed: () => showAppSnackBar(context, 'ส่งคำขอแล้ว'),
               ),
-              const RowDivider(),
-              DetailRow(
-                label: 'หนี้กับคนนี้',
-                leading: const Icon(Icons.account_balance_outlined),
-                trailing: const MoneyText(1500, tone: MoneyTone.income),
-                showChevron: true,
-                onTap: () => showAppSnackBar(context, 'ไปหน้าหนี้'),
-              ),
-              const RowDivider(),
-              DetailRow(
-                label: 'เก็บถาวร',
-                leading: const Icon(Icons.archive_outlined),
-                onTap: () => showAppSnackBar(context, 'เก็บถาวร'),
-              ),
-            ],
-          ),
+            ),
+            DetailRow(
+              label: 'หนี้กับคนนี้',
+              leading: const Icon(Icons.account_balance_outlined),
+              trailing: const MoneyText(1500, tone: MoneyTone.income),
+              showChevron: true,
+              onTap: () => showAppSnackBar(context, 'ไปหน้าหนี้'),
+            ),
+            DetailRow(
+              label: 'เก็บถาวร',
+              leading: const Icon(Icons.archive_outlined),
+              onTap: () => showAppSnackBar(context, 'เก็บถาวร'),
+            ),
+          ],
         ),
         // Delete lives here, only in edit mode (no 🗑 on the top bar).
         if (editing)
@@ -2443,6 +2663,20 @@ class _DomainDemoState extends State<_DomainDemo> {
   String _currency = 'THB';
   String _picked = '—';
   String? _pickedId;
+  TransactionType _heroType = TransactionType.expense;
+  final _heroAmount = TextEditingController();
+  final _heroNote = TextEditingController();
+  final _heroViewAmount = TextEditingController(text: '1,250');
+  final _heroViewNote = TextEditingController(text: 'ข้าวมันไก่');
+
+  @override
+  void dispose() {
+    _heroAmount.dispose();
+    _heroNote.dispose();
+    _heroViewAmount.dispose();
+    _heroViewNote.dispose();
+    super.dispose();
+  }
 
   static const _txs = [
     Transaction(
@@ -2533,6 +2767,36 @@ class _DomainDemoState extends State<_DomainDemo> {
                 value: _currency,
                 onChanged: null,
                 label: 'อ่านอย่างเดียว',
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title:
+              'การ์ดหัวรายการ (ชิปประเภท · ปัดซ้าย/ขวาเปลี่ยนประเภท · '
+              'ยอด · ค่าอะไร (คำอธิบาย) · วันที่) — สร้าง / ดู',
+          name: 'TxHeroCard',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TxHeroCard(
+                type: _heroType,
+                onTypeChanged: (t) => setState(() => _heroType = t),
+                amount: _heroAmount,
+                title: _heroNote,
+                dateLabel: 'วันนี้',
+                onPickDate: () => showAppSnackBar(context, 'เลือกวันที่'),
+              ),
+              const _Gap(),
+              TxHeroCard(
+                type: TransactionType.expense,
+                amount: _heroViewAmount,
+                title: _heroViewNote,
+                dateLabel: 'เมื่อวาน',
+                editing: false,
+                onEdit: () => showAppSnackBar(context, '✏️ เข้าโหมดแก้ไข'),
+                onLongPressField: (_) =>
+                    showAppSnackBar(context, 'กดค้าง → เข้าโหมดแก้ไข'),
               ),
             ],
           ),
@@ -2676,6 +2940,89 @@ class _ChartsDemoState extends State<_ChartsDemo> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Pill family demos ──────────────────────────────────────────────────
+
+/// Sample tags for the pill demos: (name, colour, glyph).
+const _demoTags = <(String, Color, IconData?)>[
+  ('เที่ยว', Color(0xFF26A69A), Icons.flight_takeoff),
+  ('ครอบครัว', Color(0xFFEF6C00), null),
+  ('งานบริษัท', Color(0xFF5C6BC0), Icons.work_outline),
+  ('ของขวัญ', Color(0xFFD81B60), null),
+  ('สุขภาพ', Color(0xFF43A047), null),
+];
+
+/// A transaction row mock-up for picking the tag look (owner 2026-10-10):
+/// [pills] null = today's coloured `#tag` text line (TagShortList's look),
+/// otherwise mini [TagPill]s, at most [pills], then `+n`.
+class _MockTxRow extends StatelessWidget {
+  const _MockTxRow({required this.caption, required this.tags, this.pills});
+
+  final String caption;
+  final List<(String, Color, IconData?)> tags;
+  final int? pills;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final max = pills;
+    final Widget tagLine = max == null
+        ? Text.rich(
+            TextSpan(
+              children: [
+                for (final (i, (name, color, _)) in tags.indexed)
+                  TextSpan(
+                    text: '${i > 0 ? '  ' : ''}#$name',
+                    style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                  ),
+              ],
+            ),
+            style: textTheme.bodySmall,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          )
+        : PillOverflowRow(
+            maxVisible: max,
+            pills: [
+              for (final (name, color, glyph) in tags)
+                TagPill(name: name, color: color, glyph: glyph),
+            ],
+          );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          const TintedIconBadge(
+            icon: Icons.restaurant,
+            tint: Color(0xFFEF6C00),
+            size: 40,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('ข้าวมันไก่', style: textTheme.titleSmall),
+                const SizedBox(height: 2),
+                Text(
+                  caption,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(children: [Flexible(child: tagLine)]),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          const MoneyText(-60, tone: MoneyTone.expense),
+        ],
+      ),
     );
   }
 }

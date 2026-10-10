@@ -24,6 +24,7 @@ class SavingGoal extends Equatable {
     required this.status,
     this.deadline,
     this.iconCode,
+    this.description,
     this.note,
     this.linkedAccount,
     this.currentAmount = 0,
@@ -44,6 +45,7 @@ class SavingGoal extends Equatable {
   final SavingGoalStatus status;
   final String? deadline; // ISO YYYY-MM-DD
   final IconCode? iconCode;
+  final String? description;
   final String? note;
 
   /// Embedded ref returned in list responses so rows can render the
@@ -91,6 +93,7 @@ class SavingGoal extends Equatable {
     SavingGoalStatus? status,
     String? deadline,
     IconCode? iconCode,
+    String? description,
     String? note,
     SavingGoalLinkedAccount? linkedAccount,
     double? currentAmount,
@@ -109,6 +112,7 @@ class SavingGoal extends Equatable {
       status: status ?? this.status,
       deadline: deadline ?? this.deadline,
       iconCode: iconCode ?? this.iconCode,
+      description: description ?? this.description,
       note: note ?? this.note,
       linkedAccount: linkedAccount ?? this.linkedAccount,
       currentAmount: currentAmount ?? this.currentAmount,
@@ -135,6 +139,7 @@ class SavingGoal extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      description: json['description'] as String?,
       note: json['note'] as String?,
       linkedAccount: embedded != null
           ? SavingGoalLinkedAccount.fromJson(embedded)
@@ -157,6 +162,7 @@ class SavingGoal extends Equatable {
       if (allocationPct > 0) 'allocation_pct': allocationPct,
       if (deadline != null) 'deadline': deadline,
       if (iconCode != null) 'icon_code': iconCode!.toJson(),
+      if (description != null) 'description': description,
       if (note != null) 'note': note,
     };
   }
@@ -171,6 +177,7 @@ class SavingGoal extends Equatable {
       'allocation_pct': allocationPct,
       'deadline': deadline,
       'icon_code': iconCode?.toJson(),
+      'description': description,
       'note': note,
     };
   }
@@ -186,6 +193,7 @@ class SavingGoal extends Equatable {
     status,
     deadline,
     iconCode,
+    description,
     note,
     linkedAccount,
     currentAmount,

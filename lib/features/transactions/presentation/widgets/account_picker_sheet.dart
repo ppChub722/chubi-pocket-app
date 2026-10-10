@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
@@ -6,6 +7,8 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
+import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/pages/account_detail_page.dart';
 import '../../../accounts/presentation/widgets/account_card.dart';
 
 /// Result returned by [showAccountPickerSheet]. Distinct from `null`
@@ -29,6 +32,9 @@ class AccountPickerCleared extends AccountPickerResult {
 ///
 /// [allowNone] adds a "ไม่ระบุกระเป๋า" tile first (floating transaction).
 /// [excludeId] hides one account (the "to" side of a transfer).
+/// [allowCreate] adds a "+ เพิ่มกระเป๋า" tile last: it opens the create page
+/// over the sheet; saving there picks the new wallet and closes the picker,
+/// back returns to the picker (owner 2026-10-10).
 Future<AccountPickerResult?> showAccountPickerSheet({
   required BuildContext context,
   required List<Account> accounts,
@@ -36,6 +42,7 @@ Future<AccountPickerResult?> showAccountPickerSheet({
   String? excludeId,
   String? title,
   bool allowNone = false,
+  bool allowCreate = false,
 }) {
   return showAppSheet<AccountPickerResult>(
     context,
@@ -47,6 +54,7 @@ Future<AccountPickerResult?> showAccountPickerSheet({
       selected: selected,
       excludeId: excludeId,
       allowNone: allowNone,
+      allowCreate: allowCreate,
     ),
   );
 }
@@ -57,12 +65,32 @@ class _AccountPickerBody extends StatelessWidget {
     required this.selected,
     required this.excludeId,
     required this.allowNone,
+    required this.allowCreate,
   });
 
   final List<Account> accounts;
   final Account? selected;
   final String? excludeId;
   final bool allowNone;
+  final bool allowCreate;
+
+  /// The create page, pushed over the sheet. A wallet that wasn't there
+  /// before is the one just made → pick it.
+  Future<void> _create(BuildContext context) async {
+    final cubit = context.read<AccountsCubit>();
+    final before = {for (final a in cubit.state.accounts) a.id};
+    await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push(MaterialPageRoute<void>(builder: (_) => const AccountDetailPage()));
+    if (!context.mounted) return;
+    final created = cubit.state.accounts
+        .where((a) => !before.contains(a.id))
+        .lastOrNull;
+    if (created != null) {
+      Navigator.of(context).pop(AccountPickerSelected(created));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +116,15 @@ class _AccountPickerBody extends StatelessWidget {
             account: a,
             horizontal: false,
             onTap: () => Navigator.of(context).pop(AccountPickerSelected(a)),
+          ),
+        ),
+      // Last, as on the wallets page.
+      if (allowCreate)
+        SelectableFrame(
+          selected: false,
+          child: AddTile(
+            label: l.accountsAddNew,
+            onTap: () => _create(context),
           ),
         ),
     ];

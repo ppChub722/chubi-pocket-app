@@ -9,8 +9,9 @@ import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/saving_goal.dart';
 
-/// Saving goals list card: icon · name · linked wallet · allocation % ·
-/// progress "฿x จาก ฿y" (honours 👁) · completed badge.
+/// Saving goals list card: icon · name · description (when set) · linked
+/// wallet · allocation % · progress "฿x จาก ฿y" (honours 👁) · completed
+/// badge.
 class SavingGoalCard extends StatelessWidget {
   const SavingGoalCard({
     super.key,
@@ -30,6 +31,10 @@ class SavingGoalCard extends StatelessWidget {
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent = goal.iconCode?.accentColorFor(palette) ?? palette.primary;
     final wallet = goal.linkedAccount?.name;
+    final desc = goal.description?.trim() ?? '';
+    final secondary = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -61,13 +66,19 @@ class SavingGoalCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
+                        if (desc.isNotEmpty)
+                          Text(
+                            desc,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: secondary,
+                          ),
                         if (wallet != null)
                           Text(
                             wallet,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: scheme.onSurfaceVariant),
+                            style: secondary,
                           ),
                       ],
                     ),

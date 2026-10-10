@@ -39,6 +39,7 @@ class _ContactsPageState extends State<ContactsPage> {
         .where(
           (c) =>
               c.effectiveName.toLowerCase().contains(q) ||
+              (c.description?.toLowerCase().contains(q) ?? false) ||
               (c.effectiveEmail?.toLowerCase().contains(q) ?? false) ||
               (c.phone?.contains(q) ?? false),
         )
@@ -169,7 +170,11 @@ class _ContactsPageState extends State<ContactsPage> {
                                 : ListView.separated(
                                     physics:
                                         const AlwaysScrollableScrollPhysics(),
-                                    padding: const EdgeInsets.only(bottom: 96),
+                                    padding: EdgeInsets.only(
+                                      bottom:
+                                          96 +
+                                          MediaQuery.paddingOf(context).bottom,
+                                    ),
                                     // + the dashed add tile at the end.
                                     itemCount: shown.length + 1,
                                     separatorBuilder: (_, i) =>
@@ -200,10 +205,15 @@ class _ContactRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final sub = [
-      if (contact.effectiveEmail?.isNotEmpty ?? false) contact.effectiveEmail!,
-      if (contact.phone?.isNotEmpty ?? false) contact.phone!,
-    ].join(' · ');
+    // The description says who they are; without one, how to reach them.
+    final description = contact.description?.trim() ?? '';
+    final sub = description.isNotEmpty
+        ? description
+        : [
+            if (contact.effectiveEmail?.isNotEmpty ?? false)
+              contact.effectiveEmail!,
+            if (contact.phone?.isNotEmpty ?? false) contact.phone!,
+          ].join(' · ');
     return Opacity(
       opacity: contact.isArchived ? 0.55 : 1,
       child: ListTile(
@@ -213,7 +223,9 @@ class _ContactRow extends StatelessWidget {
           iconCode: contact.effectiveIconCode,
         ),
         title: Text(contact.effectiveName),
-        subtitle: sub.isEmpty ? null : Text(sub),
+        subtitle: sub.isEmpty
+            ? null
+            : Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

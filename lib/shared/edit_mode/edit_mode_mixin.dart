@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/shell/shell_chrome.dart';
+import '../../app/shell/tab_nav.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../widgets/feedback/confirm_dialog.dart';
 import '../widgets/mode_action_bar.dart';
 
 /// The app's in-place edit-mode lifecycle, shared by every detail page
@@ -19,7 +20,9 @@ import '../widgets/mode_action_bar.dart';
 /// * undo — every discrete change is one step; typing bursts in one field
 ///   collapse into one step (500 ms debounce, or switching field);
 ///   undoing back to the original leaves edit mode;
-/// * back / system back while dirty asks to discard first.
+/// * back (system gesture / the top bar's ✕) while editing = ยกเลิก: drops
+///   the changes and returns to view mode — or leaves, for create — with
+///   no "discard?" prompt (owner 2026-10-10).
 ///
 /// Usage:
 /// ```dart
@@ -74,19 +77,16 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   /// Create flows: there's no view mode, so Cancel / back leave the page.
   bool get leaveOnCancel => false;
 
-  /// Leaving the page (create cancel, back in view mode).
-  void leavePage() => Navigator.of(context).maybePop();
-
-  /// Discard prompt shown when backing out of a dirty edit.
-  Future<bool> confirmDiscard() {
-    final l = AppLocalizations.of(context)!;
-    return showConfirmDialog(
-      context,
-      title: l.commonDiscardTitle,
-      message: l.commonDiscardBody,
-      confirmLabel: l.commonDiscard,
-      destructive: true,
-    );
+  /// Leaving the page (create cancel, back in view mode). A plain pop —
+  /// `maybePop` would come back through this page's own PopScope. A page
+  /// opened alone in its tab has nothing to pop: the shell's back takes
+  /// over (previous tab, the เพิ่มเติม hub, or the dashboard).
+  void leavePage() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      ShellBackScope.maybeOf(context)?.call();
+    }
   }
 
   // ── Setup ───────────────────────────────────────────────────────────
@@ -159,16 +159,15 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     onDraftRestored();
   }
 
-  /// Top-bar ← / ✕ and system back.
-  Future<void> handleBack() async {
+  /// Top-bar ← / ✕ and system back. While editing it's exactly the ยกเลิก
+  /// button: [cancelEdit], no prompt (owner 2026-10-10).
+  void handleBack() {
     if (_saving) return;
-    if (!_editing) {
+    if (_editing) {
+      cancelEdit();
+    } else {
       leavePage();
-      return;
     }
-    commitTextSession();
-    if (isDirty && !await confirmDiscard()) return;
-    if (mounted) cancelEdit();
   }
 
   // ── Changes ─────────────────────────────────────────────────────────

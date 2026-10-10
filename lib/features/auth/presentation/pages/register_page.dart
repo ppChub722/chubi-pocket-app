@@ -102,6 +102,9 @@ class _RegisterPageState extends State<RegisterPage> {
                             const SizedBox(height: AppSpacing.md),
                           ],
                           SectionCard(
+                            first: true,
+                            // Stacked form fields, not rows — no hairlines.
+                            dividers: false,
                             title: l.authRegisterSectionAccount,
                             children: [
                               AppTextField(
@@ -165,8 +168,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: AppSpacing.lg),
                           SectionCard(
+                            dividers: false,
                             title: l.authRegisterSectionProfile,
                             children: [
                               AppTextField(

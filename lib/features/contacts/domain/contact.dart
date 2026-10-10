@@ -12,7 +12,8 @@ class Contact extends Equatable {
     required this.status,
     this.email,
     this.phone,
-    this.notes,
+    this.description,
+    this.note,
     this.iconCode,
     this.linkedUserId,
     this.linkedUserIconCode,
@@ -35,7 +36,8 @@ class Contact extends Equatable {
   /// for display so linked contacts mirror the user's current email.
   final String? email;
   final String? phone;
-  final String? notes;
+  final String? description;
+  final String? note;
   final IconCode? iconCode;
   final String? linkedUserId;
 
@@ -83,7 +85,8 @@ class Contact extends Equatable {
       displayName: json['display_name'] as String,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
-      notes: json['notes'] as String?,
+      description: json['description'] as String?,
+      note: json['note'] as String?,
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
@@ -108,7 +111,8 @@ class Contact extends Equatable {
     String? displayName,
     String? email,
     String? phone,
-    String? notes,
+    String? description,
+    String? note,
     IconCode? iconCode,
     String? linkedUserId,
     IconCode? linkedUserIconCode,
@@ -124,7 +128,8 @@ class Contact extends Equatable {
       displayName: displayName ?? this.displayName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
-      notes: notes ?? this.notes,
+      description: description ?? this.description,
+      note: note ?? this.note,
       iconCode: iconCode ?? this.iconCode,
       linkedUserId: clearLinkedUserId
           ? null
@@ -150,7 +155,8 @@ class Contact extends Equatable {
     displayName,
     email,
     phone,
-    notes,
+    description,
+    note,
     iconCode,
     linkedUserId,
     linkedUserIconCode,

@@ -131,10 +131,12 @@ class AccountsRepository {
   /// an Adjustment transaction whose delta brings the account's cached
   /// balance to [newBalance]. Returns both the updated account and the
   /// id of the synthetic Adjustment transaction so the UI can offer a
-  /// "View" action that navigates to it.
+  /// "View" action that navigates to it. [description] / [note] land on
+  /// that transaction (absent = none).
   Future<AdjustBalanceOutcome> adjustBalance({
     required String id,
     required double newBalance,
+    String? description,
     String? note,
     String? date,
   }) async {
@@ -143,6 +145,7 @@ class AccountsRepository {
         '/accounts/$id/adjust-balance',
         data: <String, dynamic>{
           'new_balance': newBalance,
+          'description': ?description,
           'note': ?note,
           'date': ?date,
         },

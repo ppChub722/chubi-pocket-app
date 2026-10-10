@@ -46,7 +46,7 @@ class SettingsPage extends StatelessWidget {
                 AppSpacing.lg,
                 MediaQuery.paddingOf(context).top + AppSpacing.sm,
                 AppSpacing.lg,
-                AppSpacing.huge,
+                AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
               ),
               children: [
                 HeaderCard(
@@ -65,7 +65,9 @@ class SettingsPage extends StatelessWidget {
                   trailing: const Icon(AppIcons.chevronRight),
                   onTap: () => context.push('/settings/profile'),
                 ),
+                const SizedBox(height: AppSpacing.lg),
                 SectionCard(
+                  first: true,
                   title: l.settingsSectionAccount,
                   children: [
                     DetailRow(
@@ -74,11 +76,11 @@ class SettingsPage extends StatelessWidget {
                       showChevron: true,
                       onTap: () => context.push('/settings/password'),
                     ),
-                    const RowDivider(),
+                    // Inset like a DetailRow.
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.sm,
+                        vertical: AppSpacing.md,
                       ),
                       child: _CurrencyRow(user: user),
                     ),
@@ -100,11 +102,8 @@ class SettingsPage extends StatelessWidget {
                   title: l.settingsSectionPreferences,
                   children: const [
                     _ThemeCards(),
-                    RowDivider(),
                     _ThemeModeRow(),
-                    RowDivider(),
                     _LanguageRow(),
-                    RowDivider(),
                     _FontRow(),
                   ],
                 ),
@@ -219,7 +218,11 @@ class _ThemeCards extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final selected = context.watch<ThemeIdCubit>().state;
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      // Inset like the other rows (DetailRow / DetailStacked).
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

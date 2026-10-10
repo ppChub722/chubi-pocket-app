@@ -45,6 +45,7 @@ class PendingDraft extends Equatable {
     this.accountId,
     this.categoryId,
     this.date,
+    this.description,
     this.note,
     this.transferToAccountId,
     this.tagIds = const [],
@@ -58,6 +59,7 @@ class PendingDraft extends Equatable {
 
   /// YYYY-MM-DD.
   final String? date;
+  final String? description;
   final String? note;
   final String? transferToAccountId;
   final List<String> tagIds;
@@ -73,6 +75,7 @@ class PendingDraft extends Equatable {
       accountId: json['account_id'] as String?,
       categoryId: json['category_id'] as String?,
       date: json['date'] as String?,
+      description: json['description'] as String?,
       note: json['note'] as String?,
       transferToAccountId: json['transfer_to_account_id'] as String?,
       tagIds: ((json['tag_ids'] as List?) ?? const []).cast<String>(),
@@ -87,6 +90,7 @@ class PendingDraft extends Equatable {
     'account_id': ?accountId,
     'category_id': ?categoryId,
     'date': ?date,
+    'description': ?description,
     'note': ?note,
     'transfer_to_account_id': ?transferToAccountId,
     if (tagIds.isNotEmpty) 'tag_ids': tagIds,
@@ -100,6 +104,7 @@ class PendingDraft extends Equatable {
     accountId,
     categoryId,
     date,
+    description,
     note,
     transferToAccountId,
     tagIds,

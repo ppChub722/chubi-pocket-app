@@ -87,6 +87,12 @@ String moneyString(BuildContext context, num amount, {String symbol = '฿'}) =>
     ? '$symbol••••'
     : CurrencyFormatter.format(amount, symbol: symbol);
 
+/// Whether the 👁 money-privacy toggle is offered at all. Off for now
+/// (owner 2026-10-10: show the numbers, always — a new way to turn it on
+/// comes later), so every toggle renders nothing and amounts never hide.
+/// The cubit / stored setting stay, untouched, for when it's back.
+const bool kMoneyPrivacyEnabled = false;
+
 /// True when the privacy toggle is on. Safe when no
 /// [MoneyVisibilityCubit] is provided (tests, dev previews) → visible.
 ///
@@ -94,6 +100,7 @@ String moneyString(BuildContext context, num amount, {String symbol = '฿'}) =>
 /// nested Builder is the one building, and `select` asserts on that. The
 /// state is a single bool, so `watch` rebuilds just as rarely.
 bool isMoneyHidden(BuildContext context) {
+  if (!kMoneyPrivacyEnabled) return false;
   try {
     return context.watch<MoneyVisibilityCubit>().state;
   } on ProviderNotFoundException {
@@ -101,7 +108,8 @@ bool isMoneyHidden(BuildContext context) {
   }
 }
 
-/// 👁 toggle that flips the app-wide money privacy setting.
+/// 👁 toggle that flips the app-wide money privacy setting. Renders
+/// nothing while [kMoneyPrivacyEnabled] is off.
 class MoneyVisibilityToggle extends StatelessWidget {
   const MoneyVisibilityToggle({this.size = 20, super.key});
 
@@ -109,6 +117,7 @@ class MoneyVisibilityToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!kMoneyPrivacyEnabled) return const SizedBox.shrink();
     final hidden = isMoneyHidden(context);
     final l = AppLocalizations.of(context)!;
     return IconButton(

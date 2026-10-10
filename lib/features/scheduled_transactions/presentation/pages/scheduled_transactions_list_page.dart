@@ -72,7 +72,7 @@ class _ScheduledTransactionsListPageState
                       AppSpacing.lg,
                       MediaQuery.paddingOf(context).top + AppSpacing.md,
                       AppSpacing.lg,
-                      96,
+                      96 + MediaQuery.paddingOf(context).bottom,
                     ),
                     children: [
                       for (final e in state.entries) ...[

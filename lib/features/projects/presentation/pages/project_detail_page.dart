@@ -7,6 +7,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/edit_mode/edit_mode_mixin.dart';
@@ -27,10 +28,11 @@ import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 
 enum _Tab { dashboard, transactions, resolve }
 
-enum _Field { name, description, planned }
+enum _Field { name, description, note, planned }
 
 /// `/projects/:id` (§12b). Header card (icon · name · status pill · type),
-/// a lock banner when the status restricts rows, then แดชบอร์ด / รายการ /
+/// คำอธิบาย / โน้ต (only the filled ones in view mode — the tabs need the
+/// room), a lock banner when the status restricts rows, then แดชบอร์ด / รายการ /
 /// เคลียร์ยอด. ✏️ on the header card edits the project info in place (owner
 /// only — the BE allows nobody else); status changes from the pill; a
 /// delete row under the info in edit mode; "+ เพิ่มรายการ" in the รายการ tab.
@@ -111,11 +113,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  @override
   void onDraftRestored() {
     void sync(_Field f, String v) {
       if (_ctrl[f]!.text != v) _ctrl[f]!.text = v;
@@ -123,12 +120,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
     sync(_Field.name, working.name);
     sync(_Field.description, working.description);
+    sync(_Field.note, working.note);
     sync(_Field.planned, working.planned);
   }
 
   void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
     _Field.name => working.copyWith(name: v),
     _Field.description => working.copyWith(description: v),
+    _Field.note => working.copyWith(note: v),
     _Field.planned => working.copyWith(planned: v),
   });
 
@@ -146,7 +145,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       await context.read<ProjectsCubit>().update(
         widget.id,
         name: w.name.trim(),
+        // '' clears (migration 51).
         description: w.description.trim(),
+        note: w.note.trim(),
         iconCode: w.iconCode,
         plannedAmount: planned,
         // Blanked an existing plan → explicit null hides it (§10/4.23).
@@ -322,6 +323,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _header(l, v),
+                        ?_texts(l, v),
                         // Delete sits under the edit-mode info (the tabs below
                         // are locked while editing, so this is the page's last
                         // live row).
@@ -404,7 +406,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         editing: editing,
         controller: _ctrl[_Field.name]!,
         focusNode: _focus[_Field.name],
-        hint: l.projectNameLabel,
+        hint: l.commonName,
+        maxLength: TextLimits.name,
         onEnterEdit: v.isOwner
             ? () => enterEdit(focus: _focus[_Field.name])
             : null,
@@ -429,15 +432,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                InlineField(
-                  editing: true,
-                  controller: _ctrl[_Field.description]!,
-                  focusNode: _focus[_Field.description],
-                  hint: l.projectDescriptionLabel,
-                  maxLines: 3,
-                  maxLength: 500,
-                  onChanged: (t) => _onText(_Field.description, t),
-                ),
                 const SizedBox(height: AppSpacing.sm),
                 AmountField(
                   controller: _ctrl[_Field.planned]!,
@@ -458,12 +452,44 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                 ),
               ],
             )
-          : (project.description?.isNotEmpty ?? false)
-          ? Text(
-              project.description!,
-              style: Theme.of(context).textTheme.bodyMedium,
-            )
           : null,
+    );
+  }
+
+  /// คำอธิบาย / โน้ต under the header — both while editing; in view mode
+  /// only the filled ones (null when neither is), so an empty project
+  /// doesn't push the tabs down.
+  Widget? _texts(AppLocalizations l, ProjectView v) {
+    final editing = isEditing;
+    Widget? row(_Field f, String label, String value, int max) {
+      if (!editing && value.trim().isEmpty) return null;
+      return DetailStacked(
+        label: label,
+        child: InlineField(
+          editing: editing,
+          controller: _ctrl[f]!,
+          focusNode: _focus[f],
+          maxLines: 3,
+          maxLength: max,
+          onEnterEdit: v.isOwner ? () => enterEdit(focus: _focus[f]) : null,
+          onChanged: (t) => _onText(f, t),
+        ),
+      );
+    }
+
+    final rows = [
+      ?row(
+        _Field.description,
+        l.commonDescription,
+        working.description,
+        TextLimits.description,
+      ),
+      ?row(_Field.note, l.commonNote, working.note, TextLimits.note),
+    ];
+    if (rows.isEmpty) return null;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: SectionCard(first: true, children: rows),
     );
   }
 }
@@ -513,6 +539,7 @@ class _InfoDraft {
   const _InfoDraft({
     this.name = '',
     this.description = '',
+    this.note = '',
     this.planned = '',
     this.iconCode,
   });
@@ -520,6 +547,7 @@ class _InfoDraft {
   factory _InfoDraft.from(Project p) => _InfoDraft(
     name: p.name,
     description: p.description ?? '',
+    note: p.note ?? '',
     planned: p.plannedAmount == null
         ? ''
         : AmountField.format(p.plannedAmount!),
@@ -528,6 +556,7 @@ class _InfoDraft {
 
   final String name;
   final String description;
+  final String note;
 
   /// Formatted, as in the field; empty = no plan.
   final String planned;
@@ -536,11 +565,13 @@ class _InfoDraft {
   _InfoDraft copyWith({
     String? name,
     String? description,
+    String? note,
     String? planned,
     IconCode? iconCode,
   }) => _InfoDraft(
     name: name ?? this.name,
     description: description ?? this.description,
+    note: note ?? this.note,
     planned: planned ?? this.planned,
     iconCode: iconCode ?? this.iconCode,
   );
@@ -550,9 +581,10 @@ class _InfoDraft {
       other is _InfoDraft &&
       other.name == name &&
       other.description == description &&
+      other.note == note &&
       other.planned == planned &&
       other.iconCode == iconCode;
 
   @override
-  int get hashCode => Object.hash(name, description, planned, iconCode);
+  int get hashCode => Object.hash(name, description, note, planned, iconCode);
 }

@@ -8,6 +8,7 @@ import '../../app/shell/main_shell.dart';
 import '../../app/shell/more_page.dart';
 import '../../app/shell/shell_chrome.dart';
 import '../../app/shell/tab_nav.dart';
+import '../../dev/detail_playground_screen.dart';
 import '../../dev/dev_hub_screen.dart';
 import '../../dev/imports_lab_screen.dart';
 import '../../dev/logs_viewer_screen.dart';
@@ -93,7 +94,9 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
 
       if (!auth.isAuthenticated && !goingToAuth) return '/auth/login';
       if (auth.isAuthenticated && goingToAuth) return '/';
-      return null;
+      // A module that's off (AppModules) has no pages — a deep link or a
+      // notification into one lands somewhere safe instead.
+      return offModuleRedirect(state.uri.path);
     },
     routes: [
       StatefulShellRoute(
@@ -140,6 +143,11 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
             path: 'theme-preview',
             name: 'dev-theme-preview',
             builder: (context, state) => const ThemePreviewScreen(),
+          ),
+          GoRoute(
+            path: 'detail-playground',
+            name: 'dev-detail-playground',
+            builder: (context, state) => const DetailPlaygroundScreen(),
           ),
           GoRoute(
             path: 'state-widgets',

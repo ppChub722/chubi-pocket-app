@@ -118,6 +118,7 @@ class Transaction extends Equatable {
     this.account,
     this.category,
     this.tags = const [],
+    this.description,
     this.note,
     this.projectId,
     this.transferGroupId,
@@ -157,6 +158,7 @@ class Transaction extends Equatable {
   /// field even when no tags are attached.
   final List<EmbeddedTag> tags;
 
+  final String? description;
   final String? note;
 
   /// Auto-managed project link (spec §04): set only on rows that mirror
@@ -236,6 +238,7 @@ class Transaction extends Equatable {
           ? EmbeddedRef.fromJson(json['category'] as Map<String, dynamic>)
           : null,
       tags: tags,
+      description: json['description'] as String?,
       note: json['note'] as String?,
       projectId: json['project_id'] as String?,
       transferGroupId: json['transfer_group_id'] as String?,
@@ -268,6 +271,7 @@ class Transaction extends Equatable {
     EmbeddedRef? account,
     EmbeddedRef? category,
     List<EmbeddedTag>? tags,
+    String? description,
     String? note,
     String? projectId,
     String? transferGroupId,
@@ -290,6 +294,7 @@ class Transaction extends Equatable {
       account: account ?? this.account,
       category: category ?? this.category,
       tags: tags ?? this.tags,
+      description: description ?? this.description,
       note: note ?? this.note,
       projectId: projectId ?? this.projectId,
       transferGroupId: transferGroupId ?? this.transferGroupId,
@@ -315,6 +320,7 @@ class Transaction extends Equatable {
     account,
     category,
     tags,
+    description,
     note,
     projectId,
     transferGroupId,

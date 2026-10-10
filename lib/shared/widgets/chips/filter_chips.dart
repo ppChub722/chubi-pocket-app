@@ -4,6 +4,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../menus/option_menu.dart';
 import '../sheets/option_sheet.dart';
+import 'pill.dart';
 
 /// Dropdown-style filter chip ("สี ▾", "สถานะ: ค้างอยู่ ▾", "กระเป๋า ▾").
 ///
@@ -36,6 +37,8 @@ class FilterDropdownChip extends StatelessWidget {
   /// Overrides the computed active state.
   final bool? active;
 
+  static const _size = PillSize.large;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -60,25 +63,29 @@ class FilterDropdownChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 36),
+            // The pill family's large size (PillSize) — same row height as
+            // ActionPill.
+            constraints: BoxConstraints(minHeight: _size.height),
             child: Padding(
-              padding: const EdgeInsets.only(
-                left: AppSpacing.md,
+              padding: EdgeInsets.only(
+                left: _size.padding,
                 right: AppSpacing.xs,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 16, color: fg),
-                    const SizedBox(width: AppSpacing.xs),
+                    Icon(icon, size: _size.icon, color: fg),
+                    SizedBox(width: _size.gap),
                   ],
                   Text(
                     text,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: isActive ? scheme.primary : null,
-                      fontWeight: isActive ? FontWeight.w600 : null,
-                    ),
+                    style: _size
+                        .textStyle(context)
+                        ?.copyWith(
+                          color: isActive ? scheme.primary : null,
+                          fontWeight: isActive ? FontWeight.w600 : null,
+                        ),
                   ),
                   Icon(AppIcons.dropdown, size: 20, color: fg),
                 ],
@@ -128,7 +135,7 @@ class SortChip<T> extends StatelessWidget {
         onTap: toggle,
         borderRadius: BorderRadius.circular(999),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 36),
+          constraints: BoxConstraints(minHeight: PillSize.large.height),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Row(
@@ -192,16 +199,28 @@ class FilterBar extends StatelessWidget {
   }
 }
 
-/// Chip-sized action button — same stadium shape/height as
-/// [FilterDropdownChip] so it can sit in the same row. Used by selection
-/// bars ("[◉ 3] [🎨 สี] [⬡ ไอคอน] [🗑 ลบ]"): bulk actions live under the
-/// search, next to the selection, not in the top bar.
+/// How an [ActionPill] sits on its background.
+enum ActionPillStyle {
+  /// Tinted fill + tinted border — rows of actions (selection bars).
+  tinted,
+
+  /// Raised surface chip with a shadow — one action floating on a card
+  /// (the wallet header's "ปรับยอด").
+  raised,
+}
+
+/// Icon + label button — the action role of the pill family ([PillSize]).
+/// At [PillSize.large] it's the same height as [FilterDropdownChip], so it
+/// can sit in the same row. Used by selection bars ("[◉ 3] [🎨 สี] [⬡
+/// ไอคอน] [🗑 ลบ]") and header actions ("ปรับยอด").
 class ActionPill extends StatelessWidget {
   const ActionPill({
     required this.label,
     required this.onTap,
     this.icon,
     this.destructive = false,
+    this.size = PillSize.large,
+    this.style = ActionPillStyle.tinted,
     super.key,
   });
 
@@ -209,43 +228,29 @@ class ActionPill extends StatelessWidget {
   final VoidCallback? onTap;
   final IconData? icon;
   final bool destructive;
+  final PillSize size;
+  final ActionPillStyle style;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final fg = destructive ? scheme.error : scheme.primary;
+    final raised = style == ActionPillStyle.raised;
     return Opacity(
       opacity: onTap != null ? 1 : 0.4,
-      child: Material(
-        color: fg.withValues(alpha: 0.10),
-        shape: StadiumBorder(
-          side: BorderSide(color: fg.withValues(alpha: 0.5)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 36),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: 16, color: fg),
-                    const SizedBox(width: AppSpacing.xs),
-                  ],
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: fg,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+      child: PillShell(
+        size: size,
+        background: raised
+            ? scheme.surfaceContainerHigh
+            : fg.withValues(alpha: 0.10),
+        border: raised ? scheme.outlineVariant : fg.withValues(alpha: 0.5),
+        elevation: raised ? 1.5 : 0,
+        onTap: onTap,
+        child: PillContent(
+          label: label,
+          color: fg,
+          size: size,
+          leading: icon == null ? null : Icon(icon, size: size.icon, color: fg),
         ),
       ),
     );

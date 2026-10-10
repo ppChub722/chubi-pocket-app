@@ -268,8 +268,10 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                             child: NotificationListenerWidget(
                               child: ListView(
                                 physics: const AlwaysScrollableScrollPhysics(),
-                                padding: const EdgeInsets.only(
-                                  bottom: AppSpacing.huge,
+                                padding: EdgeInsets.only(
+                                  bottom:
+                                      AppSpacing.huge +
+                                      MediaQuery.paddingOf(ctx).bottom,
                                 ),
                                 children: rows,
                               ),
@@ -417,7 +419,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
   }
 
   /// "อัปเดตตาม" on project_tx_changed — write the suggested amount / date /
-  /// note onto my personal copy.
+  /// description / note onto my personal copy.
   Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
     final txId = n.payload['personal_transaction_id'] as String?;
     final s = n.payload['suggested'];
@@ -429,6 +431,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
         id: txId,
         amount: (s['amount'] as num?)?.toDouble(),
         date: s['date'] as String?,
+        description: s['description'] as String?,
         note: s['note'] as String?,
       );
       await inboxCubit.markActioned(n.id);

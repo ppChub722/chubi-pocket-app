@@ -127,64 +127,63 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
                   AppSpacing.lg,
                   MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   AppSpacing.lg,
-                  96,
+                  96 + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
                   _Header(person: person),
                   const SizedBox(height: AppSpacing.lg),
-                  if (open.isNotEmpty)
+                  // Open debts, then the way to add one more.
+                  SectionCard(
+                    first: true,
+                    title: open.isEmpty ? null : l.debtsStatusOpen,
+                    children: [
+                      for (final d in open) DebtTile(debt: d),
+                      DetailAddRow(label: l.debtsPersonAdd, onTap: _addDebt),
+                    ],
+                  ),
+                  if (widget.contactId == null)
                     SectionCard(
-                      title: l.debtsStatusOpen,
                       children: [
-                        for (final (i, d) in open.indexed) ...[
-                          if (i > 0) const RowDivider(),
-                          DebtTile(debt: d),
-                        ],
+                        DetailRow(
+                          leading: _linking
+                              ? const SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(AppIcons.link),
+                          label: l.debtsPersonLinkContact,
+                          helper: l.debtsPersonLinkContactHint,
+                          showChevron: true,
+                          onTap: _linking ? null : _linkToContact,
+                        ),
                       ],
                     ),
-                  const SizedBox(height: AppSpacing.sm),
-                  AddTile(
-                    label: l.debtsPersonAdd,
-                    variant: AddTileVariant.row,
-                    onTap: _addDebt,
-                  ),
-                  if (widget.contactId == null) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    DetailRow(
-                      leading: _linking
-                          ? const SizedBox.square(
-                              dimension: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(AppIcons.link),
-                      label: l.debtsPersonLinkContact,
-                      helper: l.debtsPersonLinkContactHint,
-                      showChevron: true,
-                      onTap: _linking ? null : _linkToContact,
-                    ),
-                  ],
-                  if (closed.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    Theme(
-                      // No divider lines from ExpansionTile.
-                      data: Theme.of(
-                        context,
-                      ).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        tilePadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
+                  if (closed.isNotEmpty)
+                    SectionCard(
+                      children: [
+                        Theme(
+                          // No divider lines from ExpansionTile.
+                          data: Theme.of(
+                            context,
+                          ).copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            tilePadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                            ),
+                            leading: const Icon(AppIcons.history),
+                            title: Text(l.debtsPersonHistory(closed.length)),
+                            children: [
+                              for (final (i, d) in closed.indexed) ...[
+                                if (i > 0) const RowDivider(),
+                                DebtTile(debt: d),
+                              ],
+                            ],
+                          ),
                         ),
-                        leading: const Icon(AppIcons.history),
-                        title: Text(l.debtsPersonHistory(closed.length)),
-                        children: [
-                          for (final (i, d) in closed.indexed) ...[
-                            if (i > 0) const RowDivider(),
-                            DebtTile(debt: d),
-                          ],
-                        ],
-                      ),
+                      ],
                     ),
-                  ],
                 ],
               ),
             );

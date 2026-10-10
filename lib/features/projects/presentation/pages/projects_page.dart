@@ -120,9 +120,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     error: state.error,
                     isEmpty: state.projects.isEmpty,
                     onRetry: ctx.read<ProjectsCubit>().load,
-                    // Zero padding: the bar is already cleared above.
+                    // No top padding: the bar is already cleared above.
                     skeleton: ListView(
-                      padding: EdgeInsets.zero,
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.paddingOf(ctx).bottom,
+                      ),
                       children: [
                         for (var i = 0; i < 5; i++) const SkeletonListTile(),
                       ],
@@ -143,11 +145,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       onRefresh: () => ctx.read<ProjectsCubit>().load(),
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(
+                        padding: EdgeInsets.fromLTRB(
                           AppSpacing.lg,
                           AppSpacing.xs,
                           AppSpacing.lg,
-                          96,
+                          96 + MediaQuery.paddingOf(context).bottom,
                         ),
                         children: [
                           if (shown.isEmpty)
@@ -222,6 +224,13 @@ class _ProjectCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
+                    if (p.description?.trim().isNotEmpty ?? false)
+                      Text(
+                        p.description!.trim(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     const SizedBox(height: 2),
                     Text(
                       meta,

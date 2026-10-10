@@ -30,6 +30,7 @@ import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../transaction_edit.dart';
 import 'draft_form.dart';
 
 /// Maps the pinned quick-create error codes (API §10) to friendly copy;
@@ -124,6 +125,9 @@ Future<bool> showQuickCreateSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
+    // Over the whole shell, wherever it's opened from: inside a tab it
+    // would sit under the floating nav (the tab body runs on beneath it).
+    useRootNavigator: true,
     // Drag-to-dismiss would skip the "discard?" question; the ✕, the
     // barrier and back all go through PopScope instead.
     enableDrag: false,
@@ -411,26 +415,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
     final t = widget.transaction;
     if (t != null) {
-      final accounts = context.read<AccountsCubit>().state.accounts;
-      // A transfer's other side is its sibling row in the same group.
-      Account? toAccount;
-      final group = t.transferGroupId;
-      if (group != null) {
-        final sibling = context
-            .read<TransactionsCubit>()
-            .state
-            .transactions
-            .where((x) => x.id != t.id && x.transferGroupId == group)
-            .firstOrNull;
-        toAccount = accounts
-            .where((a) => a.id == sibling?.accountId)
-            .firstOrNull;
-      }
       _c.prefillTransaction(
         t,
-        accounts: accounts,
+        accounts: context.read<AccountsCubit>().state.accounts,
         categories: context.read<CategoriesCubit>().state.categories,
-        toAccount: toAccount,
+        // A transfer's other side is its sibling row in the same group.
+        toAccount: transferOtherAccount(context, t),
       );
       _txBaseline = _c.toDraft();
       _initialAccountId = _c.account?.id;
@@ -662,6 +652,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         .where((s) => s.isComplete)
         .map((s) => s.toJson())
         .toList();
+    final description = _c.description.text.trim().isEmpty
+        ? null
+        : _c.description.text.trim();
     final note = _c.note.text.trim().isEmpty ? null : _c.note.text.trim();
     final event = _event;
     final type = _c.type;
@@ -681,6 +674,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             amount: amount,
             date: _ymd(_c.date),
             categoryId: _c.isTransfer ? null : _c.category?.id,
+            description: description,
             note: note,
             transferToAccountId: _c.isTransfer ? _c.toAccount?.id : null,
             tagIds: tagIds,
@@ -696,6 +690,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           'date': _ymd(_c.date),
           'account_id': ?account?.id,
           'category_id': ?_c.category?.id,
+          'description': ?description,
           'note': ?note,
           if (splits.isNotEmpty) 'splits': splits,
         };
@@ -738,8 +733,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Edit mode "บันทึก": update the saved row with what changed, then
-  /// reconcile its tags.
+  /// Edit mode "บันทึก": the same save as the detail page's in-place edit
+  /// ([saveTransactionEdit]).
   Future<void> _saveEdit() async {
     final l = AppLocalizations.of(context)!;
     final problem = _problem(l);
@@ -748,55 +743,17 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       _toast(problem);
       return;
     }
-    final t = widget.transaction!;
-    final txCubit = context.read<TransactionsCubit>();
-    final accounts = context.read<AccountsCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final isTransfer = _c.isTransfer;
-    final note = _c.note.text.trim().isEmpty ? null : _c.note.text.trim();
-    // Another member's row: never send category_id — only the author may
-    // change it (403 CATEGORY_AUTHOR_ONLY otherwise).
-    final canCategory = !isTransfer && t.canEditCategory;
-    final accountId = _c.account?.id;
-    final accountChanged = accountId != _initialAccountId;
-    final toAccountChanged =
-        isTransfer && _c.toAccount?.id != _initialToAccountId;
-
     setState(() => _saving = true);
-    String? warn;
     try {
-      final result = await txCubit.updateTransaction(
-        id: t.id,
-        amount: _c.amountValue,
-        date: _ymd(_c.date),
-        categoryId: canCategory ? _c.category?.id : null,
-        clearCategory:
-            canCategory && t.categoryId != null && _c.category == null,
-        note: note,
-        clearNote: note == null && t.note != null,
-        accountId: accountChanged ? accountId : null,
-        clearAccount: accountChanged && accountId == null,
-        transferToAccountId: toAccountChanged ? _c.toAccount?.id : null,
+      final warn = await saveTransactionEdit(
+        context,
+        t: widget.transaction!,
+        c: _c,
+        initialAccountId: _initialAccountId,
+        initialToAccountId: _initialToAccountId,
       );
-      // A transfer's tags live on its OUT row.
-      final tagTarget = result.transfer != null
-          ? result.transfer!.rows
-                .firstWhere(
-                  (r) => r.signedAmount < 0,
-                  orElse: () => result.transfer!.rows.first,
-                )
-                .id
-          : t.id;
-      try {
-        await txCubit.setTags(
-          transactionId: tagTarget,
-          tagIds: _c.tagIds.toList(),
-        );
-      } on ApiException {
-        warn = l.txSavedTagsFailed; // saved — just the tags
-      }
-      await accounts.load();
       navigator.pop(true);
       showAppSnackBarOn(
         messenger,
@@ -929,7 +886,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                               : null,
                           // Drafts don't go to events (submit is a plain
                           // create) — the tile only exists when creating.
-                          moreExtra:
+                          extra:
                               _editingDraft ||
                                   _editingTx ||
                                   _isEvent ||
@@ -980,20 +937,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
               // Pinned above the keyboard: draft (→ รอยืนยัน) · save for real.
               // Editing a saved row: just save. Locked row: nothing to save.
               // Scheduled: one button too — drafts are for one-off rows.
+              // Pinned bars clear the gesture bar themselves — the sheet's
+              // useSafeArea only covers the top.
               if (_editingTx || _isEvent || _isScheduled)
-                Container(
-                  decoration: BoxDecoration(
-                    color: scheme.surface,
-                    border: Border(
-                      top: BorderSide(color: scheme.outlineVariant),
-                    ),
-                  ),
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                    AppSpacing.lg,
-                    insets > 0 ? AppSpacing.sm : AppSpacing.lg,
-                  ),
+                PinnedBar(
                   child: AppButton(
                     label: _isScheduled && !_editingScheduled
                         ? l.scheduledFormSave
@@ -1010,19 +957,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                   ),
                 )
               else
-                Container(
-                  decoration: BoxDecoration(
-                    color: scheme.surface,
-                    border: Border(
-                      top: BorderSide(color: scheme.outlineVariant),
-                    ),
-                  ),
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                    AppSpacing.lg,
-                    insets > 0 ? AppSpacing.sm : AppSpacing.lg,
-                  ),
+                PinnedBar(
                   child: Row(
                     children: [
                       Expanded(

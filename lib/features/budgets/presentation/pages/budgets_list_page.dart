@@ -127,7 +127,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
                 AppSpacing.lg,
                 MediaQuery.paddingOf(context).top + AppSpacing.md,
                 AppSpacing.lg,
-                0,
+                MediaQuery.paddingOf(context).bottom,
               ),
               children: [
                 BudgetOverviewCard(
@@ -174,7 +174,7 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
           AppSpacing.lg,
           MediaQuery.paddingOf(context).top + AppSpacing.md,
           AppSpacing.lg,
-          96,
+          96 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           if (!_overviewFailed) ...[

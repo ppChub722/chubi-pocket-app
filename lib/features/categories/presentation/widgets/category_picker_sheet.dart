@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
@@ -11,6 +12,8 @@ import '../../../../shared/widgets/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
+import '../cubit/categories_cubit.dart';
+import '../pages/category_detail_page.dart';
 
 /// Result returned by [showCategoryPickerSheet]. Distinct from `null`
 /// (which means "user dismissed without picking") — `cleared` means
@@ -41,6 +44,9 @@ class CategoryPickerCleared extends CategoryPickerResult {
 ///   yourself or create a cycle.
 /// - [allowNone] / [noneLabel] — show a "None" row (clear / top-level).
 /// - [title] — sheet heading.
+/// - [allowCreate] — a "+ เพิ่มหมวดหมู่" row: opens the create page over the
+///   sheet; saving there picks the new category and closes the picker, back
+///   returns to the picker (owner 2026-10-10).
 ///
 /// System categories are always filtered out (server auto-assigns them).
 Future<CategoryPickerResult?> showCategoryPickerSheet({
@@ -53,6 +59,7 @@ Future<CategoryPickerResult?> showCategoryPickerSheet({
   String? noneLabel,
   int maxDepth = 2,
   Set<String> excludeIds = const <String>{},
+  bool allowCreate = false,
 }) {
   return showAppSheet<CategoryPickerResult>(
     context,
@@ -67,6 +74,7 @@ Future<CategoryPickerResult?> showCategoryPickerSheet({
       noneLabel: noneLabel,
       maxDepth: maxDepth,
       excludeIds: excludeIds,
+      allowCreate: allowCreate,
     ),
   );
 }
@@ -80,6 +88,7 @@ class _CategoryPickerBody extends StatefulWidget {
     required this.noneLabel,
     required this.maxDepth,
     required this.excludeIds,
+    required this.allowCreate,
   });
 
   final List<Category> categories;
@@ -89,6 +98,7 @@ class _CategoryPickerBody extends StatefulWidget {
   final String? noneLabel;
   final int maxDepth;
   final Set<String> excludeIds;
+  final bool allowCreate;
 
   @override
   State<_CategoryPickerBody> createState() => _CategoryPickerBodyState();
@@ -97,6 +107,48 @@ class _CategoryPickerBody extends StatefulWidget {
 class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
   /// Ids whose subtree is currently expanded.
   final Set<String> _expanded = <String>{};
+
+  /// The picked row — scrolled into view on open.
+  final _selectedKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    // A deep pick opens down to its level (owner 2026-10-10): expand every
+    // ancestor, then bring the row into view.
+    final byId = {for (final c in widget.categories) c.id: c};
+    var parentId = widget.selected?.parentId;
+    while (parentId != null && _expanded.add(parentId)) {
+      parentId = byId[parentId]?.parentId;
+    }
+    if (widget.selected != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final row = _selectedKey.currentContext;
+        if (row != null && row.mounted) {
+          Scrollable.ensureVisible(row, alignment: 0.4);
+        }
+      });
+    }
+  }
+
+  /// The create page, pushed over the sheet. A category of this type that
+  /// wasn't there before is the one just made → pick it.
+  Future<void> _create() async {
+    final cubit = context.read<CategoriesCubit>();
+    final before = {for (final c in cubit.state.categories) c.id};
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CategoryDetailPage(initialType: widget.type),
+      ),
+    );
+    if (!mounted) return;
+    final created = cubit.state.categories
+        .where((c) => c.type == widget.type && !before.contains(c.id))
+        .lastOrNull;
+    if (created != null) {
+      Navigator.of(context).pop(CategoryPickerSelected(created));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,6 +197,20 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
           )
         else
           ...rows,
+        if (widget.allowCreate)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              AppSpacing.sm,
+              AppSpacing.sm,
+              0,
+            ),
+            child: AddTile(
+              label: l.categoriesAddNew,
+              variant: AddTileVariant.row,
+              onTap: _create,
+            ),
+          ),
         const SizedBox(height: AppSpacing.md),
       ],
     );
@@ -165,6 +231,7 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
 
     out.add(
       _CategoryRow(
+        key: widget.selected?.id == category.id ? _selectedKey : null,
         category: category,
         iconCode: CategoryTree.resolveIconCode(category, widget.categories),
         depth: depth,
@@ -202,6 +269,7 @@ Color _selectedTint(BuildContext context) =>
 
 class _CategoryRow extends StatelessWidget {
   const _CategoryRow({
+    super.key,
     required this.category,
     required this.iconCode,
     required this.depth,

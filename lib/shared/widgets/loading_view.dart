@@ -21,7 +21,12 @@ class LoadingView extends StatelessWidget {
     // Generic fallback: stack of three shimmer blocks. Phase 1+ list screens
     // should pass an explicit skeleton instead.
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md + MediaQuery.paddingOf(context).bottom,
+      ),
       children: const [
         SkeletonBox(height: 24, width: 200),
         SizedBox(height: AppSpacing.md),

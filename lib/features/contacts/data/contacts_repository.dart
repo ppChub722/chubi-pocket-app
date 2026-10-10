@@ -52,7 +52,8 @@ class ContactsRepository {
     required String displayName,
     String? email,
     String? phone,
-    String? notes,
+    String? description,
+    String? note,
     IconCode? iconCode,
     List<String>? absorbNames,
   }) async {
@@ -63,7 +64,8 @@ class ContactsRepository {
           'display_name': displayName,
           'email': ?email,
           'phone': ?phone,
-          'notes': ?notes,
+          'description': ?description,
+          'note': ?note,
           if (iconCode != null) 'icon_code': iconCode.toJson(),
           'absorb_names': ?absorbNames,
         },
@@ -82,7 +84,8 @@ class ContactsRepository {
     String? displayName,
     String? email,
     String? phone,
-    String? notes,
+    String? description,
+    String? note,
     IconCode? iconCode,
   }) async {
     try {
@@ -92,7 +95,8 @@ class ContactsRepository {
           'display_name': ?displayName,
           'email': ?email,
           'phone': ?phone,
-          'notes': ?notes,
+          'description': ?description,
+          'note': ?note,
           if (iconCode != null) 'icon_code': iconCode.toJson(),
         },
       );
@@ -187,16 +191,21 @@ class ContactsRepository {
   /// Post-accept "no existing contact, create one" — the BE pulls
   /// display_name + email from the sender's user record (so the snapshot
   /// is correct as a fallback if the contact is later unlinked). Phone /
-  /// notes / icon come from the form.
+  /// description / note come from the form.
   Future<Contact> createLinkedContactFromLinkRequest(
     String notificationId, {
     String? phone,
-    String? notes,
+    String? description,
+    String? note,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/contacts/link-requests/$notificationId/create-linked-contact',
-        data: <String, dynamic>{'phone': ?phone, 'notes': ?notes},
+        data: <String, dynamic>{
+          'phone': ?phone,
+          'description': ?description,
+          'note': ?note,
+        },
       );
       return Contact.fromJson(res.data!);
     } on DioException catch (e) {
@@ -209,18 +218,23 @@ class ContactsRepository {
   /// Post-accept "I already have a contact for them, just wire the link"
   /// — the BE sets `linked_user_id` on the existing caller-owned contact.
   /// `display_name` and `email` are NOT sent — those project from the
-  /// linked user once the contact is linked. Phone / notes / icon are
+  /// linked user once the contact is linked. Phone / description / note are
   /// optional B-side updates.
   Future<Contact> linkExistingContactFromLinkRequest(
     String notificationId,
     String contactId, {
     String? phone,
-    String? notes,
+    String? description,
+    String? note,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/contacts/link-requests/$notificationId/link-existing-contact/$contactId',
-        data: <String, dynamic>{'phone': ?phone, 'notes': ?notes},
+        data: <String, dynamic>{
+          'phone': ?phone,
+          'description': ?description,
+          'note': ?note,
+        },
       );
       return Contact.fromJson(res.data!);
     } on DioException catch (e) {

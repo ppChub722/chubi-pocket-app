@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
@@ -59,11 +58,6 @@ class _EditProfilePageState extends State<EditProfilePage>
 
   @override
   bool get leaveOnCancel => true;
-
-  @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
 
   @override
   void onDraftRestored() {
@@ -152,7 +146,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                 AppSpacing.lg,
                 MediaQuery.paddingOf(context).top + AppSpacing.lg,
                 AppSpacing.lg,
-                AppSpacing.huge,
+                AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
               ),
               children: [
                 HeaderCard(
@@ -186,6 +180,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 SectionCard(
+                  first: true,
                   children: [
                     DetailRow(
                       leading: const Icon(AppIcons.lock),
@@ -193,7 +188,6 @@ class _EditProfilePageState extends State<EditProfilePage>
                       helper: l.profileUsernameLocked,
                       trailing: Text('@${_user.username}'),
                     ),
-                    const RowDivider(),
                     DetailStacked(
                       label: l.editProfileEmailLabel,
                       child: Column(

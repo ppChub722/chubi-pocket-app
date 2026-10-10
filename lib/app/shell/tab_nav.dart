@@ -40,6 +40,43 @@ enum ShellTab {
     tags => AppModules.tags,
   };
 
+  /// The first path segments each tab's routes start with (app_router.dart).
+  static const _segments = {
+    '': home,
+    'browse': home,
+    'transactions': transactions,
+    'accounts': accounts,
+    'more': more,
+    'pending': pending,
+    'notifications': notifications,
+    'settings': settings,
+    'projects': projects,
+    'contacts': contacts,
+    'budgets': budgets,
+    'scheduled-transactions': scheduled,
+    'saving-goals': savingGoals,
+    'personal-debts': debts,
+    'categories': categories,
+    'tags': tags,
+  };
+
+  /// The tab a location's page lives in — null outside the shell (`/dev`,
+  /// `/auth`) or for an unknown path.
+  static ShellTab? ofPath(String location) {
+    final path = Uri.parse(location).path;
+    final segments = path.split('/').where((s) => s.isNotEmpty);
+    return _segments[segments.isEmpty ? '' : segments.first];
+  }
+
+  /// The module a location belongs to — usually [ofPath], but a page can
+  /// sit in another tab's stack for its module (notification settings
+  /// under ตั้งค่า).
+  static ShellTab? moduleOfPath(String location) {
+    final path = Uri.parse(location).path;
+    if (path == '/settings/notifications') return notifications;
+    return ofPath(path);
+  }
+
   /// The on-screen row this tab sits in.
   ShellRow get row => ShellRow.values.firstWhere((r) => r.all.contains(this));
 
@@ -93,6 +130,18 @@ enum ShellRow {
 
   /// A section of the เพิ่มเติม hub.
   bool get inMore => index >= library.index;
+}
+
+/// Where the router sends [location] when its module is switched off
+/// ([AppModules]) — a deep link, a notification's link, an `openPage`:
+/// a เพิ่มเติม card's page → the hub, anything else → the dashboard. Null
+/// = the module is on (or the page isn't a module's), go ahead.
+///
+/// [isOn] is for tests; the app uses [ShellTab.enabled].
+String? offModuleRedirect(String location, {bool Function(ShellTab)? isOn}) {
+  final tab = ShellTab.moduleOfPath(location);
+  if (tab == null || (isOn ?? (t) => t.enabled)(tab)) return null;
+  return tab.inMore ? '/more' : '/';
 }
 
 /// Opens [location] where it lives — returned as a closure so callers can
@@ -149,4 +198,35 @@ class ShellBackScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(ShellBackScope old) => onBack != old.onBack;
+}
+
+/// A tab root that spends the sideways swipe on itself first — the
+/// dashboard's month (owner 2026-10-10: swipe changes the month; only past
+/// the last one does it change the tab). [dir] is +1 for a swipe left
+/// (next), −1 for a swipe right (previous).
+abstract interface class ShellSwipeHandler {
+  /// Whether a swipe toward [dir] is this page's (not the tab switch's).
+  bool canSwipe(int dir);
+
+  void onSwipe(int dir);
+}
+
+/// Where a tab's root page registers its [ShellSwipeHandler]; the shell's
+/// swipe asks the current tab's handler before switching tabs. One gesture
+/// recogniser for both, so the two never fight in the arena.
+class ShellSwipeScope extends InheritedWidget {
+  const ShellSwipeScope({
+    required this.handlers,
+    required super.child,
+    super.key,
+  });
+
+  /// Per tab. Pages add / remove themselves; the map is the shell's.
+  final Map<ShellTab, ShellSwipeHandler> handlers;
+
+  static Map<ShellTab, ShellSwipeHandler>? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<ShellSwipeScope>()?.handlers;
+
+  @override
+  bool updateShouldNotify(ShellSwipeScope old) => handlers != old.handlers;
 }

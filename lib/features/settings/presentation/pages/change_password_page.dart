@@ -34,6 +34,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
+  /// ยกเลิก and ✕ alike: leave the form (nothing while submitting).
+  void _cancel() {
+    if (!_submitting) context.pop();
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final l = AppLocalizations.of(context)!;
@@ -77,7 +82,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         title: l.changePasswordTitle,
         showBack: true,
         editing: true,
-        onBack: () => context.pop(),
+        // ✕ = ยกเลิก (owner 2026-10-10).
+        onBack: _cancel,
       ),
       // No undo on a password form — the bar hides it (onUndo null).
       bottomNavigationBar: ModeActionBar(
@@ -85,7 +91,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         saving: _submitting,
         cancelLabel: l.commonCancel,
         saveLabel: l.changePasswordSubmit,
-        onCancel: () => context.pop(),
+        onCancel: _cancel,
         onSave: _submit,
       ),
       extendBodyBehindAppBar: true,

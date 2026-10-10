@@ -164,17 +164,10 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
               ],
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: scheme.surface,
-              border: Border(top: BorderSide(color: scheme.outlineVariant)),
-            ),
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.sm,
-              AppSpacing.lg,
-              AppSpacing.sm + MediaQuery.paddingOf(context).bottom,
-            ),
+          // The text button below brings its own bottom space.
+          PinnedBar(
+            bottomGap: AppSpacing.sm,
+            keyboardGap: 0,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

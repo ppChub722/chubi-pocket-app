@@ -28,6 +28,14 @@ class DevHubScreen extends StatelessWidget {
         icon: Icons.widgets_outlined,
       ),
       _DevEntry(
+        title: 'Detail playground',
+        subtitle:
+            'Mock detail page — every row kind · row dividers (#16) · '
+            'section separators (#17)',
+        route: '/dev/detail-playground',
+        icon: Icons.view_agenda_outlined,
+      ),
+      _DevEntry(
         title: 'Theme preview',
         subtitle: 'Theme registry, locale, font, color swatches, formatters',
         route: '/dev/theme-preview',

@@ -71,13 +71,15 @@ class TransactionTile extends StatelessWidget {
             size: 36,
           );
 
+    // The record's own title ("what for") first, else its category.
     final categoryName = tx.category?.name ?? '';
-    final title = categoryName.isNotEmpty
-        ? categoryName
-        : ((tx.note?.isNotEmpty ?? false) ? tx.note! : '—');
+    final description = tx.description?.trim() ?? '';
+    final title = description.isNotEmpty
+        ? description
+        : (categoryName.isNotEmpty ? categoryName : '—');
 
     final parts = <String>[
-      if (categoryName.isNotEmpty && (tx.note?.isNotEmpty ?? false)) tx.note!,
+      if (description.isNotEmpty && categoryName.isNotEmpty) categoryName,
       if (showAccount && tx.account != null) tx.account!.name,
       if (showDate) _date(context, l, tx.date),
     ];

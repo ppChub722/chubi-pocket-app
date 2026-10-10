@@ -62,58 +62,47 @@ class _Body extends StatelessWidget {
           Set<String> toggled(Set<String> set, String v, bool add) =>
               add ? {...set, v} : (set.toSet()..remove(v));
 
-          /// One type: "receive" switch, plus — when the type has an action
+          /// One type, as one row: "receive" switch, plus — when it has an action
           /// — an indented "do it automatically" switch. Muted → the auto
           /// switch is disabled (and ignored by the server) but keeps its
           /// value for when the type is turned back on.
-          List<Widget> typeRows(
+          Widget typeRow(
             NotificationType t,
             String label, {
             String? autoLabel,
             Widget? extra,
           }) {
             final on = !s.isMuted(t);
-            return [
-              SwitchListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                ),
-                title: Text(label),
-                value: on,
-                onChanged: (v) =>
-                    cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
-              ),
-              if (autoLabel != null)
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 SwitchListTile(
-                  contentPadding: const EdgeInsets.only(
-                    left: AppSpacing.xxxl,
-                    right: AppSpacing.lg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
-                  dense: true,
-                  title: Text(autoLabel),
-                  value: s.isAuto(t),
-                  onChanged: on
-                      ? (v) => cubit.update(autoTypes: toggled(auto, t.wire, v))
-                      : null,
+                  title: Text(label),
+                  value: on,
+                  onChanged: (v) =>
+                      cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
                 ),
-              ?extra,
-            ];
+                if (autoLabel != null)
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.only(
+                      left: AppSpacing.xxxl,
+                      right: AppSpacing.lg,
+                    ),
+                    dense: true,
+                    title: Text(autoLabel),
+                    value: s.isAuto(t),
+                    onChanged: on
+                        ? (v) =>
+                              cubit.update(autoTypes: toggled(auto, t.wire, v))
+                        : null,
+                  ),
+                ?extra,
+              ],
+            );
           }
-
-          Widget groupTitle(String t) => Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
-              0,
-            ),
-            child: Text(
-              t,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          );
 
           final accounts = ctx.watch<AccountsCubit>().state.accounts;
           final receiving = accounts
@@ -124,13 +113,16 @@ class _Body extends StatelessWidget {
               s.isAuto(NotificationType.splitPaid);
 
           return ListView(
-            // Clear the floating top bar.
-            padding: EdgeInsets.only(
-              top: MediaQuery.paddingOf(ctx).top,
-              bottom: AppSpacing.huge,
+            // Clear the floating top bar; sides like every detail page.
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              MediaQuery.paddingOf(ctx).top + AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
             ),
             children: [
               SectionCard(
+                first: true,
                 title: l.notifSettingsReceive,
                 children: [
                   Padding(
@@ -142,13 +134,17 @@ class _Body extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
-                  groupTitle(l.notifGroupSplits),
-                  ...typeRows(
+                ],
+              ),
+              SectionCard(
+                title: l.notifGroupSplits,
+                children: [
+                  typeRow(
                     NotificationType.splitCreated,
                     l.notifTypeSplitCreated,
                     autoLabel: l.notifAutoAddDebt,
                   ),
-                  ...typeRows(
+                  typeRow(
                     NotificationType.splitPaid,
                     l.notifTypeSplitPaid,
                     autoLabel: l.notifAutoRecordPayment,
@@ -180,35 +176,28 @@ class _Body extends StatelessWidget {
                       ),
                     ),
                   ),
-                  groupTitle(l.notifGroupProjects),
-                  ...typeRows(
-                    NotificationType.projectTxRecordedForYou,
-                    l.notifTypeProjectTxForYou,
-                    autoLabel: l.notifAutoCopyToBook,
-                  ),
-                  ...typeRows(
-                    NotificationType.projectTxChanged,
-                    l.notifTypeProjectTxChanged,
-                    autoLabel: l.notifAutoUpdateCopy,
-                  ),
-                  ...typeRows(
-                    NotificationType.projectAdded,
-                    l.notifTypeProjectAdded,
-                  ),
-                  groupTitle(l.notifGroupRequests),
-                  DetailRow(
-                    label: l.notifGroupRequests,
-                    trailing: AppBadge(
-                      label: l.notifTypeAlwaysOn,
-                      icon: AppIcons.lock,
-                    ),
-                  ),
                 ],
               ),
               SectionCard(
                 title: l.notifGroupProjects,
                 children: [
-                  // Not a notification — I recorded it myself.
+                  typeRow(
+                    NotificationType.projectTxRecordedForYou,
+                    l.notifTypeProjectTxForYou,
+                    autoLabel: l.notifAutoCopyToBook,
+                  ),
+                  typeRow(
+                    NotificationType.projectTxChanged,
+                    l.notifTypeProjectTxChanged,
+                    autoLabel: l.notifAutoUpdateCopy,
+                  ),
+                  typeRow(
+                    NotificationType.projectAdded,
+                    l.notifTypeProjectAdded,
+                  ),
+                  // Not a notification — I recorded it myself. Lives with
+                  // the project types rather than a second "โปรเจกต์"
+                  // section.
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.lg,
@@ -216,6 +205,18 @@ class _Body extends StatelessWidget {
                     title: Text(l.notifAutoResolveProject),
                     value: s.autoResolveOwnInProjects,
                     onChanged: (v) => cubit.update(autoResolveOwnInProjects: v),
+                  ),
+                ],
+              ),
+              SectionCard(
+                title: l.notifGroupRequests,
+                children: [
+                  DetailRow(
+                    label: l.notifGroupRequests,
+                    trailing: AppBadge(
+                      label: l.notifTypeAlwaysOn,
+                      icon: AppIcons.lock,
+                    ),
                   ),
                 ],
               ),

@@ -93,6 +93,7 @@ class PersonalDebtsRepository {
     required double amount,
     required String currency,
     String? counterpartyContactId,
+    String? description,
     String? note,
   }) async {
     try {
@@ -104,6 +105,7 @@ class PersonalDebtsRepository {
           'amount': amount,
           'currency': currency,
           'counterparty_contact_id': ?counterpartyContactId,
+          'description': ?description,
           'note': ?note,
         },
       );
@@ -126,11 +128,13 @@ class PersonalDebtsRepository {
   }
 
   /// [clearContact] sends an explicit `counterparty_contact_id: null`
-  /// (switching to a typed name) — contract §7.
+  /// (switching to a typed name) — contract §7. [description] / [note]:
+  /// null = unchanged, `''` = clear (migration 51).
   Future<PersonalDebt> update(
     String id, {
     double? amount,
     double? settledAmount,
+    String? description,
     String? note,
     DebtStatus? status,
     String? counterpartyPersonName,
@@ -143,6 +147,7 @@ class PersonalDebtsRepository {
         data: <String, dynamic>{
           'amount': ?amount,
           'settled_amount': ?settledAmount,
+          'description': ?description,
           'note': ?note,
           'status': ?status?.wire,
           'counterparty_person_name': ?counterpartyPersonName,
@@ -180,11 +185,13 @@ class PersonalDebtsRepository {
   /// Settle a debt: always records a transaction (income for owed_to_me,
   /// expense for i_owe) — into [accountId], or a floating (no-wallet) row
   /// when it's null — and bumps settled_amount. Write-offs use cancel.
+  /// No [description] → the server copies the debt's; no [note] → empty.
   Future<SettleResult> settle(
     String id, {
     String? accountId,
     double? amount,
     String? date,
+    String? description,
     String? note,
   }) async {
     try {
@@ -195,6 +202,7 @@ class PersonalDebtsRepository {
           'account_id': ?accountId,
           'amount': ?amount,
           'date': ?date,
+          'description': ?description,
           'note': ?note,
         },
       );

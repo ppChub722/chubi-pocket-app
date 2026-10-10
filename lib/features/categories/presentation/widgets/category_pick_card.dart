@@ -21,6 +21,7 @@ class CategoryPickCard extends StatelessWidget {
     required this.placeholder,
     required this.onTap,
     this.errorText,
+    this.dense = false,
     super.key,
   });
 
@@ -29,6 +30,11 @@ class CategoryPickCard extends StatelessWidget {
   final String placeholder;
   final VoidCallback? onTap;
   final String? errorText;
+
+  /// [PickCard.dense], with a smaller icon — two cards on one row.
+  final bool dense;
+
+  double get _icon => dense ? 32 : 40;
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +48,17 @@ class CategoryPickCard extends StatelessWidget {
       value: c?.name,
       placeholder: placeholder,
       leading: c == null
-          ? const PickCardEmptyIcon(AppIcons.category)
-          : IconDisplay(type: IconType.category, size: 40, iconCode: iconCode),
+          ? PickCardEmptyIcon(AppIcons.category, size: _icon)
+          : IconDisplay(
+              type: IconType.category,
+              size: _icon,
+              iconCode: iconCode,
+            ),
       subtitle: path.isEmpty ? null : Text(path),
       accent: iconCode?.accentColorFor(palette) ?? palette.primary,
       onTap: onTap,
       errorText: errorText,
+      dense: dense,
     );
   }
 }

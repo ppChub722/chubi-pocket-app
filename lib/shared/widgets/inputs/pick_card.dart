@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../dashed_rect_border.dart';
@@ -9,14 +8,19 @@ import '../dashed_rect_border.dart';
 /// that opens its picker on tap. Same look as the wallet / เพิ่มเติม cards:
 /// a soft wash of the value's own [accent] colour, hairline accent border.
 ///
-/// `[icon]  label            [✕ | ›]`
+/// `[icon]  label`
 /// `        Value`
 /// `        subtitle`
 ///
 /// - [value] null → empty state: dashed outline, [placeholder] in muted text
 ///   (an optional field the user left blank, e.g. "ไม่ระบุหมวด").
 /// - No ✕: the whole card opens the picker, and the picker offers the
-///   "none" option for optional fields (owner 2026-10-09).
+///   "none" option for optional fields (owner 2026-10-09). No › either
+///   (owner 2026-10-10): the tinted / dashed card already reads as
+///   tappable, and half-width cards need the room for the value.
+/// - Two side by side: wrap the [Row] in an [IntrinsicHeight] with
+///   `CrossAxisAlignment.stretch` — both cards take the taller one's
+///   height and centre their content. [dense] tightens the insets.
 /// - [errorText] → error border + message under the card.
 class PickCard extends StatelessWidget {
   const PickCard({
@@ -29,6 +33,7 @@ class PickCard extends StatelessWidget {
     this.accent,
     this.errorText,
     this.watermark,
+    this.dense = false,
     super.key,
   });
 
@@ -48,9 +53,12 @@ class PickCard extends StatelessWidget {
   /// The value's colour; null = neutral.
   final Color? accent;
 
-  /// Null = read-only (no ripple, no chevron).
+  /// Null = read-only (no ripple).
   final VoidCallback? onTap;
   final String? errorText;
+
+  /// Tighter insets / gap — for two cards side by side on a phone.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +98,7 @@ class PickCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Stack(
+            alignment: AlignmentDirectional.centerStart,
             children: [
               // Big faded glyph in the corner, like the wallet cards.
               if (!empty && watermark != null)
@@ -107,16 +116,14 @@ class PickCard extends StatelessWidget {
               ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 64),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.sm,
-                    AppSpacing.xs,
-                    AppSpacing.sm,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: dense ? AppSpacing.sm : AppSpacing.md,
+                    vertical: AppSpacing.sm,
                   ),
                   child: Row(
                     children: [
                       Opacity(opacity: empty ? 0.6 : 1, child: leading),
-                      const SizedBox(width: AppSpacing.md),
+                      SizedBox(width: dense ? AppSpacing.sm : AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,14 +159,6 @@ class PickCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      if (onTap != null)
-                        Padding(
-                          padding: const EdgeInsets.all(AppSpacing.sm),
-                          child: Icon(
-                            AppIcons.chevronRight,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
                     ],
                   ),
                 ),

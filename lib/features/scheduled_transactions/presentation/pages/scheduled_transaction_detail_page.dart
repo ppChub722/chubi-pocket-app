@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
@@ -209,7 +208,7 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
               AppSpacing.lg,
               MediaQuery.paddingOf(context).top + AppSpacing.md,
               AppSpacing.lg,
-              96,
+              96 + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
               _Hero(
@@ -223,11 +222,8 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
               ),
               const SizedBox(height: AppSpacing.lg),
               _StatsCard(entry: entry),
-              if (entry.canGenerateNow) ...[
-                const SizedBox(height: AppSpacing.lg),
+              if (entry.canGenerateNow)
                 _GenerateNowCard(entry: entry, onGenerated: _refreshHistory),
-              ],
-              const SizedBox(height: AppSpacing.lg),
               _HistorySection(future: _historyFuture),
               DangerRow(
                 icon: AppIcons.delete,
@@ -400,23 +396,16 @@ class _StatsCard extends StatelessWidget {
             value: '${entry.interestRate!.toStringAsFixed(2)}%',
           ),
       ],
-      if (entry.note != null && entry.note!.isNotEmpty)
-        _StatRow(
-          icon: AppIcons.note,
-          label: l.scheduledDetailNote,
-          value: entry.note!,
-        ),
+      // Long text: label on top, value full-width below.
+      if (_has(entry.description))
+        _TextRow(label: l.commonDescription, value: entry.description!),
+      if (_has(entry.note)) _TextRow(label: l.commonNote, value: entry.note!),
     ];
     // Detail-page rows (SectionCard / DetailRow), hairlines between.
-    return SectionCard(
-      children: [
-        for (var i = 0; i < rows.length; i++) ...[
-          if (i > 0) const RowDivider(),
-          rows[i],
-        ],
-      ],
-    );
+    return SectionCard(first: true, children: rows);
   }
+
+  static bool _has(String? v) => v != null && v.trim().isNotEmpty;
 
   String _cycleLabel(AppLocalizations l, BillingCycle c) {
     switch (c) {
@@ -449,6 +438,20 @@ class _StatRow extends StatelessWidget {
       DetailRow(leading: Icon(icon), label: label, trailing: Text(value));
 }
 
+/// Description / note — a [DetailStacked], so long text wraps full-width.
+class _TextRow extends StatelessWidget {
+  const _TextRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => DetailStacked(
+    label: label,
+    child: Text(value, style: Theme.of(context).textTheme.bodyLarge),
+  );
+}
+
 class _GenerateNowCard extends StatefulWidget {
   const _GenerateNowCard({required this.entry, required this.onGenerated});
   final ScheduledTransaction entry;
@@ -465,6 +468,8 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return SectionCard(
+      // One block — the row and its button belong together.
+      dividers: false,
       children: [
         DetailRow(
           leading: const Icon(AppIcons.add),
@@ -529,130 +534,115 @@ class _HistorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    return SectionCard(
-      title: l.scheduledDetailHistoryTitle,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FutureBuilder<ScheduledHistory>(
-                future: future,
-                builder: (context, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    // Rows shaped like the history rows below.
-                    return Column(
-                      children: [
-                        for (var i = 0; i < 3; i++)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: AppSpacing.sm,
-                            ),
-                            child: Row(
-                              children: [
-                                SkeletonCircle(size: 20),
-                                SizedBox(width: AppSpacing.md),
-                                Expanded(child: SkeletonLine()),
-                                SizedBox(width: AppSpacing.xl),
-                                SkeletonLine(width: 64),
-                              ],
-                            ),
-                          ),
-                      ],
-                    );
-                  }
-                  if (snap.hasError) {
-                    return Text(
-                      ErrorView.titleFor(
-                        l,
-                        ApiException.from(snap.error!, snap.stackTrace),
-                      ),
-                      style: TextStyle(color: scheme.error),
-                    );
-                  }
-                  final h = snap.data!;
-                  if (h.entries.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.md,
-                      ),
-                      child: Text(
-                        l.scheduledDetailHistoryEmpty,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    );
-                  }
-                  return Column(
-                    children: [
-                      for (final e in h.entries)
-                        InkWell(
-                          onTap: () => GoRouter.of(
-                            context,
-                          ).push('/transactions/${e.id}'),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.sm,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  AppIcons.transactions,
-                                  size: 20,
-                                  color: scheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: AppSpacing.md),
-                                Expanded(
-                                  child: Text(
-                                    e.date,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
-                                ),
-                                Text(
-                                  moneyString(context, e.amount),
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      if (h.totalGenerated > 0) ...[
-                        const Divider(),
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.xs),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                l.scheduledDetailHistoryTotal(h.totalGenerated),
-                                style: Theme.of(context).textTheme.labelMedium
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
-                              Text(
-                                moneyString(context, h.totalAmountGenerated),
-                                style: Theme.of(context).textTheme.labelMedium
-                                    ?.copyWith(
-                                      color: scheme.onSurface,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
+    final textTheme = Theme.of(context).textTheme;
+    // Each history entry is its own row, so the section draws the
+    // hairlines between them (and above the total).
+    Widget row(Widget child, {VoidCallback? onTap}) {
+      final padded = Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
         ),
-      ],
+        child: child,
+      );
+      return onTap == null ? padded : InkWell(onTap: onTap, child: padded);
+    }
+
+    return FutureBuilder<ScheduledHistory>(
+      future: future,
+      builder: (context, snap) {
+        final List<Widget> rows;
+        if (snap.connectionState != ConnectionState.done) {
+          // Rows shaped like the history rows below.
+          rows = [
+            for (var i = 0; i < 3; i++)
+              row(
+                const Row(
+                  children: [
+                    SkeletonCircle(size: 20),
+                    SizedBox(width: AppSpacing.md),
+                    Expanded(child: SkeletonLine()),
+                    SizedBox(width: AppSpacing.xl),
+                    SkeletonLine(width: 64),
+                  ],
+                ),
+              ),
+          ];
+        } else if (snap.hasError) {
+          rows = [
+            row(
+              Text(
+                ErrorView.titleFor(
+                  l,
+                  ApiException.from(snap.error!, snap.stackTrace),
+                ),
+                style: TextStyle(color: scheme.error),
+              ),
+            ),
+          ];
+        } else if (snap.data!.entries.isEmpty) {
+          rows = [
+            row(
+              Text(
+                l.scheduledDetailHistoryEmpty,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ];
+        } else {
+          final h = snap.data!;
+          rows = [
+            for (final e in h.entries)
+              row(
+                onTap: () => openPage(context, '/transactions/${e.id}'),
+                Row(
+                  children: [
+                    Icon(
+                      AppIcons.transactions,
+                      size: 20,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: Text(e.date, style: textTheme.bodyMedium)),
+                    Text(
+                      moneyString(context, e.amount),
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (h.totalGenerated > 0)
+              row(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l.scheduledDetailHistoryTotal(h.totalGenerated),
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      moneyString(context, h.totalAmountGenerated),
+                      style: textTheme.labelMedium?.copyWith(
+                        color: scheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ];
+        }
+        return SectionCard(
+          title: l.scheduledDetailHistoryTitle,
+          children: rows,
+        );
+      },
     );
   }
 }

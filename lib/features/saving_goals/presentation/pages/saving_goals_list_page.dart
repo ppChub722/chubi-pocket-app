@@ -64,7 +64,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
                   AppSpacing.lg,
                   MediaQuery.paddingOf(context).top + AppSpacing.md,
                   AppSpacing.lg,
-                  96,
+                  96 + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
                   for (final g in state.goals) ...[

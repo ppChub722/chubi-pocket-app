@@ -7,12 +7,16 @@ class Tag extends Equatable {
     required this.id,
     required this.name,
     this.iconCode,
+    this.description,
+    this.note,
     this.usageCount = 0,
   });
 
   final String id;
   final String name;
   final IconCode? iconCode;
+  final String? description;
+  final String? note;
   final int usageCount;
 
   factory Tag.fromJson(Map<String, dynamic> json) {
@@ -22,6 +26,8 @@ class Tag extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      description: json['description'] as String?,
+      note: json['note'] as String?,
       usageCount: (json['usage_count'] as int?) ?? 0,
     );
   }
@@ -30,27 +36,46 @@ class Tag extends Equatable {
     return <String, dynamic>{
       'name': name,
       if (iconCode != null) 'icon_code': iconCode!.toJson(),
+      if (description != null) 'description': description,
+      if (note != null) 'note': note,
     };
   }
 
+  /// Full replace — null clears.
   Map<String, dynamic> toUpdateJson() {
-    return <String, dynamic>{'name': name, 'icon_code': iconCode?.toJson()};
+    return <String, dynamic>{
+      'name': name,
+      'icon_code': iconCode?.toJson(),
+      'description': description,
+      'note': note,
+    };
   }
 
   Tag copyWith({
     String? id,
     String? name,
     IconCode? iconCode,
+    String? description,
+    String? note,
     int? usageCount,
   }) {
     return Tag(
       id: id ?? this.id,
       name: name ?? this.name,
       iconCode: iconCode ?? this.iconCode,
+      description: description ?? this.description,
+      note: note ?? this.note,
       usageCount: usageCount ?? this.usageCount,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, iconCode, usageCount];
+  List<Object?> get props => [
+    id,
+    name,
+    iconCode,
+    description,
+    note,
+    usageCount,
+  ];
 }

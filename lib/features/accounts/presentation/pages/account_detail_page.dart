@@ -11,6 +11,7 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/currencies.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -229,11 +230,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   bool get leaveOnCancel => _isCreate;
 
   @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  @override
   void onDraftRestored() {
     void sync(TextEditingController c, String v) {
       if (c.text != v) c.text = v;
@@ -284,7 +280,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     String? opt(String s) => s.trim().isEmpty ? null : s.trim();
     return Account(
       id: base?.id ?? 'preview',
-      name: w.name.trim().isEmpty ? l.accountFormNameLabel : w.name,
+      name: w.name.trim().isEmpty ? l.commonName : w.name,
       type: w.type,
       // Create: the opening balance (credit = debt, stored negative).
       balance: base?.balance ?? (w.type.isCredit ? -opening : opening),
@@ -458,6 +454,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       final outcome = await cubit.adjustBalance(
         id: a.id,
         newBalance: result.balance,
+        description: result.description,
         note: result.note,
       );
       await txCubit.load(accountId: a.id);
@@ -549,11 +546,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               );
               final overview = ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
+                padding: EdgeInsets.fromLTRB(
                   AppSpacing.lg,
                   AppSpacing.md,
                   AppSpacing.lg,
-                  AppSpacing.huge,
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: _overview(l),
               );
@@ -652,14 +649,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         const SizedBox(height: AppSpacing.md),
       ],
       _infoSection(l),
-      if (_identifiersSection(l) case final numbers?) ...[
-        const SizedBox(height: AppSpacing.md),
-        numbers,
-      ],
-      if (a != null) ...[
-        const SizedBox(height: AppSpacing.md),
-        LockedInEdit(locked: editing, child: _sharingSection(l, a)),
-      ],
+      ?_identifiersSection(l),
+      if (a != null) _sharingSection(l, a),
       // Archive lives at the bottom of the body in edit mode (the top bar
       // carries no page actions).
       if (editing && a != null)
@@ -684,28 +675,30 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         editing: editing,
         controller: _nameController,
         focusNode: _nameFocus,
-        hint: l.accountFormNameLabel,
+        hint: l.commonName,
+        maxLength: TextLimits.name,
         maxLines: 2,
         onEnterEdit: _enterOn(_nameFocus),
         onChanged: (v) => _onText(_Field.name, v),
         validator: (v) {
           final name = v?.trim() ?? '';
           if (name.isEmpty) return l.accountFormNameRequired;
-          if (name.length > 100) return l.accountFormNameTooLong;
+          if (name.length > TextLimits.name) return l.accountFormNameTooLong;
           return null;
         },
       ),
       // The description lives here now, edited in place (owner
       // 2026-10-09) — no separate row below. The owner always gets the line
       // (empty = the dim hint) so entering edit doesn't grow the card;
-      // others only see one that's set.
+      // others only see one that's set. Like the name above it, the
+      // header field has no label, so its hint is the standard word.
       descriptionField: editing || hasDescription || owner
           ? InlineTitleField(
               editing: editing,
               controller: _descriptionController,
               focusNode: _descriptionFocus,
-              hint: l.accountFormDescriptionHelper,
-              maxLength: 280,
+              hint: l.commonDescription,
+              maxLength: TextLimits.description,
               maxLines: 3,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurface.withValues(alpha: 0.75),
@@ -736,6 +729,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     // Non-owners can't fill an empty field, so don't show it.
     bool show(String v) => editing || owner || v.trim().isNotEmpty;
     return SectionCard(
+      first: true,
       children: [
         if (editing)
           DetailStacked(
@@ -763,8 +757,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             label: l.accountFormTypeLabel,
             trailing: _TypeChip(type: w.type, accent: accent),
           ),
-        if (_isCreate) ...[
-          const RowDivider(),
+        if (_isCreate)
           DetailStacked(
             label: w.type.isCredit
                 ? l.accountFormOpeningDebtLabel
@@ -791,23 +784,20 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               ],
             ),
           ),
-        ],
-        if (show(w.note)) ...[
-          const RowDivider(),
+        if (show(w.note))
           DetailStacked(
-            label: l.accountDetailNote,
+            label: l.commonNote,
             child: InlineField(
               editing: editing,
               controller: _noteController,
               focusNode: _noteFocus,
-              maxLines: 2,
-              maxLength: 280,
+              maxLines: 3,
+              maxLength: TextLimits.note,
               hint: l.accountFormNoteHelper,
               onEnterEdit: _enterOn(_noteFocus),
               onChanged: (v) => _onText(_Field.note, v),
             ),
           ),
-        ],
         if (w.type.isCredit) ..._creditRows(l, symbol),
       ],
     );
@@ -824,19 +814,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     if (list.isEmpty && !owner) return null;
     final hidden = !editing && isMoneyHidden(context);
     return SectionCard(
+      title: l.accountIdentifiersTitle,
+      // 👁 — the same switch as the money privacy toggle.
+      trailing: IdentifiersVisibility(show: !editing && list.isNotEmpty),
       children: [
-        IdentifiersTitle(
-          title: l.accountIdentifiersTitle,
-          showToggle: !editing && list.isNotEmpty,
-        ),
         if (list.isEmpty && !editing)
           DetailRow(
             label: l.accountIdentifiersEmpty,
             helper: l.accountIdentifiersHelper,
             onTap: enterEdit,
           ),
-        for (final (i, id) in list.indexed) ...[
-          if (i > 0) const RowDivider(),
+        for (final (i, id) in list.indexed)
           IdentifierRow(
             identifier: id,
             providers: _providers,
@@ -844,15 +832,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             onTap: editing ? () => _editIdentifier(i) : null,
             onDelete: editing ? () => _removeIdentifier(i) : null,
           ),
-        ],
-        if (editing) ...[
-          if (list.isNotEmpty) const RowDivider(),
-          AddTile(
+        if (editing)
+          DetailAddRow(
             label: l.accountIdentifiersAdd,
-            variant: AddTileVariant.row,
             onTap: () => _editIdentifier(null),
           ),
-        ],
       ],
     );
   }
@@ -890,34 +874,27 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       final dueDay = int.tryParse(w.dueDay);
       final minPayment = AmountField.parse(w.minPayment);
       return [
-        const RowDivider(),
         DetailRow(
           label: l.accountFormCreditLimitLabel,
           trailing: limit == null
               ? const Text('—')
               : MoneyText(limit, symbol: symbol),
         ),
-        if (statementDay != null) ...[
-          const RowDivider(),
+        if (statementDay != null)
           DetailRow(
             label: l.accountDetailStatementDate,
             trailing: Text(l.accountDetailDayOfMonth(statementDay)),
           ),
-        ],
-        if (dueDay != null) ...[
-          const RowDivider(),
+        if (dueDay != null)
           DetailRow(
             label: l.accountDetailPaymentDue,
             trailing: Text(l.accountDetailDayOfMonth(dueDay)),
           ),
-        ],
-        if (minPayment != null) ...[
-          const RowDivider(),
+        if (minPayment != null)
           DetailRow(
             label: l.accountDetailMinimumPayment,
             trailing: MoneyText(minPayment, symbol: symbol),
           ),
-        ],
       ];
     }
     String? validateDay(String? v) {
@@ -929,7 +906,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
 
     return [
-      const RowDivider(),
       DetailStacked(
         label: l.accountFormCreditLimitLabel,
         child: AmountField(
@@ -943,7 +919,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           },
         ),
       ),
-      const RowDivider(),
       DetailRow(
         label: l.accountFormStatementDateLabel,
         helper: l.accountFormStatementDateHelper,
@@ -953,7 +928,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           validator: validateDay,
         ),
       ),
-      const RowDivider(),
       DetailRow(
         label: l.accountFormPaymentDueLabel,
         helper: l.accountFormPaymentDueHelper,
@@ -963,7 +937,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           validator: validateDay,
         ),
       ),
-      const RowDivider(),
       DetailStacked(
         label: l.accountFormMinimumPaymentLabel,
         child: AmountField(
@@ -981,6 +954,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final scope = _effectiveScope(a);
     return SectionCard(
       title: l.accountSharingSectionTitle,
+      // Live settings, not part of the edit — locked while editing.
+      locked: isEditing,
       children: [
         DetailRow(
           label: l.walletMembersTitle,
@@ -995,7 +970,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           showChevron: true,
           onTap: () => context.push('/accounts/${a.id}/members'),
         ),
-        const RowDivider(),
         DetailRow(
           label: l.walletReportScopeTitle,
           helper: l.walletReportScopeHelper,

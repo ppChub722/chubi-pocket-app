@@ -4,9 +4,9 @@ part of 'draft_form.dart';
 /// no wallet or category — it has a payer, a description, a note, tags and
 /// splits between members, in the project's currency:
 ///
-///   [ จ่าย | รับ ] · amount · [ จ่ายโดย 👤 ]
-///   date · คำอธิบาย (tap → pick one used before, or type a new one)
-///   ▸ รายละเอียดเพิ่ม: note · tags · หารกับสมาชิก
+///   [TxHeroCard]: [ จ่าย | รับ ] · amount · คำอธิบาย (tap → pick one
+///     used before, or type a new one) · date
+///   [ จ่ายโดย 👤 ] · note · tags · หารกับสมาชิก
 class DraftEvent {
   const DraftEvent({
     required this.members,
@@ -36,8 +36,6 @@ class _EventForm extends StatelessWidget {
     required this.autofocus,
     required this.locked,
     required this.readOnly,
-    required this.moreOpen,
-    required this.onToggleMore,
     required this.onPickDate,
   });
 
@@ -49,8 +47,6 @@ class _EventForm extends StatelessWidget {
   /// A saved row: its type and payer can't change (the API keeps them).
   final bool locked;
   final bool readOnly;
-  final bool moreOpen;
-  final VoidCallback onToggleMore;
   final VoidCallback onPickDate;
 
   ProjectMember? _member(String? id) =>
@@ -87,109 +83,45 @@ class _EventForm extends StatelessWidget {
       builder: (context, _) {
         final c = controller;
         final isIncome = c.type == TransactionType.income;
-        final description = c.description.text.trim();
-        final extras =
-            (c.note.text.trim().isEmpty ? 0 : 1) +
-            c.tagNames.length +
-            c.memberSplits.length;
         final form = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _TypeSwitch(
+            // The hero's "what for" line is the row's คำอธิบาย here.
+            TxHeroCard(
               type: c.type,
               allowTransfer: false,
-              onChanged: locked ? null : c.setType,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _AmountInput(
-              controller: c.amount,
-              type: c.type,
-              compact: compact,
-              autofocus: autofocus,
+              onTypeChanged: locked ? null : c.setType,
+              amount: c.amount,
+              title: c.description,
+              titleHint: l.projectTxDescriptionHint,
+              onTitleTap: () => _pickDescription(context),
+              dateLabel: _dayLabel(context, c.date),
+              onPickDate: onPickDate,
               symbol: event.symbol,
+              autofocus: autofocus,
+              compact: compact,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.md),
             MemberPickCard(
               member: _member(c.payerId),
               label: isIncome ? l.projectTxReceivedBy : l.projectTxPaidBy,
               onTap: locked ? null : () => _pickPayer(context),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                SizedBox(
-                  width: 132,
-                  child: _Pill(
-                    icon: AppIcons.date,
-                    label: DateFormatter.friendly(
-                      c.date,
-                      today: l.commonToday,
-                      yesterday: l.commonYesterday,
-                      locale: Localizations.localeOf(context).languageCode,
-                    ),
-                    onTap: onPickDate,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: _Pill(
-                    icon: AppIcons.note,
-                    label: description.isEmpty
-                        ? l.projectTxDescriptionHint
-                        : description,
-                    muted: description.isEmpty,
-                    onTap: () => _pickDescription(context),
-                  ),
-                ),
-              ],
+            const SizedBox(height: AppSpacing.md),
+            _TextBlock(
+              label: l.commonNote,
+              controller: c.note,
+              maxLength: TextLimits.note,
             ),
-            const SizedBox(height: AppSpacing.xs),
-            _MoreToggle(
-              label: l.quickMore,
-              open: moreOpen,
-              count: extras,
-              onTap: onToggleMore,
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.topCenter,
-              child: !moreOpen
-                  ? const SizedBox(width: double.infinity)
-                  : Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TextField(
-                            controller: c.note,
-                            maxLength: 500,
-                            maxLines: 2,
-                            minLines: 1,
-                            decoration: InputDecoration(
-                              hintText: l.projectTxNote,
-                              counterText: '',
-                              isDense: true,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          _EventTags(controller: c, known: event.tags),
-                          const SizedBox(height: AppSpacing.md),
-                          _MemberSplits(
-                            controller: c,
-                            members: event.members,
-                            symbol: event.symbol,
-                            errorColor: scheme.error,
-                          ),
-                        ],
-                      ),
-                    ),
+            const SizedBox(height: AppSpacing.md),
+            _EventTags(controller: c, known: event.tags),
+            const SizedBox(height: AppSpacing.md),
+            _MemberSplits(
+              controller: c,
+              members: event.members,
+              symbol: event.symbol,
+              errorColor: scheme.error,
             ),
           ],
         );

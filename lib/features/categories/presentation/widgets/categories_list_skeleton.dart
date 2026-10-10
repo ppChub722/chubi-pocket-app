@@ -21,7 +21,10 @@ class CategoriesListSkeleton extends StatelessWidget {
       0,
     ];
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: EdgeInsets.only(
+        top: AppSpacing.md,
+        bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
+      ),
       physics: const NeverScrollableScrollPhysics(),
       children: [
         const Padding(

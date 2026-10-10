@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -37,9 +37,13 @@ import '../widgets/category_preview_card.dart';
 /// edit mode on it. Lifecycle (undo, discard, nav hiding) is
 /// [EditModeMixin].
 class CategoryDetailPage extends StatefulWidget {
-  const CategoryDetailPage({this.editingId, super.key});
+  const CategoryDetailPage({this.editingId, this.initialType, super.key});
 
   final String? editingId;
+
+  /// Create only: the type to start with (a picker for income opens the
+  /// create page on income).
+  final CategoryType? initialType;
 
   bool get isCreate => editingId == null;
 
@@ -75,7 +79,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   void initState() {
     super.initState();
     if (widget.isCreate) {
-      initDraft(const _CategoryDraft(), editing: true);
+      initDraft(
+        _CategoryDraft(type: widget.initialType ?? CategoryType.expense),
+        editing: true,
+      );
     } else {
       _persisted = context.read<CategoriesCubit>().byId(widget.editingId!);
       _notFound = _persisted == null;
@@ -143,11 +150,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   bool get leaveOnCancel => widget.isCreate;
 
   @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  @override
   void onDraftRestored() {
     void sync(TextEditingController c, String v) {
       if (c.text != v) c.text = v;
@@ -211,7 +213,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           clearParent: w.parentId == null,
           iconCode: w.iconCode,
           description: description.isEmpty ? null : description,
+          // Emptied = cleared: the update sends an explicit null.
+          clearDescription: description.isEmpty,
           note: note.isEmpty ? null : note,
+          clearNote: note.isEmpty,
           includeInReport: w.includeInReport,
         );
         await cubit.update(next);
@@ -426,6 +431,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 l,
                 state.categories,
                 topInset: MediaQuery.paddingOf(context).top,
+                bottomInset: MediaQuery.paddingOf(context).bottom,
               ),
             ),
           ),
@@ -441,12 +447,13 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return working.name.isEmpty ? l.categoriesTitle : working.name;
   }
 
-  /// [topInset] clears the transparent top bar (read from a context inside
-  /// the Scaffold body).
+  /// [topInset] / [bottomInset] clear the transparent top bar and the
+  /// floating nav (read from a context inside the Scaffold body).
   Widget _body(
     AppLocalizations l,
     List<Category> all, {
     required double topInset,
+    required double bottomInset,
   }) {
     final editing = isEditing;
     final preview = _previewCategory();
@@ -458,7 +465,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         AppSpacing.lg,
         topInset + AppSpacing.lg,
         AppSpacing.lg,
-        AppSpacing.huge,
+        AppSpacing.huge + bottomInset,
       ),
       children: [
         _Header(
@@ -470,7 +477,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             editing: editing,
             controller: _nameController,
             focusNode: _nameFocus,
-            hint: l.categoryFormNameLabel,
+            hint: l.commonName,
+            maxLength: TextLimits.name,
             onEnterEdit: () => enterEdit(focus: _nameFocus),
             onChanged: (v) => _onText(_TextField.name, v),
             validator: (v) => _validateName(v, all),
@@ -480,6 +488,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         ),
         const SizedBox(height: AppSpacing.lg),
         SectionCard(
+          first: true,
           children: [
             // Type is immutable once created (spec §3.4).
             DetailRow(
@@ -489,7 +498,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                   : l.categoryFormTypeImmutableHelper,
               trailing: _typeTrailing(),
             ),
-            const RowDivider(),
             DetailRow(
               label: l.categoryFormParentLabel,
               trailing: _ParentBox(
@@ -504,37 +512,31 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 onTap: () => _openParentPicker(all),
               ),
             ),
-            const RowDivider(),
+            // maxLength caps the input, so no length validator.
             DetailStacked(
-              label: l.categoryFormDescriptionLabel,
+              label: l.commonDescription,
               child: InlineField(
                 editing: editing,
                 controller: _descriptionController,
                 focusNode: _descriptionFocus,
                 maxLines: 3,
+                maxLength: TextLimits.description,
                 onEnterEdit: () => enterEdit(focus: _descriptionFocus),
                 onChanged: (v) => _onText(_TextField.description, v),
-                validator: (v) => (v != null && v.length > 200)
-                    ? l.categoryFormDescriptionTooLong
-                    : null,
               ),
             ),
-            const RowDivider(),
             DetailStacked(
-              label: l.categoryFormNoteLabel,
+              label: l.commonNote,
               child: InlineField(
                 editing: editing,
                 controller: _noteController,
                 focusNode: _noteFocus,
-                maxLines: 2,
+                maxLines: 3,
+                maxLength: TextLimits.note,
                 onEnterEdit: () => enterEdit(focus: _noteFocus),
                 onChanged: (v) => _onText(_TextField.note, v),
-                validator: (v) => (v != null && v.length > 200)
-                    ? l.categoryFormNoteTooLong
-                    : null,
               ),
             ),
-            const RowDivider(),
             DetailRow(
               label: l.categoryFormIncludeInReportLabel,
               helper: l.categoryFormIncludeInReportHelper,
@@ -545,8 +547,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               ),
             ),
             // Expense categories only, and only once saved (needs an id).
-            if (_persisted != null && working.type == CategoryType.expense) ...[
-              const RowDivider(),
+            if (_persisted != null && working.type == CategoryType.expense)
               DetailRow(
                 label: l.categoryFeeSwitchLabel,
                 helper: l.categoryFeeSwitchHelper,
@@ -555,7 +556,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                   onChanged: _feeBusy ? null : _setFeeCategory,
                 ),
               ),
-            ],
           ],
         ),
         // Delete lives at the bottom of the body in edit mode (the top bar
@@ -574,7 +574,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final l = AppLocalizations.of(context)!;
     final name = v?.trim() ?? '';
     if (name.isEmpty) return l.categoryFormNameRequired;
-    if (name.length > 100) return l.categoryFormNameTooLong;
+    if (name.length > TextLimits.name) return l.categoryFormNameTooLong;
     if (CategoryTree.hasSiblingWithName(
       name: name,
       parentId: working.parentId,

@@ -510,7 +510,9 @@ class _ResolveSheetState extends State<_ResolveSheet> {
           accountId: _account!.id,
           amount: _amount,
           date: widget.tx.date,
-          note: widget.tx.note ?? widget.tx.description,
+          // Same fields both sides (migration 51): what-for → what-for.
+          description: widget.tx.description,
+          note: widget.tx.note,
           categoryId: _category?.id,
           sourceProjectTransactionId: widget.tx.id,
         );
@@ -521,7 +523,8 @@ class _ResolveSheetState extends State<_ResolveSheet> {
           counterpartyPersonName: widget.counterparty?.displayName ?? '?',
           amount: _amount,
           currency: widget.tx.currency,
-          note: widget.tx.description ?? widget.tx.note,
+          description: widget.tx.description,
+          note: widget.tx.note,
         );
       }
       if (mounted) Navigator.pop(context, true);

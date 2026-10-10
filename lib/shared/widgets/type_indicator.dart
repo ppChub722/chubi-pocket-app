@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_icons.dart';
-import '../../core/constants/app_spacing.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../l10n/gen/app_localizations.dart';
+import 'chips/pill.dart';
 
 /// How a [TypeIndicator] renders.
 enum TypeIndicatorVariant {
@@ -27,11 +28,15 @@ class TypeIndicator extends StatelessWidget {
     required this.isIncome,
     this.variant = TypeIndicatorVariant.pill,
     this.label,
+    this.size = PillSize.medium,
     super.key,
   });
 
   final bool isIncome;
   final TypeIndicatorVariant variant;
+
+  /// The pill's size (ignored by [TypeIndicatorVariant.sign]).
+  final PillSize size;
 
   /// Overrides the pill's text. Defaults to the localized income/expense
   /// label. Ignored by [TypeIndicatorVariant.sign].
@@ -48,31 +53,14 @@ class TypeIndicator extends StatelessWidget {
         return Icon(signIcon, size: 18, color: color);
       case TypeIndicatorVariant.pill:
         final l = AppLocalizations.of(context)!;
-        final text =
-            label ?? (isIncome ? l.categoryTypeIncome : l.categoryTypeExpense);
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(signIcon, size: 16, color: color),
-              const SizedBox(width: AppSpacing.xs),
-              Text(
-                text,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
+        // The label role of the pill family.
+        return LabelPill(
+          label:
+              label ??
+              (isIncome ? l.categoryTypeIncome : l.categoryTypeExpense),
+          icon: signIcon,
+          color: color,
+          size: size,
         );
     }
   }

@@ -7,6 +7,7 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/edit_mode/edit_mode_mixin.dart';
@@ -38,7 +39,7 @@ class ContactDetailPage extends StatefulWidget {
   State<ContactDetailPage> createState() => _ContactDetailPageState();
 }
 
-enum _Field { name, email, phone, notes }
+enum _Field { name, description, email, phone, note }
 
 class _ContactDetailPageState extends State<ContactDetailPage>
     with EditModeMixin<ContactDetailPage, _ContactDraft> {
@@ -108,11 +109,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
   bool get leaveOnCancel => _isCreate;
 
   @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  @override
   void onDraftRestored() {
     void sync(_Field f, String v) {
       if (_ctrl[f]!.text != v) _ctrl[f]!.text = v;
@@ -121,14 +117,16 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     sync(_Field.name, working.name);
     sync(_Field.email, working.email);
     sync(_Field.phone, working.phone);
-    sync(_Field.notes, working.notes);
+    sync(_Field.description, working.description);
+    sync(_Field.note, working.note);
   }
 
   void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
     _Field.name => working.copyWith(name: v),
     _Field.email => working.copyWith(email: v),
     _Field.phone => working.copyWith(phone: v),
-    _Field.notes => working.copyWith(notes: v),
+    _Field.description => working.copyWith(description: v),
+    _Field.note => working.copyWith(note: v),
   });
 
   // ── Save / delete ───────────────────────────────────────────────────
@@ -146,7 +144,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           displayName: w.name,
           email: w.email.isEmpty ? null : w.email,
           phone: w.phone.isEmpty ? null : w.phone,
-          notes: w.notes.isEmpty ? null : w.notes,
+          description: w.description.isEmpty ? null : w.description,
+          note: w.note.isEmpty ? null : w.note,
           iconCode: w.iconCode,
         );
         if (!mounted) return;
@@ -169,7 +168,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         displayName: _linked ? null : w.name,
         email: _linked ? null : w.email,
         phone: w.phone,
-        notes: w.notes,
+        description: w.description,
+        note: w.note,
         iconCode: _linked ? null : w.iconCode,
       );
       if (!mounted) return;
@@ -334,16 +334,13 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                   AppSpacing.lg,
                   MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   AppSpacing.lg,
-                  AppSpacing.huge,
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
                   _header(l),
                   const SizedBox(height: AppSpacing.lg),
                   _fields(l),
-                  if (!_isCreate) ...[
-                    const SizedBox(height: AppSpacing.lg),
-                    LockedInEdit(locked: isEditing, child: _actions(l)),
-                  ],
+                  if (!_isCreate) _actions(l),
                   // Delete lives at the bottom in edit mode (no top-bar actions).
                   if (isEditing && !_isCreate)
                     DangerRow(
@@ -392,6 +389,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         controller: _ctrl[_Field.name]!,
         focusNode: _focus[_Field.name],
         hint: l.contactNameHint,
+        maxLength: TextLimits.name,
         onEnterEdit: _linked
             ? null
             : () => enterEdit(focus: _focus[_Field.name]),
@@ -399,7 +397,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         validator: (v) {
           final s = v?.trim() ?? '';
           if (s.isEmpty) return l.contactNameRequired;
-          if (s.length > 100) return l.contactNameTooLong;
+          if (s.length > TextLimits.name) return l.contactNameTooLong;
           return null;
         },
       ),
@@ -456,39 +454,58 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       );
     }
 
+    final email = field(
+      _Field.email,
+      l.contactEmailLabel,
+      hint: l.contactEmailHint,
+      locked: _linked,
+      maxLength: 255,
+      keyboard: TextInputType.emailAddress,
+      validator: (v) {
+        final s = v?.trim() ?? '';
+        if (s.isEmpty) return null;
+        return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
+            ? null
+            : l.contactEmailInvalid;
+      },
+    );
     return SectionCard(
+      first: true,
       children: [
+        // Description is the contact's own (not the linked account's), so
+        // it stays editable when linked. maxLength caps it — no validator.
         field(
-          _Field.email,
-          l.contactEmailLabel,
-          hint: l.contactEmailHint,
-          locked: _linked,
-          maxLength: 255,
-          keyboard: TextInputType.emailAddress,
-          validator: (v) {
-            final s = v?.trim() ?? '';
-            if (s.isEmpty) return null;
-            return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(s)
-                ? null
-                : l.contactEmailInvalid;
-          },
+          _Field.description,
+          l.commonDescription,
+          hint: l.contactDescriptionHint,
+          maxLines: 3,
+          maxLength: TextLimits.description,
         ),
+        // The "locked: it's the linked account's" hint belongs to the email
+        // row — one row, so the divider goes below the hint.
         if (_linked && editing)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0,
-              AppSpacing.lg,
-              AppSpacing.sm,
-            ),
-            child: Text(
-              l.contactLinkedLockedHint,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              email,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                ),
+                child: Text(
+                  l.contactLinkedLockedHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
-            ),
-          ),
-        const RowDivider(),
+            ],
+          )
+        else
+          email,
         field(
           _Field.phone,
           l.contactPhoneLabel,
@@ -496,13 +513,12 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           maxLength: 50,
           keyboard: TextInputType.phone,
         ),
-        const RowDivider(),
         field(
-          _Field.notes,
-          l.contactNotesLabel,
-          hint: l.contactNotesHint,
+          _Field.note,
+          l.commonNote,
+          hint: l.contactNoteHint,
           maxLines: 3,
-          maxLength: 500,
+          maxLength: TextLimits.note,
         ),
       ],
     );
@@ -513,6 +529,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final hasEmail = c.effectiveEmail?.isNotEmpty ?? false;
     return SectionCard(
       title: l.contactSectionActions,
+      locked: isEditing,
       children: [
         if (c.isLinked)
           DetailRow(
@@ -534,13 +551,11 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             showChevron: hasEmail,
             onTap: hasEmail ? _requestLink : null,
           ),
-        const RowDivider(),
         _WireNamesRow(
           key: ValueKey(_actionsVersion),
           contact: c,
           onWired: _load,
         ),
-        const RowDivider(),
         DetailRow(
           leading: const Icon(AppIcons.debt),
           label: l.contactDebts,
@@ -553,7 +568,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             ).toString(),
           ),
         ),
-        const RowDivider(),
         DetailRow(
           leading: Icon(c.isArchived ? AppIcons.unarchive : AppIcons.archive),
           label: c.isArchived ? l.contactRestore : l.contactArchive,
@@ -734,45 +748,51 @@ class _WireNamesSheetState extends State<_WireNamesSheet> {
 class _ContactDraft {
   const _ContactDraft({
     this.name = '',
+    this.description = '',
     this.email = '',
     this.phone = '',
-    this.notes = '',
+    this.note = '',
     this.iconCode,
   });
 
   factory _ContactDraft.from(Contact c) => _ContactDraft(
     name: c.effectiveDisplayName,
+    description: c.description ?? '',
     email: c.effectiveEmail ?? '',
     phone: c.phone ?? '',
-    notes: c.notes ?? '',
+    note: c.note ?? '',
     iconCode: c.iconCode,
   );
 
   final String name;
+  final String description;
   final String email;
   final String phone;
-  final String notes;
+  final String note;
   final IconCode? iconCode;
 
   _ContactDraft trimmed() => _ContactDraft(
     name: name.trim(),
+    description: description.trim(),
     email: email.trim(),
     phone: phone.trim(),
-    notes: notes.trim(),
+    note: note.trim(),
     iconCode: iconCode,
   );
 
   _ContactDraft copyWith({
     String? name,
+    String? description,
     String? email,
     String? phone,
-    String? notes,
+    String? note,
     IconCode? iconCode,
   }) => _ContactDraft(
     name: name ?? this.name,
+    description: description ?? this.description,
     email: email ?? this.email,
     phone: phone ?? this.phone,
-    notes: notes ?? this.notes,
+    note: note ?? this.note,
     iconCode: iconCode ?? this.iconCode,
   );
 
@@ -780,11 +800,13 @@ class _ContactDraft {
   bool operator ==(Object other) =>
       other is _ContactDraft &&
       other.name == name &&
+      other.description == description &&
       other.email == email &&
       other.phone == phone &&
-      other.notes == notes &&
+      other.note == note &&
       other.iconCode == iconCode;
 
   @override
-  int get hashCode => Object.hash(name, email, phone, notes, iconCode);
+  int get hashCode =>
+      Object.hash(name, description, email, phone, note, iconCode);
 }

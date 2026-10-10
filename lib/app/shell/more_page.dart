@@ -154,7 +154,7 @@ class _MorePageState extends State<MorePage> {
             AppSpacing.lg,
             MediaQuery.paddingOf(context).top + AppSpacing.xs,
             AppSpacing.lg,
-            AppSpacing.huge,
+            AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
           ),
           children: [
             for (final (title, tint, entries) in groups) ...[

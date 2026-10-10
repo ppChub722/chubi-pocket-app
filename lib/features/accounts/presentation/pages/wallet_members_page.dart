@@ -131,7 +131,8 @@ class _WalletMembersPageState extends State<WalletMembersPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.only(
                     top: MediaQuery.paddingOf(context).top,
-                    bottom: AppSpacing.huge,
+                    bottom:
+                        AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                   ),
                   children: [
                     for (final m in active)

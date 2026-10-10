@@ -104,7 +104,9 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
       onRefresh: widget.onChanged,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 96),
+        padding: EdgeInsets.only(
+          bottom: 96 + MediaQuery.paddingOf(context).bottom,
+        ),
         children: [
           AppSearchBar(
             hint: l.projectTxSearchHint,

@@ -222,6 +222,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
     });
   }
 
+  /// ยกเลิก, ✕ and system back in reorder mode — one behaviour (owner
+  /// 2026-10-10): drop the staged order, no prompt; nothing while saving.
+  void _backInReorder() {
+    if (!_savingReorder) _cancelReorder();
+  }
+
   void _cancelReorder() {
     _shellChrome?.show(); // restore the shell nav
     setState(() {
@@ -539,7 +545,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           canPop: !_reorderMode,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) return;
-            if (_reorderMode) _cancelReorder();
+            if (_reorderMode) _backInReorder();
           },
           child: Scaffold(
             // The bar floats over the body; the pinned column below starts
@@ -551,7 +557,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   : l.categoriesTitle,
               showBack: true,
               editing: _reorderMode,
-              onBack: _reorderMode ? _cancelReorder : null,
+              onBack: _reorderMode ? _backInReorder : null,
             ),
             body: TabSwitchBody(
               child: AsyncStateView(
@@ -642,7 +648,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     cancelLabel: l.categoriesReorderCancel,
                     saveLabel: l.categoriesReorderSave,
                     undoTooltip: l.categoriesUndo,
-                    onCancel: _savingReorder ? () {} : _cancelReorder,
+                    onCancel: _backInReorder,
                     onUndo: _undoLastDrag,
                     onSave: _saveReorder,
                   )
@@ -940,7 +946,10 @@ class _ListBody extends StatelessWidget {
     return ListView(
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: EdgeInsets.only(
+        top: AppSpacing.md,
+        bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         if (reorderMode) _TopOfSectionLine(type: type, hover: hover),
         for (final parent in roots)
@@ -1198,6 +1207,10 @@ class _RowContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final desc = category.description?.trim();
+    final hasDesc = desc != null && desc.isNotEmpty;
+    final hidden = !category.includeInReport;
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.lg + depth * AppSpacing.xxl,
@@ -1206,17 +1219,31 @@ class _RowContent extends StatelessWidget {
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         leading: _IconCircle(category: category, reorderMode: reorderMode),
-        title: Text(
-          category.name,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        subtitle: !category.includeInReport
-            ? Text(
-                l.categoryHiddenFromReport,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontStyle: FontStyle.italic,
-                ),
+        title: Text(category.name, style: textTheme.titleSmall),
+        // Description (one line), then the hidden-from-report mark.
+        subtitle: hasDesc || hidden
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasDesc)
+                    Text(
+                      desc,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (hidden)
+                    Text(
+                      l.categoryHiddenFromReport,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                ],
               )
             : null,
         trailing: _RowTrailing(

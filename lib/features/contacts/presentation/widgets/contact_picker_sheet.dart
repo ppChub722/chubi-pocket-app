@@ -71,6 +71,13 @@ class _ContactPickerState extends State<_ContactPicker> {
       .list(status: 'active');
   String _query = '';
 
+  static String? _subtitleOf(Contact c) {
+    final description = c.description?.trim() ?? '';
+    if (description.isNotEmpty) return description;
+    final email = c.effectiveEmail ?? '';
+    return email.isEmpty ? null : email;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -105,6 +112,8 @@ class _ContactPickerState extends State<_ContactPicker> {
                         .where(
                           (c) =>
                               c.effectiveName.toLowerCase().contains(lower) ||
+                              (c.description?.toLowerCase().contains(lower) ??
+                                  false) ||
                               (c.effectiveEmail?.toLowerCase().contains(
                                     lower,
                                   ) ??
@@ -148,9 +157,14 @@ class _ContactPickerState extends State<_ContactPicker> {
                         iconCode: c.effectiveIconCode,
                       ),
                       title: Text(c.effectiveName),
-                      subtitle: c.effectiveEmail == null
+                      // Description (who they are) wins over email.
+                      subtitle: _subtitleOf(c) == null
                           ? null
-                          : Text(c.effectiveEmail!),
+                          : Text(
+                              _subtitleOf(c)!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

@@ -117,12 +117,20 @@ class DashboardCubit extends Cubit<DashboardState> with Clearable {
     final base = state.month ?? state.data?.month ?? current;
     final next = DateTime(base.year, base.month + delta);
     if (next.isAfter(current)) return;
+    await setMonth(next);
+  }
+
+  /// Jumps the month-scoped blocks to [month]'s month (the month picker),
+  /// clamped to the current month. No-op when it's already selected.
+  Future<void> setMonth(DateTime month) async {
+    final now = DateTime.now();
+    final current = DateTime(now.year, now.month);
+    var next = DateTime(month.year, month.month);
+    if (next.isAfter(current)) next = current;
+    final selected = next == current ? null : next;
+    if (selected == state.month && state.data != null) return;
     emit(
-      DashboardState(
-        status: state.status,
-        data: state.data,
-        month: next == current ? null : next,
-      ),
+      DashboardState(status: state.status, data: state.data, month: selected),
     );
     await load();
   }

@@ -3,30 +3,39 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/currencies.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/account.dart';
 
 /// "ปรับยอด" bottom sheet (spec §2.5): current balance → the new balance →
-/// live difference → optional note → a banner that the difference is
-/// booked as an "ปรับยอด" transaction dated today. Resolves the new balance
-/// + note, or null on cancel; the caller makes the API call
+/// live difference → optional description + note → a banner that the
+/// difference is booked as an "ปรับยอด" transaction dated today. Resolves
+/// the new balance + description + note (null when blank), or null on
+/// cancel; the caller makes the API call
 /// (`POST /v1/accounts/:id/adjust-balance`).
 ///
 /// Credit wallets (card / pay-later) keep debt as a negative balance, so
 /// their field asks for the outstanding amount and the result is negated.
 /// The field takes a sign (± chip) for every type — an overdrawn account or
 /// an overpaid card is a real balance.
-Future<({double balance, String? note})?> showAdjustBalanceSheet(
+Future<AdjustBalanceInput?> showAdjustBalanceSheet(
   BuildContext context,
   Account account,
 ) {
-  return showAppSheetCustom<({double balance, String? note})>(
+  return showAppSheetCustom<AdjustBalanceInput>(
     context,
     builder: (_) => _AdjustBalanceSheet(account: account),
   );
 }
+
+/// What the ปรับยอด sheet resolves to.
+typedef AdjustBalanceInput = ({
+  double balance,
+  String? description,
+  String? note,
+});
 
 class _AdjustBalanceSheet extends StatefulWidget {
   const _AdjustBalanceSheet({required this.account});
@@ -38,6 +47,7 @@ class _AdjustBalanceSheet extends StatefulWidget {
 
 class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
   late final TextEditingController _controller;
+  final _description = TextEditingController();
   final _note = TextEditingController();
 
   bool get _isCredit => widget.account.type.isCredit;
@@ -54,8 +64,14 @@ class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
   @override
   void dispose() {
     _controller.dispose();
+    _description.dispose();
     _note.dispose();
     super.dispose();
+  }
+
+  static String? _opt(TextEditingController c) {
+    final v = c.text.trim();
+    return v.isEmpty ? null : v;
   }
 
   /// The balance the field describes; null while it doesn't parse.
@@ -104,9 +120,8 @@ class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
               onPressed: canAdjust
                   ? () => Navigator.of(context).pop((
                       balance: next,
-                      note: _note.text.trim().isEmpty
-                          ? null
-                          : _note.text.trim(),
+                      description: _opt(_description),
+                      note: _opt(_note),
                     ))
                   : null,
             ),
@@ -170,10 +185,18 @@ class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
             ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
+              controller: _description,
+              label: l.commonDescription,
+              prefixIcon: AppIcons.font,
+              maxLength: TextLimits.description,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppTextField(
               controller: _note,
-              label: l.accountAdjustBalanceNoteLabel,
+              label: l.commonNote,
               prefixIcon: AppIcons.note,
-              maxLength: 200,
+              maxLength: TextLimits.note,
+              maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.sm),
             MessageBanner(

@@ -110,7 +110,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     required String displayName,
     String? email,
     String? phone,
-    String? notes,
+    String? description,
+    String? note,
     IconCode? iconCode,
     List<String>? absorbNames,
   }) async {
@@ -118,7 +119,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
       displayName: displayName,
       email: email,
       phone: phone,
-      notes: notes,
+      description: description,
+      note: note,
       iconCode: iconCode,
       absorbNames: absorbNames,
     );
@@ -131,7 +133,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     String? displayName,
     String? email,
     String? phone,
-    String? notes,
+    String? description,
+    String? note,
     IconCode? iconCode,
   }) async {
     final updated = await _repo.update(
@@ -139,7 +142,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
       displayName: displayName,
       email: email,
       phone: phone,
-      notes: notes,
+      description: description,
+      note: note,
       iconCode: iconCode,
     );
     _replace(updated);

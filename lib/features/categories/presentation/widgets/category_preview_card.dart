@@ -57,9 +57,7 @@ class CategoryPreviewCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    category.name.isEmpty
-                        ? l.categoryFormNameLabel
-                        : category.name,
+                    category.name.isEmpty ? l.commonName : category.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium,

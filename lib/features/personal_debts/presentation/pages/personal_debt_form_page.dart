@@ -7,6 +7,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/currencies.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -30,12 +31,13 @@ class PersonalDebtFormPage extends StatefulWidget {
   State<PersonalDebtFormPage> createState() => _PersonalDebtFormPageState();
 }
 
-enum _Field { amount, note }
+enum _Field { amount, description, note }
 
 class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
     with EditModeMixin<PersonalDebtFormPage, _NewDebt> {
   final _formKey = GlobalKey<FormState>();
   final _amountCtrl = TextEditingController();
+  final _descriptionCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
   String? _counterpartyError;
 
@@ -61,6 +63,7 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
   @override
   void dispose() {
     _amountCtrl.dispose();
+    _descriptionCtrl.dispose();
     _noteCtrl.dispose();
     super.dispose();
   }
@@ -69,13 +72,11 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
   bool get leaveOnCancel => true;
 
   @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  @override
   void onDraftRestored() {
     if (_amountCtrl.text != working.amount) _amountCtrl.text = working.amount;
+    if (_descriptionCtrl.text != working.description) {
+      _descriptionCtrl.text = working.description;
+    }
     if (_noteCtrl.text != working.note) _noteCtrl.text = working.note;
   }
 
@@ -108,6 +109,7 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
     );
     if (!formOk || !hasPerson) return;
     final w = working;
+    String? opt(String s) => s.trim().isEmpty ? null : s.trim();
     FocusScope.of(context).unfocus();
     setSaving(true);
     try {
@@ -117,7 +119,8 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
         counterpartyContactId: w.contactId,
         amount: AmountField.parse(w.amount)!,
         currency: w.currency,
-        note: w.note.trim().isEmpty ? null : w.note.trim(),
+        description: opt(w.description),
+        note: opt(w.note),
       );
       if (!mounted) return;
       HapticFeedback.mediumImpact();
@@ -149,9 +152,12 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
           // Builder: its context sees the floating bar's height.
           child: Builder(
             builder: (context) => ListView(
-              padding: const EdgeInsets.all(
-                AppSpacing.lg,
-              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
+              padding: const EdgeInsets.all(AppSpacing.lg).add(
+                EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top,
+                  bottom: MediaQuery.paddingOf(context).bottom,
+                ),
+              ),
               children: [
                 SelectCardGroup<DebtDirection>(
                   selected: w.direction,
@@ -206,13 +212,23 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
                   value: w.currency,
                   onChanged: (c) => applyChange(w.copyWith(currency: c)),
                 ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _descriptionCtrl,
+                  label: l.commonDescription,
+                  maxLength: TextLimits.description,
+                  onChanged: (v) => applyTextChange(
+                    _Field.description,
+                    working.copyWith(description: v),
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 AppTextField(
                   controller: _noteCtrl,
-                  label: l.debtNote,
+                  label: l.commonNote,
                   prefixIcon: AppIcons.note,
                   maxLines: 3,
-                  maxLength: 500,
+                  maxLength: TextLimits.note,
                   onChanged: (v) =>
                       applyTextChange(_Field.note, working.copyWith(note: v)),
                 ),
@@ -233,6 +249,7 @@ class _NewDebt {
     this.contactId,
     this.name = '',
     this.currency = 'THB',
+    this.description = '',
     this.note = '',
   });
 
@@ -241,6 +258,7 @@ class _NewDebt {
   final String? contactId;
   final String name;
   final String currency;
+  final String description;
   final String note;
 
   _NewDebt copyWith({
@@ -250,6 +268,7 @@ class _NewDebt {
     bool clearContact = false,
     String? name,
     String? currency,
+    String? description,
     String? note,
   }) => _NewDebt(
     direction: direction ?? this.direction,
@@ -257,6 +276,7 @@ class _NewDebt {
     contactId: clearContact ? null : (contactId ?? this.contactId),
     name: name ?? this.name,
     currency: currency ?? this.currency,
+    description: description ?? this.description,
     note: note ?? this.note,
   );
 
@@ -268,9 +288,17 @@ class _NewDebt {
       other.contactId == contactId &&
       other.name == name &&
       other.currency == currency &&
+      other.description == description &&
       other.note == note;
 
   @override
-  int get hashCode =>
-      Object.hash(direction, amount, contactId, name, currency, note);
+  int get hashCode => Object.hash(
+    direction,
+    amount,
+    contactId,
+    name,
+    currency,
+    description,
+    note,
+  );
 }

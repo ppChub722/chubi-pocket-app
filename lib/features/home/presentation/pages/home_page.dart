@@ -48,7 +48,34 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+/// Swiping sideways moves the month (owner 2026-10-10) — left = next,
+/// right = previous. Left on the current month (no next) falls through to
+/// the shell's tab swipe → รายการ.
+class _HomePageState extends State<HomePage> implements ShellSwipeHandler {
+  Map<ShellTab, ShellSwipeHandler>? _swipeHandlers;
+
+  @override
+  bool canSwipe(int dir) =>
+      // `month` null = the current month: nothing after it.
+      dir < 0 || context.read<DashboardCubit>().state.month != null;
+
+  @override
+  void onSwipe(int dir) => context.read<DashboardCubit>().shiftMonth(dir);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _swipeHandlers = ShellSwipeScope.maybeOf(context)?..[ShellTab.home] = this;
+  }
+
+  @override
+  void dispose() {
+    if (_swipeHandlers?[ShellTab.home] == this) {
+      _swipeHandlers!.remove(ShellTab.home);
+    }
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -147,7 +174,7 @@ class _HomeView extends StatelessWidget {
                     AppSpacing.lg,
                     MediaQuery.paddingOf(context).top + AppSpacing.xs,
                     AppSpacing.lg,
-                    96,
+                    96 + MediaQuery.paddingOf(context).bottom,
                   ),
                   children: [
                     _MonthBar(month: d.month),
@@ -172,11 +199,23 @@ class _HomeView extends StatelessWidget {
                           _NetWorthCard(netWorth: d.netWorth),
                           const _PendingBlock(),
                           const SizedBox(height: AppSpacing.md),
-                          _MonthCard(current: d.summary, previous: d.previous),
+                          _MonthSlide(
+                            month: d.month,
+                            child: _MonthCard(
+                              current: d.summary,
+                              previous: d.previous,
+                            ),
+                          ),
                           if (d.upcoming.items.isNotEmpty)
                             _ComingUp(block: d.upcoming),
-                          _WhereItWent(d: d),
-                          _Trend(points: d.trend),
+                          _MonthSlide(
+                            month: d.month,
+                            child: _WhereItWent(d: d),
+                          ),
+                          _MonthSlide(
+                            month: d.month,
+                            child: _Trend(points: d.trend),
+                          ),
                           const SizedBox(height: AppSpacing.lg),
                           _Tiles(d: d),
                           _Recent(d: d),
@@ -199,8 +238,10 @@ String _locale(BuildContext context) =>
 
 // ── Month picker ──────────────────────────────────────────────────────
 
-/// ‹ month › as round chips (the top bar's look) + 👁. No spinner — the
-/// content below dims while a month loads.
+/// The month as a compact centred pill — `‹ ตุลาคม 2026 ▾ ›` ([MonthPill]:
+/// ‹ › step, the label opens the month picker) — + 👁 at the right. Never
+/// past the current month. No spinner — the content below dims while a
+/// month loads.
 class _MonthBar extends StatelessWidget {
   const _MonthBar({required this.month});
 
@@ -208,36 +249,84 @@ class _MonthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
     final cubit = context.read<DashboardCubit>();
-    final now = DateTime.now();
-    final isCurrent = month.year == now.year && month.month == now.month;
-    return Row(
+    return Stack(
+      alignment: Alignment.center,
       children: [
-        AppIconButton(
-          icon: AppIcons.chevronLeft,
-          size: 36,
-          tooltip: l.homePrevMonth,
-          onPressed: () => cubit.shiftMonth(-1),
+        MonthPill(
+          month: month,
+          last: DateTime.now(),
+          onChanged: cubit.setMonth,
         ),
-        Expanded(
-          child: Text(
-            DateFormat.yMMMM(_locale(context)).format(month),
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        if (kMoneyPrivacyEnabled)
+          const Align(
+            alignment: Alignment.centerRight,
+            child: MoneyVisibilityToggle(),
+          ),
+      ],
+    );
+  }
+}
+
+/// A month-scoped block: when the month changes (swipe, ‹ ›, the picker)
+/// the new month's numbers slide in from its side — a later month from the
+/// right, an earlier one from the left — as they arrive. Fades only under
+/// reduced motion; a refresh of the same month doesn't animate.
+class _MonthSlide extends StatefulWidget {
+  const _MonthSlide({required this.month, required this.child});
+
+  final DateTime month;
+  final Widget child;
+
+  @override
+  State<_MonthSlide> createState() => _MonthSlideState();
+}
+
+class _MonthSlideState extends State<_MonthSlide>
+    with SingleTickerProviderStateMixin {
+  /// Entry slide, as a fraction of the block's width (the tab switch's).
+  static const _shift = 0.06;
+
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: AppDurations.chrome,
+    value: 1,
+  );
+  late final Animation<double> _curve = CurvedAnimation(
+    parent: _ctrl,
+    curve: AppDurations.chromeCurve,
+  );
+  int _side = 0;
+
+  @override
+  void didUpdateWidget(_MonthSlide old) {
+    super.didUpdateWidget(old);
+    final side = widget.month.compareTo(old.month).sign;
+    if (side == 0) return;
+    _side = side;
+    _ctrl.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final still = MediaQuery.disableAnimationsOf(context);
+    return FadeTransition(
+      opacity: _curve,
+      child: SlideTransition(
+        position: _curve.drive(
+          Tween<Offset>(
+            begin: Offset(still ? 0 : _side * _shift, 0),
+            end: Offset.zero,
           ),
         ),
-        AppIconButton(
-          icon: AppIcons.chevronRight,
-          size: 36,
-          tooltip: l.homeNextMonth,
-          onPressed: isCurrent ? null : () => cubit.shiftMonth(1),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        const MoneyVisibilityToggle(),
-      ],
+        child: widget.child,
+      ),
     );
   }
 }
@@ -963,9 +1052,12 @@ class _PendingBlock extends StatelessWidget {
 
     Widget row(PendingTransaction p) {
       final d = p.draft;
-      final title = (d.note?.trim().isNotEmpty ?? false)
-          ? d.note!.trim()
-          : l.pendingUntitled;
+      // The draft's own title ("what for") first, else its category.
+      final description = d.description?.trim() ?? '';
+      final title = description.isNotEmpty
+          ? description
+          : context.read<CategoriesCubit>().byId(d.categoryId ?? '')?.name ??
+                l.pendingUntitled;
       return Row(
         children: [
           Expanded(

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/currencies.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -30,8 +30,9 @@ import '../cubit/saving_goals_cubit.dart';
 /// edit mode, for `/saving-goals/:id/edit`). Lifecycle is [EditModeMixin].
 ///
 /// Header: icon + name + current amount, target, progress. Body: linked
-/// wallet → target / allocation / deadline / note → stats (locked while
-/// editing, absent on create). Edit mode ends with archive · delete.
+/// wallet → target / allocation / deadline / description / note → stats
+/// (locked while editing, absent on create). Edit mode ends with archive ·
+/// delete.
 ///
 /// **Spec quirks** baked in:
 /// - `linked_account_id` is NOT editable (spec §3.4) — the wallet is picked
@@ -55,7 +56,7 @@ class SavingGoalDetailPage extends StatefulWidget {
 }
 
 /// Which text field a typing burst belongs to (undo grouping).
-enum _Field { name, target, allocation, note }
+enum _Field { name, target, allocation, description, note }
 
 class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     with EditModeMixin<SavingGoalDetailPage, _GoalDraft> {
@@ -63,8 +64,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   final _nameCtrl = TextEditingController();
   final _targetCtrl = TextEditingController();
   final _allocationCtrl = TextEditingController();
+  final _descriptionCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
   final _nameFocus = FocusNode();
+  final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
   /// Last goal shown. After archive / delete the cubit drops it while this
@@ -112,8 +115,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     _nameCtrl.dispose();
     _targetCtrl.dispose();
     _allocationCtrl.dispose();
+    _descriptionCtrl.dispose();
     _noteCtrl.dispose();
     _nameFocus.dispose();
+    _descriptionFocus.dispose();
     _noteFocus.dispose();
     super.dispose();
   }
@@ -139,15 +144,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
   /// Back to the list — popping when possible, else (deep link) going there.
   @override
-  void leavePage() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go('/saving-goals');
-    }
-  }
-
-  @override
   void onDraftRestored() {
     void sync(TextEditingController c, String v) {
       if (c.text != v) c.text = v;
@@ -156,6 +152,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     sync(_nameCtrl, working.name);
     sync(_targetCtrl, working.target);
     sync(_allocationCtrl, working.allocation);
+    sync(_descriptionCtrl, working.description);
     sync(_noteCtrl, working.note);
   }
 
@@ -164,6 +161,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         _Field.name => working.copyWith(name: v),
         _Field.target => working.copyWith(target: v),
         _Field.allocation => working.copyWith(allocation: v),
+        _Field.description => working.copyWith(description: v),
         _Field.note => working.copyWith(note: v),
       });
 
@@ -234,6 +232,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
     final cubit = context.read<SavingGoalsCubit>();
     final w = working;
+    final description = w.description.trim();
     final note = w.note.trim();
     final allocation = double.tryParse(w.allocation.trim()) ?? 0;
     final deadline = w.deadline == null ? null : _isoDate(w.deadline!);
@@ -254,6 +253,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             status: SavingGoalStatus.active,
             deadline: deadline,
             iconCode: w.iconCode,
+            description: description.isEmpty ? null : description,
             note: note.isEmpty ? null : note,
           ),
         );
@@ -270,6 +270,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             status: g.status,
             deadline: deadline,
             iconCode: w.iconCode,
+            description: description.isEmpty ? null : description,
             note: note.isEmpty ? null : note,
           ),
         );
@@ -427,7 +428,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                   AppSpacing.lg,
                   MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   AppSpacing.lg,
-                  AppSpacing.huge,
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
                   _header(l, goal),
@@ -435,10 +436,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                   _wallet(l, goal),
                   const SizedBox(height: AppSpacing.md),
                   _fields(l, goal),
-                  if (goal != null) ...[
-                    const SizedBox(height: AppSpacing.lg),
-                    LockedInEdit(locked: editing, child: _stats(l, goal)),
-                  ],
+                  if (goal != null) _stats(l, goal),
                   // Archive · delete — edit only, always last (the top bar
                   // carries no page actions).
                   if (editing && goal != null) ...[
@@ -501,7 +499,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         editing: editing,
         controller: _nameCtrl,
         focusNode: _nameFocus,
-        hint: l.savingGoalFormNameLabel,
+        hint: l.commonName,
+        maxLength: TextLimits.name,
         onEnterEdit: () => enterEdit(focus: _nameFocus),
         onChanged: (v) => _onText(_Field.name, v),
         validator: (v) => (v == null || v.trim().isEmpty)
@@ -576,13 +575,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 placeholder: l.quickPickWallet,
                 onTap: null,
               )
-            : SectionCard(
-                children: [
-                  DetailRow(
-                    label: l.savingGoalFormLinkedAccountLabel,
-                    trailing: Text(goal.linkedAccount?.name ?? '—'),
-                  ),
-                ],
+            // A plain row, like the card it stands in for — the page's
+            // first section is the fields below.
+            : DetailRow(
+                label: l.savingGoalFormLinkedAccountLabel,
+                trailing: Text(goal.linkedAccount?.name ?? '—'),
               );
         return LockedInEdit(locked: isEditing, child: card);
       },
@@ -595,6 +592,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final deadline = working.deadline;
     final locale = Localizations.localeOf(context).toLanguageTag();
     return SectionCard(
+      first: true,
       children: [
         if (editing)
           DetailStacked(
@@ -616,7 +614,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             label: l.savingGoalFormTargetLabel,
             trailing: MoneyText(goal!.targetAmount, symbol: symbol),
           ),
-        const RowDivider(),
         DetailRow(
           label: l.savingGoalFormAllocationLabel,
           trailing: editing
@@ -653,7 +650,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 )
               : Text('${working.allocation}%'),
         ),
-        const RowDivider(),
         // Live in view mode too: picking a date enters edit mode.
         DetailRow(
           leading: const Icon(AppIcons.date),
@@ -683,15 +679,26 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           showChevron: true,
           onTap: _pickDeadline,
         ),
-        const RowDivider(),
         DetailStacked(
-          label: l.savingGoalFormNoteLabel,
+          label: l.commonDescription,
+          child: InlineField(
+            editing: editing,
+            controller: _descriptionCtrl,
+            focusNode: _descriptionFocus,
+            maxLines: 3,
+            maxLength: TextLimits.description,
+            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+            onChanged: (v) => _onText(_Field.description, v),
+          ),
+        ),
+        DetailStacked(
+          label: l.commonNote,
           child: InlineField(
             editing: editing,
             controller: _noteCtrl,
             focusNode: _noteFocus,
-            maxLines: 2,
-            maxLength: 200,
+            maxLines: 3,
+            maxLength: TextLimits.note,
             onEnterEdit: () => enterEdit(focus: _noteFocus),
             onChanged: (v) => _onText(_Field.note, v),
           ),
@@ -704,25 +711,22 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   Widget _stats(AppLocalizations l, SavingGoal g) {
     final symbol = Currencies.symbolOf(g.currency);
     return SectionCard(
+      locked: isEditing,
       children: [
         DetailRow(
           label: l.savingGoalDetailRemaining,
           trailing: MoneyText(g.remainingAmount, symbol: symbol),
         ),
-        if (g.daysRemaining != null) ...[
-          const RowDivider(),
+        if (g.daysRemaining != null)
           DetailRow(
             label: l.savingGoalDetailDaysRemaining,
             trailing: Text(l.savingGoalDetailDaysValue(g.daysRemaining!)),
           ),
-        ],
-        if (g.requiredMonthly != null) ...[
-          const RowDivider(),
+        if (g.requiredMonthly != null)
           DetailRow(
             label: l.savingGoalDetailRequiredMonthly,
             trailing: MoneyText(g.requiredMonthly!, symbol: symbol),
           ),
-        ],
       ],
     );
   }
@@ -739,6 +743,7 @@ class _GoalDraft {
     this.allocation = '',
     this.deadline,
     this.iconCode,
+    this.description = '',
     this.note = '',
     this.accountId,
   });
@@ -749,6 +754,7 @@ class _GoalDraft {
     allocation: _pct(g.allocationPct),
     deadline: g.deadline == null ? null : DateTime.tryParse(g.deadline!),
     iconCode: g.iconCode,
+    description: g.description ?? '',
     note: g.note ?? '',
     accountId: g.linkedAccountId,
   );
@@ -760,6 +766,7 @@ class _GoalDraft {
   final String allocation;
   final DateTime? deadline;
   final IconCode? iconCode;
+  final String description;
   final String note;
 
   /// Linked wallet — chosen on create only.
@@ -773,6 +780,7 @@ class _GoalDraft {
   _GoalDraft trimmed() => copyWith(
     name: name.trim(),
     allocation: allocation.trim(),
+    description: description.trim(),
     note: note.trim(),
   );
 
@@ -784,6 +792,7 @@ class _GoalDraft {
     bool clearDeadline = false,
     IconCode? iconCode,
     bool clearIcon = false,
+    String? description,
     String? note,
     String? accountId,
   }) => _GoalDraft(
@@ -792,6 +801,7 @@ class _GoalDraft {
     allocation: allocation ?? this.allocation,
     deadline: clearDeadline ? null : (deadline ?? this.deadline),
     iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
+    description: description ?? this.description,
     note: note ?? this.note,
     accountId: accountId ?? this.accountId,
   );
@@ -804,6 +814,7 @@ class _GoalDraft {
       other.allocation == allocation &&
       other.deadline == deadline &&
       other.iconCode == iconCode &&
+      other.description == description &&
       other.note == note &&
       other.accountId == accountId;
 
@@ -814,6 +825,7 @@ class _GoalDraft {
     allocation,
     deadline,
     iconCode,
+    description,
     note,
     accountId,
   );

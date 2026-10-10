@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/currencies.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -20,7 +20,7 @@ import '../cubit/personal_debts_cubit.dart';
 import '../widgets/debt_widgets.dart';
 
 /// `/personal-debts/:id` — one debt, view ⇄ edit (§11). Edit covers amount,
-/// counterparty and note; paid-back amount and status only move through
+/// counterparty, description and note; paid-back amount and status only move through
 /// "รับเงินคืน / จ่ายคืน" (settle sheet) and "ยกเลิกหนี้นี้".
 class PersonalDebtDetailPage extends StatefulWidget {
   const PersonalDebtDetailPage({required this.id, super.key});
@@ -30,13 +30,15 @@ class PersonalDebtDetailPage extends StatefulWidget {
   State<PersonalDebtDetailPage> createState() => _PersonalDebtDetailPageState();
 }
 
-enum _Field { amount, note }
+enum _Field { amount, description, note }
 
 class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     with EditModeMixin<PersonalDebtDetailPage, _DebtDraft> {
   final _formKey = GlobalKey<FormState>();
   final _amountCtrl = TextEditingController();
+  final _descriptionCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
   /// Used when the debt isn't in the cubit yet (deep link).
@@ -57,7 +59,9 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
   @override
   void dispose() {
     _amountCtrl.dispose();
+    _descriptionCtrl.dispose();
     _noteCtrl.dispose();
+    _descriptionFocus.dispose();
     _noteFocus.dispose();
     super.dispose();
   }
@@ -85,13 +89,11 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
   // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  @override
   void onDraftRestored() {
     if (_amountCtrl.text != working.amount) _amountCtrl.text = working.amount;
+    if (_descriptionCtrl.text != working.description) {
+      _descriptionCtrl.text = working.description;
+    }
     if (_noteCtrl.text != working.note) _noteCtrl.text = working.note;
   }
 
@@ -128,6 +130,8 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
       final updated = await context.read<PersonalDebtsCubit>().update(
         debt.id,
         amount: AmountField.parse(w.amount),
+        // '' clears (migration 51).
+        description: w.description.trim(),
         note: w.note.trim(),
         counterpartyPersonName: counterpartyChanged ? w.name : null,
         counterpartyContactId: counterpartyChanged ? w.contactId : null,
@@ -249,7 +253,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
                   AppSpacing.lg,
                   MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   AppSpacing.lg,
-                  AppSpacing.huge,
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
                   LockedInEdit(locked: isEditing, child: _header(l, debt)),
@@ -353,6 +357,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
         ? (l.debtSourceTransaction, '/transactions/${debt.sourceTransactionId}')
         : (l.debtSourceManual, null);
     return SectionCard(
+      first: true,
       children: [
         if (editing)
           DetailStacked(
@@ -379,7 +384,6 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
             label: l.debtAmount,
             trailing: MoneyText(debt.amount, symbol: symbol),
           ),
-        const RowDivider(),
         LockedInEdit(
           locked: editing,
           child: DetailRow(
@@ -387,7 +391,6 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
             trailing: MoneyText(debt.settledAmount, symbol: symbol),
           ),
         ),
-        const RowDivider(),
         DetailRow(
           label: l.debtCounterparty,
           trailing: Row(
@@ -403,7 +406,6 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
           showChevron: editing,
           onTap: editing ? _pickCounterparty : null,
         ),
-        const RowDivider(),
         LockedInEdit(
           locked: editing,
           child: DetailRow(
@@ -415,22 +417,35 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
                 : () => openPage(context, sourceRoute),
           ),
         ),
-        const RowDivider(),
         DetailStacked(
-          label: l.debtNote,
+          label: l.commonDescription,
+          child: InlineField(
+            editing: editing,
+            controller: _descriptionCtrl,
+            focusNode: _descriptionFocus,
+            maxLines: 3,
+            maxLength: TextLimits.description,
+            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+            onChanged: (v) => applyTextChange(
+              _Field.description,
+              working.copyWith(description: v),
+            ),
+          ),
+        ),
+        DetailStacked(
+          label: l.commonNote,
           child: InlineField(
             editing: editing,
             controller: _noteCtrl,
             focusNode: _noteFocus,
             maxLines: 3,
-            maxLength: 500,
+            maxLength: TextLimits.note,
             onEnterEdit: () => enterEdit(focus: _noteFocus),
             onChanged: (v) =>
                 applyTextChange(_Field.note, working.copyWith(note: v)),
           ),
         ),
-        if (debt.createdAt != null) ...[
-          const RowDivider(),
+        if (debt.createdAt != null)
           LockedInEdit(
             locked: editing,
             child: DetailRow(
@@ -443,7 +458,6 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
               ),
             ),
           ),
-        ],
       ],
     );
   }
@@ -452,6 +466,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
 class _DebtDraft {
   const _DebtDraft({
     this.amount = '',
+    this.description = '',
     this.note = '',
     this.contactId,
     this.name = '',
@@ -459,6 +474,7 @@ class _DebtDraft {
 
   factory _DebtDraft.from(PersonalDebt d) => _DebtDraft(
     amount: AmountField.format(d.amount),
+    description: d.description ?? '',
     note: d.note ?? '',
     contactId: d.counterpartyContactId,
     name: d.counterpartyPersonName,
@@ -466,18 +482,21 @@ class _DebtDraft {
 
   /// Formatted text, as in the field.
   final String amount;
+  final String description;
   final String note;
   final String? contactId;
   final String name;
 
   _DebtDraft copyWith({
     String? amount,
+    String? description,
     String? note,
     String? contactId,
     bool clearContact = false,
     String? name,
   }) => _DebtDraft(
     amount: amount ?? this.amount,
+    description: description ?? this.description,
     note: note ?? this.note,
     contactId: clearContact ? null : (contactId ?? this.contactId),
     name: name ?? this.name,
@@ -487,10 +506,11 @@ class _DebtDraft {
   bool operator ==(Object other) =>
       other is _DebtDraft &&
       other.amount == amount &&
+      other.description == description &&
       other.note == note &&
       other.contactId == contactId &&
       other.name == name;
 
   @override
-  int get hashCode => Object.hash(amount, note, contactId, name);
+  int get hashCode => Object.hash(amount, description, note, contactId, name);
 }

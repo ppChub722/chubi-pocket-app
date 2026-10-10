@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -34,6 +34,7 @@ import '../../../scheduled_transactions/domain/scheduled_enums.dart';
 import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
 import 'account_picker_sheet.dart';
 import 'splits_section.dart';
+import 'tx_hero_card.dart';
 
 part 'draft_form_event.dart';
 part 'draft_form_scheduled.dart';
@@ -55,10 +56,13 @@ class DraftFormController extends ChangeNotifier {
   /// Scheduled mode (a recurring template) — see draft_form_scheduled.dart.
   final schedule = ScheduleFields();
 
+  /// What it was for — the record's title (the hero's big line). A
+  /// project row's คำอธิบาย too.
+  final description = TextEditingController();
+
   // ── Event mode (a project row) ──
   /// The project member who paid / received.
   String? payerId;
-  final description = TextEditingController();
 
   /// The row's project tags (names).
   final List<String> tagNames = [];
@@ -162,10 +166,18 @@ class DraftFormController extends ChangeNotifier {
   final Set<String> tagIds = {};
   List<SplitDraft> splits = const [];
 
+  /// A saved row's category / wallet that isn't in this user's lists
+  /// (another member's, on a shared wallet) — shown by name, not editable.
+  String? foreignCategoryName;
+  String? foreignAccountName;
+
+  /// A saved row's tags, for ones missing from this user's list.
+  final Map<String, Tag> knownTags = {};
+
   bool get isTransfer => type == TransactionType.transfer;
   double get amountValue => AmountField.parse(amount.text) ?? 0;
 
-  /// Anything in the "more" section — it opens by itself when there is.
+  /// Anything beyond the basics: tags, splits, project tags / splits.
   bool get hasExtras =>
       tagIds.isNotEmpty ||
       splits.any((s) => s.isComplete) ||
@@ -240,6 +252,7 @@ class DraftFormController extends ChangeNotifier {
     type = d.type ?? TransactionType.expense;
     final a = d.amount;
     if (a != null && a > 0) amount.text = AmountField.format(a);
+    description.text = d.description ?? '';
     note.text = d.note ?? '';
     date = DateTime.tryParse(d.date ?? '') ?? date;
     accountTouched = true;
@@ -269,17 +282,49 @@ class DraftFormController extends ChangeNotifier {
   }) {
     type = t.type;
     amount.text = AmountField.format(t.amount);
+    description.text = t.description ?? '';
     note.text = t.note ?? '';
     date = DateTime.tryParse(t.date) ?? date;
     accountTouched = true;
     account = accounts.where((x) => x.id == t.accountId).firstOrNull;
     this.toAccount = toAccount;
     category = categories.where((c) => c.id == t.categoryId).firstOrNull;
+    foreignAccountName = account == null ? t.account?.name : null;
+    foreignCategoryName = category == null && !isTransfer
+        ? t.category?.name
+        : null;
     tagIds.addAll(t.tags.map((x) => x.id));
+    knownTags.addAll({for (final x in t.tags) x.id: x.asTag});
+  }
+
+  /// Puts a saved transaction's fields back as [d] (undo / cancel on the
+  /// detail page). Text controllers each notify; a caller listening for
+  /// edits should ignore changes while this runs.
+  void restoreTransaction(
+    PendingDraft d, {
+    required List<Account> accounts,
+    required List<Category> categories,
+  }) {
+    type = d.type ?? type;
+    final a = d.amount;
+    amount.text = a == null ? '' : AmountField.format(a);
+    description.text = d.description ?? '';
+    note.text = d.note ?? '';
+    date = DateTime.tryParse(d.date ?? '') ?? date;
+    account = accounts.where((x) => x.id == d.accountId).firstOrNull;
+    toAccount = accounts
+        .where((x) => x.id == d.transferToAccountId)
+        .firstOrNull;
+    category = categories.where((c) => c.id == d.categoryId).firstOrNull;
+    tagIds
+      ..clear()
+      ..addAll(d.tagIds);
+    notifyListeners();
   }
 
   /// The fields as a draft — no validation, anything may be empty.
   PendingDraft toDraft() {
+    final d = description.text.trim();
     final n = note.text.trim();
     return PendingDraft(
       type: type,
@@ -287,6 +332,7 @@ class DraftFormController extends ChangeNotifier {
       accountId: account?.id,
       categoryId: isTransfer ? null : category?.id,
       date: _ymd(date),
+      description: d.isEmpty ? null : d,
       note: n.isEmpty ? null : n,
       transferToAccountId: isTransfer ? toAccount?.id : null,
       tagIds: tagIds.toList(),
@@ -320,30 +366,52 @@ class MemberSplitDraft {
 String _ymd(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
+/// "วันนี้" / "เมื่อวาน" / a short date.
+String _dayLabel(BuildContext context, DateTime d) {
+  final l = AppLocalizations.of(context)!;
+  return DateFormatter.friendly(
+    d,
+    today: l.commonToday,
+    yesterday: l.commonYesterday,
+    locale: Localizations.localeOf(context).languageCode,
+  );
+}
+
 /// One transaction's fields — the single form behind the `+` quick create,
-/// "แก้ร่าง" and every row of "เพิ่มร่าง":
+/// "แก้ร่าง", every row of "เพิ่มร่าง" and the transaction detail page
+/// (owner design 2026-10-10). Everything shows at once, no "more" toggle:
 ///
-///   type · amount · category + wallet cards · date + note
-///   ▸ รายละเอียดเพิ่ม (closed by default; opens by itself if it has
-///     something): tags · split · [moreExtra]
-///
-/// Transfers swap the two cards for source → destination.
+///   [TxHeroCard]: type chips · amount · ค่าอะไร (description) · date
+///   โน้ต
+///   category + wallet cards (a transfer: [จาก] → [ไป])
+///   tags · หารกับ… · [extra]
 ///
 /// Editing a saved transaction: [typeLocked] (the API can't change it),
 /// [allowSplits] false (splits are set at create only), [categoryLockedHint]
 /// on another member's row (only the author picks its category), and
 /// [readOnly] on an ex-member's locked row.
+///
+/// [editing] false = the detail page's view mode: the same layout, nothing
+/// editable. A long-press on a field calls [onEnterEdit] (with the field's
+/// focus node, if it's a text field), [onEdit] adds the hero's ✏️, and the
+/// category / wallet cards open their pages ([onOpenCategory] /
+/// [onOpenAccount]).
 class DraftForm extends StatefulWidget {
   const DraftForm({
     required this.controller,
     this.compact = false,
     this.autofocus = true,
     this.defaultAccount,
-    this.moreExtra,
+    this.extra,
     this.typeLocked = false,
     this.allowSplits = true,
     this.categoryLockedHint,
     this.readOnly = false,
+    this.editing = true,
+    this.onEnterEdit,
+    this.onEdit,
+    this.onOpenCategory,
+    this.onOpenAccount,
     this.event,
     this.schedule,
     super.key,
@@ -362,8 +430,21 @@ class DraftForm extends StatefulWidget {
   /// Non-null → the category card can't be changed; this says why.
   final String? categoryLockedHint;
 
-  /// Everything shown, nothing editable.
+  /// Everything shown, nothing editable (dimmed).
   final bool readOnly;
+
+  /// False = view mode (the detail page outside edit mode).
+  final bool editing;
+
+  /// View mode: long-press on a field → enter edit, focusing that field.
+  final ValueChanged<FocusNode?>? onEnterEdit;
+
+  /// View mode: the hero's ✏️.
+  final VoidCallback? onEdit;
+
+  /// View mode: tapping the category / wallet card.
+  final ValueChanged<Category>? onOpenCategory;
+  final ValueChanged<Account>? onOpenAccount;
 
   final DraftFormController controller;
 
@@ -374,18 +455,27 @@ class DraftForm extends StatefulWidget {
   /// Wallet shown until the user picks one.
   final Account? defaultAccount;
 
-  /// Extra tile at the bottom of the "more" section (the quick create's
-  /// "เพิ่มเข้าอีเวนต์").
-  final Widget? moreExtra;
+  /// Extra tile at the bottom (the quick create's "เพิ่มเข้าอีเวนต์").
+  final Widget? extra;
 
   @override
   State<DraftForm> createState() => _DraftFormState();
 }
 
 class _DraftFormState extends State<DraftForm> {
-  late bool _moreOpen = widget.controller.hasExtras;
+  final _amountFocus = FocusNode();
+  final _descriptionFocus = FocusNode();
+  final _noteFocus = FocusNode();
 
   DraftFormController get _c => widget.controller;
+
+  @override
+  void dispose() {
+    _amountFocus.dispose();
+    _descriptionFocus.dispose();
+    _noteFocus.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickCategory() async {
     final r = await showCategoryPickerSheet(
@@ -395,6 +485,7 @@ class _DraftFormState extends State<DraftForm> {
           ? CategoryType.income
           : CategoryType.expense,
       selected: _c.category,
+      allowCreate: true,
     );
     if (!mounted || r == null) return;
     _c.setCategory(r is CategoryPickerSelected ? r.category : null);
@@ -413,6 +504,7 @@ class _DraftFormState extends State<DraftForm> {
       title: to ? l.quickTo : l.transactionFormAccountLabel,
       // Expense / income may be floating; a transfer needs real wallets.
       allowNone: !_c.isTransfer && !to,
+      allowCreate: true,
     );
     if (!mounted || r == null) return;
     if (to) {
@@ -432,6 +524,61 @@ class _DraftFormState extends State<DraftForm> {
     if (d != null) _c.setDate(d);
   }
 
+  /// A wallet card: picker in edit mode, the wallet's page in view mode.
+  /// One that isn't in this user's list (someone else's, on a shared
+  /// wallet) still shows its name, just not tappable.
+  Widget _walletCard({
+    required Account? account,
+    required String label,
+    required String placeholder,
+    required VoidCallback onPick,
+    String? foreignName,
+  }) {
+    if (account == null && foreignName != null) {
+      return PickCard(
+        label: label,
+        value: foreignName,
+        leading: const PickCardEmptyIcon(AppIcons.bank, size: 32),
+        dense: true,
+        onTap: null,
+      );
+    }
+    final open = widget.onOpenAccount;
+    return WalletPickCard(
+      account: account,
+      label: label,
+      placeholder: placeholder,
+      dense: true,
+      onTap: widget.editing
+          ? onPick
+          : (account == null || open == null ? null : () => open(account)),
+    );
+  }
+
+  Widget _categoryCard(AppLocalizations l) {
+    final c = _c.category;
+    final foreign = _c.foreignCategoryName;
+    if (c == null && foreign != null) {
+      return PickCard(
+        label: l.transactionFormCategoryLabel,
+        value: foreign,
+        leading: const PickCardEmptyIcon(AppIcons.category, size: 32),
+        dense: true,
+        onTap: null,
+      );
+    }
+    final open = widget.onOpenCategory;
+    return CategoryPickCard(
+      category: c,
+      label: l.transactionFormCategoryLabel,
+      placeholder: l.transactionFormCategoryNone,
+      dense: true,
+      onTap: widget.editing
+          ? (widget.categoryLockedHint == null ? _pickCategory : null)
+          : (c == null || c.isSystem || open == null ? null : () => open(c)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -444,8 +591,6 @@ class _DraftFormState extends State<DraftForm> {
         autofocus: widget.autofocus && !widget.readOnly,
         locked: widget.typeLocked,
         readOnly: widget.readOnly,
-        moreOpen: _moreOpen,
-        onToggleMore: () => setState(() => _moreOpen = !_moreOpen),
         onPickDate: _pickDate,
       );
     }
@@ -461,76 +606,111 @@ class _DraftFormState extends State<DraftForm> {
       );
     }
 
+    final editing = widget.editing;
+    final enterEdit = widget.onEnterEdit;
+    // View mode: a long-press anywhere on the cards enters edit mode too.
+    Widget longPressable(Widget child) => editing || enterEdit == null
+        ? child
+        : GestureDetector(onLongPress: () => enterEdit(null), child: child);
+
     return ListenableBuilder(
       listenable: _c,
       builder: (context, _) {
         final isTransfer = _c.isTransfer;
-        final extras =
-            _c.tagIds.length + _c.splits.where((s) => s.isComplete).length;
         final categoryHint = widget.categoryLockedHint;
         final form = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _TypeSwitch(
+            TxHeroCard(
               type: _c.type,
-              onChanged: widget.typeLocked ? null : _c.setType,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _AmountInput(
-              controller: _c.amount,
-              type: _c.type,
-              compact: widget.compact,
+              onTypeChanged: widget.typeLocked ? null : _c.setType,
+              amount: _c.amount,
+              title: _c.description,
+              dateLabel: _dayLabel(context, _c.date),
+              onPickDate: _pickDate,
+              editing: editing,
               autofocus: widget.autofocus && !widget.readOnly,
+              compact: widget.compact,
+              amountFocus: _amountFocus,
+              titleFocus: _descriptionFocus,
+              onEdit: widget.onEdit,
+              onLongPressField: enterEdit,
             ),
-            const SizedBox(height: AppSpacing.sm),
-            if (isTransfer) ...[
-              WalletPickCard(
-                account: _c.account,
-                label: l.quickFrom,
-                placeholder: l.quickPickWallet,
-                onTap: () => _pickAccount(),
+            // View mode: an empty note only shows when it can be filled in.
+            if (editing || enterEdit != null || _c.note.text.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              _TextBlock(
+                label: l.commonNote,
+                controller: _c.note,
+                maxLength: TextLimits.note,
+                editing: editing,
+                focusNode: _noteFocus,
+                onEnterEdit: enterEdit,
               ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  tooltip: l.quickSwap,
-                  icon: const Icon(AppIcons.transfer),
-                  onPressed: _c.swapAccounts,
+            ],
+            const SizedBox(height: AppSpacing.md),
+            if (isTransfer)
+              // One row, money flows left → right (owner 2026-10-10). The
+              // arrow never turns: tapping it swaps the wallets instead.
+              longPressable(
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _walletCard(
+                          account: _c.account,
+                          label: l.quickFrom,
+                          placeholder: l.quickPickWallet,
+                          onPick: () => _pickAccount(),
+                          foreignName: _c.foreignAccountName,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: editing ? l.quickSwap : null,
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32),
+                        icon: const Icon(AppIcons.arrowForward),
+                        onPressed: editing ? _c.swapAccounts : null,
+                      ),
+                      Expanded(
+                        child: _walletCard(
+                          account: _c.toAccount,
+                          label: l.quickTo,
+                          placeholder: l.quickPickWallet,
+                          onPick: () => _pickAccount(to: true),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              // Picked → the card takes the category's / wallet's own
+              // colour; blank (both optional) → dashed. Same height both.
+              longPressable(
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _categoryCard(l)),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _walletCard(
+                          account: _c.account,
+                          label: l.transactionFormAccountLabel,
+                          placeholder: l.transactionFormAccountNone,
+                          onPick: () => _pickAccount(),
+                          foreignName: _c.foreignAccountName,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              WalletPickCard(
-                account: _c.toAccount,
-                label: l.quickTo,
-                placeholder: l.quickPickWallet,
-                onTap: () => _pickAccount(to: true),
-              ),
-            ] else
-              // Picked → the card takes the category's / wallet's own
-              // colour; blank (both optional) → dashed.
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: CategoryPickCard(
-                      category: _c.category,
-                      label: l.transactionFormCategoryLabel,
-                      placeholder: l.transactionFormCategoryNone,
-                      onTap: categoryHint == null ? _pickCategory : null,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: WalletPickCard(
-                      account: _c.account,
-                      label: l.transactionFormAccountLabel,
-                      placeholder: l.transactionFormAccountNone,
-                      onTap: () => _pickAccount(),
-                    ),
-                  ),
-                ],
-              ),
-            if (!isTransfer && categoryHint != null)
+            if (editing && !isTransfer && categoryHint != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.md,
@@ -545,83 +725,35 @@ class _DraftFormState extends State<DraftForm> {
                   ),
                 ),
               ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                SizedBox(
-                  width: 132,
-                  child: _Pill(
-                    icon: AppIcons.date,
-                    label: DateFormatter.friendly(
-                      _c.date,
-                      today: l.commonToday,
-                      yesterday: l.commonYesterday,
-                      locale: Localizations.localeOf(context).languageCode,
-                    ),
-                    onTap: _pickDate,
-                  ),
+            // View mode shows only the row's own tags — none, no block.
+            if (editing || _c.tagIds.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              longPressable(
+                _TagsBlock(
+                  selected: _c.tagIds,
+                  onToggle: _c.toggleTag,
+                  editing: editing,
+                  known: _c.knownTags,
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: TextField(
-                    controller: _c.note,
-                    maxLength: 500,
-                    textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      hintText: l.quickNoteHint,
-                      counterText: '',
-                      isDense: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                    ),
-                  ),
+              ),
+            ],
+            if (!isTransfer) ...[
+              if (editing && widget.allowSplits) ...[
+                const SizedBox(height: AppSpacing.md),
+                SplitsSection(
+                  totalAmount: _c.amountValue,
+                  drafts: _c.splits,
+                  onChanged: _c.setSplits,
+                  title: _c.type == TransactionType.income
+                      ? l.transactionSplitShareTitle
+                      : l.transactionSplitWithTitle,
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            _MoreToggle(
-              label: l.quickMore,
-              open: _moreOpen,
-              count: extras,
-              onTap: () => setState(() => _moreOpen = !_moreOpen),
-            ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.topCenter,
-              child: !_moreOpen
-                  ? const SizedBox(width: double.infinity)
-                  : Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _TagsBlock(
-                            selected: _c.tagIds,
-                            onToggle: _c.toggleTag,
-                          ),
-                          if (!isTransfer) ...[
-                            if (widget.allowSplits) ...[
-                              const SizedBox(height: AppSpacing.sm),
-                              SplitsSection(
-                                totalAmount: _c.amountValue,
-                                drafts: _c.splits,
-                                onChanged: _c.setSplits,
-                                title: _c.type == TransactionType.income
-                                    ? l.transactionSplitShareTitle
-                                    : l.transactionSplitWithTitle,
-                              ),
-                            ],
-                            if (widget.moreExtra != null) ...[
-                              const SizedBox(height: AppSpacing.sm),
-                              widget.moreExtra!,
-                            ],
-                          ],
-                        ],
-                      ),
-                    ),
-            ),
+              if (widget.extra != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                widget.extra!,
+              ],
+            ],
           ],
         );
         if (!widget.readOnly) return form;
@@ -633,229 +765,77 @@ class _DraftFormState extends State<DraftForm> {
 
 // ── Pieces ────────────────────────────────────────────────────────────
 
-class _TypeSwitch extends StatelessWidget {
-  const _TypeSwitch({
-    required this.type,
-    required this.onChanged,
-    this.allowTransfer = true,
-  });
-  final TransactionType type;
-
-  /// Null = locked (editing a saved transaction).
-  final ValueChanged<TransactionType>? onChanged;
-
-  /// False for project rows (expense | income only).
-  final bool allowTransfer;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return SegmentedButton<TransactionType>(
-      showSelectedIcon: false,
-      expandedInsets: EdgeInsets.zero,
-      segments: [
-        ButtonSegment(
-          value: TransactionType.expense,
-          label: Text(l.transactionTypeExpense),
-        ),
-        ButtonSegment(
-          value: TransactionType.income,
-          label: Text(l.transactionTypeIncome),
-        ),
-        if (allowTransfer)
-          ButtonSegment(
-            value: TransactionType.transfer,
-            label: Text(l.transactionTypeTransfer),
-          ),
-      ],
-      selected: {type},
-      onSelectionChanged: onChanged == null ? null : (s) => onChanged!(s.first),
-    );
-  }
-}
-
-Color _typeColor(BuildContext context, TransactionType t) {
-  final palette = Theme.of(context).extension<AppColors>()!;
-  return switch (t) {
-    TransactionType.expense => palette.expense,
-    TransactionType.income => palette.income,
-    TransactionType.transfer => Theme.of(context).colorScheme.onSurface,
-  };
-}
-
-String _typeSign(TransactionType t) => switch (t) {
-  TransactionType.expense => '−',
-  TransactionType.income => '+',
-  TransactionType.transfer => '',
-};
-
-/// The big centred amount — numeric keyboard, coloured by type.
-class _AmountInput extends StatelessWidget {
-  const _AmountInput({
+/// A labelled text field under the hero — โน้ต, a scheduled entry's
+/// คำอธิบาย. The same box in view and edit mode ([InlineField]); in view
+/// mode a long-press calls [onEnterEdit] with this field's focus node.
+class _TextBlock extends StatelessWidget {
+  const _TextBlock({
+    required this.label,
     required this.controller,
-    required this.type,
-    required this.compact,
-    required this.autofocus,
-    this.symbol = '฿',
+    required this.maxLength,
+    this.editing = true,
+    this.focusNode,
+    this.onEnterEdit,
   });
-  final TextEditingController controller;
-  final TransactionType type;
-  final bool compact;
-  final bool autofocus;
 
-  /// Currency symbol (a project row uses the project's currency).
-  final String symbol;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final color = _typeColor(context, type);
-    final base = compact
-        ? Theme.of(context).textTheme.headlineSmall
-        : Theme.of(context).textTheme.displaySmall;
-    final big = base?.copyWith(
-      fontWeight: FontWeight.w700,
-      color: color,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
-    return TextField(
-      controller: controller,
-      autofocus: autofocus,
-      textAlign: TextAlign.center,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [ThousandsInputFormatter()],
-      style: big,
-      cursorColor: Theme.of(context).colorScheme.primary,
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        hintText: '0',
-        hintStyle: big?.copyWith(color: color.withValues(alpha: 0.35)),
-        prefixText: '${_typeSign(type)}$symbol ',
-        prefixStyle: big?.copyWith(fontSize: (big.fontSize ?? 36) * 0.6),
-        semanticCounterText: l.transactionFormAmountLabel,
-      ),
-    );
-  }
-}
-
-/// A compact tappable field: icon · value · ▾.
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.muted = false,
-  });
-  final IconData icon;
   final String label;
-  final VoidCallback onTap;
-
-  /// [label] is a placeholder (nothing picked yet).
-  final bool muted;
+  final TextEditingController controller;
+  final int maxLength;
+  final bool editing;
+  final FocusNode? focusNode;
+  final ValueChanged<FocusNode?>? onEnterEdit;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Material(
-      color: scheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: scheme.outlineVariant),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: muted ? scheme.onSurfaceVariant : null,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    final enter = onEnterEdit;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.xs),
+        InlineField(
+          editing: editing,
+          controller: controller,
+          focusNode: focusNode,
+          maxLength: maxLength,
+          maxLines: 4,
+          onEnterEdit: enter == null ? null : () => enter(focusNode),
+        ),
+      ],
     );
   }
 }
 
-/// "รายละเอียดเพิ่ม ▾" — opens / closes the extra fields (pushes what's
-/// below it down). [count] = how many extras are filled, shown while closed.
-class _MoreToggle extends StatelessWidget {
-  const _MoreToggle({
-    required this.label,
-    required this.open,
-    required this.count,
-    required this.onTap,
-  });
-  final String label;
-  final bool open;
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.xs,
-          vertical: AppSpacing.sm,
-        ),
-        child: Row(
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (!open && count > 0) ...[
-              const SizedBox(width: AppSpacing.sm),
-              Badge(label: Text('$count')),
-            ],
-            const Spacer(),
-            AnimatedRotation(
-              turns: open ? 0.5 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: Icon(AppIcons.expand, color: scheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
+/// Tags: every tag as a toggle chip while editing; view mode shows only
+/// the picked ones. [known] resolves picked tags that aren't in this
+/// user's list (another member's, on a shared wallet).
 class _TagsBlock extends StatelessWidget {
-  const _TagsBlock({required this.selected, required this.onToggle});
+  const _TagsBlock({
+    required this.selected,
+    required this.onToggle,
+    this.editing = true,
+    this.known = const {},
+  });
   final Set<String> selected;
   final ValueChanged<String> onToggle;
+  final bool editing;
+  final Map<String, Tag> known;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final tags = context.watch<TagsCubit>().state.tags;
+    final mine = context.watch<TagsCubit>().state.tags;
+    final List<Tag> tags = editing
+        ? mine
+        : [
+            for (final id in selected)
+              ?(mine.where((t) => t.id == id).firstOrNull ?? known[id]),
+          ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -883,8 +863,8 @@ class _TagsBlock extends StatelessWidget {
               for (final t in tags)
                 TagChip(
                   tag: t,
-                  selected: selected.contains(t.id),
-                  onTap: () => onToggle(t.id),
+                  selected: editing ? selected.contains(t.id) : null,
+                  onTap: editing ? () => onToggle(t.id) : null,
                 ),
             ],
           ),

@@ -62,6 +62,7 @@ class PersonalDebt extends Equatable {
     this.sourceTransactionId,
     this.sourceProjectTransactionId,
     this.projectId,
+    this.description,
     this.note,
     this.createdAt,
   });
@@ -78,6 +79,7 @@ class PersonalDebt extends Equatable {
   final double settledAmount;
   final String currency;
   final DebtStatus status;
+  final String? description;
   final String? note;
   final DateTime? createdAt;
 
@@ -101,6 +103,7 @@ class PersonalDebt extends Equatable {
       settledAmount: (json['settled_amount'] as num).toDouble(),
       currency: json['currency'] as String,
       status: DebtStatusWire.parse(json['status'] as String?),
+      description: json['description'] as String?,
       note: json['note'] as String?,
       createdAt: DateTime.tryParse(
         (json['created_at'] as String?) ?? '',
@@ -122,6 +125,7 @@ class PersonalDebt extends Equatable {
     settledAmount,
     currency,
     status,
+    description,
     note,
     createdAt,
   ];

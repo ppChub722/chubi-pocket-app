@@ -180,14 +180,14 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       ? animation
       : ReverseAnimation(animation);
 
-  /// Pops the page; on a tab's root (nothing to pop) it's the shell's back
-  /// — the previous tab, the เพิ่มเติม hub, or the dashboard.
-  void _defaultBack(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      ShellBackScope.maybeOf(context)?.call();
-    }
+  /// Same as the system back gesture (owner 2026-10-10): `maybePop`, so a
+  /// page's [PopScope] (discard prompt, edit mode, …) gets its say. On a
+  /// tab's root (nothing to pop) it's the shell's back — the previous tab,
+  /// the เพิ่มเติม hub, or the dashboard.
+  Future<void> _defaultBack(BuildContext context) async {
+    final shellBack = ShellBackScope.maybeOf(context);
+    final handled = await Navigator.of(context).maybePop();
+    if (!handled) shellBack?.call();
   }
 }
 

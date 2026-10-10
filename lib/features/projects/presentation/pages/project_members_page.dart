@@ -227,7 +227,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.only(
               top: MediaQuery.paddingOf(context).top,
-              bottom: 96,
+              bottom: 96 + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
               for (final (title, list) in groups)

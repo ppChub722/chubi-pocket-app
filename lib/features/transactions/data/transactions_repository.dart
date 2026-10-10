@@ -105,6 +105,7 @@ class TransactionsRepository {
     required double amount,
     required String date,
     String? categoryId,
+    String? description,
     String? note,
     String? transferToAccountId,
     List<Map<String, dynamic>>? splits,
@@ -117,6 +118,7 @@ class TransactionsRepository {
         'amount': amount,
         'date': date,
         'category_id': ?categoryId,
+        'description': ?description,
         'note': ?note,
         'transfer_to_account_id': ?transferToAccountId,
         if (splits != null && splits.isNotEmpty) 'splits': splits,
@@ -133,14 +135,14 @@ class TransactionsRepository {
   }
 
   /// `PUT /v1/transactions/:id`. Per spec §3.4, editable fields are
-  /// `amount`, `date`, `category_id`, `note`. For transfers the BE
-  /// cascades the change to the paired row + re-balances both accounts
+  /// `amount`, `date`, `category_id`, `description`, `note`. For transfers
+  /// the BE cascades the change to the paired row + re-balances both accounts
   /// atomically and returns a [TransferResult] envelope.
   ///
-  /// `category_id` and `note` use presence semantics: pass `null` and
-  /// set `clearCategory` / `clearNote` to true to send an explicit
-  /// `null` (clears the column); leave both args null + flags false to
-  /// omit the field (leaves the column unchanged).
+  /// `category_id`, `description` and `note` use presence semantics: pass
+  /// `null` and set `clearCategory` / `clearDescription` / `clearNote` to
+  /// true to send an explicit `null` (clears the column); leave the arg
+  /// null + flag false to omit the field (leaves the column unchanged).
   Future<TransactionMutationResult> update({
     required String id,
     double? amount,
@@ -149,6 +151,8 @@ class TransactionsRepository {
     bool clearCategory = false,
     String? note,
     bool clearNote = false,
+    String? description,
+    bool clearDescription = false,
     String? accountId,
     bool clearAccount = false,
     String? transferToAccountId,
@@ -164,6 +168,11 @@ class TransactionsRepository {
         body['note'] = note;
       } else if (clearNote) {
         body['note'] = null;
+      }
+      if (description != null) {
+        body['description'] = description;
+      } else if (clearDescription) {
+        body['description'] = null;
       }
       if (accountId != null) {
         body['account_id'] = accountId;

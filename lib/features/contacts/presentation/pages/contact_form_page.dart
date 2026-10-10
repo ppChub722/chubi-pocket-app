@@ -6,6 +6,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -29,7 +30,7 @@ import '../cubit/contacts_cubit.dart';
 /// - **Link-existing** (linkRequestId + contactId) — post-accept tap
 ///   flow when B has an unlinked email-match. Loads the existing
 ///   contact, locks display_name + email (about to become linked-driven
-///   anyway), keeps phone/notes editable. Save calls
+///   anyway), keeps phone / description / note editable. Save calls
 ///   `linkExistingContactFromLinkRequest`.
 class ContactFormPage extends StatefulWidget {
   const ContactFormPage({
@@ -65,7 +66,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
-  final _notes = TextEditingController();
+  final _description = TextEditingController();
+  final _note = TextEditingController();
 
   bool _loading = false;
   String? _error;
@@ -115,7 +117,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
       _name.text = c.effectiveDisplayName;
       _email.text = c.effectiveEmail ?? '';
       _phone.text = c.phone ?? '';
-      _notes.text = c.notes ?? '';
+      _description.text = c.description ?? '';
+      _note.text = c.note ?? '';
     } on ApiException catch (e) {
       _error = e.message;
     } finally {
@@ -134,14 +137,18 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final name = _name.text.trim();
     final email = _email.text.trim().isEmpty ? null : _email.text.trim();
     final phone = _phone.text.trim().isEmpty ? null : _phone.text.trim();
-    final notes = _notes.text.trim().isEmpty ? null : _notes.text.trim();
+    final description = _description.text.trim().isEmpty
+        ? null
+        : _description.text.trim();
+    final note = _note.text.trim().isEmpty ? null : _note.text.trim();
     try {
       if (_isLinkExisting) {
         await repo.linkExistingContactFromLinkRequest(
           widget.linkRequestId!,
           widget.editingId!,
           phone: phone,
-          notes: notes,
+          description: description,
+          note: note,
         );
         await cubit.load();
         if (!mounted) return;
@@ -150,7 +157,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
         final created = await repo.createLinkedContactFromLinkRequest(
           widget.linkRequestId!,
           phone: phone,
-          notes: notes,
+          description: description,
+          note: note,
         );
         await cubit.load();
         if (!mounted) return;
@@ -165,7 +173,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
           displayName: _displayFieldsLocked ? null : name,
           email: _displayFieldsLocked ? null : email,
           phone: phone,
-          notes: notes,
+          description: description,
+          note: note,
         );
         if (!mounted) return;
         context.pop<Contact?>(null);
@@ -174,7 +183,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
           displayName: name,
           email: email,
           phone: phone,
-          notes: notes,
+          description: description,
+          note: note,
         );
         if (!mounted) return;
         context.pop<Contact?>(null);
@@ -217,9 +227,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
           return Form(
             key: _form,
             child: ListView(
-              padding: const EdgeInsets.all(
-                AppSpacing.lg,
-              ).add(EdgeInsets.only(top: top)),
+              padding: const EdgeInsets.all(AppSpacing.lg).add(
+                EdgeInsets.only(
+                  top: top,
+                  bottom: MediaQuery.paddingOf(context).bottom,
+                ),
+              ),
               children: [
                 if (_isLinkFlow)
                   Padding(
@@ -231,13 +244,23 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   ),
                 AppTextField(
                   controller: _name,
-                  label: l.contactNameLabel,
+                  label: l.commonName,
                   readOnly: _displayFieldsLocked,
                   prefixIcon: lockedIcon,
                   helper: lockedHelper,
+                  maxLength: TextLimits.name,
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? l.contactNameRequired
                       : null,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                // The contact's own — editable even when name/email are locked.
+                AppTextField(
+                  controller: _description,
+                  label: l.commonDescription,
+                  hint: l.contactDescriptionHint,
+                  maxLines: 3,
+                  maxLength: TextLimits.description,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 AppTextField(
@@ -256,9 +279,11 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 AppTextField(
-                  controller: _notes,
-                  label: l.contactNotesLabel,
+                  controller: _note,
+                  label: l.commonNote,
+                  hint: l.contactNoteHint,
                   maxLines: 3,
+                  maxLength: TextLimits.note,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -289,7 +314,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
     _name.dispose();
     _email.dispose();
     _phone.dispose();
-    _notes.dispose();
+    _description.dispose();
+    _note.dispose();
     super.dispose();
   }
 }

@@ -4,6 +4,7 @@ import 'package:chubi_pocket/app/shell/tab_nav.dart';
 import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -44,6 +45,36 @@ Widget _root(String name, {bool withRow = false}) => Builder(
   ),
 );
 
+/// Swipes right that tab c's page spent on itself (like the dashboard's
+/// month).
+int _pageSwipes = 0;
+
+/// Registers tab c's root as a [ShellSwipeHandler] taking swipes right.
+class _SwipeOwner extends StatefulWidget {
+  const _SwipeOwner({required this.child});
+  final Widget child;
+
+  @override
+  State<_SwipeOwner> createState() => _SwipeOwnerState();
+}
+
+class _SwipeOwnerState extends State<_SwipeOwner> implements ShellSwipeHandler {
+  @override
+  bool canSwipe(int dir) => dir < 0;
+
+  @override
+  void onSwipe(int dir) => _pageSwipes++;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    ShellSwipeScope.maybeOf(context)?[ShellTab.accounts] = this;
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
 /// One branch per [ShellTab], like the app: the four nav tabs are a–d (d =
 /// the เพิ่มเติม hub), the rest go by their tab name. Details are siblings
 /// of their root, as in app_router.dart.
@@ -63,8 +94,9 @@ GoRouter _router(String initialLocation) => GoRouter(
             routes: [
               GoRoute(
                 path: '/${_name(tab)}',
-                builder: (_, _) =>
-                    _root(_name(tab), withRow: tab == ShellTab.home),
+                builder: (_, _) => tab == ShellTab.accounts
+                    ? _SwipeOwner(child: _root(_name(tab)))
+                    : _root(_name(tab), withRow: tab == ShellTab.home),
               ),
               GoRoute(
                 path: '/${_name(tab)}/detail',
@@ -81,7 +113,11 @@ GoRouter _router(String initialLocation) => GoRouter(
 String _name(ShellTab tab) => tab.inNav ? 'abcd'[tab.index] : tab.name;
 
 void main() {
-  Future<void> pump(WidgetTester t, {String at = '/a'}) async {
+  Future<void> pump(
+    WidgetTester t, {
+    String at = '/a',
+    bool reduceMotion = false,
+  }) async {
     await t.pumpWidget(
       MaterialApp.router(
         routerConfig: _router(at),
@@ -89,6 +125,12 @@ void main() {
         locale: const Locale('th'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: reduceMotion),
+          child: child!,
+        ),
       ),
     );
     await t.pumpAndSettle();
@@ -170,6 +212,67 @@ void main() {
     expect(x(t, 'a'), lessThan(rest));
     await t.pumpAndSettle();
     expect(x(t, 'a'), rest);
+  });
+
+  testWidgets('a swipe the page takes: no tab nudge, the page handles it', (
+    t,
+  ) async {
+    await pump(t, at: '/c');
+    _pageSwipes = 0;
+    final rest = x(t, 'c');
+    final g = await t.startGesture(t.getCenter(find.text('tab c')));
+    for (var i = 0; i < 10; i++) {
+      await g.moveBy(const Offset(20, 0));
+      await t.pump(const Duration(milliseconds: 100));
+    }
+    expect(x(t, 'c'), rest); // the tab doesn't move as if switching
+    await g.up();
+    await t.pumpAndSettle();
+    await swipe(t, find.text('tab c').hitTestable(), 300);
+    expect(_pageSwipes, 1);
+    expect(find.text('tab c').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('landing on a detail page fades the tab in, not a snap', (
+    t,
+  ) async {
+    await pump(t);
+    await t.tap(find.text('open project').hitTestable());
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 50));
+    bool fading(Layer? l) {
+      for (var c = l; c != null; c = c.nextSibling) {
+        if (c is OpacityLayer && (c.alpha ?? 255) < 255) return true;
+        if (c is ContainerLayer && fading(c.firstChild)) return true;
+      }
+      return false;
+    }
+
+    expect(fading(t.layers.first), isTrue);
+    await t.pumpAndSettle();
+    expect(fading(t.layers.first), isFalse);
+  });
+
+  testWidgets('reduced motion: tabs fade, no slide, no nudge', (t) async {
+    await pump(t, reduceMotion: true);
+    final rest = x(t, 'a');
+    final g = await t.startGesture(t.getCenter(find.text('tab a')));
+    for (var i = 0; i < 10; i++) {
+      await g.moveBy(const Offset(-20, 0));
+      await t.pump(const Duration(milliseconds: 100));
+    }
+    expect(x(t, 'a'), rest);
+    await g.up();
+    await t.pumpAndSettle();
+    await t.fling(
+      find.text('tab a').hitTestable(),
+      const Offset(-300, 0),
+      1200,
+    );
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 50));
+    expect(x(t, 'b'), rest);
+    await t.pumpAndSettle();
   });
 
   // ── System back ────────────────────────────────────────────────────

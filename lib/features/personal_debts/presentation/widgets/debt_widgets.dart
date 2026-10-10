@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/currencies.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -72,8 +73,10 @@ StatusPill debtStatusPill(
   };
 }
 
-/// One debt as a row — direction + note, progress for open ones, and the
-/// outstanding (open) or full (closed) amount tinted by who owes whom.
+/// One debt as a row on the person's page (the name is the page) — the
+/// description (what for) on top when there is one, then direction + date;
+/// progress for open ones, and the outstanding (open) or full (closed)
+/// amount tinted by who owes whom. The note stays on the detail page.
 class DebtTile extends StatelessWidget {
   const DebtTile({required this.debt, super.key});
 
@@ -83,11 +86,12 @@ class DebtTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final symbol = Currencies.symbolOf(debt.currency);
     final dir = debt.isOwedToMe ? l.debtsOwedToMe : l.debtsIOwe;
-    final subtitle = [
+    final description = debt.description?.trim() ?? '';
+    final meta = [
       dir,
-      if (debt.note?.isNotEmpty ?? false) debt.note!,
       if (debt.createdAt != null)
         DateFormatter.friendly(
           debt.createdAt!,
@@ -109,12 +113,32 @@ class DebtTile extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                  child: description.isEmpty
+                      ? Text(
+                          meta,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.bodyMedium,
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              description,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.bodyMedium,
+                            ),
+                            Text(
+                              meta,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 if (!debt.isOpen) ...[
@@ -155,7 +179,8 @@ class DebtTile extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────
 
 /// "รับเงินคืน / จ่ายคืน". Amount (≤ outstanding) with ทั้งหมด / ครึ่งหนึ่ง,
-/// wallet (or "ไม่ผูกกระเป๋า" → a floating row) and date. Always records a
+/// wallet (or "ไม่ผูกกระเป๋า" → a floating row), date and an optional
+/// คำอธิบาย (blank = the debt's) / โน้ต for the new row. Always records a
 /// transaction — income for owed_to_me, expense for i_owe (contract §7).
 /// [amount] pre-fills the field (e.g. from a "จ่ายแล้ว" notification).
 /// Returns true when saved.
@@ -199,6 +224,9 @@ class _SettleSheetState extends State<_SettleSheet> {
     ),
   );
 
+  final _description = TextEditingController();
+  final _note = TextEditingController();
+
   /// null = no wallet (a floating transaction).
   Account? _account;
   DateTime _date = DateTime.now();
@@ -214,6 +242,8 @@ class _SettleSheetState extends State<_SettleSheet> {
   @override
   void dispose() {
     _amount.dispose();
+    _description.dispose();
+    _note.dispose();
     super.dispose();
   }
 
@@ -248,6 +278,8 @@ class _SettleSheetState extends State<_SettleSheet> {
     final debts = context.read<PersonalDebtsCubit>();
     final tx = context.read<TransactionsCubit>();
     final accounts = context.read<AccountsCubit>();
+    String? opt(TextEditingController c) =>
+        c.text.trim().isEmpty ? null : c.text.trim();
     setState(() => _saving = true);
     try {
       await debts.settle(
@@ -255,6 +287,9 @@ class _SettleSheetState extends State<_SettleSheet> {
         accountId: _account?.id,
         amount: AmountField.parse(_amount.text),
         date: _ymd(_date),
+        // Left blank → the server uses the debt's description.
+        description: opt(_description),
+        note: opt(_note),
       );
       // A transaction was recorded (and maybe a wallet moved).
       await Future.wait([tx.load(), accounts.load()]);
@@ -327,6 +362,22 @@ class _SettleSheetState extends State<_SettleSheet> {
               ),
               leading: const Icon(AppIcons.date),
               onTap: _pickDate,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              controller: _description,
+              label: l.commonDescription,
+              // The default when left blank — the debt's own description.
+              hint: debt.description,
+              maxLength: TextLimits.description,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            AppTextField(
+              controller: _note,
+              label: l.commonNote,
+              prefixIcon: AppIcons.note,
+              maxLines: 3,
+              maxLength: TextLimits.note,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(

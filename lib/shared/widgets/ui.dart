@@ -18,6 +18,7 @@ export 'inputs/app_search_bar.dart';
 export 'inputs/app_text_field.dart';
 export 'inputs/currency_tile.dart';
 export 'inputs/inline_field.dart';
+export 'inputs/month_picker.dart';
 export 'inputs/pick_card.dart';
 export 'inputs/picker_tile.dart';
 export 'inputs/select_card_group.dart';
@@ -30,6 +31,7 @@ export 'charts/paired_bar_chart.dart';
 
 // Chips & pills
 export 'chips/filter_chips.dart';
+export 'chips/pill.dart';
 export 'chips/status_pill.dart';
 export 'chips/tone.dart';
 
@@ -40,6 +42,7 @@ export 'layout/danger_row.dart';
 export 'layout/detail_rows.dart';
 export 'layout/header_card.dart';
 export 'layout/locked_in_edit.dart';
+export 'layout/pinned_bar.dart';
 export 'layout/section_header.dart';
 export 'layout/selectable_frame.dart';
 export 'layout/tinted_card.dart';

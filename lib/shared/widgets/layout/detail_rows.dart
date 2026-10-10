@@ -2,51 +2,162 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
+import 'add_tile.dart';
+import 'locked_in_edit.dart';
 
-/// Detail-page building blocks (category-detail style): a frameless group
-/// of rows separated by hairlines. Label left, value/control right — or
-/// label on top for long values.
+/// Detail-page building blocks (category-detail style): frameless sections
+/// of rows. Label left, value/control right — or label on top for long
+/// values. Owner rules 2026-10-10 (#16 / #17): a hairline **between** rows,
+/// and a tinted band ([SectionBand]) **between** sections.
 ///
 /// ```dart
-/// SectionCard(children: [
+/// SectionCard(first: true, children: [
 ///   DetailRow(label: 'อีเมล', trailing: Text(email)),
-///   const RowDivider(),
 ///   DetailStacked(label: 'บันทึก', child: InlineField(...)),
-/// ])
+/// ]),
+/// SectionCard(title: 'การจัดการ', locked: editing, children: [...]),
 /// ```
 
-/// Groups detail rows. No outer frame — rows sit on the page, separated by
-/// [RowDivider]s. Optional [title] renders a small section heading.
+/// One section of a detail page: a [SectionBand] above it (unless [first]),
+/// an optional [title] row, then [children] with a [RowDivider] between
+/// each — pages don't place dividers themselves.
+///
+/// Sits in a list padded [AppSpacing.lg] at the sides (the detail-page
+/// norm); the band reaches past that to the screen edges.
 class SectionCard extends StatelessWidget {
-  const SectionCard({required this.children, this.title, super.key});
+  const SectionCard({
+    required this.children,
+    this.title,
+    this.trailing,
+    this.first = false,
+    this.locked = false,
+    this.dividers = true,
+    super.key,
+  });
 
   final List<Widget> children;
   final String? title;
 
+  /// A small action at the end of the title row (👁, share, …).
+  final Widget? trailing;
+
+  /// The page's first section — no band above it.
+  final bool first;
+
+  /// An action section in edit mode: dimmed and inert ([LockedInEdit]).
+  /// The band stays as it is.
+  final bool locked;
+
+  /// false = no hairlines (one block that isn't a list of rows).
+  final bool dividers;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final hasTitleRow = title != null || trailing != null;
+    final body = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (hasTitleRow)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              trailing == null ? AppSpacing.lg : AppSpacing.sm,
+              AppSpacing.xs,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title ?? '',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                ?trailing,
+              ],
+            ),
+          ),
+        for (final (i, row) in children.indexed) ...[
+          if (i > 0 && dividers) const RowDivider(),
+          row,
+        ],
+      ],
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (title != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.xs,
-            ),
-            child: Text(
-              title!,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: scheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
+        if (!first) const SectionBand(),
+        LockedInEdit(locked: locked, child: body),
+      ],
+    );
+  }
+}
+
+/// The separator between detail sections (#17): a tinted band, edge to
+/// edge. [SectionCard] puts one above itself; use it directly only where a
+/// page has a section that isn't a [SectionCard].
+///
+/// It breaks out of the page's side inset ([bleed] on each side) so pages
+/// keep their usual padded list.
+class SectionBand extends StatelessWidget {
+  const SectionBand({this.bleed = AppSpacing.lg, super.key});
+
+  /// How far past its box the band reaches on each side — the page's side
+  /// padding.
+  final double bleed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: SizedBox(
+        height: AppSpacing.sm,
+        child: LayoutBuilder(
+          builder: (context, box) => OverflowBox(
+            minWidth: box.maxWidth + bleed * 2,
+            maxWidth: box.maxWidth + bleed * 2,
+            child: ColoredBox(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: const SizedBox.expand(),
             ),
           ),
-        ...children,
-      ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The "add one more" row at the end of a [SectionCard] (a number, a
+/// split, …): a row-style [AddTile], inset like the rows around it.
+class DetailAddRow extends StatelessWidget {
+  const DetailAddRow({
+    required this.label,
+    required this.onTap,
+    this.icon = AppIcons.add,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: AddTile(
+        label: label,
+        icon: icon,
+        variant: AddTileVariant.row,
+        onTap: onTap,
+      ),
     );
   }
 }
@@ -160,7 +271,8 @@ class DetailStacked extends StatelessWidget {
   }
 }
 
-/// Hairline divider between detail rows.
+/// Hairline divider between detail rows — [SectionCard] places them; use
+/// it directly only in a plain list of rows.
 class RowDivider extends StatelessWidget {
   const RowDivider({super.key});
 

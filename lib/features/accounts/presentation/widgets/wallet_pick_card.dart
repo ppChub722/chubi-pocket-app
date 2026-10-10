@@ -19,6 +19,7 @@ class WalletPickCard extends StatelessWidget {
     required this.placeholder,
     required this.onTap,
     this.errorText,
+    this.dense = false,
     super.key,
   });
 
@@ -27,6 +28,11 @@ class WalletPickCard extends StatelessWidget {
   final String placeholder;
   final VoidCallback? onTap;
   final String? errorText;
+
+  /// [PickCard.dense], with a smaller icon — two cards on one row.
+  final bool dense;
+
+  double get _icon => dense ? 32 : 40;
 
   @override
   Widget build(BuildContext context) {
@@ -37,16 +43,16 @@ class WalletPickCard extends StatelessWidget {
     if (a != null) {
       icon = IconDisplay(
         type: IconType.account,
-        size: 40,
+        size: _icon,
         iconCode: a.iconCode,
       );
-      if (a.isShared) icon = SharedWalletIconBadge(size: 40, child: icon);
+      if (a.isShared) icon = SharedWalletIconBadge(size: _icon, child: icon);
     }
     return PickCard(
       label: label,
       value: a?.name,
       placeholder: placeholder,
-      leading: icon ?? const PickCardEmptyIcon(AppIcons.noWallet),
+      leading: icon ?? PickCardEmptyIcon(AppIcons.noWallet, size: _icon),
       subtitle: a == null
           ? null
           : MoneyText(
@@ -60,6 +66,7 @@ class WalletPickCard extends StatelessWidget {
       watermark: a?.type.icon,
       onTap: onTap,
       errorText: errorText,
+      dense: dense,
     );
   }
 }

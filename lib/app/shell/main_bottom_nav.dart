@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_icons.dart';
@@ -56,6 +58,9 @@ class MainBottomNav extends StatelessWidget {
   static const double _tabGap = 2;
   static const double _addSize = 76;
 
+  /// Frosted-glass blur behind the bar.
+  static const double _blur = 16;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -76,30 +81,37 @@ class MainBottomNav extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Material(
-                color: scheme.surfaceContainerHigh,
-                elevation: 8,
-                shadowColor: scheme.shadow.withValues(alpha: 0.35),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(_barRadius),
-                  side: BorderSide(color: scheme.outlineVariant),
-                ),
-                child: SizedBox(
-                  height: _barHeight,
-                  child: Padding(
-                    // + each tab's own [_tabGap] = [_tabInset] at the ends.
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: _tabInset - _tabGap,
+              // Frosted glass (owner 2026-10-10: see-through): the page
+              // scrolls on underneath, blurred. No elevation — a shadow
+              // would show through the tint as a dark smudge.
+              ClipRRect(
+                borderRadius: BorderRadius.circular(_barRadius),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: _blur, sigmaY: _blur),
+                  child: Material(
+                    color: scheme.surfaceContainerHigh.withValues(alpha: 0.72),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(_barRadius),
+                      side: BorderSide(color: scheme.outlineVariant),
                     ),
-                    child: LayoutBuilder(
-                      builder: (context, box) => Stack(
-                        children: [
-                          _SlidingHighlight(
-                            slot: _selectedSlot,
-                            width: box.maxWidth,
+                    child: SizedBox(
+                      height: _barHeight,
+                      child: Padding(
+                        // + each tab's own [_tabGap] = [_tabInset] at the ends.
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: _tabInset - _tabGap,
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, box) => Stack(
+                            children: [
+                              _SlidingHighlight(
+                                slot: _selectedSlot,
+                                width: box.maxWidth,
+                              ),
+                              _tabs(l),
+                            ],
                           ),
-                          _tabs(l),
-                        ],
+                        ),
                       ),
                     ),
                   ),

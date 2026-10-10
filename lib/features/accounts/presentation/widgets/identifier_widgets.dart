@@ -153,108 +153,91 @@ class _IdentifierSheetState extends State<_IdentifierSheet> {
           ? l.identifierSheetAddTitle
           : l.identifierSheetEditTitle,
       footer: AppButton(label: l.commonSave, onPressed: _save, expand: true),
+      // Same side insets as the title and the footer.
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SelectCardGroup<IdentifierKind>(
-              columns: 4,
-              selected: _kind,
-              onChanged: (k) => setState(() => _kind = k),
-              options: [
-                for (final k in IdentifierKind.values)
-                  SelectCardOption(
-                    value: k,
-                    label: identifierKindLabel(l, k),
-                    icon: identifierKindIcon(k),
-                  ),
-              ],
-            ),
-            if (_kind == IdentifierKind.bankAccount) ...[
-              const SizedBox(height: AppSpacing.md),
-              DetailRow(
-                label: l.identifierBankLabel,
-                trailing: OptionMenuAnchor<String>(
-                  selected: _bankCode ?? '',
-                  onSelected: (c) =>
-                      setState(() => _bankCode = c.isEmpty ? null : c),
-                  options: [
-                    SheetOption(value: '', label: l.identifierBankNone),
-                    for (final b in banks)
-                      SheetOption(
-                        value: b.code,
-                        label: b.name(lang),
-                        subtitle: b.code,
-                      ),
-                  ],
-                  builder: (context, toggle) => TextButton(
-                    onPressed: toggle,
-                    child: Text(bank?.label(lang) ?? l.identifierBankNone),
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SelectCardGroup<IdentifierKind>(
+                columns: 4,
+                selected: _kind,
+                onChanged: (k) => setState(() => _kind = k),
+                options: [
+                  for (final k in IdentifierKind.values)
+                    SelectCardOption(
+                      value: k,
+                      label: identifierKindLabel(l, k),
+                      icon: identifierKindIcon(k),
+                    ),
+                ],
+              ),
+              if (_kind == IdentifierKind.bankAccount) ...[
+                const SizedBox(height: AppSpacing.md),
+                // Full-width like the fields around it; the bank list is long,
+                // so a searchable option sheet, not a popover (owner
+                // 2026-10-10: the narrow trigger + menu looked off).
+                PickerTile(
+                  label: l.identifierBankLabel,
+                  value: bank?.label(lang),
+                  placeholder: l.identifierBankNone,
+                  leading: const Icon(AppIcons.bank),
+                  onTap: () async {
+                    final c = await showOptionSheet<String>(
+                      context,
+                      title: l.identifierBankLabel,
+                      selected: _bankCode ?? '',
+                      searchable: true,
+                      options: [
+                        SheetOption(value: '', label: l.identifierBankNone),
+                        for (final b in banks)
+                          SheetOption(
+                            value: b.code,
+                            label: b.name(lang),
+                            subtitle: b.code,
+                          ),
+                      ],
+                    );
+                    if (c != null && mounted) {
+                      setState(() => _bankCode = c.isEmpty ? null : c);
+                    }
+                  },
                 ),
+              ],
+              const SizedBox(height: AppSpacing.md),
+              AppTextField(
+                controller: _value,
+                label: l.identifierValueLabel,
+                hint: l.identifierValueHint,
+                helper: _kind == IdentifierKind.promptPay
+                    ? l.identifierValueHelperPromptPay
+                    : null,
+                keyboardType: TextInputType.visiblePassword,
+                textInputAction: TextInputAction.done,
+                autofocus: widget.initial == null,
+                validator: (v) => _validate(v, l),
+                onSubmitted: (_) => _save(),
               ),
             ],
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              controller: _value,
-              label: l.identifierValueLabel,
-              hint: l.identifierValueHint,
-              helper: _kind == IdentifierKind.promptPay
-                  ? l.identifierValueHelperPromptPay
-                  : null,
-              keyboardType: TextInputType.visiblePassword,
-              textInputAction: TextInputAction.done,
-              autofocus: widget.initial == null,
-              validator: (v) => _validate(v, l),
-              onSubmitted: (_) => _save(),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// The numbers section's title row — [SectionCard]'s title look, with the
-/// app-wide 👁 on the right (the same toggle that hides money).
-class IdentifiersTitle extends StatelessWidget {
-  const IdentifiersTitle({
-    required this.title,
-    this.showToggle = true,
-    super.key,
-  });
+/// The numbers section's title-row action ([SectionCard.trailing]): the
+/// app-wide 👁 (the same toggle that hides money). Hidden ([show] false) it
+/// keeps the toggle's height, so the title row doesn't jump.
+class IdentifiersVisibility extends StatelessWidget {
+  const IdentifiersVisibility({this.show = true, super.key});
 
-  final String title;
-  final bool showToggle;
+  final bool show;
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xs,
-        AppSpacing.sm,
-        0,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: scheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          if (showToggle)
-            const MoneyVisibilityToggle()
-          else
-            const SizedBox(height: 40),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => show && kMoneyPrivacyEnabled
+      ? const MoneyVisibilityToggle()
+      : const SizedBox(height: 40);
 }

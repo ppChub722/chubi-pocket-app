@@ -101,7 +101,7 @@ class _PersonalDebtsPageState extends State<PersonalDebtsPage> {
                   // Top: clear the floating top bar.
                   padding: EdgeInsets.only(
                     top: MediaQuery.paddingOf(context).top,
-                    bottom: 96,
+                    bottom: 96 + MediaQuery.paddingOf(context).bottom,
                   ),
                   children: [
                     _Summary(

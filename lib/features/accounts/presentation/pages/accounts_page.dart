@@ -196,7 +196,11 @@ class _AccountsPageState extends State<AccountsPage> {
                           ),
                         ),
                       ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 96)),
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 96 + MediaQuery.paddingOf(context).bottom,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -472,7 +476,7 @@ class _AccountsSkeleton extends StatelessWidget {
         AppSpacing.lg,
         MediaQuery.paddingOf(context).top + AppSpacing.sm,
         AppSpacing.lg,
-        0,
+        MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         const SkeletonBox(height: 168, borderRadius: AppRadius.md),

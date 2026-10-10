@@ -30,6 +30,7 @@ class ScheduledCard extends StatelessWidget {
     final amountColor = entry.type == ScheduledTransactionType.income
         ? palette.income
         : null;
+    final desc = entry.description?.trim();
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -64,6 +65,17 @@ class ScheduledCard extends StatelessWidget {
                         _VariantPill(entry: entry),
                       ],
                     ),
+                    if (desc != null && desc.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        desc,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Row(
                       children: [

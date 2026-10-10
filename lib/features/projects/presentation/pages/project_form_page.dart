@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/edit_mode/edit_mode_mixin.dart';
@@ -25,7 +26,7 @@ class ProjectFormPage extends StatefulWidget {
   State<ProjectFormPage> createState() => _ProjectFormPageState();
 }
 
-enum _Field { name, type, description, planned }
+enum _Field { name, type, description, note, planned }
 
 class _ProjectFormPageState extends State<ProjectFormPage>
     with EditModeMixin<ProjectFormPage, _NewProject> {
@@ -48,11 +49,6 @@ class _ProjectFormPageState extends State<ProjectFormPage>
 
   @override
   bool get leaveOnCancel => true;
-
-  @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
 
   @override
   void onDraftRestored() {
@@ -89,6 +85,7 @@ class _ProjectFormPageState extends State<ProjectFormPage>
         name: w.name.trim(),
         type: opt(w.type),
         description: opt(w.description),
+        note: opt(w.note),
         iconCode: w.iconCode,
       );
       // planned_amount is only accepted on PUT (API §10).
@@ -125,9 +122,12 @@ class _ProjectFormPageState extends State<ProjectFormPage>
           // Builder: the bar height is only in the body's MediaQuery.
           child: Builder(
             builder: (context) => ListView(
-              padding: const EdgeInsets.all(
-                AppSpacing.lg,
-              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
+              padding: const EdgeInsets.all(AppSpacing.lg).add(
+                EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top,
+                  bottom: MediaQuery.paddingOf(context).bottom,
+                ),
+              ),
               children: [
                 Row(
                   children: [
@@ -144,9 +144,10 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                     Expanded(
                       child: AppTextField(
                         controller: _ctrl[_Field.name]!,
-                        label: l.projectNameLabel,
+                        label: l.commonName,
+                        hint: l.projectNameLabel,
                         autofocus: true,
-                        maxLength: 100,
+                        maxLength: TextLimits.name,
                         onChanged: (v) => onText(_Field.name, v),
                         validator: (v) => (v?.trim().isEmpty ?? true)
                             ? l.projectNameRequired
@@ -167,11 +168,19 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                 const SizedBox(height: AppSpacing.md),
                 AppTextField(
                   controller: _ctrl[_Field.description]!,
-                  label: l.projectDescriptionLabel,
+                  label: l.commonDescription,
+                  maxLines: 3,
+                  maxLength: TextLimits.description,
+                  onChanged: (v) => onText(_Field.description, v),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppTextField(
+                  controller: _ctrl[_Field.note]!,
+                  label: l.commonNote,
                   prefixIcon: AppIcons.note,
                   maxLines: 3,
-                  maxLength: 500,
-                  onChanged: (v) => onText(_Field.description, v),
+                  maxLength: TextLimits.note,
+                  onChanged: (v) => onText(_Field.note, v),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 AmountField(
@@ -206,6 +215,7 @@ class _NewProject {
     this.name = '',
     this.type = '',
     this.description = '',
+    this.note = '',
     this.planned = '',
     this.iconCode,
   });
@@ -213,6 +223,7 @@ class _NewProject {
   final String name;
   final String type;
   final String description;
+  final String note;
   final String planned;
   final IconCode? iconCode;
 
@@ -220,6 +231,7 @@ class _NewProject {
     _Field.name => name,
     _Field.type => type,
     _Field.description => description,
+    _Field.note => note,
     _Field.planned => planned,
   };
 
@@ -227,6 +239,7 @@ class _NewProject {
     name: f == _Field.name ? v : name,
     type: f == _Field.type ? v : type,
     description: f == _Field.description ? v : description,
+    note: f == _Field.note ? v : note,
     planned: f == _Field.planned ? v : planned,
     iconCode: iconCode,
   );
@@ -235,6 +248,7 @@ class _NewProject {
     name: name,
     type: type,
     description: description,
+    note: note,
     planned: planned,
     iconCode: iconCode ?? this.iconCode,
   );
@@ -245,9 +259,11 @@ class _NewProject {
       other.name == name &&
       other.type == type &&
       other.description == description &&
+      other.note == note &&
       other.planned == planned &&
       other.iconCode == iconCode;
 
   @override
-  int get hashCode => Object.hash(name, type, description, planned, iconCode);
+  int get hashCode =>
+      Object.hash(name, type, description, note, planned, iconCode);
 }

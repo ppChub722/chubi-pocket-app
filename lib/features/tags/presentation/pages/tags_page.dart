@@ -8,6 +8,7 @@ import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -123,9 +124,13 @@ class _TagsPageState extends State<TagsPage>
       _query.trim().isNotEmpty ||
       (!isEditing && (_filterColors.isNotEmpty || _filterIcons.isNotEmpty));
 
-  bool _matches(String name, IconCode? iconCode) {
+  bool _matches(String name, String? description, IconCode? iconCode) {
     final q = _query.trim().toLowerCase();
-    if (q.isNotEmpty && !name.toLowerCase().contains(q)) return false;
+    if (q.isNotEmpty &&
+        !name.toLowerCase().contains(q) &&
+        !(description?.toLowerCase().contains(q) ?? false)) {
+      return false;
+    }
     if (isEditing) return true;
     if (_filterColors.isNotEmpty &&
         !_filterColors.contains(_colorOf(iconCode))) {
@@ -170,7 +175,9 @@ class _TagsPageState extends State<TagsPage>
           if (byId[id] != null) byId[id]!,
       ];
     }
-    return _sorted(all).where((t) => _matches(t.name, t.iconCode)).toList();
+    return _sorted(
+      all,
+    ).where((t) => _matches(t.name, t.description, t.iconCode)).toList();
   }
 
   /// Edit mode rows — filter matches plus anything touched this session
@@ -179,7 +186,7 @@ class _TagsPageState extends State<TagsPage>
     final orig = {for (final d in original.items) d.key: d};
     return [
       for (final d in working.items)
-        if (_matches(d.name, d.iconCode) || orig[d.key] != d) d,
+        if (_matches(d.name, d.description, d.iconCode) || orig[d.key] != d) d,
     ];
   }
 
@@ -217,6 +224,8 @@ class _TagsPageState extends State<TagsPage>
               serverId: t.id,
               name: t.name,
               iconCode: t.iconCode,
+              description: t.description ?? '',
+              note: t.note ?? '',
             ),
         ]),
       );
@@ -348,6 +357,26 @@ class _TagsPageState extends State<TagsPage>
     );
   }
 
+  /// Description + note of the one selected tag — a sheet, since the grid
+  /// cell only has room for the name (the description shows under it).
+  Future<void> _openDetails() async {
+    final key = _selected.single;
+    final draft = working.items.firstWhere((d) => d.key == key);
+    final result =
+        await showAppSheetCustom<({String description, String note})>(
+          context,
+          builder: (_) => _TagDetailsSheet(draft: draft),
+        );
+    if (!mounted || result == null) return;
+    applyChange(
+      working.map(
+        (d) => d.key == key
+            ? d.copyWith(description: result.description, note: result.note)
+            : d,
+      ),
+    );
+  }
+
   Future<void> _bulkDelete() async {
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
@@ -371,7 +400,7 @@ class _TagsPageState extends State<TagsPage>
   String? _validateName(AppLocalizations l, String key, String? v) {
     final name = v?.trim() ?? '';
     if (name.isEmpty) return l.tagFormNameRequired;
-    if (name.length > 50) return l.tagFormNameTooLong;
+    if (name.length > TextLimits.tagName) return l.tagFormNameTooLong;
     final lower = name.toLowerCase();
     final dup = working.items.any(
       (d) => d.key != key && d.name.trim().toLowerCase() == lower,
@@ -433,17 +462,25 @@ class _TagsPageState extends State<TagsPage>
       final origById = {for (final o in original.items) o.serverId: o};
       for (final d in working.items) {
         final name = d.name.trim();
+        // Update is a full replace, so description / note always ride along
+        // (null clears).
+        final tag = Tag(
+          id: d.serverId ?? 'draft',
+          name: name,
+          iconCode: d.iconCode,
+          description: d.description.isEmpty ? null : d.description,
+          note: d.note.isEmpty ? null : d.note,
+        );
         if (d.serverId == null) {
-          final created = await cubit.add(
-            Tag(id: 'draft', name: name, iconCode: d.iconCode),
-          );
+          final created = await cubit.add(tag);
           resultIds.add(created.id);
         } else {
           final orig = origById[d.serverId]!;
-          if (orig.name != name || orig.iconCode != d.iconCode) {
-            await cubit.update(
-              Tag(id: d.serverId!, name: name, iconCode: d.iconCode),
-            );
+          if (orig.name != name ||
+              orig.iconCode != d.iconCode ||
+              orig.description != d.description ||
+              orig.note != d.note) {
+            await cubit.update(tag);
           }
           resultIds.add(d.serverId!);
         }
@@ -532,7 +569,7 @@ class _TagsPageState extends State<TagsPage>
 
   // Row 2 — same height in both modes so the grid never jumps.
   //   view: [สี▾][ไอคอน▾] … [เรียง▾](✏️)
-  //   edit: [☐ n] … [สี][ไอคอน][ลบ]
+  //   edit: [☐ n/N] … [สี][ไอคอน][คำอธิบาย · โน้ต][ลบ]
   Widget _toolRow(
     AppLocalizations l,
     List<Tag> tags,
@@ -551,9 +588,9 @@ class _TagsPageState extends State<TagsPage>
       child: Row(
         children: [
           if (isEditing) ...[
-            _SelectAllBox(
-              visible: visible!,
-              selected: _selected,
+            SelectAllCount(
+              selected: visible!.where((d) => _selected.contains(d.key)).length,
+              total: visible.length,
               tooltip: l.tagsSelectAll,
               onTap: () => _toggleSelectAll(visible),
             ),
@@ -594,6 +631,15 @@ class _TagsPageState extends State<TagsPage>
                       icon: AppIcons.iconPicker,
                       label: l.tagsBulkIcon,
                       onTap: _canBulk ? _bulkIcon : null,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    // One tag at a time.
+                    ActionPill(
+                      icon: AppIcons.note,
+                      label: l.tagDetailsTitle,
+                      onTap: _selected.length == 1 && !isSaving
+                          ? _openDetails
+                          : null,
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     ActionPill(
@@ -713,6 +759,7 @@ class _TagsPageState extends State<TagsPage>
               editing: false,
               name: t.name,
               iconCode: t.iconCode,
+              description: t.description,
               usage: l.tagsUsageCount(t.usageCount),
               onEnterEdit: () => _beginEdit(focusKey: t.id),
               onEnterEditIcon: () => _beginEdit(focusKey: t.id, openIcon: true),
@@ -737,6 +784,7 @@ class _TagsPageState extends State<TagsPage>
               editing: true,
               name: d.name,
               iconCode: d.iconCode,
+              description: d.description,
               selected: _selected.contains(d.key),
               onToggleSelect: () => _toggleSelect(d.key),
               controller: _controllerFor(d),
@@ -762,6 +810,8 @@ class _TagsPageState extends State<TagsPage>
 
 /// Two equal columns that keep every child mounted (unlike a lazy grid), so
 /// the form validates all visible rows and `ensureVisible` can reach them.
+/// The two cells of a row share its height (a description line or a
+/// validation error makes one taller).
 class _Grid extends StatelessWidget {
   const _Grid({required this.children});
 
@@ -769,41 +819,68 @@ class _Grid extends StatelessWidget {
 
   static const _gap = AppSpacing.sm;
 
+  /// Pairs cells into rows; a [_GridMessage] takes a whole row.
+  List<List<Widget>> _rows() {
+    final rows = <List<Widget>>[];
+    for (final c in children) {
+      if (c is _GridMessage ||
+          rows.isEmpty ||
+          rows.last.length == 2 ||
+          rows.last.first is _GridMessage) {
+        rows.add([c]);
+      } else {
+        rows.last.add(c);
+      }
+    }
+    return rows;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, box) {
-        final full = box.maxWidth - AppSpacing.lg * 2;
-        final cell = (full - _gap) / 2;
-        return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          // Bottom room for the shell's FAB.
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.xs,
-            AppSpacing.lg,
-            96,
-          ),
-          child: Wrap(
-            spacing: _gap,
-            runSpacing: _gap,
-            children: [
-              for (final c in children)
-                SizedBox(
-                  width: c is _GridMessage ? full : cell,
-                  // Same inset as a tile's SelectableFrame (gap 3 + ring 2) so
-                  // the add tile lines up with its row.
-                  child: c is AddTile
-                      ? Padding(
-                          padding: const EdgeInsets.all(5),
-                          child: SizedBox(height: _tileMinHeight, child: c),
-                        )
-                      : c,
+    // Same inset as a tile's SelectableFrame (gap 3 + ring 2) so the add
+    // tile lines up with its row. Its height only counts as a plain tile's
+    // — next to a taller one it stretches.
+    Widget cell(Widget c) => c is AddTile
+        ? Padding(
+            padding: const EdgeInsets.all(5),
+            child: SizedBox(height: _tileMinHeight, child: c),
+          )
+        : c;
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      // Bottom room for the shell's FAB, above the floating nav.
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.lg,
+        96 + MediaQuery.paddingOf(context).bottom,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (i, row) in _rows().indexed) ...[
+            if (i > 0) const SizedBox(height: _gap),
+            if (row.first is _GridMessage)
+              row.first
+            else
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cell(row.first)),
+                    const SizedBox(width: _gap),
+                    Expanded(
+                      child: row.length > 1
+                          ? cell(row[1])
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
-            ],
-          ),
-        );
-      },
+              ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -828,57 +905,19 @@ class _GridMessage extends StatelessWidget {
   }
 }
 
-/// "[☐ n]" — select / deselect everything currently visible.
-class _SelectAllBox extends StatelessWidget {
-  const _SelectAllBox({
-    required this.visible,
-    required this.selected,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  final List<_TagDraft> visible;
-  final Set<String> selected;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final n = visible.where((d) => selected.contains(d.key)).length;
-    final value = n == 0 ? false : (n == visible.length ? true : null);
-    return InkWell(
-      onTap: visible.isEmpty ? null : onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SelectCheck(
-              value: value,
-              tooltip: tooltip,
-              onTap: visible.isEmpty ? null : onTap,
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Text('$n', style: Theme.of(context).textTheme.titleSmall),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Tile height without a validation error — the add tile matches it.
 const double _tileMinHeight = 58;
 
-/// One grid cell for both modes — icon + name with constant metrics (the
-/// name is the same field, only its border/editability toggle). Edit adds
-/// the selection ring and a corner check; tapping the cell selects it.
+/// One grid cell for both modes — icon + name (+ description) with constant
+/// metrics (the name is the same field, only its border/editability toggle).
+/// Edit adds the selection ring and a corner check; tapping the cell
+/// selects it.
 class _TagTile extends StatelessWidget {
   const _TagTile({
     required this.editing,
     required this.name,
     required this.iconCode,
+    this.description,
     this.usage,
     this.onEnterEdit,
     this.onEnterEditIcon,
@@ -895,6 +934,9 @@ class _TagTile extends StatelessWidget {
   final bool editing;
   final String name;
   final IconCode? iconCode;
+
+  /// One line under the name, both modes (so entering edit doesn't jump).
+  final String? description;
 
   // View
   final String? usage;
@@ -927,7 +969,7 @@ class _TagTile extends StatelessWidget {
       initialValue: editing ? null : name,
       focusNode: editing ? focusNode : null,
       readOnly: !editing,
-      maxLength: 50,
+      maxLength: TextLimits.tagName,
       style: textTheme.bodyLarge?.copyWith(
         color: color,
         fontWeight: FontWeight.w600,
@@ -954,6 +996,7 @@ class _TagTile extends StatelessWidget {
     );
 
     final hasUsage = !editing && (usage?.isNotEmpty ?? false);
+    final hasDescription = description?.trim().isNotEmpty ?? false;
     final tile = Container(
       constraints: const BoxConstraints(minHeight: _tileMinHeight),
       padding: const EdgeInsets.fromLTRB(
@@ -993,13 +1036,35 @@ class _TagTile extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
-            child: editing
-                ? field
-                : GestureDetector(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (editing)
+                  field
+                else
+                  GestureDetector(
                     onLongPress: onEnterEdit,
                     behavior: HitTestBehavior.opaque,
                     child: AbsorbPointer(child: field),
                   ),
+                if (hasDescription)
+                  Padding(
+                    // Lines up with the name's text inset.
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
+                    child: Text(
+                      description!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: color.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
@@ -1036,6 +1101,104 @@ class _TagTile extends StatelessWidget {
     );
   }
 }
+
+/// Edit-mode sheet for one tag's description + note. Resolves the trimmed
+/// values ('' = none) into the page's draft; the page's Save sends them.
+class _TagDetailsSheet extends StatefulWidget {
+  const _TagDetailsSheet({required this.draft});
+
+  final _TagDraft draft;
+
+  @override
+  State<_TagDetailsSheet> createState() => _TagDetailsSheetState();
+}
+
+class _TagDetailsSheetState extends State<_TagDetailsSheet> {
+  late final _description = TextEditingController(
+    text: widget.draft.description,
+  );
+  late final _note = TextEditingController(text: widget.draft.note);
+
+  @override
+  void dispose() {
+    _description.dispose();
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final d = widget.draft;
+    return AppSheetScaffold(
+      title: l.tagDetailsTitle,
+      footer: Row(
+        children: [
+          Expanded(
+            child: AppButton(
+              label: l.commonCancel,
+              variant: AppButtonVariant.outlined,
+              size: AppButtonSize.large,
+              expand: true,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: AppButton(
+              label: l.commonOk,
+              size: AppButtonSize.large,
+              expand: true,
+              onPressed: () => Navigator.of(context).pop((
+                description: _description.text.trim(),
+                note: _note.text.trim(),
+              )),
+            ),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Which tag this is.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TagChip(
+                tag: Tag(
+                  id: d.key,
+                  name: d.name.trim().isEmpty ? '…' : d.name.trim(),
+                  iconCode: d.iconCode,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppTextField(
+              controller: _description,
+              label: l.commonDescription,
+              hint: l.tagDescriptionHint,
+              maxLines: 3,
+              maxLength: TextLimits.description,
+              autofocus: true,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppTextField(
+              controller: _note,
+              label: l.commonNote,
+              hint: l.tagNoteHint,
+              maxLines: 3,
+              maxLength: TextLimits.note,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ────────────────────────────────────────────────────────────────────
 // Editing snapshot — the whole list is one draft (undo / dirty).
 // ────────────────────────────────────────────────────────────────────
@@ -1063,6 +1226,8 @@ class _TagDraft {
     this.serverId,
     required this.name,
     this.iconCode,
+    this.description = '',
+    this.note = '',
   });
 
   final String key;
@@ -1070,11 +1235,22 @@ class _TagDraft {
   final String name;
   final IconCode? iconCode;
 
-  _TagDraft copyWith({String? name, IconCode? iconCode}) => _TagDraft(
+  /// '' = none (the sheet trims).
+  final String description;
+  final String note;
+
+  _TagDraft copyWith({
+    String? name,
+    IconCode? iconCode,
+    String? description,
+    String? note,
+  }) => _TagDraft(
     key: key,
     serverId: serverId,
     name: name ?? this.name,
     iconCode: iconCode ?? this.iconCode,
+    description: description ?? this.description,
+    note: note ?? this.note,
   );
 
   @override
@@ -1083,8 +1259,11 @@ class _TagDraft {
       other.key == key &&
       other.serverId == serverId &&
       other.name == name &&
-      other.iconCode == iconCode;
+      other.iconCode == iconCode &&
+      other.description == description &&
+      other.note == note;
 
   @override
-  int get hashCode => Object.hash(key, serverId, name, iconCode);
+  int get hashCode =>
+      Object.hash(key, serverId, name, iconCode, description, note);
 }

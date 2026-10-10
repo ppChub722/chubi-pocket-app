@@ -11,7 +11,10 @@ class ContactsListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      padding: EdgeInsets.only(
+        top: AppSpacing.sm,
+        bottom: AppSpacing.sm + MediaQuery.paddingOf(context).bottom,
+      ),
       physics: const NeverScrollableScrollPhysics(),
       children: [
         for (var i = 0; i < 8; i++)

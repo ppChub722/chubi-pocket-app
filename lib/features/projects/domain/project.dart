@@ -93,6 +93,7 @@ class Project extends Equatable {
     required this.status,
     this.type,
     this.description,
+    this.note,
     this.startDate,
     this.endDate,
     this.membersCount = 0,
@@ -105,6 +106,7 @@ class Project extends Equatable {
   final String name;
   final String? type;
   final String? description;
+  final String? note;
   final String? startDate;
   final String? endDate;
   final ProjectStatus status;
@@ -129,6 +131,7 @@ class Project extends Equatable {
       name: json['name'] as String,
       type: json['type'] as String?,
       description: json['description'] as String?,
+      note: json['note'] as String?,
       startDate: json['start_date'] as String?,
       endDate: json['end_date'] as String?,
       status: ProjectStatusWire.parse(json['status'] as String?),
@@ -147,6 +150,7 @@ class Project extends Equatable {
     name,
     type,
     description,
+    note,
     startDate,
     endDate,
     status,

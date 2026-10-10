@@ -78,11 +78,11 @@ class ProjectDashboardTab extends StatelessWidget {
       onRefresh: onChanged,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AppSpacing.lg,
           AppSpacing.md,
           AppSpacing.lg,
-          96,
+          96 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           Card(

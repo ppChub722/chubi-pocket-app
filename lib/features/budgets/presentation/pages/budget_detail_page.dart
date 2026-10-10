@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -29,11 +29,11 @@ import '../widgets/budget_card.dart';
 /// `/budgets/new`, `/budgets/:id` (+ `/edit`) — one page for a user-scope
 /// budget, view ⇄ edit in place ([EditModeMixin], category style).
 ///
-/// Header: category icon, name (optional — falls back to the category
-/// name), spent / limit / progress / period range. Body: category (live —
-/// editable after create, BE accepts `category_id` on PUT), limit, period
-/// (live cards), note. Edit mode ends with archive · delete, both of which
-/// leave to the list.
+/// Header: category icon, name (blank → the server names it after the
+/// category), spent / limit / progress / period range. Body: category
+/// (live — editable after create, BE accepts `category_id` on PUT; doesn't
+/// rename), limit, period (live cards), description, note. Edit mode ends
+/// with archive · delete, both of which leave to the list.
 ///
 /// Project-scope budgets are created from the project, not here; `scope`
 /// / `project_id` aren't editable on PUT (spec §3.4). The icon always comes
@@ -54,13 +54,14 @@ class BudgetDetailPage extends StatefulWidget {
 }
 
 /// Which text field a typing burst belongs to (undo grouping).
-enum _Field { name, amount, note }
+enum _Field { name, amount, description, note }
 
 class _BudgetDetailPageState extends State<BudgetDetailPage>
     with EditModeMixin<BudgetDetailPage, _BudgetDraft> {
   final _formKey = GlobalKey<FormState>();
   final _ctrl = {for (final f in _Field.values) f: TextEditingController()};
   final _nameFocus = FocusNode();
+  final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
   /// Last budget shown. After archive / delete the cubit drops it while
@@ -102,6 +103,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       c.dispose();
     }
     _nameFocus.dispose();
+    _descriptionFocus.dispose();
     _noteFocus.dispose();
     super.dispose();
   }
@@ -125,11 +127,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   bool get leaveOnCancel => widget.isCreate;
 
   @override
-  void leavePage() {
-    if (context.canPop()) context.pop();
-  }
-
-  @override
   void onDraftRestored() {
     void sync(_Field f, String v) {
       if (_ctrl[f]!.text != v) _ctrl[f]!.text = v;
@@ -137,12 +134,14 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
 
     sync(_Field.name, working.name);
     sync(_Field.amount, working.amount);
+    sync(_Field.description, working.description);
     sync(_Field.note, working.note);
   }
 
   void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
     _Field.name => working.copyWith(name: v),
     _Field.amount => working.copyWith(amount: v),
+    _Field.description => working.copyWith(description: v),
     _Field.note => working.copyWith(note: v),
   });
 
@@ -170,7 +169,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final cubit = context.read<BudgetsCubit>();
     final w = working.trimmed();
     final amount = AmountField.parse(w.amount)!;
-    final name = w.name.isEmpty ? null : w.name;
+    final description = w.description.isEmpty ? null : w.description;
     final note = w.note.isEmpty ? null : w.note;
     FocusScope.of(context).unfocus();
     setSaving(true);
@@ -185,7 +184,9 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             scope: BudgetScope.user,
             currency: 'THB',
             status: BudgetStatus.active,
-            description: name,
+            // Blank → the server names it after the category.
+            name: w.name,
+            description: description,
             note: note,
           ),
         );
@@ -195,7 +196,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         return;
       }
       // Constructed directly (not copyWith) so cleared text goes out as
-      // JSON null — the BE's `*string` fields treat that as a clear.
+      // JSON null — the BE treats that as a clear. A cleared name resets
+      // to the current category's name.
       final recategorized = w.categoryId != budget.categoryId;
       await cubit.update(
         Budget(
@@ -207,7 +209,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           currency: budget.currency,
           status: budget.status,
           projectId: budget.projectId,
-          description: name,
+          name: w.name,
+          description: description,
           note: note,
           // The old embedded category is stale after a re-anchor; the
           // server response brings the new one.
@@ -346,13 +349,12 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   Widget _page(AppLocalizations l, Budget? budget) {
     final all = context.watch<CategoriesCubit>().state.categories;
     final category = _category(all, budget);
-    final categoryName = category?.name ?? '';
     return editScope(
       Scaffold(
         // The bar floats over the list; its first item is padded below it.
         extendBodyBehindAppBar: true,
         appBar: AppTopBar(
-          title: _title(l, categoryName),
+          title: _title(l),
           showBack: true,
           editing: isEditing,
           onBack: handleBack,
@@ -370,28 +372,24 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                   AppSpacing.lg,
                   MediaQuery.paddingOf(context).top + AppSpacing.lg,
                   AppSpacing.lg,
-                  AppSpacing.huge,
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
                   _header(l, budget, category, all),
                   const SizedBox(height: AppSpacing.lg),
                   _fields(l, all, category),
-                  if (budget != null && budget.childBreakdown.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    LockedInEdit(
+                  if (budget != null && budget.childBreakdown.isNotEmpty)
+                    SectionCard(
+                      title: l.budgetDetailBreakdownTitle,
                       locked: isEditing,
-                      child: SectionCard(
-                        title: l.budgetDetailBreakdownTitle,
-                        children: [
-                          for (final row in budget.childBreakdown)
-                            DetailRow(
-                              label: row.name,
-                              trailing: MoneyText(row.spent),
-                            ),
-                        ],
-                      ),
+                      children: [
+                        for (final row in budget.childBreakdown)
+                          DetailRow(
+                            label: row.name,
+                            trailing: MoneyText(row.spent),
+                          ),
+                      ],
                     ),
-                  ],
                   // Archive · delete — edit mode only, always last (the top
                   // bar carries no page actions).
                   if (isEditing && budget != null) ...[
@@ -419,12 +417,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  String _title(AppLocalizations l, String categoryName) {
+  String _title(AppLocalizations l) {
     if (widget.isCreate) return l.budgetFormTitle;
     if (isEditing) return l.budgetFormTitleEdit;
     final name = working.name.trim();
-    if (name.isNotEmpty) return name;
-    return categoryName.isEmpty ? l.budgetDetailFallbackTitle : categoryName;
+    return name.isEmpty ? l.budgetDetailFallbackTitle : name;
   }
 
   Widget _header(
@@ -436,7 +433,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     final palette = Theme.of(context).extension<AppColors>()!;
     final textTheme = Theme.of(context).textTheme;
     final categoryName = category?.name ?? '';
-    final hasName = working.name.trim().isNotEmpty;
     // The embedded icon while the category is unchanged (matches the list
     // card); the picked one's resolved icon after a change / on create.
     final iconCode =
@@ -448,30 +444,18 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         ? budgetAccent(context, budget)
         : (iconCode?.accentColorFor(palette) ?? palette.primary);
 
-    // View mode with no name: the category name stands in as the title.
-    final Widget title = !isEditing && !hasName
-        ? GestureDetector(
-            onLongPress: () => enterEdit(focus: _nameFocus),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-              child: Text(
-                categoryName.isEmpty
-                    ? l.budgetDetailFallbackTitle
-                    : categoryName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          )
-        : InlineTitleField(
-            editing: isEditing,
-            controller: _ctrl[_Field.name]!,
-            focusNode: _nameFocus,
-            hint: categoryName.isEmpty ? l.budgetNameLabel : categoryName,
-            maxLength: 200,
-            onEnterEdit: () => enterEdit(focus: _nameFocus),
-            onChanged: (v) => _onText(_Field.name, v),
-          );
+    // Blank is fine — the server names it after the category, so that's
+    // the placeholder.
+    final title = InlineTitleField(
+      editing: isEditing,
+      controller: _ctrl[_Field.name]!,
+      focusNode: _nameFocus,
+      hint: categoryName.isEmpty ? l.commonName : categoryName,
+      maxLength: TextLimits.name,
+      onEnterEdit: () => enterEdit(focus: _nameFocus),
+      onChanged: (v) => _onText(_Field.name, v),
+    );
+    final name = working.name.trim();
 
     return HeaderCard(
       accent: accent,
@@ -484,7 +468,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       title: title,
       subtitle: Text(
         [
-          if (hasName && categoryName.isNotEmpty) categoryName,
+          // Skipped while the name already says it (the default).
+          if (name.isNotEmpty &&
+              categoryName.isNotEmpty &&
+              categoryName != name)
+            categoryName,
           budgetPeriodLabel(l, working.period),
         ].join(' · '),
         maxLines: 1,
@@ -572,12 +560,13 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
-  /// Category · limit · period · note. Category and period stay live in
-  /// view mode (using them enters edit mode); text fields enter it on
-  /// long-press.
+  /// Category · limit · period · description · note. Category and period
+  /// stay live in view mode (using them enters edit mode); text fields
+  /// enter it on long-press.
   Widget _fields(AppLocalizations l, List<Category> all, Category? category) {
     final editing = isEditing;
     return SectionCard(
+      first: true,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -615,7 +604,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               trailing: MoneyText(AmountField.parse(working.amount) ?? 0),
             ),
           ),
-        const RowDivider(),
         DetailStacked(
           label: l.budgetFormPeriodLabel,
           child: SelectCardGroup<BudgetPeriod>(
@@ -629,15 +617,26 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             ],
           ),
         ),
-        const RowDivider(),
         DetailStacked(
-          label: l.budgetFormNoteLabel,
+          label: l.commonDescription,
+          child: InlineField(
+            editing: editing,
+            controller: _ctrl[_Field.description]!,
+            focusNode: _descriptionFocus,
+            maxLines: 3,
+            maxLength: TextLimits.description,
+            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+            onChanged: (v) => _onText(_Field.description, v),
+          ),
+        ),
+        DetailStacked(
+          label: l.commonNote,
           child: InlineField(
             editing: editing,
             controller: _ctrl[_Field.note]!,
             focusNode: _noteFocus,
             maxLines: 3,
-            maxLength: 500,
+            maxLength: TextLimits.note,
             onEnterEdit: () => enterEdit(focus: _noteFocus),
             onChanged: (v) => _onText(_Field.note, v),
           ),
@@ -657,6 +656,7 @@ class _BudgetDraft {
     this.amount = '',
     this.period = BudgetPeriod.monthly,
     this.name = '',
+    this.description = '',
     this.note = '',
   });
 
@@ -664,7 +664,8 @@ class _BudgetDraft {
     categoryId: b.categoryId,
     amount: AmountField.format(b.amount),
     period: b.period,
-    name: b.description ?? '',
+    name: b.name,
+    description: b.description ?? '',
     note: b.note ?? '',
   );
 
@@ -674,25 +675,32 @@ class _BudgetDraft {
   final String amount;
   final BudgetPeriod period;
 
-  /// The budget's display name (API `description`); empty = category name.
+  /// Empty = the server names it after the category.
   final String name;
+  final String description;
   final String note;
 
   /// What the server stores (text trimmed).
-  _BudgetDraft trimmed() =>
-      copyWith(amount: amount.trim(), name: name.trim(), note: note.trim());
+  _BudgetDraft trimmed() => copyWith(
+    amount: amount.trim(),
+    name: name.trim(),
+    description: description.trim(),
+    note: note.trim(),
+  );
 
   _BudgetDraft copyWith({
     String? categoryId,
     String? amount,
     BudgetPeriod? period,
     String? name,
+    String? description,
     String? note,
   }) => _BudgetDraft(
     categoryId: categoryId ?? this.categoryId,
     amount: amount ?? this.amount,
     period: period ?? this.period,
     name: name ?? this.name,
+    description: description ?? this.description,
     note: note ?? this.note,
   );
 
@@ -703,8 +711,10 @@ class _BudgetDraft {
       other.amount == amount &&
       other.period == period &&
       other.name == name &&
+      other.description == description &&
       other.note == note;
 
   @override
-  int get hashCode => Object.hash(categoryId, amount, period, name, note);
+  int get hashCode =>
+      Object.hash(categoryId, amount, period, name, description, note);
 }

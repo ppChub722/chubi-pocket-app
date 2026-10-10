@@ -26,6 +26,7 @@ class ScheduledTransaction extends Equatable {
     required this.nextBillingDate,
     required this.status,
     this.categoryId,
+    this.description,
     this.note,
     this.iconCode,
     this.account,
@@ -48,6 +49,7 @@ class ScheduledTransaction extends Equatable {
   final BillingCycle billingCycle;
   final String nextBillingDate; // ISO YYYY-MM-DD
   final ScheduledStatus status;
+  final String? description;
   final String? note;
   final IconCode? iconCode;
 
@@ -89,6 +91,7 @@ class ScheduledTransaction extends Equatable {
     BillingCycle? billingCycle,
     String? nextBillingDate,
     ScheduledStatus? status,
+    String? description,
     String? note,
     IconCode? iconCode,
     ScheduledAccountRef? account,
@@ -111,6 +114,7 @@ class ScheduledTransaction extends Equatable {
       billingCycle: billingCycle ?? this.billingCycle,
       nextBillingDate: nextBillingDate ?? this.nextBillingDate,
       status: status ?? this.status,
+      description: description ?? this.description,
       note: note ?? this.note,
       iconCode: iconCode ?? this.iconCode,
       account: account ?? this.account,
@@ -141,6 +145,7 @@ class ScheduledTransaction extends Equatable {
       billingCycle: BillingCycle.fromJson(json['billing_cycle'] as String),
       nextBillingDate: json['next_billing_date'] as String,
       status: ScheduledStatus.fromJson(json['status'] as String),
+      description: json['description'] as String?,
       note: json['note'] as String?,
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
@@ -168,6 +173,7 @@ class ScheduledTransaction extends Equatable {
       if (categoryId != null) 'category_id': categoryId,
       'billing_cycle': billingCycle.toJson(),
       'next_billing_date': nextBillingDate,
+      if (description != null) 'description': description,
       if (note != null) 'note': note,
       if (iconCode != null) 'icon_code': iconCode!.toJson(),
       if (entryType == ScheduledEntryType.installment) ...{
@@ -190,6 +196,7 @@ class ScheduledTransaction extends Equatable {
       'category_id': categoryId,
       'billing_cycle': billingCycle.toJson(),
       'next_billing_date': nextBillingDate,
+      'description': description,
       'note': note,
       'icon_code': iconCode?.toJson(),
       if (entryType == ScheduledEntryType.installment) ...{
@@ -214,6 +221,7 @@ class ScheduledTransaction extends Equatable {
     billingCycle,
     nextBillingDate,
     status,
+    description,
     note,
     iconCode,
     account,

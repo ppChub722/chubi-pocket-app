@@ -1,0 +1,129 @@
+import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
+import 'package:chubi_pocket/features/transactions/presentation/widgets/tx_hero_card.dart';
+import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  late TextEditingController amount;
+  late TextEditingController note;
+
+  setUp(() {
+    amount = TextEditingController();
+    note = TextEditingController();
+  });
+
+  tearDown(() {
+    amount.dispose();
+    note.dispose();
+  });
+
+  Future<void> pump(WidgetTester t, Widget card) => t.pumpWidget(
+    MaterialApp(
+      theme: ThemeData(extensions: [sweetTheme.lightColors]),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('th'),
+      home: Scaffold(
+        body: Padding(padding: const EdgeInsets.all(16), child: card),
+      ),
+    ),
+  );
+
+  testWidgets('swiping steps through the types, without wrapping', (t) async {
+    var type = TransactionType.expense;
+    await pump(
+      t,
+      StatefulBuilder(
+        builder: (context, setState) => TxHeroCard(
+          type: type,
+          onTypeChanged: (v) => setState(() => type = v),
+          amount: amount,
+          title: note,
+          dateLabel: 'วันนี้',
+        ),
+      ),
+    );
+    final card = find.byType(TxHeroCard);
+    await t.fling(card, const Offset(-300, 0), 1500);
+    await t.pumpAndSettle();
+    expect(type, TransactionType.income);
+    await t.fling(card, const Offset(-300, 0), 1500);
+    await t.pumpAndSettle();
+    expect(type, TransactionType.transfer);
+    await t.fling(card, const Offset(-300, 0), 1500);
+    await t.pumpAndSettle();
+    expect(type, TransactionType.transfer);
+    await t.fling(card, const Offset(300, 0), 1500);
+    await t.pumpAndSettle();
+    expect(type, TransactionType.income);
+  });
+
+  testWidgets('a chip tap picks that type; no transfer when not allowed', (
+    t,
+  ) async {
+    TransactionType? picked;
+    await pump(
+      t,
+      TxHeroCard(
+        type: TransactionType.expense,
+        allowTransfer: false,
+        onTypeChanged: (v) => picked = v,
+        amount: amount,
+        title: note,
+        dateLabel: 'วันนี้',
+      ),
+    );
+    expect(find.byType(TxTypeChip), findsNWidgets(2));
+    await t.tap(find.text('รายรับ'));
+    expect(picked, TransactionType.income);
+  });
+
+  testWidgets('a locked type shows only its own chip', (t) async {
+    await pump(
+      t,
+      TxHeroCard(
+        type: TransactionType.income,
+        amount: amount,
+        title: note,
+        dateLabel: 'วันนี้',
+      ),
+    );
+    expect(find.byType(TxTypeChip), findsOneWidget);
+    await t.fling(find.byType(TxHeroCard), const Offset(-300, 0), 1500);
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('view mode: read-only fields, ✏️ and long-press enter edit', (
+    t,
+  ) async {
+    var edits = 0;
+    FocusNode? focused;
+    final noteFocus = FocusNode();
+    addTearDown(noteFocus.dispose);
+    note.text = 'ข้าวมันไก่';
+    await pump(
+      t,
+      TxHeroCard(
+        type: TransactionType.expense,
+        amount: amount,
+        title: note,
+        titleFocus: noteFocus,
+        dateLabel: 'วันนี้',
+        editing: false,
+        onEdit: () => edits++,
+        onLongPressField: (f) => focused = f,
+      ),
+    );
+    for (final f in t.widgetList<TextField>(find.byType(TextField))) {
+      expect(f.readOnly, isTrue);
+    }
+    await t.tap(find.byTooltip('แก้ไข'));
+    expect(edits, 1);
+    // The field absorbs pointers in view mode — the wrapper gets it.
+    await t.longPress(find.text('ข้าวมันไก่'), warnIfMissed: false);
+    expect(focused, noteFocus);
+  });
+}

@@ -85,7 +85,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                 // ListView gets it automatically).
                 padding: EdgeInsets.only(
                   top: MediaQuery.paddingOf(context).top,
-                  bottom: 96,
+                  bottom: 96 + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
                   for (final a in list)

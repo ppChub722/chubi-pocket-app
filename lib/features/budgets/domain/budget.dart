@@ -14,8 +14,9 @@ import 'budget_status.dart';
 ///
 /// Migration 000037 dropped the per-budget `icon_code` — the icon is now
 /// always taken from the linked category (see [BudgetCategoryRef.iconCode]).
-/// `description`, when set, is the budget's primary label; otherwise the
-/// FE falls back to the category name.
+/// Migration 51: [name] is the title — the server fills it with the
+/// category's name when left blank (create) or cleared (update), so it's
+/// never empty in responses. [description] is a real description now.
 ///
 /// [currentPeriod] and [childBreakdown] come back populated from the API
 /// on every read; the client never stores or computes these for writes.
@@ -28,6 +29,7 @@ class Budget extends Equatable {
     required this.scope,
     required this.currency,
     required this.status,
+    required this.name,
     this.projectId,
     this.description,
     this.note,
@@ -44,10 +46,15 @@ class Budget extends Equatable {
   final String currency;
   final BudgetStatus status;
   final String? projectId;
+
+  /// The budget's title. Empty only on a create draft (→ the server uses
+  /// the category's name); changing the category doesn't rename it.
+  final String name;
+
+  /// Short one-liner; shown under the title on the list card.
   final String? description;
 
-  /// Free-form longer narrative; rendered as a separate card on the
-  /// detail page (mirrors the accounts description / note split).
+  /// Free-form longer narrative; detail page only.
   final String? note;
 
   final BudgetCategoryRef? category;
@@ -66,14 +73,6 @@ class Budget extends Equatable {
   /// longer carries an icon — UI renders this everywhere.
   IconCode? get iconCode => category?.iconCode;
 
-  /// User-facing primary label. `description` if set, else the category
-  /// name, else the empty string. Mirrors the BE rule the FE applies on
-  /// list cards, detail header, and AppBar titles.
-  String get displayTitle {
-    if (description != null && description!.isNotEmpty) return description!;
-    return category?.name ?? '';
-  }
-
   Budget copyWith({
     String? id,
     String? categoryId,
@@ -83,6 +82,7 @@ class Budget extends Equatable {
     String? currency,
     BudgetStatus? status,
     String? projectId,
+    String? name,
     String? description,
     String? note,
     BudgetCategoryRef? category,
@@ -98,6 +98,7 @@ class Budget extends Equatable {
       currency: currency ?? this.currency,
       status: status ?? this.status,
       projectId: projectId ?? this.projectId,
+      name: name ?? this.name,
       description: description ?? this.description,
       note: note ?? this.note,
       category: category ?? this.category,
@@ -124,6 +125,9 @@ class Budget extends Equatable {
       currency: json['currency'] as String,
       status: BudgetStatus.fromJson(json['status'] as String),
       projectId: json['project_id'] as String?,
+      // Always sent since migration 51; a pre-51 server sends none — the
+      // category's name is what it would have filled in.
+      name: (json['name'] as String?) ?? (category?['name'] as String? ?? ''),
       description: json['description'] as String?,
       note: json['note'] as String?,
       category: category != null ? BudgetCategoryRef.fromJson(category) : null,
@@ -142,6 +146,8 @@ class Budget extends Equatable {
       'scope': scope.toJson(),
       if (projectId != null) 'project_id': projectId,
       'currency': currency,
+      // Blank → the server names it after the category.
+      if (name.isNotEmpty) 'name': name,
       if (description != null) 'description': description,
       if (note != null) 'note': note,
     };
@@ -156,6 +162,8 @@ class Budget extends Equatable {
       'amount': amount,
       'period': period.toJson(),
       'currency': currency,
+      // Blank → the server resets it to the current category's name.
+      'name': name,
       'description': description,
       'note': note,
     };
@@ -171,6 +179,7 @@ class Budget extends Equatable {
     currency,
     status,
     projectId,
+    name,
     description,
     note,
     category,

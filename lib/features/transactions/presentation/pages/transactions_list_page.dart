@@ -47,9 +47,10 @@ class _OneWallet extends _WalletFilter {
 }
 
 /// `/transactions` tab root (§9). Top bar comes from the shell. A search
-/// box (note / category / wallet, contract §1), then one scrolling row of
-/// dropdown chips — [ประเภท▾][ช่วงเวลา▾][กระเป๋า▾][หมวด▾][แท็ก▾] — plus
-/// sort; rows grouped under "วันนี้ · −฿540" day headers.
+/// box (description / note / category / wallet, contract §1), then one
+/// scrolling row of dropdown chips —
+/// [ประเภท▾][ช่วงเวลา▾][กระเป๋า▾][หมวด▾][แท็ก▾] — plus sort; rows grouped
+/// under "วันนี้ · −฿540" day headers.
 ///
 /// [initialAccountId] pre-filters to one wallet ("ดูทั้งหมด ›" from a
 /// wallet). [initialCategoryId] / [initialUncategorized] + [initialMonth]
@@ -576,7 +577,10 @@ class _DayGroupedList extends StatelessWidget {
     return ListView(
       controller: controller,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: 96),
+      padding: EdgeInsets.only(
+        top: AppSpacing.md,
+        bottom: 96 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: children,
     );
   }

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,24 +10,29 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/edit_mode/edit_mode_mixin.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../tags/presentation/widgets/tag_chip.dart';
+import '../../../pending/domain/pending_transaction.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
-import '../widgets/quick_create_sheet.dart';
+import '../transaction_edit.dart';
+import '../widgets/draft_form.dart';
 
-/// `/transactions/:id` (§9): header (category icon · name · date · big
-/// amount, ✏️ → quick-create sheet), a lock banner for system rows (opening
-/// balance / adjustment — no ✏️ / 🗑), then rows: wallet, category, balance
-/// after, tags, note, split, recorded by, source project, and a 🗑
-/// [DangerRow] last.
+/// `/transactions/:id` (§9) — the quick-create form's own layout, in the
+/// page (owner design 2026-10-10): hero (type · amount · ค่าอะไร · date),
+/// category + wallet cards, tags. Then the detail-only rows: balance
+/// after, split, recorded by, source project.
+///
+/// ✏️ on the hero, or a long-press on a field, edits in place
+/// ([EditModeMixin]): ยกเลิก · ↶ · บันทึก, the nav hidden, back = cancel,
+/// 🗑 as the last row. Saves the same way as the sheet's edit mode
+/// ([saveTransactionEdit]). System rows (opening balance / adjustment) and
+/// an ex-member's locked rows stay read-only, with a banner.
 class TransactionDetailPage extends StatefulWidget {
   const TransactionDetailPage({required this.transactionId, super.key});
 
@@ -91,15 +98,154 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 }
 
-class _Loaded extends StatelessWidget {
+class _Loaded extends StatefulWidget {
   const _Loaded({required this.tx});
   final Transaction tx;
 
   @override
+  State<_Loaded> createState() => _LoadedState();
+}
+
+/// The draft is the form's fields as a [PendingDraft] (Equatable), so the
+/// mixin's dirty check and undo work on the shared [DraftFormController].
+class _LoadedState extends State<_Loaded>
+    with EditModeMixin<_Loaded, PendingDraft> {
+  final _c = DraftFormController();
+
+  /// The row the form edits: the page's row, or for an incoming transfer
+  /// its outgoing twin — so the wallets read [จาก] → [ไป] and the save is
+  /// the one the sheet makes for that transfer.
+  late Transaction _edited;
+  String? _initialAccountId;
+  String? _initialToAccountId;
+
+  /// Pushing a draft into the controller — not a user edit.
+  bool _restoring = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefill();
+    initDraft(_c.toDraft());
+    _c.addListener(_onFormChanged);
+  }
+
+  @override
+  void didUpdateWidget(_Loaded old) {
+    super.didUpdateWidget(old);
+    // Refreshed underneath (pull, another page) — rebase unless editing.
+    if (old.tx != widget.tx && !isEditing) _reload();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _prefill() {
+    final tx = widget.tx;
+    var edited = tx;
+    if (tx.isTransferIn) edited = transferSibling(context, tx) ?? tx;
+    _edited = edited;
+    _restoring = true;
+    _c.tagIds.clear();
+    _c.knownTags.clear();
+    _c.prefillTransaction(
+      edited,
+      accounts: context.read<AccountsCubit>().state.accounts,
+      categories: context.read<CategoriesCubit>().state.categories,
+      toAccount: transferOtherAccount(context, edited),
+    );
+    _restoring = false;
+    _initialAccountId = _c.account?.id;
+    _initialToAccountId = _c.toAccount?.id;
+  }
+
+  void _reload() {
+    _prefill();
+    resetDraft(_c.toDraft());
+  }
+
+  // ── EditModeMixin ─────────────────────────────────────────────────
+
+  @override
+  void onDraftRestored() {
+    _restoring = true;
+    _c.restoreTransaction(
+      working,
+      accounts: context.read<AccountsCubit>().state.accounts,
+      categories: context.read<CategoriesCubit>().state.categories,
+    );
+    _restoring = false;
+  }
+
+  /// Typing in the amount / description / note is one undo step per burst;
+  /// a pick (date, category, wallet, tag) is a step of its own.
+  void _onFormChanged() {
+    if (_restoring) return;
+    final next = _c.toDraft();
+    final w = working;
+    if (next == w) return;
+    final textOnly =
+        next.type == w.type &&
+        next.date == w.date &&
+        next.accountId == w.accountId &&
+        next.categoryId == w.categoryId &&
+        next.transferToAccountId == w.transferToAccountId &&
+        listEquals(next.tagIds, w.tagIds);
+    if (textOnly) {
+      final field = next.note != w.note
+          ? 'note'
+          : next.description != w.description
+          ? 'description'
+          : 'amount';
+      applyTextChange(field, next);
+    } else {
+      applyChange(next);
+    }
+  }
+
+  Future<void> _save() async {
+    final l = AppLocalizations.of(context)!;
+    commitTextSession();
+    final problem = transactionEditProblem(l, _c);
+    if (problem != null) {
+      HapticFeedback.lightImpact();
+      showAppSnackBar(context, problem, tone: Tone.danger);
+      return;
+    }
+    setSaving(true);
+    try {
+      final warn = await saveTransactionEdit(
+        context,
+        t: _edited,
+        c: _c,
+        initialAccountId: _initialAccountId,
+        initialToAccountId: _initialToAccountId,
+      );
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+      commitSaved(working);
+      _reload();
+      showAppSnackBar(
+        context,
+        warn ?? l.quickSaved,
+        tone: warn == null ? Tone.success : Tone.warning,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setSaving(false);
+      showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+    }
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────
+
+  @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final scheme = Theme.of(context).colorScheme;
+    final tx = widget.tx;
     final cat = tx.categoryId == null
         ? null
         : context.watch<CategoriesCubit>().byId(tx.categoryId!);
@@ -107,208 +253,119 @@ class _Loaded extends StatelessWidget {
     // Transfers carry a system category too but have their own cascade.
     final isSystemRow =
         tx.type != TransactionType.transfer && (cat?.isSystem ?? false);
-    final accent =
-        cat?.iconCode?.accentColorFor(palette) ??
-        switch (tx.type) {
-          TransactionType.expense => palette.expense,
-          TransactionType.income => palette.income,
-          TransactionType.transfer => scheme.onSurfaceVariant,
-        };
-    final day = DateFormatter.parseDay(tx.date);
-    final dateLabel = day == null
-        ? tx.date
-        : DateFormatter.friendly(
-            day,
-            today: l.commonToday,
-            yesterday: l.commonYesterday,
-            locale: Localizations.localeOf(context).languageCode,
-          );
-    final hasNote = tx.note?.isNotEmpty ?? false;
+    final canEdit = !isSystemRow && !tx.isLocked;
+    final editing = isEditing;
 
-    return Scaffold(
-      appBar: AppTopBar(title: _titleForType(l, tx.type), showBack: true),
-      extendBodyBehindAppBar: true,
-      // Builder: the body's context sees the bar height in padding.top.
-      body: Builder(
-        builder: (context) => PullToRefresh(
-          onRefresh: () async {
-            try {
-              await context.read<TransactionsCubit>().refreshOne(tx.id);
-            } on ApiException catch (e) {
-              if (context.mounted) {
-                showAppSnackBar(context, e.message, tone: Tone.danger);
+    final info = <Widget>[
+      if (tx.accountBalanceAfter != null)
+        DetailRow(
+          label: l.txDetailBalanceAfter,
+          trailing: MoneyText(tx.accountBalanceAfter!),
+        ),
+      if (tx.hasSplits)
+        DetailRow(
+          leading: const Icon(AppIcons.split),
+          label: l.txDetailSplits,
+          trailing: Text(l.txDetailHasSplits),
+        ),
+      if (tx.createdBy != null)
+        DetailRow(
+          leading: UserAvatar(
+            displayName: tx.createdBy!.displayName,
+            iconCode: tx.createdBy!.iconCode,
+            size: 24,
+          ),
+          label: l.txDetailRecordedBy,
+          trailing: Text(tx.createdBy!.displayName),
+        ),
+      if (tx.projectId != null)
+        DetailRow(
+          leading: const Icon(AppIcons.project),
+          label: l.txDetailSource,
+          trailing: Text(l.txDetailSourceProject),
+          showChevron: true,
+          onTap: () => openPage(context, '/projects/${tx.projectId}'),
+        ),
+    ];
+
+    return editScope(
+      Scaffold(
+        appBar: AppTopBar(
+          title: editing
+              ? l.transactionFormTitleEdit
+              : _titleForType(l, tx.type),
+          showBack: true,
+          editing: editing,
+          onBack: handleBack,
+        ),
+        extendBodyBehindAppBar: true,
+        // Builder: the body's context sees the bar height in padding.top.
+        body: Builder(
+          builder: (context) => PullToRefresh(
+            enabled: !editing,
+            onRefresh: () async {
+              try {
+                await context.read<TransactionsCubit>().refreshOne(tx.id);
+              } on ApiException catch (e) {
+                if (context.mounted) {
+                  showAppSnackBar(context, e.message, tone: Tone.danger);
+                }
               }
-            }
-          },
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              MediaQuery.paddingOf(context).top + AppSpacing.md,
-              AppSpacing.lg,
-              96,
-            ),
-            children: [
-              HeaderCard(
-                accent: accent,
-                // No in-place edit here — ✏️ opens the quick-create sheet.
-                onEdit: isSystemRow
-                    ? null
-                    : () => showQuickCreateSheet(context, transaction: tx),
-                leading: IconBubble(
-                  icon: IconRegistry.get(
-                    cat?.iconCode?.icon,
-                    fallback: switch (tx.type) {
-                      TransactionType.expense => AppIcons.expense,
-                      TransactionType.income => AppIcons.income,
-                      TransactionType.transfer => AppIcons.transfer,
-                    },
-                  ),
-                  color: accent,
-                  size: 44,
-                ),
-                title: Text(tx.category?.name ?? (hasNote ? tx.note! : '—')),
-                subtitle: Text(dateLabel),
-                footer: MoneyText(
-                  tx.signedAmount,
-                  tone: tx.type == TransactionType.transfer
-                      ? MoneyTone.plain
-                      : MoneyTone.signed,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                MediaQuery.paddingOf(context).top + AppSpacing.md,
+                AppSpacing.lg,
+                96 + MediaQuery.paddingOf(context).bottom,
               ),
-              if (isSystemRow) ...[
-                const SizedBox(height: AppSpacing.md),
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+              children: [
+                if (isSystemRow) ...[
+                  _LockNote(text: l.transactionDetailSystemRowBanner),
+                  const SizedBox(height: AppSpacing.md),
+                ] else if (tx.isLocked) ...[
+                  MessageBanner(
+                    message: l.transactionFormLockedBanner,
+                    tone: Tone.warning,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        AppIcons.lock,
-                        size: 18,
-                        color: scheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: Text(
-                          l.transactionDetailSystemRowBanner,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              SectionCard(
-                children: [
-                  DetailRow(
-                    leading: Icon(
-                      tx.account == null ? AppIcons.noWallet : AppIcons.bank,
-                    ),
-                    label:
-                        tx.type == TransactionType.transfer && tx.isTransferIn
-                        ? l.txDetailTransferTo
-                        : l.txDetailAccount,
-                    trailing: Text(
-                      tx.account?.name ?? l.transactionFormAccountNone,
-                    ),
-                    showChevron: tx.account != null,
-                    onTap: tx.account == null
-                        ? null
-                        : () =>
-                              openPage(context, '/accounts/${tx.account!.id}'),
-                  ),
-                  if (tx.type != TransactionType.transfer) ...[
-                    const RowDivider(),
-                    DetailRow(
-                      leading: const Icon(AppIcons.category),
-                      label: l.txDetailCategory,
-                      trailing: Text(
-                        tx.category?.name ?? l.transactionFormCategoryNone,
-                      ),
-                    ),
-                  ],
-                  if (tx.accountBalanceAfter != null) ...[
-                    const RowDivider(),
-                    DetailRow(
-                      label: l.txDetailBalanceAfter,
-                      trailing: MoneyText(tx.accountBalanceAfter!),
-                    ),
-                  ],
-                  if (tx.tags.isNotEmpty) ...[
-                    const RowDivider(),
-                    DetailStacked(
-                      label: l.txDetailTags,
-                      child: Wrap(
-                        spacing: AppSpacing.xs,
-                        runSpacing: AppSpacing.xs,
-                        children: [
-                          for (final t in tx.tags) TagChip(tag: t.asTag),
-                        ],
-                      ),
-                    ),
-                  ],
-                  if (hasNote) ...[
-                    const RowDivider(),
-                    DetailStacked(label: l.txDetailNote, child: Text(tx.note!)),
-                  ],
-                  if (tx.hasSplits) ...[
-                    const RowDivider(),
-                    DetailRow(
-                      leading: const Icon(AppIcons.split),
-                      label: l.txDetailSplits,
-                      trailing: Text(l.txDetailHasSplits),
-                    ),
-                  ],
-                  if (tx.createdBy != null) ...[
-                    const RowDivider(),
-                    DetailRow(
-                      leading: UserAvatar(
-                        displayName: tx.createdBy!.displayName,
-                        iconCode: tx.createdBy!.iconCode,
-                        size: 24,
-                      ),
-                      label: l.txDetailRecordedBy,
-                      trailing: Text(tx.createdBy!.displayName),
-                    ),
-                  ],
-                  if (tx.projectId != null) ...[
-                    const RowDivider(),
-                    DetailRow(
-                      leading: const Icon(AppIcons.project),
-                      label: l.txDetailSource,
-                      trailing: Text(l.txDetailSourceProject),
-                      showChevron: true,
-                      onTap: () =>
-                          openPage(context, '/projects/${tx.projectId}'),
-                    ),
-                  ],
+                  const SizedBox(height: AppSpacing.md),
                 ],
-              ),
-              // No in-place edit mode, so delete is always the last row
-              // (system rows stay locked).
-              if (!isSystemRow)
-                DangerRow(
-                  icon: AppIcons.delete,
-                  label: l.transactionDeleteThis,
-                  onTap: () => _confirmDelete(context, l),
+                DraftForm(
+                  controller: _c,
+                  autofocus: false,
+                  // The update API can't change these.
+                  typeLocked: true,
+                  allowSplits: false,
+                  editing: editing,
+                  categoryLockedHint: _edited.canEditCategory
+                      ? null
+                      : l.transactionFormCategoryAuthorOnlyHint,
+                  onEdit: canEdit ? enterEdit : null,
+                  onEnterEdit: canEdit ? (f) => enterEdit(focus: f) : null,
+                  onOpenCategory: (c) =>
+                      openPage(context, '/categories/${c.id}'),
+                  onOpenAccount: (a) => openPage(context, '/accounts/${a.id}'),
                 ),
-            ],
+                if (info.isNotEmpty)
+                  SectionCard(locked: editing, children: info),
+                if (editing && canEdit)
+                  DangerRow(
+                    icon: AppIcons.delete,
+                    label: l.transactionDeleteThis,
+                    onTap: isSaving ? null : () => _confirmDelete(context, l),
+                  ),
+              ],
+            ),
           ),
         ),
+        bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
       ),
     );
   }
 
   Future<void> _confirmDelete(BuildContext context, AppLocalizations l) async {
+    final tx = widget.tx;
     final isTransfer = tx.type == TransactionType.transfer;
     final ok = await showConfirmDialog(
       context,
@@ -325,14 +382,20 @@ class _Loaded extends StatelessWidget {
     final router = GoRouter.of(context);
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final back = ShellBackScope.maybeOf(context);
     try {
       await txCubit.remove(tx.id);
       // A transfer moves two balances — a full reload keeps it simple.
       await accountsCubit.load();
-      if (context.mounted) {
-        showAppSnackBar(context, l.txDeleted, tone: Tone.success);
+      showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
+      // Opened alone in its tab (from another tab) there's nothing to pop
+      // — back to where the user came from.
+      if (router.canPop()) {
+        router.pop();
+      } else {
+        back?.call();
       }
-      if (router.canPop()) router.pop();
     } on ApiException catch (e) {
       if (context.mounted) {
         showAppSnackBar(context, e.message, tone: Tone.danger);
@@ -346,3 +409,31 @@ String _titleForType(AppLocalizations l, TransactionType t) => switch (t) {
   TransactionType.income => l.transactionTypeIncome,
   TransactionType.transfer => l.transactionTypeTransfer,
 };
+
+/// 🔒 + why a system row can't be edited.
+class _LockNote extends StatelessWidget {
+  const _LockNote({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(AppIcons.lock, size: 18, color: scheme.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.bodySmall),
+          ),
+        ],
+      ),
+    );
+  }
+}

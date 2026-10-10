@@ -15,6 +15,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonRequired => 'จำเป็น';
 
   @override
+  String get commonName => 'ชื่อ';
+
+  @override
+  String get commonDescription => 'คำอธิบาย';
+
+  @override
+  String get commonNote => 'โน้ต';
+
+  @override
   String get commonCancel => 'ยกเลิก';
 
   @override
@@ -361,9 +370,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountFormTypeLabel => 'ประเภท';
 
   @override
-  String get accountFormNameLabel => 'ชื่อกระเป๋า';
-
-  @override
   String get accountFormNameRequired => 'จำเป็น';
 
   @override
@@ -416,9 +422,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountAdjustBalanceNewLabel => 'ยอดใหม่';
 
   @override
-  String get accountAdjustBalanceNoteLabel => 'บันทึก (ไม่บังคับ)';
-
-  @override
   String get accountAdjustBalanceNoChange => 'ยอดใหม่ต้องต่างจากยอดปัจจุบัน';
 
   @override
@@ -432,12 +435,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountArchiveConfirmAction => 'เก็บ';
 
   @override
-  String get accountFormDescriptionHelper =>
-      'ใช้สำหรับอะไร เห็นเฉพาะคุณคนเดียว';
-
-  @override
-  String get accountFormNoteHelper =>
-      'บันทึกส่วนตัว (เช่น \"เงินไปเที่ยวญี่ปุ่น\")';
+  String get accountFormNoteHelper => 'อะไรที่อยากจดไว้ เห็นเฉพาะคุณคนเดียว';
 
   @override
   String get iconPickerUseThis => 'ใช้รูปนี้';
@@ -612,9 +610,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactPhoneHint => 'ไม่บังคับ · 081-234-5678';
 
   @override
-  String get contactNotesHint => 'ไม่บังคับ · เช่น เพื่อนที่ทำงาน';
-
-  @override
   String get contactNameRequired => 'ต้องใส่ชื่อ';
 
   @override
@@ -630,7 +625,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactPhoneLabel => 'เบอร์โทร';
 
   @override
-  String get contactNotesLabel => 'บันทึก';
+  String get contactDescriptionHint => 'ไม่บังคับ · เช่น เพื่อนที่ทำงาน';
+
+  @override
+  String get contactNoteHint => 'ไม่บังคับ · เช่น ชอบให้โอนผ่านพร้อมเพย์';
 
   @override
   String get contactLinkedBadge => 'เชื่อมกับบัญชีผู้ใช้';
@@ -881,9 +879,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtSourceProject => 'โปรเจกต์';
 
   @override
-  String get debtNote => 'บันทึก';
-
-  @override
   String get debtCreatedAt => 'วันที่สร้าง';
 
   @override
@@ -1050,9 +1045,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectTypeHint => 'เช่น ทริป งานฟรีแลนซ์';
-
-  @override
-  String get projectDescriptionLabel => 'รายละเอียด';
 
   @override
   String get projectIconLabel => 'ไอคอนโปรเจกต์';
@@ -1354,9 +1346,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectTxReceivedBy => 'ใครรับ';
-
-  @override
-  String get projectTxNote => 'บันทึก';
 
   @override
   String get projectTxTags => 'แท็ก';
@@ -1762,9 +1751,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txDetailTags => 'แท็ก';
 
   @override
-  String get txDetailNote => 'บันทึก';
-
-  @override
   String get txDetailSplits => 'การหาร';
 
   @override
@@ -1911,9 +1897,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get accountDetailNote => 'บันทึก';
-
-  @override
   String get accountArchiveHasMembers =>
       'กระเป๋าที่ยังมีสมาชิกอื่นเก็บถาวรไม่ได้ — นำสมาชิกออกก่อน';
 
@@ -2035,9 +2018,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get categoryFormTitleEdit => 'แก้ไขหมวดหมู่';
 
   @override
-  String get categoryFormNameLabel => 'ชื่อ';
-
-  @override
   String get categoryFormNameRequired => 'จำเป็น';
 
   @override
@@ -2065,18 +2045,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get categoryFormColorLabel => 'สี';
-
-  @override
-  String get categoryFormDescriptionLabel => 'คำอธิบาย';
-
-  @override
-  String get categoryFormDescriptionTooLong => 'สูงสุด 200 ตัวอักษร';
-
-  @override
-  String get categoryFormNoteLabel => 'บันทึกย่อ';
-
-  @override
-  String get categoryFormNoteTooLong => 'สูงสุด 200 ตัวอักษร';
 
   @override
   String get categoryFormIncludeInReportLabel => 'รวมในรายงาน';
@@ -2234,6 +2202,15 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get tagFormColorLabel => 'สี';
+
+  @override
+  String get tagDetailsTitle => 'คำอธิบาย · โน้ต';
+
+  @override
+  String get tagDescriptionHint => 'ไม่บังคับ · เช่น ค่าใช้จ่ายทริปญี่ปุ่น';
+
+  @override
+  String get tagNoteHint => 'ไม่บังคับ';
 
   @override
   String get settingsTitle => 'การตั้งค่า';
@@ -2404,10 +2381,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickSaved => 'บันทึกแล้ว';
 
   @override
-  String get quickNoteHint => 'โน้ต (ไม่บังคับ)';
+  String get txHeroTitleHint => 'ค่าอะไร?';
 
   @override
-  String get quickMore => 'รายละเอียดเพิ่ม';
+  String get scheduledHeroNameHint => 'จ่ายค่าอะไร เช่น Netflix';
 
   @override
   String get quickFrom => 'จาก';
@@ -2550,7 +2527,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pendingSeeTransactions => 'ดูในรายการ';
 
   @override
-  String get pendingUntitled => 'ไม่มีโน้ต';
+  String get pendingUntitled => 'ไม่มีคำอธิบาย';
 
   @override
   String get pendingSourceManual => 'ใส่เอง';
@@ -2609,6 +2586,11 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get pendingDiscardTitle => 'ทิ้งร่างนี้?';
+
+  @override
+  String pendingDiscardSelectedTitle(int count) {
+    return 'ทิ้ง $count ร่าง?';
+  }
 
   @override
   String get pendingKeepAsDraft => 'เก็บเป็นร่าง';
@@ -2793,9 +2775,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get savingGoalFormIconLabel => 'ไอคอน';
 
   @override
-  String get savingGoalFormNameLabel => 'ชื่อเป้าหมาย';
-
-  @override
   String get savingGoalFormNameRequired => 'จำเป็น';
 
   @override
@@ -2821,9 +2800,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get savingGoalFormDeadlinePlaceholder => 'ไม่ระบุ';
-
-  @override
-  String get savingGoalFormNoteLabel => 'หมายเหตุ';
 
   @override
   String get savingGoalDetailNotFound => 'ไม่พบเป้าหมาย';
@@ -2930,9 +2906,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get budgetFormPeriodLabel => 'รอบ';
-
-  @override
-  String get budgetFormNoteLabel => 'หมายเหตุ';
 
   @override
   String get budgetDetailNotFound => 'ไม่พบงบประมาณ';
@@ -3050,9 +3023,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get scheduledFormIconLabel => 'ไอคอน';
 
   @override
-  String get scheduledFormNameLabel => 'ชื่อ';
-
-  @override
   String get scheduledFormNameRequired => 'จำเป็น';
 
   @override
@@ -3117,9 +3087,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get scheduledFormInterestInvalid => 'ต้องอยู่ระหว่าง 0 ถึง 99.99';
 
   @override
-  String get scheduledFormNoteLabel => 'หมายเหตุ';
-
-  @override
   String get scheduledDetailNotFound => 'ไม่พบรายการ';
 
   @override
@@ -3160,9 +3127,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get scheduledDetailInterestRate => 'อัตราดอกเบี้ย';
-
-  @override
-  String get scheduledDetailNote => 'หมายเหตุ';
 
   @override
   String get scheduledGenerateNowTitle => 'สร้างตอนนี้';
@@ -3447,9 +3411,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'ข้อมูลบางอย่างยังไม่ถูกต้อง ลองตรวจดูอีกครั้ง';
 
   @override
-  String get budgetNameLabel => 'ชื่องบ';
-
-  @override
   String budgetsOverviewSpent(String spent, String total) {
     return 'ใช้ไป $spent จาก $total';
   }
@@ -3460,7 +3421,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get transactionsSearchHint => 'ค้นหาโน้ต · หมวด · กระเป๋า';
+  String get transactionsSearchHint => 'ค้นหาคำอธิบาย · โน้ต · หมวด · กระเป๋า';
 
   @override
   String get savingGoalAllocationAuto => 'อัตโนมัติ';
@@ -3564,4 +3525,22 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get categoryFeeSwitchFailed => 'ตั้งหมวดค่าธรรมเนียมไม่สำเร็จ';
+
+  @override
+  String get monthPickerTitle => 'เลือกเดือน';
+
+  @override
+  String get monthPickerThisMonth => 'เดือนนี้';
+
+  @override
+  String get monthPickerPrevYear => 'ปีก่อน';
+
+  @override
+  String get monthPickerNextYear => 'ปีถัดไป';
+
+  @override
+  String get monthPickerPrevMonth => 'เดือนก่อน';
+
+  @override
+  String get monthPickerNextMonth => 'เดือนถัดไป';
 }

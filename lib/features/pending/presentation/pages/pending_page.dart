@@ -99,27 +99,39 @@ class _PendingPageState extends State<PendingPage> {
     }
   }
 
-  Future<void> _discard(PendingTransaction p) async {
+  /// The ticked drafts among [visible] (owner 2026-10-10: no per-card trash
+  /// — tick first, then 🗑 in the top row).
+  Future<void> _discardSelected(List<PendingTransaction> visible) async {
+    final ids = [
+      for (final p in visible)
+        if (_selected.contains(p.id)) p.id,
+    ];
+    if (ids.isEmpty) return;
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
       context,
-      title: l.pendingDiscardTitle,
+      title: ids.length == 1
+          ? l.pendingDiscardTitle
+          : l.pendingDiscardSelectedTitle(ids.length),
       confirmLabel: l.quickDiscardConfirm,
       destructive: true,
     );
     if (!ok || !mounted) return;
-    try {
-      await context.read<PendingCubit>().discard(p.id);
-      setState(() => _selected.remove(p.id));
-    } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+    final cubit = context.read<PendingCubit>();
+    for (final id in ids) {
+      try {
+        await cubit.discard(id);
+        if (mounted) setState(() => _selected.remove(id));
+      } on ApiException catch (e) {
+        if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+        return;
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final state = context.watch<PendingCubit>().state;
     final all = state.items;
     final visible = _visible(all);
@@ -129,15 +141,8 @@ class _PendingPageState extends State<PendingPage> {
     final result = _lastResult;
     // UI only for now — the slip scan itself isn't wired yet. Phone only:
     // no button at all on web (ML Kit has no web build).
-    final importSlip = SlipQrReader.isSupported
-        ? AddTile(
-            label: l.pendingImportSlip,
-            icon: AppIcons.importSlip,
-            variant: AddTileVariant.row,
-            onTap: () {},
-          )
-        : null;
-    final lead = importSlip == null ? 0 : 1;
+    final canImportSlip = SlipQrReader.isSupported;
+    void importSlip() {}
 
     return Scaffold(
       appBar: AppTopBar(title: l.pendingTitle),
@@ -154,25 +159,12 @@ class _PendingPageState extends State<PendingPage> {
       bottomNavigationBar: _selected.isEmpty
           ? null
           : ShellChromeHider(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  border: Border(top: BorderSide(color: scheme.outlineVariant)),
-                ),
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: AppButton(
-                    label: l.pendingSubmitSelected(_selected.length),
-                    expand: true,
-                    loading: _submitting,
-                    onPressed: _submitSelected,
-                  ),
+              child: PinnedBar(
+                child: AppButton(
+                  label: l.pendingSubmitSelected(_selected.length),
+                  expand: true,
+                  loading: _submitting,
+                  onPressed: _submitSelected,
                 ),
               ),
             ),
@@ -187,13 +179,15 @@ class _PendingPageState extends State<PendingPage> {
               children: [
                 SizedBox(height: MediaQuery.paddingOf(context).top),
                 if (visible.isNotEmpty)
-                  _SelectAllRow(
-                    label: l.pendingSelectAll,
-                    value: pickedVisible == 0
-                        ? false
-                        : (pickedVisible == visible.length ? true : null),
-                    count: '$pickedVisible/${visible.length}',
-                    onTap: () => setState(
+                  _ToolRow(
+                    picked: pickedVisible,
+                    total: visible.length,
+                    selectAllTooltip: l.pendingSelectAll,
+                    onDiscard: pickedVisible == 0
+                        ? null
+                        : () => _discardSelected(visible),
+                    onImportSlip: canImportSlip ? importSlip : null,
+                    onSelectAll: () => setState(
                       () => pickedVisible == visible.length
                           ? _selected.removeAll(visible.map((p) => p.id))
                           : _selected.addAll(visible.map((p) => p.id)),
@@ -249,8 +243,13 @@ class _PendingPageState extends State<PendingPage> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (importSlip != null) ...[
-                            importSlip,
+                          if (canImportSlip) ...[
+                            AddTile(
+                              label: l.pendingImportSlip,
+                              icon: AppIcons.importSlip,
+                              variant: AddTileVariant.row,
+                              onTap: importSlip,
+                            ),
                             const SizedBox(height: AppSpacing.sm),
                           ],
                           AddTile(
@@ -264,26 +263,25 @@ class _PendingPageState extends State<PendingPage> {
                       onRefresh: context.read<PendingCubit>().load,
                       child: ListView.separated(
                         // Room under the last row for the floating chat button.
-                        padding: const EdgeInsets.fromLTRB(
+                        padding: EdgeInsets.fromLTRB(
                           AppSpacing.lg,
                           0,
                           AppSpacing.lg,
-                          96,
+                          96 + MediaQuery.paddingOf(context).bottom,
                         ),
-                        itemCount: visible.length + lead + 1,
+                        itemCount: visible.length + 1,
                         separatorBuilder: (_, _) =>
                             const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (context, i) {
-                          // "นำเข้าสลิป" opens the list, "เพิ่มร่าง" closes it.
-                          if (i == 0 && importSlip != null) return importSlip;
-                          if (i == visible.length + lead) {
+                          // "เพิ่มร่าง" closes the list.
+                          if (i == visible.length) {
                             return AddTile(
                               label: l.pendingAdd,
                               variant: AddTileVariant.row,
                               onTap: () => context.push('/pending/new'),
                             );
                           }
-                          final p = visible[i - lead];
+                          final p = visible[i];
                           return _PendingCard(
                             item: p,
                             selected: _selected.contains(p.id),
@@ -294,7 +292,6 @@ class _PendingPageState extends State<PendingPage> {
                             ),
                             onOpen: () =>
                                 showQuickCreateSheet(context, draft: p),
-                            onDiscard: () => _discard(p),
                           );
                         },
                       ),
@@ -310,51 +307,63 @@ class _PendingPageState extends State<PendingPage> {
   }
 }
 
-/// The thin row under the top bar: ○ เลือกทั้งหมด … 2/5.
-class _SelectAllRow extends StatelessWidget {
-  const _SelectAllRow({
-    required this.label,
-    required this.value,
-    required this.count,
-    required this.onTap,
+/// The thin row under the top bar (owner 2026-10-10):
+/// `[☐ 2/5] ……… [🗑 ลบ] [นำเข้าสลิป]` — 🗑 acts on the ticked drafts.
+class _ToolRow extends StatelessWidget {
+  const _ToolRow({
+    required this.picked,
+    required this.total,
+    required this.selectAllTooltip,
+    required this.onSelectAll,
+    required this.onDiscard,
+    required this.onImportSlip,
   });
 
-  final String label;
-  final bool? value;
-  final String count;
-  final VoidCallback onTap;
+  final int picked;
+  final int total;
+  final String selectAllTooltip;
+  final VoidCallback onSelectAll;
+
+  /// Null = nothing ticked (the pill dims).
+  final VoidCallback? onDiscard;
+
+  /// Null = no slip scan on this platform (no pill).
+  final VoidCallback? onImportSlip;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.xs,
-        ),
-        child: Row(
-          children: [
-            SelectCheck(value: value, onTap: onTap),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                label,
-                style: textTheme.labelLarge?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            Text(
-              count,
-              style: textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+    final l = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          SelectAllCount(
+            selected: picked,
+            total: total,
+            tooltip: selectAllTooltip,
+            onTap: onSelectAll,
+          ),
+          const Spacer(),
+          ActionPill(
+            icon: AppIcons.delete,
+            label: l.commonDelete,
+            destructive: true,
+            onTap: onDiscard,
+          ),
+          if (onImportSlip != null) ...[
+            const SizedBox(width: AppSpacing.xs),
+            ActionPill(
+              icon: AppIcons.importSlip,
+              label: l.pendingImportSlip,
+              onTap: onImportSlip,
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -368,14 +377,12 @@ class _PendingCard extends StatelessWidget {
     required this.selected,
     required this.onToggle,
     required this.onOpen,
-    required this.onDiscard,
   });
 
   final PendingTransaction item;
   final bool selected;
   final VoidCallback onToggle;
   final VoidCallback onOpen;
-  final VoidCallback onDiscard;
 
   @override
   Widget build(BuildContext context) {
@@ -393,14 +400,16 @@ class _PendingCard extends StatelessWidget {
     final toWallet = accounts
         .where((a) => a.id == d.transferToAccountId)
         .firstOrNull;
-    final title = (d.note?.trim().isNotEmpty ?? false)
-        ? d.note!.trim()
+    // The draft's own title ("what for") first, else its category.
+    final description = d.description?.trim() ?? '';
+    final title = description.isNotEmpty
+        ? description
         : category?.name ?? l.pendingUntitled;
     final meta = <String>[
       if (d.type == TransactionType.transfer)
         '${wallet?.name ?? '?'} → ${toWallet?.name ?? '?'}'
       else ...[
-        ?category?.name,
+        if (description.isNotEmpty) ?category?.name,
         wallet?.name ?? l.transactionFormAccountNone,
       ],
     ].join(' · ');
@@ -438,17 +447,25 @@ class _PendingCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.xs,
-            AppSpacing.sm,
-            AppSpacing.xs,
-            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Checkbox(
-                value: selected,
-                onChanged: (_) => onToggle(),
-                semanticLabel: l.pendingSelectOne,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xs,
+                  0,
+                  AppSpacing.sm,
+                  0,
+                ),
+                child: SelectCheck(
+                  value: selected,
+                  tooltip: l.pendingSelectOne,
+                  onTap: onToggle,
+                ),
               ),
               Expanded(
                 child: Column(
@@ -537,11 +554,6 @@ class _PendingCard extends StatelessWidget {
                     ],
                   ],
                 ),
-              ),
-              IconButton(
-                tooltip: l.pendingDiscardTitle,
-                icon: const Icon(AppIcons.delete, size: 20),
-                onPressed: onDiscard,
               ),
             ],
           ),

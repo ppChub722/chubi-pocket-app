@@ -92,15 +92,24 @@ void main() {
     expect(s.canUndo, isFalse);
   });
 
-  testWidgets('back while dirty asks before discarding', (t) async {
+  testWidgets('back while dirty = Cancel: drops changes, no prompt', (t) async {
     final s = await pump(t);
     s.applyChange('b');
     await t.pump();
     s.handleBack();
     await t.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
-    await t.tap(find.text('Discard'));
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(s.working, 'a');
+    expect(s.isEditing, isFalse);
+  });
+
+  testWidgets('system back while editing = Cancel too', (t) async {
+    final s = await pump(t);
+    s.applyChange('b');
+    await t.pump();
+    await t.binding.handlePopRoute();
     await t.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
     expect(s.working, 'a');
     expect(s.isEditing, isFalse);
   });

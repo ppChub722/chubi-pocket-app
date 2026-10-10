@@ -15,6 +15,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonRequired => 'Required';
 
   @override
+  String get commonName => 'Name';
+
+  @override
+  String get commonDescription => 'Description';
+
+  @override
+  String get commonNote => 'Note';
+
+  @override
   String get commonCancel => 'Cancel';
 
   @override
@@ -363,9 +372,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountFormTypeLabel => 'Type';
 
   @override
-  String get accountFormNameLabel => 'Wallet name';
-
-  @override
   String get accountFormNameRequired => 'Required';
 
   @override
@@ -418,9 +424,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountAdjustBalanceNewLabel => 'New balance';
 
   @override
-  String get accountAdjustBalanceNoteLabel => 'Note (optional)';
-
-  @override
   String get accountAdjustBalanceNoChange =>
       'New balance must differ from the current balance.';
 
@@ -435,12 +438,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountArchiveConfirmAction => 'Archive';
 
   @override
-  String get accountFormDescriptionHelper =>
-      'What this wallet is for. Visible to you only.';
-
-  @override
   String get accountFormNoteHelper =>
-      'Personal scratch note (e.g. \"Travel money for Japan trip\").';
+      'Anything you want to jot down. Visible to you only.';
 
   @override
   String get iconPickerUseThis => 'Use this';
@@ -616,9 +615,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactPhoneHint => 'Optional · 081-234-5678';
 
   @override
-  String get contactNotesHint => 'Optional · e.g. a work friend';
-
-  @override
   String get contactNameRequired => 'Name is required';
 
   @override
@@ -634,7 +630,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactPhoneLabel => 'Phone';
 
   @override
-  String get contactNotesLabel => 'Notes';
+  String get contactDescriptionHint => 'Optional · e.g. a work friend';
+
+  @override
+  String get contactNoteHint => 'Optional · e.g. prefers PromptPay';
 
   @override
   String get contactLinkedBadge => 'Linked to an app account';
@@ -894,9 +893,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtSourceProject => 'Project';
 
   @override
-  String get debtNote => 'Note';
-
-  @override
   String get debtCreatedAt => 'Created';
 
   @override
@@ -1069,9 +1065,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectTypeHint => 'e.g. trip, freelance';
-
-  @override
-  String get projectDescriptionLabel => 'Description';
 
   @override
   String get projectIconLabel => 'Project icon';
@@ -1376,9 +1369,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get projectTxReceivedBy => 'Received by';
-
-  @override
-  String get projectTxNote => 'Note';
 
   @override
   String get projectTxTags => 'Tags';
@@ -1788,9 +1778,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txDetailTags => 'Tags';
 
   @override
-  String get txDetailNote => 'Note';
-
-  @override
   String get txDetailSplits => 'Split';
 
   @override
@@ -1941,9 +1928,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accountDetailNote => 'Note';
-
-  @override
   String get accountArchiveHasMembers =>
       'A wallet with other members cannot be archived. Remove them first.';
 
@@ -2069,9 +2053,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryFormTitleEdit => 'Edit category';
 
   @override
-  String get categoryFormNameLabel => 'Name';
-
-  @override
   String get categoryFormNameRequired => 'Required';
 
   @override
@@ -2099,18 +2080,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryFormColorLabel => 'Color';
-
-  @override
-  String get categoryFormDescriptionLabel => 'Description';
-
-  @override
-  String get categoryFormDescriptionTooLong => 'Max 200 characters';
-
-  @override
-  String get categoryFormNoteLabel => 'Note';
-
-  @override
-  String get categoryFormNoteTooLong => 'Max 200 characters';
 
   @override
   String get categoryFormIncludeInReportLabel => 'Include in reports';
@@ -2284,6 +2253,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagFormColorLabel => 'Color';
 
   @override
+  String get tagDetailsTitle => 'Description · Note';
+
+  @override
+  String get tagDescriptionHint => 'Optional · e.g. Japan trip spending';
+
+  @override
+  String get tagNoteHint => 'Optional';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -2454,10 +2432,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickSaved => 'Saved';
 
   @override
-  String get quickNoteHint => 'Note (optional)';
+  String get txHeroTitleHint => 'What\'s it for?';
 
   @override
-  String get quickMore => 'More details';
+  String get scheduledHeroNameHint => 'What\'s it for, e.g. Netflix';
 
   @override
   String get quickFrom => 'From';
@@ -2607,7 +2585,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingSeeTransactions => 'View';
 
   @override
-  String get pendingUntitled => 'No note';
+  String get pendingUntitled => 'No description';
 
   @override
   String get pendingSourceManual => 'Mine';
@@ -2672,6 +2650,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pendingDiscardTitle => 'Discard this draft?';
+
+  @override
+  String pendingDiscardSelectedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Discard $count drafts?',
+      one: 'Discard 1 draft?',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get pendingKeepAsDraft => 'Keep as a draft';
@@ -2863,9 +2852,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savingGoalFormIconLabel => 'Icon';
 
   @override
-  String get savingGoalFormNameLabel => 'Goal name';
-
-  @override
   String get savingGoalFormNameRequired => 'Required';
 
   @override
@@ -2891,9 +2877,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingGoalFormDeadlinePlaceholder => 'Optional';
-
-  @override
-  String get savingGoalFormNoteLabel => 'Note';
 
   @override
   String get savingGoalDetailNotFound => 'Goal not found';
@@ -3000,9 +2983,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get budgetFormPeriodLabel => 'Period';
-
-  @override
-  String get budgetFormNoteLabel => 'Note';
 
   @override
   String get budgetDetailNotFound => 'Budget not found';
@@ -3122,9 +3102,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledFormIconLabel => 'Icon';
 
   @override
-  String get scheduledFormNameLabel => 'Name';
-
-  @override
   String get scheduledFormNameRequired => 'Required';
 
   @override
@@ -3190,9 +3167,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledFormInterestInvalid => 'Must be between 0 and 99.99';
 
   @override
-  String get scheduledFormNoteLabel => 'Note';
-
-  @override
   String get scheduledDetailNotFound => 'Schedule not found';
 
   @override
@@ -3233,9 +3207,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduledDetailInterestRate => 'Interest rate';
-
-  @override
-  String get scheduledDetailNote => 'Note';
 
   @override
   String get scheduledGenerateNowTitle => 'Generate now';
@@ -3524,9 +3495,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something\'s not right — check the form and try again.';
 
   @override
-  String get budgetNameLabel => 'Budget name';
-
-  @override
   String budgetsOverviewSpent(String spent, String total) {
     return 'Spent $spent of $total';
   }
@@ -3543,7 +3511,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get transactionsSearchHint => 'Search note · category · wallet';
+  String get transactionsSearchHint =>
+      'Search description · note · category · wallet';
 
   @override
   String get savingGoalAllocationAuto => 'Auto';
@@ -3647,4 +3616,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoryFeeSwitchFailed => 'Couldn’t set the fee category';
+
+  @override
+  String get monthPickerTitle => 'Pick a month';
+
+  @override
+  String get monthPickerThisMonth => 'This month';
+
+  @override
+  String get monthPickerPrevYear => 'Previous year';
+
+  @override
+  String get monthPickerNextYear => 'Next year';
+
+  @override
+  String get monthPickerPrevMonth => 'Previous month';
+
+  @override
+  String get monthPickerNextMonth => 'Next month';
 }

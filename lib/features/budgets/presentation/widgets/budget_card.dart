@@ -39,8 +39,8 @@ Color budgetAccent(BuildContext context, Budget b) {
   return b.iconCode?.accentColorFor(palette) ?? palette.primary;
 }
 
-/// Budgets list card: category icon · title (description, else category)
-/// · period · progress "฿x จาก ฿y" + % (honours 👁).
+/// Budgets list card: category icon · name · description (when set) ·
+/// category · period · progress "฿x จาก ฿y" + % (honours 👁).
 class BudgetCard extends StatelessWidget {
   const BudgetCard({super.key, required this.budget, this.onTap});
 
@@ -55,10 +55,14 @@ class BudgetCard extends StatelessWidget {
     final over = cp?.overLimit ?? false;
     final pct = cp?.utilizationPct ?? 0;
     final category = budget.category?.name ?? '';
-    final hasDesc = budget.description?.isNotEmpty ?? false;
-    final title = hasDesc ? budget.description! : category;
+    final desc = budget.description?.trim() ?? '';
+    final secondary = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
+    // The category only when the name doesn't already say it (the server
+    // names a budget after its category by default).
     final subtitle = [
-      if (hasDesc && category.isNotEmpty) category,
+      if (category.isNotEmpty && category != budget.name) category,
       budgetPeriodLabel(l, budget.period),
     ].join(' · ');
     return Card(
@@ -84,17 +88,23 @@ class BudgetCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          budget.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
+                        if (desc.isNotEmpty)
+                          Text(
+                            desc,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: secondary,
+                          ),
                         Text(
                           subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
+                          style: secondary,
                         ),
                       ],
                     ),

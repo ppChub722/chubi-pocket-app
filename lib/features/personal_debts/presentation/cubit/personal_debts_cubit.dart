@@ -87,6 +87,7 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
     required double amount,
     required String currency,
     String? counterpartyContactId,
+    String? description,
     String? note,
   }) async {
     final created = await _repo.create(
@@ -95,6 +96,7 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
       amount: amount,
       currency: currency,
       counterpartyContactId: counterpartyContactId,
+      description: description,
       note: note,
     );
     emit(state.copyWith(debts: [created, ...state.debts]));
@@ -104,6 +106,7 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
   Future<PersonalDebt> update(
     String id, {
     double? amount,
+    String? description,
     String? note,
     String? counterpartyPersonName,
     String? counterpartyContactId,
@@ -112,6 +115,7 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
     final updated = await _repo.update(
       id,
       amount: amount,
+      description: description,
       note: note,
       counterpartyPersonName: counterpartyPersonName,
       counterpartyContactId: counterpartyContactId,
@@ -137,12 +141,16 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
     String? accountId,
     double? amount,
     String? date,
+    String? description,
+    String? note,
   }) async {
     final res = await _repo.settle(
       id,
       accountId: accountId,
       amount: amount,
       date: date,
+      description: description,
+      note: note,
     );
     _replace(res.debt);
     return res.debt;

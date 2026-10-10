@@ -9,11 +9,14 @@ enum ScheduleVariant { recurring, installment, loan }
 
 /// What [DraftForm]'s scheduled mode needs. A scheduled entry is a template
 /// the server turns into a transaction every cycle — it has the shared
-/// type · amount · category + wallet · note, plus its own fields:
+/// type · amount · category + wallet, plus its own fields. It's a "thing"
+/// (name + description + note); its name is the hero's "what for" line:
 ///
-///   [ ประจำ | ผ่อนชำระ | เงินกู้ ] · type · amount
-///   icon + name · category + wallet cards (both required) · note
-///   รอบ: [ สัปดาห์ | เดือน | ปี ] · วันที่งวดถัดไป
+///   [ ประจำ | ผ่อนชำระ | เงินกู้ ]
+///   [TxHeroCard]: type · amount · icon + ชื่อ · วันที่งวดถัดไป
+///   คำอธิบาย · โน้ต
+///   category + wallet cards (both required)
+///   รอบ: [ สัปดาห์ | เดือน | ปี ]
 ///   ข้อมูลการผ่อน (installment / loan): ยอดรวม · เงินดาวน์ · งวดทั้งหมด /
 ///     งวดที่เหลือ · ดอกเบี้ย (loan)
 class DraftSchedule {
@@ -152,6 +155,7 @@ extension DraftScheduledX on DraftFormController {
         ? TransactionType.income
         : TransactionType.expense;
     amount.text = AmountField.format(e.amount);
+    description.text = e.description ?? '';
     note.text = e.note ?? '';
     accountTouched = true;
     account = accounts.where((a) => a.id == e.accountId).firstOrNull;
@@ -186,6 +190,7 @@ extension DraftScheduledX on DraftFormController {
       amount.text,
       category?.id,
       accountTouched ? account?.id : null,
+      description.text.trim(),
       note.text.trim(),
       s.name.text.trim(),
       s.iconCode?.toJson().toString(),
@@ -209,7 +214,7 @@ extension DraftScheduledX on DraftFormController {
     String named(String label, String msg) => '$label: $msg';
     if (amountValue <= 0) return l.quickAmountRequired;
     final nameErr = s.nameError(l);
-    if (nameErr != null) return named(l.scheduledFormNameLabel, nameErr);
+    if (nameErr != null) return named(l.commonName, nameErr);
     if (category == null) return l.scheduledFormCategoryRequired;
     if (account == null) return l.scheduledFormAccountRequired;
     final checks = <(String, String?)>[
@@ -232,6 +237,7 @@ extension DraftScheduledX on DraftFormController {
   ScheduledTransaction toScheduled({ScheduledTransaction? initial}) {
     final s = schedule;
     final installment = s.isInstallment;
+    final d = description.text.trim();
     final n = note.text.trim();
     return ScheduledTransaction(
       id: initial?.id ?? 'draft',
@@ -248,6 +254,7 @@ extension DraftScheduledX on DraftFormController {
       billingCycle: s.cycle,
       nextBillingDate: _ymd(s.nextBillingDate),
       status: initial?.status ?? ScheduledStatus.active,
+      description: d.isEmpty ? null : d,
       note: n.isEmpty ? null : n,
       iconCode: s.iconCode,
       totalAmount: installment ? AmountField.parse(s.totalAmount.text) : null,
@@ -291,6 +298,7 @@ class _ScheduledForm extends StatelessWidget {
       selected: c.category,
       // Required here — the generated transactions take their icon from it.
       allowNone: false,
+      allowCreate: true,
     );
     if (r is CategoryPickerSelected) c.setCategory(r.category);
   }
@@ -303,6 +311,7 @@ class _ScheduledForm extends StatelessWidget {
       accounts: context.read<AccountsCubit>().state.accounts,
       selected: c.account,
       title: l.scheduledFormAccountLabel,
+      allowCreate: true,
     );
     if (r is AccountPickerSelected) c.setAccount(r.account);
   }
@@ -338,8 +347,6 @@ class _ScheduledForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final locked = schedule.editing;
     return ListenableBuilder(
       listenable: controller,
@@ -374,60 +381,56 @@ class _ScheduledForm extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.sm),
-            _TypeSwitch(
+            const SizedBox(height: AppSpacing.md),
+            // The variant (above) says what the amount is; the hero's date
+            // is the next billing date.
+            TxHeroCard(
               type: c.type,
               allowTransfer: false,
-              onChanged: locked ? null : c.setType,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              s.isInstallment
+              onTypeChanged: locked ? null : c.setType,
+              amount: c.amount,
+              amountLabel: s.isInstallment
                   ? l.scheduledFormPaymentLabel
                   : l.scheduledFormAmountLabel,
-              textAlign: TextAlign.center,
-              style: textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
+              amountError: err && c.amountValue <= 0
+                  ? l.scheduledFormAmountInvalid
+                  : null,
+              // A scheduled entry is a thing: its name is the "what for" -
+              // the BE copies it into each generated transaction's
+              // description.
+              title: s.name,
+              titleHint: l.scheduledHeroNameHint,
+              titleMaxLength: TextLimits.name,
+              titleError: err ? s.nameError(l) : null,
+              titleLeading: EditableCircle(
+                size: 40,
+                onTap: () => _pickIcon(context),
+                child: IconDisplay(
+                  type: IconType.category,
+                  size: 40,
+                  iconCode: s.iconCode,
+                ),
               ),
-            ),
-            _AmountInput(
-              controller: c.amount,
-              type: c.type,
-              compact: compact,
+              dateLabel:
+                  '${l.scheduledFormNextBillingLabel} · '
+                  '${_dayLabel(context, s.nextBillingDate)}',
+              onPickDate: () => _pickNextBilling(context),
               autofocus: autofocus,
+              compact: compact,
             ),
-            if (err && c.amountValue <= 0)
-              Text(
-                l.scheduledFormAmountInvalid,
-                textAlign: TextAlign.center,
-                style: textTheme.bodySmall?.copyWith(color: scheme.error),
-              ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                EditableCircle(
-                  size: 56,
-                  onTap: () => _pickIcon(context),
-                  child: IconDisplay(
-                    type: IconType.category,
-                    size: 56,
-                    iconCode: s.iconCode,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: AppTextField(
-                    controller: s.name,
-                    label: l.scheduledFormNameLabel,
-                    maxLength: 100,
-                    textInputAction: TextInputAction.next,
-                    errorText: err ? s.nameError(l) : null,
-                  ),
-                ),
-              ],
+            const SizedBox(height: AppSpacing.md),
+            _TextBlock(
+              label: l.commonDescription,
+              controller: c.description,
+              maxLength: TextLimits.description,
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: AppSpacing.md),
+            _TextBlock(
+              label: l.commonNote,
+              controller: c.note,
+              maxLength: TextLimits.note,
+            ),
+            const SizedBox(height: AppSpacing.md),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -439,6 +442,7 @@ class _ScheduledForm extends StatelessWidget {
                     errorText: err && c.category == null
                         ? l.scheduledFormCategoryRequired
                         : null,
+                    dense: true,
                     onTap: () => _pickCategory(context),
                   ),
                 ),
@@ -451,25 +455,11 @@ class _ScheduledForm extends StatelessWidget {
                     errorText: err && c.account == null
                         ? l.scheduledFormAccountRequired
                         : null,
+                    dense: true,
                     onTap: () => _pickAccount(context),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            TextField(
-              controller: c.note,
-              maxLength: 200,
-              maxLines: 2,
-              minLines: 1,
-              decoration: InputDecoration(
-                hintText: l.scheduledFormNoteLabel,
-                counterText: '',
-                isDense: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-              ),
             ),
             SectionHeader(
               title: l.scheduledFormCycleLabel,
@@ -502,16 +492,6 @@ class _ScheduledForm extends StatelessWidget {
                   label: l.scheduledCycleYearly,
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            PickerTile(
-              label: l.scheduledFormNextBillingLabel,
-              value: DateFormatter.medium(
-                s.nextBillingDate,
-                locale: Localizations.localeOf(context).toLanguageTag(),
-              ),
-              leading: const Icon(AppIcons.date),
-              onTap: () => _pickNextBilling(context),
             ),
             if (s.isInstallment) ...[
               SectionHeader(

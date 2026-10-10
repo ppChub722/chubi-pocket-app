@@ -110,6 +110,24 @@ abstract class AppLocalizations {
   /// **'Required'**
   String get commonRequired;
 
+  /// No description provided for @commonName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get commonName;
+
+  /// No description provided for @commonDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get commonDescription;
+
+  /// No description provided for @commonNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get commonNote;
+
   /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:
@@ -746,12 +764,6 @@ abstract class AppLocalizations {
   /// **'Type'**
   String get accountFormTypeLabel;
 
-  /// No description provided for @accountFormNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Wallet name'**
-  String get accountFormNameLabel;
-
   /// No description provided for @accountFormNameRequired.
   ///
   /// In en, this message translates to:
@@ -854,12 +866,6 @@ abstract class AppLocalizations {
   /// **'New balance'**
   String get accountAdjustBalanceNewLabel;
 
-  /// No description provided for @accountAdjustBalanceNoteLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Note (optional)'**
-  String get accountAdjustBalanceNoteLabel;
-
   /// No description provided for @accountAdjustBalanceNoChange.
   ///
   /// In en, this message translates to:
@@ -884,16 +890,10 @@ abstract class AppLocalizations {
   /// **'Archive'**
   String get accountArchiveConfirmAction;
 
-  /// No description provided for @accountFormDescriptionHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'What this wallet is for. Visible to you only.'**
-  String get accountFormDescriptionHelper;
-
   /// No description provided for @accountFormNoteHelper.
   ///
   /// In en, this message translates to:
-  /// **'Personal scratch note (e.g. \"Travel money for Japan trip\").'**
+  /// **'Anything you want to jot down. Visible to you only.'**
   String get accountFormNoteHelper;
 
   /// No description provided for @iconPickerUseThis.
@@ -1226,12 +1226,6 @@ abstract class AppLocalizations {
   /// **'Optional · 081-234-5678'**
   String get contactPhoneHint;
 
-  /// No description provided for @contactNotesHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional · e.g. a work friend'**
-  String get contactNotesHint;
-
   /// No description provided for @contactNameRequired.
   ///
   /// In en, this message translates to:
@@ -1262,11 +1256,17 @@ abstract class AppLocalizations {
   /// **'Phone'**
   String get contactPhoneLabel;
 
-  /// No description provided for @contactNotesLabel.
+  /// No description provided for @contactDescriptionHint.
   ///
   /// In en, this message translates to:
-  /// **'Notes'**
-  String get contactNotesLabel;
+  /// **'Optional · e.g. a work friend'**
+  String get contactDescriptionHint;
+
+  /// No description provided for @contactNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · e.g. prefers PromptPay'**
+  String get contactNoteHint;
 
   /// No description provided for @contactLinkedBadge.
   ///
@@ -1676,12 +1676,6 @@ abstract class AppLocalizations {
   /// **'Project'**
   String get debtSourceProject;
 
-  /// No description provided for @debtNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get debtNote;
-
   /// No description provided for @debtCreatedAt.
   ///
   /// In en, this message translates to:
@@ -1993,12 +1987,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'e.g. trip, freelance'**
   String get projectTypeHint;
-
-  /// No description provided for @projectDescriptionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get projectDescriptionLabel;
 
   /// No description provided for @projectIconLabel.
   ///
@@ -2527,12 +2515,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Received by'**
   String get projectTxReceivedBy;
-
-  /// No description provided for @projectTxNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get projectTxNote;
 
   /// No description provided for @projectTxTags.
   ///
@@ -3200,12 +3182,6 @@ abstract class AppLocalizations {
   /// **'Tags'**
   String get txDetailTags;
 
-  /// No description provided for @txDetailNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get txDetailNote;
-
   /// No description provided for @txDetailSplits.
   ///
   /// In en, this message translates to:
@@ -3464,12 +3440,6 @@ abstract class AppLocalizations {
   /// **'Restored {name}'**
   String accountRestored(String name);
 
-  /// No description provided for @accountDetailNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get accountDetailNote;
-
   /// No description provided for @accountArchiveHasMembers.
   ///
   /// In en, this message translates to:
@@ -3674,12 +3644,6 @@ abstract class AppLocalizations {
   /// **'Edit category'**
   String get categoryFormTitleEdit;
 
-  /// No description provided for @categoryFormNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get categoryFormNameLabel;
-
   /// No description provided for @categoryFormNameRequired.
   ///
   /// In en, this message translates to:
@@ -3733,30 +3697,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Color'**
   String get categoryFormColorLabel;
-
-  /// No description provided for @categoryFormDescriptionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get categoryFormDescriptionLabel;
-
-  /// No description provided for @categoryFormDescriptionTooLong.
-  ///
-  /// In en, this message translates to:
-  /// **'Max 200 characters'**
-  String get categoryFormDescriptionTooLong;
-
-  /// No description provided for @categoryFormNoteLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get categoryFormNoteLabel;
-
-  /// No description provided for @categoryFormNoteTooLong.
-  ///
-  /// In en, this message translates to:
-  /// **'Max 200 characters'**
-  String get categoryFormNoteTooLong;
 
   /// No description provided for @categoryFormIncludeInReportLabel.
   ///
@@ -4033,6 +3973,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Color'**
   String get tagFormColorLabel;
+
+  /// No description provided for @tagDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Description · Note'**
+  String get tagDetailsTitle;
+
+  /// No description provided for @tagDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · e.g. Japan trip spending'**
+  String get tagDescriptionHint;
+
+  /// No description provided for @tagNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get tagNoteHint;
 
   /// No description provided for @settingsTitle.
   ///
@@ -4364,17 +4322,17 @@ abstract class AppLocalizations {
   /// **'Saved'**
   String get quickSaved;
 
-  /// No description provided for @quickNoteHint.
+  /// No description provided for @txHeroTitleHint.
   ///
   /// In en, this message translates to:
-  /// **'Note (optional)'**
-  String get quickNoteHint;
+  /// **'What\'s it for?'**
+  String get txHeroTitleHint;
 
-  /// No description provided for @quickMore.
+  /// No description provided for @scheduledHeroNameHint.
   ///
   /// In en, this message translates to:
-  /// **'More details'**
-  String get quickMore;
+  /// **'What\'s it for, e.g. Netflix'**
+  String get scheduledHeroNameHint;
 
   /// No description provided for @quickFrom.
   ///
@@ -4631,7 +4589,7 @@ abstract class AppLocalizations {
   /// No description provided for @pendingUntitled.
   ///
   /// In en, this message translates to:
-  /// **'No note'**
+  /// **'No description'**
   String get pendingUntitled;
 
   /// No description provided for @pendingSourceManual.
@@ -4735,6 +4693,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard this draft?'**
   String get pendingDiscardTitle;
+
+  /// No description provided for @pendingDiscardSelectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Discard 1 draft?} other{Discard {count} drafts?}}'**
+  String pendingDiscardSelectedTitle(int count);
 
   /// No description provided for @pendingKeepAsDraft.
   ///
@@ -5078,12 +5042,6 @@ abstract class AppLocalizations {
   /// **'Icon'**
   String get savingGoalFormIconLabel;
 
-  /// No description provided for @savingGoalFormNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Goal name'**
-  String get savingGoalFormNameLabel;
-
   /// No description provided for @savingGoalFormNameRequired.
   ///
   /// In en, this message translates to:
@@ -5137,12 +5095,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Optional'**
   String get savingGoalFormDeadlinePlaceholder;
-
-  /// No description provided for @savingGoalFormNoteLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get savingGoalFormNoteLabel;
 
   /// No description provided for @savingGoalDetailNotFound.
   ///
@@ -5323,12 +5275,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Period'**
   String get budgetFormPeriodLabel;
-
-  /// No description provided for @budgetFormNoteLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get budgetFormNoteLabel;
 
   /// No description provided for @budgetDetailNotFound.
   ///
@@ -5534,12 +5480,6 @@ abstract class AppLocalizations {
   /// **'Icon'**
   String get scheduledFormIconLabel;
 
-  /// No description provided for @scheduledFormNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get scheduledFormNameLabel;
-
   /// No description provided for @scheduledFormNameRequired.
   ///
   /// In en, this message translates to:
@@ -5666,12 +5606,6 @@ abstract class AppLocalizations {
   /// **'Must be between 0 and 99.99'**
   String get scheduledFormInterestInvalid;
 
-  /// No description provided for @scheduledFormNoteLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get scheduledFormNoteLabel;
-
   /// No description provided for @scheduledDetailNotFound.
   ///
   /// In en, this message translates to:
@@ -5749,12 +5683,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Interest rate'**
   String get scheduledDetailInterestRate;
-
-  /// No description provided for @scheduledDetailNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note'**
-  String get scheduledDetailNote;
 
   /// No description provided for @scheduledGenerateNowTitle.
   ///
@@ -6212,12 +6140,6 @@ abstract class AppLocalizations {
   /// **'Something\'s not right — check the form and try again.'**
   String get quickCreateErrorValidation;
 
-  /// No description provided for @budgetNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Budget name'**
-  String get budgetNameLabel;
-
   /// No description provided for @budgetsOverviewSpent.
   ///
   /// In en, this message translates to:
@@ -6233,7 +6155,7 @@ abstract class AppLocalizations {
   /// No description provided for @transactionsSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search note · category · wallet'**
+  /// **'Search description · note · category · wallet'**
   String get transactionsSearchHint;
 
   /// No description provided for @savingGoalAllocationAuto.
@@ -6433,6 +6355,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn’t set the fee category'**
   String get categoryFeeSwitchFailed;
+
+  /// No description provided for @monthPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a month'**
+  String get monthPickerTitle;
+
+  /// No description provided for @monthPickerThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get monthPickerThisMonth;
+
+  /// No description provided for @monthPickerPrevYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous year'**
+  String get monthPickerPrevYear;
+
+  /// No description provided for @monthPickerNextYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Next year'**
+  String get monthPickerNextYear;
+
+  /// No description provided for @monthPickerPrevMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get monthPickerPrevMonth;
+
+  /// No description provided for @monthPickerNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get monthPickerNextMonth;
 }
 
 class _AppLocalizationsDelegate

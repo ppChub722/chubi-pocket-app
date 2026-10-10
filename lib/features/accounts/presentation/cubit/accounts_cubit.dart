@@ -131,12 +131,14 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
   Future<AdjustBalanceOutcome> adjustBalance({
     required String id,
     required double newBalance,
+    String? description,
     String? note,
     String? date,
   }) async {
     final outcome = await _repo.adjustBalance(
       id: id,
       newBalance: newBalance,
+      description: description,
       note: note,
       date: date,
     );
