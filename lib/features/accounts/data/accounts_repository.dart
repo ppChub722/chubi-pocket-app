@@ -179,19 +179,29 @@ class AccountsRepository {
     }
   }
 
-  /// `POST /v1/accounts/:id/members` body `{"email": "..."}` → 201
-  /// pending member (notification-pattern invite, same as projects).
-  /// Errors: `404 USER_NOT_FOUND`, `409 USER_ALREADY_MEMBER`,
-  /// `403 NOT_MEMBER`. The conversion warning is gated client-side —
-  /// callers must confirm before the FIRST invite on a personal wallet.
+  /// `POST /v1/accounts/:id/members` → 201 pending member (the invitee
+  /// gets the account_invite notification). Body: exactly one of
+  /// `{"contact_id"}` (one of my contacts with `linked_user_id` set — the
+  /// app's only path since 2026-10-11) or `{"email"}`.
+  /// Errors: `400 VALIDATION_ERROR`, `404 CONTACT_NOT_FOUND`,
+  /// `409 CONTACT_ARCHIVED`, `422 CONTACT_NOT_LINKED`,
+  /// `409 USER_ALREADY_MEMBER` (member, pending, or yourself),
+  /// `404 USER_NOT_FOUND` (email only), `403 NOT_MEMBER`. The conversion
+  /// warning is gated client-side — callers must confirm before the FIRST
+  /// invite on a personal wallet.
   Future<WalletMember> inviteMember({
     required String accountId,
-    required String email,
+    String? contactId,
+    String? email,
   }) async {
+    assert(
+      (contactId == null) != (email == null),
+      'send exactly one of contactId / email',
+    );
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts/$accountId/members',
-        data: <String, dynamic>{'email': email},
+        data: <String, dynamic>{'contact_id': ?contactId, 'email': ?email},
       );
       return WalletMember.fromJson(res.data!);
     } on DioException catch (e) {

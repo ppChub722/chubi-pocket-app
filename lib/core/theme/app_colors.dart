@@ -30,6 +30,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.onSuccess,
     required this.error,
     required this.onError,
+    required this.walletAsset,
+    required this.walletLiability,
   });
 
   final Brightness brightness;
@@ -65,6 +67,15 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color onSuccess;
   final Color error;
   final Color onError;
+
+  /// Wallet type groups (owner 2026-10-11) — read them through
+  /// `AccountType.colorOf`, the one place that maps a type to its group.
+  /// What you have (cash / bank / e-wallet): a cool tone.
+  final Color walletAsset;
+
+  /// What you owe (credit card / pay later): a warm red-orange, kept
+  /// apart from [expense].
+  final Color walletLiability;
 
   ColorScheme toColorScheme() {
     return ColorScheme(
@@ -115,6 +126,8 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? onSuccess,
     Color? error,
     Color? onError,
+    Color? walletAsset,
+    Color? walletLiability,
   }) {
     return AppColors(
       brightness: brightness ?? this.brightness,
@@ -144,6 +157,8 @@ class AppColors extends ThemeExtension<AppColors> {
       onSuccess: onSuccess ?? this.onSuccess,
       error: error ?? this.error,
       onError: onError ?? this.onError,
+      walletAsset: walletAsset ?? this.walletAsset,
+      walletLiability: walletLiability ?? this.walletLiability,
     );
   }
 
@@ -190,6 +205,8 @@ class AppColors extends ThemeExtension<AppColors> {
       onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
       error: Color.lerp(error, other.error, t)!,
       onError: Color.lerp(onError, other.onError, t)!,
+      walletAsset: Color.lerp(walletAsset, other.walletAsset, t)!,
+      walletLiability: Color.lerp(walletLiability, other.walletLiability, t)!,
     );
   }
 }

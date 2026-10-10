@@ -266,6 +266,53 @@ class DraftFormController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// "ฉัน" in the split editor (owner 2026-10-11) — my own share. Once
+  /// anyone is in the split, ฉัน + the people must equal [splitCap] to save
+  /// ([splitsBalanced]).
+  ///
+  /// [meAuto] (the "อัตโนมัติ" chip, on by default): ฉัน is what's left
+  /// ([splitCap] − the people, never below 0 — past that it's "แบ่งเกิน"),
+  /// live as the others change. Typing an amount ([setMeAmount]) turns it
+  /// off; the chip ([setMeAuto]) turns it back on and re-fills ฉัน. Null =
+  /// no ฉัน (nobody to split with), or typed empty (counts as 0).
+  double? get meAmount {
+    if (splits.isEmpty) return null;
+    if (!meAuto) return _meTyped;
+    final left = splitLeft(splitCap, 0, splits);
+    return left < 0 ? 0 : left;
+  }
+
+  bool meAuto = true;
+  double? _meTyped;
+
+  /// ฉัน typed by hand — auto goes off.
+  void setMeAmount(double? v) {
+    _meTyped = v;
+    meAuto = false;
+    notifyListeners();
+  }
+
+  /// The chip: on = what's left from now on; off = keep the number shown,
+  /// as typed.
+  void setMeAuto(bool on) {
+    if (!on) _meTyped = meAmount;
+    meAuto = on;
+    notifyListeners();
+  }
+
+  /// [splitCap] − (ฉัน + the people's amounts): what's still to split.
+  double get splitLeftover => splitLeft(splitCap, meAmount, splits);
+
+  /// Nobody to split with, or it adds up exactly.
+  bool get splitsBalanced => splits.isEmpty || splitLeftover.abs() <= 0.005;
+
+  /// A fresh form (create, a loaded row, a restore): ฉัน on auto — a loaded
+  /// row comes out balanced, as it was saved.
+  void _seedMe() {
+    meAuto = true;
+    _meTyped = null;
+  }
+
   /// The wallet to show until the user picks one — silent (no notify), it's
   /// called from build.
   void applyDefaultAccount(Account? a) {
@@ -299,6 +346,7 @@ class DraftFormController extends ChangeNotifier {
           owedAmount: (s['owed_amount'] as num?)?.toDouble(),
         ),
     ];
+    _seedMe();
   }
 
   /// Loads a saved transaction for editing. [toAccount] is the other side
@@ -340,6 +388,7 @@ class DraftFormController extends ChangeNotifier {
         ? 0
         : (t.amount - mine - myOwn).clamp(0, t.amount).toDouble();
     savedInEvent = t.projectId != null;
+    _seedMe();
   }
 
   /// The saved row is an event bill (its splits sit on my share).
@@ -411,6 +460,8 @@ class DraftFormController extends ChangeNotifier {
           ),
         },
     ];
+    // Back to a saved state — balanced, as it was.
+    _seedMe();
     notifyListeners();
   }
 
@@ -823,63 +874,41 @@ class _DraftFormState extends State<DraftForm> {
                   order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
                 ),
               ],
-              // Sectioned (the detail page): tags live in section 1.
-              if (!widget.sectioned) ...[
-                const SizedBox(height: AppSpacing.sm),
-                TagChipRow(
-                  selected: _c.tagIds,
-                  onToggle: _c.toggleTag,
-                  onMore: _moreTags,
-                  known: _c.knownTags,
-                  order: _tagOrder,
-                ),
-              ],
-            ] else if (!widget.sectioned && _c.tagIds.isNotEmpty) ...[
-              // Right under the card, as chips with their icons, led by the
-              // tag icon like the edit row (owner 2026-10-10).
-              const SizedBox(height: AppSpacing.md),
+              // Editing, sectioned or not: [🏷 chips…] right under the
+              // category chips (owner 2026-10-11 — not a "แท็ก" row in the
+              // sections). View mode keeps the section row.
+              const SizedBox(height: AppSpacing.sm),
+              TagChipRow(
+                selected: _c.tagIds,
+                onToggle: _c.toggleTag,
+                onMore: _moreTags,
+                known: _c.knownTags,
+                order: _tagOrder,
+              ),
+            ] else if (_c.tagIds.isNotEmpty) ...[
+              // View, sectioned or not: right under the card, as chips led
+              // by the tag icon like the edit row — no "แท็ก" row (owner
+              // 2026-10-11).
+              SizedBox(
+                height: widget.sectioned ? HeroSpacing.after : AppSpacing.md,
+              ),
               longPressable(
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 5),
-                      child: Icon(
-                        AppIcons.tag,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Wrap(
-                        spacing: AppSpacing.xs,
-                        runSpacing: AppSpacing.xs,
-                        children: [
-                          for (final id in _c.tagIds)
-                            ?_tagChip(
-                              context
-                                      .read<TagsCubit>()
-                                      .state
-                                      .tags
-                                      .where((t) => t.id == id)
-                                      .firstOrNull ??
-                                  _c.knownTags[id],
-                            ),
-                        ],
-                      ),
-                    ),
+                TxTagStrip(
+                  tags: [
+                    for (final id in _c.tagIds)
+                      ?(context
+                              .read<TagsCubit>()
+                              .state
+                              .tags
+                              .where((t) => t.id == id)
+                              .firstOrNull ??
+                          _c.knownTags[id]),
                   ],
                 ),
               ),
             ],
             ...widget.sectioned
-                ? _sections(
-                    l,
-                    editing: editing,
-                    isTransfer: isTransfer,
-                    longPressable: longPressable,
-                  )
+                ? _sections(l, editing: editing, isTransfer: isTransfer)
                 : _detailRows(l, editing: editing, isTransfer: isTransfer),
           ],
         );
@@ -888,8 +917,6 @@ class _DraftFormState extends State<DraftForm> {
       },
     );
   }
-
-  Widget? _tagChip(Tag? tag) => tag == null ? null : TagChip(tag: tag);
 
   /// Category + wallet cards, one row — a transfer [จาก] → [ไป]. Editing:
   /// under the hero, tapping opens the pickers; view mode: inside the hero
@@ -954,54 +981,24 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
-  /// [DraftForm.sectioned] — the detail page below the hero:
+  /// [DraftForm.sectioned] — the detail page below the hero (and, in view
+  /// mode, the [TxTagStrip] under it):
   ///
-  ///   แท็ก            [#a] [#b] …      (section 1, a row)
   ///   โน้ต                               (label on top, full width)
   ///   ▬▬▬▬
   ///   หารกับ        [+ เพิ่มคน] [หารเท่ากัน]   (edit: the split editor)
   ///   …[DraftForm.trailingRows]: the page's sections (view splits, event)
   ///
-  /// View mode shows only what has something in it.
+  /// The note always shows where it can be edited — empty, the long-press
+  /// hint (owner 2026-10-11).
   List<Widget> _sections(
     AppLocalizations l, {
     required bool editing,
     required bool isTransfer,
-    required Widget Function(Widget) longPressable,
   }) {
     final enter = widget.onEnterEdit;
-    final tagsCubit = context.read<TagsCubit>();
     final first = <Widget>[
-      if (editing || _c.tagIds.isNotEmpty)
-        longPressable(
-          DetailRow(
-            label: l.txDetailTags,
-            trailing: editing
-                ? TagChipRow(
-                    selected: _c.tagIds,
-                    onToggle: _c.toggleTag,
-                    onMore: _moreTags,
-                    known: _c.knownTags,
-                    order: _tagOrder,
-                    leadingIcon: false,
-                  )
-                : Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    children: [
-                      for (final id in _c.tagIds)
-                        ?_tagChip(
-                          tagsCubit.state.tags
-                                  .where((t) => t.id == id)
-                                  .firstOrNull ??
-                              _c.knownTags[id],
-                        ),
-                    ],
-                  ),
-          ),
-        ),
-      if (editing || _c.note.text.trim().isNotEmpty)
+      if (editing || enter != null || _c.note.text.trim().isNotEmpty)
         DetailStacked(
           label: l.commonNote,
           child: InlineField(
@@ -1037,6 +1034,10 @@ class _DraftFormState extends State<DraftForm> {
           overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
           drafts: _c.splits,
           onChanged: _c.setSplits,
+          me: _c.meAmount,
+          onMeChanged: _c.setMeAmount,
+          meAuto: _c.meAuto,
+          onMeAutoChanged: _c.setMeAuto,
           sectioned: true,
         ),
       ...widget.trailingRows,
@@ -1088,6 +1089,10 @@ class _DraftFormState extends State<DraftForm> {
           overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
           drafts: _c.splits,
           onChanged: _c.setSplits,
+          me: _c.meAmount,
+          onMeChanged: _c.setMeAmount,
+          meAuto: _c.meAuto,
+          onMeAutoChanged: _c.setMeAuto,
         ),
       if (!isTransfer && widget.extra != null) widget.extra!,
       ...widget.trailingRows,
@@ -1107,6 +1112,39 @@ class _DraftFormState extends State<DraftForm> {
 }
 
 // ── Pieces ────────────────────────────────────────────────────────────
+
+/// A transaction's tags in view mode, right under the hero: `🏷 [#a] [#b]`
+/// — the tag icon leads, like the edit mode's chip row; the chips wrap.
+class TxTagStrip extends StatelessWidget {
+  const TxTagStrip({required this.tags, super.key});
+
+  final List<Tag> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Icon(
+            AppIcons.tag,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [for (final t in tags) TagChip(tag: t)],
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 /// A labelled text field under the hero of an event row / scheduled entry
 /// (คำอธิบาย, โน้ต) — label on top, an [InlineField] box below.
@@ -1179,34 +1217,43 @@ class DraftFieldRow extends StatelessWidget {
   }
 }
 
-/// "ส่วนของคุณ ฿x · คนอื่นติด ฿y" under the hero's amount once the row is
-/// split — the key number (owner 2026-10-10; reports count it). Income
-/// splits are what I pass on: "· ของคนอื่น ฿y". Split past the total → my
-/// share goes negative, in the error colour.
+/// "ส่วนของคุณ ฿y · คนอื่นติดคุณ ฿x" under the hero's amount once the row
+/// is split — the key number (owner 2026-10-10; reports count it). Income
+/// splits are what I pass on: "· คุณติดคนอื่น ฿x" (owner 2026-10-11).
+/// A negative share shows in the error colour.
 ///
-/// x = the server's `my_share` while the form is as loaded (it also knows
-/// an event share), y = amount − x; with unsaved split / amount changes
-/// (or a BE without it) both are worked out from the draft.
+/// y = the server's `my_share` while the form is as loaded (it also knows
+/// an event share), x = amount − y. With unsaved split / amount changes
+/// (or a BE without it): x = the event's others + the people, y = ฉัน as
+/// typed (else what's left of the amount).
 class _ShareLine extends StatelessWidget {
   const _ShareLine({
     required this.type,
-    required this.total,
+    required this.mine,
     required this.others,
   });
 
   final TransactionType type;
-  final double total;
+  final double mine;
   final double others;
 
   /// Null while it's all mine.
   static Widget? of(DraftFormController c) {
-    final mine = c.savedMyShare;
-    final others = mine != null
-        ? c.amountValue - mine
-        : c.eventOthers +
-              c.splits.fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
+    final saved = c.savedMyShare;
+    if (saved != null) {
+      final others = c.amountValue - saved;
+      if (others <= 0.005) return null;
+      return _ShareLine(type: c.type, mine: saved, others: others);
+    }
+    final others =
+        c.eventOthers +
+        c.splits.fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
     if (others <= 0.005) return null;
-    return _ShareLine(type: c.type, total: c.amountValue, others: others);
+    return _ShareLine(
+      type: c.type,
+      mine: c.meAmount ?? c.amountValue - others,
+      others: others,
+    );
   }
 
   @override
@@ -1214,7 +1261,6 @@ class _ShareLine extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final mine = total - others;
     final over = mine < -0.005;
     final othersText = moneyString(context, others);
     return Row(
@@ -1238,7 +1284,7 @@ class _ShareLine extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Flexible(
           child: Text(
-            '· ${type == TransactionType.income ? l.txShareOthers(othersText) : l.txShareOthersOwe(othersText)}',
+            '· ${type == TransactionType.income ? l.txShareYouOweOthers(othersText) : l.txShareOthersOweYou(othersText)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: textTheme.bodySmall?.copyWith(

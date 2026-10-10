@@ -37,7 +37,7 @@ class FilterDropdownChip extends StatelessWidget {
   /// Overrides the computed active state.
   final bool? active;
 
-  static const _size = PillSize.large;
+  static const _size = PillSize.normal;
 
   @override
   Widget build(BuildContext context) {
@@ -63,8 +63,7 @@ class FilterDropdownChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            // The pill family's large size (PillSize) — same row height as
-            // ActionPill.
+            // The one chip size (PillSize.normal), like every chip.
             constraints: BoxConstraints(minHeight: _size.height),
             child: Padding(
               padding: EdgeInsets.only(
@@ -83,8 +82,8 @@ class FilterDropdownChip extends StatelessWidget {
                     style: _size
                         .textStyle(context)
                         ?.copyWith(
-                          color: isActive ? scheme.primary : null,
-                          fontWeight: isActive ? FontWeight.w600 : null,
+                          color: isActive ? scheme.primary : fg,
+                          fontWeight: PillSize.chipWeight,
                         ),
                   ),
                   Icon(AppIcons.dropdown, size: 20, color: fg),
@@ -135,7 +134,7 @@ class SortChip<T> extends StatelessWidget {
         onTap: toggle,
         borderRadius: BorderRadius.circular(999),
         child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: PillSize.large.height),
+          constraints: BoxConstraints(minHeight: PillSize.normal.height),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Row(
@@ -145,7 +144,9 @@ class SortChip<T> extends StatelessWidget {
                 const SizedBox(width: AppSpacing.xs),
                 Text(
                   current.label,
-                  style: Theme.of(context).textTheme.labelLarge,
+                  style: PillSize.normal
+                      .textStyle(context)
+                      ?.copyWith(fontWeight: PillSize.chipWeight),
                 ),
                 Icon(AppIcons.dropdown, color: scheme.onSurfaceVariant),
               ],
@@ -209,9 +210,9 @@ enum ActionPillStyle {
   raised,
 }
 
-/// Icon + label button — the action role of the pill family ([PillSize]).
-/// At [PillSize.large] it's the same height as [FilterDropdownChip], so it
-/// can sit in the same row. Used by selection bars ("[◉ 3] [🎨 สี] [⬡
+/// Icon + label button — the action role of the pill family
+/// ([PillSize.normal], the height of every chip), so it sits in any chip
+/// row. Used by selection bars ("[◉ 3] [🎨 สี] [⬡
 /// ไอคอน] [🗑 ลบ]") and header actions ("ปรับยอด").
 class ActionPill extends StatelessWidget {
   const ActionPill({
@@ -219,7 +220,6 @@ class ActionPill extends StatelessWidget {
     required this.onTap,
     this.icon,
     this.destructive = false,
-    this.size = PillSize.large,
     this.style = ActionPillStyle.tinted,
     super.key,
   });
@@ -228,7 +228,7 @@ class ActionPill extends StatelessWidget {
   final VoidCallback? onTap;
   final IconData? icon;
   final bool destructive;
-  final PillSize size;
+  static const size = PillSize.normal;
   final ActionPillStyle style;
 
   @override

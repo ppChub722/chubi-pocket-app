@@ -3959,4 +3959,188 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get tagsBulkDeleteConfirmBody =>
       'แท็กที่เลือกจะถูกลบเมื่อกดบันทึก และจะเอาออกจากรายการที่ใช้แท็กนั้น';
+
+  @override
+  String get contactLinked => 'ผูกแล้ว';
+
+  @override
+  String get contactsLinkLabel => 'การผูก';
+
+  @override
+  String get contactsLinkUnlinked => 'ยังไม่ผูก';
+
+  @override
+  String get contactsNoFilterMatch => 'ไม่มีผู้ติดต่อตามตัวกรองนี้';
+
+  @override
+  String get contactsNoFilterMatchMessage => 'ลองเปลี่ยนตัวกรอง';
+
+  @override
+  String get contactsNoMatchFilterMessage => 'ลองคำค้นอื่น หรือเปลี่ยนตัวกรอง';
+
+  @override
+  String get walletInviteFromContacts => 'เชิญจากผู้ติดต่อ';
+
+  @override
+  String get walletInvitePickTitle => 'เชิญเข้ากระเป๋านี้';
+
+  @override
+  String get walletInvitePickHint =>
+      'เชิญได้เฉพาะผู้ติดต่อที่ลิงก์บัญชีแอปแล้ว';
+
+  @override
+  String get walletInvitePickEmpty =>
+      'ไม่มีผู้ติดต่อที่ลิงก์บัญชีให้เชิญแล้ว — ลิงก์ผู้ติดต่อกับบัญชีแอปของเขาก่อน (ที่หน้าผู้ติดต่อ)';
+
+  @override
+  String get walletErrorContactNotFound => 'ไม่พบผู้ติดต่อนี้แล้ว';
+
+  @override
+  String get walletErrorContactArchived =>
+      'ผู้ติดต่อนี้ถูกเก็บถาวรอยู่ กู้คืนก่อนจึงจะเชิญได้';
+
+  @override
+  String get walletErrorContactNotLinked =>
+      'ผู้ติดต่อนี้ยังไม่ได้ลิงก์บัญชีแอป';
+
+  @override
+  String get walletErrorInviteInvalid => 'ส่งคำเชิญไม่สำเร็จ ลองใหม่อีกครั้ง';
+
+  @override
+  String get reorderMoveUp => 'เลื่อนขึ้น';
+
+  @override
+  String get reorderMoveDown => 'เลื่อนลง';
+
+  @override
+  String get reorderOutdent => 'ออกหนึ่งระดับ';
+
+  @override
+  String get reorderIndent => 'เข้าหนึ่งระดับ';
+
+  @override
+  String categoriesReorderUnder(String name) {
+    return 'ใต้ $name';
+  }
+
+  @override
+  String get categoriesReorderTopLevel => 'หมวดหลัก';
+
+  @override
+  String get categoriesReorderTapHint =>
+      'แตะแถวเพื่อเลือกแล้วใช้ลูกศร หรือลากที่ ⠿';
+
+  @override
+  String get categoryErrorMaxDepth =>
+      'หมวดหมู่ซ้อนกันได้ไม่เกิน 3 ระดับ (นับหมวดย่อยของหมวดนี้ด้วย)';
+
+  @override
+  String get accountsReorderTapHint =>
+      'แตะเพื่อเลือกแล้วใช้ลูกศร หรือลากที่ ⠿ ลำดับนี้เป็นของคุณคนเดียว ไม่กระทบสมาชิกกระเป๋าแชร์';
+
+  @override
+  String get categorySectionSettings => 'การตั้งค่า';
+
+  @override
+  String get dayPickerLastDay => 'วันสุดท้ายของเดือน';
+
+  @override
+  String get dayPickerNone => 'ไม่ระบุ';
+
+  @override
+  String dayPickerEveryMonth(int day) {
+    return 'วันที่ $day ของทุกเดือน';
+  }
+
+  @override
+  String get txSplitMe => 'ฉัน';
+
+  @override
+  String txSplitLeft(String amount) {
+    return 'ยังไม่ได้แบ่ง $amount';
+  }
+
+  @override
+  String get txSplitBalanced => 'แบ่งครบแล้ว';
+
+  @override
+  String txSplitOverBy(String amount) {
+    return 'แบ่งเกิน $amount';
+  }
+
+  @override
+  String get txSplitUnbalanced =>
+      'ยอดที่แบ่งยังไม่ลงตัว — ส่วนของคุณรวมกับของคนอื่นต้องเท่ากับยอดรายการก่อนบันทึก';
+
+  @override
+  String txShareOthersOweYou(String amount) {
+    return 'คนอื่นติดคุณ $amount';
+  }
+
+  @override
+  String txShareYouOweOthers(String amount) {
+    return 'คุณติดคนอื่น $amount';
+  }
+
+  @override
+  String get txSplitPersonLockedLinked =>
+      'ลิงก์กับบัญชีแอปของเขาแล้ว — ถ้าจะเปลี่ยนคน ให้ลบแถวนี้แล้วเพิ่มใหม่';
+
+  @override
+  String get accountFormNameExample => 'เช่น บัญชีเงินเดือน';
+
+  @override
+  String get accountFormDescriptionExample => 'เช่น ไว้จ่ายของใช้ในบ้าน';
+
+  @override
+  String get accountsSortCustom => 'ลำดับที่จัดเอง';
+
+  @override
+  String get accountsSortBalance => 'ยอดมาก→น้อย';
+
+  @override
+  String get accountsSortName => 'ชื่อ';
+
+  @override
+  String get accountsSortType => 'ประเภท';
+
+  @override
+  String accountsSummarySharedCount(int count) {
+    return '(ร่วม $count)';
+  }
+
+  @override
+  String get accountsSummaryCardDebt => 'หนี้บัตร';
+
+  @override
+  String get accountReportSectionTitle => 'ในรายงานของฉัน';
+
+  @override
+  String get accountOpeningSectionTitle => 'ยอดเริ่มต้น';
+
+  @override
+  String get accountCreditSectionTitle => 'บัตร / วงเงิน';
+
+  @override
+  String get accountMinPaymentOverLimit =>
+      'ขั้นต่ำมากกว่าวงเงิน ตรวจดูอีกครั้ง';
+
+  @override
+  String get identifierHintBankAccount => 'เช่น 123-4-56789-0';
+
+  @override
+  String get identifierHintPromptPay => 'เบอร์ 10 หลัก หรือเลขบัตร 13 หลัก';
+
+  @override
+  String get identifierHintCard => '4 ตัวท้ายของบัตร';
+
+  @override
+  String get identifierPromptPayLength =>
+      'พร้อมเพย์ต้องเป็นเบอร์ 10 หลัก หรือเลขบัตร 13 หลัก';
+
+  @override
+  String get identifierCardLength => 'ใส่ 4 ตัวท้ายของบัตร';
+
+  @override
+  String get txSplitAuto => 'อัตโนมัติ';
 }

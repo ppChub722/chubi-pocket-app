@@ -56,27 +56,15 @@ class DebtAvatar extends StatelessWidget {
 }
 
 /// "ค้างอยู่ / คืนครบแล้ว / ยกเลิก".
-StatusPill debtStatusPill(
-  BuildContext context,
-  DebtStatus s, {
-  bool dense = false,
-}) {
+StatusPill debtStatusPill(BuildContext context, DebtStatus s) {
   final l = AppLocalizations.of(context)!;
   return switch (s) {
-    DebtStatus.open => StatusPill(
-      label: l.debtsStatusOpen,
-      tone: Tone.warning,
-      dense: dense,
-    ),
+    DebtStatus.open => StatusPill(label: l.debtsStatusOpen, tone: Tone.warning),
     DebtStatus.settled => StatusPill(
       label: l.debtStatusSettled,
       tone: Tone.success,
-      dense: dense,
     ),
-    DebtStatus.cancelled => StatusPill(
-      label: l.debtStatusCancelled,
-      dense: dense,
-    ),
+    DebtStatus.cancelled => StatusPill(label: l.debtStatusCancelled),
   };
 }
 
@@ -149,16 +137,12 @@ class DebtTile extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 if (!debt.isOpen) ...[
-                  debtStatusPill(context, debt.status, dense: true),
+                  debtStatusPill(context, debt.status),
                   const SizedBox(width: AppSpacing.sm),
                 ],
                 // Overpaid: the difference, owed the other way, flagged.
                 if (debt.isOpen && debt.isOverpaid) ...[
-                  StatusPill(
-                    label: l.debtOverpaid,
-                    tone: Tone.warning,
-                    dense: true,
-                  ),
+                  StatusPill(label: l.debtOverpaid, tone: Tone.warning),
                   const SizedBox(width: AppSpacing.sm),
                 ],
                 MoneyText(

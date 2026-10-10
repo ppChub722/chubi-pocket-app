@@ -53,7 +53,13 @@ Future<Transaction?> fetchTransferSibling(
 }
 
 /// The rule the server would reject first; null = ready to save.
-String? transactionEditProblem(AppLocalizations l, DraftFormController c) {
+/// [splitsEditable]: the split editor is open — then the split must add up
+/// (ฉัน + the people = what may be split, owner 2026-10-11).
+String? transactionEditProblem(
+  AppLocalizations l,
+  DraftFormController c, {
+  bool splitsEditable = true,
+}) {
   if (c.amountValue <= 0) return l.quickAmountRequired;
   if (c.isTransfer) {
     if (c.account == null || c.toAccount == null) return l.txTransferNeedsTo;
@@ -67,6 +73,7 @@ String? transactionEditProblem(AppLocalizations l, DraftFormController c) {
     if (total > c.splitCap + 0.005) {
       return c.eventOthers > 0 ? l.txSplitExceedsShare : l.txSplitExceeds;
     }
+    if (splitsEditable && !c.splitsBalanced) return l.txSplitUnbalanced;
   }
   return null;
 }

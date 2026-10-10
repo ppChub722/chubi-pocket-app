@@ -126,9 +126,14 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
           // AuthInitial → AuthAuthenticated, the router redirect returns
           // null (no nav change), so without a Bloc subscription the builder
           // would not re-run and the splash would stay on screen.
+          //
+          // Signed in only: on AuthInitial → unauthenticated the redirect to
+          // /auth/login lands a frame later — building the shell for that
+          // frame started the tabs' loads (the inbox) without a token; their
+          // 401s came back to closed cubits (QA S1, 2026-10-11).
           final shell = BlocBuilder<AuthCubit, AuthState>(
             builder: (context, auth) {
-              if (auth is AuthInitial) return const SplashPage();
+              if (!auth.isAuthenticated) return const SplashPage();
               return MainShell(navigationShell: navigationShell);
             },
           );
@@ -565,7 +570,8 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/categories/new',
       name: 'category-new',
-      builder: (context, state) => const CategoryDetailPage(),
+      builder: (context, state) =>
+          CategoryDetailPage.create(type: state.uri.queryParameters['type']),
     ),
     GoRoute(
       path: '/categories/:id',

@@ -18,6 +18,7 @@ import '../../../../shared/widgets/ui.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
+import '../widgets/contact_linked_mark.dart';
 
 /// `/contacts/new`, `/contacts/:id` (+ `/edit`) — one page, view ⇄ edit,
 /// category style (`ux-overhaul-plan.md` §6). Linked contacts lock name,
@@ -321,11 +322,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     return editScope(
       Scaffold(
         appBar: AppTopBar(
-          title: _isCreate
-              ? l.contactTitleNew
-              : isEditing
-              ? l.contactTitleEdit
-              : _contact!.effectiveName,
+          // Edit mode keeps the page's title (owner QA T1) — the action bar
+          // shows the mode.
+          title: _isCreate ? l.contactTitleNew : _contact!.effectiveName,
           showBack: true,
           editing: isEditing,
           onBack: handleBack,
@@ -352,13 +351,26 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                   const SizedBox(height: AppSpacing.lg),
                   _fields(l),
                   if (!_isCreate) _actions(l),
-                  // Delete lives at the bottom in edit mode (no top-bar actions).
-                  if (isEditing && !_isCreate)
+                  // Archive (amber) · delete (red) live at the bottom in edit
+                  // mode (no top-bar actions); archive flips to restore.
+                  if (isEditing && !_isCreate) ...[
+                    DangerRow(
+                      icon: _contact!.isArchived
+                          ? AppIcons.unarchive
+                          : AppIcons.archive,
+                      label: _contact!.isArchived
+                          ? l.contactRestore
+                          : l.contactArchive,
+                      caution: true,
+                      onTap: isSaving ? null : _toggleArchive,
+                    ),
                     DangerRow(
                       icon: AppIcons.delete,
                       label: l.contactDeleteThis,
                       onTap: isSaving ? null : _delete,
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -375,25 +387,37 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final iconEditable = editing && !_linked;
     return HeaderCard(
       onEdit: editing ? null : enterEdit,
-      leading: GestureDetector(
-        onLongPress: editing || _linked
-            ? null
-            : () {
-                enterEdit();
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _openIconMaker(),
-                );
-              },
-        child: EditableCircle(
-          size: 52,
-          onTap: iconEditable ? _openIconMaker : null,
-          child: UserAvatar(
-            displayName: working.name.isEmpty ? '?' : working.name,
-            // Linked: the account's icon wins (and isn't editable here).
-            iconCode: _linked ? c!.effectiveIconCode : working.iconCode,
-            size: 52,
+      // avatar → 🔗 → name (owner 2026-10-11): the badge sits outside the
+      // circle, so the editable avatar keeps its shape.
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onLongPress: editing || _linked
+                ? null
+                : () {
+                    enterEdit();
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => _openIconMaker(),
+                    );
+                  },
+            child: EditableCircle(
+              size: 52,
+              onTap: iconEditable ? _openIconMaker : null,
+              // Linked: the account's icon wins (and isn't editable here).
+              child: PersonMark(
+                name: working.name,
+                level: PersonLevel.contact,
+                iconCode: _linked ? c!.effectiveIconCode : working.iconCode,
+                size: 52,
+              ),
+            ),
           ),
-        ),
+          if (_linked) ...[
+            const SizedBox(width: AppSpacing.xs),
+            const PersonLinkBadge(),
+          ],
+        ],
       ),
       title: InlineTitleField(
         editing: editing && !_linked,
@@ -419,18 +443,11 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               spacing: HeroSpacing.itemGap,
               runSpacing: AppSpacing.xs,
               children: [
-                if (c.isLinked)
-                  LabelPill(
-                    label: l.contactLinkedBadge,
-                    icon: AppIcons.link,
-                    tone: Tone.info,
-                    size: PillSize.small,
-                  ),
+                if (c.isLinked) const ContactLinkedPill(),
                 if (c.isArchived)
                   LabelPill(
                     label: l.contactArchivedBadge,
                     icon: AppIcons.archive,
-                    size: PillSize.small,
                   ),
               ],
             ),
@@ -581,12 +598,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
               queryParameters: {'contact': c.id, 'name': c.effectiveName},
             ).toString(),
           ),
-        ),
-        DetailRow(
-          leading: Icon(c.isArchived ? AppIcons.unarchive : AppIcons.archive),
-          label: c.isArchived ? l.contactRestore : l.contactArchive,
-          helper: c.isArchived ? null : l.contactArchiveHint,
-          onTap: _toggleArchive,
         ),
       ],
     );

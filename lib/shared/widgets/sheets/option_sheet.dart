@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../inputs/app_search_bar.dart';
 import 'app_sheet.dart';
+import 'picker_sheet.dart';
 
 /// One choice in [showOptionSheet].
 class SheetOption<T> {
@@ -27,8 +26,10 @@ class SheetOption<T> {
 }
 
 /// Single-select list sheet — language, font, currency, status, sort, …
-/// Resolves the picked value, or null on dismiss. [searchable] adds a
-/// filter field on top (long lists: currencies, contacts).
+/// Resolves the picked value, or null on dismiss. On the kit [PickerSheet]
+/// shell (owner 2026-10-11): title + ✕, [searchable] adds the compact
+/// search (long lists: currencies, banks), rows are [PickerRow]s and the
+/// selected one is highlighted — never a ✓.
 Future<T?> showOptionSheet<T>(
   BuildContext context, {
   required String title,
@@ -36,80 +37,38 @@ Future<T?> showOptionSheet<T>(
   T? selected,
   bool searchable = false,
 }) {
-  return showModalBottomSheet<T>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    useRootNavigator: true,
-    builder: (_) => _OptionSheet<T>(
+  return showAppSheetCustom<T>(
+    context,
+    builder: (_) => PickerSheet(
       title: title,
-      options: options,
-      selected: selected,
       searchable: searchable,
+      builder: (context, query) {
+        final visible = query.isEmpty
+            ? options
+            : options
+                  .where(
+                    (o) =>
+                        o.label.toLowerCase().contains(query) ||
+                        (o.subtitle?.toLowerCase().contains(query) ?? false),
+                  )
+                  .toList();
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final o in visible)
+              PickerRow(
+                leading: o.leading,
+                title: o.label,
+                titleStyle: o.labelStyle,
+                subtitle: o.subtitle,
+                selected: o.value == selected,
+                onTap: o.enabled ? () => Navigator.pop(context, o.value) : null,
+              ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        );
+      },
     ),
   );
-}
-
-class _OptionSheet<T> extends StatefulWidget {
-  const _OptionSheet({
-    required this.title,
-    required this.options,
-    required this.selected,
-    required this.searchable,
-  });
-
-  final String title;
-  final List<SheetOption<T>> options;
-  final T? selected;
-  final bool searchable;
-
-  @override
-  State<_OptionSheet<T>> createState() => _OptionSheetState<T>();
-}
-
-class _OptionSheetState<T> extends State<_OptionSheet<T>> {
-  String _query = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final q = _query.trim().toLowerCase();
-    final visible = q.isEmpty
-        ? widget.options
-        : widget.options
-              .where(
-                (o) =>
-                    o.label.toLowerCase().contains(q) ||
-                    (o.subtitle?.toLowerCase().contains(q) ?? false),
-              )
-              .toList();
-    return AppSheetScaffold(
-      title: widget.title,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (widget.searchable)
-            AppSearchBar(onChanged: (v) => setState(() => _query = v)),
-          for (final o in visible)
-            ListTile(
-              enabled: o.enabled,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-              ),
-              leading: o.leading,
-              title: Text(o.label, style: o.labelStyle),
-              subtitle: o.subtitle == null ? null : Text(o.subtitle!),
-              trailing: o.value == widget.selected
-                  ? Icon(AppIcons.check, color: scheme.primary)
-                  : null,
-              selected: o.value == widget.selected,
-              onTap: () => Navigator.pop(context, o.value),
-            ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ),
-    );
-  }
 }

@@ -86,6 +86,8 @@ class AccountIdentifier extends Equatable {
   /// card "4000 1234 1234 1234"; anything else as stored.
   String get formatted {
     final v = value;
+    // A card is known by its last four.
+    if (kind == IdentifierKind.card && v.length <= 4) return '•••• $v';
     List<int>? groups;
     var sep = '-';
     switch (kind) {

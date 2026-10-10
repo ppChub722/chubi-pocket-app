@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show OverflowBoxFit;
 
 import '../../../core/constants/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../layout/detail_rows.dart';
 
 /// A text field that is the same box in view and edit mode — only the
 /// border and editability toggle, so the layout never reflows when a
@@ -9,6 +11,10 @@ import '../../../l10n/gen/app_localizations.dart';
 ///
 /// View mode: borderless, read-only; long-press calls [onEnterEdit]
 /// (enter edit + focus). Empty shows a "long-press to edit" hint.
+///
+/// Under a [DetailStacked] label the field hangs its side padding out to
+/// the left ([_textInset]), so the text starts exactly under the label in both
+/// modes — the edit outline just reaches a little further left.
 class InlineField extends StatelessWidget {
   const InlineField({
     required this.editing,
@@ -74,13 +80,31 @@ class InlineField extends StatelessWidget {
         border: _border(editing ? scheme.outline : Colors.transparent),
       ),
     );
-    if (editing) return field;
-    return GestureDetector(
-      onLongPress: onEnterEdit,
-      behavior: HitTestBehavior.opaque,
-      child: AbsorbPointer(child: field),
+    final Widget box = editing
+        ? field
+        : GestureDetector(
+            onLongPress: onEnterEdit,
+            behavior: HitTestBehavior.opaque,
+            child: AbsorbPointer(child: field),
+          );
+    if (!DetailStackedValue.of(context)) return box;
+    // [_textInset] wider, sticking out on the left — its text then starts at
+    // this widget's left edge, under the label.
+    return LayoutBuilder(
+      builder: (context, c) => OverflowBox(
+        minWidth: c.maxWidth + _textInset,
+        maxWidth: c.maxWidth + _textInset,
+        fit: OverflowBoxFit.deferToChild,
+        alignment: AlignmentDirectional.centerEnd,
+        child: box,
+      ),
     );
   }
+
+  /// Where the text starts inside the field: the 12 content padding plus
+  /// the 4 the outlined decorator adds (measured — test/shared/
+  /// detail_stacked_test.dart guards it).
+  static const double _textInset = AppSpacing.lg;
 
   static OutlineInputBorder _border(Color c) => OutlineInputBorder(
     borderRadius: BorderRadius.circular(10),

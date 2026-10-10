@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// The five account types from
 /// [`design/spec/03-accounts.md §3.1`](../../../../../chubi-pocket-docs/design/spec/03-accounts.md).
@@ -70,4 +71,12 @@ enum AccountType {
   /// date columns).
   bool get isCredit =>
       this == AccountType.creditCard || this == AccountType.payLater;
+
+  /// The type's group colour (owner 2026-10-11) — the one place to read
+  /// it: what you have ([AppColors.walletAsset]) or what you owe
+  /// ([AppColors.walletLiability], [isCredit]). Theme tokens, light / dark.
+  Color colorOf(BuildContext context) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    return isCredit ? palette.walletLiability : palette.walletAsset;
+  }
 }

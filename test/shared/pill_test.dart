@@ -13,44 +13,93 @@ void main() {
     ),
   );
 
-  testWidgets('every role shares the size scale', (t) async {
-    for (final s in PillSize.values) {
-      await pump(
-        t,
-        Wrap(
-          children: [
-            StatusPill(key: const Key('s'), label: 'ค้าง', size: s),
-            LabelPill(key: const Key('l'), label: 'ผ่อน', size: s),
-            ActionPill(key: const Key('a'), label: 'ลบ', onTap: () {}, size: s),
-            ChoicePill(
-              key: const Key('c'),
-              label: 'เดือน',
-              selected: true,
-              onTap: () {},
-              size: s,
-            ),
-            TagPill(
-              key: const Key('t'),
-              name: 'เที่ยว',
-              color: Colors.teal,
-              size: s,
-            ),
-          ],
-        ),
-      );
-      for (final k in ['s', 'l', 'a', 'c', 't']) {
-        expect(
-          t.getSize(find.byKey(Key(k))).height,
-          s.height,
-          reason: '$k at ${s.name}',
-        );
-      }
+  // Two sizes app-wide (owner 2026-10-11): every chip 32, mini 20 only
+  // for the tags on a transaction list row.
+  testWidgets('every normal chip is 32 high', (t) async {
+    await pump(
+      t,
+      Wrap(
+        children: [
+          const StatusPill(key: Key('s'), label: 'ค้าง'),
+          const LabelPill(key: Key('l'), label: 'ผ่อน'),
+          ActionPill(key: const Key('a'), label: 'ลบ', onTap: () {}),
+          ChoicePill(
+            key: const Key('c'),
+            label: 'เดือน',
+            selected: true,
+            onTap: () {},
+          ),
+          RowChip(key: const Key('r'), label: 'อาหาร', onTap: () {}),
+          FilterDropdownChip(key: const Key('f'), label: 'สี', onTap: () {}),
+          SortChip<int>(
+            key: const Key('o'),
+            options: const [SortOption(0, 'ชื่อ')],
+            selected: 0,
+            onSelected: (_) {},
+          ),
+          const AppChip(key: Key('p'), label: 'ชิป'),
+          const TagPill(
+            key: Key('t'),
+            name: 'เที่ยว',
+            color: Colors.teal,
+            size: PillSize.normal,
+          ),
+        ],
+      ),
+    );
+    for (final k in ['s', 'l', 'a', 'c', 'r', 'f', 'o', 'p', 't']) {
+      expect(t.getSize(find.byKey(Key(k))).height, 32, reason: k);
     }
   });
 
-  testWidgets('StatusPill: dense = small, a dot, ⌄ when tappable', (t) async {
-    await pump(t, StatusPill(label: 'ค้าง', dense: true, onTap: () {}));
-    expect(t.getSize(find.byType(StatusPill)).height, PillSize.small.height);
+  testWidgets('mini is 20 (tags on a transaction row)', (t) async {
+    await pump(
+      t,
+      const Wrap(
+        children: [
+          TagPill(key: Key('t'), name: 'เที่ยว', color: Colors.teal),
+          LabelPill(key: Key('l'), label: '+2', size: PillSize.mini),
+          AppChip(key: Key('p'), label: 'ชิป', size: PillSize.mini),
+        ],
+      ),
+    );
+    for (final k in ['t', 'l', 'p']) {
+      expect(t.getSize(find.byKey(Key(k))).height, 20, reason: k);
+    }
+  });
+
+  testWidgets('same label, same width — chips differ only by the label', (
+    t,
+  ) async {
+    await pump(
+      t,
+      Wrap(
+        children: [
+          const LabelPill(key: Key('l'), label: 'ผ่อน'),
+          RowChip(key: const Key('r'), label: 'ผ่อน', onTap: () {}),
+          ChoicePill(
+            key: const Key('c'),
+            label: 'ผ่อน',
+            selected: false,
+            onTap: () {},
+          ),
+          const AppChip(key: Key('p'), label: 'ผ่อน'),
+        ],
+      ),
+    );
+    final w = t.getSize(find.byKey(const Key('l'))).width;
+    for (final k in ['r', 'c', 'p']) {
+      expect(
+        t.getSize(find.byKey(Key(k))).width,
+        moreOrLessEquals(w),
+        reason: k,
+      );
+    }
+  });
+
+  testWidgets('StatusPill: a dot, ⌄ when tappable', (t) async {
+    await pump(t, StatusPill(label: 'ค้าง', onTap: () {}));
+    expect(t.getSize(find.byType(StatusPill)).height, PillSize.normal.height);
     expect(find.byType(Icon), findsOneWidget); // the ⌄
   });
 

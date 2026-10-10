@@ -254,7 +254,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                               ? l.projectRoleViewer
                               : l.projectRoleMember,
                           tone: m.isOwner ? Tone.primary : Tone.neutral,
-                          dense: true,
                         ),
                         // Owner manages everyone but themself.
                         onTap: _isOwner && !readOnly && !m.isOwner

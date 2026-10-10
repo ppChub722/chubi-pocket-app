@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -5,6 +7,7 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
+import '../../../../shared/widgets/skeleton_box.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -42,6 +45,7 @@ class CategoryChipRow extends StatelessWidget {
     this.trailing = const [],
     this.max = 6,
     this.leadingIcon = true,
+    this.maxLines,
     super.key,
   });
 
@@ -59,10 +63,15 @@ class CategoryChipRow extends StatelessWidget {
   /// False under a section title that shows the icon (the filter sheet).
   final bool leadingIcon;
 
+  /// [ChipRow.maxLines]: wrap, cut past this many lines (the filter
+  /// sheet); null = one scrolling line (the forms).
+  final int? maxLines;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final all = context.watch<CategoriesCubit>().state.categories;
+    final catState = context.watch<CategoriesCubit>().state;
+    final all = catState.categories;
     final txs = context.watch<TransactionsCubit>().state.transactions;
     final usable = {
       for (final c in all)
@@ -105,20 +114,29 @@ class CategoryChipRow extends StatelessWidget {
       rank: rank,
       picked: [if (sel != null && usable.containsKey(sel.id)) sel.id],
     );
-    return ChipRow(
-      icon: leadingIcon ? AppIcons.category : null,
-      moreLabel: l.commonMore,
-      onMore: onMore,
-      chips: [
-        ...leading,
-        for (final c in [for (final id in ids) ?usable[id]])
-          CategoryChip(
-            category: c,
-            selected: c.id == sel?.id,
-            onTap: () => onPick(c),
-          ),
-        ...trailing,
-      ],
+    final loading =
+        all.isEmpty &&
+        (catState.status == CategoriesStatus.initial ||
+            catState.status == CategoriesStatus.loading);
+    return _EnsureLoaded(
+      load: (c) => c.read<CategoriesCubit>().loadIfNeeded(),
+      child: ChipRow(
+        icon: leadingIcon ? AppIcons.category : null,
+        moreLabel: l.commonMore,
+        onMore: onMore,
+        maxLines: maxLines,
+        chips: [
+          ...leading,
+          if (loading) ..._skeletonChips(),
+          for (final c in [for (final id in ids) ?usable[id]])
+            CategoryChip(
+              category: c,
+              selected: c.id == sel?.id,
+              onTap: () => onPick(c),
+            ),
+          ...trailing,
+        ],
+      ),
     );
   }
 }
@@ -140,6 +158,7 @@ class TagChipRow extends StatelessWidget {
     this.leading = const [],
     this.shown = 3,
     this.leadingIcon = true,
+    this.maxLines,
     super.key,
   });
 
@@ -155,10 +174,15 @@ class TagChipRow extends StatelessWidget {
   /// False under a section title that shows the icon (the filter sheet).
   final bool leadingIcon;
 
+  /// [ChipRow.maxLines]: wrap, cut past this many lines (the filter
+  /// sheet); null = one scrolling line (the forms).
+  final int? maxLines;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final mine = context.watch<TagsCubit>().state.tags;
+    final tagState = context.watch<TagsCubit>().state;
+    final mine = tagState.tags;
     final byId = {for (final t in mine) t.id: t};
     final txs = editing
         ? context.watch<TransactionsCubit>().state.transactions
@@ -189,19 +213,28 @@ class TagChipRow extends StatelessWidget {
     final ids = editing
         ? order.ids(ready: mine.isNotEmpty, rank: rank, picked: selected)
         : selected.toList();
-    return ChipRow(
-      icon: leadingIcon ? AppIcons.tag : null,
-      moreLabel: l.commonMore,
-      onMore: editing ? onMore : null,
-      chips: [
-        ...leading,
-        for (final t in [for (final id in ids) ?(byId[id] ?? known[id])])
-          TagChip(
-            tag: t,
-            selected: editing ? selected.contains(t.id) : null,
-            onTap: editing ? () => onToggle(t.id) : null,
-          ),
-      ],
+    final loading =
+        mine.isEmpty &&
+        (tagState.status == TagsStatus.initial ||
+            tagState.status == TagsStatus.loading);
+    return _EnsureLoaded(
+      load: (c) => c.read<TagsCubit>().loadIfNeeded(),
+      child: ChipRow(
+        icon: leadingIcon ? AppIcons.tag : null,
+        moreLabel: l.commonMore,
+        onMore: editing ? onMore : null,
+        maxLines: maxLines,
+        chips: [
+          ...leading,
+          if (loading) ..._skeletonChips(),
+          for (final t in [for (final id in ids) ?(byId[id] ?? known[id])])
+            TagChip(
+              tag: t,
+              selected: editing ? selected.contains(t.id) : null,
+              onTap: editing ? () => onToggle(t.id) : null,
+            ),
+        ],
+      ),
     );
   }
 }
@@ -220,6 +253,7 @@ class WalletChipRow extends StatelessWidget {
     this.trailing = const [],
     this.max = 4,
     this.leadingIcon = true,
+    this.maxLines,
     super.key,
   });
 
@@ -234,11 +268,16 @@ class WalletChipRow extends StatelessWidget {
   /// False under a section title that shows the icon (the filter sheet).
   final bool leadingIcon;
 
+  /// [ChipRow.maxLines]: wrap, cut past this many lines (the filter
+  /// sheet); null = one scrolling line (the forms).
+  final int? maxLines;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accounts = context.watch<AccountsCubit>().state.accounts;
+    final accState = context.watch<AccountsCubit>().state;
+    final accounts = accState.accounts;
     final txs = context.watch<TransactionsCubit>().state.transactions;
     final byId = {for (final a in accounts) a.id: a};
     List<String> rank() {
@@ -262,25 +301,66 @@ class WalletChipRow extends StatelessWidget {
       rank: rank,
       picked: [if (sel != null && byId.containsKey(sel)) sel],
     );
-    return ChipRow(
-      icon: leadingIcon ? AppIcons.wallet : null,
-      moreLabel: l.commonMore,
-      onMore: onMore,
-      chips: [
-        ...leading,
-        for (final a in [for (final id in ids) ?byId[id]])
-          RowChip(
-            label: a.name,
-            icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
-            color: a.iconCode?.accentColorFor(palette) ?? palette.primary,
-            selected: a.id == sel,
-            onTap: () => onPick(a),
-          ),
-        ...trailing,
-      ],
+    final loading =
+        accounts.isEmpty &&
+        (accState.status == AccountsStatus.initial ||
+            accState.status == AccountsStatus.loading);
+    return _EnsureLoaded(
+      load: (c) => c.read<AccountsCubit>().loadIfNeeded(),
+      child: ChipRow(
+        icon: leadingIcon ? AppIcons.wallet : null,
+        moreLabel: l.commonMore,
+        onMore: onMore,
+        maxLines: maxLines,
+        chips: [
+          ...leading,
+          if (loading) ..._skeletonChips(),
+          for (final a in [for (final id in ids) ?byId[id]])
+            RowChip(
+              label: a.name,
+              icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
+              color: a.iconCode?.accentColorFor(palette) ?? palette.primary,
+              selected: a.id == sel,
+              onTap: () => onPick(a),
+            ),
+          ...trailing,
+        ],
+      ),
     );
   }
 }
+
+/// Fetches a row's list if nothing has yet (QA run-3 E2): the filter sheet
+/// can open before any page loaded the wallets / categories / tags. [load]
+/// runs once, after the first frame.
+class _EnsureLoaded extends StatefulWidget {
+  const _EnsureLoaded({required this.load, required this.child});
+
+  final Future<void> Function(BuildContext context) load;
+  final Widget child;
+
+  @override
+  State<_EnsureLoaded> createState() => _EnsureLoadedState();
+}
+
+class _EnsureLoadedState extends State<_EnsureLoaded> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(widget.load(context));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Chip-sized shimmer placeholders while a row's list loads.
+List<Widget> _skeletonChips() => [
+  for (final w in const [72.0, 56.0, 64.0])
+    SkeletonBox(width: w, height: PillSize.normal.height, borderRadius: 999),
+];
 
 /// [first], then [rest] not already in it, up to [max] — distinct.
 List<String> _topUp(List<String> first, List<String> rest, int max) {

@@ -29,7 +29,7 @@ abstract final class HeroSpacing {
   static const double itemGap = AppSpacing.sm;
 
   /// Every control in the card's top row is this tall (date chip, ✏️,
-  /// type / shared pills — `PillSize.control`).
+  /// type / shared pills — [PillSize.normal]).
   static const double controlHeight = 32;
 
   /// Inside a card nested in the hero (category / wallet [PickCard]s).

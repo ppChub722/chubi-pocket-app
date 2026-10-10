@@ -163,6 +163,11 @@ class _TxFilterSheet extends StatefulWidget {
 class _TxFilterSheetState extends State<_TxFilterSheet> {
   late TxFilters _f = widget.initial;
 
+  /// Each chip section wraps onto at most this many lines, then ends with
+  /// "เพิ่มเติม" (owner 2026-10-11) — given enough chips to fill them.
+  static const _chipLines = 4;
+  static const _chipMax = 40;
+
   /// The chip rows' orders, fixed while the sheet is open (categories: one
   /// per type filter) — see [ChipOrder].
   final _categoryOrders = <TransactionType?, ChipOrder>{};
@@ -243,6 +248,7 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
             title: l.transactionsFilterType,
             icon: AppIcons.transfer,
             child: ChipRow(
+              maxLines: _chipLines,
               chips: [
                 for (final t in const [
                   null,
@@ -273,6 +279,8 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
               icon: AppIcons.wallet,
               child: WalletChipRow(
                 leadingIcon: false,
+                maxLines: _chipLines,
+                max: _chipMax,
                 selectedId: wallet is TxOneWallet ? wallet.account.id : null,
                 order: _walletOrder,
                 onPick: (a) => _set(
@@ -311,6 +319,8 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
             icon: AppIcons.category,
             child: CategoryChipRow(
               leadingIcon: false,
+              maxLines: _chipLines,
+              max: _chipMax,
               type: _f.type,
               selected: _f.category,
               order: _categoryOrders.putIfAbsent(_f.type, ChipOrder.new),
@@ -348,6 +358,8 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
             icon: AppIcons.tag,
             child: TagChipRow(
               leadingIcon: false,
+              maxLines: _chipLines,
+              shown: _chipMax,
               selected: {for (final t in _f.tags) t.id},
               order: _tagOrder,
               onToggle: _toggleTag,

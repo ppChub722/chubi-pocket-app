@@ -55,12 +55,13 @@ class MoneyText extends StatelessWidget {
       MoneyTone.plain => (null, ''),
       MoneyTone.income => (palette.income, '+'),
       MoneyTone.expense => (palette.expense, '−'),
+      // Something that shows as ฿0.00 gets no sign or colour.
       MoneyTone.signed =>
-        amount > 0
+        CurrencyFormatter.roundsToZero(amount)
+            ? (null, '')
+            : amount > 0
             ? (palette.income, '+')
-            : amount < 0
-            ? (palette.expense, '−')
-            : (null, ''),
+            : (palette.expense, '−'),
     };
     final magnitude = tone == MoneyTone.plain ? amount : amount.abs();
     final text = hidden

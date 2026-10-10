@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../../core/network/api_exception.dart';
 import '../cubit/contacts_cubit.dart';
 import '../../domain/contact.dart';
+import 'contact_linked_mark.dart';
 
 /// Result of [showContactPickerSheet]. `null` = dismissed.
 sealed class ContactPickResult {
@@ -149,7 +149,25 @@ class _ContactPickerState extends State<_ContactPicker> {
             // contact first.
             if (offerName) ...[
               PickerRow(
-                leading: const Icon(AppIcons.profile),
+                // A typed name — the person mark's first level (👤), in
+                // the avatars' 36 column + the 🔗 slot, so its text lines up
+                // with the contact rows.
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox.square(
+                      dimension: 36,
+                      child: Center(
+                        child: PersonMark(
+                          name: typed,
+                          level: PersonLevel.name,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: PersonMark.linkSlotWidth(36)),
+                  ],
+                ),
                 title: l.contactPickerUseName(typed),
                 subtitle: l.contactPickerUseNameHint,
                 onTap: () => Navigator.pop(context, ContactNameTyped(typed)),
@@ -172,25 +190,10 @@ class _ContactPickerState extends State<_ContactPicker> {
               ),
             for (final c in hits)
               PickerRow(
-                leading: UserAvatar(
-                  displayName: c.effectiveName,
-                  iconCode: c.effectiveIconCode,
-                  size: 36,
-                ),
+                leading: ContactAvatar(contact: c, size: 36),
                 title: c.effectiveName,
                 subtitle: _subtitleOf(c),
                 selected: c.id == widget.selectedContactId,
-                // 🔗 in the contacts list's colour.
-                trailing: c.isLinked
-                    ? Padding(
-                        padding: const EdgeInsets.only(right: AppSpacing.md),
-                        child: Icon(
-                          AppIcons.link,
-                          size: 18,
-                          color: scheme.primary,
-                        ),
-                      )
-                    : null,
                 onTap: () => Navigator.pop(context, ContactPicked(c)),
               ),
             const SizedBox(height: AppSpacing.md),

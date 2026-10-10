@@ -123,6 +123,9 @@ class OptionMenuAnchor<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return MenuAnchor(
       style: _menuStyle(context),
+      // The tap that closes the popover must not also hit what lies
+      // underneath (QA S2: a row opened while closing the filter).
+      consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
         for (final o in options)
@@ -193,6 +196,9 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return MenuAnchor(
       style: _menuStyle(context),
+      // The tap that closes the popover must not also hit what lies
+      // underneath (QA S2: a row opened while closing the filter).
+      consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
         for (final o in options)
@@ -239,6 +245,9 @@ class PopoverAnchor extends StatelessWidget {
   Widget build(BuildContext context) {
     return MenuAnchor(
       style: _menuStyle(context),
+      // The tap that closes the popover must not also hit what lies
+      // underneath (QA S2: a row opened while closing the filter).
+      consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
         Builder(

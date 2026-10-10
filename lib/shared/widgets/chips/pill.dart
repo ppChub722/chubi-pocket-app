@@ -13,43 +13,19 @@ import 'tone.dart';
 /// - **choice** ([ChoicePill], in a [ChoicePillRow]): one option of a
 ///   pick-one row ("เดือน · สัปดาห์ · ปี").
 ///
-/// They share one size scale ([PillSize]), so a status, a type and an
-/// action in the same row line up. [AppBadge] (a counter) stays apart.
+/// TWO sizes app-wide (owner 2026-10-11) — [PillSize.normal] (32) for
+/// every chip and pill, with the same side padding and text, so chips
+/// differ only by their label; [PillSize.mini] (20) only for the tags on a
+/// transaction list row. [AppBadge] (a counter) stays apart.
 enum PillSize {
-  /// List rows that are already dense — tags on a transaction row.
-  mini(height: 18, padding: 6, gap: 3, icon: 10, dot: 5),
+  /// Tags on a transaction list row — nowhere else.
+  mini(height: 20, padding: 6, gap: 3, icon: 11, dot: 5),
 
-  /// List rows, cards.
-  small(
-    height: 22,
-    padding: AppSpacing.sm,
-    gap: AppSpacing.xs,
-    icon: 12,
-    dot: 6,
-  ),
-
-  /// Headers, detail rows — the default.
-  medium(
-    height: 28,
-    padding: AppSpacing.md,
-    gap: AppSpacing.xs,
-    icon: 16,
-    dot: 8,
-  ),
-
-  /// A hero card's top row — the same height as its date chip and ✏️
+  /// Everything else: filter / form / hero / splits chips, status / label
+  /// / action / choice pills, dropdown and sort chips, the date pill
   /// ([HeroSpacing.controlHeight]).
-  control(
+  normal(
     height: 32,
-    padding: AppSpacing.md,
-    gap: AppSpacing.xs,
-    icon: 16,
-    dot: 8,
-  ),
-
-  /// Tap targets in toolbars — filter chips, action pills.
-  large(
-    height: 36,
     padding: AppSpacing.md,
     gap: AppSpacing.xs,
     icon: 16,
@@ -75,15 +51,18 @@ enum PillSize {
   final double icon;
   final double dot;
 
-  /// The label's text style — weight and colour are the pill's own.
+  /// The label's text style — colour is the pill's own; every chip uses
+  /// the same weight ([chipWeight]) so a selection never changes its width.
   TextStyle? textStyle(BuildContext context) {
     final t = Theme.of(context).textTheme;
     return switch (this) {
       mini => t.labelSmall?.copyWith(fontSize: 10, height: 1.2),
-      small => t.labelSmall,
-      medium || control || large => t.labelLarge,
+      normal => t.labelLarge,
     };
   }
+
+  /// The one label weight of a chip.
+  static const FontWeight chipWeight = FontWeight.w600;
 }
 
 /// The shape every pill shares: stadium, [PillSize] height and padding,
@@ -139,7 +118,7 @@ class PillContent extends StatelessWidget {
     required this.size,
     this.leading,
     this.trailing,
-    this.weight = FontWeight.w600,
+    this.weight = PillSize.chipWeight,
     super.key,
   });
 
@@ -186,7 +165,7 @@ class LabelPill extends StatelessWidget {
     this.tone = Tone.neutral,
     this.color,
     this.outlined = false,
-    this.size = PillSize.medium,
+    this.size = PillSize.normal,
     this.onTap,
     super.key,
   });
@@ -226,15 +205,13 @@ class LabelPill extends StatelessWidget {
 /// One option of a pick-one row of pills — "เดือน · สัปดาห์ · ปี",
 /// "ใหม่สุด · เก่าสุด" (the filter sheet). [selected] = primary-tinted fill,
 /// border and text; otherwise a quiet outline. The kit's answer to a
-/// Material ChoiceChip, sized on the pill scale ([PillSize.large] = a tap
-/// target).
+/// Material ChoiceChip, [PillSize.normal].
 class ChoicePill extends StatelessWidget {
   const ChoicePill({
     required this.label,
     required this.selected,
     required this.onTap,
     this.icon,
-    this.size = PillSize.large,
     super.key,
   });
 
@@ -242,7 +219,7 @@ class ChoicePill extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
   final IconData? icon;
-  final PillSize size;
+  static const size = PillSize.normal;
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +239,6 @@ class ChoicePill extends StatelessWidget {
           label: label,
           color: fg,
           size: size,
-          weight: selected ? FontWeight.w700 : FontWeight.w500,
           leading: icon == null ? null : Icon(icon, size: size.icon, color: fg),
         ),
       ),
@@ -280,7 +256,6 @@ class ChoicePillRow<T> extends StatelessWidget {
     required this.label,
     required this.onSelected,
     this.reselect,
-    this.size = PillSize.large,
     super.key,
   });
 
@@ -289,7 +264,6 @@ class ChoicePillRow<T> extends StatelessWidget {
   final String Function(T) label;
   final ValueChanged<T> onSelected;
   final bool Function(T)? reselect;
-  final PillSize size;
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +275,6 @@ class ChoicePillRow<T> extends StatelessWidget {
           ChoicePill(
             label: label(v),
             selected: v == selected,
-            size: size,
             onTap: () {
               if (v != selected || (reselect?.call(v) ?? false)) {
                 onSelected(v);

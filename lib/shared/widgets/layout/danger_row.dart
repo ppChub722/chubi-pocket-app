@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Red full-width row at the bottom of a page for the destructive action —
 /// "ลบหมวดหมู่นี้", "เก็บกระเป๋านี้ถาวร". Since the top bar carries no page
@@ -9,14 +10,21 @@ import '../../../core/constants/app_spacing.dart';
 /// in edit mode on pages that have one (a page with no in-place edit, e.g.
 /// transaction detail, shows it always). The caller still confirms via
 /// `showConfirmDialog` in [onTap].
+///
+/// [caution] = the amber one, same shape — เก็บถาวร (restorable) next to
+/// the red ลบ (owner 2026-10-11, the การจัดการ block).
 class DangerRow extends StatelessWidget {
   const DangerRow({
     required this.icon,
     required this.label,
     required this.onTap,
     this.padding = const EdgeInsets.only(top: AppSpacing.xl),
+    this.caution = false,
     super.key,
   });
+
+  /// Amber (warning) instead of red: an undoable action (archive).
+  final bool caution;
 
   final IconData icon;
   final String label;
@@ -28,11 +36,14 @@ class DangerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = onTap == null ? scheme.onSurfaceVariant : scheme.error;
+    final tint = caution
+        ? Theme.of(context).extension<AppColors>()!.warning
+        : scheme.error;
+    final color = onTap == null ? scheme.onSurfaceVariant : tint;
     return Padding(
       padding: padding,
       child: Material(
-        color: scheme.error.withValues(alpha: onTap == null ? 0.04 : 0.08),
+        color: tint.withValues(alpha: onTap == null ? 0.04 : 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
           side: BorderSide(color: color.withValues(alpha: 0.35)),

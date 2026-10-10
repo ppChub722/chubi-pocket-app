@@ -628,14 +628,14 @@ class _ActiveFilterChip extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: PillShell(
-        size: PillSize.medium,
+        size: PillSize.normal,
         background: scheme.primary.withValues(alpha: 0.12),
         border: scheme.primary.withValues(alpha: 0.5),
         onTap: onRemove,
         child: PillContent(
           label: label,
           color: scheme.primary,
-          size: PillSize.medium,
+          size: PillSize.normal,
           trailing: Icon(AppIcons.close, size: 16, color: scheme.primary),
         ),
       ),

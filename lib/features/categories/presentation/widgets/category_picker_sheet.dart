@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -10,7 +9,6 @@ import '../../../../shared/widgets/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
-import '../cubit/categories_cubit.dart';
 import '../pages/category_detail_page.dart';
 
 /// Result returned by [showCategoryPickerSheet]. Distinct from `null`
@@ -132,23 +130,17 @@ class _CategoryPickerState extends State<_CategoryPicker> {
     }
   }
 
-  /// The create page, pushed over the sheet. A category of this type that
-  /// wasn't there before is the one just made → pick it.
+  /// The create page, pushed over the sheet. Saving there pops with the
+  /// new category → pick it; back (nothing saved) returns to the picker.
   Future<void> _create() async {
-    final cubit = context.read<CategoriesCubit>();
-    final before = {for (final c in cubit.state.categories) c.id};
-    await Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CategoryDetailPage(initialType: widget.type),
+    final created = await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<Category>(
+        builder: (_) =>
+            CategoryDetailPage(initialType: widget.type, popOnCreate: true),
       ),
     );
-    if (!mounted) return;
-    final created = cubit.state.categories
-        .where((c) => c.type == widget.type && !before.contains(c.id))
-        .lastOrNull;
-    if (created != null) {
-      Navigator.of(context).pop(CategoryPickerSelected(created));
-    }
+    if (!mounted || created == null) return;
+    Navigator.of(context).pop(CategoryPickerSelected(created));
   }
 
   @override

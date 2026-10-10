@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'shell/keyboard_insets_guard.dart';
 import '../core/fonts/font_registry.dart';
 import '../core/network/api_client.dart';
 import '../core/network/connectivity_cubit.dart';
@@ -299,12 +300,17 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                       value: ThemeBuilder.systemBarsStyle(
                         Theme.of(context).scaffoldBackgroundColor,
                       ),
-                      child: Column(
-                        children: [
-                          const OfflineBanner(),
-                          const UpdateBanner(),
-                          Expanded(child: child ?? const SizedBox.shrink()),
-                        ],
+                      // A keyboard height left over from leaving the app
+                      // with it open is dropped here, for every page and
+                      // sheet below.
+                      child: KeyboardInsetsGuard(
+                        child: Column(
+                          children: [
+                            const OfflineBanner(),
+                            const UpdateBanner(),
+                            Expanded(child: child ?? const SizedBox.shrink()),
+                          ],
+                        ),
                       ),
                     ),
               ),

@@ -52,6 +52,8 @@ final sweetTheme = AppTheme(
     onSuccess: Color(0xFFFFFFFF),
     error: Color(0xFFE11D63),
     onError: Color(0xFFFFFFFF),
+    walletAsset: Color(0xFF0284C7),
+    walletLiability: Color(0xFFEA580C),
   ),
   darkColors: const AppColors(
     brightness: Brightness.dark,
@@ -81,5 +83,7 @@ final sweetTheme = AppTheme(
     onSuccess: Color(0xFF052E16),
     error: Color(0xFFFB7185),
     onError: Color(0xFF4A0E1F),
+    walletAsset: Color(0xFF38BDF8),
+    walletLiability: Color(0xFFFB923C),
   ),
 );

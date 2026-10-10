@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 
@@ -18,8 +17,8 @@ class SelectCardOption<T> {
   final String label;
   final IconData? icon;
 
-  /// Accent when selected (e.g. expense red / income green). Defaults to
-  /// the primary colour.
+  /// This option's accent when selected (expense red / income green, a
+  /// wallet type's group colour). Defaults to the primary colour.
   final Color? color;
   final String? description;
 }
@@ -32,6 +31,10 @@ class SelectCardOption<T> {
 /// the options into a grid of that many per row — each card stacks its icon
 /// above the label, and a short last row stretches to fill (5 options at
 /// `columns: 3` → 3 + 2, e.g. the wallet type picker).
+///
+/// Selected = highlight only (owner 2026-10-11, the app's no-✓ rule): a
+/// tinted fill, an accent border and a filled icon disc, in the option's
+/// own [SelectCardOption.color]. No check badge.
 class SelectCardGroup<T> extends StatelessWidget {
   const SelectCardGroup({
     required this.options,
@@ -173,7 +176,7 @@ class SelectCardGroup<T> extends StatelessWidget {
       );
     }
 
-    final card = AnimatedContainer(
+    return AnimatedContainer(
       duration: _motion,
       decoration: BoxDecoration(
         color: active
@@ -207,30 +210,6 @@ class SelectCardGroup<T> extends StatelessWidget {
           ),
         ),
       ),
-    );
-    // ✓ in the corner of the picked one.
-    return Stack(
-      // Passthrough: the row stretches the card to equal heights.
-      fit: StackFit.passthrough,
-      clipBehavior: Clip.none,
-      children: [
-        card,
-        Positioned(
-          top: AppSpacing.xs + 2,
-          right: AppSpacing.xs + 2,
-          child: AnimatedScale(
-            duration: _motion,
-            curve: Curves.easeOutBack,
-            scale: active ? 1 : 0,
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
-              child: Icon(AppIcons.check, size: 12, color: onAccent),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

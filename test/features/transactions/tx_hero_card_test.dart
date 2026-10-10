@@ -166,6 +166,34 @@ void main() {
     expect(find.text('182'), findsOneWidget);
   });
 
+  testWidgets('inline edit: the whole amount cell focuses the amount', (
+    t,
+  ) async {
+    final amountFocus = FocusNode();
+    addTearDown(amountFocus.dispose);
+    // Two lines of description — the row is taller than the amount.
+    note.text = List.filled(12, 'ข้าวมันไก่').join(' ');
+    await pump(
+      t,
+      TxHeroCard(
+        type: TransactionType.expense,
+        amount: amount,
+        title: note,
+        amountFocus: amountFocus,
+        dateLabel: 'วันนี้',
+        inline: true,
+      ),
+    );
+    final symbol = t.getRect(find.text('฿'));
+    final titleTop = t.getTopLeft(find.text(note.text)).dy;
+    expect(titleTop, lessThan(symbol.top));
+    // Left of the ฿, level with the description's first line: empty space
+    // in the amount's half of the row.
+    await t.tapAt(Offset(symbol.left - 24, titleTop + 2));
+    await t.pump();
+    expect(amountFocus.hasFocus, isTrue);
+  });
+
   testWidgets('a locked type in edit mode shows the 🔒 chip', (t) async {
     await pump(
       t,

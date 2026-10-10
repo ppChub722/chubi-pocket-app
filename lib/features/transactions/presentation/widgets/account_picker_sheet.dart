@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
@@ -7,7 +6,6 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/pages/account_detail_page.dart';
 import '../../../accounts/presentation/widgets/account_card.dart';
 
@@ -78,22 +76,17 @@ class _AccountPicker extends StatelessWidget {
   final bool allowCreate;
 
   /// The create page over the sheet — on the root navigator: a routed push
-  /// (/accounts/new) from inside this modal would land under it. A wallet
-  /// that wasn't there before is the one just made → pick it.
+  /// (/accounts/new) from inside this modal would land under it. Saving
+  /// there pops with the new wallet (no router replace — QA W2) → pick it;
+  /// back (nothing saved) returns to the picker.
   Future<void> _create(BuildContext context) async {
-    final cubit = context.read<AccountsCubit>();
-    final before = {for (final a in cubit.state.accounts) a.id};
-    await Navigator.of(
-      context,
-      rootNavigator: true,
-    ).push(MaterialPageRoute<void>(builder: (_) => const AccountDetailPage()));
-    if (!context.mounted) return;
-    final created = cubit.state.accounts
-        .where((a) => !before.contains(a.id))
-        .lastOrNull;
-    if (created != null) {
-      Navigator.of(context).pop(AccountPickerSelected(created));
-    }
+    final created = await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<Account>(
+        builder: (_) => const AccountDetailPage(popOnCreate: true),
+      ),
+    );
+    if (!context.mounted || created == null) return;
+    Navigator.of(context).pop(AccountPickerSelected(created));
   }
 
   @override

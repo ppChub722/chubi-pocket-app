@@ -513,7 +513,9 @@ class _TagsPageState extends State<TagsPage>
         // spacer of its height.
         extendBodyBehindAppBar: true,
         appBar: AppTopBar(
-          title: isEditing ? l.tagFormTitleEdit : l.tagsTitle,
+          // The title never changes with the mode (owner, QA T1) — the
+          // action bar says it's edit mode.
+          title: l.tagsTitle,
           showBack: true,
           editing: isEditing,
           onBack: isEditing ? handleBack : null,

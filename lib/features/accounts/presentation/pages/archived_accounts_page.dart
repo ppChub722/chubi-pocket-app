@@ -107,7 +107,6 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                           trailing: ActionPill(
                             label: l.accountRestore,
                             icon: AppIcons.unarchive,
-                            size: PillSize.medium,
                             onTap: _busy.contains(a.id)
                                 ? null
                                 : () => _restore(a),

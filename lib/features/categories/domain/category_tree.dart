@@ -33,10 +33,6 @@ class CategoryTree {
   /// Returns the L1 ancestor of [category] — i.e. the root of [category]'s
   /// branch. For an L1 category this is itself; for L2/L3 it walks up the
   /// `parent_id` chain until it finds a node with no parent.
-  ///
-  /// Used by the color-inheritance rule: every row's display color comes
-  /// from its L1 ancestor, so editing a leaf's color is meaningless —
-  /// only the root carries the visual identity for its branch.
   static Category rootOf(Category category, List<Category> all) {
     var current = category;
     while (current.parentId != null) {
@@ -47,10 +43,11 @@ class CategoryTree {
     return current;
   }
 
-  /// IconCode to display, derived from [rootOf]. L1 rows return their own
-  /// iconCode; L2/L3 rows inherit from their L1 ancestor.
+  /// IconCode to display: every level shows its OWN icon, glyph and colour
+  /// (owner 2026-10-11, spec 05 §4.14b). Only a row with no icon at all
+  /// falls back to its L1 ancestor's.
   static IconCode? resolveIconCode(Category category, List<Category> all) {
-    return rootOf(category, all).iconCode;
+    return category.iconCode ?? rootOf(category, all).iconCode;
   }
 
   /// Renders an ancestor-path breadcrumb for a category, e.g.

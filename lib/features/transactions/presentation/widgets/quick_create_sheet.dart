@@ -33,7 +33,6 @@ import '../cubit/transactions_cubit.dart';
 import '../transaction_edit.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
-import 'tx_summary_title.dart';
 
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
 /// — never a new page:
@@ -47,9 +46,8 @@ import 'tx_summary_title.dart';
 /// remembered per type.
 ///
 /// The fields are the shared [DraftForm] — the same one "เพิ่มร่าง" and
-/// "แก้ร่าง" use. Save sits pinned above the keyboard. Once the hero's
-/// amount scrolls out of view, the title row shows amount · category
-/// instead of the title; tap it to scroll back.
+/// "แก้ร่าง" use. Save sits pinned above the keyboard. The title never
+/// changes while scrolling (owner 2026-10-11).
 ///
 /// Defaults: the last wallet used (else the first) and today.
 /// "เพิ่มเข้าอีเวนต์" files the bill into a new event or an existing one
@@ -189,12 +187,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// How far the sheet is dragged down by its handle / title row.
   double _drag = 0;
   bool _dragging = false;
-
-  /// The hero card's amount is scrolled out of view → the title row shows
-  /// the amount + category instead of the title.
-  bool _collapsed = false;
-  final _heroKey = GlobalKey();
-  final _listKey = GlobalKey();
 
   bool get _editingDraft => widget.draft != null;
 
@@ -391,10 +383,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      final c = _amountHidden();
-      if (c != _collapsed) setState(() => _collapsed = c);
-    });
     final type = widget.initialType;
     if (type != null) _c.setType(type);
     if (_isEvent) _initEvent();
@@ -624,6 +612,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           .where((s) => s.isComplete)
           .fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
       if (splitTotal > _c.amountValue + 0.005) return l.txSplitExceeds;
+      // ฉัน + the people must make the amount exactly (owner 2026-10-11).
+      if (!_c.splitsBalanced) return l.txSplitUnbalanced;
     }
     if (_activeEvent != null && _c.account == null) {
       return l.quickEventNeedsWallet;
@@ -739,22 +729,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  // ── Title-row summary ─────────────────────────────────────────────
-
-  /// The hero's amount has scrolled up past the list's top edge. The
-  /// amount ends the card's content (inline layout), so its bottom minus
-  /// the card's padding is the line to watch.
-  bool _amountHidden() {
-    final hero = _heroKey.currentContext?.findRenderObject();
-    final list = _listKey.currentContext?.findRenderObject();
-    if (hero is! RenderBox || list is! RenderBox) return false;
-    if (!hero.attached || !list.attached) return false;
-    final amountBottom = hero
-        .localToGlobal(Offset(0, hero.size.height - AppSpacing.md))
-        .dy;
-    return amountBottom < list.localToGlobal(Offset.zero).dy;
-  }
-
   /// The keyboard height last build — growing means it just opened.
   double _lastInsets = 0;
 
@@ -796,18 +770,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       );
     } else {
       _scroll.jumpTo(to);
-    }
-  }
-
-  void _scrollToTop() {
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _scroll.jumpTo(0);
-    } else {
-      _scroll.animateTo(
-        0,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
     }
   }
 
@@ -891,51 +853,23 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         ),
                         child: Row(
                           children: [
-                            // The title, or — once the hero's amount has
-                            // scrolled away — amount + category (tap: back
-                            // to the top). Cross-fades in place; nothing
-                            // floats over the form any more.
+                            // The title never changes (owner 2026-10-11) —
+                            // no amount / category swap on scroll.
                             Expanded(
-                              child: AnimatedSwitcher(
-                                duration:
-                                    MediaQuery.disableAnimationsOf(context)
-                                    ? Duration.zero
-                                    : const Duration(milliseconds: 200),
-                                layoutBuilder: (current, previous) => Stack(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  children: [...previous, ?current],
-                                ),
-                                child: _collapsed
-                                    ? TxSummaryTitle(
-                                        key: const ValueKey('summary'),
-                                        type: _c.type,
-                                        amount: _c.amountValue,
-                                        category: _c.isTransfer
-                                            ? null
-                                            : _c.category,
-                                        symbol: widget.project?.symbol ?? '฿',
-                                        onTap: _scrollToTop,
-                                      )
-                                    : Text(
-                                        key: const ValueKey('title'),
-                                        _isScheduled
-                                            ? (_editingScheduled
-                                                  ? l.scheduledSheetTitleEdit
-                                                  : l.scheduledSheetTitleNew)
-                                            : _isEvent
-                                            ? (_editingRow
-                                                  ? l.projectTxEditTitle
-                                                  : l.projectTxNewTitle)
-                                            : _editingDraft
-                                            ? l.pendingEditTitle
-                                            : l.transactionFormTitleNew,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                      ),
+                              child: Text(
+                                _isScheduled
+                                    ? (_editingScheduled
+                                          ? l.scheduledSheetTitleEdit
+                                          : l.scheduledSheetTitleNew)
+                                    : _isEvent
+                                    ? (_editingRow
+                                          ? l.projectTxEditTitle
+                                          : l.projectTxNewTitle)
+                                    : _editingDraft
+                                    ? l.pendingEditTitle
+                                    : l.transactionFormTitleNew,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                             ),
                             if (_editingDraft)
@@ -959,7 +893,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 ),
                 Expanded(
                   child: ListView(
-                    key: _listKey,
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.lg,
@@ -970,7 +903,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                     children: [
                       DraftForm(
                         controller: _c,
-                        heroKey: _heroKey,
                         defaultAccount: _defaultAccount(accounts),
                         // A saved project row keeps its type.
                         typeLocked: _editingRow,

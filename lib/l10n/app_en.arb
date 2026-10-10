@@ -1482,5 +1482,83 @@
   "contactsSortNameAsc": "Name A→Z",
   "contactsSortNameDesc": "Name Z→A",
   "contactArchiveConfirmTitle": "Archive this contact?",
-  "tagsBulkDeleteConfirmBody": "The selected tags are deleted when you save, and removed from any transactions using them."
+  "tagsBulkDeleteConfirmBody": "The selected tags are deleted when you save, and removed from any transactions using them.",
+  "contactLinked": "Linked",
+  "contactsLinkLabel": "Link",
+  "contactsLinkUnlinked": "Not linked",
+  "contactsNoFilterMatch": "No contacts match this filter",
+  "contactsNoFilterMatchMessage": "Try changing the filter",
+  "contactsNoMatchFilterMessage": "Try another search or change the filters",
+  "walletInviteFromContacts": "Invite from contacts",
+  "walletInvitePickTitle": "Invite to this wallet",
+  "walletInvitePickHint": "Only contacts linked to an app account can be invited.",
+  "walletInvitePickEmpty": "No linked contacts left to invite. Link a contact to their app account first (Contacts).",
+  "walletErrorContactNotFound": "That contact no longer exists.",
+  "walletErrorContactArchived": "That contact is archived. Restore it to invite them.",
+  "walletErrorContactNotLinked": "That contact isn't linked to an app account yet.",
+  "walletErrorInviteInvalid": "The invite couldn't be sent. Please try again.",
+  "reorderMoveUp": "Move up",
+  "reorderMoveDown": "Move down",
+  "reorderOutdent": "Move out a level",
+  "reorderIndent": "Move in a level",
+  "categoriesReorderUnder": "Under {name}",
+  "@categoriesReorderUnder": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "categoriesReorderTopLevel": "Top level",
+  "categoriesReorderTapHint": "Tap a row and use the arrows, or drag ⠿",
+  "categoryErrorMaxDepth": "Categories nest up to 3 levels (counting this one's sub-categories)",
+  "accountsReorderTapHint": "Tap to select and use the arrows, or drag ⠿. This order is yours alone; shared-wallet members aren't affected.",
+  "categorySectionSettings": "Settings",
+  "dayPickerLastDay": "Last day of the month",
+  "dayPickerNone": "Not set",
+  "dayPickerEveryMonth": "{day} of every month",
+  "@dayPickerEveryMonth": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "txSplitMe": "Me",
+  "txSplitLeft": "Not split yet {amount}",
+  "@txSplitLeft": {"placeholders":{"amount":{"type":"String"}}},
+  "txSplitBalanced": "All split",
+  "txSplitOverBy": "Over by {amount}",
+  "@txSplitOverBy": {"placeholders":{"amount":{"type":"String"}}},
+  "txSplitUnbalanced": "The split doesn't add up yet — make your share and theirs total the amount before saving.",
+  "txShareOthersOweYou": "others owe you {amount}",
+  "@txShareOthersOweYou": {"placeholders":{"amount":{"type":"String"}}},
+  "txShareYouOweOthers": "you owe others {amount}",
+  "@txShareYouOweOthers": {"placeholders":{"amount":{"type":"String"}}},
+  "txSplitPersonLockedLinked": "Linked to their app account — to change who, remove this row and add the person again",
+  "accountFormNameExample": "e.g. Salary account",
+  "accountFormDescriptionExample": "e.g. For household spending",
+  "accountsSortCustom": "My order",
+  "accountsSortBalance": "Balance, high to low",
+  "accountsSortName": "Name",
+  "accountsSortType": "Type",
+  "accountsSummarySharedCount": "({count} shared)",
+  "@accountsSummarySharedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountsSummaryCardDebt": "Card debt",
+  "accountReportSectionTitle": "In my reports",
+  "accountOpeningSectionTitle": "Opening balance",
+  "accountCreditSectionTitle": "Card / credit limit",
+  "accountMinPaymentOverLimit": "The minimum payment is more than the credit limit. Check it.",
+  "identifierHintBankAccount": "e.g. 123-4-56789-0",
+  "identifierHintPromptPay": "10-digit phone or 13-digit ID",
+  "identifierHintCard": "Last 4 digits of the card",
+  "identifierPromptPayLength": "PromptPay is a 10-digit phone or a 13-digit ID number",
+  "identifierCardLength": "Enter the card's last 4 digits",
+  "txSplitAuto": "Auto"
 }

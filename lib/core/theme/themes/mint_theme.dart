@@ -53,6 +53,8 @@ final mintTheme = AppTheme(
     onSuccess: Color(0xFFFFFFFF),
     error: Color(0xFFEF4444),
     onError: Color(0xFFFFFFFF),
+    walletAsset: Color(0xFF0D9488),
+    walletLiability: Color(0xFFEA580C),
   ),
   darkColors: const AppColors(
     brightness: Brightness.dark,
@@ -82,5 +84,7 @@ final mintTheme = AppTheme(
     onSuccess: Color(0xFF052E16),
     error: Color(0xFFF87171),
     onError: Color(0xFF450A0A),
+    walletAsset: Color(0xFF2DD4BF),
+    walletLiability: Color(0xFFFB923C),
   ),
 );

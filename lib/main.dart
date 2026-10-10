@@ -16,6 +16,12 @@ Future<void> main() async {
   // logged + surfaced as a visible error screen instead of the infinite
   // white screen we shipped once (missing INTERNET permission killed the
   // font preload before runApp; nobody could see why).
+  //
+  // Only BOOT failures get that screen. Once the app is up, the zone keeps
+  // catching every stray async error for its whole life — those are
+  // logged and the app carries on (a late 401 must never replace the
+  // running app with "Failed to start", QA S1 2026-10-11).
+  var booted = false;
   await runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
@@ -67,8 +73,17 @@ Future<void> main() async {
       await BrandLogo.precache();
 
       runApp(ChubiPocketApp(prefs: prefs));
+      booted = true;
     },
     (error, stack) {
+      if (booted) {
+        AppLogger.instance.error(
+          'zone.uncaught',
+          fields: {'exception': '$error', 'stack': '$stack'},
+        );
+        debugPrint('UNCAUGHT (app keeps running): $error\n$stack');
+        return;
+      }
       // Best-effort logging — the logger may or may not be up yet.
       try {
         AppLogger.instance.error(

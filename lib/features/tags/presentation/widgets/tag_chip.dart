@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
+import '../../../../shared/widgets/chips/pill.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/color_token.dart';
@@ -46,17 +46,16 @@ class TagChip extends StatelessWidget {
     final body = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(iconData, size: 16, color: color),
-        const SizedBox(width: AppSpacing.xs),
+        Icon(iconData, size: PillSize.normal.icon, color: color),
+        SizedBox(width: PillSize.normal.gap),
         Flexible(
           child: Text(
             tag.name.isEmpty ? l.tagFormNameLabel : tag.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: fg,
-              fontWeight: FontWeight.w600,
-            ),
+            style: PillSize.normal
+                .textStyle(context)
+                ?.copyWith(color: fg, fontWeight: PillSize.chipWeight),
           ),
         ),
       ],
@@ -73,12 +72,13 @@ class TagChip extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md - 2,
-            vertical: AppSpacing.xs,
+        // The one chip size (PillSize.normal, owner 2026-10-11).
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: PillSize.normal.height),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: PillSize.normal.padding),
+            child: body,
           ),
-          child: body,
         ),
       ),
     );

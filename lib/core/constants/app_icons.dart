@@ -63,6 +63,9 @@ abstract final class AppIcons {
   static const date = Icons.calendar_today_outlined;
   static const note = Icons.sticky_note_2_outlined;
   static const split = Icons.call_split;
+
+  /// Worked out for you (the split's ฉัน on "อัตโนมัติ").
+  static const auto = Icons.auto_mode;
   static const link = Icons.link;
   static const unlink = Icons.link_off;
   static const trendUp = Icons.arrow_upward;
@@ -178,6 +181,7 @@ abstract final class AppIcons {
       'date': date,
       'note': note,
       'split': split,
+      'auto': auto,
       'link': link,
       'unlink': unlink,
       'trendUp': trendUp,

@@ -28,15 +28,11 @@ class TypeIndicator extends StatelessWidget {
     required this.isIncome,
     this.variant = TypeIndicatorVariant.pill,
     this.label,
-    this.size = PillSize.medium,
     super.key,
   });
 
   final bool isIncome;
   final TypeIndicatorVariant variant;
-
-  /// The pill's size (ignored by [TypeIndicatorVariant.sign]).
-  final PillSize size;
 
   /// Overrides the pill's text. Defaults to the localized income/expense
   /// label. Ignored by [TypeIndicatorVariant.sign].
@@ -60,7 +56,6 @@ class TypeIndicator extends StatelessWidget {
               (isIncome ? l.categoryTypeIncome : l.categoryTypeExpense),
           icon: signIcon,
           color: color,
-          size: size,
         );
     }
   }

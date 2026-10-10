@@ -10,20 +10,22 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
+import '../widgets/contact_linked_mark.dart';
 import '../widgets/contacts_list_skeleton.dart';
 
 /// `/contacts` (owner 2026-10-10) — the library list look shared with
 /// categories and tags:
 ///
 ///   [🔍 ค้นหา…                    ]
-///   [สถานะ: ใช้งาน ▾]      [⇅ ใช้ล่าสุด ▾]
+///   [สถานะ: ใช้งาน ▾] [การผูก: ทั้งหมด ▾]      [⇅ ใช้ล่าสุด ▾]
 ///   (avatar) name · description · email               🔗
 ///   … dashed "+ เพิ่มผู้ติดต่อ" at the end
 ///
 /// Search is client-side over name / description / email / phone. Status
 /// (ใช้งาน / เก็บถาวร / ทั้งหมด) loads from the server — archived ones
-/// live here, dimmed, not on a page of their own. Sort is client-side:
-/// ใช้ล่าสุด (the server's order), ชื่อ ก→ฮ, ชื่อ ฮ→ก.
+/// live here, dimmed, not on a page of their own. การผูก (ทั้งหมด /
+/// ผูกแล้ว / ยังไม่ผูก) filters client-side on top of it. Sort is
+/// client-side: ใช้ล่าสุด (the server's order), ชื่อ ก→ฮ, ชื่อ ฮ→ก.
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
 
@@ -33,9 +35,13 @@ class ContactsPage extends StatefulWidget {
 
 enum _ContactSort { recent, nameAsc, nameDesc }
 
+/// The การผูก filter — linked to an app account or not.
+enum _LinkFilter { all, linked, unlinked }
+
 class _ContactsPageState extends State<ContactsPage> {
   String _query = '';
   _ContactSort _sort = _ContactSort.recent;
+  _LinkFilter _link = _LinkFilter.all;
 
   @override
   void initState() {
@@ -47,17 +53,19 @@ class _ContactsPageState extends State<ContactsPage> {
 
   List<Contact> _filter(List<Contact> all) {
     final q = _query.trim().toLowerCase();
-    final hits = q.isEmpty
-        ? all
-        : all
-              .where(
-                (c) =>
-                    c.effectiveName.toLowerCase().contains(q) ||
-                    (c.description?.toLowerCase().contains(q) ?? false) ||
-                    (c.effectiveEmail?.toLowerCase().contains(q) ?? false) ||
-                    (c.phone?.contains(q) ?? false),
-              )
-              .toList();
+    final hits = all.where((c) {
+      final linkOk = switch (_link) {
+        _LinkFilter.all => true,
+        _LinkFilter.linked => c.isLinked,
+        _LinkFilter.unlinked => !c.isLinked,
+      };
+      return linkOk &&
+          (q.isEmpty ||
+              c.effectiveName.toLowerCase().contains(q) ||
+              (c.description?.toLowerCase().contains(q) ?? false) ||
+              (c.effectiveEmail?.toLowerCase().contains(q) ?? false) ||
+              (c.phone?.contains(q) ?? false));
+    }).toList();
     int byName(Contact a, Contact b) =>
         a.effectiveName.toLowerCase().compareTo(b.effectiveName.toLowerCase());
     return switch (_sort) {
@@ -86,12 +94,43 @@ class _ContactsPageState extends State<ContactsPage> {
     child: AddTile(label: l.contactsAddNew, onTap: _add),
   );
 
-  /// Nothing to show under the current search / status — the same
+  String _linkLabel(AppLocalizations l, _LinkFilter f) => switch (f) {
+    _LinkFilter.all => l.contactsFilterAll,
+    _LinkFilter.linked => l.contactLinked,
+    _LinkFilter.unlinked => l.contactsLinkUnlinked,
+  };
+
+  /// Nothing to show under the current search / status / การผูก — the same
   /// [EmptyView] look as the first-run empty state, scrollable so
   /// pull-to-refresh still fires.
   Widget _noResults(AppLocalizations l, String statusFilter) {
     final searching = _query.trim().isNotEmpty;
-    final archived = !searching && statusFilter == 'archived';
+    final linkFiltered = _link != _LinkFilter.all;
+    final archived = !searching && !linkFiltered && statusFilter == 'archived';
+    final (icon, title, message) = searching
+        ? (
+            AppIcons.search,
+            l.contactsNoMatch,
+            linkFiltered
+                ? l.contactsNoMatchFilterMessage
+                : l.contactsNoMatchMessage,
+          )
+        : linkFiltered
+        ? (
+            AppIcons.link,
+            l.contactsNoFilterMatch,
+            l.contactsNoFilterMatchMessage,
+          )
+        : archived
+        ? (
+            AppIcons.archive,
+            l.contactsArchivedEmptyTitle,
+            l.contactsArchivedEmptyMessage,
+          )
+        : (AppIcons.contact, l.contactsNoMatch, '');
+    // A new contact is active and unlinked — only offer it where it would
+    // show up.
+    final canAdd = statusFilter != 'archived' && _link != _LinkFilter.linked;
     return LayoutBuilder(
       builder: (context, box) => SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -99,18 +138,10 @@ class _ContactsPageState extends State<ContactsPage> {
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: box.maxHeight - 96),
           child: EmptyView(
-            icon: searching
-                ? AppIcons.search
-                : (archived ? AppIcons.archive : AppIcons.contact),
-            title: searching
-                ? l.contactsNoMatch
-                : (archived ? l.contactsArchivedEmptyTitle : l.contactsNoMatch),
-            message: searching
-                ? l.contactsNoMatchMessage
-                : (archived ? l.contactsArchivedEmptyMessage : ''),
-            cta: archived
-                ? null
-                : AddTile(label: l.contactsAddNew, onTap: _add),
+            icon: icon,
+            title: title,
+            message: message,
+            cta: canAdd ? AddTile(label: l.contactsAddNew, onTap: _add) : null,
           ),
         ),
       ),
@@ -185,6 +216,20 @@ class _ContactsPageState extends State<ContactsPage> {
                           onTap: toggle,
                         ),
                       ),
+                      OptionMenuAnchor<_LinkFilter>(
+                        selected: _link,
+                        onSelected: (v) => setState(() => _link = v),
+                        options: [
+                          for (final f in _LinkFilter.values)
+                            SheetOption(value: f, label: _linkLabel(l, f)),
+                        ],
+                        builder: (context, toggle) => FilterDropdownChip(
+                          label: l.contactsLinkLabel,
+                          valueLabel: _linkLabel(l, _link),
+                          active: _link != _LinkFilter.all,
+                          onTap: toggle,
+                        ),
+                      ),
                     ],
                   ),
                   Expanded(
@@ -241,7 +286,6 @@ class _ContactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     // "description · email", either alone, or nothing — never the phone
     // (owner 2026-10-10; search still matches it).
     final sub = [
@@ -249,16 +293,10 @@ class _ContactRow extends StatelessWidget {
       contact.effectiveEmail?.trim() ?? '',
     ].where((s) => s.isNotEmpty).join(' · ');
     return ListRow(
-      leading: UserAvatar(
-        displayName: contact.effectiveName,
-        iconCode: contact.effectiveIconCode,
-      ),
+      leading: ContactAvatar(contact: contact),
       title: contact.effectiveName,
       subtitle: sub,
       dimmed: contact.isArchived,
-      trailing: contact.isLinked
-          ? Icon(AppIcons.link, size: 18, color: scheme.primary)
-          : null,
       onTap: () => context.push('/contacts/${contact.id}'),
     );
   }

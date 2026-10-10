@@ -1,14 +1,20 @@
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// PUT /transactions/:id/splits entries (contract 2026-10-10): a saved row
-/// sends a new person only when it's unlinked and actually changed.
+/// PUT /transactions/:id/splits entries (contract 2026-10-11): a saved row
+/// sends a new person only when it changed and isn't locked — and only a
+/// contact linked to an app user locks it.
 void main() {
-  SplitDraft saved({String name = 'ลี', String? contact}) => SplitDraft(
+  SplitDraft saved({
+    String name = 'ลี',
+    String? contact,
+    bool appLinked = false,
+  }) => SplitDraft(
     debtId: 'd1',
     personName: name,
     contactId: contact,
     owedAmount: 100,
+    savedContactLinked: appLinked,
   );
 
   test('a new row: name, contact, amount — no debt_id', () {
@@ -36,12 +42,13 @@ void main() {
     });
   });
 
-  test('saved + unlinked, linked to a contact: sends contact_id', () {
+  test('saved typed name, linked to a contact: sends contact_id + name', () {
     final d = saved()..setPerson('ลี', contact: 'c9');
     expect(d.toUpdateJson(), {
       'debt_id': 'd1',
       'owed_amount': 100,
       'contact_id': 'c9',
+      'person_name': 'ลี',
     });
   });
 
@@ -52,8 +59,12 @@ void main() {
     expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 100});
   });
 
-  test('saved + linked: identity locked, never sent', () {
-    final d = saved(contact: 'c1');
+  test('saved plain contact: not locked', () {
+    expect(saved(contact: 'c1').identityLocked, isFalse);
+  });
+
+  test('saved + app-linked contact: identity locked, never sent', () {
+    final d = saved(contact: 'c1', appLinked: true);
     expect(d.identityLocked, isTrue);
     expect(d.isWired, isTrue);
     expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 100});

@@ -18,6 +18,17 @@ import 'hero_shell.dart';
 ///
 /// [title] is a widget so a page can swap a read-only `Text` for an
 /// `InlineTitleField` in edit mode without the card changing height.
+///
+/// [topRow] (owner 2026-10-11) adds the hero's top row ([HeroTopRow], every
+/// control [HeroSpacing.controlHeight] high): these chips on the left,
+/// [topActions] then ✏️ on the right — ✏️ moves up there from the title
+/// row. The row keeps its height without ✏️ (edit mode), so nothing below
+/// moves:
+///
+///   [type][status]                  [action] ✏️
+///   (icon)  title
+///           subtitle
+///   footer
 class HeaderCard extends StatelessWidget {
   const HeaderCard({
     required this.leading,
@@ -28,6 +39,8 @@ class HeaderCard extends StatelessWidget {
     this.accent,
     this.onTap,
     this.onEdit,
+    this.topRow,
+    this.topActions = const [],
     super.key,
   });
 
@@ -44,14 +57,32 @@ class HeaderCard extends StatelessWidget {
   /// Shows the ✏️ chip (enter edit mode); null hides it.
   final VoidCallback? onEdit;
 
+  /// Non-null → the top row: these chips (type / status pills,
+  /// [PillSize.normal]) on the left; ✏️ moves into it.
+  final List<Widget>? topRow;
+
+  /// The top row's actions, left of ✏️ ("ปรับยอด"); needs [topRow].
+  final List<Widget> topActions;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final border = accent ?? scheme.primary;
-    // The kit's hero spacing ([HeroContent]): 16 inside, 12 to the footer,
+    final top = topRow;
+    final edit = onEdit == null
+        ? null
+        : AppIconButton(
+            icon: AppIcons.edit,
+            size: HeroSpacing.controlHeight,
+            tooltip: AppLocalizations.of(context)!.commonEdit,
+            onPressed: onEdit,
+          );
+    // The kit's hero spacing ([HeroContent]): 16 inside, 12 between rows,
     // 8 between the title column and the ✏️ / trailing controls.
     final body = HeroContent(
       rows: [
+        if (top != null)
+          HeroTopRow(leading: top, trailing: [...topActions, ?edit]),
         Row(
           children: [
             leading,
@@ -77,14 +108,9 @@ class HeaderCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (onEdit != null) ...[
+            if (edit != null && top == null) ...[
               const SizedBox(width: HeroSpacing.itemGap),
-              AppIconButton(
-                icon: AppIcons.edit,
-                size: HeroSpacing.controlHeight,
-                tooltip: AppLocalizations.of(context)!.commonEdit,
-                onPressed: onEdit,
-              ),
+              edit,
             ],
             if (trailing != null) ...[
               const SizedBox(width: HeroSpacing.itemGap),

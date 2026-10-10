@@ -398,9 +398,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
+  /// Titles never change with the mode (owner, QA T1): the goal's name in
+  /// view and edit alike.
   String _title(AppLocalizations l, SavingGoal? goal) {
     if (widget.isCreate) return l.savingGoalFormTitle;
-    if (isEditing) return l.savingGoalFormTitleEdit;
     return goal!.name;
   }
 

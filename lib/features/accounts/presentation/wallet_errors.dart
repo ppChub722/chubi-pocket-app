@@ -28,6 +28,13 @@ String walletErrorMessage(AppLocalizations l, ApiException e) {
       return l.walletErrorInvalidIdentifier;
     case 'USER_ALREADY_MEMBER':
       return l.walletErrorAlreadyMember;
+    // The contact invite (POST /accounts/:id/members {contact_id}).
+    case 'CONTACT_NOT_FOUND':
+      return l.walletErrorContactNotFound;
+    case 'CONTACT_ARCHIVED':
+      return l.walletErrorContactArchived;
+    case 'CONTACT_NOT_LINKED':
+      return l.walletErrorContactNotLinked;
     default:
       return e.message;
   }

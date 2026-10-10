@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
+import '../../../../shared/widgets/chips/pill.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
@@ -47,34 +47,37 @@ class CategoryChip extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md - 2,
-            vertical: AppSpacing.xs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                IconRegistry.get(code?.icon, fallback: AppIcons.category),
-                size: 16,
-                color: color,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              // Flexible: a chip given a fixed width (the detail card's
-              // half-row) ellipsises a long name instead of overflowing.
-              Flexible(
-                child: Text(
-                  categoryDisplayName(AppLocalizations.of(context)!, category),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w600,
+        // The one chip size (PillSize.normal, owner 2026-10-11).
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: PillSize.normal.height),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: PillSize.normal.padding),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  IconRegistry.get(code?.icon, fallback: AppIcons.category),
+                  size: PillSize.normal.icon,
+                  color: color,
+                ),
+                SizedBox(width: PillSize.normal.gap),
+                // Flexible: a chip given a fixed width (the detail card's
+                // half-row) ellipsises a long name instead of overflowing.
+                Flexible(
+                  child: Text(
+                    categoryDisplayName(
+                      AppLocalizations.of(context)!,
+                      category,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: PillSize.normal
+                        .textStyle(context)
+                        ?.copyWith(color: fg, fontWeight: PillSize.chipWeight),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -482,7 +482,6 @@ class _PendingCard extends StatelessWidget {
                         StatusPill(
                           label: _sourceLabel(l, item.source),
                           tone: item.source.isManual ? Tone.info : Tone.primary,
-                          dense: true,
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         if (date != null)

@@ -10,6 +10,8 @@ import '../core/network/api_exception.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/date_formatter.dart';
 import '../features/accounts/domain/account.dart';
+import '../features/accounts/domain/payment_provider.dart';
+import '../features/accounts/presentation/widgets/bank_picker_sheet.dart';
 import '../features/app_version/domain/app_version_info.dart';
 import '../features/app_version/presentation/pages/update_required_page.dart';
 import '../features/app_version/presentation/widgets/update_banner.dart';
@@ -45,6 +47,10 @@ import '../l10n/gen/app_localizations.dart';
 import '../shared/icon_maker/icon_type.dart';
 import '../shared/widgets/type_indicator.dart';
 import '../shared/widgets/ui.dart';
+import 'app_chip_tab.dart';
+import 'compact_hero_demo.dart';
+import 'detail_patterns_tab.dart';
+import 'reorder_demo.dart';
 
 /// `/dev/widgets` — live catalogue of the shared UI kit
 /// (`shared/widgets/ui.dart`). Every widget is interactive so behaviour
@@ -58,9 +64,11 @@ class WidgetGalleryScreen extends StatefulWidget {
 }
 
 enum _Section {
+  details,
   buttons,
   inputs,
   chips,
+  appChip,
   layout,
   feedback,
   data,
@@ -68,10 +76,11 @@ enum _Section {
   appIcons,
   icons,
   edit,
+  reorder,
 }
 
 class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
-  _Section _section = _Section.buttons;
+  _Section _section = _Section.details;
   bool _editing = false;
 
   @override
@@ -96,7 +105,7 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
-                    width: 10 * 96,
+                    width: 13 * 96,
                     child: AppTabBar<_Section>(
                       selected: _section,
                       onChanged: (s) => setState(() {
@@ -104,9 +113,14 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
                         _editing = false;
                       }),
                       tabs: const [
+                        // The detail-page reference (owner 2026-10-11).
+                        AppTab(value: _Section.details, label: 'รายละเอียด'),
                         AppTab(value: _Section.buttons, label: 'ปุ่ม'),
                         AppTab(value: _Section.inputs, label: 'ช่องกรอก'),
                         AppTab(value: _Section.chips, label: 'Chip'),
+                        // One chip for all — old vs AppChip (owner
+                        // 2026-10-11, step 1).
+                        AppTab(value: _Section.appChip, label: 'AppChip'),
                         AppTab(value: _Section.layout, label: 'Layout'),
                         AppTab(value: _Section.feedback, label: 'Feedback'),
                         AppTab(value: _Section.data, label: 'ข้อมูล'),
@@ -114,6 +128,7 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
                         AppTab(value: _Section.appIcons, label: 'ไอคอน'),
                         AppTab(value: _Section.icons, label: 'Icon maker'),
                         AppTab(value: _Section.edit, label: 'โหมดแก้ไข'),
+                        AppTab(value: _Section.reorder, label: 'จัดลำดับ'),
                       ],
                     ),
                   ),
@@ -128,15 +143,18 @@ class _WidgetGalleryScreenState extends State<WidgetGalleryScreen> {
           ),
           Expanded(
             child: switch (_section) {
+              _Section.details => const DetailPatternsTab(),
               _Section.buttons => const _ButtonsDemo(),
               _Section.inputs => const _InputsDemo(),
               _Section.chips => const _ChipsDemo(),
+              _Section.appChip => const AppChipTab(),
               _Section.layout => const _LayoutDemo(),
               _Section.feedback => const _FeedbackDemo(),
               _Section.data => const _DataDemo(),
               _Section.domain => const _DomainDemo(),
               _Section.appIcons => const _AppIconsDemo(),
               _Section.icons => const _IconMakerDemo(),
+              _Section.reorder => const ReorderModeDemo(),
               _Section.edit => _EditModeDemo(
                 editing: _editing,
                 onEnterEdit: () => setState(() => _editing = true),
@@ -638,8 +656,10 @@ class _InputsDemoState extends State<_InputsDemo> {
             ),
           ),
           _Demo(
-            title: 'เลือกประเภท (การ์ดใหญ่ แบบตาราง 3+2)',
-            name: 'SelectCardGroup(columns: 3)',
+            title:
+                'เลือกประเภท (การ์ดใหญ่ แบบตาราง 3+2) — ไม่มี ✓, สีตามกลุ่ม: '
+                'มีเงิน (โทนเย็น) / หนี้ (ส้มแดง)',
+            name: 'SelectCardGroup(columns: 3) · AccountType.colorOf',
             child: SelectCardGroup<AccountType>(
               columns: 3,
               selected: _walletType,
@@ -652,7 +672,12 @@ class _InputsDemoState extends State<_InputsDemo> {
                   (AccountType.creditCard, 'บัตรเครดิต'),
                   (AccountType.payLater, 'ผ่อนทีหลัง'),
                 ])
-                  SelectCardOption(value: t, label: label, icon: t.icon),
+                  SelectCardOption(
+                    value: t,
+                    label: label,
+                    icon: t.icon,
+                    color: t.colorOf(context),
+                  ),
               ],
             ),
           ),
@@ -877,6 +902,68 @@ class _PickerShellDemo extends StatefulWidget {
 class _PickerShellDemoState extends State<_PickerShellDemo> {
   String? _picked = 'มะม่วง';
   String? _event;
+  String _option = 'serif';
+  String? _bank = '004';
+  int? _day = 25;
+
+  /// The seeded banks plus a few more — the order and the fallback mark.
+  static const _demoBanks = [
+    PaymentProvider(
+      kind: 'bank',
+      scheme: 'bot',
+      code: '002',
+      nameTh: 'ธนาคารกรุงเทพ',
+      nameEn: 'Bangkok Bank',
+      shortName: 'BBL',
+    ),
+    PaymentProvider(
+      kind: 'bank',
+      scheme: 'bot',
+      code: '004',
+      nameTh: 'ธนาคารกสิกรไทย',
+      nameEn: 'Kasikornbank',
+      shortName: 'KBANK',
+    ),
+    PaymentProvider(
+      kind: 'bank',
+      scheme: 'bot',
+      code: '006',
+      nameTh: 'ธนาคารกรุงไทย',
+      nameEn: 'Krungthai Bank',
+      shortName: 'KTB',
+    ),
+    PaymentProvider(
+      kind: 'bank',
+      scheme: 'bot',
+      code: '014',
+      nameTh: 'ธนาคารไทยพาณิชย์',
+      nameEn: 'Siam Commercial Bank',
+      shortName: 'SCB',
+    ),
+    PaymentProvider(
+      kind: 'bank',
+      scheme: 'bot',
+      code: '025',
+      nameTh: 'ธนาคารกรุงศรีอยุธยา',
+      nameEn: 'Bank of Ayudhya',
+      shortName: 'BAY',
+    ),
+    PaymentProvider(
+      kind: 'bank',
+      scheme: 'bot',
+      code: '030',
+      nameTh: 'ธนาคารออมสิน',
+      nameEn: 'Government Savings Bank',
+      shortName: 'GSB',
+    ),
+    PaymentProvider(
+      kind: 'bank',
+      scheme: 'bot',
+      code: '999',
+      nameTh: 'ธนาคารทดลอง',
+      nameEn: 'Test Demo Bank',
+    ),
+  ];
 
   static const _fruits = [
     'มะม่วง',
@@ -942,6 +1029,90 @@ class _PickerShellDemoState extends State<_PickerShellDemo> {
               ActionPill(label: 'กำลังโหลด', onTap: () => _open(loading: true)),
               ActionPill(label: 'error', onTap: () => _open(error: true)),
             ],
+          ),
+        ),
+        _Demo(
+          title: 'เลือกหนึ่งอย่าง (option sheet) — บน picker shell',
+          name:
+              'showOptionSheet · SheetOption(labelStyle → PickerRow.titleStyle, '
+              'enabled: false → แถวจาง)',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: ActionPill(
+              label: 'เปิด ($_option)',
+              onTap: () async {
+                final v = await showOptionSheet<String>(
+                  context,
+                  title: 'ฟอนต์',
+                  selected: _option,
+                  options: const [
+                    SheetOption(
+                      value: 'serif',
+                      label: 'Serif',
+                      subtitle: 'ชื่อแสดงด้วยฟอนต์ของมันเอง',
+                      labelStyle: TextStyle(fontFamily: 'serif'),
+                    ),
+                    SheetOption(
+                      value: 'mono',
+                      label: 'Monospace',
+                      labelStyle: TextStyle(fontFamily: 'monospace'),
+                    ),
+                    SheetOption(
+                      value: 'off',
+                      label: 'ใช้ไม่ได้ตอนนี้',
+                      subtitle: 'enabled: false',
+                      enabled: false,
+                    ),
+                  ],
+                );
+                if (v != null && mounted) setState(() => _option = v);
+              },
+            ),
+          ),
+        ),
+        _Demo(
+          title: 'ธนาคาร — ธนาคารใหญ่ขึ้นก่อน · ตราสี + ตัวย่อ · ค้นหา',
+          name: 'showBankPicker · BankMark',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final b in _demoBanks.take(5)) BankMark(provider: b),
+              ActionPill(
+                label: 'เปิด (${_bank ?? 'ไม่ระบุ'})',
+                onTap: () async {
+                  final r = await showBankPicker(
+                    context,
+                    providers: _demoBanks,
+                    selectedCode: _bank,
+                  );
+                  if (r != null && mounted) {
+                    setState(() => _bank = r.bank?.code);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title:
+              'วันของเดือน — ตาราง 1–30 · วันสุดท้ายของเดือน (= 31) · ไม่ระบุ',
+          name: 'showDayOfMonthPicker · DayOfMonthGrid · dayOfMonthLabel',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FilterDropdownChip(
+              label: dayOfMonthLabel(AppLocalizations.of(context)!, _day),
+              active: _day != null,
+              onTap: () async {
+                final r = await showDayOfMonthPicker(
+                  context,
+                  title: 'วันตัดรอบบัญชี',
+                  selected: _day,
+                );
+                if (r != null && mounted) setState(() => _day = r.day);
+              },
+            ),
           ),
         ),
         _Demo(
@@ -1030,7 +1201,6 @@ class _PickRowsDemoState extends State<_PickRowsDemo> {
           child: ChoicePillRow<String>(
             values: const ['เดือน', 'สัปดาห์', 'ปี', 'ทั้งหมด', 'กำหนดเอง'],
             selected: _unit,
-            size: PillSize.medium,
             label: (v) => v,
             onSelected: (v) => setState(() => _unit = v),
           ),
@@ -1054,6 +1224,48 @@ class _PickRowsDemoState extends State<_PickRowsDemo> {
                 color: Colors.green,
                 selected: !_all,
                 onTap: () => setState(() => _all = false),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title:
+              'แถวเลือกในตัวกรอง: ขึ้นบรรทัดใหม่ได้ไม่เกิน 4 บรรทัด '
+              'เกินนั้นตัด แล้วจบด้วย [เพิ่มเติม] (ฟอร์มยังเป็นบรรทัดเดียว)',
+          name: 'ChipRow(maxLines: 4) · RowChip(trailingIcon)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ChipRow(
+                maxLines: 4,
+                moreLabel: 'เพิ่มเติม',
+                onMore: () {},
+                chips: [
+                  for (var i = 1; i <= 30; i++)
+                    RowChip(
+                      label: 'หมวด $i',
+                      icon: AppIcons.category,
+                      selected: i == 2,
+                      onTap: () {},
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: AppSpacing.xs,
+                children: [
+                  for (final t in TransactionType.values)
+                    TxTypeChip(
+                      type: t,
+                      selected: t == TransactionType.expense,
+                      onTap: () {},
+                    ),
+                  const TxTypeChip(
+                    type: TransactionType.income,
+                    selected: true,
+                    locked: true,
+                  ),
+                ],
               ),
             ],
           ),
@@ -1396,7 +1608,7 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 tone: Tone.expense,
                 icon: Icons.remove,
               ),
-              StatusPill(label: 'dense', tone: Tone.primary, dense: true),
+              StatusPill(label: 'ใช้งาน', tone: Tone.primary),
             ],
           ),
         ),
@@ -1529,39 +1741,62 @@ class _ChipsDemoState extends State<_ChipsDemo> {
         ),
         // ── The pill family (owner 2026-10-10) ─────────────────────────
         _Demo(
-          title: 'ตระกูล pill — ขนาด (mini · small · medium · large)',
-          name: 'PillSize · StatusPill · LabelPill · ActionPill · TagPill',
+          title:
+              'ขนาดชิป — มีแค่ 2 (owner 2026-10-11): ปกติ 32 ทุกที่ · '
+              'mini 20 เฉพาะแท็กในแถวรายการ',
+          name: 'PillSize.normal · PillSize.mini',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final s in PillSize.values) ...[
-                Text(
-                  '${s.name} · ${s.height.toInt()}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    StatusPill(label: 'ค้างอยู่', tone: Tone.warning, size: s),
-                    LabelPill(label: 'ผ่อน', size: s),
-                    ActionPill(
-                      label: 'ปรับยอด',
-                      icon: AppIcons.reset,
-                      size: s,
-                      onTap: () => showAppSnackBar(context, 'ปรับยอด'),
-                    ),
-                    TagPill(
-                      name: 'เที่ยว',
-                      color: const Color(0xFF26A69A),
-                      size: s,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
+              Text(
+                'normal · ${PillSize.normal.height.toInt()}',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const StatusPill(label: 'ค้างอยู่', tone: Tone.warning),
+                  const LabelPill(label: 'ผ่อน'),
+                  ActionPill(
+                    label: 'ปรับยอด',
+                    icon: AppIcons.reset,
+                    onTap: () => showAppSnackBar(context, 'ปรับยอด'),
+                  ),
+                  ChoicePill(label: 'เดือน', selected: true, onTap: () {}),
+                  FilterDropdownChip(label: 'สี', onTap: () {}),
+                  RowChip(
+                    label: 'อาหาร',
+                    icon: AppIcons.category,
+                    onTap: () {},
+                  ),
+                  const TxTypeChip(
+                    type: TransactionType.expense,
+                    selected: true,
+                  ),
+                  const TagPill(
+                    name: 'เที่ยว',
+                    color: Color(0xFF26A69A),
+                    size: PillSize.normal,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'mini · ${PillSize.mini.height.toInt()} — แท็กในแถวรายการเท่านั้น',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              const Wrap(
+                spacing: AppSpacing.sm,
+                children: [
+                  TagPill(name: 'เที่ยว', color: Color(0xFF26A69A)),
+                  TagPill(name: 'งาน', color: Color(0xFF5C6BC0)),
+                  LabelPill(label: '+2', size: PillSize.mini),
+                ],
+              ),
             ],
           ),
         ),
@@ -1572,8 +1807,8 @@ class _ChipsDemoState extends State<_ChipsDemo> {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              const LabelPill(label: 'ผ่อน', size: PillSize.small),
-              const LabelPill(label: 'กู้ยืม', size: PillSize.small),
+              const LabelPill(label: 'ผ่อน'),
+              const LabelPill(label: 'กู้ยืม'),
               const LabelPill(label: 'ประจำ', tone: Tone.info),
               // Wallet type — the wallet's own accent, outlined.
               const LabelPill(
@@ -1581,7 +1816,6 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 icon: AppIcons.bank,
                 color: Color(0xFF5C6BC0),
                 outlined: true,
-                size: PillSize.large,
               ),
               const TypeIndicator(isIncome: false),
               const TypeIndicator(isIncome: true),
@@ -1590,7 +1824,6 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 opacity: 0.4,
                 child: TypeIndicator(
                   isIncome: true,
-                  size: PillSize.medium,
                   label: AppLocalizations.of(context)!.categoryTypeIncome,
                 ),
               ),
@@ -1619,7 +1852,6 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                 label: 'ปรับยอด',
                 icon: AppIcons.reset,
                 style: ActionPillStyle.raised,
-                size: PillSize.medium,
                 onTap: () => showAppSnackBar(context, 'ปรับยอด'),
               ),
               const ActionPill(label: 'ปิดอยู่', onTap: null),
@@ -1641,7 +1873,7 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                       name: name,
                       color: color,
                       glyph: glyph,
-                      size: PillSize.small,
+                      size: PillSize.normal,
                     ),
                 ],
               ),
@@ -1927,6 +2159,11 @@ class _LayoutDemo extends StatelessWidget {
             ),
           ),
         ),
+        const _Demo(
+          title: 'แถบ hero ย่อ (โผล่ใต้ top bar เมื่อ hero เลื่อนพ้น)',
+          name: 'CompactHeroBar · CompactHeroScope — presets: tx · wallet',
+          child: CompactHeroDemo(),
+        ),
         _Demo(
           title: 'แถวรายละเอียด',
           name:
@@ -2087,7 +2324,6 @@ class _ListRowDemoState extends State<_ListRowDemo> {
           trailing: const LabelPill(
             label: 'ซ่อนจากรายงาน',
             icon: AppIcons.hidden,
-            size: PillSize.small,
           ),
           onTap: () {},
         ),
@@ -3667,7 +3903,7 @@ class _HeroSpacingDemo extends StatelessWidget {
       title:
           'ระยะของ hero (ทุกการ์ดหัวหน้า): ใน 16 · ระหว่างแถว 12 · '
           'ระหว่างปุ่ม 8 · ปุ่มสูง 32 · การ์ดซ้อน ใน 12 ห่าง 8 · ถึงบล็อกถัดไป 16',
-      name: 'HeroSpacing · HeroContent · HeroTopRow · PillSize.control',
+      name: 'HeroSpacing · HeroContent · HeroTopRow · PillSize.normal',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -3686,13 +3922,11 @@ class _HeroSpacingDemo extends StatelessWidget {
                       icon: AppIcons.bank,
                       color: scheme.primary,
                       outlined: true,
-                      size: PillSize.control,
                     ),
                     LabelPill(
                       label: 'แชร์ 3 คน',
                       icon: AppIcons.link,
                       color: scheme.primary,
-                      size: PillSize.control,
                     ),
                   ],
                   trailing: [

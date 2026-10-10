@@ -293,7 +293,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     return editScope(
       Scaffold(
         appBar: AppTopBar(
-          title: isEditing ? l.projectEditTitle : p.name,
+          // The saved name, in both modes (titles never change, owner
+          // 2026-10-11).
+          title: p.name,
           showBack: true,
           editing: isEditing,
           onBack: handleBack,
@@ -421,7 +423,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         children: [
           ProjectStatusPill(
             status: project.status,
-            dense: true,
             // Owner only; not while editing the info.
             onTap: v.isOwner && !editing ? _changeStatus : null,
           ),

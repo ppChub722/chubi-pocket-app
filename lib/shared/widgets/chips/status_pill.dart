@@ -18,8 +18,6 @@ class StatusPill extends StatelessWidget {
     this.icon,
     this.showDot = true,
     this.onTap,
-    this.dense = false,
-    this.size,
     super.key,
   });
 
@@ -31,16 +29,10 @@ class StatusPill extends StatelessWidget {
   final bool showDot;
   final VoidCallback? onTap;
 
-  /// Shorthand for [PillSize.small] — list rows.
-  final bool dense;
-
-  /// Overrides [dense]. Default [PillSize.medium].
-  final PillSize? size;
-
   @override
   Widget build(BuildContext context) {
     final color = tone.color(context);
-    final s = size ?? (dense ? PillSize.small : PillSize.medium);
+    const s = PillSize.normal;
     return PillShell(
       size: s,
       background: color.withValues(alpha: 0.14),

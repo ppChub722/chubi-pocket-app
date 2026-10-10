@@ -163,7 +163,8 @@ class DetailAddRow extends StatelessWidget {
 }
 
 /// A row: label (+ optional helper) on the left, value/control on the right.
-/// [onTap] makes the whole row tappable (pickers); [leading] adds an icon.
+/// [onTap] makes the whole row tappable (pickers); [leading] adds an icon;
+/// [onLongPress] = the view-mode "long-press to edit" on a row.
 class DetailRow extends StatelessWidget {
   const DetailRow({
     required this.label,
@@ -171,9 +172,13 @@ class DetailRow extends StatelessWidget {
     this.helper,
     this.leading,
     this.onTap,
+    this.onLongPress,
     this.showChevron = false,
     super.key,
   });
+
+  /// View mode: enter edit on this row (long-press).
+  final VoidCallback? onLongPress;
 
   final String label;
   final Widget? trailing;
@@ -240,12 +245,15 @@ class DetailRow extends StatelessWidget {
         ],
       ),
     );
-    if (onTap == null) return row;
-    return InkWell(onTap: onTap, child: row);
+    if (onTap == null && onLongPress == null) return row;
+    return InkWell(onTap: onTap, onLongPress: onLongPress, child: row);
   }
 }
 
-/// A row for long values: label on top, value full-width below.
+/// A row for long values: label on top, value full-width below. The
+/// value's text starts where the label does (owner 2026-10-11): an
+/// [InlineField] in here lets its padding hang out to the left
+/// ([DetailStackedValue]), so view-mode text isn't indented under the label.
 class DetailStacked extends StatelessWidget {
   const DetailStacked({required this.label, required this.child, super.key});
 
@@ -264,11 +272,24 @@ class DetailStacked extends StatelessWidget {
         children: [
           Text(label, style: detailLabelStyle(context)),
           const SizedBox(height: AppSpacing.xs),
-          child,
+          DetailStackedValue(child: child),
         ],
       ),
     );
   }
+}
+
+/// Marks a [DetailStacked]'s value area: fields that pad their text
+/// inside a box (an [InlineField]) shift left by that padding here, so the
+/// text lines up with the label above.
+class DetailStackedValue extends InheritedWidget {
+  const DetailStackedValue({required super.child, super.key});
+
+  static bool of(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<DetailStackedValue>() != null;
+
+  @override
+  bool updateShouldNotify(DetailStackedValue old) => false;
 }
 
 /// Hairline divider between detail rows — [SectionCard] places them; use

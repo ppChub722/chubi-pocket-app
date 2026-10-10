@@ -4058,4 +4058,190 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tagsBulkDeleteConfirmBody =>
       'The selected tags are deleted when you save, and removed from any transactions using them.';
+
+  @override
+  String get contactLinked => 'Linked';
+
+  @override
+  String get contactsLinkLabel => 'Link';
+
+  @override
+  String get contactsLinkUnlinked => 'Not linked';
+
+  @override
+  String get contactsNoFilterMatch => 'No contacts match this filter';
+
+  @override
+  String get contactsNoFilterMatchMessage => 'Try changing the filter';
+
+  @override
+  String get contactsNoMatchFilterMessage =>
+      'Try another search or change the filters';
+
+  @override
+  String get walletInviteFromContacts => 'Invite from contacts';
+
+  @override
+  String get walletInvitePickTitle => 'Invite to this wallet';
+
+  @override
+  String get walletInvitePickHint =>
+      'Only contacts linked to an app account can be invited.';
+
+  @override
+  String get walletInvitePickEmpty =>
+      'No linked contacts left to invite. Link a contact to their app account first (Contacts).';
+
+  @override
+  String get walletErrorContactNotFound => 'That contact no longer exists.';
+
+  @override
+  String get walletErrorContactArchived =>
+      'That contact is archived. Restore it to invite them.';
+
+  @override
+  String get walletErrorContactNotLinked =>
+      'That contact isn\'t linked to an app account yet.';
+
+  @override
+  String get walletErrorInviteInvalid =>
+      'The invite couldn\'t be sent. Please try again.';
+
+  @override
+  String get reorderMoveUp => 'Move up';
+
+  @override
+  String get reorderMoveDown => 'Move down';
+
+  @override
+  String get reorderOutdent => 'Move out a level';
+
+  @override
+  String get reorderIndent => 'Move in a level';
+
+  @override
+  String categoriesReorderUnder(String name) {
+    return 'Under $name';
+  }
+
+  @override
+  String get categoriesReorderTopLevel => 'Top level';
+
+  @override
+  String get categoriesReorderTapHint =>
+      'Tap a row and use the arrows, or drag ⠿';
+
+  @override
+  String get categoryErrorMaxDepth =>
+      'Categories nest up to 3 levels (counting this one\'s sub-categories)';
+
+  @override
+  String get accountsReorderTapHint =>
+      'Tap to select and use the arrows, or drag ⠿. This order is yours alone; shared-wallet members aren\'t affected.';
+
+  @override
+  String get categorySectionSettings => 'Settings';
+
+  @override
+  String get dayPickerLastDay => 'Last day of the month';
+
+  @override
+  String get dayPickerNone => 'Not set';
+
+  @override
+  String dayPickerEveryMonth(int day) {
+    return '$day of every month';
+  }
+
+  @override
+  String get txSplitMe => 'Me';
+
+  @override
+  String txSplitLeft(String amount) {
+    return 'Not split yet $amount';
+  }
+
+  @override
+  String get txSplitBalanced => 'All split';
+
+  @override
+  String txSplitOverBy(String amount) {
+    return 'Over by $amount';
+  }
+
+  @override
+  String get txSplitUnbalanced =>
+      'The split doesn\'t add up yet — make your share and theirs total the amount before saving.';
+
+  @override
+  String txShareOthersOweYou(String amount) {
+    return 'others owe you $amount';
+  }
+
+  @override
+  String txShareYouOweOthers(String amount) {
+    return 'you owe others $amount';
+  }
+
+  @override
+  String get txSplitPersonLockedLinked =>
+      'Linked to their app account — to change who, remove this row and add the person again';
+
+  @override
+  String get accountFormNameExample => 'e.g. Salary account';
+
+  @override
+  String get accountFormDescriptionExample => 'e.g. For household spending';
+
+  @override
+  String get accountsSortCustom => 'My order';
+
+  @override
+  String get accountsSortBalance => 'Balance, high to low';
+
+  @override
+  String get accountsSortName => 'Name';
+
+  @override
+  String get accountsSortType => 'Type';
+
+  @override
+  String accountsSummarySharedCount(int count) {
+    return '($count shared)';
+  }
+
+  @override
+  String get accountsSummaryCardDebt => 'Card debt';
+
+  @override
+  String get accountReportSectionTitle => 'In my reports';
+
+  @override
+  String get accountOpeningSectionTitle => 'Opening balance';
+
+  @override
+  String get accountCreditSectionTitle => 'Card / credit limit';
+
+  @override
+  String get accountMinPaymentOverLimit =>
+      'The minimum payment is more than the credit limit. Check it.';
+
+  @override
+  String get identifierHintBankAccount => 'e.g. 123-4-56789-0';
+
+  @override
+  String get identifierHintPromptPay => '10-digit phone or 13-digit ID';
+
+  @override
+  String get identifierHintCard => 'Last 4 digits of the card';
+
+  @override
+  String get identifierPromptPayLength =>
+      'PromptPay is a 10-digit phone or a 13-digit ID number';
+
+  @override
+  String get identifierCardLength => 'Enter the card\'s last 4 digits';
+
+  @override
+  String get txSplitAuto => 'Auto';
 }

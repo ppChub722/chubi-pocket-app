@@ -1,75 +1,47 @@
+import '../../../shared/widgets/reorder/reorder_outline.dart';
 import 'category.dart';
-import 'category_tree.dart';
 import 'category_type.dart';
 
-/// One row in the user-visible flat list (DFS render order). Carries the
-/// row's [level] independently of the underlying tree — lets the reorder
-/// flow stage moves as `(id, level)` pairs and derive parent_ids only at
-/// commit time, "outliner" style.
-class CategoryFlatRow {
-  const CategoryFlatRow(this.category, this.level);
-
-  final Category category;
-
-  /// 1 = root, 2 = child, 3 = grandchild. Independent of [Category.parentId];
-  /// during a staged reorder the level is the source of truth.
-  final int level;
-}
-
-/// Pure functions for the simplified reorder model.
+/// Categories ⇄ the reorder kit's outline ([ReorderOutline]).
 ///
-/// **Model**: during reorder mode, the visible list is flat. Each row
-/// carries an explicit [level] (1, 2, or 3). Parent_id is *derived* from
-/// list position + level on commit — the standard outliner rule:
-/// "a row's parent is the nearest preceding row with a smaller level".
-///
-/// The model is easier to reason about and to extract for future
-/// tree-shaped features. On save the derived tree goes to
-/// `PATCH /v1/categories/reorder` as `parent_id` + `sort_order` per row.
-class CategoryReorderLogic {
-  CategoryReorderLogic._();
-
-  /// Computes the level the dropped row should land at, given the cursor
-  /// column and the row directly above the cursor.
-  ///
-  /// Rules (only two clamps, everything else free):
-  /// - **Top of section** (anchor null) → always L1. The first row of a
-  ///   section physically can't be a child — there's nothing above to
-  ///   parent it.
-  /// - **Col 3 with anchor at L1** → L2. Putting an L3 directly under an
-  ///   L1 would skip a level.
-  ///
-  /// Otherwise: cursor column = level. Free drop.
-  static int effectiveLevel({
-    required int cursorCol,
-    required Category? anchor,
-    required List<Category> all,
-  }) {
-    if (anchor == null) return 1;
-    final anchorDepth = CategoryTree.depthOf(anchor, all);
-    if (cursorCol == 3 && anchorDepth == 1) return 2;
-    return cursorCol;
-  }
-
-  /// IDs in DFS order rooted at [rootId] — root first, then descendants.
-  /// Used to find the contiguous subtree that travels with a dragged
-  /// parent.
+/// The reorder mode stages moves as an outline — rows in display order,
+/// each with a level, one section per [CategoryType]. On save the outline
+/// becomes `parent_id` + `sort_order` per row (a row's parent is the
+/// nearest row above it with a smaller level) for
+/// `PATCH /v1/categories/reorder`.
+abstract final class CategoryReorderLogic {
+  /// IDs in display order rooted at [rootId] — root first, then
+  /// descendants.
   static List<String> subtreeIds(String rootId, List<Category> all) {
     final result = <String>[rootId];
-    final children = all.where((c) => c.parentId == rootId).toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    for (final c in children) {
+    for (final c in _children(rootId, all)) {
       result.addAll(subtreeIds(c.id, all));
     }
     return result;
   }
 
-  /// User-visible flat list of categories of [type] in DFS tree order
-  /// (parent then children, sorted by sort_order). System categories are
-  /// excluded — they never appear in the management UI.
-  static List<CategoryFlatRow> flatten(List<Category> all, CategoryType type) {
-    final result = <CategoryFlatRow>[];
-    void visit(String? parentId, int level) {
+  /// Levels in the subtree rooted at [rootId]: 1 = a leaf, 2 = has
+  /// children, 3 = has grandchildren.
+  static int subtreeHeight(String rootId, List<Category> all) {
+    var deepest = 0;
+    for (final c in all) {
+      if (c.parentId == rootId) {
+        final h = subtreeHeight(c.id, all);
+        if (h > deepest) deepest = h;
+      }
+    }
+    return deepest + 1;
+  }
+
+  /// The user categories as an outline: [types] in order, each type its
+  /// own section, rows parent-first by sort order. System categories never
+  /// appear in the management UI.
+  static List<OutlineItem> toOutline(
+    List<Category> all, {
+    List<CategoryType> types = CategoryType.values,
+  }) {
+    final out = <OutlineItem>[];
+    void visit(String? parentId, CategoryType type, int level) {
       final children =
           all
               .where(
@@ -78,153 +50,55 @@ class CategoryReorderLogic {
               .toList()
             ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
       for (final c in children) {
-        result.add(CategoryFlatRow(c, level));
-        visit(c.id, level + 1);
+        out.add(OutlineItem(c.id, level, section: type));
+        visit(c.id, type, level + 1);
       }
     }
 
-    visit(null, 1);
-    return result;
+    for (final t in types) {
+      visit(null, t, 1);
+    }
+    return out;
   }
 
-  /// Applies one drag-and-drop move to [all]:
-  /// 1. Cuts the moving block out of its current position. The block is
-  ///    either the **whole subtree** (`dragOnlyRoot: false` — the
-  ///    natural "move this branch" behavior, used when dragging a
-  ///    collapsed parent) or **just the dragged row** (`dragOnlyRoot:
-  ///    true` — used when dragging an expanded parent: descendants stay
-  ///    where they are and get re-parented by the outliner rebuild).
-  /// 2. Applies the level shift to every row in the moving block.
-  ///    **Each row is clamped individually at [CategoryTree.maxDepth]**
-  ///    — descendants that would land past L3 stay at L3 (becoming
-  ///    siblings of whatever's at L3 in their branch). The root lands
-  ///    at the requested level even if some descendants get flattened.
-  /// 3. Inserts the moving block right after [anchor] in the flat list.
-  ///    Pass `anchor: null` to drop at the top of the section. Pass
-  ///    `anchor.id == dragged.id` for "demote in place" — the row stays
-  ///    at its original flat position; only its level changes.
-  /// 4. Walks the new flat list and rewrites parent_id + sort_order via
-  ///    the outliner rule (nearest preceding row with smaller level).
-  ///
-  /// Returns a new [List<Category>] where the moved rows (and any
-  /// rows whose sort_order changed because of the rewrite) carry
-  /// updated parent_id and sort_order. Categories of other types are
-  /// untouched.
-  static List<Category> applyMove({
-    required List<Category> all,
-    required Category dragged,
-    required Category? anchor,
-    required int targetLevel,
-    bool dragOnlyRoot = false,
-  }) {
-    final type = dragged.type;
-    final flat = flatten(all, type);
-
-    final draggedIdx = flat.indexWhere((r) => r.category.id == dragged.id);
-    if (draggedIdx < 0) return all; // not in this section, no-op
-
-    final draggedLevel = flat[draggedIdx].level;
-
-    // Determine the moving block's extent in the flat list.
-    final int endIdx;
-    if (dragOnlyRoot) {
-      // Expanded parent — only the row itself moves; descendants stay
-      // in the flat list and get re-parented by the outliner walk.
-      endIdx = draggedIdx + 1;
-    } else {
-      // Collapsed parent (or leaf) — grab the whole subtree by DFS
-      // adjacency: the dragged row plus every consecutive descendant.
-      var e = draggedIdx + 1;
-      while (e < flat.length && flat[e].level > draggedLevel) {
-        e++;
-      }
-      endIdx = e;
-    }
-    final subtree = flat.sublist(draggedIdx, endIdx);
-
-    // Per-row clamp: shift each row by `levelShift`, clamping at
-    // maxDepth individually. Descendants that would exceed L3 collapse
-    // onto L3 (becoming siblings of whatever's at L3 in their branch).
-    // The root lands where the cursor said even if some descendants
-    // flatten — matches the "free drop" intent.
-    final levelShift = targetLevel - draggedLevel;
-    final shiftedSubtree = [
-      for (final r in subtree)
-        CategoryFlatRow(
-          r.category,
-          (r.level + levelShift) > CategoryTree.maxDepth
-              ? CategoryTree.maxDepth
-              : (r.level + levelShift),
-        ),
-    ];
-
-    // Cut subtree out of the flat list.
-    final remaining = [...flat.sublist(0, draggedIdx), ...flat.sublist(endIdx)];
-
-    // Find insert position: right after anchor in `remaining`.
-    int insertIdx;
-    if (anchor == null) {
-      insertIdx = 0;
-    } else if (anchor.id == dragged.id) {
-      // Drop on self → keep the dragged item exactly where it was in
-      // the flat list. Combined with the level shift above, this is the
-      // "demote in place" gesture: the row stays put while its level
-      // (and thus its parent_id, after outliner rebuild) changes.
-      // Items before `draggedIdx` weren't cut, so the original index
-      // also points to the same slot in `remaining`.
-      insertIdx = draggedIdx;
-    } else {
-      final anchorIdxInRemaining = remaining.indexWhere(
-        (r) => r.category.id == anchor.id,
-      );
-      insertIdx = anchorIdxInRemaining < 0
-          ? remaining.length
-          : anchorIdxInRemaining + 1;
-    }
-
-    final newFlat = [
-      ...remaining.sublist(0, insertIdx),
-      ...shiftedSubtree,
-      ...remaining.sublist(insertIdx),
-    ];
-
-    // Reconstruct parent_id + sort_order from the new flat list.
-    return _reconstruct(newFlat, all, type);
-  }
-
-  /// Walks [flat] left-to-right, deriving each row's parent_id (nearest
-  /// preceding row with a smaller level) and sort_order (incrementing
-  /// counter per parent group). Returns the merged list — categories of
-  /// other types and system categories pass through unchanged.
-  static List<Category> _reconstruct(
-    List<CategoryFlatRow> flat,
-    List<Category> originalAll,
-    CategoryType type,
+  /// [all] with `parent_id` + `sort_order` rewritten from [outline]; rows
+  /// not in it (system ones) pass through unchanged.
+  static List<Category> fromOutline(
+    List<OutlineItem> outline,
+    List<Category> all,
   ) {
+    final byId = {for (final c in all) c.id: c};
     final updated = <String, Category>{};
-    final stack = <String>[]; // ids of active ancestors, deepest at end
-    final sortCounters = <String?, int>{};
-
-    for (final row in flat) {
-      // Trim stack so its size matches (level - 1).
+    final stack = <String>[]; // active ancestors, deepest last
+    final counters = <String?, int>{};
+    Object? section;
+    for (final row in outline) {
+      if (row.section != section) {
+        // Each type numbers its own top level from 0.
+        section = row.section;
+        stack.clear();
+        counters.remove(null);
+      }
       while (stack.length >= row.level) {
         stack.removeLast();
       }
       final parentId = stack.isEmpty ? null : stack.last;
-      final sortOrder = sortCounters[parentId] ?? 0;
-      sortCounters[parentId] = sortOrder + 1;
-
-      updated[row.category.id] = row.category.copyWith(
-        parentId: parentId,
-        clearParent: parentId == null,
-        sortOrder: sortOrder,
-      );
-      stack.add(row.category.id);
+      final sortOrder = counters[parentId] ?? 0;
+      counters[parentId] = sortOrder + 1;
+      final c = byId[row.id];
+      if (c != null) {
+        updated[c.id] = c.copyWith(
+          parentId: parentId,
+          clearParent: parentId == null,
+          sortOrder: sortOrder,
+        );
+      }
+      stack.add(row.id);
     }
-
-    return [
-      for (final c in originalAll)
-        if (updated.containsKey(c.id)) updated[c.id]! else c,
-    ];
+    return [for (final c in all) updated[c.id] ?? c];
   }
+
+  static List<Category> _children(String parentId, List<Category> all) =>
+      all.where((c) => c.parentId == parentId).toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 }

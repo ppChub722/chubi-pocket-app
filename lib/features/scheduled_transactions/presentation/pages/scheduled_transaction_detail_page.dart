@@ -274,7 +274,7 @@ class _Hero extends StatelessWidget {
         runSpacing: AppSpacing.xs,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          StatusPill(label: label, tone: tone, dense: true, onTap: onStatusTap),
+          StatusPill(label: label, tone: tone, onTap: onStatusTap),
           _VariantPill(entry: entry),
         ],
       ),

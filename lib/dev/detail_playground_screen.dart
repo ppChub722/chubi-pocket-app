@@ -129,11 +129,7 @@ class _DetailPlaygroundScreenState extends State<DetailPlaygroundScreen> {
               rows: [
                 DetailRow(
                   label: 'ประเภท',
-                  trailing: StatusPill(
-                    label: 'ธนาคาร',
-                    tone: Tone.info,
-                    dense: true,
-                  ),
+                  trailing: StatusPill(label: 'ธนาคาร', tone: Tone.info),
                 ),
                 DetailRow(
                   label: 'สกุลเงิน',
@@ -174,8 +170,8 @@ class _DetailPlaygroundScreenState extends State<DetailPlaygroundScreen> {
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
                     children: const [
-                      StatusPill(label: 'เงินเดือน', dense: true),
-                      StatusPill(label: 'ค่าใช้จ่ายประจำ', dense: true),
+                      StatusPill(label: 'เงินเดือน'),
+                      StatusPill(label: 'ค่าใช้จ่ายประจำ'),
                     ],
                   ),
                 ),

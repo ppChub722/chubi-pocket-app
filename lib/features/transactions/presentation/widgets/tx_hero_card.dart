@@ -177,15 +177,31 @@ class TxHeroCard extends StatelessWidget {
       );
     }
 
+    // The type chips as one group on ONE line (owner 2026-10-11):
+    // chips 4 apart; a large text scale shrinks the group rather than
+    // wrapping it under itself.
     final chips = [
-      for (final t in _types)
-        if (canSwitch || t == type)
-          TxTypeChip(
-            type: t,
-            selected: t == type,
-            onTap: canSwitch && t != type ? () => onTypeChanged!(t) : null,
-            locked: editing && onTypeChanged == null,
-          ),
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: AlignmentDirectional.centerStart,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (i, t) in [
+              for (final t in _types)
+                if (canSwitch || t == type) t,
+            ].indexed) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.xs),
+              TxTypeChip(
+                type: t,
+                selected: t == type,
+                onTap: canSwitch && t != type ? () => onTypeChanged!(t) : null,
+                locked: editing && onTypeChanged == null,
+              ),
+            ],
+          ],
+        ),
+      ),
     ];
     final datePill = _DatePill(
       label: dateLabel,
@@ -284,21 +300,29 @@ class TxHeroCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 LayoutBuilder(
-                  builder: (context, box) => Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: !editing && title.text.trim().isEmpty
-                            ? const SizedBox.shrink()
-                            : titleField(maxLines: 2),
-                      ),
-                      // The amount keeps its spot however long the
-                      // description wraps.
-                      SizedBox(
-                        width: box.maxWidth * 0.48,
-                        child: amountField(align: TextAlign.end),
-                      ),
-                    ],
+                  // Both cells as tall as the row, each centring its
+                  // content: the amount's whole cell — the right half of
+                  // the row — is its tap target, not just the digits.
+                  builder: (context, box) => IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: !editing && title.text.trim().isEmpty
+                                ? const SizedBox.shrink()
+                                : titleField(maxLines: 2),
+                          ),
+                        ),
+                        // The amount keeps its spot however long the
+                        // description wraps.
+                        SizedBox(
+                          width: box.maxWidth * 0.48,
+                          child: amountField(align: TextAlign.end),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 ?amountErrorText,
@@ -431,9 +455,11 @@ Color txTypeColor(BuildContext context, TransactionType t) {
   };
 }
 
-/// One small type chip — `[− รายจ่าย]`: filled in the type's colour when
-/// [selected], faint text otherwise. [type] null = "ทั้งหมด" (the filter's
-/// any-type chip), in a neutral ink — no icon.
+/// One type chip — `[− รายจ่าย]`, the filter sheet's look ([RowChip],
+/// owner 2026-10-11): an outlined grey chip; [selected] = a tinted border
+/// and a faint fill in the type's colour. [PillSize.normal] like every
+/// chip; the hero keeps รายจ่าย / รายรับ / โอนเงิน + the date on one row. [type] null = "ทั้งหมด" (the filter's any-type chip), in the
+/// primary colour — no icon.
 class TxTypeChip extends StatelessWidget {
   const TxTypeChip({
     required this.type,
@@ -454,14 +480,7 @@ class TxTypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final t = type;
-    final color = t == null ? scheme.onSurface : txTypeColor(context, t);
-    final fg = selected
-        ? (t == TransactionType.expense || t == TransactionType.income
-              ? Colors.white
-              : scheme.surface)
-        : scheme.onSurfaceVariant.withValues(alpha: 0.7);
     final (IconData? icon, label) = switch (t) {
       null => (null, l.transactionsListFilterAll),
       TransactionType.expense => (AppIcons.expense, l.transactionTypeExpense),
@@ -471,43 +490,15 @@ class TxTypeChip extends StatelessWidget {
         l.transactionTypeTransfer,
       ),
     };
-    final chip = Semantics(
-      selected: selected,
-      button: onTap != null,
-      child: Material(
-        color: selected ? color : Colors.transparent,
-        shape: const StadiumBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: AnimatedPadding(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: 6,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 16, color: fg),
-                  const SizedBox(width: 2),
-                ],
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: fg,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-                if (locked) ...[
-                  const SizedBox(width: AppSpacing.xs),
-                  Icon(AppIcons.lock, size: 14, color: fg),
-                ],
-              ],
-            ),
-          ),
-        ),
+    final chip = SizedBox(
+      height: HeroSpacing.controlHeight,
+      child: RowChip(
+        label: label,
+        icon: icon,
+        color: t == null ? null : txTypeColor(context, t),
+        selected: selected,
+        onTap: onTap,
+        trailingIcon: locked ? AppIcons.lock : null,
       ),
     );
     if (!locked) return chip;
@@ -616,13 +607,15 @@ class _AmountInputState extends State<_AmountInput> {
         ),
       ),
     );
-    return Align(
-      alignment: widget.textAlign == TextAlign.end
-          ? AlignmentDirectional.centerEnd
-          : AlignmentDirectional.centerStart,
-      child: GestureDetector(
-        // The symbol is part of the field: tapping it types into it.
-        onTap: widget.editing ? _focus.requestFocus : null,
+    // The whole box is the tap target (owner 2026-10-11): the symbol and
+    // the empty space around the digits type into the field too.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.editing ? _focus.requestFocus : null,
+      child: Align(
+        alignment: widget.textAlign == TextAlign.end
+            ? AlignmentDirectional.centerEnd
+            : AlignmentDirectional.centerStart,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -640,7 +633,8 @@ class _AmountInputState extends State<_AmountInput> {
   }
 }
 
-/// `[📅 วันนี้]` — small pill; null [onTap] = read-only.
+/// `[📅 วันนี้]` — [PillSize.normal], like every chip (owner 2026-10-11);
+/// null [onTap] = read-only.
 class _DatePill extends StatelessWidget {
   const _DatePill({required this.label, required this.onTap});
   final String label;
@@ -655,11 +649,9 @@ class _DatePill extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: 6,
-          ),
+        child: Container(
+          constraints: BoxConstraints(minHeight: PillSize.normal.height),
+          padding: EdgeInsets.symmetric(horizontal: PillSize.normal.padding),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -670,7 +662,9 @@ class _DatePill extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge,
+                  style: PillSize.normal
+                      .textStyle(context)
+                      ?.copyWith(fontWeight: PillSize.chipWeight),
                 ),
               ),
             ],

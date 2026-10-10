@@ -417,10 +417,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
+  /// Titles never change with the mode (owner, QA T1): the saved name in
+  /// view and edit alike (not the one being typed).
   String _title(AppLocalizations l) {
     if (widget.isCreate) return l.budgetFormTitle;
-    if (isEditing) return l.budgetFormTitleEdit;
-    final name = working.name.trim();
+    final name = _last?.name.trim() ?? '';
     return name.isEmpty ? l.budgetDetailFallbackTitle : name;
   }
 

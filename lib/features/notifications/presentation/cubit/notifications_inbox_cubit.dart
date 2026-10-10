@@ -71,6 +71,14 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
 
   final NotificationsRepository _repo;
 
+  /// Every await here can outlive the page that owns this cubit (the home
+  /// tab, the inbox) — a reply landing after close is dropped, not thrown
+  /// ("Cannot emit new states after calling close", QA S1 2026-10-11).
+  @override
+  void emit(InboxState state) {
+    if (!isClosed) super.emit(state);
+  }
+
   Future<void> load({bool unreadOnly = false}) async {
     emit(
       state.copyWith(

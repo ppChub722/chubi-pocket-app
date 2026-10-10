@@ -167,6 +167,8 @@ class _PickerSheetState extends State<PickerSheet> {
 /// One row of a [PickerSheet]: [leading] · [title] / [subtitle] ·
 /// [trailing]. [selected] = a highlight tint behind the row (owner rule for
 /// every picker: never a ✓). [indent] shifts it right (a tree's levels).
+/// [titleStyle] merges into the title (a font name in its font); a null
+/// [onTap] = disabled, faded.
 class PickerRow extends StatelessWidget {
   const PickerRow({
     required this.title,
@@ -176,8 +178,12 @@ class PickerRow extends StatelessWidget {
     this.trailing,
     this.indent = 0,
     this.selected = false,
+    this.titleStyle,
     super.key,
   });
+
+  /// Every row's height (an [IconButton] ▾ fits inside it).
+  static const double rowHeight = 56;
 
   final String title;
 
@@ -187,27 +193,34 @@ class PickerRow extends StatelessWidget {
   final String? subtitle;
   final Widget? leading;
   final bool selected;
+
+  /// Null = disabled: the row fades and ignores taps.
   final VoidCallback? onTap;
+
+  /// Merged into the title's style (colour / weight for [selected] still
+  /// win).
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: Material(
-        color: selected
-            ? scheme.primary.withValues(alpha: 0.10)
-            : Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+    final row = Material(
+      color: selected
+          ? scheme.primary.withValues(alpha: 0.10)
+          : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        // One height for every row, with or without a ▾ / subtitle (QA
+        // F6: 48 vs 56 before).
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: rowHeight),
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               AppSpacing.lg + indent,
-              trailing == null ? AppSpacing.md : AppSpacing.xs,
+              AppSpacing.xs,
               trailing == null ? AppSpacing.lg : AppSpacing.xs,
-              trailing == null ? AppSpacing.md : AppSpacing.xs,
+              AppSpacing.xs,
             ),
             child: Row(
               children: [
@@ -232,10 +245,12 @@ class PickerRow extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: selected ? scheme.primary : null,
-                          fontWeight: selected ? FontWeight.w700 : null,
-                        ),
+                        style: textTheme.bodyLarge
+                            ?.merge(titleStyle)
+                            .copyWith(
+                              color: selected ? scheme.primary : null,
+                              fontWeight: selected ? FontWeight.w700 : null,
+                            ),
                       ),
                       if (subtitle != null)
                         Text(
@@ -255,6 +270,12 @@ class PickerRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+    return Semantics(
+      selected: selected,
+      button: true,
+      enabled: onTap != null,
+      child: onTap == null ? Opacity(opacity: 0.38, child: row) : row,
     );
   }
 }

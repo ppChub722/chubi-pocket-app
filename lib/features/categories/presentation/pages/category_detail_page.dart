@@ -37,13 +37,33 @@ import '../widgets/category_preview_card.dart';
 /// edit mode on it. Lifecycle (undo, discard, nav hiding) is
 /// [EditModeMixin].
 class CategoryDetailPage extends StatefulWidget {
-  const CategoryDetailPage({this.editingId, this.initialType, super.key});
+  const CategoryDetailPage({
+    this.editingId,
+    this.initialType,
+    this.popOnCreate = false,
+    super.key,
+  });
+
+  /// `/categories/new?type=income` — create on the list tab's type (QA F3).
+  /// Anything but `income` starts on expense.
+  CategoryDetailPage.create({String? type, Key? key})
+    : this(
+        initialType: type == CategoryType.income.toJson()
+            ? CategoryType.income
+            : CategoryType.expense,
+        key: key,
+      );
 
   final String? editingId;
 
   /// Create only: the type to start with (a picker for income opens the
   /// create page on income).
   final CategoryType? initialType;
+
+  /// Create pushed over a picker (Navigator, not the router): saving pops
+  /// with the new [Category] instead of becoming its view, so the page
+  /// underneath stays (QA F5).
+  final bool popOnCreate;
 
   bool get isCreate => editingId == null;
 
@@ -79,6 +99,24 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   /// refreshed from `GET /users/me` (login answers without preferences).
   String? _feeCategoryId;
   bool _feeBusy = false;
+
+  /// This page's own messenger: its snackbars float above the page's
+  /// action bar instead of over it (QA F4 — the shell's Scaffold doesn't
+  /// know about this page's bottom bar).
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  void _snack(String message, {Tone tone = Tone.neutral}) {
+    final messenger = _messengerKey.currentState;
+    if (messenger != null) {
+      showAppSnackBarOn(messenger, message, tone: tone);
+    } else {
+      showAppSnackBar(context, message, tone: tone);
+    }
+  }
+
+  /// A save error in words: the depth limit in Thai, else the server's.
+  String _errorText(ApiException e, AppLocalizations l) =>
+      e.code == 'MAX_DEPTH_EXCEEDED' ? l.categoryErrorMaxDepth : e.message;
 
   @override
   void initState() {
@@ -167,7 +205,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       setState(() => _feeCategoryId = me.feeCategoryId);
     } on ApiException {
       if (mounted) {
-        showAppSnackBar(context, l.categoryFeeSwitchFailed, tone: Tone.danger);
+        _snack(l.categoryFeeSwitchFailed, tone: Tone.danger);
       }
     } finally {
       if (mounted) setState(() => _feeBusy = false);
@@ -224,7 +262,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final cubit = context.read<CategoriesCubit>();
     final l = AppLocalizations.of(context)!;
     if (_isCreate && !cubit.canAddMore) {
-      showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
+      _snack(l.categoriesLimitReached, tone: Tone.warning);
       return;
     }
 
@@ -249,6 +287,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         );
         if (!mounted) return;
         HapticFeedback.mediumImpact();
+        if (widget.popOnCreate) {
+          // Pop without the discard prompt — the picker takes it from here.
+          commitSaved(_CategoryDraft.fromCategory(created));
+          Navigator.of(context).pop(created);
+          return;
+        }
         // Become the saved category right here — edit → view in place, as
         // contacts do. `replace` only fixes the URL: same page key, so no
         // transition and this state is kept.
@@ -276,12 +320,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on CategoryLimitExceeded {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
+      _snack(l.categoriesLimitReached, tone: Tone.warning);
       return;
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      _snack(_errorText(e, l), tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -303,7 +347,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      _snack(e.message, tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -336,7 +380,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      _snack(e.message, tone: Tone.danger);
     }
   }
 
@@ -351,24 +395,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     includeInReport: working.includeInReport,
   );
 
-  /// L1 shows its own colours; L2/L3 inherit the L1 ancestor's (as the
-  /// list does).
+  /// Every level shows its own icon (owner 2026-10-11); a row with none yet
+  /// falls back to its L1 ancestor's, as the list does.
   IconCode? _resolvedDisplayIconCode() {
-    if (working.parentId == null) return working.iconCode;
-    final all = context.read<CategoriesCubit>().state.categories;
-    String? cursor = working.parentId;
-    while (cursor != null) {
-      final parent = all.firstWhere(
-        (c) => c.id == cursor,
-        orElse: () => Category(id: cursor!, name: '', type: working.type),
-      );
-      if (parent.parentId == null) return parent.iconCode;
-      cursor = parent.parentId;
+    if (working.iconCode != null || working.parentId == null) {
+      return working.iconCode;
     }
-    return working.iconCode;
+    final all = context.read<CategoriesCubit>().state.categories;
+    final parent = context.read<CategoriesCubit>().byId(working.parentId!);
+    return parent == null ? null : CategoryTree.resolveIconCode(parent, all);
   }
-
-  bool get _isColorEditable => working.parentId == null;
 
   String? _parentBreadcrumb(List<Category> all) {
     if (working.parentId == null) return null;
@@ -391,22 +427,14 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       title: l.categoryFormIconLabel,
       iconSectionLabel: l.categoryFormIconLabel,
       colorSectionLabel: l.categoryFormColorLabel,
-      showColorSection: _isColorEditable,
       previewBuilder: (iconCode) => CategoryPreviewCard(
         category: _previewCategory().copyWith(iconCode: iconCode),
         parentPath: breadcrumb,
       ),
     );
     if (!mounted || result is! IconMakerSelected) return;
-    if (_isColorEditable) {
-      applyChange(working.copyWith(iconCode: result.iconCode));
-    } else {
-      // L2/L3: keep own colours, take only the glyph.
-      final next = (working.iconCode ?? const IconCode()).copyWith(
-        icon: result.iconCode.icon,
-      );
-      applyChange(working.copyWith(iconCode: next));
-    }
+    // Any level edits its whole icon — glyph and colours.
+    applyChange(working.copyWith(iconCode: result.iconCode));
   }
 
   Future<void> _openParentPicker(List<Category> all) async {
@@ -417,8 +445,21 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         : cubit.byId(working.parentId!);
     // Can't parent into yourself or your own subtree (would cycle).
     final exclude = _persisted == null
-        ? const <String>{}
+        ? <String>{}
         : CategoryReorderLogic.subtreeIds(_persisted!.id, all).toSet();
+    // This row and everything under it must stay within 3 levels (QA F4):
+    // a parent at level d (1-based) needs d + height ≤ 3, so only levels up
+    // to 3 − height are offered. A 3-level subtree can only be top-level.
+    final height = _persisted == null
+        ? 1
+        : CategoryReorderLogic.subtreeHeight(_persisted!.id, all);
+    final deepestParent = CategoryTree.maxDepth - height; // 1-based
+    if (deepestParent < 1) {
+      exclude.addAll([
+        for (final c in all)
+          if (c.type == working.type) c.id,
+      ]);
+    }
     final result = await showCategoryPickerSheet(
       context: context,
       categories: all,
@@ -427,7 +468,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       allowNone: true,
       noneLabel: l.categoryFormParentNone,
       title: l.categoryFormParentLabel,
-      maxDepth: 1, // L1 + L2 only — a child of this stays within 3 levels
+      // The picker counts levels from 0.
+      maxDepth: deepestParent < 1 ? 0 : deepestParent - 1,
       excludeIds: exclude,
     );
     if (!mounted || result == null) return;
@@ -456,48 +498,63 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                       title: l.categoryDetailNotFound,
                       message: l.categoryDetailNotFoundMessage,
                     )
-                  : const LoadingView(),
+                  // Clear the transparent top bar (the Builder's context
+                  // sees its height in the top padding).
+                  : Builder(
+                      builder: (context) => Padding(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.paddingOf(context).top,
+                        ),
+                        child: const LoadingView(),
+                      ),
+                    ),
             ),
     );
   }
 
   Widget _page(AppLocalizations l) {
     return editScope(
-      Scaffold(
-        // The bar floats over the list; its first item is padded below it.
-        extendBodyBehindAppBar: true,
-        appBar: AppTopBar(
-          title: _title(l),
-          showBack: true,
-          editing: isEditing,
-          onBack: handleBack,
-        ),
-        body: BlocBuilder<CategoriesCubit, CategoriesState>(
-          // This context sits inside the Scaffold body, so it sees the bar
-          // height in its top padding.
-          builder: (context, state) => Form(
-            key: _formKey,
-            child: PullToRefresh(
-              enabled: !_isCreate,
-              onRefresh: context.read<CategoriesCubit>().load,
-              child: _body(
-                l,
-                state.categories,
-                topInset: MediaQuery.paddingOf(context).top,
-                bottomInset: MediaQuery.paddingOf(context).bottom,
-              ),
-            ),
-          ),
-        ),
-        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
-      ),
+      ScaffoldMessenger(key: _messengerKey, child: _scaffold(l)),
     );
   }
 
+  Widget _scaffold(AppLocalizations l) {
+    return Scaffold(
+      // The bar floats over the list; its first item is padded below it.
+      extendBodyBehindAppBar: true,
+      appBar: AppTopBar(
+        title: _title(l),
+        showBack: true,
+        editing: isEditing,
+        onBack: handleBack,
+      ),
+      body: BlocBuilder<CategoriesCubit, CategoriesState>(
+        // This context sits inside the Scaffold body, so it sees the bar
+        // height in its top padding.
+        builder: (context, state) => Form(
+          key: _formKey,
+          child: PullToRefresh(
+            enabled: !_isCreate,
+            onRefresh: context.read<CategoriesCubit>().load,
+            child: _body(
+              l,
+              state.categories,
+              topInset: MediaQuery.paddingOf(context).top,
+              bottomInset: MediaQuery.paddingOf(context).bottom,
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+    );
+  }
+
+  /// Titles never change with the mode (owner, QA T1): the saved name in
+  /// view and edit alike (not the one being typed).
   String _title(AppLocalizations l) {
     if (_isCreate) return l.categoryFormTitleNew;
-    if (isEditing) return l.categoryFormTitleEdit;
-    return working.name.isEmpty ? l.categoriesTitle : working.name;
+    final name = _persisted?.name ?? '';
+    return name.isEmpty ? l.categoriesTitle : name;
   }
 
   /// [topInset] / [bottomInset] clear the transparent top bar and the
@@ -525,6 +582,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           category: preview,
           parentPath: breadcrumb,
           editing: editing,
+          isIncome: working.type == CategoryType.income,
           onEdit: editing ? null : enterEdit,
           nameField: InlineTitleField(
             editing: editing,
@@ -539,16 +597,18 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           onIconTap: _openIconMaker,
           onIconLongPress: _enterEditThenOpenMaker,
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: HeroSpacing.after),
+        // 1 — where it sits. Create also picks the type here (fixed once
+        // saved, spec §3.4 — the hero's chip shows it after that).
         SectionCard(
           first: true,
           children: [
-            // Type is immutable once created (spec §3.4).
-            DetailRow(
-              label: l.categoryFormTypeLabel,
-              helper: _isCreate ? null : l.categoryFormTypeImmutableHelper,
-              trailing: _typeTrailing(l),
-            ),
+            if (_isCreate)
+              DetailRow(
+                label: l.categoryFormTypeLabel,
+                helper: l.categoryFormTypeImmutableHelper,
+                trailing: _typeChoice(l),
+              ),
             // The parent picker — the row opens the category picker.
             DetailRow(
               label: l.categoryFormParentLabel,
@@ -556,6 +616,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               onTap: () => _openParentPicker(all),
               trailing: _parentValue(l, breadcrumb),
             ),
+          ],
+        ),
+        // 2 — words. The note always shows, empty or not (owner rule), with
+        // the long-press hint in view mode.
+        SectionCard(
+          children: [
             // maxLength caps the input, so no length validator.
             DetailStacked(
               label: l.commonDescription,
@@ -581,6 +647,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 onChanged: (v) => _onText(_TextField.note, v),
               ),
             ),
+          ],
+        ),
+        // 3 — การตั้งค่า.
+        SectionCard(
+          title: l.categorySectionSettings,
+          children: [
             DetailRow(
               label: l.categoryFormIncludeInReportLabel,
               helper: l.categoryFormIncludeInReportHelper,
@@ -631,14 +703,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return null;
   }
 
-  /// Type: a fixed [TypeIndicator] once saved; while creating, an
-  /// expense / income [ChoicePill] pair (changing it clears the parent).
-  Widget _typeTrailing(AppLocalizations l) {
-    final isIncome = working.type == CategoryType.income;
-    if (!_isCreate) return TypeIndicator(isIncome: isIncome);
+  /// Create only: the expense / income [ChoicePill] pair (changing it
+  /// clears the parent). Once saved the type is the hero's chip.
+  Widget _typeChoice(AppLocalizations l) {
     Widget pill(CategoryType t, String label) => ChoicePill(
       label: label,
-      size: PillSize.medium,
       selected: working.type == t,
       onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
     );
@@ -677,9 +746,15 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Header — kit HeaderCard with the category's accent border. View mode:
-// ✏️ chip → edit; long-press the icon → edit + maker. Edit mode: tap the
-// icon → maker.
+// Hero — kit [HeaderCard] with its top row (owner 2026-10-11) and the
+// category's accent border:
+//
+//   [− รายจ่าย]                                    ✏️
+//   (icon)  name
+//           parent › path · [ซ่อนจากรายงาน]
+//
+// View mode: ✏️ → edit; long-press the icon → edit + maker. Edit mode:
+// tap the icon → maker.
 // ────────────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
@@ -687,6 +762,7 @@ class _Header extends StatelessWidget {
     required this.category,
     required this.parentPath,
     required this.editing,
+    required this.isIncome,
     required this.nameField,
     required this.onIconTap,
     required this.onIconLongPress,
@@ -696,6 +772,7 @@ class _Header extends StatelessWidget {
   final Category category;
   final String? parentPath;
   final bool editing;
+  final bool isIncome;
   final Widget nameField;
   final VoidCallback onIconTap;
   final VoidCallback onIconLongPress;
@@ -708,9 +785,13 @@ class _Header extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final palette = Theme.of(context).extension<AppColors>()!;
     final hasPath = parentPath != null && parentPath!.isNotEmpty;
+    final hidden = !category.includeInReport;
     return HeaderCard(
       accent: category.iconCode?.accentColorFor(palette) ?? palette.primary,
       onEdit: onEdit,
+      // The row keeps its height without ✏️ (edit mode), so nothing below
+      // moves.
+      topRow: [TypeIndicator(isIncome: isIncome)],
       // EditableCircle keeps a constant footprint with or without onTap,
       // so the name column never shifts between modes.
       leading: GestureDetector(
@@ -726,9 +807,10 @@ class _Header extends StatelessWidget {
         ),
       ),
       title: nameField,
-      subtitle: hasPath || !category.includeInReport
+      subtitle: hasPath || hidden
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (hasPath)
                   Text(
@@ -736,13 +818,12 @@ class _Header extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                if (!category.includeInReport)
+                if (hidden)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.xs),
                     child: LabelPill(
                       label: l.categoryHiddenFromReport,
                       icon: AppIcons.hidden,
-                      size: PillSize.small,
                     ),
                   ),
               ],

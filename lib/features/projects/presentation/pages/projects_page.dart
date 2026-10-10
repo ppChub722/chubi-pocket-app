@@ -244,7 +244,7 @@ class _ProjectCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              ProjectStatusPill(status: p.status, dense: true),
+              ProjectStatusPill(status: p.status),
             ],
           ),
         ),

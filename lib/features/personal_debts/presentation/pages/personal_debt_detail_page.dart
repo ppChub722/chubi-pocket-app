@@ -230,7 +230,9 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     return editScope(
       Scaffold(
         appBar: AppTopBar(
-          title: isEditing ? l.debtEditTitle : debt.counterpartyPersonName,
+          // The same title in both modes (owner QA T1): edit mode shows
+          // in the ✕ and the action bar.
+          title: debt.counterpartyPersonName,
           showBack: true,
           editing: isEditing,
           onBack: handleBack,
@@ -320,7 +322,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
       ),
       subtitle: Align(
         alignment: Alignment.centerLeft,
-        child: debtStatusPill(context, debt.status, dense: true),
+        child: debtStatusPill(context, debt.status),
       ),
       footer: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

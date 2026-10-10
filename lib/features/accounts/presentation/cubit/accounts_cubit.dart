@@ -87,9 +87,11 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     }
   }
 
-  Future<void> add(Account draft) async {
+  /// Creates the wallet; returns it as the server made it (its id).
+  Future<Account> add(Account draft) async {
     final created = await _repo.create(draft);
     emit(state.copyWith(accounts: [...state.accounts, created]));
+    return created;
   }
 
   Future<void> update(Account account) async {

@@ -7104,6 +7104,324 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The selected tags are deleted when you save, and removed from any transactions using them.'**
   String get tagsBulkDeleteConfirmBody;
+
+  /// No description provided for @contactLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked'**
+  String get contactLinked;
+
+  /// No description provided for @contactsLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get contactsLinkLabel;
+
+  /// No description provided for @contactsLinkUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not linked'**
+  String get contactsLinkUnlinked;
+
+  /// No description provided for @contactsNoFilterMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts match this filter'**
+  String get contactsNoFilterMatch;
+
+  /// No description provided for @contactsNoFilterMatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try changing the filter'**
+  String get contactsNoFilterMatchMessage;
+
+  /// No description provided for @contactsNoMatchFilterMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another search or change the filters'**
+  String get contactsNoMatchFilterMessage;
+
+  /// No description provided for @walletInviteFromContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite from contacts'**
+  String get walletInviteFromContacts;
+
+  /// No description provided for @walletInvitePickTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite to this wallet'**
+  String get walletInvitePickTitle;
+
+  /// No description provided for @walletInvitePickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only contacts linked to an app account can be invited.'**
+  String get walletInvitePickHint;
+
+  /// No description provided for @walletInvitePickEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No linked contacts left to invite. Link a contact to their app account first (Contacts).'**
+  String get walletInvitePickEmpty;
+
+  /// No description provided for @walletErrorContactNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'That contact no longer exists.'**
+  String get walletErrorContactNotFound;
+
+  /// No description provided for @walletErrorContactArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'That contact is archived. Restore it to invite them.'**
+  String get walletErrorContactArchived;
+
+  /// No description provided for @walletErrorContactNotLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'That contact isn\'t linked to an app account yet.'**
+  String get walletErrorContactNotLinked;
+
+  /// No description provided for @walletErrorInviteInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The invite couldn\'t be sent. Please try again.'**
+  String get walletErrorInviteInvalid;
+
+  /// No description provided for @reorderMoveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get reorderMoveUp;
+
+  /// No description provided for @reorderMoveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get reorderMoveDown;
+
+  /// No description provided for @reorderOutdent.
+  ///
+  /// In en, this message translates to:
+  /// **'Move out a level'**
+  String get reorderOutdent;
+
+  /// No description provided for @reorderIndent.
+  ///
+  /// In en, this message translates to:
+  /// **'Move in a level'**
+  String get reorderIndent;
+
+  /// No description provided for @categoriesReorderUnder.
+  ///
+  /// In en, this message translates to:
+  /// **'Under {name}'**
+  String categoriesReorderUnder(String name);
+
+  /// No description provided for @categoriesReorderTopLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Top level'**
+  String get categoriesReorderTopLevel;
+
+  /// No description provided for @categoriesReorderTapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a row and use the arrows, or drag ⠿'**
+  String get categoriesReorderTapHint;
+
+  /// No description provided for @categoryErrorMaxDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories nest up to 3 levels (counting this one\'s sub-categories)'**
+  String get categoryErrorMaxDepth;
+
+  /// No description provided for @accountsReorderTapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select and use the arrows, or drag ⠿. This order is yours alone; shared-wallet members aren\'t affected.'**
+  String get accountsReorderTapHint;
+
+  /// No description provided for @categorySectionSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get categorySectionSettings;
+
+  /// No description provided for @dayPickerLastDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Last day of the month'**
+  String get dayPickerLastDay;
+
+  /// No description provided for @dayPickerNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get dayPickerNone;
+
+  /// No description provided for @dayPickerEveryMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} of every month'**
+  String dayPickerEveryMonth(int day);
+
+  /// No description provided for @txSplitMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get txSplitMe;
+
+  /// No description provided for @txSplitLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Not split yet {amount}'**
+  String txSplitLeft(String amount);
+
+  /// No description provided for @txSplitBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'All split'**
+  String get txSplitBalanced;
+
+  /// No description provided for @txSplitOverBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String txSplitOverBy(String amount);
+
+  /// No description provided for @txSplitUnbalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'The split doesn\'t add up yet — make your share and theirs total the amount before saving.'**
+  String get txSplitUnbalanced;
+
+  /// No description provided for @txShareOthersOweYou.
+  ///
+  /// In en, this message translates to:
+  /// **'others owe you {amount}'**
+  String txShareOthersOweYou(String amount);
+
+  /// No description provided for @txShareYouOweOthers.
+  ///
+  /// In en, this message translates to:
+  /// **'you owe others {amount}'**
+  String txShareYouOweOthers(String amount);
+
+  /// No description provided for @txSplitPersonLockedLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to their app account — to change who, remove this row and add the person again'**
+  String get txSplitPersonLockedLinked;
+
+  /// No description provided for @accountFormNameExample.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Salary account'**
+  String get accountFormNameExample;
+
+  /// No description provided for @accountFormDescriptionExample.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. For household spending'**
+  String get accountFormDescriptionExample;
+
+  /// No description provided for @accountsSortCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'My order'**
+  String get accountsSortCustom;
+
+  /// No description provided for @accountsSortBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance, high to low'**
+  String get accountsSortBalance;
+
+  /// No description provided for @accountsSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get accountsSortName;
+
+  /// No description provided for @accountsSortType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get accountsSortType;
+
+  /// No description provided for @accountsSummarySharedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'({count} shared)'**
+  String accountsSummarySharedCount(int count);
+
+  /// No description provided for @accountsSummaryCardDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Card debt'**
+  String get accountsSummaryCardDebt;
+
+  /// No description provided for @accountReportSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'In my reports'**
+  String get accountReportSectionTitle;
+
+  /// No description provided for @accountOpeningSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get accountOpeningSectionTitle;
+
+  /// No description provided for @accountCreditSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Card / credit limit'**
+  String get accountCreditSectionTitle;
+
+  /// No description provided for @accountMinPaymentOverLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'The minimum payment is more than the credit limit. Check it.'**
+  String get accountMinPaymentOverLimit;
+
+  /// No description provided for @identifierHintBankAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 123-4-56789-0'**
+  String get identifierHintBankAccount;
+
+  /// No description provided for @identifierHintPromptPay.
+  ///
+  /// In en, this message translates to:
+  /// **'10-digit phone or 13-digit ID'**
+  String get identifierHintPromptPay;
+
+  /// No description provided for @identifierHintCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 4 digits of the card'**
+  String get identifierHintCard;
+
+  /// No description provided for @identifierPromptPayLength.
+  ///
+  /// In en, this message translates to:
+  /// **'PromptPay is a 10-digit phone or a 13-digit ID number'**
+  String get identifierPromptPayLength;
+
+  /// No description provided for @identifierCardLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the card\'s last 4 digits'**
+  String get identifierCardLength;
+
+  /// No description provided for @txSplitAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get txSplitAuto;
 }
 
 class _AppLocalizationsDelegate

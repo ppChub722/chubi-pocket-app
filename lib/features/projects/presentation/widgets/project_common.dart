@@ -26,18 +26,12 @@ Tone projectStatusTone(ProjectStatus s) => switch (s) {
 };
 
 class ProjectStatusPill extends StatelessWidget {
-  const ProjectStatusPill({
-    required this.status,
-    this.onTap,
-    this.dense = false,
-    super.key,
-  });
+  const ProjectStatusPill({required this.status, this.onTap, super.key});
 
   final ProjectStatus status;
 
   /// Owner only — opens the status picker.
   final VoidCallback? onTap;
-  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +39,6 @@ class ProjectStatusPill extends StatelessWidget {
     return StatusPill(
       label: projectStatusLabel(l, status),
       tone: projectStatusTone(status),
-      dense: dense,
       onTap: onTap,
     );
   }

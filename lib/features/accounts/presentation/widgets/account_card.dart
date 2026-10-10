@@ -161,9 +161,9 @@ class _HorizontalLayout extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             MoneyText(
-              account.balance,
+              accountDisplayBalance(account),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: accent,
+                color: accountBalanceColor(context, account),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -233,9 +233,9 @@ class _VerticalLayout extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         MoneyText(
-          account.balance,
+          accountDisplayBalance(account),
           style: textTheme.titleMedium?.copyWith(
-            color: accent,
+            color: accountBalanceColor(context, account),
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -396,6 +396,20 @@ class _UtilizationBar extends StatelessWidget {
     );
   }
 }
+
+/// A wallet's balance text colour (owner 2026-10-11): what you owe — a
+/// credit-type wallet — in the liability token; otherwise the wallet's own
+/// icon colour (the card wash keeps that colour either way).
+Color accountBalanceColor(BuildContext context, Account account) {
+  if (account.type.isCredit) return account.type.colorOf(context);
+  final palette = Theme.of(context).extension<AppColors>()!;
+  return account.iconCode?.accentColorFor(palette) ?? palette.primary;
+}
+
+/// The balance to show: a zero is a plain 0 — `-0.0` (a new card) would
+/// read "-฿0.00".
+double accountDisplayBalance(Account account) =>
+    account.balance == 0 ? 0 : account.balance;
 
 String accountTypeLabel(BuildContext context, AccountType type) {
   final l = AppLocalizations.of(context)!;

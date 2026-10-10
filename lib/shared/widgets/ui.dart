@@ -31,6 +31,7 @@ export 'charts/donut_chart.dart';
 export 'charts/paired_bar_chart.dart';
 
 // Chips & pills
+export 'chips/app_chip.dart';
 export 'chips/chip_row.dart';
 export 'chips/filter_chips.dart';
 export 'chips/pill.dart';
@@ -40,7 +41,9 @@ export 'chips/tone.dart';
 // Layout
 export 'layout/add_tile.dart';
 export 'layout/app_tab_bar.dart';
+export 'layout/compact_hero_bar.dart';
 export 'layout/danger_row.dart';
+export 'layout/detail_meta.dart';
 export 'layout/detail_rows.dart';
 export 'layout/header_card.dart';
 export 'layout/list_row.dart';
@@ -51,6 +54,7 @@ export 'layout/section_header.dart';
 export 'layout/selectable_frame.dart';
 export 'layout/tinted_card.dart';
 export 'mode_action_bar.dart';
+export 'reorder/reorder.dart';
 
 // Feedback
 export 'async_state_view.dart';
@@ -69,6 +73,7 @@ export 'skeletons.dart';
 export 'menus/option_menu.dart';
 export 'sheets/action_sheet.dart';
 export 'sheets/app_sheet.dart';
+export 'sheets/day_of_month_picker.dart';
 export 'sheets/option_sheet.dart';
 export 'sheets/picker_sheet.dart';
 export 'sheets/side_sheet.dart';
@@ -77,6 +82,7 @@ export 'sheets/side_sheet.dart';
 export 'data/money_list_tile.dart';
 export 'data/money_text.dart';
 export 'data/people.dart';
+export 'data/person_mark.dart';
 export 'data/summary_stats.dart';
 export 'brand_logo.dart';
 export 'editable_circle.dart';

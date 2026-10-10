@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,61 +6,43 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/shell_chrome.dart';
-import '../../../../core/constants/app_radius.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../shared/widgets/ui.dart';
-import '../widgets/categories_list_skeleton.dart';
-import '../../../../shared/widgets/reorder_drop_line.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/color_token.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/reorder_mode_tilt.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../cubit/categories_cubit.dart';
+import '../widgets/categories_list_skeleton.dart';
 
-/// Categories management with smart drag-and-drop reorder.
+/// Categories management.
 ///
 /// **Browse mode** — the library list shared with tags / contacts (owner
 /// 2026-10-10):
 /// - Expense / income tabs; swipe sideways to switch ([AppTabPager] —
 ///   the content follows the finger).
-/// - Search, then [สี▾][ไอคอน▾] … (⇅) — ⇅ enters reorder mode (as on
-///   wallets).
+/// - Search, then [สี▾][ไอคอน▾] … (✏️) — ✏️ enters reorder mode (owner
+///   2026-10-11: on a list page ✏️ = the list's edit mode).
 /// - [ListRow]s on the tree's indent: icon · name · description, then
 ///   "ซ่อนจากรายงาน" and ▾/▴ (parents only — toggles collapse).
-/// - Tap row → the category's detail page. Long-press → reorder mode.
-/// - A dashed "+ เพิ่มหมวดหมู่" tile ends the list (also the empty CTA).
-/// - The shell's bottom nav stays visible.
+/// - Tap row → the category's detail page. Long-press → reorder mode with
+///   that row selected (no drag starts from that press).
+/// - A dashed "+ เพิ่มหมวดหมู่" tile ends the list (also the empty CTA),
+///   creating on the tab's type.
 ///
-/// **Reorder mode** (⇅ or long-press):
-/// - Each row's icon visibly tilts ~2° + gets a corner mark, signalling
-///   draggable.
-/// - 350 ms long-press starts a drag. The dragged proxy floats with the
-///   cursor; the original row dims.
-/// - **Column-based depth lanes** — horizontal cursor position chooses
-///   the target depth (1 / 2 / 3). Vertical position picks the anchor
-///   row (the row directly above the cursor).
-///   [CategoryReorderLogic.effectiveLevel] clamps the lane to a level the
-///   anchor allows, so every drop is valid — the line never goes red.
-/// - Auto-scroll: when the cursor enters the top/bottom 100 dp band
-///   while dragging, the list scrolls automatically. Speed ramps with
-///   how deep into the band the cursor sits.
-/// - Drop indicator is a horizontal line under the anchor row at the
-///   chosen depth's indent.
-/// - Bottom bar: Cancel · Undo · Save (in-mode undo, max 5).
-/// - Back arrow doubles as Cancel.
-///
-/// Hover state lives in a single page-level [ValueNotifier] — only the
-/// drop-line widget rebuilds as the cursor moves, everything else stays
-/// painted (see `RepaintBoundary` wrappers below).
+/// **Reorder mode** — the kit's [ReorderController] / [ReorderListScope]:
+/// ⠿ handles drag at once with smart sideways depth; tap a row → the
+/// ← ↑ ↓ → bar; ยกเลิก / ↶ / บันทึก at the bottom; back = cancel. Entering
+/// keeps the layout where it is: the search + filter rows keep their space
+/// (a hint shows there) and the expand state is untouched.
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
 
@@ -71,41 +51,21 @@ class CategoriesPage extends StatefulWidget {
 }
 
 class _CategoriesPageState extends State<CategoriesPage> {
-  bool _reorderMode = false;
+  /// Non-null while reordering.
+  ReorderController? _reorder;
+  bool _savingReorder = false;
 
   /// Which type's tree the list is showing — toggled by the top tab bar.
   CategoryType _listType = CategoryType.expense;
-  List<Category>? _staged;
-  bool _dirty = false;
-  bool _savingReorder = false;
-
-  static const int _inModeUndoLimit = 5;
-  final List<List<Category>> _inModeUndoStack = [];
 
   /// Shell chrome controller — lets reorder mode hide the shell's bottom
   /// nav so the [ModeActionBar] replaces it instead of stacking under
   /// it. Grabbed in [didChangeDependencies].
   ShellChromeController? _shellChrome;
 
-  /// Set of parent ids whose children are hidden in the list. Persists
-  /// across mode switches so the user's collapse choices survive.
+  /// Parent ids whose children are hidden. Shared with the reorder
+  /// controller, so collapse choices carry over between the modes.
   final Set<String> _collapsedIds = <String>{};
-
-  /// Locked while a drag is active so the chevron toggle can't fire
-  /// mid-drag (which would yank rows out from under the pointer).
-  bool _draggingNow = false;
-
-  /// Single source of truth for hover state — the drop-line widget is
-  /// the only thing that listens, so cursor moves don't rebuild the
-  /// whole list.
-  final ValueNotifier<_HoverState> _hover = ValueNotifier<_HoverState>(
-    _HoverState.empty,
-  );
-
-  /// Throttle hover updates to ~one frame at 60 Hz. Without this,
-  /// `onMove`'s firing rate (sub-millisecond) janks even with a
-  /// ValueNotifier.
-  DateTime _lastHoverUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 
   /// The tabs, in bar order — one [AppTabPager] page each.
   static const _types = [CategoryType.expense, CategoryType.income];
@@ -114,23 +74,21 @@ class _CategoriesPageState extends State<CategoriesPage> {
   );
 
   /// One per tab: both pages are built side by side, and a controller
-  /// can't drive two lists. Auto-scroll during a reorder drag uses the
-  /// selected tab's ([_scrollController]).
+  /// can't drive two lists. The same list (and offset) serves both modes.
   final Map<CategoryType, ScrollController> _scrollControllers = {
     for (final t in _types) t: ScrollController(),
   };
-  ScrollController get _scrollController => _scrollControllers[_listType]!;
-  Timer? _autoScrollTimer;
-  double _autoScrollSpeed = 0;
 
   /// Browse-mode search. Non-empty → the tree shows only matches plus
   /// their ancestors (auto-expanded) and long-press reorder is off.
+  final _search = TextEditingController();
   String _query = '';
 
   /// Browse-mode colour / icon filters (the filter row under the search).
-  /// Keyed on what a row *shows* — L2/L3 inherit their L1's icon code.
   final Set<String> _filterColors = {};
   final Set<String> _filterIcons = {};
+
+  bool get _reordering => _reorder != null;
 
   bool get _filtering =>
       _query.trim().isNotEmpty ||
@@ -152,6 +110,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
       _filterColors.clear();
       _filterIcons.clear();
     });
+    // The move bar belongs to a row on the tab being left.
+    _reorder?.select(null);
   }
 
   @override
@@ -197,330 +157,104 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   @override
   void dispose() {
-    // Safety net: if we somehow leave while reorder mode is still active,
-    // restore the shell's chrome so the nav doesn't stay hidden.
-    if (_reorderMode) _shellChrome?.show();
-    _hover.dispose();
+    // Safety net: leaving while reordering restores the shell's nav.
+    if (_reordering) _shellChrome?.show();
+    _reorder?.dispose();
     for (final c in _scrollControllers.values) {
       c.dispose();
     }
     _pages.dispose();
-    _autoScrollTimer?.cancel();
+    _search.dispose();
     super.dispose();
   }
 
   // ── Mode lifecycle ──────────────────────────────────────────────────
 
-  void _enterReorder(List<Category> current) {
+  /// [select] — the long-pressed row, selected on entry so its ← ↑ ↓ →
+  /// bar is right there.
+  void _enterReorder(List<Category> all, {String? select}) {
     HapticFeedback.lightImpact();
-    _shellChrome?.hide(); // action bar replaces the shell nav
-    setState(() {
-      _reorderMode = true;
-      _staged = List<Category>.from(current);
-      _inModeUndoStack.clear();
-      _dirty = false;
+    _shellChrome?.hide(); // the action bar replaces the shell nav
+    final c = ReorderController(
+      items: CategoryReorderLogic.toOutline(all, types: _types),
+      maxDepth: CategoryTree.maxDepth,
+      collapsed: _collapsedIds,
+    )..addListener(_onReorderChanged);
+    if (select != null) c.select(select);
+    _keepOffset(() => _reorder = c);
+  }
+
+  /// Switches mode without moving the list under the finger (QA F1): the
+  /// rows come back at the same offset. The list's [PageStorageKey]
+  /// restores it; this puts it back if that didn't.
+  void _keepOffset(VoidCallback change) {
+    final sc = _scrollControllers[_listType]!;
+    final offset = sc.hasClients ? sc.offset : null;
+    setState(change);
+    if (offset == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !sc.hasClients) return;
+      final max = sc.position.maxScrollExtent;
+      final target = offset > max ? max : offset;
+      if (sc.offset != target) sc.jumpTo(target);
     });
   }
 
-  /// ยกเลิก, ✕ and system back in reorder mode — one behaviour (owner
+  void _onReorderChanged() => setState(() {});
+
+  /// ยกเลิก, ← and system back in reorder mode — one behaviour (owner
   /// 2026-10-10): drop the staged order, no prompt; nothing while saving.
   void _backInReorder() {
-    if (!_savingReorder) _cancelReorder();
+    if (!_savingReorder) _exitReorder();
   }
 
-  void _cancelReorder() {
+  void _exitReorder() {
     _shellChrome?.show(); // restore the shell nav
-    setState(() {
-      _reorderMode = false;
-      _staged = null;
-      _inModeUndoStack.clear();
-      _dirty = false;
-      _draggingNow = false;
+    final c = _reorder;
+    _keepOffset(() {
+      _reorder = null;
       _savingReorder = false;
-      _hover.value = _HoverState.empty;
     });
-    _stopAutoScroll();
+    // After the frame: the scopes stop listening first.
+    WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
   }
 
-  Future<void> _saveReorder() async {
-    if (_staged == null) {
-      _cancelReorder();
+  Future<void> _saveReorder(List<Category> all) async {
+    final c = _reorder;
+    if (c == null || !c.dirty) {
+      _exitReorder();
       return;
     }
     final cubit = context.read<CategoriesCubit>();
     final l = AppLocalizations.of(context)!;
     setState(() => _savingReorder = true);
     try {
-      await cubit.saveReorder(_staged!);
+      await cubit.saveReorder(CategoryReorderLogic.fromOutline(c.items, all));
       HapticFeedback.mediumImpact();
       if (!mounted) return;
-      _cancelReorder();
+      _exitReorder();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _savingReorder = false);
       showAppSnackBar(
         context,
-        '${l.categoriesReorderSave}: ${e.message}',
+        e.code == 'MAX_DEPTH_EXCEEDED'
+            ? l.categoryErrorMaxDepth
+            : '${l.categoriesReorderSave}: ${e.message}',
         tone: Tone.danger,
       );
     }
   }
 
-  void _undoLastDrag() {
-    if (_inModeUndoStack.isEmpty) return;
-    HapticFeedback.selectionClick();
-    setState(() {
-      _staged = _inModeUndoStack.removeLast();
-      _dirty = _inModeUndoStack.isNotEmpty;
-    });
-  }
-
-  void _pushInModeUndo() {
-    _inModeUndoStack.add(List<Category>.unmodifiable(_staged!));
-    if (_inModeUndoStack.length > _inModeUndoLimit) {
-      _inModeUndoStack.removeAt(0);
-    }
-  }
-
   void _toggleCollapse(String id) {
-    if (_draggingNow) return; // C1: lock collapse during drag
-    setState(() {
-      if (_collapsedIds.contains(id)) {
-        _collapsedIds.remove(id);
-      } else {
-        _collapsedIds.add(id);
-      }
-    });
-  }
-
-  // ── Drag lifecycle ──────────────────────────────────────────────────
-
-  /// IDs of the dragged item's **descendants** (not including the root
-  /// itself). These rows are never valid drop anchors — dropping a
-  /// parent into its own descendant would be a cycle. The root is
-  /// tracked separately in [_draggedRoot] because it IS a valid anchor
-  /// (drop-on-self enables in-place level change).
-  final Set<String> _draggedDescendantIds = <String>{};
-
-  /// The ROOT of the currently-dragged subtree.
-  Category? _draggedRoot;
-
-  /// True when the dragged root is **collapsed** at drag start — in
-  /// that case the whole subtree travels with it as a block. False
-  /// when expanded — only the root row moves; descendants stay where
-  /// they are and get re-parented by the outliner rebuild.
-  bool _dragsAsBlock = false;
-
-  void _onDragStarted(Category dragged) {
-    setState(() {
-      _draggingNow = true;
-      _draggedRoot = dragged;
-      _dragsAsBlock = _collapsedIds.contains(dragged.id);
-      _draggedDescendantIds
-        ..clear()
-        ..addAll(
-          CategoryReorderLogic.subtreeIds(
-            dragged.id,
-            _staged!,
-          ).where((id) => id != dragged.id),
-        );
-    });
-    HapticFeedback.mediumImpact();
-  }
-
-  void _onDragEnded() {
-    setState(() {
-      _draggingNow = false;
-      _draggedRoot = null;
-      _dragsAsBlock = false;
-      _draggedDescendantIds.clear();
-    });
-    _hover.value = _HoverState.empty;
-    _stopAutoScroll();
-  }
-
-  /// Called from each row's `DragTarget.onMove`. Resolves the anchor
-  /// based on the cursor's *vertical* position within the row:
-  /// - **Upper portion** (~top 30%) → anchor = the row directly above
-  ///   in the flat list. For the first row of a section, that's
-  ///   `null` (= top-of-section drop).
-  /// - **Lower portion** → anchor = this row (existing behavior).
-  ///
-  /// This generalizes "drop above" to every row, not just the first,
-  /// and removes the need for a dedicated top-of-section widget that
-  /// claims layout space.
-  void _onPointerOverRow({
-    required Category dragged,
-    required Category thisRow,
-    required Offset globalOffset,
-    required RenderBox rowBox,
-  }) {
-    // Throttle: skip if last update < 16 ms ago.
-    final now = DateTime.now();
-    if (now.difference(_lastHoverUpdate).inMilliseconds < 16) return;
-    _lastHoverUpdate = now;
-
-    final local = rowBox.globalToLocal(globalOffset);
-    final localX = local.dx.clamp(0.0, rowBox.size.width);
-    final localY = local.dy;
-
-    // Top 30% of the row = "drop above this row"; the rest = "drop
-    // after this row". 30% feels right for finger taps without
-    // accidentally triggering the upper region while aiming at body.
-    final inUpperPortion = localY < rowBox.size.height * 0.3;
-
-    final anchor = inUpperPortion ? _previousInFlat(thisRow) : thisRow;
-
-    final laneWidth = (rowBox.size.width / 3).clamp(60.0, 120.0);
-    final cursorCol = (localX / laneWidth).floor().clamp(0, 2) + 1;
-
-    final _HoverState next;
-    if (anchor == null) {
-      // Top-of-section drop — always L1, signalled by null anchor
-      // and `endType` so the section's top-line widget can find it.
-      next = _HoverState(
-        anchorRowId: null,
-        depth: 1,
-        isEnd: true,
-        endType: thisRow.type,
-      );
-    } else {
-      final level = CategoryReorderLogic.effectiveLevel(
-        cursorCol: cursorCol,
-        anchor: anchor,
-        all: _staged!,
-      );
-      next = _HoverState(anchorRowId: anchor.id, depth: level, isEnd: false);
-    }
-
-    if (next != _hover.value) {
-      _hover.value = next;
-      HapticFeedback.selectionClick();
-    }
-
-    _maybeAutoScroll(globalOffset);
-  }
-
-  /// Returns the row directly above [thisRow] in the user's flat list
-  /// of [thisRow.type], or null when [thisRow] is the first.
-  Category? _previousInFlat(Category thisRow) {
-    final flat = CategoryReorderLogic.flatten(_staged!, thisRow.type);
-    final idx = flat.indexWhere((r) => r.category.id == thisRow.id);
-    if (idx <= 0) return null;
-    return flat[idx - 1].category;
-  }
-
-  /// Resolves a category id back to its [Category] from the staged
-  /// state. Used by [_commitFromHover] to convert the hover state's
-  /// anchor id into the object [_commitDropOnRow] needs.
-  Category? _findById(String id) {
-    for (final c in _staged!) {
-      if (c.id == id) return c;
-    }
-    return null;
-  }
-
-  /// Single dispatcher used by every row's `DragTarget.onAccept`.
-  /// Reads the live hover state and routes to either the
-  /// top-of-section commit or the row-anchored commit.
-  void _commitFromHover(Category dragged) {
-    final state = _hover.value;
-    if (state.depth == null) return;
-    if (state.anchorRowId == null) {
-      _commitDropAtTop(state.endType ?? dragged.type, dragged);
+    final c = _reorder;
+    if (c != null) {
+      c.toggleCollapsed(id); // the shared set; c notifies
       return;
     }
-    final anchor = _findById(state.anchorRowId!);
-    if (anchor == null) return;
-    _commitDropOnRow(dragged: dragged, anchor: anchor, level: state.depth!);
-  }
-
-  void _onPointerLeftAllRows() {
-    _hover.value = _HoverState.empty;
-    _stopAutoScroll();
-  }
-
-  /// Commits the drop after a row body release. The current hover state
-  /// already carries the clamped effective level — we trust it instead
-  /// of recomputing.
-  void _commitDropOnRow({
-    required Category dragged,
-    required Category anchor,
-    required int level,
-  }) {
     setState(() {
-      _pushInModeUndo();
-      _staged = CategoryReorderLogic.applyMove(
-        all: _staged!,
-        dragged: dragged,
-        anchor: anchor,
-        targetLevel: level,
-        dragOnlyRoot: !_dragsAsBlock,
-      );
-      _dirty = true;
+      if (!_collapsedIds.remove(id)) _collapsedIds.add(id);
     });
-    HapticFeedback.heavyImpact();
-  }
-
-  /// Commits a drop on the top-of-section zone.
-  void _commitDropAtTop(CategoryType type, Category dragged) {
-    if (dragged.type != type) return;
-    setState(() {
-      _pushInModeUndo();
-      _staged = CategoryReorderLogic.applyMove(
-        all: _staged!,
-        dragged: dragged,
-        anchor: null,
-        targetLevel: 1,
-        dragOnlyRoot: !_dragsAsBlock,
-      );
-      _dirty = true;
-    });
-    HapticFeedback.heavyImpact();
-  }
-
-  // ── Auto-scroll near edges ─────────────────────────────────────────
-
-  void _maybeAutoScroll(Offset globalOffset) {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null) return;
-    final local = box.globalToLocal(globalOffset).dy;
-    final viewportHeight = box.size.height;
-    const edge = 100.0;
-
-    double speed = 0;
-    if (local < edge) {
-      speed = -((edge - local) / edge) * 8.0;
-    } else if (local > viewportHeight - edge) {
-      speed = ((local - (viewportHeight - edge)) / edge) * 8.0;
-    }
-
-    if (speed == 0) {
-      _stopAutoScroll();
-      return;
-    }
-    _autoScrollSpeed = speed;
-    _autoScrollTimer ??= Timer.periodic(
-      const Duration(milliseconds: 16),
-      (_) => _tickAutoScroll(),
-    );
-  }
-
-  void _tickAutoScroll() {
-    if (!_scrollController.hasClients) return;
-    final pos = _scrollController.position;
-    final next = (pos.pixels + _autoScrollSpeed).clamp(
-      0.0,
-      pos.maxScrollExtent,
-    );
-    if (next == pos.pixels) return;
-    _scrollController.jumpTo(next);
-  }
-
-  void _stopAutoScroll() {
-    _autoScrollTimer?.cancel();
-    _autoScrollTimer = null;
-    _autoScrollSpeed = 0;
   }
 
   // ── Build ──────────────────────────────────────────────────────────
@@ -531,27 +265,25 @@ class _CategoriesPageState extends State<CategoriesPage> {
     return BlocBuilder<CategoriesCubit, CategoriesState>(
       builder: (context, state) {
         final all = state.categories;
-        final source = _reorderMode ? (_staged ?? all) : all;
-        final users = source.where((c) => !c.isSystem).toList();
+        final users = all.where((c) => !c.isSystem).toList();
         final typeUsers = users.where((c) => c.type == _listType).toList();
-        final visible = _reorderMode ? null : _visibleIds(typeUsers);
+        final reorder = _reorder;
         return PopScope(
-          canPop: !_reorderMode,
+          canPop: !_reordering,
           onPopInvokedWithResult: (didPop, _) {
-            if (didPop) return;
-            if (_reorderMode) _backInReorder();
+            if (!didPop && _reordering) _backInReorder();
           },
           child: Scaffold(
             // The bar floats over the body; the pinned column below starts
             // with a spacer of its height.
             extendBodyBehindAppBar: true,
             appBar: AppTopBar(
-              title: _reorderMode
-                  ? l.categoriesReorderEnter
-                  : l.categoriesTitle,
+              // The title never changes with the mode (owner, QA T1) — the
+              // action bar and the hint say it's reorder mode.
+              title: l.categoriesTitle,
               showBack: true,
-              editing: _reorderMode,
-              onBack: _reorderMode ? _backInReorder : null,
+              editing: _reordering,
+              onBack: _reordering ? _backInReorder : null,
             ),
             body: TabSwitchBody(
               child: AsyncStateView(
@@ -591,40 +323,23 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         ),
                       ],
                     ),
-                    // Hidden (not just disabled) in reorder mode so the
-                    // tree can't be filtered mid-drag.
-                    if (!_reorderMode && typeUsers.isNotEmpty)
-                      AppSearchBar(
-                        hint: l.categoriesSearchHint,
-                        onChanged: (v) => setState(() => _query = v),
-                      ),
-                    // [สี▾][ไอคอน▾] … (⇅) — same row as the other list
-                    // pages. Hidden with the search in reorder mode.
-                    if (!_reorderMode) _filterRow(l, typeUsers, all),
+                    // An empty tab has nothing to search or filter.
+                    if (typeUsers.isNotEmpty) _header(l, typeUsers, all),
                     Expanded(
                       // Swipe sideways = the other tab, following the finger
                       // (off while reordering — a sideways drag there picks
-                      // a depth lane; paging stops via physics only).
+                      // a level).
                       child: AppTabPager<CategoryType>(
                         controller: _pages,
                         values: _types,
                         selected: _listType,
                         onChanged: _setListType,
-                        enabled: !_reorderMode,
+                        enabled: !_reordering,
                         builder: (context, t) {
-                          if (t == _listType) {
-                            return _listOrEmpty(l, typeUsers, all, visible, t);
-                          }
-                          final other = users
-                              .where((c) => c.type == t)
-                              .toList();
-                          return _listOrEmpty(
-                            l,
-                            other,
-                            all,
-                            _reorderMode ? null : _visibleIds(other),
-                            t,
-                          );
+                          final rows = t == _listType
+                              ? typeUsers
+                              : users.where((c) => c.type == t).toList();
+                          return _listOrEmpty(l, rows, all, t);
                         },
                       ),
                     ),
@@ -632,30 +347,83 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 ),
               ),
             ),
-            // Browse: the shell's nav shows through. Reorder: this bar
-            // replaces it (ShellChrome.hide on entry).
-            bottomNavigationBar: _reorderMode
-                ? ModeActionBar(
-                    canUndo: _inModeUndoStack.isNotEmpty && !_savingReorder,
-                    canSave: _dirty && !_savingReorder,
-                    saving: _savingReorder,
-                    cancelLabel: l.categoriesReorderCancel,
-                    saveLabel: l.categoriesReorderSave,
-                    undoTooltip: l.categoriesUndo,
-                    onCancel: _backInReorder,
-                    onUndo: _undoLastDrag,
-                    onSave: _saveReorder,
-                  )
-                : null,
+            // Browse: the shell's nav shows through. Reorder: the move bar
+            // (while a row is selected) over this bar replaces it.
+            bottomNavigationBar: reorder == null
+                ? null
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ReorderMoveBar(controller: reorder),
+                      ModeActionBar(
+                        canUndo: reorder.canUndo && !_savingReorder,
+                        canSave: reorder.dirty && !_savingReorder,
+                        saving: _savingReorder,
+                        cancelLabel: l.categoriesReorderCancel,
+                        saveLabel: l.categoriesReorderSave,
+                        undoTooltip: l.categoriesUndo,
+                        onCancel: _backInReorder,
+                        onUndo: reorder.undo,
+                        onSave: () => _saveReorder(all),
+                      ),
+                    ],
+                  ),
           ),
         );
       },
     );
   }
 
-  /// `[สี▾][ไอคอน▾] … (⇅)` — filters left, reorder right (the top bar
-  /// carries no page actions; add is the dashed tile ending the list). ⇅ =
-  /// reorder mode, same as long-pressing a row.
+  /// Search + `[สี▾][ไอคอน▾] … (✏️)`. In reorder mode they keep their
+  /// space (invisible, so nothing under the finger moves — QA F1) and a
+  /// hint takes it.
+  Widget _header(
+    AppLocalizations l,
+    List<Category> typeUsers,
+    List<Category> all,
+  ) {
+    final browse = Column(
+      children: [
+        AppSearchBar(
+          controller: _search,
+          hint: l.categoriesSearchHint,
+          onChanged: (v) => setState(() => _query = v),
+        ),
+        _filterRow(l, typeUsers, all),
+      ],
+    );
+    if (!_reordering) return browse;
+    final scheme = Theme.of(context).colorScheme;
+    return Stack(
+      children: [
+        Visibility(
+          visible: false,
+          maintainSize: true,
+          maintainAnimation: true,
+          maintainState: true,
+          child: browse,
+        ),
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                l.categoriesReorderTapHint,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// `[สี▾][ไอคอน▾] … (✏️)` — filters left, the list's edit mode right
+  /// (the top bar carries no page actions; add is the dashed tile ending
+  /// the list).
   Widget _filterRow(
     AppLocalizations l,
     List<Category> typeUsers,
@@ -727,14 +495,14 @@ class _CategoriesPageState extends State<CategoriesPage> {
         ),
       ],
       trailing: AppIconButton(
-        icon: AppIcons.reorder,
+        icon: AppIcons.edit,
         size: 36,
         tooltip: l.categoriesReorderEnter,
         onPressed: typeUsers.length < 2
             ? null
             : () {
-                // Reorder shows the whole tree — drop search / filters
-                // (the search field goes away with them).
+                // Reorder shows the whole tree — drop search / filters.
+                _search.clear();
                 _query = '';
                 _filterColors.clear();
                 _filterIcons.clear();
@@ -748,7 +516,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
     AppLocalizations l,
     List<Category> typeUsers,
     List<Category> all,
-    Set<String>? visible,
     CategoryType type,
   ) {
     if (typeUsers.isEmpty) {
@@ -756,11 +523,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
         icon: AppIcons.category,
         title: l.categoriesEmptyTitle,
         message: l.categoriesEmptyMessage,
-        cta: _reorderMode
+        cta: _reordering
             ? null
-            : AddTile(label: l.categoriesAddNew, onTap: () => _add(l)),
+            : AddTile(label: l.categoriesAddNew, onTap: () => _add(l, type)),
       );
     }
+    final visible = _reordering ? null : _visibleIds(typeUsers);
     if (visible != null && visible.isEmpty) {
       return EmptyView(
         icon: AppIcons.search,
@@ -768,149 +536,86 @@ class _CategoriesPageState extends State<CategoriesPage> {
         message: '',
       );
     }
-    final body = _ListBody(
-      users: typeUsers,
-      type: type,
-      reorderMode: _reorderMode,
-      visibleIds: visible,
-      collapsedIds: _collapsedIds,
-      draggedRootId: _draggedRoot?.id,
-      draggedDescendantIds: _draggedDescendantIds,
-      dragsAsBlock: _dragsAsBlock,
-      hover: _hover,
+    final byId = {for (final c in typeUsers) c.id: c};
+    final body = ReorderListScope(
+      controller: _reorder,
       scrollController: _scrollControllers[type]!,
-      onLongPressEnter: () => _enterReorder(all),
-      onToggleCollapse: _toggleCollapse,
-      onDragStarted: _onDragStarted,
-      onDragEnded: _onDragEnded,
-      onPointerOverRow: _onPointerOverRow,
-      onPointerLeftAllRows: _onPointerLeftAllRows,
-      onCommit: _commitFromHover,
-      addLabel: l.categoriesAddNew,
-      // The add tile ends the list in browse mode only.
-      onAdd: _reorderMode ? null : () => _add(l),
+      indentStep: AppSpacing.xxl,
+      indentBase: AppSpacing.lg,
+      dropLabel: (parentId) {
+        final parent = parentId == null ? null : byId[parentId];
+        return parent == null
+            ? l.categoriesReorderTopLevel
+            : l.categoriesReorderUnder(parent.name);
+      },
+      child: _ListBody(
+        users: typeUsers,
+        type: type,
+        reorder: _reorder,
+        visibleIds: visible,
+        collapsedIds: _collapsedIds,
+        scrollController: _scrollControllers[type]!,
+        // Long-press enters the mode (not while searching / filtering —
+        // the tree isn't whole then); it never starts a drag.
+        onLongPress: visible != null || typeUsers.length < 2
+            ? null
+            : (id) => _enterReorder(all, select: id),
+        onToggleCollapse: _toggleCollapse,
+        addLabel: l.categoriesAddNew,
+        onAdd: _reordering ? null : () => _add(l, type),
+      ),
     );
-    if (_reorderMode) return body;
+    // Kept (off) while reordering: the same widgets above the list in both
+    // modes keep its scroll offset when the mode switches.
     return PullToRefresh(
+      enabled: !_reordering,
       onRefresh: () => context.read<CategoriesCubit>().load(),
       child: body,
     );
   }
 
-  void _add(AppLocalizations l) {
+  /// Create on [type] — the tab the add tile is on (QA F3).
+  void _add(AppLocalizations l, CategoryType type) {
     if (!context.read<CategoriesCubit>().canAddMore) {
       showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
       return;
     }
-    context.push('/categories/new');
+    context.push('/categories/new?type=${type.toJson()}');
   }
 }
 
 // ────────────────────────────────────────────────────────────────────
-// Hover state
-// ────────────────────────────────────────────────────────────────────
-
-/// Single source of truth for "which row + which depth lane is the
-/// drag pointer over right now". Consumed by the drop-line indicator
-/// (which is the only widget rebuilding on cursor move).
-class _HoverState {
-  const _HoverState({
-    this.anchorRowId,
-    this.depth,
-    this.isEnd = false,
-    this.endType,
-  });
-
-  final String? anchorRowId;
-  final int? depth;
-  final bool isEnd;
-  final CategoryType? endType;
-
-  static const empty = _HoverState();
-
-  @override
-  bool operator ==(Object other) =>
-      other is _HoverState &&
-      other.anchorRowId == anchorRowId &&
-      other.depth == depth &&
-      other.isEnd == isEnd &&
-      other.endType == endType;
-
-  @override
-  int get hashCode => Object.hash(anchorRowId, depth, isEnd, endType);
-}
-
-// ────────────────────────────────────────────────────────────────────
-// List body — handles browse + reorder, tree walking, collapse
+// List body — one ListView for both modes (so its offset survives the
+// switch): browse walks the tree, reorder walks the controller's outline.
 // ────────────────────────────────────────────────────────────────────
 
 class _ListBody extends StatelessWidget {
   const _ListBody({
     required this.users,
     required this.type,
-    required this.reorderMode,
+    required this.reorder,
     required this.visibleIds,
     required this.collapsedIds,
-    required this.draggedRootId,
-    required this.draggedDescendantIds,
-    required this.dragsAsBlock,
-    required this.hover,
     required this.scrollController,
-    required this.onLongPressEnter,
+    required this.onLongPress,
     required this.onToggleCollapse,
-    required this.onDragStarted,
-    required this.onDragEnded,
-    required this.onPointerOverRow,
-    required this.onPointerLeftAllRows,
-    required this.onCommit,
     required this.addLabel,
     this.onAdd,
   });
 
+  /// This tab's user categories.
   final List<Category> users;
-
-  /// The single type this list renders (driven by the top tab bar).
   final CategoryType type;
 
-  final bool reorderMode;
+  /// Non-null while reordering.
+  final ReorderController? reorder;
 
   /// Search result ids (matches + ancestors); null = show everything.
   final Set<String>? visibleIds;
-
   final Set<String> collapsedIds;
-
-  /// Id of the dragged subtree's root, or null when no drag is active.
-  /// The root always fades (it's the row being moved).
-  final String? draggedRootId;
-
-  /// Descendants of the dragged root. Faded only when [dragsAsBlock] is
-  /// true (collapsed parent travels with subtree); when false (expanded
-  /// parent), descendants stay solid because they aren't moving.
-  final Set<String> draggedDescendantIds;
-
-  /// True = drag a collapsed parent's whole subtree as one block.
-  /// False = drag only the dragged row; descendants stay in place and
-  /// get re-parented by the outliner walk during reconstruction.
-  final bool dragsAsBlock;
-
-  final ValueNotifier<_HoverState> hover;
   final ScrollController scrollController;
-  final VoidCallback onLongPressEnter;
+  final void Function(String id)? onLongPress;
   final void Function(String id) onToggleCollapse;
-  final void Function(Category dragged) onDragStarted;
-  final VoidCallback onDragEnded;
-  final void Function({
-    required Category dragged,
-    required Category thisRow,
-    required Offset globalOffset,
-    required RenderBox rowBox,
-  })
-  onPointerOverRow;
-  final VoidCallback onPointerLeftAllRows;
-
-  /// Single commit dispatcher. Reads the live hover state to decide
-  /// between top-of-section drops (anchor null) and row-anchored drops.
-  final void Function(Category dragged) onCommit;
 
   /// The dashed "+ เพิ่มหมวดหมู่" tile after the last row (add lives in
   /// the body, not the top bar). Null hides it (reorder mode).
@@ -919,24 +624,21 @@ class _ListBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final roots =
-        users.where((c) => c.type == type && c.parentId == null).toList()
-          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
+    final rows = reorder == null ? _treeRows() : _outlineRows(reorder!);
     return ListView(
+      // Restores the offset when the mode switch rebuilds the list.
+      key: PageStorageKey('categories-list-${type.name}'),
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.only(
         bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
-        if (reorderMode) _TopOfSectionLine(type: type, hover: hover),
         // Hairline-separated, as on the other library lists.
-        for (final (i, row) in [
-          for (final parent in roots)
-            if (visibleIds?.contains(parent.id) ?? true)
-              ..._renderSubtree(parent, depth: 0),
-        ].indexed) ...[if (i > 0) const RowDivider(), row],
+        for (final (i, row) in rows.indexed) ...[
+          if (i > 0) const RowDivider(),
+          row,
+        ],
         if (onAdd != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -952,254 +654,118 @@ class _ListBody extends StatelessWidget {
     );
   }
 
-  List<Widget> _renderSubtree(Category category, {required int depth}) {
-    final children = users.where((c) => c.parentId == category.id).toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    // Searching forces matches + ancestors open.
-    final isCollapsed =
-        visibleIds == null && collapsedIds.contains(category.id);
-    // Fade rules:
-    // - The dragged root always fades (it's the row being moved).
-    // - Descendants fade only when the parent is collapsed at drag
-    //   start (`dragsAsBlock`). When expanded, descendants stay solid
-    //   because they're not moving with the drag.
-    final isDraggingThis =
-        category.id == draggedRootId ||
-        (dragsAsBlock && draggedDescendantIds.contains(category.id));
-
-    // Color inheritance — every row's display color comes from its L1
-    // ancestor. Override the color field once here so every downstream
-    // widget (icon circle, drag proxy, etc.) picks it up without prop
-    // drilling.
-    final inheritedIconCode = CategoryTree.resolveIconCode(category, users);
-    final renderCategory = inheritedIconCode == category.iconCode
-        ? category
-        : category.copyWith(iconCode: inheritedIconCode);
-
-    return [
-      RepaintBoundary(
-        child: Opacity(
-          opacity: isDraggingThis ? 0.3 : 1.0,
-          child: _Row(
-            category: renderCategory,
-            depth: depth,
-            reorderMode: reorderMode,
-            hasChildren: children.isNotEmpty,
-            isCollapsed: isCollapsed,
-            hover: hover,
-            dragEnabled: reorderMode || visibleIds == null,
-            onLongPressEnter: onLongPressEnter,
-            onToggleCollapse: onToggleCollapse,
-            onDragStarted: onDragStarted,
-            onDragEnded: onDragEnded,
-            onPointerOverRow: onPointerOverRow,
-            onPointerLeftAllRows: onPointerLeftAllRows,
-            onCommit: onCommit,
-          ),
+  /// Browse: the tree by sort order, collapsed parents closed, search
+  /// results forced open.
+  List<Widget> _treeRows() {
+    List<Category> childrenOf(String? id) =>
+        users.where((c) => c.parentId == id).toList()
+          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final out = <Widget>[];
+    void walk(Category c, int depth) {
+      if (!(visibleIds?.contains(c.id) ?? true)) return;
+      final children = childrenOf(c.id);
+      final collapsed = visibleIds == null && collapsedIds.contains(c.id);
+      out.add(
+        _row(
+          c,
+          depth: depth,
+          hasChildren: children.isNotEmpty,
+          collapsed: collapsed,
+          reordering: false,
         ),
-      ),
-      if (!isCollapsed)
-        for (final c in children)
-          if (visibleIds?.contains(c.id) ?? true)
-            ..._renderSubtree(c, depth: depth + 1),
+      );
+      if (!collapsed) {
+        for (final child in children) {
+          walk(child, depth + 1);
+        }
+      }
+    }
+
+    for (final root in childrenOf(null)) {
+      walk(root, 0);
+    }
+    return out;
+  }
+
+  /// Reorder: the staged outline's visible rows for this tab.
+  List<Widget> _outlineRows(ReorderController c) {
+    final byId = {for (final cat in users) cat.id: cat};
+    return [
+      for (final item in c.visible(section: type))
+        if (byId[item.id] case final cat?)
+          _row(
+            cat,
+            depth: item.level - 1,
+            hasChildren: c.hasChildren(item.id),
+            collapsed: c.isCollapsed(item.id),
+            reordering: true,
+          ),
     ];
   }
-}
 
-// ────────────────────────────────────────────────────────────────────
-// One row — used for both browse + reorder. Picks behavior from props.
-// ────────────────────────────────────────────────────────────────────
-
-class _Row extends StatelessWidget {
-  const _Row({
-    required this.category,
-    required this.depth,
-    required this.reorderMode,
-    required this.dragEnabled,
-    required this.hasChildren,
-    required this.isCollapsed,
-    required this.hover,
-    required this.onLongPressEnter,
-    required this.onToggleCollapse,
-    required this.onDragStarted,
-    required this.onDragEnded,
-    required this.onPointerOverRow,
-    required this.onPointerLeftAllRows,
-    required this.onCommit,
-  });
-
-  final Category category;
-  final int depth;
-  final bool reorderMode;
-
-  /// False while searching — rows are plain taps, no long-press reorder.
-  final bool dragEnabled;
-  final bool hasChildren;
-  final bool isCollapsed;
-  final ValueNotifier<_HoverState> hover;
-  final VoidCallback onLongPressEnter;
-  final void Function(String id) onToggleCollapse;
-  final void Function(Category dragged) onDragStarted;
-  final VoidCallback onDragEnded;
-  final void Function({
-    required Category dragged,
-    required Category thisRow,
-    required Offset globalOffset,
-    required RenderBox rowBox,
-  })
-  onPointerOverRow;
-  final VoidCallback onPointerLeftAllRows;
-
-  /// Single dispatcher invoked on drop accept. Reads the live hover
-  /// state to route between top-of-section and row-anchored commits.
-  final void Function(Category dragged) onCommit;
-
-  @override
-  Widget build(BuildContext context) {
-    final body = _RowContent(
-      category: category,
-      depth: depth,
-      reorderMode: reorderMode,
-      hasChildren: hasChildren,
-      isCollapsed: isCollapsed,
-      onToggleCollapse: () => onToggleCollapse(category.id),
-    );
-
-    // The LongPressDraggable wraps every row in BOTH modes so that one
-    // continuous long-press in browse mode can fall through into a drag
-    // without the user having to release and long-press again. In
-    // browse mode, [onDragStarted] also flips the page into reorder
-    // mode in the same frame; the drag overlay keeps following the
-    // pointer because Draggable's gesture stream isn't tied to the
-    // rebuild cycle.
-    //
-    // DragTarget is also always present for symmetry, but its handlers
-    // short-circuit when [reorderMode] is false. Keeping the structural
-    // shape stable across mode transitions avoids gesture-recognizer
-    // resets mid-press.
-    if (!dragEnabled) return body;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Builder(
-          builder: (rowContext) {
-            return DragTarget<Category>(
-              onMove: (details) {
-                if (!reorderMode) return;
-                final box = rowContext.findRenderObject() as RenderBox?;
-                if (box == null) return;
-                onPointerOverRow(
-                  dragged: details.data,
-                  thisRow: category,
-                  globalOffset: details.offset,
-                  rowBox: box,
-                );
-              },
-              onLeave: (_) {
-                if (reorderMode) onPointerLeftAllRows();
-              },
-              // Self-drop is allowed — the page-level handler distinguishes
-              // descendants (rejected via empty hover state) from the root
-              // itself (accepted, used for in-place level change).
-              onWillAcceptWithDetails: (_) => reorderMode,
-              onAcceptWithDetails: (d) {
-                if (!reorderMode) return;
-                if (hover.value.depth == null) return;
-                onCommit(d.data);
-              },
-              builder: (context, candidate, rejected) {
-                return LongPressDraggable<Category>(
-                  data: category,
-                  // 500 ms in browse mode — entering reorder mode is a
-                  // mode switch, so the gesture should feel deliberate.
-                  // 350 ms in reorder mode — the user is already
-                  // committed; quicker pickup keeps successive drags
-                  // snappy.
-                  delay: Duration(milliseconds: reorderMode ? 350 : 500),
-                  hapticFeedbackOnStart: false, // we trigger our own
-                  onDragStarted: () {
-                    // Browse mode: flip into reorder mode first so the
-                    // staged list and tilt cue are ready by the time the
-                    // user moves. The same gesture continues into the drag.
-                    if (!reorderMode) onLongPressEnter();
-                    onDragStarted(category);
-                  },
-                  onDraggableCanceled: (_, _) => onDragEnded(),
-                  onDragEnd: (_) => onDragEnded(),
-                  onDragCompleted: onDragEnded,
-                  feedback: _DragProxy(category: category),
-                  // The outer wrapper in `_renderSubtree` already applies
-                  // Opacity(0.3) to the dragged root (and to descendants
-                  // when [dragsAsBlock] is true). Wrapping body in another
-                  // Opacity here would multiply (0.3 × 0.3 = 0.09) and
-                  // make the placeholder almost invisible.
-                  childWhenDragging: body,
-                  child: body,
-                );
-              },
-            );
-          },
-        ),
-        // Drop-line indicator under this row. Always rendered so the
-        // widget tree shape doesn't change when reorder mode toggles —
-        // in browse mode, hover is always empty so the AnimatedSize
-        // collapses to zero height.
-        ValueListenableBuilder<_HoverState>(
-          valueListenable: hover,
-          builder: (context, state, _) {
-            final anchored =
-                state.anchorRowId == category.id && state.depth != null;
-            return AnimatedSize(
-              duration: const Duration(milliseconds: 120),
-              alignment: Alignment.topCenter,
-              child: anchored
-                  ? ReorderDropLine(
-                      depth: state.depth!,
-                      indentPerDepth: AppSpacing.xxl,
-                      baseIndent: AppSpacing.lg,
-                    )
-                  : const SizedBox.shrink(),
-            );
-          },
-        ),
-      ],
+  Widget _row(
+    Category c, {
+    required int depth,
+    required bool hasChildren,
+    required bool collapsed,
+    required bool reordering,
+  }) {
+    return ReorderRow(
+      key: ValueKey(c.id),
+      id: c.id,
+      child: _RowContent(
+        category: c,
+        // Every level shows its own icon (owner 2026-10-11).
+        iconCode: CategoryTree.resolveIconCode(c, users),
+        depth: depth,
+        reorderMode: reordering,
+        hasChildren: hasChildren,
+        isCollapsed: collapsed,
+        onToggleCollapse: () => onToggleCollapse(c.id),
+        onLongPress: reordering || onLongPress == null
+            ? null
+            : () => onLongPress!(c.id),
+      ),
     );
   }
 }
 
 /// One category on the list — [ListRow] on the tree's indent: icon ·
 /// name · description, then "ซ่อนจากรายงาน" and ▾/▴ (parents only).
-/// Reorder mode tilts the icon (the shared draggable cue) and turns the
-/// tap off; ▾/▴ keeps working there.
+/// In reorder mode the tap belongs to the [ReorderRow] (select); ▾/▴
+/// keeps working.
 class _RowContent extends StatelessWidget {
   const _RowContent({
     required this.category,
+    required this.iconCode,
     required this.depth,
     required this.reorderMode,
     required this.hasChildren,
     required this.isCollapsed,
     required this.onToggleCollapse,
+    this.onLongPress,
   });
 
   final Category category;
+  final IconCode? iconCode;
   final int depth;
   final bool reorderMode;
   final bool hasChildren;
   final bool isCollapsed;
   final VoidCallback onToggleCollapse;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final hidden = !category.includeInReport;
-    final circle = IconDisplay(
-      type: IconType.category,
-      size: 40,
-      iconCode: category.iconCode,
-    );
     return ListRow(
       indent: depth * AppSpacing.xxl,
-      leading: reorderMode ? ReorderModeTilt(child: circle) : circle,
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 40,
+        iconCode: iconCode,
+      ),
       title: category.name,
       subtitle: category.description?.trim(),
       trailing: hidden || hasChildren
@@ -1210,7 +776,6 @@ class _RowContent extends StatelessWidget {
                   LabelPill(
                     label: l.categoryHiddenFromReport,
                     icon: AppIcons.hidden,
-                    size: PillSize.small,
                   ),
                 if (hasChildren)
                   IconButton(
@@ -1226,92 +791,7 @@ class _RowContent extends StatelessWidget {
       onTap: reorderMode
           ? null
           : () => context.push('/categories/${category.id}'),
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Top-of-section drop indicator — a thin line that appears between the
-// section header and the first row only when the live hover state has
-// `anchorRowId == null` (cursor is in the upper portion of the first
-// row). Layout cost is zero when no drop is targeted at the top, so
-// reorder mode keeps the same spacing as browse mode.
-// ────────────────────────────────────────────────────────────────────
-
-class _TopOfSectionLine extends StatelessWidget {
-  const _TopOfSectionLine({required this.type, required this.hover});
-
-  final CategoryType type;
-  final ValueNotifier<_HoverState> hover;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<_HoverState>(
-      valueListenable: hover,
-      builder: (context, state, _) {
-        final active =
-            state.anchorRowId == null &&
-            state.endType == type &&
-            state.depth != null;
-        return AnimatedSize(
-          duration: const Duration(milliseconds: 120),
-          alignment: Alignment.topCenter,
-          child: active
-              ? ReorderDropLine(
-                  depth: state.depth!,
-                  indentPerDepth: AppSpacing.xxl,
-                  baseIndent: AppSpacing.lg,
-                )
-              : const SizedBox.shrink(),
-        );
-      },
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Drag proxy (floats with cursor)
-// ────────────────────────────────────────────────────────────────────
-
-class _DragProxy extends StatelessWidget {
-  const _DragProxy({required this.category});
-  final Category category;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      color: scheme.surfaceContainerHigh,
-      child: SizedBox(
-        width: 280,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              IconDisplay(
-                type: IconType.category,
-                size: 40,
-                iconCode: category.iconCode,
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(
-                  category.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              const Icon(AppIcons.reorder),
-            ],
-          ),
-        ),
-      ),
+      onLongPress: onLongPress,
     );
   }
 }

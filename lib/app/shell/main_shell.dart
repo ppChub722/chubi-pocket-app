@@ -11,6 +11,7 @@ import '../../shared/widgets/feedback/confirm_dialog.dart';
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
 import 'fade_branch_container.dart';
 import 'main_bottom_nav.dart';
+import 'quick_create_context.dart';
 import 'shell_chrome.dart';
 import 'tab_nav.dart';
 
@@ -46,6 +47,10 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
   final ShellChromeController _chrome = ShellChromeController();
+
+  /// Pages that preset the centre +'s quick create (a wallet's page →
+  /// that wallet).
+  final QuickCreateContext _quickCreate = QuickCreateContext();
 
   static final _moreBranch = ShellTab.more.index;
 
@@ -234,7 +239,10 @@ class _MainShellState extends State<MainShell>
         onBack: _onBackAtRoot,
         child: ShellSwipeScope(
           handlers: _swipeHandlers,
-          child: _shell(context),
+          child: QuickCreateContextScope(
+            registry: _quickCreate,
+            child: _shell(context),
+          ),
         ),
       ),
     );
@@ -294,7 +302,11 @@ class _MainShellState extends State<MainShell>
               onTabSelected: _goBranch,
               // Quick create event-from-bills lives INSIDE the + sheet
               // (spec §10/4.24).
-              onAddPressed: () => showQuickCreateSheet(context),
+              // Preset by the page on screen, if it offers one.
+              onAddPressed: () => showQuickCreateSheet(
+                context,
+                account: _quickCreate.active()?.account,
+              ),
               onMorePressed: () => _goBranch(_moreBranch),
             ),
     );

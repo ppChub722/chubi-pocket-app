@@ -9,6 +9,7 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/skeleton_box.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -17,17 +18,21 @@ import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
 import '../widgets/account_card.dart';
 
-/// Wallets tab root (§10, owner 2026-10-10):
+/// How the wallets list is ordered — client-side; [custom] is the user's
+/// own order (the only one that can be rearranged).
+enum _WalletSort { custom, balance, name, type }
+
+/// Wallets tab root (§10, owner 2026-10-11):
 ///
-///   summary (mine only — the shared pot is never summed in, spec §14;
-///   👁 hides amounts)
-///   ของฉัน ⇅ · grid (2 col phone / 3 tablet) · dashed "+ เพิ่มกระเป๋า"
-///   กระเป๋าร่วม ⇅ · grid
+///   summary card (net · composition · debt / shared pot)
+///   ✏️ ………………………………………… [ลำดับที่จัดเอง ▾]
+///   one flat grid in that order (shared wallets keep their badge) ·
+///   dashed "+ เพิ่มกระเป๋า"
 ///   "กระเป๋าที่เก็บถาวร (n) ›"
 ///
-/// ⇅ (or a long-press on a wallet) → reorder mode: a drag list per group,
-/// save / cancel replacing the shell nav. The order is the caller's own,
-/// saved mine-first in one PATCH /accounts/reorder (contract §3).
+/// ✏️ (or a long-press on a wallet) → the kit's reorder mode, flat — only
+/// in ลำดับที่จัดเอง. The order is the caller's own, saved in one
+/// PATCH /accounts/reorder (contract §3).
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
 
@@ -41,14 +46,19 @@ const double _cardExtent = 156;
 
 class _AccountsPageState extends State<AccountsPage> {
   int _archivedCount = 0;
+  _WalletSort _sort = _WalletSort.custom;
 
-  /// Non-null while reordering — the staged order, per group.
-  List<Account>? _stagedMine;
-  List<Account>? _stagedShared;
+  /// Non-null while reordering — the kit's flat reorder mode.
+  ReorderController? _reorder;
+  final _reorderScroll = ScrollController();
   bool _savingOrder = false;
   ShellChromeController? _shellChrome;
 
-  bool get _reordering => _stagedMine != null;
+  bool get _reordering => _reorder != null;
+
+  /// Rearranging only makes sense on the user's own order.
+  bool _canReorder(List<Account> accounts) =>
+      _sort == _WalletSort.custom && accounts.length > 1;
 
   @override
   void didChangeDependencies() {
@@ -59,57 +69,9 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   void dispose() {
     if (_reordering) _shellChrome?.show();
+    _reorder?.dispose();
+    _reorderScroll.dispose();
     super.dispose();
-  }
-
-  void _enterReorder(List<Account> current) {
-    HapticFeedback.lightImpact();
-    _shellChrome?.hide(); // the action bar replaces the shell nav
-    setState(() {
-      _stagedMine = [
-        for (final a in current)
-          if (!a.isShared) a,
-      ];
-      _stagedShared = [
-        for (final a in current)
-          if (a.isShared) a,
-      ];
-    });
-  }
-
-  void _exitReorder() {
-    _shellChrome?.show();
-    setState(() {
-      _stagedMine = null;
-      _stagedShared = null;
-      _savingOrder = false;
-    });
-  }
-
-  void _move(List<Account> group, int from, int to) => setState(() {
-    final item = group.removeAt(from);
-    group.insert(to, item);
-  });
-
-  Future<void> _saveOrder() async {
-    final l = AppLocalizations.of(context)!;
-    setState(() => _savingOrder = true);
-    try {
-      // One order for all of them: mine first, then the shared ones.
-      await context.read<AccountsCubit>().saveOrder([
-        ..._stagedMine!,
-        ..._stagedShared!,
-      ]);
-      if (mounted) _exitReorder();
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _savingOrder = false);
-      showAppSnackBar(
-        context,
-        '${l.accountsReorderSave}: ${e.message}',
-        tone: Tone.danger,
-      );
-    }
   }
 
   @override
@@ -135,6 +97,94 @@ class _AccountsPageState extends State<AccountsPage> {
     await context.read<AccountsCubit>().load();
     await _loadArchivedCount();
   }
+
+  // ── Sort ────────────────────────────────────────────────────────────
+
+  String _sortLabel(AppLocalizations l, _WalletSort s) => switch (s) {
+    _WalletSort.custom => l.accountsSortCustom,
+    _WalletSort.balance => l.accountsSortBalance,
+    _WalletSort.name => l.accountsSortName,
+    _WalletSort.type => l.accountsSortType,
+  };
+
+  /// [accounts] in the cubit's (the user's) order, re-sorted for [_sort];
+  /// ties keep the user's order.
+  List<Account> _sorted(List<Account> accounts) {
+    final indexed = [...accounts.indexed];
+    int byOrder((int, Account) a, (int, Account) b) => a.$1.compareTo(b.$1);
+    final int Function((int, Account), (int, Account)) cmp = switch (_sort) {
+      _WalletSort.custom => byOrder,
+      _WalletSort.balance => (a, b) {
+        final c = b.$2.balance.compareTo(a.$2.balance);
+        return c != 0 ? c : byOrder(a, b);
+      },
+      _WalletSort.name => (a, b) {
+        final c = a.$2.name.toLowerCase().compareTo(b.$2.name.toLowerCase());
+        return c != 0 ? c : byOrder(a, b);
+      },
+      _WalletSort.type => (a, b) {
+        final c = a.$2.type.index.compareTo(b.$2.type.index);
+        return c != 0 ? c : byOrder(a, b);
+      },
+    };
+    indexed.sort(cmp);
+    return [for (final (_, a) in indexed) a];
+  }
+
+  // ── Reorder mode ────────────────────────────────────────────────────
+
+  /// [select] — the long-pressed wallet, selected on entry so its ↑ ↓ bar
+  /// is right there.
+  void _enterReorder(List<Account> current, {String? select}) {
+    HapticFeedback.lightImpact();
+    _shellChrome?.hide(); // the action bar replaces the shell nav
+    final c = ReorderController(
+      maxDepth: 1,
+      items: [for (final a in current) OutlineItem(a.id, 1)],
+    )..addListener(_onReorderChanged);
+    if (select != null) c.select(select);
+    setState(() => _reorder = c);
+  }
+
+  void _onReorderChanged() => setState(() {});
+
+  void _exitReorder() {
+    _shellChrome?.show();
+    final c = _reorder;
+    setState(() {
+      _reorder = null;
+      _savingOrder = false;
+    });
+    // After the frame: the scope stops listening first.
+    WidgetsBinding.instance.addPostFrameCallback((_) => c?.dispose());
+  }
+
+  Future<void> _saveOrder(List<Account> accounts) async {
+    final l = AppLocalizations.of(context)!;
+    final c = _reorder;
+    if (c == null || !c.dirty) {
+      _exitReorder();
+      return;
+    }
+    final byId = {for (final a in accounts) a.id: a};
+    setState(() => _savingOrder = true);
+    try {
+      await context.read<AccountsCubit>().saveOrder([
+        for (final item in c.items) ?byId[item.id],
+      ]);
+      if (mounted) _exitReorder();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _savingOrder = false);
+      showAppSnackBar(
+        context,
+        '${l.accountsReorderSave}: ${e.message}',
+        tone: Tone.danger,
+      );
+    }
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +226,7 @@ class _AccountsPageState extends State<AccountsPage> {
               ),
             ),
             builder: (context) {
-              if (_reordering) return _reorderView(context);
+              if (_reordering) return _reorderView(context, accounts);
               return _gridView(context, accounts, cols);
             },
           );
@@ -185,31 +235,60 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  Widget _gridView(BuildContext context, List<Account> accounts, int cols) {
-    final l = AppLocalizations.of(context)!;
-    final mine = [
-      for (final a in accounts)
-        if (!a.isShared) a,
-    ];
-    final shared = [
-      for (final a in accounts)
-        if (a.isShared) a,
-    ];
-    Widget reorderButton() => IconButton(
-      tooltip: l.accountsReorder,
-      icon: const Icon(AppIcons.reorder),
-      onPressed: () => _enterReorder(accounts),
-    );
-    // One group: header (⇅ when it has two to swap), then its cards.
-    List<Widget> group(String title, List<Account> list, {bool add = false}) =>
-        [
-          SliverToBoxAdapter(
-            child: SectionHeader(
-              title: title,
-              count: list.length,
-              trailing: list.length < 2 ? null : reorderButton(),
+  /// `✏️ ……… [sort ▾]` — the list's edit mode left (✏️ = the list's edit
+  /// mode, owner 2026-10-11), the order right. No search.
+  Widget _toolbar(AppLocalizations l, List<Account> accounts) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          AppIconButton(
+            icon: AppIcons.edit,
+            size: 36,
+            tooltip: l.accountsReorder,
+            onPressed: _canReorder(accounts)
+                ? () => _enterReorder(accounts)
+                : null,
+          ),
+          const Spacer(),
+          OptionMenuAnchor<_WalletSort>(
+            selected: _sort,
+            onSelected: (s) => setState(() => _sort = s),
+            options: [
+              for (final s in _WalletSort.values)
+                SheetOption(value: s, label: _sortLabel(l, s)),
+            ],
+            builder: (context, toggle) => FilterDropdownChip(
+              label: _sortLabel(l, _sort),
+              icon: AppIcons.sort,
+              active: _sort != _WalletSort.custom,
+              onTap: toggle,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _gridView(BuildContext context, List<Account> accounts, int cols) {
+    final l = AppLocalizations.of(context)!;
+    final list = _sorted(accounts);
+    return PullToRefresh(
+      onRefresh: _refresh,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Clear the transparent top bar.
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.paddingOf(context).top),
+          ),
+          SliverToBoxAdapter(child: _WalletsSummary(accounts: accounts)),
+          SliverToBoxAdapter(child: _toolbar(l, accounts)),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             sliver: SliverGrid(
@@ -228,31 +307,18 @@ class _AccountsPageState extends State<AccountsPage> {
                 }
                 final a = list[i];
                 return GestureDetector(
-                  onLongPress: accounts.length < 2
-                      ? null
-                      : () => _enterReorder(accounts),
+                  onLongPress: _canReorder(accounts)
+                      ? () => _enterReorder(accounts, select: a.id)
+                      : null,
                   child: AccountCard(
                     account: a,
                     horizontal: false,
                     onTap: () => context.push('/accounts/${a.id}'),
                   ),
                 );
-              }, childCount: list.length + (add ? 1 : 0)),
+              }, childCount: list.length + 1),
             ),
           ),
-        ];
-    return PullToRefresh(
-      onRefresh: _refresh,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // Clear the transparent top bar.
-          SliverToBoxAdapter(
-            child: SizedBox(height: MediaQuery.paddingOf(context).top),
-          ),
-          SliverToBoxAdapter(child: _WalletsSummary(accounts: accounts)),
-          ...group(l.accountsGroupMine, mine, add: true),
-          if (shared.isNotEmpty) ...group(l.walletSharedLabel, shared),
           if (_archivedCount > 0)
             SliverToBoxAdapter(
               child: Padding(
@@ -276,122 +342,125 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  /// Reorder mode: a hint, a drag list per group (a wallet stays in its
-  /// group), and save / cancel at the bottom.
-  Widget _reorderView(BuildContext context) {
+  /// Reorder mode (the kit's, flat): a hint, the wallets with ⠿ handles
+  /// (drag at once; tap → the ↑ ↓ bar), then the move bar + ยกเลิก / ↶ /
+  /// บันทึก at the bottom.
+  Widget _reorderView(BuildContext context, List<Account> accounts) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final mine = _stagedMine!;
-    final shared = _stagedShared!;
-    Widget list(List<Account> group) => ReorderableListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      buildDefaultDragHandles: false,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      itemCount: group.length,
-      onReorderItem: (from, to) => _move(group, from, to),
-      itemBuilder: (context, i) {
-        final a = group[i];
-        return Padding(
-          key: ValueKey(a.id),
-          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-          child: Row(
-            children: [
-              Expanded(child: AccountCard(account: a, horizontal: true)),
-              ReorderableDragStartListener(
-                index: i,
-                child: const Padding(
-                  padding: EdgeInsets.all(AppSpacing.md),
-                  child: Icon(AppIcons.reorder),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final c = _reorder!;
+    final byId = {for (final a in accounts) a.id: a};
     return Column(
       children: [
         Expanded(
-          child: ListView(
-            padding: EdgeInsets.only(
-              // Clear the transparent top bar.
-              top: MediaQuery.paddingOf(context).top + AppSpacing.sm,
-              bottom: AppSpacing.lg,
-            ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Text(
-                  l.accountsReorderHint,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+          child: ReorderListScope(
+            controller: c,
+            scrollController: _reorderScroll,
+            child: ListView(
+              controller: _reorderScroll,
+              padding: EdgeInsets.only(
+                // Clear the transparent top bar.
+                top: MediaQuery.paddingOf(context).top + AppSpacing.sm,
+                bottom: AppSpacing.lg,
+              ),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    0,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
+                  child: Text(
+                    l.accountsReorderTapHint,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              ),
-              if (mine.isNotEmpty) ...[
-                SectionHeader(title: l.accountsGroupMine, count: mine.length),
-                list(mine),
+                for (final item in c.visible())
+                  if (byId[item.id] case final a?)
+                    ReorderRow(
+                      key: ValueKey(a.id),
+                      id: a.id,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.xs,
+                          0,
+                          AppSpacing.xs,
+                        ),
+                        child: AccountCard(account: a, horizontal: true),
+                      ),
+                    ),
               ],
-              if (shared.isNotEmpty) ...[
-                SectionHeader(title: l.walletSharedLabel, count: shared.length),
-                list(shared),
-              ],
-            ],
+            ),
           ),
         ),
+        ReorderMoveBar(controller: c),
         ModeActionBar(
-          canSave: true,
+          canUndo: c.canUndo && !_savingOrder,
+          canSave: c.dirty && !_savingOrder,
           saving: _savingOrder,
           cancelLabel: l.accountsReorderDiscard,
           saveLabel: l.accountsReorderSave,
+          undoTooltip: l.categoriesUndo,
           onCancel: _exitReorder,
-          onSave: _saveOrder,
+          onUndo: c.undo,
+          onSave: () => _saveOrder(accounts),
         ),
       ],
     );
   }
 }
 
-/// Wallet-tab dashboard. "Mine" figures only — the shared pot is shown on
-/// its own line and never summed into them (spec §14); 👁 hides amounts.
+/// Wallet-tab dashboard (owner 2026-10-11). "Mine" figures only — the
+/// shared pot is never summed into them (spec §14); no number twice:
 ///
-/// - Net = what I have − what I owe ([Account.asset] / [Account.debt]:
-///   an overpaid card is money I have, an overdrawn wallet is debt)
-/// - What the money on hand is made of (a bar by wallet type)
-/// - Money on hand · debt · shared pot
-/// - Credit-limit usage across my cards ([Account.creditUsed])
+///   ยอดสุทธิ · n กระเป๋า (ร่วม m)                          👁
+///   ฿ net                     (what I have − what I owe)
+///   ▓▓▓▓▒▒░░  cash 60% · bank 30% · …   (what the money on hand is)
+///   เงินที่มี ฿x              (only with debt — else it equals net)
+///   ใช้วงเงิน n% · เหลือ ฿y   (cards with a limit; liability colour)
+///   หนี้บัตร ฿a · กองกลาง ฿b  (each only when non-zero)
 class _WalletsSummary extends StatelessWidget {
   const _WalletsSummary({required this.accounts});
   final List<Account> accounts;
 
-  static Tone _toneOf(AccountType t) => switch (t) {
-    AccountType.cash => Tone.success,
-    AccountType.bank => Tone.info,
-    AccountType.eWallet => Tone.primary,
-    _ => Tone.neutral,
-  };
+  /// A type's segment / legend colour: its group's theme token
+  /// ([AccountType.colorOf] — have = cool, owe = warm, owner 2026-10-11),
+  /// one shade per type so the segments stay apart.
+  static Color _colorOf(BuildContext context, AccountType t) => t
+      .colorOf(context)
+      .withValues(
+        alpha: switch (t) {
+          AccountType.cash || AccountType.creditCard => 1,
+          AccountType.bank || AccountType.payLater => 0.65,
+          AccountType.eWallet => 0.4,
+        },
+      );
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final liability = palette.walletLiability;
+    final muted = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
     var debt = 0.0;
     var shared = 0.0;
-    var hasShared = false;
+    var sharedCount = 0;
     var creditUsed = 0.0;
     var creditLimit = 0.0;
-    var mineCount = 0;
     final byType = <AccountType, double>{};
     for (final a in accounts) {
       if (a.isShared) {
-        hasShared = true;
+        sharedCount++;
         shared += a.balance;
         continue;
       }
-      mineCount++;
       debt += a.debt;
       if (a.asset > 0) byType[a.type] = (byType[a.type] ?? 0) + a.asset;
       final limit = a.creditLimit;
@@ -404,6 +473,25 @@ class _WalletsSummary extends StatelessWidget {
     final net = assets - debt;
     final parts = byType.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
+
+    // "หนี้บัตร ฿a · กองกลาง ฿b" — each part only when non-zero.
+    final bottom = <InlineSpan>[
+      if (debt > 0) ...[
+        TextSpan(text: '${l.accountsSummaryCardDebt} '),
+        TextSpan(
+          text: moneyString(context, debt),
+          style: TextStyle(color: liability, fontWeight: FontWeight.w600),
+        ),
+      ],
+      if (shared != 0) ...[
+        if (debt > 0) const TextSpan(text: ' · '),
+        TextSpan(text: '${l.accountsTotalShared} '),
+        TextSpan(
+          text: moneyString(context, shared),
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ],
+    ];
 
     return TintedCard(
       tint: scheme.primary,
@@ -428,7 +516,8 @@ class _WalletsSummary extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '${l.accountsSummaryNet} · '
-                    '${l.accountsSummaryWalletCount(mineCount)}',
+                    '${l.accountsSummaryWalletCount(accounts.length)}'
+                    '${sharedCount > 0 ? ' ${l.accountsSummarySharedCount(sharedCount)}' : ''}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.labelLarge?.copyWith(
@@ -442,9 +531,9 @@ class _WalletsSummary extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: MoneyText(
-                net,
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+                net == 0 ? 0 : net,
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
@@ -466,9 +555,7 @@ class _WalletsSummary extends StatelessWidget {
                               1,
                               1000,
                             ),
-                            child: ColoredBox(
-                              color: _toneOf(p.key).color(context),
-                            ),
+                            child: ColoredBox(color: _colorOf(context, p.key)),
                           ),
                       ],
                     ),
@@ -488,7 +575,7 @@ class _WalletsSummary extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: _toneOf(p.key).color(context),
+                            color: _colorOf(context, p.key),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -505,20 +592,22 @@ class _WalletsSummary extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: AppSpacing.md),
-            SummaryStats(
-              stats: [
-                SummaryStat(label: l.accountsSummaryAssets, amount: assets),
-                if (debt > 0)
-                  SummaryStat(
-                    label: l.accountsSummaryDebt,
-                    amount: debt,
-                    tone: MoneyTone.expense,
-                  ),
-                if (hasShared)
-                  SummaryStat(label: l.accountsTotalShared, amount: shared),
-              ],
-            ),
+            // With no debt, the money on hand IS the net — not twice.
+            if (debt > 0) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: '${l.accountsSummaryAssets} '),
+                    TextSpan(
+                      text: moneyString(context, assets),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+                style: muted,
+              ),
+            ],
             if (creditLimit > 0) ...[
               const SizedBox(height: AppSpacing.md),
               Padding(
@@ -529,8 +618,13 @@ class _WalletsSummary extends StatelessWidget {
                     moneyString(context, creditLimit - creditUsed),
                   ),
                   value: creditUsed / creditLimit,
+                  color: liability,
                 ),
               ),
+            ],
+            if (bottom.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Text.rich(TextSpan(children: bottom), style: muted),
             ],
           ],
         ),
@@ -539,7 +633,7 @@ class _WalletsSummary extends StatelessWidget {
   }
 }
 
-/// Loading placeholder mirroring the real layout: summary, a group header
+/// Loading placeholder mirroring the real layout: summary, the toolbar
 /// and the grid at the cards' own height.
 class _AccountsSkeleton extends StatelessWidget {
   const _AccountsSkeleton({required this.cols});
@@ -559,8 +653,12 @@ class _AccountsSkeleton extends StatelessWidget {
         const SkeletonBox(height: 168, borderRadius: AppRadius.md),
         const SizedBox(height: AppSpacing.lg),
         const Align(
-          alignment: Alignment.centerLeft,
-          child: SkeletonBox(width: 96, height: 20, borderRadius: AppRadius.xs),
+          alignment: Alignment.centerRight,
+          child: SkeletonBox(
+            width: 120,
+            height: 28,
+            borderRadius: AppRadius.xs,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         GridView.builder(

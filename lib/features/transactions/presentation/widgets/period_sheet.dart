@@ -157,7 +157,6 @@ class _PeriodPickerState extends State<PeriodPicker> {
             TxPeriodKind.custom,
           ],
           selected: _unit,
-          size: PillSize.medium,
           label: (k) => txPeriodUnitLabel(l, k),
           onSelected: _onUnit,
           // Picking กำหนดเอง / ทั้งหมด again still acts.

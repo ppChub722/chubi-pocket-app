@@ -12,17 +12,77 @@ import '../../data/accounts_repository.dart';
 import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
 import '../wallet_errors.dart';
+import 'wallet_invite_picker.dart';
 
 /// A wallet's members (spec §14 / B4) — the wallet page's สมาชิก tab
 /// (`/accounts/:id/members` opens it there):
 ///
 /// - Active members: avatar · name (คุณ) · role pill; a pending invite
 ///   carries "รอตอบรับ". ⋯ holds what the viewer may do to that member.
-/// - "+ เชิญทางอีเมล" (owner): the FIRST invite on a personal wallet asks
-///   first — sharing exposes the wallet's whole history (spec §14/4).
+/// - "+ เชิญจากผู้ติดต่อ" (owner; no email invite since 2026-10-11): pick
+///   one of my contacts linked to an app account ([showWalletInvitePicker]);
+///   the FIRST invite on a personal wallet asks first — sharing exposes the
+///   wallet's whole history (spec §14/4).
 /// - History: members who left (dimmed, joined / left dates) —
 ///   membership is append-only (spec §14/2.4).
 /// - Leave (self), remove / transfer ownership (owner — spec §14/2.5).
+/// The invite flow (owner): pick a linked contact ([showWalletInvitePicker],
+/// [members] still in the wallet hidden), confirm the FIRST invite on a
+/// personal wallet (spec §14/4 — sharing exposes its history), send, then
+/// refresh the wallets cache. Returns whether an invite went out. Used by
+/// the สมาชิก tab and the wallet page's "invite" row.
+Future<bool> inviteWalletMember(
+  BuildContext context, {
+  required String accountId,
+  required List<WalletMember> members,
+}) async {
+  final l = AppLocalizations.of(context)!;
+  // Hidden: everyone in the wallet or already invited.
+  final contact = await showWalletInvitePicker(
+    context,
+    excludeUserIds: {
+      for (final m in members)
+        if (!m.hasLeft) m.userId,
+    },
+  );
+  if (contact == null || !context.mounted) return false;
+  final name = contact.effectiveName;
+
+  // Conversion warning: gate the FIRST invite on a currently-personal
+  // wallet. Adding to an already-shared wallet skips the warning.
+  if (members.where((m) => m.isActive).length <= 1) {
+    final account = context.read<AccountsCubit>().byId(accountId);
+    final ok = await showConfirmDialog(
+      context,
+      title: l.walletConvertWarnTitle(name),
+      message: l.walletConvertWarnBody(account?.name ?? '', name),
+      confirmLabel: l.walletInviteSend,
+    );
+    if (!ok || !context.mounted) return false;
+  }
+
+  final repo = context.read<AccountsRepository>();
+  final accountsCubit = context.read<AccountsCubit>();
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    await repo.inviteMember(accountId: accountId, contactId: contact.id);
+    showAppSnackBarOn(messenger, l.walletInviteSent, tone: Tone.success);
+    // Membership changed server-side; refresh the accounts cache so
+    // is_shared / members[] on the list + detail stay in sync.
+    await accountsCubit.load();
+    return true;
+  } on ApiException catch (e) {
+    showAppSnackBarOn(
+      messenger,
+      e.code == 'VALIDATION_ERROR'
+          ? l.walletErrorInviteInvalid
+          : walletErrorMessage(l, e),
+      tone: Tone.danger,
+    );
+    return false;
+  }
+}
+
 class WalletMembersView extends StatefulWidget {
   const WalletMembersView({
     required this.accountId,
@@ -87,10 +147,6 @@ class _WalletMembersViewState extends State<WalletMembersView> {
     return false;
   }
 
-  /// Active (non-pending, non-left) member count — drives the
-  /// "first invite converts this wallet" warning gate.
-  int get _activeCount => _members.where((m) => m.isActive).length;
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -132,7 +188,7 @@ class _WalletMembersViewState extends State<WalletMembersView> {
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.md),
               child: AddTile(
-                label: l.walletMembersInvite,
+                label: l.walletInviteFromContacts,
                 variant: AddTileVariant.row,
                 icon: AppIcons.inviteMember,
                 onTap: () => _onInvitePressed(l),
@@ -161,39 +217,12 @@ class _WalletMembersViewState extends State<WalletMembersView> {
   // ─── Invite flow ─────────────────────────────────────────────────────
 
   Future<void> _onInvitePressed(AppLocalizations l) async {
-    final email = await showAppSheetCustom<String>(
+    final invited = await inviteWalletMember(
       context,
-      builder: (_) => const _InviteEmailSheet(),
+      accountId: widget.accountId,
+      members: _members,
     );
-    if (email == null || !mounted) return;
-
-    // Conversion warning (spec §14/4): gate the FIRST invite on a
-    // currently-personal wallet. Adding to an already-shared wallet
-    // skips the warning.
-    if (_activeCount <= 1) {
-      final account = context.read<AccountsCubit>().byId(widget.accountId);
-      final ok = await showConfirmDialog(
-        context,
-        title: l.walletConvertWarnTitle(email),
-        message: l.walletConvertWarnBody(account?.name ?? '', email),
-        confirmLabel: l.walletInviteSend,
-      );
-      if (!ok || !mounted) return;
-    }
-
-    final repo = context.read<AccountsRepository>();
-    final accountsCubit = context.read<AccountsCubit>();
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await repo.inviteMember(accountId: widget.accountId, email: email);
-      showAppSnackBarOn(messenger, l.walletInviteSent, tone: Tone.success);
-      await _load();
-      // Membership changed server-side; refresh the accounts cache so
-      // is_shared / members[] on the list + detail stay in sync.
-      await accountsCubit.load();
-    } on ApiException catch (e) {
-      showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
-    }
+    if (invited && mounted) await _load();
   }
 
   // ─── Member actions ──────────────────────────────────────────────────
@@ -324,7 +353,6 @@ class _MemberRow extends StatelessWidget {
                 ? l.walletMemberRoleOwner
                 : l.walletMemberRoleMember,
             tone: member.isOwner ? Tone.primary : Tone.neutral,
-            size: PillSize.small,
           );
     final destructive = TextStyle(color: scheme.error);
     return DetailRow(
@@ -381,82 +409,5 @@ class _MemberRow extends StatelessWidget {
   static String _dateOnly(String iso) {
     final t = iso.indexOf('T');
     return t > 0 ? iso.substring(0, t) : iso;
-  }
-}
-
-/// "เชิญสมาชิก" sheet — one email field; resolves the trimmed email, or
-/// null on cancel.
-class _InviteEmailSheet extends StatefulWidget {
-  const _InviteEmailSheet();
-
-  @override
-  State<_InviteEmailSheet> createState() => _InviteEmailSheetState();
-}
-
-class _InviteEmailSheetState extends State<_InviteEmailSheet> {
-  final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController();
-
-  @override
-  void dispose() {
-    _email.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pop(_email.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return AppSheetScaffold(
-      title: l.walletInviteTitle,
-      footer: Row(
-        children: [
-          Expanded(
-            child: AppButton(
-              label: l.commonCancel,
-              variant: AppButtonVariant.outlined,
-              size: AppButtonSize.large,
-              expand: true,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: AppButton(
-              label: l.walletInviteSend,
-              icon: AppIcons.send,
-              size: AppButtonSize.large,
-              expand: true,
-              onPressed: _submit,
-            ),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Form(
-          key: _formKey,
-          child: AppTextField(
-            controller: _email,
-            autofocus: true,
-            label: l.walletInviteEmailLabel,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _submit(),
-            validator: (v) {
-              final t = (v ?? '').trim();
-              if (t.isEmpty || !t.contains('@') || t.length > 254) {
-                return l.walletInviteEmailInvalid;
-              }
-              return null;
-            },
-          ),
-        ),
-      ),
-    );
   }
 }
