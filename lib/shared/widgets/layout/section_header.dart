@@ -11,6 +11,7 @@ class SectionHeader extends StatelessWidget {
     this.count,
     this.actionLabel,
     this.onAction,
+    this.trailing,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.lg,
       AppSpacing.md,
@@ -24,6 +25,9 @@ class SectionHeader extends StatelessWidget {
   final int? count;
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// An icon action at the end instead (the wallet groups' ⇅).
+  final Widget? trailing;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -69,6 +73,7 @@ class SectionHeader extends StatelessWidget {
                 ],
               ),
             ),
+          ?trailing,
         ],
       ),
     );

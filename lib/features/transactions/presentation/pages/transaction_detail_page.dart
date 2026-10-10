@@ -23,12 +23,16 @@ import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
+import '../../../projects/data/projects_repository.dart';
+import '../../../projects/presentation/cubit/projects_cubit.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../transaction_edit.dart';
+import '../tx_rules.dart';
 import '../widgets/draft_form.dart';
+import '../widgets/event_pick.dart';
 import '../widgets/tx_summary_title.dart';
 
 /// `/transactions/:id` (§9) — the quick-create form's own layout, in the
@@ -144,6 +148,67 @@ class _LoadedState extends State<_Loaded>
   final _heroKey = GlobalKey();
   final _listKey = GlobalKey();
   bool _collapsed = false;
+
+  /// Edit mode: the event picked on the card, applied on บันทึก after the
+  /// row's own fields (null = no change).
+  EventTarget? _eventChange;
+
+  /// An event change alone is worth saving (and asking before discarding).
+  @override
+  bool get isDirty => super.isDirty || _eventChange != null;
+
+  @override
+  void cancelEdit() {
+    _eventChange = null;
+    super.cancelEdit();
+  }
+
+  Future<void> _pickEvent() async {
+    final l = AppLocalizations.of(context)!;
+    final current = widget.tx.projectId;
+    final description = _c.description.text.trim();
+    final date = DateFormatter.medium(
+      _c.date,
+      locale: Localizations.localeOf(context).toLanguageTag(),
+    );
+    final picked = await showEventTargetSheet(
+      context,
+      suggestedName:
+          '${description.isEmpty ? l.quickEventDefaultName : description}'
+          ' · $date',
+      currentProjectId: current,
+      selectedProjectId: switch (_eventChange) {
+        ExistingEventTarget(:final project) => project.id,
+        _ => null,
+      },
+    );
+    if (picked == null || !mounted) return;
+    setState(
+      () => _eventChange = switch (picked) {
+        // Back to how it is = no change.
+        RemoveFromEvent() when current == null => null,
+        ExistingEventTarget(:final project) when project.id == current => null,
+        _ => picked,
+      },
+    );
+  }
+
+  /// ✕ on the card: out of the event it's in, or drop a pick not saved.
+  void _clearEvent() => setState(
+    () => _eventChange = widget.tx.projectId == null
+        ? null
+        : const RemoveFromEvent(),
+  );
+
+  /// The card's name while editing: the pick, else the event it's in.
+  String? _eventName(AppLocalizations l, Transaction tx) =>
+      switch (_eventChange) {
+        null =>
+          tx.projectId == null
+              ? null
+              : tx.project?.name ?? l.txDetailSourceProject,
+        final change => eventTargetName(l, change),
+      };
 
   /// The top bar's height over the body (status bar included) — the list
   /// runs beneath it. Read from the body's context each build.
@@ -329,6 +394,9 @@ class _LoadedState extends State<_Loaded>
     if (!await confirmIncompleteSplits(context, _c)) return;
     if (!mounted) return;
     setSaving(true);
+    final projects = context.read<ProjectsRepository>();
+    final projectsCubit = context.read<ProjectsCubit>();
+    final txCubit = context.read<TransactionsCubit>();
     try {
       final warn = await saveTransactionEdit(
         context,
@@ -338,6 +406,39 @@ class _LoadedState extends State<_Loaded>
         initialToAccountId: _initialToAccountId,
       );
       if (!mounted) return;
+      // The event goes after the row's own fields. Failing, the fields
+      // stay saved and edit mode stays open on the event pick.
+      final change = _eventChange;
+      if (change != null) {
+        try {
+          await applyEventChange(
+            projects,
+            txId: _edited.id,
+            currentProjectId: _edited.projectId,
+            change: change,
+          );
+        } on ApiException catch (e) {
+          if (!mounted) return;
+          commitSaved(working);
+          _reload();
+          enterEdit();
+          showAppSnackBar(
+            context,
+            l.txEventFailedAfterSave(eventErrorMessage(l, e)),
+            tone: Tone.danger,
+          );
+          return;
+        }
+        _eventChange = null;
+        unawaited(projectsCubit.load());
+        // Joining / leaving moves the row's splits too (BE) — re-read it.
+        try {
+          await txCubit.refreshOne(_edited.id, afterWrite: true);
+        } on ApiException {
+          // The event changed; the next refresh shows the rest.
+        }
+        if (!mounted) return;
+      }
       HapticFeedback.mediumImpact();
       commitSaved(working);
       _reload();
@@ -381,11 +482,9 @@ class _LoadedState extends State<_Loaded>
     // The row's author edits its splits in place (expense / income only);
     // anyone else sees them read-only, with the way to the debts.
     // Only once the form holds the real people — see [_splitsPrefilled].
+    // Who may is one rule ([txCanEditSplits]: the BE's flag, else ours).
     final canEditSplits =
-        canEdit &&
-        tx.type != TransactionType.transfer &&
-        _edited.canEditCategory &&
-        _splitsPrefilled;
+        canEdit && txCanEditSplits(_edited, category: cat) && _splitsPrefilled;
     final editing = isEditing;
 
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -402,57 +501,72 @@ class _LoadedState extends State<_Loaded>
         updated != null &&
         updated.difference(created).inSeconds.abs() >= 60;
     void openProject() => openPage(context, '/projects/${tx.projectId}');
+    // The one rule for the event card ([txCanJoinEvent]).
+    final canJoinEvent = canEdit && txCanJoinEvent(_edited, category: cat);
 
     // After the note (owner 2026-10-10). View: who it's split with, each
-    // with where they stand, then "มาจาก ›". Edit: what a saved row can't
-    // change, read-only with the way to it.
+    // with where they stand, then the event card. Edit: what a saved row
+    // can't change, read-only; the event card as a picker.
+    // The sections after the form's own (owner 2026-10-10, rules #16 / #17
+    // — the wallet / category detail kit): หารกับ, then อีเวนต์.
+    final splitTitle = tx.type == TransactionType.income
+        ? l.txSplitShareShort
+        : l.txSplitWith;
+    final eventName = tx.projectId == null
+        ? null
+        : tx.project?.name ?? l.txDetailSourceProject;
     final trailingRows = editing
         ? <Widget>[
+            // Can't edit these people here (another member's row, or the
+            // people didn't load): say so; nothing in splits pushes a page.
             if (hasSplits && !canEditSplits)
-              DraftFieldRow(
-                label: l.txSplitWith,
-                child: _LinkValue(
-                  text: splitCount > 0
-                      ? l.txDetailSplitEditElsewhere(splitCount)
-                      : l.txSplitEditOnDebts,
-                  locked: true,
-                  // Edit mode: nothing in splits pushes a page.
-                  onTap: null,
-                ),
+              SectionCard(
+                title: splitTitle,
+                children: [
+                  DetailRow(
+                    leading: const Icon(AppIcons.lock),
+                    label: splitCount > 0
+                        ? l.txDetailSplitEditElsewhere(splitCount)
+                        : l.txSplitEditOnDebts,
+                  ),
+                ],
               ),
-            if (tx.projectId != null)
-              DraftFieldRow(
-                label: l.quickEventLabel,
-                child: _LinkValue(
-                  text: tx.project?.name ?? l.txDetailSourceProject,
-                  locked: true,
-                  onTap: openProject,
-                ),
-              ),
+            // Joins / moves / leaves on บันทึก (with the rest of the edit).
+            if (canJoinEvent)
+              SectionCard(
+                children: [
+                  EventRow(
+                    name: _eventName(l, tx),
+                    onTap: _pickEvent,
+                    onClear: _eventName(l, tx) == null ? null : _clearEvent,
+                  ),
+                ],
+              )
+            else if (eventName != null)
+              SectionCard(children: [EventRow(name: eventName, locked: true)]),
           ]
         : <Widget>[
             if (tx.splits.isNotEmpty)
-              _SplitList(splits: tx.splits, onOpen: _openSplits)
+              SectionCard(
+                title: splitTitle,
+                children: [
+                  for (final s in tx.splits)
+                    _SplitRow(split: s, onOpen: () => _openSplits(s)),
+                ],
+              )
             else if (hasSplits)
               // Another member's row on a shared wallet: the BE keeps the
               // people to their author — say where to look, never a bare
-              // count (owner 2026-10-10).
-              DraftFieldRow(
-                label: l.txSplitWith,
-                child: _LinkValue(
-                  text: l.txSplitSeeDebts,
-                  // Says where to look; tapping goes nowhere (owner
-                  // 2026-10-10: no page pushes from this row).
-                  onTap: null,
-                ),
+              // count; tapping goes nowhere (owner 2026-10-10).
+              SectionCard(
+                title: splitTitle,
+                children: [DetailRow(label: l.txSplitSeeDebts)],
               ),
-            if (tx.projectId != null)
-              DraftFieldRow(
-                label: l.txDetailSource,
-                child: _LinkValue(
-                  text: tx.project?.name ?? l.txDetailSourceProject,
-                  onTap: openProject,
-                ),
+            // Tapping opens the event — the one link here, like a split
+            // person → their debts (owner 2026-10-10).
+            if (eventName != null)
+              SectionCard(
+                children: [EventRow(name: eventName, onTap: openProject)],
               ),
           ];
 
@@ -545,6 +659,11 @@ class _LoadedState extends State<_Loaded>
                     onEdit: canEdit ? _enterEdit : null,
                     onEnterEdit: canEdit ? (f) => _enterEdit(focus: f) : null,
                     trailingRows: trailingRows,
+                    sectioned: true,
+                    // Moving into an event: the splits go with it (titled so).
+                    eventPending:
+                        _eventChange is NewEventTarget ||
+                        _eventChange is ExistingEventTarget,
                   ),
                   if ((editing && canEdit) || isRepayment)
                     DangerRow(
@@ -677,61 +796,17 @@ class _LockNote extends StatelessWidget {
   }
 }
 
-/// A value that leads somewhere else — "มาจาก Japan Trip ›"; [locked] adds
-/// a 🔒 for what a saved row can't change ("2 คน · แก้ได้ที่หน้าหนี้ ›").
-class _LinkValue extends StatelessWidget {
-  const _LinkValue({
-    required this.text,
-    required this.onTap,
-    this.locked = false,
-  });
-  final String text;
-
-  /// Null = information only: no ripple, no ›.
-  final VoidCallback? onTap;
-  final bool locked;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: 10,
-        ),
-        child: Row(
-          children: [
-            if (locked) ...[
-              Icon(AppIcons.lock, size: 16, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.sm),
-            ],
-            Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: locked ? scheme.onSurfaceVariant : null,
-                ),
-              ),
-            ),
-            if (onTap != null)
-              Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// "หารกับ" as the people themselves — each with what they owe and where
-/// it stands (owner 2026-10-10). Only a person's icon + name are tappable
-/// — they open that person's debts; the rest of the row is just text.
-class _SplitList extends StatelessWidget {
-  const _SplitList({required this.splits, required this.onOpen});
-  final List<TxSplit> splits;
-  final ValueChanged<TxSplit> onOpen;
+/// One person of the "หารกับ" section (owner 2026-10-10):
+///
+///   (avatar) ลี                        ฿120
+///                                 รอคืน ฿20
+///
+/// Only the avatar + name are tappable — they open that person's debts;
+/// the amount and where it stands are just text.
+class _SplitRow extends StatelessWidget {
+  const _SplitRow({required this.split, required this.onOpen});
+  final TxSplit split;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -739,90 +814,87 @@ class _SplitList extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final palette = Theme.of(context).extension<AppColors>()!;
+    final s = split;
     String money(double v) => moneyString(context, v);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          l.txSplitWith,
-          style: textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
-        ),
-        for (final s in splits)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: InkWell(
-                      onTap: () => onOpen(s),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            UserAvatar(displayName: s.personName, size: 28),
-                            const SizedBox(width: AppSpacing.sm),
-                            Flexible(
-                              child: Text(
-                                s.personName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: textTheme.bodyLarge,
-                              ),
-                            ),
-                          ],
+    // Where it stands, from my side of it.
+    final status = switch (s.status) {
+      // Repaid more than the (edited) amount: say which way the difference
+      // goes back (owner 2026-10-10).
+      _ when s.isOverpaid =>
+        s.owedToMe
+            ? l.txSplitStatusOverpaidToThem(money(-s.outstanding))
+            : l.txSplitStatusOverpaidByMe(money(-s.outstanding)),
+      'settled' => s.owedToMe ? l.txSplitStatusPaid : l.txSplitStatusRepaid,
+      'cancelled' => l.txSplitStatusCancelled,
+      _ when s.settledAmount > 0.005 =>
+        s.owedToMe
+            ? l.txSplitStatusPartPaid(money(s.settledAmount), money(s.amount))
+            : l.txSplitStatusPartRepaid(
+                money(s.settledAmount),
+                money(s.amount),
+              ),
+      _ =>
+        s.owedToMe
+            ? l.txSplitStatusAwaiting(money(s.outstanding))
+            : l.txSplitStatusToPay(money(s.outstanding)),
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: InkWell(
+                onTap: onOpen,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      UserAvatar(displayName: s.personName, size: 32),
+                      const SizedBox(width: AppSpacing.md),
+                      Flexible(
+                        child: Text(
+                          s.personName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-                Text(money(s.amount), style: textTheme.bodyLarge),
-                const SizedBox(width: AppSpacing.md),
-                // Where it stands, from my side of it.
-                Text(
-                  switch (s.status) {
-                    // Repaid more than the (edited) amount: say which way
-                    // the difference goes back (owner 2026-10-10).
-                    _ when s.isOverpaid =>
-                      s.owedToMe
-                          ? l.txSplitStatusOverpaidToThem(money(-s.outstanding))
-                          : l.txSplitStatusOverpaidByMe(money(-s.outstanding)),
-                    'settled' =>
-                      s.owedToMe ? l.txSplitStatusPaid : l.txSplitStatusRepaid,
-                    'cancelled' => l.txSplitStatusCancelled,
-                    _ when s.settledAmount > 0.005 =>
-                      s.owedToMe
-                          ? l.txSplitStatusPartPaid(
-                              money(s.settledAmount),
-                              money(s.amount),
-                            )
-                          : l.txSplitStatusPartRepaid(
-                              money(s.settledAmount),
-                              money(s.amount),
-                            ),
-                    _ =>
-                      s.owedToMe
-                          ? l.txSplitStatusAwaiting(money(s.outstanding))
-                          : l.txSplitStatusToPay(money(s.outstanding)),
-                  },
-                  style: textTheme.bodySmall?.copyWith(
-                    color: s.isOverpaid
-                        ? palette.warning
-                        : s.status == 'settled'
-                        ? palette.income
-                        : scheme.onSurfaceVariant,
-                    fontWeight: s.status == 'settled' ? FontWeight.w600 : null,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-      ],
+          const SizedBox(width: AppSpacing.md),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(money(s.amount), style: textTheme.bodyLarge),
+              Text(
+                status,
+                style: textTheme.bodySmall?.copyWith(
+                  color: s.isOverpaid
+                      ? palette.warning
+                      : s.status == 'settled'
+                      ? palette.income
+                      : scheme.onSurfaceVariant,
+                  fontWeight: s.status == 'settled' ? FontWeight.w600 : null,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

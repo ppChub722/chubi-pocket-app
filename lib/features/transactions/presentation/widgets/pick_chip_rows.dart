@@ -41,6 +41,7 @@ class CategoryChipRow extends StatelessWidget {
     this.leading = const [],
     this.trailing = const [],
     this.max = 6,
+    this.leadingIcon = true,
     super.key,
   });
 
@@ -54,6 +55,9 @@ class CategoryChipRow extends StatelessWidget {
   final List<Widget> leading;
   final List<Widget> trailing;
   final int max;
+
+  /// False under a section title that shows the icon (the filter sheet).
+  final bool leadingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +106,7 @@ class CategoryChipRow extends StatelessWidget {
       picked: [if (sel != null && usable.containsKey(sel.id)) sel.id],
     );
     return ChipRow(
-      icon: AppIcons.category,
+      icon: leadingIcon ? AppIcons.category : null,
       moreLabel: l.commonMore,
       onMore: onMore,
       chips: [
@@ -135,6 +139,7 @@ class TagChipRow extends StatelessWidget {
     this.known = const {},
     this.leading = const [],
     this.shown = 3,
+    this.leadingIcon = true,
     super.key,
   });
 
@@ -146,6 +151,9 @@ class TagChipRow extends StatelessWidget {
   final Map<String, Tag> known;
   final List<Widget> leading;
   final int shown;
+
+  /// False under a section title that shows the icon (the filter sheet).
+  final bool leadingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +190,7 @@ class TagChipRow extends StatelessWidget {
         ? order.ids(ready: mine.isNotEmpty, rank: rank, picked: selected)
         : selected.toList();
     return ChipRow(
-      icon: AppIcons.tag,
+      icon: leadingIcon ? AppIcons.tag : null,
       moreLabel: l.commonMore,
       onMore: editing ? onMore : null,
       chips: [
@@ -211,6 +219,7 @@ class WalletChipRow extends StatelessWidget {
     this.leading = const [],
     this.trailing = const [],
     this.max = 4,
+    this.leadingIcon = true,
     super.key,
   });
 
@@ -221,6 +230,9 @@ class WalletChipRow extends StatelessWidget {
   final List<Widget> leading;
   final List<Widget> trailing;
   final int max;
+
+  /// False under a section title that shows the icon (the filter sheet).
+  final bool leadingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +263,7 @@ class WalletChipRow extends StatelessWidget {
       picked: [if (sel != null && byId.containsKey(sel)) sel],
     );
     return ChipRow(
-      icon: AppIcons.wallet,
+      icon: leadingIcon ? AppIcons.wallet : null,
       moreLabel: l.commonMore,
       onMore: onMore,
       chips: [

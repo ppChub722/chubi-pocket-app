@@ -17,14 +17,18 @@ bool categoryFitsType(Category c, TransactionType? type) => switch (type) {
 };
 
 /// The unit a transactions list period is measured in.
-enum TxPeriodKind { month, week, year, all, custom }
+enum TxPeriodKind { day, week, month, year, all, custom }
 
 /// The list's period — what the pill on top shows and steps (owner
-/// 2026-10-10). [start] is the first day of the month / week (Monday) /
-/// year; a custom range runs [start]..[end].
+/// 2026-10-10). [start] is the day, or the first day of the week (Monday)
+/// / month / year; a custom range runs [start]..[end].
 @immutable
 class TxPeriod {
   const TxPeriod._(this.kind, this.start, [this.end]);
+
+  /// One day.
+  factory TxPeriod.day(DateTime day) =>
+      TxPeriod._(TxPeriodKind.day, DateTime(day.year, day.month, day.day));
 
   /// The month holding [day].
   factory TxPeriod.month(DateTime day) =>
@@ -55,6 +59,7 @@ class TxPeriod {
 
   /// The [kind] period holding [day] (custom / all aren't anchored).
   factory TxPeriod.of(TxPeriodKind kind, DateTime day) => switch (kind) {
+    TxPeriodKind.day => TxPeriod.day(day),
     TxPeriodKind.month => TxPeriod.month(day),
     TxPeriodKind.week => TxPeriod.week(day),
     TxPeriodKind.year => TxPeriod.year(day),
@@ -68,6 +73,7 @@ class TxPeriod {
 
   /// The last day included (null = open: [TxPeriodKind.all]).
   DateTime? get last => switch (kind) {
+    TxPeriodKind.day => start,
     TxPeriodKind.month => DateTime(start.year, start.month + 1, 0),
     TxPeriodKind.week => start.add(const Duration(days: 6)),
     TxPeriodKind.year => DateTime(start.year, 12, 31),
@@ -83,6 +89,9 @@ class TxPeriod {
   /// The neighbouring period [dir] steps away (−1 back, +1 forward), or
   /// null for one with no neighbours (ทั้งหมด, a custom range).
   TxPeriod? step(int dir) => switch (kind) {
+    TxPeriodKind.day => TxPeriod.day(
+      DateTime(start.year, start.month, start.day + dir),
+    ),
     TxPeriodKind.month => TxPeriod.month(
       DateTime(start.year, start.month + dir),
     ),
@@ -102,6 +111,7 @@ class TxPeriod {
     final l = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).toLanguageTag();
     return switch (kind) {
+      TxPeriodKind.day => DateFormat.yMMMEd(locale).format(start),
       TxPeriodKind.month => DateFormat.yMMMM(locale).format(start),
       TxPeriodKind.year => DateFormat.y(locale).format(start),
       TxPeriodKind.all => l.transactionsRangeAll,

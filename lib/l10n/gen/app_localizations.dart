@@ -953,7 +953,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountFormNoteHelper.
   ///
   /// In en, this message translates to:
-  /// **'Anything you want to jot down. Visible to you only.'**
+  /// **'Anything you want to jot down. The wallet\'s members see it too.'**
   String get accountFormNoteHelper;
 
   /// No description provided for @iconPickerUseThis.
@@ -3263,7 +3263,7 @@ abstract class AppLocalizations {
   /// No description provided for @txDetailSourceProject.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Event'**
   String get txDetailSourceProject;
 
   /// No description provided for @txDetailTransferTo.
@@ -3449,7 +3449,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountsSummaryDebt.
   ///
   /// In en, this message translates to:
-  /// **'Card / pay-later debt'**
+  /// **'Debt (cards · overdrawn)'**
   String get accountsSummaryDebt;
 
   /// No description provided for @accountsSummaryCreditUsed.
@@ -3665,7 +3665,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoriesLimitReached.
   ///
   /// In en, this message translates to:
-  /// **'100-category limit reached. Archive or delete one to add another.'**
+  /// **'100-category limit reached. Delete one to add another.'**
   String get categoriesLimitReached;
 
   /// No description provided for @categoryTypeExpense.
@@ -3877,12 +3877,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get categoriesReorderSave;
-
-  /// No description provided for @categoriesReorderDiscard.
-  ///
-  /// In en, this message translates to:
-  /// **'Discard'**
-  String get categoriesReorderDiscard;
 
   /// No description provided for @categoriesUndo.
   ///
@@ -4584,12 +4578,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create “{name}”'**
   String tagPickerCreateNamed(String name);
-
-  /// No description provided for @tagsMore.
-  ///
-  /// In en, this message translates to:
-  /// **'More'**
-  String get tagsMore;
 
   /// No description provided for @txNoteAddHint.
   ///
@@ -6870,6 +6858,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'others\' share {amount}'**
   String txShareOthers(String amount);
+
+  /// No description provided for @txSplitPersonLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to a contact — to change who, remove this row and add the person again'**
+  String get txSplitPersonLocked;
+
+  /// No description provided for @txSplitAuthorOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only whoever recorded this transaction can change its splits'**
+  String get txSplitAuthorOnly;
+
+  /// No description provided for @quickCreateErrorNotBillable.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening-balance and adjustment rows can\'t go into an event'**
+  String get quickCreateErrorNotBillable;
+
+  /// No description provided for @txEventRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Take out of the event'**
+  String get txEventRemove;
+
+  /// No description provided for @txEventSplitRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone already paid their share back — this can\'t go into an event'**
+  String get txEventSplitRepaid;
+
+  /// No description provided for @txEventFailedAfterSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved — but the event didn\'t change: {reason}'**
+  String txEventFailedAfterSave(String reason);
+
+  /// No description provided for @txEventSplitCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'A split on this was forgiven — it can\'t go into an event'**
+  String get txEventSplitCancelled;
+
+  /// No description provided for @txSplitExceedsShare.
+  ///
+  /// In en, this message translates to:
+  /// **'More than your share'**
+  String get txSplitExceedsShare;
+
+  /// No description provided for @accountsGroupMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Mine'**
+  String get accountsGroupMine;
+
+  /// No description provided for @accountsReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get accountsReorder;
+
+  /// No description provided for @accountsReorderSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save order'**
+  String get accountsReorderSave;
+
+  /// No description provided for @accountsReorderDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get accountsReorderDiscard;
+
+  /// No description provided for @accountsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallets yet'**
+  String get accountsEmptyTitle;
+
+  /// No description provided for @accountsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first one — cash, a bank account or a card'**
+  String get accountsEmptyMessage;
+
+  /// No description provided for @accountsArchivedEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived wallets wait here — restore one any time'**
+  String get accountsArchivedEmptyMessage;
+
+  /// No description provided for @accountDetailAddTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction'**
+  String get accountDetailAddTx;
+
+  /// No description provided for @accountDetailTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get accountDetailTransfer;
+
+  /// No description provided for @accountSharedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared · {count}'**
+  String accountSharedWith(int count);
+
+  /// No description provided for @accountDayNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get accountDayNone;
+
+  /// No description provided for @txPeriodDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get txPeriodDay;
+
+  /// No description provided for @txPeriodWeekHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap any day — its whole week (Monday to Sunday)'**
+  String get txPeriodWeekHint;
+
+  /// No description provided for @quickEventOpenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open events'**
+  String get quickEventOpenTitle;
+
+  /// No description provided for @quickEventNewRow.
+  ///
+  /// In en, this message translates to:
+  /// **'New event'**
+  String get quickEventNewRow;
+
+  /// No description provided for @quickEventCreateNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Create \"{name}\"'**
+  String quickEventCreateNamed(String name);
+
+  /// No description provided for @quickEventMembersInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'The people you split with join the event as members'**
+  String get quickEventMembersInfo;
+
+  /// No description provided for @txSplitInEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Split in the event'**
+  String get txSplitInEvent;
+
+  /// No description provided for @txSplitInEventHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'This split will live in the event — change it on the event page'**
+  String get txSplitInEventHelper;
+
+  /// No description provided for @txSplitFromMyShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Split from your share'**
+  String get txSplitFromMyShare;
+
+  /// No description provided for @categoryPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category'**
+  String get categoryPickerTitle;
+
+  /// No description provided for @categoryPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search categories'**
+  String get categoryPickerSearchHint;
+
+  /// No description provided for @categoryPickerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No category matches'**
+  String get categoryPickerNoMatch;
+
+  /// No description provided for @tagPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search or name a new tag'**
+  String get tagPickerSearchHint;
+
+  /// No description provided for @tagPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet — make them on the tags page'**
+  String get tagPickerEmpty;
+
+  /// No description provided for @tagPickerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No tag matches'**
+  String get tagPickerNoMatch;
+
+  /// No description provided for @contactPickerSaveAsContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as a contact'**
+  String get contactPickerSaveAsContact;
+
+  /// No description provided for @contactPickerSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the contact'**
+  String get contactPickerSaveFailed;
+
+  /// No description provided for @contactsSortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently used'**
+  String get contactsSortRecent;
+
+  /// No description provided for @contactsSortNameAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'Name A→Z'**
+  String get contactsSortNameAsc;
+
+  /// No description provided for @contactsSortNameDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Name Z→A'**
+  String get contactsSortNameDesc;
+
+  /// No description provided for @contactArchiveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this contact?'**
+  String get contactArchiveConfirmTitle;
+
+  /// No description provided for @tagsBulkDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected tags are deleted when you save, and removed from any transactions using them.'**
+  String get tagsBulkDeleteConfirmBody;
 }
 
 class _AppLocalizationsDelegate

@@ -30,28 +30,28 @@ import '../cubit/categories_cubit.dart';
 
 /// Categories management with smart drag-and-drop reorder.
 ///
-/// **Browse mode**:
+/// **Browse mode** — the library list shared with tags / contacts (owner
+/// 2026-10-10):
 /// - Expense / income tabs; swipe sideways to switch ([AppTabPager] —
 ///   the content follows the finger).
-/// - Search + colour / icon filters, with ✏️ (reorder) and + on the
-///   filter row's right.
-/// - Tap row → edit form. Long-press → enter reorder mode.
-/// - Chevron toggles collapse/expand for parents with children.
+/// - Search, then [สี▾][ไอคอน▾] … (⇅) — ⇅ enters reorder mode (as on
+///   wallets).
+/// - [ListRow]s on the tree's indent: icon · name · description, then
+///   "ซ่อนจากรายงาน" and ▾/▴ (parents only — toggles collapse).
+/// - Tap row → the category's detail page. Long-press → reorder mode.
 /// - A dashed "+ เพิ่มหมวดหมู่" tile ends the list (also the empty CTA).
-/// - Bottom nav stays visible (`MainBottomNav` reused).
+/// - The shell's bottom nav stays visible.
 ///
-/// **Reorder mode** (entered via long-press):
-/// - Each row visibly tilts ~2° + gets a corner mark, signalling
+/// **Reorder mode** (⇅ or long-press):
+/// - Each row's icon visibly tilts ~2° + gets a corner mark, signalling
 ///   draggable.
 /// - 350 ms long-press starts a drag. The dragged proxy floats with the
 ///   cursor; the original row dims.
 /// - **Column-based depth lanes** — horizontal cursor position chooses
 ///   the target depth (1 / 2 / 3). Vertical position picks the anchor
-///   row (the row directly above the cursor). Together they resolve to
-///   a `(parentId, insertIdx)` plan via [CategoryDropResolver].
-/// - Pre-validation: the drop indicator goes red when the resolver
-///   rejects the move (cycle / depth overflow / level skip). User sees
-///   red → can't drop. No more snackbar-after-rejection.
+///   row (the row directly above the cursor).
+///   [CategoryReorderLogic.effectiveLevel] clamps the lane to a level the
+///   anchor allows, so every drop is valid — the line never goes red.
 /// - Auto-scroll: when the cursor enters the top/bottom 100 dp band
 ///   while dragging, the list scrolls automatically. Speed ramps with
 ///   how deep into the band the cursor sits.
@@ -83,7 +83,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   final List<List<Category>> _inModeUndoStack = [];
 
   /// Shell chrome controller — lets reorder mode hide the shell's bottom
-  /// nav so the [ReorderActionBar] replaces it instead of stacking under
+  /// nav so the [ModeActionBar] replaces it instead of stacking under
   /// it. Grabbed in [didChangeDependencies].
   ShellChromeController? _shellChrome;
 
@@ -381,7 +381,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
       next = _HoverState(
         anchorRowId: null,
         depth: 1,
-        isValid: true,
         isEnd: true,
         endType: thisRow.type,
       );
@@ -391,12 +390,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
         anchor: anchor,
         all: _staged!,
       );
-      next = _HoverState(
-        anchorRowId: anchor.id,
-        depth: level,
-        isValid: true,
-        isEnd: false,
-      );
+      next = _HoverState(anchorRowId: anchor.id, depth: level, isEnd: false);
     }
 
     if (next != _hover.value) {
@@ -604,7 +598,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         hint: l.categoriesSearchHint,
                         onChanged: (v) => setState(() => _query = v),
                       ),
-                    // [สี▾][ไอคอน▾] … (✏️)(+) — same row as the other list
+                    // [สี▾][ไอคอน▾] … (⇅) — same row as the other list
                     // pages. Hidden with the search in reorder mode.
                     if (!_reorderMode) _filterRow(l, typeUsers, all),
                     Expanded(
@@ -659,8 +653,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
-  /// `[สี▾][ไอคอน▾] … (✏️)(+)` — filters left, page actions right (the top
-  /// bar carries none). ✏️ = reorder mode, same as long-pressing a row.
+  /// `[สี▾][ไอคอน▾] … (⇅)` — filters left, reorder right (the top bar
+  /// carries no page actions; add is the dashed tile ending the list). ⇅ =
+  /// reorder mode, same as long-pressing a row.
   Widget _filterRow(
     AppLocalizations l,
     List<Category> typeUsers,
@@ -731,32 +726,20 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
       ],
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppIconButton(
-            icon: AppIcons.edit,
-            size: 36,
-            tooltip: l.categoriesReorderEnter,
-            onPressed: typeUsers.length < 2
-                ? null
-                : () {
-                    // Reorder shows the whole tree — drop search / filters
-                    // (the search field goes away with them).
-                    _query = '';
-                    _filterColors.clear();
-                    _filterIcons.clear();
-                    _enterReorder(all);
-                  },
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          AppIconButton(
-            icon: AppIcons.add,
-            size: 36,
-            tooltip: l.categoriesAddNew,
-            onPressed: () => _add(l),
-          ),
-        ],
+      trailing: AppIconButton(
+        icon: AppIcons.reorder,
+        size: 36,
+        tooltip: l.categoriesReorderEnter,
+        onPressed: typeUsers.length < 2
+            ? null
+            : () {
+                // Reorder shows the whole tree — drop search / filters
+                // (the search field goes away with them).
+                _query = '';
+                _filterColors.clear();
+                _filterIcons.clear();
+                _enterReorder(all);
+              },
       ),
     );
   }
@@ -834,14 +817,12 @@ class _HoverState {
   const _HoverState({
     this.anchorRowId,
     this.depth,
-    this.isValid = false,
     this.isEnd = false,
     this.endType,
   });
 
   final String? anchorRowId;
   final int? depth;
-  final bool isValid;
   final bool isEnd;
   final CategoryType? endType;
 
@@ -852,12 +833,11 @@ class _HoverState {
       other is _HoverState &&
       other.anchorRowId == anchorRowId &&
       other.depth == depth &&
-      other.isValid == isValid &&
       other.isEnd == isEnd &&
       other.endType == endType;
 
   @override
-  int get hashCode => Object.hash(anchorRowId, depth, isValid, isEnd, endType);
+  int get hashCode => Object.hash(anchorRowId, depth, isEnd, endType);
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -947,14 +927,16 @@ class _ListBody extends StatelessWidget {
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.only(
-        top: AppSpacing.md,
         bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         if (reorderMode) _TopOfSectionLine(type: type, hover: hover),
-        for (final parent in roots)
-          if (visibleIds?.contains(parent.id) ?? true)
-            ..._renderSubtree(parent, depth: 0),
+        // Hairline-separated, as on the other library lists.
+        for (final (i, row) in [
+          for (final parent in roots)
+            if (visibleIds?.contains(parent.id) ?? true)
+              ..._renderSubtree(parent, depth: 0),
+        ].indexed) ...[if (i > 0) const RowDivider(), row],
         if (onAdd != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -1173,7 +1155,6 @@ class _Row extends StatelessWidget {
               child: anchored
                   ? ReorderDropLine(
                       depth: state.depth!,
-                      isValid: state.isValid,
                       indentPerDepth: AppSpacing.xxl,
                       baseIndent: AppSpacing.lg,
                     )
@@ -1186,6 +1167,10 @@ class _Row extends StatelessWidget {
   }
 }
 
+/// One category on the list — [ListRow] on the tree's indent: icon ·
+/// name · description, then "ซ่อนจากรายงาน" and ▾/▴ (parents only).
+/// Reorder mode tilts the icon (the shared draggable cue) and turns the
+/// tap off; ▾/▴ keeps working there.
 class _RowContent extends StatelessWidget {
   const _RowContent({
     required this.category,
@@ -1206,125 +1191,42 @@ class _RowContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final desc = category.description?.trim();
-    final hasDesc = desc != null && desc.isNotEmpty;
     final hidden = !category.includeInReport;
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppSpacing.lg + depth * AppSpacing.xxl,
-        right: AppSpacing.lg,
-      ),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: _IconCircle(category: category, reorderMode: reorderMode),
-        title: Text(category.name, style: textTheme.titleSmall),
-        // Description (one line), then the hidden-from-report mark.
-        subtitle: hasDesc || hidden
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (hasDesc)
-                    Text(
-                      desc,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  if (hidden)
-                    Text(
-                      l.categoryHiddenFromReport,
-                      style: textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                ],
-              )
-            : null,
-        trailing: _RowTrailing(
-          reorderMode: reorderMode,
-          hasChildren: hasChildren,
-          isCollapsed: isCollapsed,
-          onToggleCollapse: onToggleCollapse,
-        ),
-        onTap: reorderMode
-            ? null
-            : () => context.push('/categories/${category.id}'),
-      ),
-    );
-  }
-}
-
-class _RowTrailing extends StatelessWidget {
-  const _RowTrailing({
-    required this.reorderMode,
-    required this.hasChildren,
-    required this.isCollapsed,
-    required this.onToggleCollapse,
-  });
-
-  final bool reorderMode;
-  final bool hasChildren;
-  final bool isCollapsed;
-  final VoidCallback onToggleCollapse;
-
-  @override
-  Widget build(BuildContext context) {
-    if (reorderMode) {
-      // Reorder-mode trailing matches browse mode: chevron toggle for
-      // parents (still works mid-reorder), nothing for leaves. The
-      // drag-handle icon is intentionally absent — the corner-bracket
-      // overlay on the icon already signals draggability, and dropping
-      // the handle keeps row width identical to browse mode.
-      if (!hasChildren) return const SizedBox.shrink();
-      return IconButton(
-        icon: AnimatedRotation(
-          turns: isCollapsed ? 0 : 0.25,
-          duration: const Duration(milliseconds: 160),
-          child: const Icon(AppIcons.chevronRight),
-        ),
-        onPressed: onToggleCollapse,
-      );
-    }
-    if (hasChildren) {
-      return IconButton(
-        icon: AnimatedRotation(
-          turns: isCollapsed ? 0 : 0.25,
-          duration: const Duration(milliseconds: 160),
-          child: const Icon(AppIcons.chevronRight),
-        ),
-        onPressed: onToggleCollapse,
-      );
-    }
-    return const Icon(AppIcons.chevronRight);
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// Icon — applies tilt + corner mark in reorder mode
-// ────────────────────────────────────────────────────────────────────
-
-class _IconCircle extends StatelessWidget {
-  const _IconCircle({required this.category, required this.reorderMode});
-
-  final Category category;
-  final bool reorderMode;
-
-  @override
-  Widget build(BuildContext context) {
     final circle = IconDisplay(
       type: IconType.category,
-      size: 36,
+      size: 40,
       iconCode: category.iconCode,
     );
-    if (!reorderMode) return circle;
-    // Reorder mode visual cue is shared across reorderable surfaces.
-    return ReorderModeTilt(child: circle);
+    return ListRow(
+      indent: depth * AppSpacing.xxl,
+      leading: reorderMode ? ReorderModeTilt(child: circle) : circle,
+      title: category.name,
+      subtitle: category.description?.trim(),
+      trailing: hidden || hasChildren
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (hidden)
+                  LabelPill(
+                    label: l.categoryHiddenFromReport,
+                    icon: AppIcons.hidden,
+                    size: PillSize.small,
+                  ),
+                if (hasChildren)
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      isCollapsed ? AppIcons.expand : AppIcons.collapse,
+                    ),
+                    onPressed: onToggleCollapse,
+                  ),
+              ],
+            )
+          : null,
+      onTap: reorderMode
+          ? null
+          : () => context.push('/categories/${category.id}'),
+    );
   }
 }
 
@@ -1357,7 +1259,6 @@ class _TopOfSectionLine extends StatelessWidget {
           child: active
               ? ReorderDropLine(
                   depth: state.depth!,
-                  isValid: state.isValid,
                   indentPerDepth: AppSpacing.xxl,
                   baseIndent: AppSpacing.lg,
                 )
@@ -1394,7 +1295,7 @@ class _DragProxy extends StatelessWidget {
             children: [
               IconDisplay(
                 type: IconType.category,
-                size: 36,
+                size: 40,
                 iconCode: category.iconCode,
               ),
               const SizedBox(width: AppSpacing.md),

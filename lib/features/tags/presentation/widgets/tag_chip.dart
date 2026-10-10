@@ -16,30 +16,19 @@ Color tagColor(IconCode? code, AppColors palette) =>
     ? resolveColor(code!.iconColors.first, palette)
     : palette.primary;
 
-/// The full tag look — `[icon] name [×count]` in a pill: border, icon and
-/// text all in the tag colour on a light tint of it. Used wherever a tag is
-/// shown on its own (tags page preview, tx detail, tag pickers).
+/// The full tag look — `[icon] name` in a pill: border, icon and text all
+/// in the tag colour on a light tint of it. Used wherever a tag is shown on
+/// its own (tx detail / form, tag pickers, the tags page's icon-maker
+/// preview).
 ///
 /// [selected] turns it into a picker chip: `null` = plain display, `true` =
 /// the full look, `false` = a neutral outline (icon keeps its colour).
-/// [showUsage] adds the `×n` usage count (tags page only).
 class TagChip extends StatelessWidget {
-  const TagChip({
-    required this.tag,
-    this.selected,
-    this.showUsage = false,
-    this.onTap,
-    this.onLongPress,
-    this.onIconTap,
-    super.key,
-  });
+  const TagChip({required this.tag, this.selected, this.onTap, super.key});
 
   final Tag tag;
   final bool? selected;
-  final bool showUsage;
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
-  final VoidCallback? onIconTap;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +38,6 @@ class TagChip extends StatelessWidget {
     final color = tagColor(tag.iconCode, palette);
     final on = selected ?? true;
     final fg = on ? color : scheme.onSurfaceVariant;
-    final usageLabel = showUsage ? l.tagsUsageCount(tag.usageCount) : '';
     final iconData = IconRegistry.get(
       tag.iconCode?.icon,
       fallback: AppIcons.tag,
@@ -58,14 +46,7 @@ class TagChip extends StatelessWidget {
     final body = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (onIconTap != null)
-          InkResponse(
-            onTap: onIconTap,
-            radius: 18,
-            child: Icon(iconData, size: 16, color: color),
-          )
-        else
-          Icon(iconData, size: 16, color: color),
+        Icon(iconData, size: 16, color: color),
         const SizedBox(width: AppSpacing.xs),
         Flexible(
           child: Text(
@@ -78,13 +59,6 @@ class TagChip extends StatelessWidget {
             ),
           ),
         ),
-        if (usageLabel.isNotEmpty) ...[
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            usageLabel,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg),
-          ),
-        ],
       ],
     );
 
@@ -99,7 +73,6 @@ class TagChip extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md - 2,

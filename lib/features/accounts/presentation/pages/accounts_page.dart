@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/shell_chrome.dart';
 import '../../../../app/shell/tab_root_scaffold.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import 'package:flutter/services.dart';
-import '../../../../app/shell/shell_chrome.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/skeleton_box.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -17,11 +17,17 @@ import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
 import '../widgets/account_card.dart';
 
-/// Wallets tab root (§10). Wallet dashboard (mine — shared pot never summed,
-/// spec §14; 👁 hides them) → wallet grid (2 col phone / 3 col tablet) →
-/// dashed "+ เพิ่มกระเป๋า" → "กระเป๋าที่เก็บถาวร (n) ›". Long-press a wallet
-/// → reorder mode (drag list + save / cancel bar replacing the shell nav);
-/// the order is the caller's own, shared wallets included (contract §3).
+/// Wallets tab root (§10, owner 2026-10-10):
+///
+///   summary (mine only — the shared pot is never summed in, spec §14;
+///   👁 hides amounts)
+///   ของฉัน ⇅ · grid (2 col phone / 3 tablet) · dashed "+ เพิ่มกระเป๋า"
+///   กระเป๋าร่วม ⇅ · grid
+///   "กระเป๋าที่เก็บถาวร (n) ›"
+///
+/// ⇅ (or a long-press on a wallet) → reorder mode: a drag list per group,
+/// save / cancel replacing the shell nav. The order is the caller's own,
+/// saved mine-first in one PATCH /accounts/reorder (contract §3).
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
 
@@ -29,13 +35,20 @@ class AccountsPage extends StatefulWidget {
   State<AccountsPage> createState() => _AccountsPageState();
 }
 
+/// One grid's mainAxisExtent: icon row · name · description · balance ·
+/// credit bar. The skeleton uses it too.
+const double _cardExtent = 156;
+
 class _AccountsPageState extends State<AccountsPage> {
   int _archivedCount = 0;
 
-  /// Non-null while reordering — the staged order.
-  List<Account>? _staged;
+  /// Non-null while reordering — the staged order, per group.
+  List<Account>? _stagedMine;
+  List<Account>? _stagedShared;
   bool _savingOrder = false;
   ShellChromeController? _shellChrome;
+
+  bool get _reordering => _stagedMine != null;
 
   @override
   void didChangeDependencies() {
@@ -45,41 +58,55 @@ class _AccountsPageState extends State<AccountsPage> {
 
   @override
   void dispose() {
-    if (_staged != null) _shellChrome?.show();
+    if (_reordering) _shellChrome?.show();
     super.dispose();
   }
 
   void _enterReorder(List<Account> current) {
     HapticFeedback.lightImpact();
     _shellChrome?.hide(); // the action bar replaces the shell nav
-    setState(() => _staged = [...current]);
+    setState(() {
+      _stagedMine = [
+        for (final a in current)
+          if (!a.isShared) a,
+      ];
+      _stagedShared = [
+        for (final a in current)
+          if (a.isShared) a,
+      ];
+    });
   }
 
   void _exitReorder() {
     _shellChrome?.show();
     setState(() {
-      _staged = null;
+      _stagedMine = null;
+      _stagedShared = null;
       _savingOrder = false;
     });
   }
 
-  void _move(int from, int to) => setState(() {
-    final item = _staged!.removeAt(from);
-    _staged!.insert(to, item);
+  void _move(List<Account> group, int from, int to) => setState(() {
+    final item = group.removeAt(from);
+    group.insert(to, item);
   });
 
   Future<void> _saveOrder() async {
     final l = AppLocalizations.of(context)!;
     setState(() => _savingOrder = true);
     try {
-      await context.read<AccountsCubit>().saveOrder(_staged!);
+      // One order for all of them: mine first, then the shared ones.
+      await context.read<AccountsCubit>().saveOrder([
+        ..._stagedMine!,
+        ..._stagedShared!,
+      ]);
       if (mounted) _exitReorder();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _savingOrder = false);
       showAppSnackBar(
         context,
-        '${l.categoriesReorderSave}: ${e.message}',
+        '${l.accountsReorderSave}: ${e.message}',
         tone: Tone.danger,
       );
     }
@@ -112,6 +139,18 @@ class _AccountsPageState extends State<AccountsPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    // Back while reordering leaves the mode (the staged order dropped) and
+    // stays on the page — the shell asks a tab's root page first.
+    return PopScope(
+      canPop: !_reordering,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _reordering) _exitReorder();
+      },
+      child: _page(context, l),
+    );
+  }
+
+  Widget _page(BuildContext context, AppLocalizations l) {
     return TabRootScaffold(
       title: l.navAccounts,
       body: BlocBuilder<AccountsCubit, AccountsState>(
@@ -126,145 +165,186 @@ class _AccountsPageState extends State<AccountsPage> {
             isEmpty: accounts.isEmpty,
             onRetry: context.read<AccountsCubit>().load,
             skeleton: _AccountsSkeleton(cols: cols),
-            // No empty view: the grid's add tile is the first-wallet CTA.
+            empty: EmptyView(
+              icon: AppIcons.wallet,
+              title: l.accountsEmptyTitle,
+              message: l.accountsEmptyMessage,
+              cta: AppButton(
+                label: l.accountsAddNew,
+                icon: AppIcons.add,
+                onPressed: () => context.push('/accounts/new'),
+              ),
+            ),
             builder: (context) {
-              final staged = _staged;
-              if (staged != null) return _reorderView(context, staged);
-              return PullToRefresh(
-                onRefresh: _refresh,
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    // Clear the transparent top bar.
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: MediaQuery.paddingOf(context).top,
-                      ),
-                    ),
-                    if (accounts.isNotEmpty)
-                      SliverToBoxAdapter(
-                        child: _WalletsSummary(accounts: accounts),
-                      ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.md,
-                        AppSpacing.lg,
-                        0,
-                      ),
-                      sliver: SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: cols,
-                          mainAxisSpacing: AppSpacing.md,
-                          crossAxisSpacing: AppSpacing.md,
-                          // Icon row · name · description · balance · credit bar.
-                          mainAxisExtent: 156,
-                        ),
-                        delegate: SliverChildBuilderDelegate((context, i) {
-                          if (i == accounts.length) {
-                            return AddTile(
-                              label: l.accountsAddNew,
-                              onTap: () => context.push('/accounts/new'),
-                            );
-                          }
-                          final a = accounts[i];
-                          return GestureDetector(
-                            onLongPress: accounts.length < 2
-                                ? null
-                                : () => _enterReorder(accounts),
-                            child: AccountCard(
-                              account: a,
-                              horizontal: false,
-                              onTap: () => context.push('/accounts/${a.id}'),
-                            ),
-                          );
-                        }, childCount: accounts.length + 1),
-                      ),
-                    ),
-                    if (_archivedCount > 0)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.md),
-                          child: DetailRow(
-                            leading: const Icon(AppIcons.archive),
-                            label: l.accountsArchivedLink(_archivedCount),
-                            showChevron: true,
-                            onTap: () async {
-                              await context.push('/accounts/archived');
-                              if (mounted) _loadArchivedCount();
-                            },
-                          ),
-                        ),
-                      ),
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 96 + MediaQuery.paddingOf(context).bottom,
-                      ),
-                    ),
-                  ],
-                ),
-              );
+              if (_reordering) return _reorderView(context);
+              return _gridView(context, accounts, cols);
             },
           );
         },
       ),
     );
   }
-}
 
-extension on _AccountsPageState {
-  /// Reorder mode: a hint, the drag list, and save / cancel at the bottom.
-  Widget _reorderView(BuildContext context, List<Account> staged) {
+  Widget _gridView(BuildContext context, List<Account> accounts, int cols) {
+    final l = AppLocalizations.of(context)!;
+    final mine = [
+      for (final a in accounts)
+        if (!a.isShared) a,
+    ];
+    final shared = [
+      for (final a in accounts)
+        if (a.isShared) a,
+    ];
+    Widget reorderButton() => IconButton(
+      tooltip: l.accountsReorder,
+      icon: const Icon(AppIcons.reorder),
+      onPressed: () => _enterReorder(accounts),
+    );
+    // One group: header (⇅ when it has two to swap), then its cards.
+    List<Widget> group(String title, List<Account> list, {bool add = false}) =>
+        [
+          SliverToBoxAdapter(
+            child: SectionHeader(
+              title: title,
+              count: list.length,
+              trailing: list.length < 2 ? null : reorderButton(),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                mainAxisSpacing: AppSpacing.md,
+                crossAxisSpacing: AppSpacing.md,
+                mainAxisExtent: _cardExtent,
+              ),
+              delegate: SliverChildBuilderDelegate((context, i) {
+                if (i == list.length) {
+                  return AddTile(
+                    label: l.accountsAddNew,
+                    onTap: () => context.push('/accounts/new'),
+                  );
+                }
+                final a = list[i];
+                return GestureDetector(
+                  onLongPress: accounts.length < 2
+                      ? null
+                      : () => _enterReorder(accounts),
+                  child: AccountCard(
+                    account: a,
+                    horizontal: false,
+                    onTap: () => context.push('/accounts/${a.id}'),
+                  ),
+                );
+              }, childCount: list.length + (add ? 1 : 0)),
+            ),
+          ),
+        ];
+    return PullToRefresh(
+      onRefresh: _refresh,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Clear the transparent top bar.
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.paddingOf(context).top),
+          ),
+          SliverToBoxAdapter(child: _WalletsSummary(accounts: accounts)),
+          ...group(l.accountsGroupMine, mine, add: true),
+          if (shared.isNotEmpty) ...group(l.walletSharedLabel, shared),
+          if (_archivedCount > 0)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.md),
+                child: DetailRow(
+                  leading: const Icon(AppIcons.archive),
+                  label: l.accountsArchivedLink(_archivedCount),
+                  showChevron: true,
+                  onTap: () async {
+                    await context.push('/accounts/archived');
+                    if (mounted) _loadArchivedCount();
+                  },
+                ),
+              ),
+            ),
+          SliverToBoxAdapter(
+            child: SizedBox(height: 96 + MediaQuery.paddingOf(context).bottom),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Reorder mode: a hint, a drag list per group (a wallet stays in its
+  /// group), and save / cancel at the bottom.
+  Widget _reorderView(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final mine = _stagedMine!;
+    final shared = _stagedShared!;
+    Widget list(List<Account> group) => ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      buildDefaultDragHandles: false,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      itemCount: group.length,
+      onReorderItem: (from, to) => _move(group, from, to),
+      itemBuilder: (context, i) {
+        final a = group[i];
+        return Padding(
+          key: ValueKey(a.id),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: Row(
+            children: [
+              Expanded(child: AccountCard(account: a, horizontal: true)),
+              ReorderableDragStartListener(
+                index: i,
+                child: const Padding(
+                  padding: EdgeInsets.all(AppSpacing.md),
+                  child: Icon(AppIcons.reorder),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
     return Column(
       children: [
-        Padding(
-          // Top: clear the transparent top bar.
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            MediaQuery.paddingOf(context).top + AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.sm,
-          ),
-          child: Text(
-            l.accountsReorderHint,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ),
         Expanded(
-          child: ReorderableListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            itemCount: staged.length,
-            onReorderItem: _move,
-            itemBuilder: (context, i) {
-              final a = staged[i];
-              return Padding(
-                key: ValueKey(a.id),
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: Row(
-                  children: [
-                    Expanded(child: AccountCard(account: a, horizontal: true)),
-                    ReorderableDragStartListener(
-                      index: i,
-                      child: const Padding(
-                        padding: EdgeInsets.all(AppSpacing.md),
-                        child: Icon(AppIcons.reorder),
-                      ),
-                    ),
-                  ],
+          child: ListView(
+            padding: EdgeInsets.only(
+              // Clear the transparent top bar.
+              top: MediaQuery.paddingOf(context).top + AppSpacing.sm,
+              bottom: AppSpacing.lg,
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Text(
+                  l.accountsReorderHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
-              );
-            },
+              ),
+              if (mine.isNotEmpty) ...[
+                SectionHeader(title: l.accountsGroupMine, count: mine.length),
+                list(mine),
+              ],
+              if (shared.isNotEmpty) ...[
+                SectionHeader(title: l.walletSharedLabel, count: shared.length),
+                list(shared),
+              ],
+            ],
           ),
         ),
         ModeActionBar(
           canSave: true,
           saving: _savingOrder,
-          cancelLabel: l.categoriesReorderDiscard,
-          saveLabel: l.categoriesReorderSave,
+          cancelLabel: l.accountsReorderDiscard,
+          saveLabel: l.accountsReorderSave,
           onCancel: _exitReorder,
           onSave: _saveOrder,
         ),
@@ -276,10 +356,11 @@ extension on _AccountsPageState {
 /// Wallet-tab dashboard. "Mine" figures only — the shared pot is shown on
 /// its own line and never summed into them (spec §14); 👁 hides amounts.
 ///
-/// - Net balance (all my wallets; card / pay-later debt is negative)
-/// - What the money on hand is made of (cash · bank · e-wallet bar)
-/// - Money on hand · card debt · shared pot
-/// - Credit-limit usage across my cards, when any has a limit
+/// - Net = what I have − what I owe ([Account.asset] / [Account.debt]:
+///   an overpaid card is money I have, an overdrawn wallet is debt)
+/// - What the money on hand is made of (a bar by wallet type)
+/// - Money on hand · debt · shared pot
+/// - Credit-limit usage across my cards ([Account.creditUsed])
 class _WalletsSummary extends StatelessWidget {
   const _WalletsSummary({required this.accounts});
   final List<Account> accounts;
@@ -297,11 +378,9 @@ class _WalletsSummary extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    var net = 0.0;
     var debt = 0.0;
     var shared = 0.0;
     var hasShared = false;
-    var hasCredit = false;
     var creditUsed = 0.0;
     var creditLimit = 0.0;
     var mineCount = 0;
@@ -313,24 +392,21 @@ class _WalletsSummary extends StatelessWidget {
         continue;
       }
       mineCount++;
-      net += a.balance;
-      if (a.type.isCredit) {
-        hasCredit = true;
-        if (a.balance < 0) debt += -a.balance;
-        final limit = a.creditLimit;
-        if (limit != null && limit > 0) {
-          creditLimit += limit;
-          creditUsed += a.balance.abs().clamp(0, limit);
-        }
-      } else if (a.balance > 0) {
-        byType[a.type] = (byType[a.type] ?? 0) + a.balance;
+      debt += a.debt;
+      if (a.asset > 0) byType[a.type] = (byType[a.type] ?? 0) + a.asset;
+      final limit = a.creditLimit;
+      if (a.type.isCredit && limit != null && limit > 0) {
+        creditLimit += limit;
+        creditUsed += a.creditUsed.clamp(0, limit);
       }
     }
     final assets = byType.values.fold(0.0, (s, v) => s + v);
+    final net = assets - debt;
     final parts = byType.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Card(
+    return TintedCard(
+      tint: scheme.primary,
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
@@ -433,11 +509,11 @@ class _WalletsSummary extends StatelessWidget {
             SummaryStats(
               stats: [
                 SummaryStat(label: l.accountsSummaryAssets, amount: assets),
-                if (hasCredit)
+                if (debt > 0)
                   SummaryStat(
                     label: l.accountsSummaryDebt,
                     amount: debt,
-                    tone: debt > 0 ? MoneyTone.expense : MoneyTone.plain,
+                    tone: MoneyTone.expense,
                   ),
                 if (hasShared)
                   SummaryStat(label: l.accountsTotalShared, amount: shared),
@@ -463,7 +539,8 @@ class _WalletsSummary extends StatelessWidget {
   }
 }
 
-/// Loading placeholder mirroring the real layout: summary + 2-col grid.
+/// Loading placeholder mirroring the real layout: summary, a group header
+/// and the grid at the cards' own height.
 class _AccountsSkeleton extends StatelessWidget {
   const _AccountsSkeleton({required this.cols});
   final int cols;
@@ -480,18 +557,26 @@ class _AccountsSkeleton extends StatelessWidget {
       ),
       children: [
         const SkeletonBox(height: 168, borderRadius: AppRadius.md),
+        const SizedBox(height: AppSpacing.lg),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: SkeletonBox(width: 96, height: 20, borderRadius: AppRadius.xs),
+        ),
         const SizedBox(height: AppSpacing.md),
-        GridView.count(
-          crossAxisCount: cols,
+        GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: AppSpacing.md,
-          crossAxisSpacing: AppSpacing.md,
-          childAspectRatio: 1.05,
-          children: [
-            for (var i = 0; i < cols * 2; i++)
-              const SkeletonBox(height: 150, borderRadius: AppRadius.lg),
-          ],
+          itemCount: cols * 2,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            mainAxisSpacing: AppSpacing.md,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisExtent: _cardExtent,
+          ),
+          itemBuilder: (_, _) => const SkeletonBox(
+            height: _cardExtent,
+            borderRadius: AppRadius.lg,
+          ),
         ),
       ],
     );

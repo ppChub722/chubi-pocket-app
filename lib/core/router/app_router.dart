@@ -16,7 +16,6 @@ import '../../dev/state_widgets_preview_screen.dart';
 import '../../dev/theme_preview_screen.dart';
 import '../../dev/widget_gallery_screen.dart';
 import '../../app/shell/fade_branch_container.dart';
-import '../../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
 import '../../features/app_version/presentation/pages/update_required_page.dart';
 import '../../features/app_version/presentation/version_gate.dart';
@@ -25,7 +24,6 @@ import '../../features/transactions/data/transactions_repository.dart';
 import '../../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../../features/accounts/presentation/pages/account_detail_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
-import '../../features/accounts/presentation/pages/wallet_members_page.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
 import '../../features/categories/presentation/pages/category_detail_page.dart';
 import '../../features/contacts/presentation/pages/contact_detail_page.dart';
@@ -285,39 +283,15 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       builder: (context, state) =>
           AccountDetailPage(accountId: state.pathParameters['id']!),
     ),
-    // A wallet's full history ("ดูทั้งหมด ›") — stays in the wallets
-    // stack, with its own list cubit so the transactions tab keeps its
-    // filters.
-    GoRoute(
-      path: '/accounts/:id/transactions',
-      name: 'account-transactions',
-      builder: (context, state) {
-        final id = state.pathParameters['id']!;
-        return BlocProvider(
-          create: (ctx) =>
-              TransactionsCubit(repository: ctx.read<TransactionsRepository>()),
-          child: TransactionsListPage(
-            initialAccountId: id,
-            title: context.read<AccountsCubit>().byId(id)?.name,
-          ),
-        );
-      },
-    ),
-    GoRoute(
-      path: '/accounts/:id/edit',
-      name: 'account-edit',
-      builder: (context, state) => AccountDetailPage(
-        accountId: state.pathParameters['id']!,
-        startEditing: true,
-      ),
-    ),
-    // Shared-wallet members (spec §14) — reached from the wallet page's
-    // sharing section (members row).
+    // Shared-wallet members (spec §14) — the wallet page, opened on its
+    // สมาชิก tab (links / notifications keep working).
     GoRoute(
       path: '/accounts/:id/members',
       name: 'account-members',
-      builder: (context, state) =>
-          WalletMembersPage(accountId: state.pathParameters['id']!),
+      builder: (context, state) => AccountDetailPage(
+        accountId: state.pathParameters['id']!,
+        initialTab: AccountDetailTab.members,
+      ),
     ),
   ],
   // เพิ่มเติม — the card hub alone; each card opens its own tab.
@@ -439,7 +413,7 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         if (extra is Map && extra['linkRequestId'] != null) {
           return ShellChromeHider(
             child: ContactFormPage(
-              linkRequestId: extra['linkRequestId'] as String?,
+              linkRequestId: extra['linkRequestId'] as String,
               lockedDisplayName: extra['lockedDisplayName'] as String?,
               lockedEmail: extra['lockedEmail'] as String?,
             ),
@@ -466,7 +440,7 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           return ShellChromeHider(
             child: ContactFormPage(
               editingId: id,
-              linkRequestId: extra['linkRequestId'] as String?,
+              linkRequestId: extra['linkRequestId'] as String,
             ),
           );
         }

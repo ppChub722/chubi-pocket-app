@@ -177,20 +177,16 @@ class TxHeroCard extends StatelessWidget {
       );
     }
 
-    final chips = Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      children: [
-        for (final t in _types)
-          if (canSwitch || t == type)
-            TxTypeChip(
-              type: t,
-              selected: t == type,
-              onTap: canSwitch && t != type ? () => onTypeChanged!(t) : null,
-              locked: editing && onTypeChanged == null,
-            ),
-      ],
-    );
+    final chips = [
+      for (final t in _types)
+        if (canSwitch || t == type)
+          TxTypeChip(
+            type: t,
+            selected: t == type,
+            onTap: canSwitch && t != type ? () => onTypeChanged!(t) : null,
+            locked: editing && onTypeChanged == null,
+          ),
+    ];
     final datePill = _DatePill(
       label: dateLabel,
       onTap: editing ? onPickDate : null,
@@ -269,107 +265,90 @@ class TxHeroCard extends StatelessWidget {
             style: textTheme.bodySmall?.copyWith(color: scheme.error),
           );
 
-    // Inline: a transaction (owner 2026-10-10).
-    final List<Widget> rows = !inline
+    // The kit's hero spacing ([HeroContent] / [HeroTopRow]): 16 inside,
+    // 12 between rows, 8 between controls, controls 32 high.
+    //
+    // Inline (a transaction), editing and view alike (owner 2026-10-10 —
+    // view got its type chip back, no 🔒 there):
+    //   [chips]                     [📅 date] (✏️ in view)
+    //   ค่าอะไร? (≤ 2 lines)           ฿120
+    //                    [amountNote: ส่วนของคุณ …]
+    //   [footer, view: category · wallet cards]
+    // View: an empty description shows nothing.
+    final List<Widget?> rows = !inline
         ? const []
-        // Edit / create and view alike (owner 2026-10-10 — view got its type
-        // chip back, no 🔒 there):
-        //   [chips]                     [📅 date] (✏️ in view)
-        //   ค่าอะไร? (≤ 2 lines)           ฿120
-        //                    [amountNote: ส่วนของคุณ …]
-        //   [footer, view: category · wallet cards]
-        // View: an empty description shows nothing.
         : [
-            Row(
+            HeroTopRow(leading: chips, trailing: [datePill, ?editChip]),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(child: chips),
-                const SizedBox(width: AppSpacing.xs),
-                datePill,
-                ?editChip,
+                LayoutBuilder(
+                  builder: (context, box) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: !editing && title.text.trim().isEmpty
+                            ? const SizedBox.shrink()
+                            : titleField(maxLines: 2),
+                      ),
+                      // The amount keeps its spot however long the
+                      // description wraps.
+                      SizedBox(
+                        width: box.maxWidth * 0.48,
+                        child: amountField(align: TextAlign.end),
+                      ),
+                    ],
+                  ),
+                ),
+                ?amountErrorText,
               ],
             ),
-            const SizedBox(height: AppSpacing.xs),
-            LayoutBuilder(
-              builder: (context, box) => Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: !editing && title.text.trim().isEmpty
-                        ? const SizedBox.shrink()
-                        : titleField(maxLines: 2),
-                  ),
-                  // The amount keeps its spot however long the
-                  // description wraps.
-                  SizedBox(
-                    width: box.maxWidth * 0.48,
-                    child: amountField(align: TextAlign.end),
-                  ),
-                ],
-              ),
-            ),
-            ?amountErrorText,
             if (amountNote != null)
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: AppSpacing.xs,
-                  right: AppSpacing.xs,
-                ),
-                child: Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: amountNote,
-                ),
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: amountNote,
               ),
-            if (!editing && footer != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              footer!,
-            ],
+            if (!editing) footer,
           ];
     // Stacked (event row, scheduled entry): chips · amount · title · date.
-    final List<Widget> stacked = [
-      Row(
+    final List<Widget?> stacked = [
+      HeroTopRow(leading: chips, trailing: [?editChip]),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(child: chips),
-          // Keeps the row the same height with or without the ✏️.
-          editChip ?? const SizedBox(height: 32),
+          if (amountLabel != null)
+            Text(
+              amountLabel!,
+              style: textTheme.labelMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          amountField(),
+          ?amountErrorText,
         ],
       ),
-      const SizedBox(height: AppSpacing.sm),
-      if (amountLabel != null)
-        Text(
-          amountLabel!,
-          style: textTheme.labelMedium?.copyWith(
-            color: scheme.onSurfaceVariant,
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              if (titleLeading != null) ...[
+                titleLeading!,
+                const SizedBox(width: HeroSpacing.itemGap),
+              ],
+              Expanded(child: titleField()),
+            ],
           ),
-        ),
-      amountField(),
-      ?amountErrorText,
-      Row(
-        children: [
-          if (titleLeading != null) ...[
-            titleLeading!,
-            const SizedBox(width: AppSpacing.sm),
-          ],
-          Expanded(child: titleField()),
+          ?titleErrorText,
         ],
       ),
-      ?titleErrorText,
-      const SizedBox(height: AppSpacing.sm),
       Align(alignment: Alignment.centerLeft, child: datePill),
     ];
 
-    final body = Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.sm,
-        AppSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: inline ? rows : stacked,
-      ),
-    );
+    final body = HeroContent(rows: inline ? rows : stacked);
 
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 200),

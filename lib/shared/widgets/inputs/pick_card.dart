@@ -40,7 +40,7 @@ class PickCard extends StatelessWidget {
   });
 
   /// At the end of the row — e.g. a ✕ on an optional value that clears in
-  /// place (the quick create's อีเวนต์ card). Most cards have none: the
+  /// place. Most cards have none: the
   /// picker offers "none" instead.
   final Widget? trailing;
 
@@ -124,8 +124,9 @@ class PickCard extends StatelessWidget {
                 constraints: const BoxConstraints(minHeight: 64),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: dense ? AppSpacing.sm : AppSpacing.md,
-                    vertical: AppSpacing.sm,
+                    // A nested card (12 inside — HeroSpacing.nestedPadding).
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md,
                   ),
                   child: Row(
                     children: [

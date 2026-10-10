@@ -469,7 +469,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountFormNoteHelper =>
-      'Anything you want to jot down. Visible to you only.';
+      'Anything you want to jot down. The wallet\'s members see it too.';
 
   @override
   String get iconPickerUseThis => 'Use this';
@@ -1818,7 +1818,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txDetailSource => 'From';
 
   @override
-  String get txDetailSourceProject => 'Project';
+  String get txDetailSourceProject => 'Event';
 
   @override
   String get txDetailTransferTo => 'To';
@@ -1918,7 +1918,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsSummaryAssets => 'Money on hand';
 
   @override
-  String get accountsSummaryDebt => 'Card / pay-later debt';
+  String get accountsSummaryDebt => 'Debt (cards · overdrawn)';
 
   @override
   String accountsSummaryCreditUsed(int pct, String left) {
@@ -2063,7 +2063,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoriesLimitReached =>
-      '100-category limit reached. Archive or delete one to add another.';
+      '100-category limit reached. Delete one to add another.';
 
   @override
   String get categoryTypeExpense => 'Expense';
@@ -2192,9 +2192,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categoriesReorderSave => 'Save';
-
-  @override
-  String get categoriesReorderDiscard => 'Discard';
 
   @override
   String get categoriesUndo => 'Undo';
@@ -2601,9 +2598,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String tagPickerCreateNamed(String name) {
     return 'Create “$name”';
   }
-
-  @override
-  String get tagsMore => 'More';
 
   @override
   String get txNoteAddHint => 'Add a note...';
@@ -3924,4 +3918,144 @@ class AppLocalizationsEn extends AppLocalizations {
   String txShareOthers(String amount) {
     return 'others\' share $amount';
   }
+
+  @override
+  String get txSplitPersonLocked =>
+      'Linked to a contact — to change who, remove this row and add the person again';
+
+  @override
+  String get txSplitAuthorOnly =>
+      'Only whoever recorded this transaction can change its splits';
+
+  @override
+  String get quickCreateErrorNotBillable =>
+      'Opening-balance and adjustment rows can\'t go into an event';
+
+  @override
+  String get txEventRemove => 'Take out of the event';
+
+  @override
+  String get txEventSplitRepaid =>
+      'Someone already paid their share back — this can\'t go into an event';
+
+  @override
+  String txEventFailedAfterSave(String reason) {
+    return 'Saved — but the event didn\'t change: $reason';
+  }
+
+  @override
+  String get txEventSplitCancelled =>
+      'A split on this was forgiven — it can\'t go into an event';
+
+  @override
+  String get txSplitExceedsShare => 'More than your share';
+
+  @override
+  String get accountsGroupMine => 'Mine';
+
+  @override
+  String get accountsReorder => 'Reorder';
+
+  @override
+  String get accountsReorderSave => 'Save order';
+
+  @override
+  String get accountsReorderDiscard => 'Discard';
+
+  @override
+  String get accountsEmptyTitle => 'No wallets yet';
+
+  @override
+  String get accountsEmptyMessage =>
+      'Add your first one — cash, a bank account or a card';
+
+  @override
+  String get accountsArchivedEmptyMessage =>
+      'Archived wallets wait here — restore one any time';
+
+  @override
+  String get accountDetailAddTx => 'Transaction';
+
+  @override
+  String get accountDetailTransfer => 'Transfer';
+
+  @override
+  String accountSharedWith(int count) {
+    return 'Shared · $count';
+  }
+
+  @override
+  String get accountDayNone => 'Not set';
+
+  @override
+  String get txPeriodDay => 'Day';
+
+  @override
+  String get txPeriodWeekHint =>
+      'Tap any day — its whole week (Monday to Sunday)';
+
+  @override
+  String get quickEventOpenTitle => 'Open events';
+
+  @override
+  String get quickEventNewRow => 'New event';
+
+  @override
+  String quickEventCreateNamed(String name) {
+    return 'Create \"$name\"';
+  }
+
+  @override
+  String get quickEventMembersInfo =>
+      'The people you split with join the event as members';
+
+  @override
+  String get txSplitInEvent => 'Split in the event';
+
+  @override
+  String get txSplitInEventHelper =>
+      'This split will live in the event — change it on the event page';
+
+  @override
+  String get txSplitFromMyShare => 'Split from your share';
+
+  @override
+  String get categoryPickerTitle => 'Pick a category';
+
+  @override
+  String get categoryPickerSearchHint => 'Search categories';
+
+  @override
+  String get categoryPickerNoMatch => 'No category matches';
+
+  @override
+  String get tagPickerSearchHint => 'Search or name a new tag';
+
+  @override
+  String get tagPickerEmpty => 'No tags yet — make them on the tags page';
+
+  @override
+  String get tagPickerNoMatch => 'No tag matches';
+
+  @override
+  String get contactPickerSaveAsContact => 'Save as a contact';
+
+  @override
+  String get contactPickerSaveFailed => 'Couldn\'t save the contact';
+
+  @override
+  String get contactsSortRecent => 'Recently used';
+
+  @override
+  String get contactsSortNameAsc => 'Name A→Z';
+
+  @override
+  String get contactsSortNameDesc => 'Name Z→A';
+
+  @override
+  String get contactArchiveConfirmTitle => 'Archive this contact?';
+
+  @override
+  String get tagsBulkDeleteConfirmBody =>
+      'The selected tags are deleted when you save, and removed from any transactions using them.';
 }

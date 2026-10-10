@@ -1,5 +1,6 @@
 import 'package:chubi_pocket/app/shell/fade_branch_container.dart';
 import 'package:chubi_pocket/app/shell/main_shell.dart';
+import 'package:chubi_pocket/app/shell/shell_chrome.dart';
 import 'package:chubi_pocket/app/shell/tab_nav.dart';
 import 'package:chubi_pocket/core/constants/app_icons.dart';
 import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
@@ -76,6 +77,42 @@ class _SwipeOwnerState extends State<_SwipeOwner> implements ShellSwipeHandler {
   Widget build(BuildContext context) => widget.child;
 }
 
+/// A tab root with a mode that hides the shell nav (categories reorder,
+/// wallets reorder, a page in edit mode): back leaves the mode first.
+class _ModePage extends StatefulWidget {
+  const _ModePage();
+
+  @override
+  State<_ModePage> createState() => _ModePageState();
+}
+
+class _ModePageState extends State<_ModePage> {
+  bool _mode = false;
+
+  void _set(bool on) {
+    final chrome = ShellChrome.of(context);
+    on ? chrome.hide() : chrome.show();
+    setState(() => _mode = on);
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_mode,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop && _mode) _set(false);
+    },
+    child: Scaffold(
+      body: Column(
+        children: [
+          const SizedBox(height: 80),
+          Text(_mode ? 'mode on' : 'mode off'),
+          TextButton(onPressed: () => _set(true), child: const Text('enter')),
+        ],
+      ),
+    ),
+  );
+}
+
 /// One branch per [ShellTab], like the app: the four nav tabs are a–d (d =
 /// the เพิ่มเติม hub), the rest go by their tab name. Details are siblings
 /// of their root, as in app_router.dart.
@@ -95,9 +132,11 @@ GoRouter _router(String initialLocation) => GoRouter(
             routes: [
               GoRoute(
                 path: '/${_name(tab)}',
-                builder: (_, _) => tab == ShellTab.accounts
-                    ? _SwipeOwner(child: _root(_name(tab)))
-                    : _root(_name(tab), withRow: tab == ShellTab.home),
+                builder: (_, _) => switch (tab) {
+                  ShellTab.accounts => _SwipeOwner(child: _root(_name(tab))),
+                  ShellTab.categories => const _ModePage(),
+                  _ => _root(_name(tab), withRow: tab == ShellTab.home),
+                },
               ),
               GoRoute(
                 path: '/${_name(tab)}/detail',
@@ -141,6 +180,28 @@ void main() {
     await t.fling(on, Offset(dx, 0), 1200);
     await t.pumpAndSettle();
   }
+
+  testWidgets('system back in a root page mode: leaves the mode, nav back', (
+    t,
+  ) async {
+    await pump(t, at: '/categories');
+    final chrome = ShellChrome.of(t.element(find.text('mode off')));
+    await t.tap(find.text('enter'));
+    await t.pumpAndSettle();
+    expect(find.text('mode on'), findsOneWidget);
+    expect(chrome.hidden, isTrue);
+
+    // System back (not the top bar ←).
+    await t.binding.handlePopRoute();
+    await t.pumpAndSettle();
+    expect(find.text('mode off').hitTestable(), findsOneWidget);
+    expect(chrome.hidden, isFalse);
+
+    // Out of the mode, back goes on to the shell (another tab).
+    await t.binding.handlePopRoute();
+    await t.pumpAndSettle();
+    expect(find.text('mode off').hitTestable(), findsNothing);
+  });
 
   testWidgets('swipe on a tab root → neighbouring tab, both ways', (t) async {
     await pump(t);

@@ -6,7 +6,7 @@ import 'category.dart';
 ///
 /// Pure functions — no state, no Bloc dependency. The cubit and forms
 /// pass their `state` (or filtered subset) and ask questions about
-/// depth, ancestors, eligibility, and breadcrumb paths.
+/// depth, the L1 root, sibling names and breadcrumb paths.
 class CategoryTree {
   CategoryTree._();
 
@@ -29,66 +29,6 @@ class CategoryTree {
     }
     return depth;
   }
-
-  /// Returns true when [candidateAncestorId] sits anywhere on the chain
-  /// from [descendantId] up to the root. Used to reject parent changes
-  /// that would create a cycle.
-  static bool isAncestorOf(
-    String candidateAncestorId,
-    String descendantId,
-    List<Category> all,
-  ) {
-    var node = _byId(descendantId, all);
-    while (node?.parentId != null) {
-      if (node!.parentId == candidateAncestorId) return true;
-      node = _byId(node.parentId!, all);
-    }
-    return false;
-  }
-
-  /// Returns the categories that may legally be picked as the parent of
-  /// [self] (or, if [self] is null, of a brand-new category being created).
-  /// Filters out:
-  /// - System categories (never parents)
-  /// - Other-type categories (must match [self]'s type)
-  /// - Self and own descendants (cycle prevention) — only when editing
-  /// - Categories whose own depth would push [self]'s subtree past
-  ///   [maxDepth]
-  static List<Category> eligibleParents({
-    required List<Category> all,
-    Category? self,
-    required type,
-  }) {
-    final selfDepthBudget = self == null ? 1 : _maxSubtreeDepth(self.id, all);
-    return all.where((c) {
-      if (c.isSystem) return false;
-      if (c.type != type) return false;
-      if (self != null && c.id == self.id) return false;
-      if (self != null && isAncestorOf(self.id, c.id, all)) return false;
-      // Allow this candidate only if making `self` a child of `c` keeps
-      // the deepest leaf in `self`'s subtree within maxDepth.
-      final candidateDepth = depthOf(c, all);
-      return candidateDepth + selfDepthBudget <= maxDepth;
-    }).toList();
-  }
-
-  /// Computes the "depth budget" of a subtree rooted at [rootId] — i.e.
-  /// the height (1 = leaf, 2 = root with children, ...). Used by
-  /// [eligibleParents] and the drag-drop validator when re-parenting an
-  /// existing branch.
-  static int subtreeHeight(String rootId, List<Category> all) {
-    var max = 1;
-    for (final c in all) {
-      if (c.parentId == rootId) {
-        final childHeight = subtreeHeight(c.id, all) + 1;
-        if (childHeight > max) max = childHeight;
-      }
-    }
-    return max;
-  }
-
-  static int _maxSubtreeDepth(String rootId, List<Category> all) =>
-      subtreeHeight(rootId, all);
 
   /// Returns the L1 ancestor of [category] — i.e. the root of [category]'s
   /// branch. For an L1 category this is itself; for L2/L3 it walks up the

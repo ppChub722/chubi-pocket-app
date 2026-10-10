@@ -10,4 +10,8 @@ abstract final class TextLimits {
 
   static const description = 200;
   static const note = 500;
+
+  /// A contact's email / phone.
+  static const email = 255;
+  static const phone = 50;
 }

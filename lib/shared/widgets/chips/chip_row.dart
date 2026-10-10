@@ -33,17 +33,20 @@ class ChipOrder {
 /// filter: a muted leading [icon] says what the row is (no label), the
 /// chips scroll sideways, and [onMore] adds "เพิ่มเติม" at the end (the
 /// full picker). The transaction form's หมวด / แท็ก rows, the filter
-/// sheet's กระเป๋า / หมวด / แท็ก rows.
+/// sheet's ประเภท / กระเป๋า / หมวด / แท็ก rows. Under a section title
+/// that carries the icon (the filter sheet), [icon] is null and the chips
+/// start flush left.
 class ChipRow extends StatelessWidget {
   const ChipRow({
-    required this.icon,
     required this.chips,
+    this.icon,
     this.onMore,
     this.moreLabel,
     super.key,
   });
 
-  final IconData icon;
+  /// Null = no leading icon (a titled section shows it instead).
+  final IconData? icon;
   final List<Widget> chips;
 
   /// Null = no "เพิ่มเติม" (a view-only row).
@@ -57,8 +60,10 @@ class ChipRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-        const SizedBox(width: AppSpacing.sm),
+        if (icon != null) ...[
+          Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.sm),
+        ],
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,

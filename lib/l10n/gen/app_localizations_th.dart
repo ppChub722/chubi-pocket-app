@@ -465,7 +465,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountArchiveConfirmAction => 'เก็บ';
 
   @override
-  String get accountFormNoteHelper => 'อะไรที่อยากจดไว้ เห็นเฉพาะคุณคนเดียว';
+  String get accountFormNoteHelper => 'อะไรที่อยากจดไว้ สมาชิกกระเป๋าเห็นด้วย';
 
   @override
   String get iconPickerUseThis => 'ใช้รูปนี้';
@@ -1791,7 +1791,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txDetailSource => 'มาจาก';
 
   @override
-  String get txDetailSourceProject => 'โปรเจกต์';
+  String get txDetailSourceProject => 'อีเวนต์';
 
   @override
   String get txDetailTransferTo => 'ไปที่';
@@ -1888,7 +1888,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountsSummaryAssets => 'เงินที่มี';
 
   @override
-  String get accountsSummaryDebt => 'หนี้บัตร / จ่ายทีหลัง';
+  String get accountsSummaryDebt => 'หนี้ (บัตร · ติดลบ)';
 
   @override
   String accountsSummaryCreditUsed(int pct, String left) {
@@ -2028,7 +2028,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get categoriesLimitReached =>
-      'ถึงขีดจำกัด 100 หมวดหมู่แล้ว เก็บเข้าคลังหรือลบหนึ่งรายการก่อนเพิ่มใหม่';
+      'ถึงขีดจำกัด 100 หมวดหมู่แล้ว ลบหนึ่งรายการก่อนเพิ่มใหม่';
 
   @override
   String get categoryTypeExpense => 'รายจ่าย';
@@ -2145,9 +2145,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get categoriesReorderSave => 'บันทึก';
-
-  @override
-  String get categoriesReorderDiscard => 'ยกเลิก';
 
   @override
   String get categoriesUndo => 'ย้อนกลับ';
@@ -2543,9 +2540,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String tagPickerCreateNamed(String name) {
     return 'สร้าง “$name”';
   }
-
-  @override
-  String get tagsMore => 'เพิ่มเติม';
 
   @override
   String get txNoteAddHint => 'เพิ่มโน้ต...';
@@ -3828,4 +3822,141 @@ class AppLocalizationsTh extends AppLocalizations {
   String txShareOthers(String amount) {
     return 'ของคนอื่น $amount';
   }
+
+  @override
+  String get txSplitPersonLocked =>
+      'ผูกกับผู้ติดต่อแล้ว — จะเปลี่ยนคน ให้ลบแถวนี้แล้วเพิ่มใหม่';
+
+  @override
+  String get txSplitAuthorOnly => 'เฉพาะคนที่บันทึกรายการนี้แก้การหารได้';
+
+  @override
+  String get quickCreateErrorNotBillable =>
+      'รายการยอดยกมา / ปรับยอด เพิ่มเข้าอีเวนต์ไม่ได้';
+
+  @override
+  String get txEventRemove => 'เอาออกจากอีเวนต์';
+
+  @override
+  String get txEventSplitRepaid => 'มีคนจ่ายคืนแล้ว เอาเข้าอีเวนต์ไม่ได้';
+
+  @override
+  String txEventFailedAfterSave(String reason) {
+    return 'บันทึกรายการแล้ว แต่เปลี่ยนอีเวนต์ไม่สำเร็จ: $reason';
+  }
+
+  @override
+  String get txEventSplitCancelled =>
+      'มีรายการหารที่ยกหนี้แล้ว เอาเข้าอีเวนต์ไม่ได้';
+
+  @override
+  String get txSplitExceedsShare => 'เกินส่วนของคุณ';
+
+  @override
+  String get accountsGroupMine => 'ของฉัน';
+
+  @override
+  String get accountsReorder => 'จัดลำดับ';
+
+  @override
+  String get accountsReorderSave => 'บันทึกลำดับ';
+
+  @override
+  String get accountsReorderDiscard => 'ยกเลิก';
+
+  @override
+  String get accountsEmptyTitle => 'ยังไม่มีกระเป๋า';
+
+  @override
+  String get accountsEmptyMessage =>
+      'เพิ่มกระเป๋าแรก — เงินสด บัญชีธนาคาร หรือบัตร';
+
+  @override
+  String get accountsArchivedEmptyMessage =>
+      'กระเป๋าที่เก็บถาวรจะอยู่ที่นี่ กู้คืนได้ทุกเมื่อ';
+
+  @override
+  String get accountDetailAddTx => 'รายการ';
+
+  @override
+  String get accountDetailTransfer => 'โอน';
+
+  @override
+  String accountSharedWith(int count) {
+    return 'แชร์ $count คน';
+  }
+
+  @override
+  String get accountDayNone => 'ไม่ระบุ';
+
+  @override
+  String get txPeriodDay => 'วัน';
+
+  @override
+  String get txPeriodWeekHint =>
+      'แตะวันไหนก็ได้ — ได้ทั้งสัปดาห์ (จันทร์ถึงอาทิตย์)';
+
+  @override
+  String get quickEventOpenTitle => 'อีเวนต์ที่เปิดอยู่';
+
+  @override
+  String get quickEventNewRow => 'สร้างอีเวนต์ใหม่';
+
+  @override
+  String quickEventCreateNamed(String name) {
+    return 'สร้าง \"$name\"';
+  }
+
+  @override
+  String get quickEventMembersInfo => 'คนที่หารด้วยจะถูกเพิ่มเป็นสมาชิกอีเวนต์';
+
+  @override
+  String get txSplitInEvent => 'หารในอีเวนต์';
+
+  @override
+  String get txSplitInEventHelper =>
+      'การหารนี้จะอยู่ในอีเวนต์ แก้ได้ที่หน้าอีเวนต์';
+
+  @override
+  String get txSplitFromMyShare => 'หารจากส่วนของคุณ';
+
+  @override
+  String get categoryPickerTitle => 'เลือกหมวดหมู่';
+
+  @override
+  String get categoryPickerSearchHint => 'ค้นหาหมวดหมู่';
+
+  @override
+  String get categoryPickerNoMatch => 'ไม่พบหมวดหมู่ที่ตรงกัน';
+
+  @override
+  String get tagPickerSearchHint => 'ค้นหา หรือพิมพ์ชื่อแท็กใหม่';
+
+  @override
+  String get tagPickerEmpty => 'ยังไม่มีแท็ก — สร้างได้ที่หน้าแท็ก';
+
+  @override
+  String get tagPickerNoMatch => 'ไม่พบแท็กที่ตรงกัน';
+
+  @override
+  String get contactPickerSaveAsContact => 'บันทึกเป็นผู้ติดต่อ';
+
+  @override
+  String get contactPickerSaveFailed => 'บันทึกผู้ติดต่อไม่สำเร็จ';
+
+  @override
+  String get contactsSortRecent => 'ใช้ล่าสุด';
+
+  @override
+  String get contactsSortNameAsc => 'ชื่อ ก→ฮ';
+
+  @override
+  String get contactsSortNameDesc => 'ชื่อ ฮ→ก';
+
+  @override
+  String get contactArchiveConfirmTitle => 'เก็บถาวรผู้ติดต่อนี้?';
+
+  @override
+  String get tagsBulkDeleteConfirmBody =>
+      'แท็กที่เลือกจะถูกลบเมื่อกดบันทึก และจะเอาออกจากรายการที่ใช้แท็กนั้น';
 }

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
@@ -75,7 +74,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
             empty: EmptyView(
               icon: AppIcons.archive,
               title: l.accountsArchivedEmpty,
-              message: '',
+              message: l.accountsArchivedEmptyMessage,
             ),
             builder: (context) => PullToRefresh(
               onRefresh: _refresh,
@@ -88,29 +87,34 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                   bottom: 96 + MediaQuery.paddingOf(context).bottom,
                 ),
                 children: [
-                  for (final a in list)
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                      ),
-                      leading: Opacity(
-                        opacity: 0.6,
-                        child: IconDisplay(
-                          type: IconType.account,
-                          size: 40,
-                          iconCode: a.iconCode,
+                  // Kit rows (owner 2026-10-10): dimmed icon · name ·
+                  // balance, and [กู้คืน].
+                  SectionCard(
+                    first: true,
+                    children: [
+                      for (final a in list)
+                        DetailRow(
+                          leading: Opacity(
+                            opacity: 0.6,
+                            child: IconDisplay(
+                              type: IconType.account,
+                              size: 40,
+                              iconCode: a.iconCode,
+                            ),
+                          ),
+                          label: a.name,
+                          helper: moneyString(context, a.balance),
+                          trailing: ActionPill(
+                            label: l.accountRestore,
+                            icon: AppIcons.unarchive,
+                            size: PillSize.medium,
+                            onTap: _busy.contains(a.id)
+                                ? null
+                                : () => _restore(a),
+                          ),
                         ),
-                      ),
-                      title: Text(a.name),
-                      subtitle: MoneyText(a.balance),
-                      trailing: AppButton(
-                        label: l.accountRestore,
-                        icon: AppIcons.unarchive,
-                        variant: AppButtonVariant.tonal,
-                        loading: _busy.contains(a.id),
-                        onPressed: () => _restore(a),
-                      ),
-                    ),
+                    ],
+                  ),
                 ],
               ),
             ),

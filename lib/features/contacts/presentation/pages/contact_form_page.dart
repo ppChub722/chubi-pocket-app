@@ -14,28 +14,24 @@ import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 
-/// `/contacts/new` and `/contacts/:id/edit`.
+/// The contact form of the link-request flows only — plain create / edit
+/// is the contact detail page. Reached from an accepted
+/// `contact_link_request` (the inbox):
 ///
-/// Modes:
-/// - **Create** (no params) — plain new contact.
-/// - **Edit existing** (editingId set) — load + update. When the loaded
-///   contact is linked to a user, display_name + email become
-///   read-only (those fields project live from the linked user; the
-///   stored values exist only as a fallback for after unlink).
-/// - **Link-create** (linkRequestId set, contactId null) — post-accept
-///   tap flow when B has no matching contact yet. Display_name + email
-///   are read-only and pre-filled from the sender's profile (BE pulls
-///   them server-side at save time too). Save calls
+/// - **Link-create** (`/contacts/new` with `extra.linkRequestId`, no
+///   [editingId]) — B has no matching contact yet. Display_name + email
+///   are read-only, pre-filled from the sender's profile (the BE pulls them
+///   server-side at save time too). Save calls
 ///   `createLinkedContactFromLinkRequest`.
-/// - **Link-existing** (linkRequestId + contactId) — post-accept tap
-///   flow when B has an unlinked email-match. Loads the existing
-///   contact, locks display_name + email (about to become linked-driven
-///   anyway), keeps phone / description / note editable. Save calls
+/// - **Link-existing** (`/contacts/:id/edit` with `extra.linkRequestId`)
+///   — B has an unlinked email-match. Loads that contact, locks
+///   display_name + email (about to become linked-driven), keeps phone /
+///   description / note editable. Save calls
 ///   `linkExistingContactFromLinkRequest`.
 class ContactFormPage extends StatefulWidget {
   const ContactFormPage({
+    required this.linkRequestId,
     this.editingId,
-    this.linkRequestId,
     this.lockedDisplayName,
     this.lockedEmail,
     super.key,
@@ -43,13 +39,11 @@ class ContactFormPage extends StatefulWidget {
 
   final String? editingId;
 
-  /// Notification id of an *actioned* `contact_link_request`. When set,
-  /// save calls one of the link-request endpoints instead of plain
-  /// create / update. The endpoint chosen is determined by whether
-  /// [editingId] is also set:
+  /// Notification id of an *actioned* `contact_link_request`. Save calls
+  /// the link-request endpoint picked by whether [editingId] is set:
   /// - editingId null → `createLinkedContactFromLinkRequest`
   /// - editingId set  → `linkExistingContactFromLinkRequest`
-  final String? linkRequestId;
+  final String linkRequestId;
 
   /// Pre-fill values for the locked display_name + email fields in
   /// link-create mode. Sourced by the inbox tap handler from the
@@ -72,32 +66,18 @@ class _ContactFormPageState extends State<ContactFormPage> {
   bool _loading = false;
   String? _error;
 
-  /// Set after [_loadExisting]; drives the "lock display_name + email"
-  /// rule for already-linked contacts in plain edit mode.
+  /// The contact being linked (link-existing), once loaded.
   Contact? _existing;
 
-  bool get _isEditExisting => widget.editingId != null;
-  bool get _isLinkFlow => widget.linkRequestId != null;
-  bool get _isLinkCreate => _isLinkFlow && !_isEditExisting;
-  bool get _isLinkExisting => _isLinkFlow && _isEditExisting;
-
-  /// True when display_name + email should be read-only:
-  ///   - link-create: locked to the sender profile values shown.
-  ///   - link-existing: locked because the contact is about to become
-  ///     linked-driven (BE will project user values on the next read).
-  ///   - plain edit on an already-linked contact: locked because the
-  ///     user values are what's actually displayed across the app.
-  bool get _displayFieldsLocked {
-    if (_isLinkFlow) return true;
-    return _existing?.isLinked ?? false;
-  }
+  bool get _isLinkExisting => widget.editingId != null;
+  bool get _isLinkCreate => !_isLinkExisting;
 
   @override
   void initState() {
     super.initState();
-    if (_isEditExisting) {
+    if (_isLinkExisting) {
       _loadExisting();
-    } else if (_isLinkCreate) {
+    } else {
       // Pre-fill (read-only) from the sender profile passed in by the
       // inbox tap handler. The BE will pull the canonical values from
       // the user record on save anyway — these fields are display-only.
@@ -112,8 +92,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
       final c = await context.read<ContactsRepository>().get(widget.editingId!);
       if (!mounted) return;
       _existing = c;
-      // For linked / link-existing flows we render the linked user's
-      // current values; otherwise the contact's own stored values.
+      // The linked user's current values where the contact has them.
       _name.text = c.effectiveDisplayName;
       _email.text = c.effectiveEmail ?? '';
       _phone.text = c.phone ?? '';
@@ -134,8 +113,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
       _loading = true;
       _error = null;
     });
-    final name = _name.text.trim();
-    final email = _email.text.trim().isEmpty ? null : _email.text.trim();
     final phone = _phone.text.trim().isEmpty ? null : _phone.text.trim();
     final description = _description.text.trim().isEmpty
         ? null
@@ -144,7 +121,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
     try {
       if (_isLinkExisting) {
         await repo.linkExistingContactFromLinkRequest(
-          widget.linkRequestId!,
+          widget.linkRequestId,
           widget.editingId!,
           phone: phone,
           description: description,
@@ -153,9 +130,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
         await cubit.load();
         if (!mounted) return;
         context.pushReplacement('/contacts/${widget.editingId!}');
-      } else if (_isLinkCreate) {
+      } else {
         final created = await repo.createLinkedContactFromLinkRequest(
-          widget.linkRequestId!,
+          widget.linkRequestId,
           phone: phone,
           description: description,
           note: note,
@@ -163,31 +140,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
         await cubit.load();
         if (!mounted) return;
         context.pushReplacement('/contacts/${created.id}');
-      } else if (_isEditExisting) {
-        // Plain edit. When the contact is linked, the form locked
-        // display_name + email — but the BE allows the update either
-        // way; we just don't surface a path to change them. For an
-        // unlinked contact, send everything.
-        await cubit.update(
-          widget.editingId!,
-          displayName: _displayFieldsLocked ? null : name,
-          email: _displayFieldsLocked ? null : email,
-          phone: phone,
-          description: description,
-          note: note,
-        );
-        if (!mounted) return;
-        context.pop<Contact?>(null);
-      } else {
-        await cubit.create(
-          displayName: name,
-          email: email,
-          phone: phone,
-          description: description,
-          note: note,
-        );
-        if (!mounted) return;
-        context.pop<Contact?>(null);
       }
     } on ApiException catch (e) {
       _error = e.message;
@@ -201,16 +153,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final l = AppLocalizations.of(context)!;
     final title = _isLinkCreate
         ? l.contactLinkCreateTitle
-        : _isLinkExisting
-        ? l.contactLinkExistingTitle
-        : _isEditExisting
-        ? l.contactTitleEdit
-        : l.contactTitleNew;
-    final saveLabel = _isLinkFlow ? l.contactLinkSave : l.commonSave;
-    final lockedHelper = _displayFieldsLocked
-        ? l.contactLinkedLockedHint
-        : null;
-    final lockedIcon = _displayFieldsLocked ? AppIcons.link : null;
+        : l.contactLinkExistingTitle;
+    final saveLabel = l.contactLinkSave;
+    // Display_name + email are read-only in both flows: link-create shows
+    // the sender's profile, link-existing is about to become linked-driven.
+    final lockedHelper = l.contactLinkedLockedHint;
+    const lockedIcon = AppIcons.link;
     return Scaffold(
       appBar: AppTopBar(title: title, showBack: true, editing: true),
       extendBodyBehindAppBar: true,
@@ -218,7 +166,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
       body: Builder(
         builder: (context) {
           final top = MediaQuery.paddingOf(context).top;
-          if (_loading && _isEditExisting && _existing == null) {
+          if (_loading && _isLinkExisting && _existing == null) {
             return Padding(
               padding: EdgeInsets.only(top: top),
               child: const LoadingView(),
@@ -234,18 +182,17 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 ),
               ),
               children: [
-                if (_isLinkFlow)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: _LinkBanner(
-                      senderName: _name.text,
-                      isExisting: _isLinkExisting,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: _LinkBanner(
+                    senderName: _name.text,
+                    isExisting: _isLinkExisting,
                   ),
+                ),
                 AppTextField(
                   controller: _name,
                   label: l.commonName,
-                  readOnly: _displayFieldsLocked,
+                  readOnly: true,
                   prefixIcon: lockedIcon,
                   helper: lockedHelper,
                   maxLength: TextLimits.name,
@@ -266,7 +213,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 AppTextField(
                   controller: _email,
                   label: l.contactEmailLabel,
-                  readOnly: _displayFieldsLocked,
+                  readOnly: true,
                   prefixIcon: lockedIcon,
                   helper: lockedHelper,
                   keyboardType: TextInputType.emailAddress,
@@ -275,6 +222,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 AppTextField(
                   controller: _phone,
                   label: l.contactPhoneLabel,
+                  maxLength: TextLimits.phone,
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: AppSpacing.md),

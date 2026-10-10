@@ -217,8 +217,18 @@ class _MainShellState extends State<MainShell>
       // The shell is the root navigator's only page, so a back that reaches
       // it would close the app — handle it instead.
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _onBackAtRoot();
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        // go_router sends system back to a tab's navigator only when it can
+        // pop — a tab's ROOT page never got asked, so its PopScope (reorder
+        // / edit mode: "leave the mode first") was skipped and the shell
+        // switched tabs with the page still in its mode, the nav hidden.
+        // Ask the current tab first; only a page that lets go falls
+        // through to the shell's back.
+        final shell = widget.navigationShell;
+        final tab = shell.route.branches[shell.currentIndex].navigatorKey;
+        if (await tab.currentState?.maybePop() ?? false) return;
+        _onBackAtRoot();
       },
       child: ShellBackScope(
         onBack: _onBackAtRoot,

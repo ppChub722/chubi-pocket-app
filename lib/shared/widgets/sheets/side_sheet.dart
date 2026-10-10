@@ -169,11 +169,18 @@ class SideSheetScaffold extends StatelessWidget {
   }
 }
 
-/// A titled block inside a side sheet's body ("ประเภท", "ช่วงเวลา", …).
+/// A titled block inside a side sheet's body ("ประเภท", "กระเป๋า", …),
+/// [icon] in front of the title — so the rows under it start flush left.
 class SideSheetSection extends StatelessWidget {
-  const SideSheetSection({required this.title, required this.child, super.key});
+  const SideSheetSection({
+    required this.title,
+    required this.child,
+    this.icon,
+    super.key,
+  });
 
   final String title;
+  final IconData? icon;
   final Widget child;
 
   @override
@@ -189,12 +196,22 @@ class SideSheetSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: scheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 18, color: scheme.primary),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.sm),
           child,

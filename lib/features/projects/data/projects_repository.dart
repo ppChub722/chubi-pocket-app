@@ -128,28 +128,33 @@ class ProjectsRepository {
   /// included bill, born auto-claimed. Settled debt state is never
   /// modified.
   ///
-  /// Request shape is pinned — do not add fields:
+  /// Request shape:
   /// - `name` — required (FE composes the members+date default, editable)
-  /// - `new_transaction` — required; the exact `POST /v1/transactions`
+  /// - `new_transaction` — optional; the exact `POST /v1/transactions`
   ///   body (splits[] allowed), processed through the normal personal
   ///   transaction create path
-  /// - `transaction_ids` — optional; each must belong to the caller and
-  ///   have `project_id IS NULL`, else the whole call fails (atomic)
+  /// - `transaction_ids` — saved rows to pull in; each must belong to the
+  ///   caller and have `project_id IS NULL` (unless [move]), else the whole
+  ///   call fails (atomic)
+  /// - `move` — true: rows already in another event move here (atomic)
   ///
-  /// Errors: `400 VALIDATION_ERROR`, `404 TX_NOT_FOUND`,
-  /// `409 TX_ALREADY_IN_PROJECT`.
+  /// Errors: `400 VALIDATION_ERROR` (a transfer), `404 TX_NOT_FOUND`,
+  /// `409 TX_ALREADY_IN_PROJECT`, `422 TX_NOT_BILLABLE` (repayment /
+  /// opening balance / adjustment).
   Future<QuickCreateResult> quickCreate({
     required String name,
-    required Map<String, dynamic> newTransaction,
+    Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
+    bool move = false,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/projects/quick',
         data: <String, dynamic>{
           'name': name,
-          'new_transaction': newTransaction,
+          'new_transaction': ?newTransaction,
           if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
+          if (move) 'move': true,
         },
       );
       return QuickCreateResult(
@@ -162,25 +167,43 @@ class ProjectsRepository {
     }
   }
 
-  /// `POST /v1/projects/:id/bills` — the new bill (plus optional loose
-  /// bills) pulled into an existing project; same response as [quickCreate].
+  /// `POST /v1/projects/:id/bills` — a new bill and / or saved rows
+  /// ([transactionIds]) pulled into an existing project; [move] takes rows
+  /// out of the event they're in. Same response and errors as
+  /// [quickCreate], plus the project's own (NOT_MEMBER, FORBIDDEN_ROLE,
+  /// PROJECT_LOCKED, PROJECT_NOT_ACTIVE).
   Future<QuickCreateResult> addBills(
     String projectId, {
-    required Map<String, dynamic> newTransaction,
+    Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
+    bool move = false,
   }) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/projects/$projectId/bills',
         data: <String, dynamic>{
-          'new_transaction': newTransaction,
+          'new_transaction': ?newTransaction,
           if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
+          if (move) 'move': true,
         },
       );
       return QuickCreateResult(
         project: Project.fromJson(res.data!),
         linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
         transactionId: res.data!['transaction_id'] as String?,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `DELETE /v1/projects/:id/bills/:transaction_id` → 204 — takes a saved
+  /// row back out of the event (it stays in the book). Errors: 404
+  /// TX_NOT_FOUND / TX_NOT_IN_PROJECT, the project's own.
+  Future<void> removeBill(String projectId, String transactionId) async {
+    try {
+      await _client.dio.delete<dynamic>(
+        '/projects/$projectId/bills/$transactionId',
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

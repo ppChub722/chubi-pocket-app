@@ -18,7 +18,7 @@ class TagsListSkeleton extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       children: [
         for (var i = 0; i < 8; i++)
-          const SkeletonListTile(avatarSize: 32, lines: 1),
+          const SkeletonListTile(avatarSize: 40, lines: 1),
       ],
     );
   }

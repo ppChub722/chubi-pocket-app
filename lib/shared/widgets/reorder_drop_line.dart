@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 class ReorderDropLine extends StatelessWidget {
   const ReorderDropLine({
     required this.depth,
-    required this.isValid,
+    this.isValid = true,
     this.indentPerDepth = 24.0,
     this.baseIndent = 16.0,
     this.height = 4.0,

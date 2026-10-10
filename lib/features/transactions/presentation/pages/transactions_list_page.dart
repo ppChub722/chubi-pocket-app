@@ -12,7 +12,6 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
@@ -29,25 +28,26 @@ import '../widgets/tx_period_pill.dart';
 /// `/transactions` (owner 2026-10-10 redesign):
 ///
 /// ```
-///        ‹  ตุลาคม 2026 ▾  ›          period pill (swipe = step it)
+///        ‹  ตุลาคม 2026 ▾  ›          the date filter: ‹ › / swipe step
+///                                      one unit, the label opens the
+///                                      period sheet (วัน…กำหนดเอง)
 ///  [ รายรับ · รายจ่าย · คงเหลือ ]        totals of the whole filtered set
-///  [🔍 ค้นหา…] [⚙ ตัวกรอง (n)]          → right side sheet
-///  (รายจ่าย ✕) (KBank ✕)                only the active filters
+///  [🔍 ค้นหา…                    ]      full width
+///  [⚙ ตัวกรอง •n]      [⇅ ใหม่สุด ▾]    → right side sheet · the sort
+///  (รายจ่าย ✕) (KBank ✕) (#ทริป ✕)      the active filters, wrapping
 ///  วันนี้                    −฿540
 ///  rows (2 lines: title · category · wallet · #tags)
 /// ```
 ///
 /// Everything above the rows scrolls with them, so the list keeps the
 /// screen. The same page is a wallet's รายการ tab ([lockedAccount], no
-/// wallet filter) and the "ดูทั้งหมด" / dashboard drill-down pages.
+/// wallet filter, this month to start) and the dashboard drill-down pages.
 ///
-/// [initialAccountId] pre-filters to one wallet ("ดูทั้งหมด ›" from a
-/// wallet). [initialCategoryId] / [initialUncategorized] + [initialMonth]
-/// open a dashboard slice ("เงินไปไหน" → one category in one month).
+/// [initialCategoryId] / [initialUncategorized] + [initialMonth] open a
+/// dashboard slice ("เงินไปไหน" → one category in one month).
 /// Picking a category always includes its sub-categories.
 class TransactionsListPage extends StatefulWidget {
   const TransactionsListPage({
-    this.initialAccountId,
     this.initialCategoryId,
     this.initialUncategorized = false,
     this.initialMonth,
@@ -65,7 +65,6 @@ class TransactionsListPage extends StatefulWidget {
   /// presets it, and the list ends in an add tile.
   final Account? lockedAccount;
 
-  final String? initialAccountId;
   final String? initialCategoryId;
   final bool initialUncategorized;
 
@@ -89,7 +88,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   late TxFilters _base = _f;
   String _q = '';
   Timer? _debounce;
-  final _scroll = ScrollController();
   final _search = TextEditingController();
   Map<ShellTab, ShellSwipeHandler>? _swipeHandlers;
 
@@ -101,31 +99,12 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      final p = _scroll.position;
-      if (p.pixels > p.maxScrollExtent - 240) {
-        context.read<TransactionsCubit>().loadMore();
-      }
-    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       var f = _f;
       final locked = widget.lockedAccount;
-      if (locked != null) {
-        f = f.copyWith(wallet: TxOneWallet(locked), period: TxPeriod.all);
-      }
-      final id = widget.initialAccountId;
-      if (id != null && locked == null) {
-        final a = context
-            .read<AccountsCubit>()
-            .state
-            .accounts
-            .where((a) => a.id == id)
-            .firstOrNull;
-        if (a != null) {
-          f = f.copyWith(wallet: TxOneWallet(a), period: TxPeriod.all);
-        }
-      }
+      // A wallet's รายการ tab opens at this month too (owner 2026-10-10).
+      if (locked != null) f = f.copyWith(wallet: TxOneWallet(locked));
       final catId = widget.initialCategoryId;
       if (catId != null) {
         final c = context.read<CategoriesCubit>().byId(catId);
@@ -164,7 +143,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       _swipeHandlers!.remove(ShellTab.transactions);
     }
     _debounce?.cancel();
-    _scroll.dispose();
     _search.dispose();
     super.dispose();
   }
@@ -237,7 +215,8 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   void _clearFilters() {
     _search.clear();
     _q = '';
-    _apply(_base.copyWith(period: _f.period));
+    // The period and the sort are the page's own controls — kept.
+    _apply(_base.copyWith(period: _f.period, sort: _f.sort));
   }
 
   // ── Active filter chips ─────────────────────────────────────────────
@@ -279,8 +258,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             ],
           ),
         ),
-      if (_f.sort != base.sort)
-        (label: txSortLabel(l, _f.sort), without: _f.copyWith(sort: base.sort)),
+      // The sort shows in its own control, the period in its pill.
     ];
   }
 
@@ -302,50 +280,77 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           const SizedBox(height: AppSpacing.sm),
           Center(child: _periodPill()),
           if (state.totals case final t?) _TotalsCard(totals: t),
-          Row(
-            children: [
-              Expanded(
-                child: AppSearchBar(
-                  key: const ValueKey('tx-search'),
-                  controller: _search,
-                  onChanged: _onSearch,
-                  hint: l.transactionsSearchHint,
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.xs,
-                    AppSpacing.sm,
-                    AppSpacing.xs,
+          // Search, the whole width (owner 2026-10-10).
+          AppSearchBar(
+            key: const ValueKey('tx-search'),
+            controller: _search,
+            onChanged: _onSearch,
+            hint: l.transactionsSearchHint,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
+          ),
+          // [ตัวกรอง •n]  ……  [⇅ ใหม่สุด ▾] — same height.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
+            child: Row(
+              children: [
+                _FiltersButton(
+                  label: l.transactionsFiltersTitle,
+                  count: chips.length,
+                  onTap: _openFilters,
+                ),
+                const Spacer(),
+                OptionMenuAnchor<String>(
+                  selected: _f.sort,
+                  onSelected: (s) => _apply(_f.copyWith(sort: s)),
+                  options: [
+                    for (final s in const [
+                      'date_desc',
+                      'date_asc',
+                      'amount_desc',
+                      'amount_asc',
+                    ])
+                      SheetOption(value: s, label: txSortLabel(l, s)),
+                  ],
+                  builder: (context, toggle) => FilterDropdownChip(
+                    label: txSortLabel(l, _f.sort),
+                    icon: AppIcons.sort,
+                    active: false,
+                    onTap: toggle,
                   ),
                 ),
-              ),
-              FilterDropdownChip(
-                label: l.transactionsFiltersTitle,
-                icon: Icons.tune,
-                count: chips.length,
-                onTap: _openFilters,
-              ),
-              const SizedBox(width: AppSpacing.lg),
-            ],
+              ],
+            ),
           ),
+          // Every active filter, wrapping onto more lines (owner: see them
+          // all), each ✕ removes it.
           if (chips.isNotEmpty)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 AppSpacing.xs,
                 AppSpacing.lg,
                 AppSpacing.xs,
               ),
-              child: Row(
+              child: Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
                 children: [
-                  for (final c in chips) ...[
+                  for (final c in chips)
                     _ActiveFilterChip(
                       label: c.label,
                       tooltip: l.transactionsFilterRemove,
                       onRemove: () => _apply(c.without),
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                  ],
                 ],
               ),
             ),
@@ -376,15 +381,28 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           );
         }
 
-        return PullToRefresh(
-          onRefresh: _refetch,
-          child: ListView(
-            controller: _scroll,
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.only(
-              bottom: 96 + MediaQuery.paddingOf(context).bottom,
+        // The next page near the end. A notification, not a controller of
+        // its own: embedded (a wallet's tab) the list scrolls on the page's
+        // NestedScrollView controller, so its header scrolls away with it.
+        return NotificationListener<ScrollUpdateNotification>(
+          onNotification: (n) {
+            final m = n.metrics;
+            if (n.depth == 0 &&
+                m.axis == Axis.vertical &&
+                m.pixels > m.maxScrollExtent - 240) {
+              context.read<TransactionsCubit>().loadMore();
+            }
+            return false;
+          },
+          child: PullToRefresh(
+            onRefresh: _refetch,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.only(
+                bottom: 96 + MediaQuery.paddingOf(context).bottom,
+              ),
+              children: [...header, ...body],
             ),
-            children: [...header, ...body],
           ),
         );
       },
@@ -402,11 +420,10 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     );
   }
 
+  /// The page's date filter: ‹ › step, the label opens the period sheet.
   Widget _periodPill() => TxPeriodPill(
     period: _f.period,
     onChanged: (p) => _apply(_f.copyWith(period: p)),
-    // A non-month label opens the filter sheet (its ช่วงเวลา section).
-    onTapLabel: _openFilters,
   );
 
   /// Filters changed → "nothing matches" + clear (back to how the page
@@ -560,6 +577,34 @@ class _TotalsCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "⚙ ตัวกรอง" with the number of active filters on its corner — a kit
+/// pill at the sort chip's height, no ▾ (it opens the side sheet).
+class _FiltersButton extends StatelessWidget {
+  const _FiltersButton({
+    required this.label,
+    required this.count,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Badge(
+      isLabelVisible: count > 0,
+      label: Text('$count'),
+      child: ChoicePill(
+        label: label,
+        icon: Icons.tune,
+        selected: count > 0,
+        onTap: onTap,
       ),
     );
   }

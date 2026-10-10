@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
-import '../../../contacts/domain/contact.dart';
-import '../../../contacts/presentation/cubit/contacts_cubit.dart';
+import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 
-/// One debtor row in the create-transaction "Split with…" section.
+/// One person of the transaction form's "หารกับ" — who (a contact, or just
+/// a name) and what they owe. The person always comes from the contact
+/// picker ([showContactPickerSheet]), never a free text field, so a link
+/// can't be broken by typing (owner 2026-10-10):
+///   - linked: picked a contact ⇒ [contactId] set, [personName] its name;
+///   - unlinked: typed a name in the picker ⇒ [personName] only.
 ///
-/// Two binding modes for the same row:
-///   - free text: user typed a name that doesn't match any contact ⇒
-///     `personName` set, `contactId` null. BE stores as a typed person_name
-///     on the resulting personal_debts row; the user can later wire it to
-///     a contact from the contact detail page.
-///   - wired: user picked a suggestion from the typeahead ⇒ `contactId`
-///     set + `personName` snapshotted to the contact's effective name.
+/// A saved split ([debtId]) remembers who it was saved with. Unlinked, it
+/// can be renamed or linked in place (the debt and its repayments stay);
+/// linked, it's [identityLocked] — to change who, remove it and add again.
 class SplitDraft {
   SplitDraft({
     String? personName,
@@ -27,16 +25,21 @@ class SplitDraft {
     this.debtId,
     this.settledAmount = 0,
     this.cancelled = false,
-  }) : personName = personName ?? '';
+  }) : personName = personName ?? '',
+       _savedName = personName ?? '',
+       _savedContactId = contactId;
 
   String personName;
   String? contactId;
   String? contactDisplayName;
   double? owedAmount;
 
-  /// A saved transaction's split: the debt row it made. Its person is fixed
-  /// (to change who, remove + add); only the amount changes.
+  /// A saved transaction's split: the debt row it made.
   final String? debtId;
+
+  /// Who it was saved with (a saved row's identity as loaded).
+  final String _savedName;
+  final String? _savedContactId;
 
   /// Already paid back on that debt — shown, never a limit: the amount may
   /// go below it (then it's overpaid) and the row may be removed.
@@ -48,6 +51,19 @@ class SplitDraft {
   bool get isSaved => debtId != null;
   bool get hasRepayments => settledAmount > 0.005;
 
+  /// Saved with a contact: who it is can't change here (the BE refuses,
+  /// SPLIT_IDENTITY_LOCKED) — remove + add instead.
+  bool get identityLocked => isSaved && _savedContactId != null;
+
+  /// Picks [name] (and [contact], when it's one from the book) as this
+  /// row's person. Not for an [identityLocked] row.
+  void setPerson(String name, {String? contact}) {
+    assert(!identityLocked);
+    personName = name;
+    contactId = contact;
+    contactDisplayName = contact == null ? null : name;
+  }
+
   Map<String, dynamic> toJson() => <String, dynamic>{
     'debt_id': ?debtId,
     'person_name': personName.trim(),
@@ -56,15 +72,27 @@ class SplitDraft {
     'split_type': 'fixed',
   };
 
-  /// One entry of PUT /transactions/:id/splits: a saved split by its debt
-  /// (only the amount is read), a new one like at create.
-  Map<String, dynamic> toUpdateJson() => isSaved
-      ? {'debt_id': debtId, 'owed_amount': owedAmount ?? 0}
-      : {
-          'person_name': personName.trim(),
-          'contact_id': ?contactId,
-          'owed_amount': owedAmount ?? 0,
-        };
+  /// One entry of PUT /transactions/:id/splits (the whole list goes up).
+  /// A saved split by its debt — plus, unlinked and changed, its new name
+  /// (rename in place) and / or contact (link in place); unchanged fields
+  /// are left out. A new one like at create.
+  Map<String, dynamic> toUpdateJson() {
+    if (!isSaved) {
+      return {
+        'person_name': personName.trim(),
+        'contact_id': ?contactId,
+        'owed_amount': owedAmount ?? 0,
+      };
+    }
+    final renamed = !identityLocked && personName.trim() != _savedName.trim();
+    final linked = !identityLocked && contactId != null;
+    return {
+      'debt_id': debtId,
+      'owed_amount': owedAmount ?? 0,
+      if (renamed) 'person_name': personName.trim(),
+      if (linked) 'contact_id': contactId,
+    };
+  }
 
   bool get isComplete => personName.trim().isNotEmpty && (owedAmount ?? 0) > 0;
 
@@ -75,26 +103,41 @@ class SplitDraft {
 /// 2026-10-10):
 ///
 ///   หารกับ                      [+ เพิ่มคน] [หารเท่ากัน]
-///   👤 ลี                                  ฿120.00  ✕
+///   [👤 ลี]                                ฿120.00  ✕
 ///
-/// One line per person — no blank row until [+ เพิ่มคน]. "ส่วนของคุณ"
-/// isn't here: the hero card shows it under the total. Returns the drafts
-/// via [onChanged].
+/// One line per person. [+ เพิ่มคน] opens the contact picker first (pick
+/// a contact, or type a name there) — cancel it and no row is added. The
+/// person is a chip; tapping it re-opens the picker (a saved row linked to
+/// a contact is locked). "ส่วนของคุณ" isn't here: the hero card shows it
+/// under the total. Returns the drafts via [onChanged].
 class SplitsSection extends StatefulWidget {
   const SplitsSection({
     required this.label,
     required this.totalAmount,
     required this.drafts,
     required this.onChanged,
+    this.overText,
+    this.sectioned = false,
+    this.helper,
     super.key,
   });
+
+  /// A small line under the title ("การหารนี้จะอยู่ในอีเวนต์ …").
+  final String? helper;
 
   /// "หารกับ" (expense: they owe me) / "แบ่งให้" (income: I owe them).
   final String label;
 
-  /// Parent transaction's amount — used for "split equally" + validation
-  /// of total ≤ tx amount.
+  /// What the splits may add up to — the transaction's amount, or for an
+  /// event bill my share of it. Used by "split equally" + the over check.
   final double totalAmount;
+
+  /// The over-the-limit line; default "ยอดหารรวมเกินยอดรายการ".
+  final String? overText;
+
+  /// The detail page: a [SectionCard] of its own — [label] and the pills
+  /// in its title row, one inset row per person with hairlines between.
+  final bool sectioned;
 
   final List<SplitDraft> drafts;
   final ValueChanged<List<SplitDraft>> onChanged;
@@ -104,19 +147,6 @@ class SplitsSection extends StatefulWidget {
 }
 
 class _SplitsSectionState extends State<SplitsSection> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      // Warm the contacts cache so the typeahead has data ready.
-      final cubit = context.read<ContactsCubit>();
-      if (cubit.state.contacts.isEmpty) {
-        cubit.load();
-      }
-    });
-  }
-
   double get _splitTotal {
     var total = 0.0;
     for (final d in widget.drafts) {
@@ -125,14 +155,140 @@ class _SplitsSectionState extends State<SplitsSection> {
     return total;
   }
 
-  void _addPerson() => widget.onChanged([...widget.drafts, SplitDraft()]);
+  Future<void> _addPerson() async {
+    final r = await showContactPickerSheet(context);
+    if (r == null || !mounted) return;
+    final d = SplitDraft();
+    _apply(d, r);
+    widget.onChanged([...widget.drafts, d]);
+  }
+
+  /// The picker's answer onto [d]: a contact links it, a typed name
+  /// unlinks it.
+  static void _apply(SplitDraft d, ContactPickResult r) {
+    switch (r) {
+      case ContactPicked(:final contact):
+        d.setPerson(contact.effectiveName, contact: contact.id);
+      case ContactNameTyped(:final name):
+        d.setPerson(name.trim());
+    }
+  }
+
+  Future<void> _changePerson(SplitDraft d) async {
+    final r = await showContactPickerSheet(
+      context,
+      selectedContactId: d.contactId,
+    );
+    if (r == null || !mounted) return;
+    _apply(d, r);
+    widget.onChanged(List.of(widget.drafts));
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
     final overflow = _splitTotal > widget.totalAmount + 0.005;
+    final sectioned = widget.sectioned;
+    final pills = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ActionPill(
+          icon: AppIcons.add,
+          label: l.txSplitAddPerson,
+          size: PillSize.medium,
+          onTap: _addPerson,
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        ActionPill(
+          icon: AppIcons.split,
+          label: l.txSplitEqually,
+          size: PillSize.medium,
+          onTap: widget.drafts.isEmpty || widget.totalAmount <= 0
+              ? null
+              : _splitEqually,
+        ),
+      ],
+    );
+    // A section row is inset like the detail rows around it.
+    Widget inset(Widget w) => sectioned
+        ? Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.xs,
+            ),
+            child: w,
+          )
+        : w;
+    final rows = <Widget>[
+      for (var i = 0; i < widget.drafts.length; i++)
+        inset(
+          _DraftRow(
+            // Key by the draft object itself: removing a middle row must
+            // drop THAT row's controller, not shift amounts onto siblings.
+            key: ObjectKey(widget.drafts[i]),
+            draft: widget.drafts[i],
+            onChange: () => widget.onChanged(List.of(widget.drafts)),
+            onChangePerson: () => _changePerson(widget.drafts[i]),
+            onRemove: () {
+              final next = List<SplitDraft>.of(widget.drafts)..removeAt(i);
+              widget.onChanged(next);
+            },
+          ),
+        ),
+    ];
+    final over = overflow
+        ? Padding(
+            padding: EdgeInsets.fromLTRB(
+              sectioned ? AppSpacing.lg : 0,
+              AppSpacing.xs,
+              sectioned ? AppSpacing.lg : 0,
+              0,
+            ),
+            child: Text(
+              widget.overText ?? l.txSplitOver,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          )
+        : null;
 
+    // The detail page: its own section, the pills in the title row, a
+    // hairline between people.
+    final helper = widget.helper == null
+        ? null
+        : Padding(
+            padding: EdgeInsets.fromLTRB(
+              sectioned ? AppSpacing.lg : 0,
+              0,
+              sectioned ? AppSpacing.lg : 0,
+              AppSpacing.xs,
+            ),
+            child: Text(
+              widget.helper!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+    if (sectioned) {
+      // The helper sits under the title, before the people (no hairline
+      // between the two: one Column).
+      return SectionCard(
+        title: widget.label,
+        trailing: pills,
+        children: [
+          if (helper != null || rows.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [?helper, ?rows.firstOrNull],
+            ),
+          ...rows.skip(1),
+          ?over,
+        ],
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -146,47 +302,12 @@ class _SplitsSectionState extends State<SplitsSection> {
                 ),
               ),
             ),
-            ActionPill(
-              icon: AppIcons.add,
-              label: l.txSplitAddPerson,
-              size: PillSize.medium,
-              onTap: _addPerson,
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            ActionPill(
-              icon: AppIcons.split,
-              label: l.txSplitEqually,
-              size: PillSize.medium,
-              onTap: widget.drafts.isEmpty || widget.totalAmount <= 0
-                  ? null
-                  : _splitEqually,
-            ),
+            pills,
           ],
         ),
-        for (var i = 0; i < widget.drafts.length; i++) ...[
-          const SizedBox(height: AppSpacing.xs),
-          _DraftRow(
-            // Key by the draft object itself: removing a middle row must
-            // drop THAT row's controllers, not shift names onto siblings.
-            key: ObjectKey(widget.drafts[i]),
-            draft: widget.drafts[i],
-            onChange: () => widget.onChanged(List.of(widget.drafts)),
-            onRemove: () {
-              final next = List<SplitDraft>.of(widget.drafts)..removeAt(i);
-              widget.onChanged(next);
-            },
-          ),
-        ],
-        if (overflow)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: Text(
-              l.txSplitOver,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-          ),
+        ?helper,
+        for (final r in rows) ...[const SizedBox(height: AppSpacing.xs), r],
+        ?over,
       ],
     );
   }
@@ -202,19 +323,21 @@ class _SplitsSectionState extends State<SplitsSection> {
   }
 }
 
-/// A single draft row. The name field is a typeahead `Autocomplete<Contact>`:
-/// suggestions narrow as the user types; picking one wires `contactId`,
-/// otherwise the typed text becomes a free-text `person_name`.
+/// One person: `[👤 name]  ฿amount  ✕`. The chip opens the picker
+/// ([onChangePerson]) — locked (🔒, a hint on tap) for a saved row linked
+/// to a contact.
 class _DraftRow extends StatefulWidget {
   const _DraftRow({
     required this.draft,
     required this.onChange,
+    required this.onChangePerson,
     required this.onRemove,
     super.key,
   });
 
   final SplitDraft draft;
   final VoidCallback onChange;
+  final VoidCallback onChangePerson;
   final VoidCallback onRemove;
 
   @override
@@ -251,218 +374,121 @@ class _DraftRowState extends State<_DraftRow> {
     super.dispose();
   }
 
-  /// Filtered + sorted contact list for the typeahead. Empty input shows
-  /// every active contact ordered by `lastUsedAt DESC NULLS LAST` (BE
-  /// already serves the list in this order, so we just preserve it).
-  Iterable<Contact> _suggestionsFor(String text, List<Contact> all) {
-    final active = all.where((c) => c.status == ContactStatus.active);
-    final q = text.trim().toLowerCase();
-    if (q.isEmpty) return active;
-    return active.where((c) {
-      final hay = c.effectiveName.toLowerCase();
-      return hay.contains(q);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final textStyle = Theme.of(context).textTheme.bodyLarge;
     final draft = widget.draft;
-    // One line, no floating labels (they ran into the row above): a hint
-    // in the empty field, an underline to show it's editable.
-    InputDecoration lineField({String? hint, String? prefix}) =>
-        InputDecoration(
-          hintText: hint,
-          prefixText: prefix,
-          isDense: true,
-          filled: false,
-          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          border: UnderlineInputBorder(
-            borderSide: BorderSide(color: scheme.outlineVariant),
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: scheme.outlineVariant),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: scheme.primary),
-          ),
-        );
-    return BlocBuilder<ContactsCubit, ContactsState>(
-      builder: (context, state) {
-        final row = Row(
-          children: [
-            // Visual cue: filled link icon when wired, outline when free text.
-            Tooltip(
-              message: draft.isWired
-                  ? l.txSplitWiredContact
-                  : l.txSplitFreeText,
-              child: Icon(
-                draft.isWired ? AppIcons.contact : AppIcons.profile,
-                color: draft.isWired ? scheme.primary : scheme.onSurfaceVariant,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              // A saved split's person is fixed (remove + add to change).
-              child: draft.isSaved
-                  ? Text(
-                      draft.personName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textStyle,
-                    )
-                  : Autocomplete<Contact>(
-                      initialValue: TextEditingValue(text: draft.personName),
-                      displayStringForOption: (c) => c.effectiveName,
-                      optionsBuilder: (textEditingValue) => _suggestionsFor(
-                        textEditingValue.text,
-                        state.contacts,
-                      ),
-                      onSelected: (c) {
-                        setState(() {
-                          draft.personName = c.effectiveName;
-                          draft.contactId = c.id;
-                          draft.contactDisplayName = c.effectiveName;
-                        });
-                        widget.onChange();
-                      },
-                      fieldViewBuilder: (context, controller, focusNode, onSubmit) {
-                        return TextField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          style: textStyle,
-                          decoration: lineField(hint: l.txSplitName),
-                          onChanged: (v) {
-                            // Typing past or away from a picked contact clears
-                            // the wire — otherwise the BE would receive a stale
-                            // contact_id that no longer matches the name.
-                            final stale =
-                                draft.contactDisplayName != null &&
-                                v != draft.contactDisplayName;
-                            setState(() {
-                              draft.personName = v;
-                              if (stale) {
-                                draft.contactId = null;
-                                draft.contactDisplayName = null;
-                              }
-                            });
-                            widget.onChange();
-                          },
-                        );
-                      },
-                      optionsViewBuilder: (context, onSelected, options) {
-                        // Default Material 3 dropdown shape constrained so it
-                        // doesn't grow taller than 280 px (typical 6 rows).
-                        final list = options.toList(growable: false);
-                        return Align(
-                          alignment: Alignment.topLeft,
-                          child: Material(
-                            elevation: 4,
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxHeight: 280,
-                                maxWidth: 320,
-                              ),
-                              child: ListView.builder(
-                                padding: EdgeInsets.zero,
-                                shrinkWrap: true,
-                                itemCount: list.length,
-                                itemBuilder: (context, i) {
-                                  final c = list[i];
-                                  return ListTile(
-                                    dense: true,
-                                    leading: UserAvatar(
-                                      displayName: c.effectiveName,
-                                      iconCode: c.effectiveIconCode,
-                                      size: 28,
-                                    ),
-                                    title: Text(c.effectiveName),
-                                    subtitle: c.email != null
-                                        ? Text(
-                                            c.email!,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodySmall,
-                                          )
-                                        : null,
-                                    trailing: c.isLinked
-                                        ? const Icon(AppIcons.link, size: 14)
-                                        : null,
-                                    onTap: () => onSelected(c),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+    final locked = draft.identityLocked;
+    // Linked: the contact-card icon, tinted; a typed name: the person icon.
+    final Widget chip = RowChip(
+      label: draft.personName,
+      icon: draft.isWired ? AppIcons.contact : AppIcons.profile,
+      color: draft.isWired ? scheme.primary : null,
+      selected: draft.isWired,
+      onTap: locked ? null : widget.onChangePerson,
+    );
+    final row = Row(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: locked
+                // Tap → why, instead of silently nothing.
+                ? Tooltip(
+                    message: l.txSplitPersonLocked,
+                    triggerMode: TooltipTriggerMode.tap,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(child: chip),
+                        const SizedBox(width: AppSpacing.xs),
+                        Icon(
+                          AppIcons.lock,
+                          size: 14,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ],
                     ),
+                  )
+                : chip,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        SizedBox(
+          // Room for "฿96,248.33".
+          width: _amountWidth,
+          // Same thousands formatting / parsing as [AmountField].
+          child: TextField(
+            controller: _amount,
+            textAlign: TextAlign.end,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [ThousandsInputFormatter()],
+            style: textStyle?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            SizedBox(
-              // Room for "฿96,248.33".
-              width: _amountWidth,
-              // Same thousands formatting / parsing as [AmountField].
-              child: TextField(
-                controller: _amount,
-                textAlign: TextAlign.end,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: [ThousandsInputFormatter()],
-                style: textStyle?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-                decoration: lineField(hint: '0', prefix: '฿'),
-                onChanged: (v) {
-                  draft.owedAmount = AmountField.parse(v);
-                  widget.onChange();
-                },
+            // One line, an underline to show it's editable.
+            decoration: InputDecoration(
+              hintText: '0',
+              prefixText: '฿',
+              isDense: true,
+              filled: false,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: AppSpacing.sm,
+              ),
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(color: scheme.outlineVariant),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: scheme.outlineVariant),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: scheme.primary),
               ),
             ),
-            // Repayments don't limit edits (owner 2026-10-10): anyone can be
-            // removed, whatever they paid back.
-            IconButton(
-              tooltip: l.txSplitRemove,
-              icon: const Icon(AppIcons.close, size: 18),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              color: scheme.onSurfaceVariant,
-              onPressed: widget.onRemove,
-            ),
-          ],
-        );
-        if (!draft.hasRepayments && !draft.cancelled) return row;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            row,
-            Padding(
-              // Under the name (past the 20 px icon).
-              padding: const EdgeInsets.only(
-                left: 20 + AppSpacing.sm,
-                top: AppSpacing.xs,
-              ),
-              child: Text(
-                draft.cancelled
-                    ? l.txSplitStatusCancelled
-                    : l.txSplitRepaidSoFar(
-                        moneyString(context, draft.settledAmount),
-                      ),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+            onChanged: (v) {
+              draft.owedAmount = AmountField.parse(v);
+              widget.onChange();
+            },
+          ),
+        ),
+        // Repayments don't limit edits (owner 2026-10-10): anyone can be
+        // removed, whatever they paid back.
+        IconButton(
+          tooltip: l.txSplitRemove,
+          icon: const Icon(AppIcons.close, size: 18),
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          color: scheme.onSurfaceVariant,
+          onPressed: widget.onRemove,
+        ),
+      ],
+    );
+    if (!draft.hasRepayments && !draft.cancelled) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row,
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.sm,
+            top: AppSpacing.xs,
+          ),
+          child: Text(
+            draft.cancelled
+                ? l.txSplitStatusCancelled
+                : l.txSplitRepaidSoFar(
+                    moneyString(context, draft.settledAmount),
+                  ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      ],
     );
   }
 }

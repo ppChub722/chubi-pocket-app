@@ -109,6 +109,7 @@ abstract final class AppIcons {
   static const chevronLeft = Icons.chevron_left;
   static const dropdown = Icons.arrow_drop_down;
   static const expand = Icons.expand_more;
+  static const collapse = Icons.expand_less;
   static const check = Icons.check;
   static const none = Icons.block;
   static const lock = Icons.lock_outline;
@@ -223,6 +224,7 @@ abstract final class AppIcons {
       'chevronLeft': chevronLeft,
       'dropdown': dropdown,
       'expand': expand,
+      'collapse': collapse,
       'check': check,
       'none': none,
       'lock': lock,

@@ -37,6 +37,16 @@ enum PillSize {
     dot: 8,
   ),
 
+  /// A hero card's top row — the same height as its date chip and ✏️
+  /// ([HeroSpacing.controlHeight]).
+  control(
+    height: 32,
+    padding: AppSpacing.md,
+    gap: AppSpacing.xs,
+    icon: 16,
+    dot: 8,
+  ),
+
   /// Tap targets in toolbars — filter chips, action pills.
   large(
     height: 36,
@@ -71,7 +81,7 @@ enum PillSize {
     return switch (this) {
       mini => t.labelSmall?.copyWith(fontSize: 10, height: 1.2),
       small => t.labelSmall,
-      medium || large => t.labelLarge,
+      medium || control || large => t.labelLarge,
     };
   }
 }

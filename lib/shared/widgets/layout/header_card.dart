@@ -5,6 +5,7 @@ import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../buttons/app_icon_button.dart';
+import 'hero_shell.dart';
 
 /// The bordered card at the top of every detail page: leading visual
 /// (icon / avatar) + title + optional subtitle lines, accent-coloured
@@ -47,58 +48,52 @@ class HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final border = accent ?? scheme.primary;
-    final body = Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              leading,
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+    // The kit's hero spacing ([HeroContent]): 16 inside, 12 to the footer,
+    // 8 between the title column and the ✏️ / trailing controls.
+    final body = HeroContent(
+      rows: [
+        Row(
+          children: [
+            leading,
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DefaultTextStyle.merge(
+                    style: Theme.of(context).textTheme.titleMedium,
+                    child: title,
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
                     DefaultTextStyle.merge(
-                      style: Theme.of(context).textTheme.titleMedium,
-                      child: title,
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      DefaultTextStyle.merge(
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                        child: subtitle!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
-                    ],
+                      child: subtitle!,
+                    ),
                   ],
-                ),
+                ],
               ),
-              if (onEdit != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                AppIconButton(
-                  icon: AppIcons.edit,
-                  size: 32,
-                  tooltip: AppLocalizations.of(context)!.commonEdit,
-                  onPressed: onEdit,
-                ),
-              ],
-              if (trailing != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                trailing!,
-              ],
+            ),
+            if (onEdit != null) ...[
+              const SizedBox(width: HeroSpacing.itemGap),
+              AppIconButton(
+                icon: AppIcons.edit,
+                size: HeroSpacing.controlHeight,
+                tooltip: AppLocalizations.of(context)!.commonEdit,
+                onPressed: onEdit,
+              ),
             ],
-          ),
-          if (footer != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            footer!,
+            if (trailing != null) ...[
+              const SizedBox(width: HeroSpacing.itemGap),
+              trailing!,
+            ],
           ],
-        ],
-      ),
+        ),
+        footer,
+      ],
     );
     return Card(
       clipBehavior: Clip.antiAlias,

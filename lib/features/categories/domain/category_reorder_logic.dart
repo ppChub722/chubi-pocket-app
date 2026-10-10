@@ -23,11 +23,9 @@ class CategoryFlatRow {
 /// list position + level on commit — the standard outliner rule:
 /// "a row's parent is the nearest preceding row with a smaller level".
 ///
-/// This replaces the old `CategoryDropResolver` (which kept parent_id as
-/// the source of truth and computed cycles / depth checks during drag).
-/// The model is easier to reason about, easier to extract for future
-/// tree-shaped features, and easier for the backend: the API will receive
-/// `[(id, level, sort_order)]` and reconstruct parent_id server-side.
+/// The model is easier to reason about and to extract for future
+/// tree-shaped features. On save the derived tree goes to
+/// `PATCH /v1/categories/reorder` as `parent_id` + `sort_order` per row.
 class CategoryReorderLogic {
   CategoryReorderLogic._();
 

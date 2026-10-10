@@ -71,6 +71,23 @@ void main() {
       expect(p.step(-1)!.canStepForward(DateTime(2026, 10, 20)), isTrue);
     });
 
+    test('day: one day, steps across month / year ends, stops at today', () {
+      final d = TxPeriod.day(DateTime(2026, 10, 10, 18, 30));
+      expect(d.bounds, (from: '2026-10-10', to: '2026-10-10'));
+      expect(d.step(-1)!.bounds.from, '2026-10-09');
+      expect(
+        TxPeriod.day(DateTime(2026, 10, 31)).step(1),
+        TxPeriod.day(DateTime(2026, 11, 1)),
+      );
+      expect(
+        TxPeriod.day(DateTime(2026, 1, 1)).step(-1)!.bounds.from,
+        '2025-12-31',
+      );
+      expect(d.canStepForward(DateTime(2026, 10, 10, 23)), isFalse);
+      expect(d.step(-1)!.canStepForward(DateTime(2026, 10, 10)), isTrue);
+      expect(TxPeriod.of(TxPeriodKind.day, DateTime(2026, 10, 10)), d);
+    });
+
     test('a month step crosses the year', () {
       final jan = TxPeriod.month(DateTime(2026, 1, 5));
       expect(jan.step(-1)!.bounds, (from: '2025-12-01', to: '2025-12-31'));

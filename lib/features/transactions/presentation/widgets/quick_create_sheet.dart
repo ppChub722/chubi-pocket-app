@@ -9,9 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/storage_keys.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/module_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -34,22 +32,8 @@ import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../transaction_edit.dart';
 import 'draft_form.dart';
+import 'event_pick.dart';
 import 'tx_summary_title.dart';
-
-/// Maps the pinned quick-create error codes (API §10) to friendly copy;
-/// falls back to the BE message for anything unmapped.
-String _eventErrorMessage(AppLocalizations l, ApiException e) {
-  switch (e.code) {
-    case 'TX_NOT_FOUND':
-      return l.quickCreateErrorTxNotFound;
-    case 'TX_ALREADY_IN_PROJECT':
-      return l.quickCreateErrorTxAlreadyInProject;
-    case 'VALIDATION_ERROR':
-      return l.quickCreateErrorValidation;
-    default:
-      return e.message;
-  }
-}
 
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
 /// — never a new page:
@@ -92,7 +76,8 @@ String _eventErrorMessage(AppLocalizations l, ApiException e) {
 /// saves through [ScheduledTransactionsCubit].
 ///
 /// [account] presets the wallet of a new transaction (adding from a
-/// wallet's page) instead of the last-used one.
+/// wallet's page) instead of the last-used one; [type] opens a new one on
+/// that type (a wallet's ⇄ โอน → a transfer from it).
 ///
 /// Returns true when something was saved.
 Future<bool> showQuickCreateSheet(
@@ -103,6 +88,7 @@ Future<bool> showQuickCreateSheet(
   bool scheduled = false,
   ScheduledTransaction? scheduledEntry,
   Account? account,
+  TransactionType? type,
 }) async {
   assert(
     [draft, project, scheduled ? true : null].where((x) => x != null).length <=
@@ -140,6 +126,7 @@ Future<bool> showQuickCreateSheet(
       scheduled: scheduled,
       scheduledEntry: scheduledEntry,
       account: account,
+      initialType: type,
     ),
   );
   return saved ?? false;
@@ -151,21 +138,6 @@ Future<bool> showQuickCreateSheet(
 
 enum _CloseChoice { draft, keepEditing, discard }
 
-/// Where "เพิ่มเข้าอีเวนต์" files the bill.
-sealed class _EventTarget {
-  const _EventTarget();
-}
-
-class _NewEvent extends _EventTarget {
-  const _NewEvent(this.name);
-  final String name;
-}
-
-class _ExistingEvent extends _EventTarget {
-  const _ExistingEvent(this.project);
-  final Project project;
-}
-
 class _QuickCreateSheet extends StatefulWidget {
   const _QuickCreateSheet({
     required this.prefs,
@@ -175,11 +147,15 @@ class _QuickCreateSheet extends StatefulWidget {
     this.scheduled = false,
     this.scheduledEntry,
     this.account,
+    this.initialType,
   });
   final SharedPreferences prefs;
 
   /// Preset wallet for a new transaction (else the last-used one).
   final Account? account;
+
+  /// A new transaction's type to start on (else expense).
+  final TransactionType? initialType;
 
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
@@ -204,10 +180,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   final _c = DraftFormController();
   final _scroll = ScrollController();
 
-  _EventTarget? _event;
+  EventTarget? _event;
 
   /// The event pick, unless it's a transfer (kept for switching back).
-  _EventTarget? get _activeEvent => _c.isTransfer ? null : _event;
+  EventTarget? get _activeEvent => typeCanJoinEvent(_c.type) ? _event : null;
   bool _saving = false;
 
   /// How far the sheet is dragged down by its handle / title row.
@@ -419,6 +395,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       final c = _amountHidden();
       if (c != _collapsed) setState(() => _collapsed = c);
     });
+    final type = widget.initialType;
+    if (type != null) _c.setType(type);
     if (_isEvent) _initEvent();
     if (_isScheduled) _initScheduled();
     final p = widget.draft;
@@ -557,11 +535,14 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   // ── Event ─────────────────────────────────────────────────────────
 
   Future<void> _pickEvent() async {
-    final picked = await showAppSheet<_EventTarget>(
+    final picked = await showEventTargetSheet(
       context,
-      title: AppLocalizations.of(context)!.quickAddToEvent,
+      suggestedName: _suggestEventName(),
+      selectedProjectId: switch (_event) {
+        ExistingEventTarget(:final project) => project.id,
+        _ => null,
+      },
       useRootNavigator: false,
-      builder: (_) => _EventTargetSheet(suggestedName: _suggestEventName()),
     );
     if (picked != null && mounted) setState(() => _event = picked);
   }
@@ -716,14 +697,16 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           if (splits.isNotEmpty) 'splits': splits,
         };
         final result = switch (event) {
-          _NewEvent(:final name) => await projects.quickCreate(
+          NewEventTarget(:final name) => await projects.quickCreate(
             name: name,
             newTransaction: body,
           ),
-          _ExistingEvent(:final project) => await projects.addBills(
+          ExistingEventTarget(:final project) => await projects.addBills(
             project.id,
             newTransaction: body,
           ),
+          // Only a saved row leaves an event (the detail page).
+          RemoveFromEvent() => throw StateError('nothing to remove from'),
         };
         final txId = result.transactionId;
         if (txId != null && tagIds.isNotEmpty) {
@@ -751,7 +734,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       _toast(
-        event == null ? walletErrorMessage(l, e) : _eventErrorMessage(l, e),
+        event == null ? walletErrorMessage(l, e) : eventErrorMessage(l, e),
       );
     }
   }
@@ -770,6 +753,50 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         .localToGlobal(Offset(0, hero.size.height - AppSpacing.md))
         .dy;
     return amountBottom < list.localToGlobal(Offset.zero).dy;
+  }
+
+  /// The keyboard height last build — growing means it just opened.
+  double _lastInsets = 0;
+
+  /// Scrolls the focused field into the list's view with room under it
+  /// (a split row's amount sat half under the buttons on device).
+  Future<void> _revealFocus() async {
+    final focused = FocusManager.instance.primaryFocus?.context;
+    if (!mounted || focused == null || !_scroll.hasClients) return;
+    // Only fields inside this list.
+    if (Scrollable.maybeOf(focused)?.position != _scroll.position) return;
+    final animate = !MediaQuery.disableAnimationsOf(context);
+    await Scrollable.ensureVisible(
+      focused,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      duration: animate ? const Duration(milliseconds: 180) : Duration.zero,
+    );
+    if (!mounted || !_scroll.hasClients || !focused.mounted) return;
+    // A little more when it ended up at the very bottom, so the whole row
+    // (and what's under it) shows.
+    final field = focused.findRenderObject();
+    final viewport = Scrollable.maybeOf(focused)?.context.findRenderObject();
+    if (field is! RenderBox || viewport is! RenderBox) return;
+    final gap =
+        viewport.localToGlobal(Offset(0, viewport.size.height)).dy -
+        field.localToGlobal(Offset(0, field.size.height)).dy;
+    const room = 56.0;
+    if (gap >= room) return;
+    final p = _scroll.position;
+    final to = (p.pixels + room - gap).clamp(
+      p.minScrollExtent,
+      p.maxScrollExtent,
+    );
+    if (to == p.pixels) return;
+    if (animate) {
+      await _scroll.animateTo(
+        to,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+      );
+    } else {
+      _scroll.jumpTo(to);
+    }
   }
 
   void _scrollToTop() {
@@ -813,6 +840,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final scheme = Theme.of(context).colorScheme;
     final accounts = context.watch<AccountsCubit>().state.accounts;
     final insets = MediaQuery.viewInsetsOf(context).bottom;
+    // The keyboard came up (or grew): bring the focused field back into
+    // view, clear of it and of the pinned buttons.
+    if (insets > _lastInsets) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _revealFocus());
+    }
+    _lastInsets = insets;
 
     return PopScope(
       canPop: !_dirty || _saving,
@@ -952,15 +985,28 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         schedule: _isScheduled
                             ? DraftSchedule(editing: _editingScheduled)
                             : null,
+                        // The detail page's layout below the hero (owner
+                        // 2026-10-10): โน้ต / หารกับ / อีเวนต์ sections.
+                        sectioned: true,
+                        eventPending: _activeEvent != null,
                         // Drafts don't go to events (submit is a plain
-                        // create) — the card only exists when creating.
-                        extra: _editingDraft || _isEvent || _isScheduled
-                            ? null
-                            : _EventCard(
-                                target: _event,
-                                onTap: _pickEvent,
-                                onClear: () => setState(() => _event = null),
-                              ),
+                        // create) — the row only exists when creating, for
+                        // a type that can join one ([typeCanJoinEvent]).
+                        trailingRows: [
+                          if (!_editingDraft &&
+                              !_isEvent &&
+                              !_isScheduled &&
+                              typeCanJoinEvent(_c.type))
+                            SectionCard(
+                              children: [
+                                EventRow(
+                                  name: eventTargetName(l, _event),
+                                  onTap: _pickEvent,
+                                  onClear: () => setState(() => _event = null),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -1017,183 +1063,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ── Pieces ────────────────────────────────────────────────────────────
-
-/// "อีเวนต์" as a full-width card, like the category / wallet cards (owner
-/// 2026-10-10): nothing picked → the dashed "ไม่ได้เลือก" card; picked → a
-/// card tinted in the events colour with the name and ✕ (takes it off).
-/// Tapping opens the event sheet.
-class _EventCard extends StatelessWidget {
-  const _EventCard({
-    required this.target,
-    required this.onTap,
-    required this.onClear,
-  });
-  final _EventTarget? target;
-  final VoidCallback onTap;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final accent = ModuleColors.of(context).people;
-    final name = switch (target) {
-      null => null,
-      _NewEvent(:final name) => l.quickEventNewNamed(name),
-      _ExistingEvent(:final project) => project.name,
-    };
-    return PickCard(
-      label: l.quickEventLabel,
-      value: name,
-      placeholder: l.quickEventNone,
-      leading: name == null
-          ? const PickCardEmptyIcon(AppIcons.project, size: 32)
-          : Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.18),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(AppIcons.project, size: 18, color: accent),
-            ),
-      accent: accent,
-      watermark: AppIcons.project,
-      dense: true,
-      onTap: onTap,
-      trailing: name == null
-          ? null
-          : IconButton(
-              tooltip: l.quickEventRemove,
-              icon: const Icon(AppIcons.clear, size: 18),
-              onPressed: onClear,
-            ),
-    );
-  }
-}
-
-/// "เพิ่มเข้าอีเวนต์": a new event (named here) or one of my active ones.
-class _EventTargetSheet extends StatefulWidget {
-  const _EventTargetSheet({required this.suggestedName});
-  final String suggestedName;
-
-  @override
-  State<_EventTargetSheet> createState() => _EventTargetSheetState();
-}
-
-class _EventTargetSheetState extends State<_EventTargetSheet> {
-  late final _name = TextEditingController(text: widget.suggestedName);
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<ProjectsCubit>().load();
-    });
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final state = context.watch<ProjectsCubit>().state;
-    final active = state.projects.where((p) => p.isActive).toList();
-    // Title row, drag handle and keyboard inset come from [showAppSheet].
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SectionHeader(
-            title: l.quickEventNew,
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-          ),
-          Row(
-            children: [
-              Expanded(
-                // No floating label — it ran into the heading above, which
-                // already says what this is; the name shows as a hint when
-                // emptied.
-                child: AppTextField(
-                  controller: _name,
-                  hint: l.quickEventNameLabel,
-                  // Nothing is created here — the event is made with the
-                  // bill, on บันทึก (owner 2026-10-10).
-                  helper: l.quickEventCreatedOnSave,
-                  maxLength: TextLimits.name,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              AppButton(
-                label: l.quickEventUseName,
-                onPressed: () {
-                  final n = _name.text.trim();
-                  if (n.isNotEmpty) Navigator.of(context).pop(_NewEvent(n));
-                },
-              ),
-            ],
-          ),
-          SectionHeader(
-            title: l.quickEventExisting,
-            padding: const EdgeInsets.only(
-              top: AppSpacing.lg,
-              bottom: AppSpacing.xs,
-            ),
-          ),
-          if (state.status == ProjectsStatus.loading && active.isEmpty)
-            // Row-shaped skeletons matching the event rows below.
-            for (var i = 0; i < 3; i++)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Row(
-                  children: [
-                    SkeletonCircle(size: 24),
-                    SizedBox(width: AppSpacing.lg),
-                    Expanded(child: SkeletonLine()),
-                  ],
-                ),
-              )
-          else if (active.isEmpty)
-            Text(
-              l.quickEventNoneYet,
-              style: Theme.of(context).textTheme.bodySmall,
-            )
-          else
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.4,
-              ),
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final p in active)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(AppIcons.project),
-                      title: Text(p.name),
-                      trailing: const Icon(AppIcons.chevronRight),
-                      onTap: () => Navigator.of(context).pop(_ExistingEvent(p)),
-                    ),
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

@@ -274,6 +274,23 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     onDraftRestored();
   }
 
+  /// A multi-step save failed part-way: [original] becomes what the server
+  /// now has and [working] the edit still pending on top of it. Edit mode
+  /// stays; the undo history goes (its snapshots predate what was saved, so
+  /// restoring one would redo it).
+  void rebaseEdit({required D original, required D working}) {
+    _debounce?.cancel();
+    _debounce = null;
+    setState(() {
+      _original = original;
+      _working = working;
+      _undoStack.clear();
+      _sessionStart = null;
+      _sessionField = null;
+    });
+    onDraftRestored();
+  }
+
   // ── Chrome ──────────────────────────────────────────────────────────
 
   /// Wrap the page's Scaffold: routes back through [handleBack] and keeps

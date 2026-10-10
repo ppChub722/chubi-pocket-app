@@ -26,15 +26,16 @@ class AccountPickerCleared extends AccountPickerResult {
   const AccountPickerCleared();
 }
 
-/// Bottom sheet for picking one of the user's active accounts — the same
-/// 2-column card grid as the accounts page (real [AccountCard]s), with the
-/// current pick ring-highlighted ([SelectableFrame]).
+/// Pick one of the user's active wallets, on the kit [PickerSheet] (owner
+/// 2026-10-10): header + ✕, the same card grid as the wallets page (real
+/// [AccountCard]s), the current pick highlighted ([SelectableFrame]: a
+/// tint + ring, no ✓). Search only with more than 8 wallets.
 ///
 /// [allowNone] adds a "ไม่ระบุกระเป๋า" tile first (floating transaction).
 /// [excludeId] hides one account (the "to" side of a transfer).
-/// [allowCreate] adds a "+ เพิ่มกระเป๋า" tile last: it opens the create page
-/// over the sheet; saving there picks the new wallet and closes the picker,
-/// back returns to the picker (owner 2026-10-10).
+/// [allowCreate] adds "＋ เพิ่มกระเป๋า" under the grid: the create page
+/// opens over the sheet; saving there picks the new wallet and closes the
+/// picker, back returns to the picker (owner 2026-10-10).
 Future<AccountPickerResult?> showAccountPickerSheet({
   required BuildContext context,
   required List<Account> accounts,
@@ -44,12 +45,12 @@ Future<AccountPickerResult?> showAccountPickerSheet({
   bool allowNone = false,
   bool allowCreate = false,
 }) {
-  return showAppSheet<AccountPickerResult>(
+  return showAppSheetCustom<AccountPickerResult>(
     context,
-    title:
-        title ??
-        AppLocalizations.of(context)!.transactionFormAccountPickerTitle,
-    builder: (_) => _AccountPickerBody(
+    builder: (_) => _AccountPicker(
+      title:
+          title ??
+          AppLocalizations.of(context)!.transactionFormAccountPickerTitle,
       accounts: accounts,
       selected: selected,
       excludeId: excludeId,
@@ -59,8 +60,9 @@ Future<AccountPickerResult?> showAccountPickerSheet({
   );
 }
 
-class _AccountPickerBody extends StatelessWidget {
-  const _AccountPickerBody({
+class _AccountPicker extends StatelessWidget {
+  const _AccountPicker({
+    required this.title,
     required this.accounts,
     required this.selected,
     required this.excludeId,
@@ -68,14 +70,16 @@ class _AccountPickerBody extends StatelessWidget {
     required this.allowCreate,
   });
 
+  final String title;
   final List<Account> accounts;
   final Account? selected;
   final String? excludeId;
   final bool allowNone;
   final bool allowCreate;
 
-  /// The create page, pushed over the sheet. A wallet that wasn't there
-  /// before is the one just made → pick it.
+  /// The create page over the sheet — on the root navigator: a routed push
+  /// (/accounts/new) from inside this modal would land under it. A wallet
+  /// that wasn't there before is the one just made → pick it.
   Future<void> _create(BuildContext context) async {
     final cubit = context.read<AccountsCubit>();
     final before = {for (final a in cubit.state.accounts) a.id};
@@ -95,74 +99,78 @@ class _AccountPickerBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final visible = excludeId == null
+    final all = excludeId == null
         ? accounts
         : accounts.where((a) => a.id != excludeId).toList();
-    final tiles = <Widget>[
-      if (allowNone)
-        SelectableFrame(
-          selected: selected == null,
-          child: _NoneTile(
-            label: l.transactionFormAccountNone,
-            onTap: () =>
-                Navigator.of(context).pop(const AccountPickerCleared()),
-          ),
-        ),
-      for (final a in visible)
-        SelectableFrame(
-          selected: a.id == selected?.id,
-          child: AccountCard(
-            account: a,
-            horizontal: false,
-            onTap: () => Navigator.of(context).pop(AccountPickerSelected(a)),
-          ),
-        ),
-      // Last, as on the wallets page.
-      if (allowCreate)
-        SelectableFrame(
-          selected: false,
-          child: AddTile(
-            label: l.accountsAddNew,
-            onTap: () => _create(context),
-          ),
-        ),
-    ];
-
-    // Chrome (title row, drag handle, scrolling) comes from [showAppSheet].
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        0,
-        AppSpacing.md,
-        AppSpacing.md,
-      ),
-      child: tiles.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              child: Text(
-                l.transactionFormAccountPickerEmpty,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
+    return PickerSheet(
+      title: title,
+      searchable: all.length > 8,
+      footer: allowCreate
+          ? PickerCreateRow(
+              label: l.accountsAddNew,
+              onTap: () => _create(context),
             )
-          : GridView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                // Same columns as the wallets page.
-                crossAxisCount: MediaQuery.sizeOf(context).shortestSide >= 600
-                    ? 3
-                    : 2,
-                mainAxisSpacing: AppSpacing.xs,
-                crossAxisSpacing: AppSpacing.xs,
-                // Fixed height: vertical AccountCard (icon · name · type ·
-                // balance + optional credit bar) + the selection ring.
-                mainAxisExtent: 156,
+          : null,
+      builder: (context, q) {
+        final scheme = Theme.of(context).colorScheme;
+        final visible = q.isEmpty
+            ? all
+            : all.where((a) => a.name.toLowerCase().contains(q)).toList();
+        final tiles = <Widget>[
+          if (allowNone && q.isEmpty)
+            SelectableFrame(
+              selected: selected == null,
+              child: _NoneTile(
+                label: l.transactionFormAccountNone,
+                onTap: () =>
+                    Navigator.of(context).pop(const AccountPickerCleared()),
               ),
-              children: tiles,
             ),
+          for (final a in visible)
+            SelectableFrame(
+              selected: a.id == selected?.id,
+              child: AccountCard(
+                account: a,
+                horizontal: false,
+                onTap: () =>
+                    Navigator.of(context).pop(AccountPickerSelected(a)),
+              ),
+            ),
+        ];
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          child: tiles.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Text(
+                    l.transactionFormAccountPickerEmpty,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              : GridView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    // Same columns as the wallets page.
+                    crossAxisCount:
+                        MediaQuery.sizeOf(context).shortestSide >= 600 ? 3 : 2,
+                    mainAxisSpacing: AppSpacing.xs,
+                    crossAxisSpacing: AppSpacing.xs,
+                    // Fixed height: vertical AccountCard (icon · name · type
+                    // · balance + optional credit bar) + the selection ring.
+                    mainAxisExtent: 156,
+                  ),
+                  children: tiles,
+                ),
+        );
+      },
     );
   }
 }

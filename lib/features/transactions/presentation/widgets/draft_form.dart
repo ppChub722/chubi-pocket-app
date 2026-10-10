@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -326,7 +328,48 @@ class DraftFormController extends ChangeNotifier {
       ..clear()
       ..addAll({for (final s in t.splits) s.debtId: s});
     splits = [for (final s in t.splits) _fromSaved(s, s.amount)];
+    _savedMyShare = t.myShare;
+    _shareBasis = _shareKey();
+    // An event bill: what the other members carry on the event row =
+    // amount − my_share − my own splits (forgiven ones never came off).
+    final mine = t.myShare;
+    final myOwn = t.splits
+        .where((s) => s.status != 'cancelled')
+        .fold<double>(0, (a, s) => a + s.amount);
+    eventOthers = mine == null || t.projectId == null
+        ? 0
+        : (t.amount - mine - myOwn).clamp(0, t.amount).toDouble();
+    savedInEvent = t.projectId != null;
   }
+
+  /// The saved row is an event bill (its splits sit on my share).
+  bool savedInEvent = false;
+
+  /// An event bill's other members' part (0 off an event, or without
+  /// `my_share`). My own splits share only what's left: Σ ≤ amount − this
+  /// (the BE says SPLITS_EXCEED_SHARE otherwise).
+  double eventOthers = 0;
+
+  /// What my own splits may add up to.
+  double get splitCap => amountValue - eventOthers;
+
+  /// The row's `my_share` as loaded (null: a transfer, or a BE that
+  /// doesn't send it) and the amount + splits it was worked out from.
+  double? _savedMyShare;
+  String? _shareBasis;
+
+  String _shareKey() => [
+    amount.text,
+    for (final s in splits) jsonEncode(s.toUpdateJson()),
+  ].join('|');
+
+  /// "ส่วนของคุณ" as the server counts it — only while the amount and the
+  /// splits are as loaded; an unsaved change → null (work it out from the
+  /// draft instead), back to the server's after the save reloads.
+  double? get savedMyShare =>
+      _savedMyShare != null && _shareKey() == _shareBasis
+      ? _savedMyShare
+      : null;
 
   /// Puts a saved transaction's fields back as [d] (undo / cancel on the
   /// detail page). Text controllers each notify; a caller listening for
@@ -353,9 +396,13 @@ class DraftFormController extends ChangeNotifier {
     splits = [
       for (final m in d.splits)
         switch (savedSplits[m['debt_id']]) {
+          // Back to the saved debt, with the person as it was at that
+          // step (an unlinked one may have been renamed / linked since).
           final saved? => _fromSaved(
             saved,
             (m['owed_amount'] as num?)?.toDouble(),
+            name: m['person_name'] as String?,
+            contact: m['contact_id'] as String?,
           ),
           null => SplitDraft(
             personName: m['person_name'] as String?,
@@ -371,14 +418,25 @@ class DraftFormController extends ChangeNotifier {
   /// save compares against.
   final Map<String, TxSplit> savedSplits = {};
 
-  static SplitDraft _fromSaved(TxSplit s, double? owed) => SplitDraft(
-    debtId: s.debtId,
-    personName: s.personName,
-    contactId: s.contactId,
-    owedAmount: owed,
-    settledAmount: s.settledAmount,
-    cancelled: s.status == 'cancelled',
-  );
+  /// A saved split as a row: who it was saved with, then — when [name] is
+  /// given and the row isn't locked — the person it has now.
+  static SplitDraft _fromSaved(
+    TxSplit s,
+    double? owed, {
+    String? name,
+    String? contact,
+  }) {
+    final d = SplitDraft(
+      debtId: s.debtId,
+      personName: s.personName,
+      contactId: s.contactId,
+      owedAmount: owed,
+      settledAmount: s.settledAmount,
+      cancelled: s.status == 'cancelled',
+    );
+    if (name != null && !d.identityLocked) d.setPerson(name, contact: contact);
+    return d;
+  }
 
   /// The fields as a draft — no validation, anything may be empty.
   PendingDraft toDraft() {
@@ -469,6 +527,8 @@ class DraftForm extends StatefulWidget {
     this.onEnterEdit,
     this.onEdit,
     this.trailingRows = const [],
+    this.sectioned = false,
+    this.eventPending = false,
     this.event,
     this.schedule,
     this.heroKey,
@@ -504,10 +564,22 @@ class DraftForm extends StatefulWidget {
   /// View mode: the hero's ✏️.
   final VoidCallback? onEdit;
 
-  /// Rows the page adds after the labelled ones (the detail page: the
-  /// split list and "มาจาก" in view mode; read-only splits / event in edit
-  /// mode — what a saved row can't change).
+  /// What the page adds after the form's own rows. [sectioned]: whole
+  /// detail sections ([SectionCard]s — the split list, the event row);
+  /// otherwise labelled rows.
   final List<Widget> trailingRows;
+
+  /// The detail page's layout below the hero (owner 2026-10-10, rules
+  /// #16 / #17): [SectionCard]s — แท็ก (row) + โน้ต (stacked) first, the
+  /// split editor as its own "หารกับ" section, then [trailingRows].
+  /// Off: the quick create's compact rows.
+  final bool sectioned;
+
+  /// An event is being picked / changed in this form (quick create with
+  /// one chosen, the detail page moving the row into one): the splits go
+  /// to the event's board with it — titled "หารในอีเวนต์". An event bill
+  /// left where it is keeps "หารกับ", split from my share.
+  final bool eventPending;
 
   final DraftFormController controller;
 
@@ -722,7 +794,8 @@ class _DraftFormState extends State<DraftForm> {
                   : null,
             ),
             if (editing) ...[
-              const SizedBox(height: AppSpacing.md),
+              // 16 from the hero to the next block (HeroSpacing.after).
+              const SizedBox(height: HeroSpacing.after),
               _cardsRow(l, isTransfer: isTransfer),
               if (editing && !isTransfer && categoryHint != null)
                 Padding(
@@ -750,21 +823,18 @@ class _DraftFormState extends State<DraftForm> {
                   order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
                 ),
               ],
-              // View mode shows only the row's own tags — none, no row.
-              if (editing || _c.tagIds.isNotEmpty) ...[
+              // Sectioned (the detail page): tags live in section 1.
+              if (!widget.sectioned) ...[
                 const SizedBox(height: AppSpacing.sm),
-                longPressable(
-                  TagChipRow(
-                    selected: _c.tagIds,
-                    onToggle: _c.toggleTag,
-                    onMore: _moreTags,
-                    editing: editing,
-                    known: _c.knownTags,
-                    order: _tagOrder,
-                  ),
+                TagChipRow(
+                  selected: _c.tagIds,
+                  onToggle: _c.toggleTag,
+                  onMore: _moreTags,
+                  known: _c.knownTags,
+                  order: _tagOrder,
                 ),
               ],
-            ] else if (_c.tagIds.isNotEmpty) ...[
+            ] else if (!widget.sectioned && _c.tagIds.isNotEmpty) ...[
               // Right under the card, as chips with their icons, led by the
               // tag icon like the edit row (owner 2026-10-10).
               const SizedBox(height: AppSpacing.md),
@@ -803,7 +873,14 @@ class _DraftFormState extends State<DraftForm> {
                 ),
               ),
             ],
-            ..._detailRows(l, editing: editing, isTransfer: isTransfer),
+            ...widget.sectioned
+                ? _sections(
+                    l,
+                    editing: editing,
+                    isTransfer: isTransfer,
+                    longPressable: longPressable,
+                  )
+                : _detailRows(l, editing: editing, isTransfer: isTransfer),
           ],
         );
         if (!widget.readOnly) return form;
@@ -877,6 +954,95 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
+  /// [DraftForm.sectioned] — the detail page below the hero:
+  ///
+  ///   แท็ก            [#a] [#b] …      (section 1, a row)
+  ///   โน้ต                               (label on top, full width)
+  ///   ▬▬▬▬
+  ///   หารกับ        [+ เพิ่มคน] [หารเท่ากัน]   (edit: the split editor)
+  ///   …[DraftForm.trailingRows]: the page's sections (view splits, event)
+  ///
+  /// View mode shows only what has something in it.
+  List<Widget> _sections(
+    AppLocalizations l, {
+    required bool editing,
+    required bool isTransfer,
+    required Widget Function(Widget) longPressable,
+  }) {
+    final enter = widget.onEnterEdit;
+    final tagsCubit = context.read<TagsCubit>();
+    final first = <Widget>[
+      if (editing || _c.tagIds.isNotEmpty)
+        longPressable(
+          DetailRow(
+            label: l.txDetailTags,
+            trailing: editing
+                ? TagChipRow(
+                    selected: _c.tagIds,
+                    onToggle: _c.toggleTag,
+                    onMore: _moreTags,
+                    known: _c.knownTags,
+                    order: _tagOrder,
+                    leadingIcon: false,
+                  )
+                : Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      for (final id in _c.tagIds)
+                        ?_tagChip(
+                          tagsCubit.state.tags
+                                  .where((t) => t.id == id)
+                                  .firstOrNull ??
+                              _c.knownTags[id],
+                        ),
+                    ],
+                  ),
+          ),
+        ),
+      if (editing || _c.note.text.trim().isNotEmpty)
+        DetailStacked(
+          label: l.commonNote,
+          child: InlineField(
+            editing: editing,
+            controller: _c.note,
+            focusNode: _noteFocus,
+            maxLines: 5,
+            maxLength: TextLimits.note,
+            hint: l.txNoteAddHint,
+            onEnterEdit: enter == null ? null : () => enter(_noteFocus),
+          ),
+        ),
+    ];
+    return [
+      const SizedBox(height: HeroSpacing.after),
+      if (first.isNotEmpty) SectionCard(first: true, children: first),
+      if (editing && widget.allowSplits && !isTransfer)
+        SplitsSection(
+          // Going into an event with the row: they'll be the event's. Else
+          // expense: they owe me; income: I owe them (spec §12).
+          label: widget.eventPending
+              ? l.txSplitInEvent
+              : _c.type == TransactionType.income
+              ? l.txSplitShareShort
+              : l.txSplitWith,
+          helper: widget.eventPending
+              ? l.txSplitInEventHelper
+              // An event bill staying put: my splits sit on my share.
+              : _c.savedInEvent
+              ? l.txSplitFromMyShare
+              : null,
+          totalAmount: _c.splitCap,
+          overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
+          drafts: _c.splits,
+          onChanged: _c.setSplits,
+          sectioned: true,
+        ),
+      ...widget.trailingRows,
+    ];
+  }
+
   /// โน้ต · หารกับ · อีเวนต์ under a hairline — always open while editing
   /// (owner 2026-10-10), labels lined up on the left; view mode shows only
   /// the ones with something in them.
@@ -917,7 +1083,9 @@ class _DraftFormState extends State<DraftForm> {
           label: _c.type == TransactionType.income
               ? l.txSplitShareShort
               : l.txSplitWith,
-          totalAmount: _c.amountValue,
+          // An event bill: only my share is mine to split.
+          totalAmount: _c.splitCap,
+          overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
           drafts: _c.splits,
           onChanged: _c.setSplits,
         ),
@@ -1012,9 +1180,13 @@ class DraftFieldRow extends StatelessWidget {
 }
 
 /// "ส่วนของคุณ ฿x · คนอื่นติด ฿y" under the hero's amount once the row is
-/// split — the key number (owner 2026-10-10; the dashboard counts it).
-/// Income splits are what I pass on: "· ของคนอื่น ฿y". Split past the
-/// total → my share goes negative, in the error colour.
+/// split — the key number (owner 2026-10-10; reports count it). Income
+/// splits are what I pass on: "· ของคนอื่น ฿y". Split past the total → my
+/// share goes negative, in the error colour.
+///
+/// x = the server's `my_share` while the form is as loaded (it also knows
+/// an event share), y = amount − x; with unsaved split / amount changes
+/// (or a BE without it) both are worked out from the draft.
 class _ShareLine extends StatelessWidget {
   const _ShareLine({
     required this.type,
@@ -1026,10 +1198,14 @@ class _ShareLine extends StatelessWidget {
   final double total;
   final double others;
 
-  /// Null until someone has an amount.
+  /// Null while it's all mine.
   static Widget? of(DraftFormController c) {
-    final others = c.splits.fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
-    if (others <= 0) return null;
+    final mine = c.savedMyShare;
+    final others = mine != null
+        ? c.amountValue - mine
+        : c.eventOthers +
+              c.splits.fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
+    if (others <= 0.005) return null;
     return _ShareLine(type: c.type, total: c.amountValue, others: others);
   }
 

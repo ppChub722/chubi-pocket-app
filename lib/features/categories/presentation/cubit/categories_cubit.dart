@@ -20,7 +20,7 @@ class CategoriesState extends Equatable {
   });
 
   /// Full list — system + user, all types. Consumers filter via the
-  /// cubit's [CategoriesCubit.userCategories] / [CategoriesCubit.childrenOf].
+  /// cubit's [CategoriesCubit.userCategories].
   final List<Category> categories;
 
   /// Cold-start lifecycle: `initial → loading → (loaded | error)`. Mutators
@@ -58,16 +58,10 @@ enum CategoriesStatus { initial, loading, loaded, error }
 /// call it from `initState` and the cubit no-ops if already loaded.
 /// First call hits the API; subsequent screens reuse the cache.
 ///
-/// **Mutators:** all return `Future<void>` and re-throw [ApiException]
-/// on failure. The success path emits the new list; the failure path
-/// leaves state untouched. This keeps the form-page UX simple — the
-/// page wraps `await cubit.add(...)` in try/catch and shows a snackbar.
-///
-/// **Undo:** [undo] is intentionally local-only. Each successful
-/// mutator pushes the prior list onto the in-memory stack; [undo] pops
-/// it and emits — no server round-trip. The next mutation will re-sync
-/// state with the server. Phase 1a accepts this trade — the alternative
-/// (round-trip undo via inverse API calls) is much more complex.
+/// **Mutators:** all re-throw [ApiException] on failure. The success path
+/// emits the new list; the failure path leaves state untouched. This keeps
+/// the form-page UX simple — the page wraps `await cubit.add(...)` in
+/// try/catch and shows a snackbar.
 class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   CategoriesCubit({required CategoriesRepository repository})
     : _repo = repository,
@@ -82,11 +76,6 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   /// canonical spec — flag for P1a doc bump). System categories don't
   /// count toward this limit.
   static const int userLimit = 100;
-
-  /// How many prior states the undo button can roll back through.
-  static const int undoLimit = 5;
-
-  final List<List<Category>> _undoStack = [];
 
   // ── Loading ────────────────────────────────────────────────────────
 
@@ -129,20 +118,11 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
 
   // ── Read helpers ───────────────────────────────────────────────────
 
-  bool get canUndo => _undoStack.isNotEmpty;
-
   /// All non-system categories. The categories management page binds
   /// to this; system rows live in [state.categories] but shouldn't
   /// surface in the management UI.
   List<Category> get userCategories =>
       state.categories.where((c) => !c.isSystem).toList();
-
-  /// Children of [parentId] (null = top-level), excluding system rows,
-  /// sorted by `sort_order`.
-  List<Category> childrenOf(String? parentId) {
-    return userCategories.where((c) => c.parentId == parentId).toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-  }
 
   Category? byId(String id) {
     for (final c in state.categories) {
@@ -161,16 +141,15 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   /// already hit [userLimit] non-system categories. Caller should
   /// pre-check via [canAddMore] for a clean UX path. Re-throws
   /// [ApiException] on server validation failures.
-  Future<void> add(Category draft) async {
+  Future<Category> add(Category draft) async {
     if (!canAddMore) throw const CategoryLimitExceeded();
     final created = await _repo.create(draft);
-    _pushUndo();
     emit(state.copyWith(categories: [...state.categories, created]));
+    return created;
   }
 
   Future<void> update(Category category) async {
     final updated = await _repo.update(category);
-    _pushUndo();
     emit(
       state.copyWith(
         categories: [
@@ -185,7 +164,6 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   /// because the server also re-parents the row's children.
   Future<void> remove(String id) async {
     await _repo.delete(id);
-    _undoStack.clear(); // local undo can't bring back a server delete
     await load();
   }
 
@@ -200,26 +178,8 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
   Future<void> saveReorder(List<Category> staged) async {
     final userOnly = staged.where((c) => !c.isSystem).toList();
     final result = await _repo.reorder(userOnly);
-    _pushUndo();
     final systemRows = state.categories.where((c) => c.isSystem).toList();
     emit(state.copyWith(categories: [...systemRows, ...result]));
-  }
-
-  // ── Undo ───────────────────────────────────────────────────────────
-
-  /// Restores the most recent pre-mutation snapshot — local-only;
-  /// does not call the server. The next mutator call re-syncs.
-  void undo() {
-    if (_undoStack.isEmpty) return;
-    final previous = _undoStack.removeLast();
-    emit(state.copyWith(categories: previous));
-  }
-
-  void _pushUndo() {
-    _undoStack.add(List<Category>.unmodifiable(state.categories));
-    if (_undoStack.length > undoLimit) {
-      _undoStack.removeAt(0);
-    }
   }
 }
 

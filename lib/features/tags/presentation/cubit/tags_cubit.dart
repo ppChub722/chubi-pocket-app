@@ -111,21 +111,4 @@ class TagsCubit extends Cubit<TagsState> with Clearable {
     }
     return null;
   }
-
-  /// Server already sorts by `usage_count DESC, name ASC` (spec §3.9),
-  /// so this is a passthrough — kept as a getter so the page doesn't
-  /// re-sort on every build and for parity with how the cubit was
-  /// shaped in mock mode.
-  List<Tag> get sorted => state.tags;
-
-  /// Case-insensitive uniqueness check for the form's name validator.
-  /// Excludes [excludeId] so editing without renaming doesn't trigger
-  /// the collision.
-  bool nameExists(String name, {String? excludeId}) {
-    final lower = name.trim().toLowerCase();
-    if (lower.isEmpty) return false;
-    return state.tags.any(
-      (t) => t.id != excludeId && t.name.trim().toLowerCase() == lower,
-    );
-  }
 }

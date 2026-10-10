@@ -132,9 +132,16 @@ class TransactionsRepository {
   /// at create; one left out is removed, `[]` removes them all. Author only,
   /// expense / income only. Returns the row with its new `splits`.
   ///
-  /// Refusals: 400 SPLITS_EXCEED_AMOUNT · 404 SPLIT_CONTACT_NOT_FOUND ·
-  /// 409 CONTACT_ARCHIVED. Repayments never limit an edit: a repaid person
-  /// removed stays at 0 (overpaid) — contract v2.
+  /// A saved split WITHOUT a contact may also carry a new `person_name`
+  /// (renamed in place) and / or `contact_id` (linked in place) — its debt
+  /// and repayments stay. One WITH a contact can't change who it is.
+  /// Omitted or unchanged fields leave the person as is.
+  ///
+  /// Refusals: 422 SPLIT_IDENTITY_LOCKED · 400 CONTACT_NOT_FOUND ·
+  /// 409 CONTACT_ARCHIVED · 403 SPLITS_AUTHOR_ONLY · 400
+  /// SPLITS_EXCEED_AMOUNT · 400 SPLITS_ON_TRANSFER · 400 VALIDATION_ERROR ·
+  /// 400 SYSTEM_TRANSACTION_IMMUTABLE. Repayments never limit an edit: a
+  /// repaid person removed stays at 0 (overpaid) — contract v2.
   Future<Transaction> updateSplits(
     String id,
     List<Map<String, dynamic>> splits,

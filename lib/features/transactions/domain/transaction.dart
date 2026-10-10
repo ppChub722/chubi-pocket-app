@@ -135,6 +135,11 @@ class Transaction extends Equatable {
     this.splitCount = 0,
     this.splits = const [],
     this.project,
+    this.sourcePersonalDebtId,
+    this.myShare,
+    this.canSplit,
+    this.canEditSplits,
+    this.canJoinEvent,
   });
 
   final String id;
@@ -210,8 +215,26 @@ class Transaction extends Equatable {
   /// another member's row on a shared wallet, while [splitCount] shows).
   final List<TxSplit> splits;
 
-  /// `{id, name}` of [projectId]'s project, for "มาจาก".
+  /// `{id, name}` of [projectId]'s project — the detail page's event card.
   final EmbeddedRef? project;
+
+  /// Set on a debt repayment (the debt it pays back) — such a row can't
+  /// join an event.
+  final String? sourcePersonalDebtId;
+
+  /// My part of an expense / income — what reports count (the total minus
+  /// what others owe / get, or my event share). Null on transfers, and
+  /// from a BE that doesn't send it yet (then the FE works it out).
+  final double? myShare;
+
+  /// BE capability flags — null while the BE doesn't send them (then the
+  /// FE's own rules decide; see tx_rules.dart):
+  /// - [canSplit]: the row can carry personal splits at all;
+  /// - [canEditSplits]: [canSplit] and I'm its author → the split editor;
+  /// - [canJoinEvent]: may go into / move to an event.
+  final bool? canSplit;
+  final bool? canEditSplits;
+  final bool? canJoinEvent;
 
   bool get isTransferOut =>
       type == TransactionType.transfer && _isTransferOutCategory;
@@ -293,6 +316,11 @@ class Transaction extends Equatable {
       project: json['project'] is Map<String, dynamic>
           ? EmbeddedRef.fromJson(json['project'] as Map<String, dynamic>)
           : null,
+      sourcePersonalDebtId: json['source_personal_debt_id'] as String?,
+      myShare: (json['my_share'] as num?)?.toDouble(),
+      canSplit: json['can_split'] as bool?,
+      canEditSplits: json['can_edit_splits'] as bool?,
+      canJoinEvent: json['can_join_event'] as bool?,
     );
   }
 
@@ -323,6 +351,11 @@ class Transaction extends Equatable {
     int? splitCount,
     List<TxSplit>? splits,
     EmbeddedRef? project,
+    String? sourcePersonalDebtId,
+    double? myShare,
+    bool? canSplit,
+    bool? canEditSplits,
+    bool? canJoinEvent,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -351,6 +384,11 @@ class Transaction extends Equatable {
       splitCount: splitCount ?? this.splitCount,
       splits: splits ?? this.splits,
       project: project ?? this.project,
+      sourcePersonalDebtId: sourcePersonalDebtId ?? this.sourcePersonalDebtId,
+      myShare: myShare ?? this.myShare,
+      canSplit: canSplit ?? this.canSplit,
+      canEditSplits: canEditSplits ?? this.canEditSplits,
+      canJoinEvent: canJoinEvent ?? this.canJoinEvent,
     );
   }
 
@@ -382,6 +420,11 @@ class Transaction extends Equatable {
     splitCount,
     splits,
     project,
+    sourcePersonalDebtId,
+    myShare,
+    canSplit,
+    canEditSplits,
+    canJoinEvent,
   ];
 }
 

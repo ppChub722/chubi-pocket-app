@@ -58,11 +58,32 @@ class Account extends Equatable {
   List<WalletMember> otherMembers(String? selfUserId) =>
       members.where((m) => m.userId != selfUserId).toList();
 
-  double? get creditUtilization {
-    if (!type.isCredit) return null;
-    if (creditLimit == null || creditLimit! <= 0) return null;
-    return (balance.abs() / creditLimit!).clamp(0.0, 1.0);
+  /// A card / pay-later's used credit — what's owed on it. A positive
+  /// balance (overpaid) uses none; 0 for other types.
+  double get creditUsed => type.isCredit && balance < 0 ? -balance : 0;
+
+  /// Credit left to spend: limit − [creditUsed] (null without a limit).
+  /// Overpaid → the whole limit (the overpaid part is money of mine, not
+  /// credit).
+  double? get creditAvailable {
+    final limit = creditLimit;
+    if (!type.isCredit || limit == null || limit <= 0) return null;
+    return limit - creditUsed;
   }
+
+  /// [creditUsed] / limit, 0..1 (null: not credit, or no limit).
+  double? get creditUtilization {
+    final limit = creditLimit;
+    if (!type.isCredit || limit == null || limit <= 0) return null;
+    return (creditUsed / limit).clamp(0.0, 1.0);
+  }
+
+  /// Money I owe through this wallet: a card's used credit, or a wallet
+  /// that isn't credit gone below zero (overdrawn). 0 otherwise.
+  double get debt => balance < 0 ? -balance : 0;
+
+  /// Money I have in it — any positive balance (an overpaid card too).
+  double get asset => balance > 0 ? balance : 0;
 
   Account copyWith({
     String? id,

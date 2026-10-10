@@ -15,20 +15,21 @@ import '../../domain/transaction_type.dart';
 import '../tx_list_filters.dart';
 import 'pick_chip_rows.dart';
 import 'tx_hero_card.dart';
-import 'tx_period_pill.dart';
 
 /// The transactions list's filters, in a side sheet from the right (owner
 /// 2026-10-10), built from the form's own pieces:
-/// - ประเภท: the [TxTypeChip]s, plus a neutral ทั้งหมด;
-/// - ช่วงเวลา: unit [ChoicePill]s over a [TxPeriodPill] (‹ › step it);
+/// - ประเภท: [RowChip]s tinted in each type's colour, ทั้งหมด in primary;
 /// - กระเป๋า · หมวด · แท็ก: the form's chip rows ([WalletChipRow],
 ///   [CategoryChipRow], [TagChipRow]), each led by "ทั้งหมด" (= no filter);
 ///   wallet / category pick one (tap again → ทั้งหมด), tags several;
 ///   เพิ่มเติม opens the full list (with ไม่มีกระเป๋า / ไม่ระบุหมวด);
-/// - เรียงตาม: [ChoicePill]s;
-/// then [ล้าง] [ใช้ตัวกรอง]. Resolves the new filters, or null when closed
-/// without applying. [base] is what ล้าง goes back to (how the list
-/// opened); [walletLocked] hides the wallet section (a wallet's own list).
+/// then [ล้าง] [ใช้ตัวกรอง]. The period and the sort live on the page
+/// (its pill and ⇅) — the sheet carries them through untouched.
+///
+/// Resolves the new filters, or null when closed without applying. ล้าง
+/// goes back to [base] (how the list opened — a wallet's list keeps its
+/// wallet) but keeps the page's period and sort; [walletLocked] hides the
+/// wallet section (a wallet's own list).
 Future<TxFilters?> showTxFilterSheet(
   BuildContext context, {
   required TxFilters current,
@@ -170,29 +171,6 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
 
   void _set(TxFilters f) => setState(() => _f = f);
 
-  Future<void> _pickPeriod(TxPeriodKind kind) async {
-    if (kind != TxPeriodKind.custom) {
-      // Switching unit keeps the place: the new period holds the old one's
-      // first day (today for ทั้งหมด).
-      final anchor = _f.period.kind == TxPeriodKind.all
-          ? DateTime.now()
-          : _f.period.start;
-      _set(_f.copyWith(period: TxPeriod.of(kind, anchor)));
-      return;
-    }
-    final now = DateTime.now();
-    final range = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(now.year + 1, 12, 31),
-      initialDateRange: _f.period.kind == TxPeriodKind.all
-          ? null
-          : DateTimeRange(start: _f.period.start, end: _f.period.last!),
-    );
-    if (range == null || !mounted) return;
-    _set(_f.copyWith(period: TxPeriod.custom(range.start, range.end)));
-  }
-
   void _setType(TransactionType? t) {
     final keep = _f.category == null || categoryFitsType(_f.category!, t);
     _set(_f.copyWith(type: t, clearType: t == null, clearCategory: !keep));
@@ -245,7 +223,6 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final wallet = _f.wallet;
-    final kind = _f.period.kind;
     // "ทั้งหมด" leads each pick row — selected = no filter there.
     RowChip all({required bool selected, required VoidCallback onTap}) =>
         RowChip(
@@ -258,57 +235,34 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // The form's type chips, type-coloured; ทั้งหมด neutral.
+          // Every row the same (owner 2026-10-10): the icon goes in front
+          // of the section title, the chips start flush left, one chip
+          // geometry ([RowChip]). Types: selected = a tint of their own
+          // colour — ทั้งหมด primary, รายจ่าย red, รายรับ green, โอน grey.
           SideSheetSection(
             title: l.transactionsFilterType,
-            child: Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              children: [
+            icon: AppIcons.transfer,
+            child: ChipRow(
+              chips: [
                 for (final t in const [
                   null,
                   TransactionType.expense,
                   TransactionType.income,
                   TransactionType.transfer,
                 ])
-                  TxTypeChip(
-                    type: t,
+                  RowChip(
+                    label: txTypeLabel(l, t),
+                    icon: switch (t) {
+                      null => null,
+                      TransactionType.expense => AppIcons.expense,
+                      TransactionType.income => AppIcons.income,
+                      TransactionType.transfer => AppIcons.transfer,
+                    },
+                    // Null = the app primary (ทั้งหมด).
+                    color: t == null ? null : txTypeColor(context, t),
                     selected: t == _f.type,
                     onTap: t == _f.type ? null : () => _setType(t),
                   ),
-              ],
-            ),
-          ),
-          // Unit pills, then the period itself — stepped by ‹ ›, a month's
-          // label opens the month grid, a custom range's the range picker.
-          SideSheetSection(
-            title: l.transactionsFilterRange,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ChoicePillRow<TxPeriodKind>(
-                  values: TxPeriodKind.values,
-                  selected: kind,
-                  size: PillSize.medium,
-                  label: (k) => switch (k) {
-                    TxPeriodKind.month => l.txPeriodMonth,
-                    TxPeriodKind.week => l.txPeriodWeek,
-                    TxPeriodKind.year => l.txPeriodYear,
-                    TxPeriodKind.all => l.transactionsRangeAll,
-                    TxPeriodKind.custom => l.txPeriodCustom,
-                  },
-                  onSelected: _pickPeriod,
-                  // Picking กำหนดเอง again re-opens the range picker.
-                  reselect: (k) => k == TxPeriodKind.custom,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                TxPeriodPill(
-                  period: _f.period,
-                  onChanged: (p) => _set(_f.copyWith(period: p)),
-                  onTapLabel: kind == TxPeriodKind.custom
-                      ? () => _pickPeriod(TxPeriodKind.custom)
-                      : null,
-                ),
               ],
             ),
           ),
@@ -316,7 +270,9 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
           if (!widget.walletLocked)
             SideSheetSection(
               title: l.transactionsFilterAccount,
+              icon: AppIcons.wallet,
               child: WalletChipRow(
+                leadingIcon: false,
                 selectedId: wallet is TxOneWallet ? wallet.account.id : null,
                 order: _walletOrder,
                 onPick: (a) => _set(
@@ -352,7 +308,9 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
           // "ไม่ระบุหมวด" from เพิ่มเติม; only the type filter's categories.
           SideSheetSection(
             title: l.transactionsFilterCategory,
+            icon: AppIcons.category,
             child: CategoryChipRow(
+              leadingIcon: false,
               type: _f.type,
               selected: _f.category,
               order: _categoryOrders.putIfAbsent(_f.type, ChipOrder.new),
@@ -387,7 +345,9 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
           // The form's row, several at once.
           SideSheetSection(
             title: l.transactionsFilterTag,
+            icon: AppIcons.tag,
             child: TagChipRow(
+              leadingIcon: false,
               selected: {for (final t in _f.tags) t.id},
               order: _tagOrder,
               onToggle: _toggleTag,
@@ -398,21 +358,6 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
                   onTap: () => _set(_f.copyWith(tags: const [])),
                 ),
               ],
-            ),
-          ),
-          SideSheetSection(
-            title: l.transactionsSortBy,
-            child: ChoicePillRow<String>(
-              values: const [
-                'date_desc',
-                'date_asc',
-                'amount_desc',
-                'amount_asc',
-              ],
-              selected: _f.sort,
-              size: PillSize.medium,
-              label: (s) => txSortLabel(l, s),
-              onSelected: (s) => _set(_f.copyWith(sort: s)),
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -426,8 +371,9 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
               variant: AppButtonVariant.outlined,
               expand: true,
               // Back to how the list opened (a wallet's list keeps its
-              // wallet).
-              onPressed: () => _set(widget.base),
+              // wallet) — the period and sort are the page's, not reset.
+              onPressed: () =>
+                  _set(widget.base.copyWith(period: _f.period, sort: _f.sort)),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),

@@ -12,8 +12,18 @@ import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 import '../widgets/contacts_list_skeleton.dart';
 
-/// `/contacts` — long, searchable list (add = dashed tile at the end).
-/// Search is client-side over name / email / phone; status is a popover.
+/// `/contacts` (owner 2026-10-10) — the library list look shared with
+/// categories and tags:
+///
+///   [🔍 ค้นหา…                    ]
+///   [สถานะ: ใช้งาน ▾]      [⇅ ใช้ล่าสุด ▾]
+///   (avatar) name · description · email               🔗
+///   … dashed "+ เพิ่มผู้ติดต่อ" at the end
+///
+/// Search is client-side over name / description / email / phone. Status
+/// (ใช้งาน / เก็บถาวร / ทั้งหมด) loads from the server — archived ones
+/// live here, dimmed, not on a page of their own. Sort is client-side:
+/// ใช้ล่าสุด (the server's order), ชื่อ ก→ฮ, ชื่อ ฮ→ก.
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
 
@@ -21,8 +31,11 @@ class ContactsPage extends StatefulWidget {
   State<ContactsPage> createState() => _ContactsPageState();
 }
 
+enum _ContactSort { recent, nameAsc, nameDesc }
+
 class _ContactsPageState extends State<ContactsPage> {
   String _query = '';
+  _ContactSort _sort = _ContactSort.recent;
 
   @override
   void initState() {
@@ -34,17 +47,31 @@ class _ContactsPageState extends State<ContactsPage> {
 
   List<Contact> _filter(List<Contact> all) {
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return all;
-    return all
-        .where(
-          (c) =>
-              c.effectiveName.toLowerCase().contains(q) ||
-              (c.description?.toLowerCase().contains(q) ?? false) ||
-              (c.effectiveEmail?.toLowerCase().contains(q) ?? false) ||
-              (c.phone?.contains(q) ?? false),
-        )
-        .toList();
+    final hits = q.isEmpty
+        ? all
+        : all
+              .where(
+                (c) =>
+                    c.effectiveName.toLowerCase().contains(q) ||
+                    (c.description?.toLowerCase().contains(q) ?? false) ||
+                    (c.effectiveEmail?.toLowerCase().contains(q) ?? false) ||
+                    (c.phone?.contains(q) ?? false),
+              )
+              .toList();
+    int byName(Contact a, Contact b) =>
+        a.effectiveName.toLowerCase().compareTo(b.effectiveName.toLowerCase());
+    return switch (_sort) {
+      _ContactSort.recent => hits,
+      _ContactSort.nameAsc => [...hits]..sort(byName),
+      _ContactSort.nameDesc => [...hits]..sort((a, b) => byName(b, a)),
+    };
   }
+
+  String _sortLabel(AppLocalizations l, _ContactSort s) => switch (s) {
+    _ContactSort.recent => l.contactsSortRecent,
+    _ContactSort.nameAsc => l.contactsSortNameAsc,
+    _ContactSort.nameDesc => l.contactsSortNameDesc,
+  };
 
   void _add() => context.push('/contacts/new');
 
@@ -125,14 +152,22 @@ class _ContactsPageState extends State<ContactsPage> {
                     hint: l.contactsSearchHint,
                     onChanged: (v) => setState(() => _query = v),
                   ),
+                  // Filters left, the sort right — as on the transactions
+                  // list. Add is the dashed tile at the end of the list.
                   FilterBar(
-                    // Add is also the dashed tile at the end of the list; this
-                    // one is always in reach.
-                    trailing: AppIconButton(
-                      icon: AppIcons.add,
-                      size: 36,
-                      tooltip: l.contactsAddNew,
-                      onPressed: _add,
+                    trailing: OptionMenuAnchor<_ContactSort>(
+                      selected: _sort,
+                      onSelected: (v) => setState(() => _sort = v),
+                      options: [
+                        for (final s in _ContactSort.values)
+                          SheetOption(value: s, label: _sortLabel(l, s)),
+                      ],
+                      builder: (context, toggle) => FilterDropdownChip(
+                        label: _sortLabel(l, _sort),
+                        icon: AppIcons.sort,
+                        active: false,
+                        onTap: toggle,
+                      ),
                     ),
                     chips: [
                       OptionMenuAnchor<String>(
@@ -198,6 +233,8 @@ class _ContactsPageState extends State<ContactsPage> {
   }
 }
 
+/// A contact on the list: avatar · name · "description · email" (one line)
+/// · 🔗 when linked. Archived ones are dimmed.
 class _ContactRow extends StatelessWidget {
   const _ContactRow({required this.contact});
   final Contact contact;
@@ -205,40 +242,24 @@ class _ContactRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // The description says who they are; without one, how to reach them.
-    final description = contact.description?.trim() ?? '';
-    final sub = description.isNotEmpty
-        ? description
-        : [
-            if (contact.effectiveEmail?.isNotEmpty ?? false)
-              contact.effectiveEmail!,
-            if (contact.phone?.isNotEmpty ?? false) contact.phone!,
-          ].join(' · ');
-    return Opacity(
-      opacity: contact.isArchived ? 0.55 : 1,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        leading: UserAvatar(
-          displayName: contact.effectiveName,
-          iconCode: contact.effectiveIconCode,
-        ),
-        title: Text(contact.effectiveName),
-        subtitle: sub.isEmpty
-            ? null
-            : Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (contact.isLinked)
-              Icon(AppIcons.link, size: 18, color: scheme.primary),
-            if (contact.isArchived)
-              Icon(AppIcons.archive, size: 18, color: scheme.onSurfaceVariant),
-            const SizedBox(width: AppSpacing.xs),
-            Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
-          ],
-        ),
-        onTap: () => context.push('/contacts/${contact.id}'),
+    // "description · email", either alone, or nothing — never the phone
+    // (owner 2026-10-10; search still matches it).
+    final sub = [
+      contact.description?.trim() ?? '',
+      contact.effectiveEmail?.trim() ?? '',
+    ].where((s) => s.isNotEmpty).join(' · ');
+    return ListRow(
+      leading: UserAvatar(
+        displayName: contact.effectiveName,
+        iconCode: contact.effectiveIconCode,
       ),
+      title: contact.effectiveName,
+      subtitle: sub,
+      dimmed: contact.isArchived,
+      trailing: contact.isLinked
+          ? Icon(AppIcons.link, size: 18, color: scheme.primary)
+          : null,
+      onTap: () => context.push('/contacts/${contact.id}'),
     );
   }
 }

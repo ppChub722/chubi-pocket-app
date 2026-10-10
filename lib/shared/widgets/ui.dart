@@ -43,6 +43,8 @@ export 'layout/app_tab_bar.dart';
 export 'layout/danger_row.dart';
 export 'layout/detail_rows.dart';
 export 'layout/header_card.dart';
+export 'layout/list_row.dart';
+export 'layout/hero_shell.dart';
 export 'layout/locked_in_edit.dart';
 export 'layout/pinned_bar.dart';
 export 'layout/section_header.dart';
@@ -68,6 +70,7 @@ export 'menus/option_menu.dart';
 export 'sheets/action_sheet.dart';
 export 'sheets/app_sheet.dart';
 export 'sheets/option_sheet.dart';
+export 'sheets/picker_sheet.dart';
 export 'sheets/side_sheet.dart';
 
 // Data display

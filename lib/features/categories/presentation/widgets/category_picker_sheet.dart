@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
@@ -31,8 +29,11 @@ class CategoryPickerCleared extends CategoryPickerResult {
   const CategoryPickerCleared();
 }
 
-/// Shared category-tree picker (bottom sheet). Shows the user's tree for
-/// [type] with collapsible parents; tap a row to select it.
+/// Shared category-tree picker, on the kit [PickerSheet] (owner
+/// 2026-10-10): header + ✕, a search that keeps the tree (a match's
+/// parents open around it), the picked row highlighted (no ✓). Tap a row
+/// to pick it; ▾ / ▴ — only on rows that have children — opens / closes
+/// a level.
 ///
 /// Reusable across features via arguments:
 /// - [maxDepth] — deepest level (0-based: L1=0, L2=1, L3=2) that is shown
@@ -43,8 +44,8 @@ class CategoryPickerCleared extends CategoryPickerResult {
 ///   picker passes the edited category + its descendants so you can't pick
 ///   yourself or create a cycle.
 /// - [allowNone] / [noneLabel] — show a "None" row (clear / top-level).
-/// - [title] — sheet heading.
-/// - [allowCreate] — a "+ เพิ่มหมวดหมู่" row: opens the create page over the
+/// - [title] — sheet heading (default "เลือกหมวดหมู่").
+/// - [allowCreate] — a "＋ เพิ่มหมวดหมู่" row: opens the create page over the
 ///   sheet; saving there picks the new category and closes the picker, back
 ///   returns to the picker (owner 2026-10-10).
 ///
@@ -61,12 +62,10 @@ Future<CategoryPickerResult?> showCategoryPickerSheet({
   Set<String> excludeIds = const <String>{},
   bool allowCreate = false,
 }) {
-  return showAppSheet<CategoryPickerResult>(
+  return showAppSheetCustom<CategoryPickerResult>(
     context,
-    title:
-        title ??
-        AppLocalizations.of(context)!.transactionFormCategoryPickerTitle,
-    builder: (_) => _CategoryPickerBody(
+    builder: (_) => _CategoryPicker(
+      title: title,
       categories: categories,
       type: type,
       selected: selected,
@@ -79,8 +78,9 @@ Future<CategoryPickerResult?> showCategoryPickerSheet({
   );
 }
 
-class _CategoryPickerBody extends StatefulWidget {
-  const _CategoryPickerBody({
+class _CategoryPicker extends StatefulWidget {
+  const _CategoryPicker({
+    required this.title,
     required this.categories,
     required this.type,
     required this.selected,
@@ -91,6 +91,7 @@ class _CategoryPickerBody extends StatefulWidget {
     required this.allowCreate,
   });
 
+  final String? title;
   final List<Category> categories;
   final CategoryType type;
   final Category? selected;
@@ -101,10 +102,10 @@ class _CategoryPickerBody extends StatefulWidget {
   final bool allowCreate;
 
   @override
-  State<_CategoryPickerBody> createState() => _CategoryPickerBodyState();
+  State<_CategoryPicker> createState() => _CategoryPickerState();
 }
 
-class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
+class _CategoryPickerState extends State<_CategoryPicker> {
   /// Ids whose subtree is currently expanded.
   final Set<String> _expanded = <String>{};
 
@@ -153,8 +154,20 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
+    return PickerSheet(
+      title: widget.title ?? l.categoryPickerTitle,
+      searchable: true,
+      searchHint: l.categoryPickerSearchHint,
+      footer: widget.allowCreate
+          ? PickerCreateRow(label: l.categoriesAddNew, onTap: _create)
+          : null,
+      builder: _body,
+    );
+  }
 
+  Widget _body(BuildContext context, String query) {
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final pool = widget.categories
         .where(
           (c) =>
@@ -163,55 +176,79 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
               !widget.excludeIds.contains(c.id),
         )
         .toList();
+    final byId = {for (final c in pool) c.id: c};
+    int depthOf(Category c) {
+      var d = 0;
+      var p = c.parentId;
+      while (p != null && byId[p] != null) {
+        d++;
+        p = byId[p]!.parentId;
+      }
+      return d;
+    }
+
+    // Searching: the matches (within reach) and every parent above them,
+    // opened — so a match always shows where it sits.
+    Set<String>? visible;
+    final forced = <String>{};
+    if (query.isNotEmpty) {
+      visible = {};
+      for (final c in pool) {
+        if (depthOf(c) > widget.maxDepth) continue;
+        if (!c.name.toLowerCase().contains(query)) continue;
+        visible.add(c.id);
+        var p = c.parentId;
+        while (p != null && byId[p] != null) {
+          visible.add(p);
+          forced.add(p);
+          p = byId[p]!.parentId;
+        }
+      }
+    }
+
     final roots = pool.where((c) => c.parentId == null).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-    final rows = <Widget>[];
-    if (widget.allowNone) {
-      rows.add(
-        _NoneRow(
-          label: widget.noneLabel ?? l.transactionFormCategoryPickerNoneOption,
+    final rows = <Widget>[
+      if (widget.allowNone && query.isEmpty)
+        PickerRow(
+          leading: const Icon(AppIcons.noCategory),
+          title: widget.noneLabel ?? l.transactionFormCategoryPickerNoneOption,
           selected: widget.selected == null,
           onTap: () => Navigator.of(context).pop(const CategoryPickerCleared()),
         ),
+    ];
+    for (final root in roots) {
+      _collectRows(
+        rows,
+        root,
+        pool,
+        depth: 0,
+        visible: visible,
+        forced: forced,
       );
     }
-    for (final root in roots) {
-      _collectRows(rows, root, pool, depth: 0);
+    final empty = query.isEmpty ? roots.isEmpty : (visible?.isEmpty ?? true);
+    if (empty) {
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Text(
+            query.isEmpty
+                ? l.transactionFormCategoryPickerEmpty
+                : l.categoryPickerNoMatch,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      );
     }
-
-    // [AppSheetScaffold] (title row + drag handle) scrolls the body.
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (roots.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Text(
-              l.transactionFormCategoryPickerEmpty,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          )
-        else
-          ...rows,
-        if (widget.allowCreate)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.sm,
-              AppSpacing.sm,
-              AppSpacing.sm,
-              0,
-            ),
-            child: AddTile(
-              label: l.categoriesAddNew,
-              variant: AddTileVariant.row,
-              onTap: _create,
-            ),
-          ),
-        const SizedBox(height: AppSpacing.md),
+        ...rows,
+        const SizedBox(height: AppSpacing.sm),
       ],
     );
   }
@@ -221,188 +258,60 @@ class _CategoryPickerBodyState extends State<_CategoryPickerBody> {
     Category category,
     List<Category> pool, {
     required int depth,
+    required Set<String>? visible,
+    required Set<String> forced,
   }) {
+    if (visible != null && !visible.contains(category.id)) return;
     final children = pool.where((c) => c.parentId == category.id).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     // Children past [maxDepth] are neither shown nor expandable.
     final canDescend = depth < widget.maxDepth;
     final hasChildren = children.isNotEmpty && canDescend;
-    final isExpanded = _expanded.contains(category.id);
+    final isExpanded =
+        forced.contains(category.id) || _expanded.contains(category.id);
+    final picked = widget.selected?.id == category.id;
 
     out.add(
-      _CategoryRow(
-        key: widget.selected?.id == category.id ? _selectedKey : null,
-        category: category,
-        iconCode: CategoryTree.resolveIconCode(category, widget.categories),
-        depth: depth,
-        isSelected: widget.selected?.id == category.id,
-        hasChildren: hasChildren,
-        isExpanded: isExpanded,
-        onTap: () {
-          Navigator.of(context).pop(CategoryPickerSelected(category));
-        },
-        onToggleExpand: hasChildren
-            ? () {
-                setState(() {
-                  if (isExpanded) {
-                    _expanded.remove(category.id);
-                  } else {
-                    _expanded.add(category.id);
-                  }
-                });
-              }
+      PickerRow(
+        key: picked ? _selectedKey : null,
+        indent: depth * AppSpacing.xl,
+        leading: IconDisplay(
+          type: IconType.category,
+          size: 32,
+          iconCode: CategoryTree.resolveIconCode(category, widget.categories),
+        ),
+        title: category.name,
+        selected: picked,
+        onTap: () =>
+            Navigator.of(context).pop(CategoryPickerSelected(category)),
+        // ▾ / ▴ only where there's a level to open (› would mean "go
+        // somewhere else" in this app).
+        trailing: hasChildren
+            ? IconButton(
+                icon: Icon(isExpanded ? AppIcons.collapse : AppIcons.expand),
+                onPressed: forced.contains(category.id)
+                    ? null
+                    : () => setState(() {
+                        if (!_expanded.remove(category.id)) {
+                          _expanded.add(category.id);
+                        }
+                      }),
+              )
             : null,
       ),
     );
 
     if (hasChildren && isExpanded) {
       for (final child in children) {
-        _collectRows(out, child, pool, depth: depth + 1);
+        _collectRows(
+          out,
+          child,
+          pool,
+          depth: depth + 1,
+          visible: visible,
+          forced: forced,
+        );
       }
     }
-  }
-}
-
-/// Background of the picked row — the "this one" highlight (no ✓).
-Color _selectedTint(BuildContext context) =>
-    Theme.of(context).colorScheme.primary.withValues(alpha: 0.12);
-
-class _CategoryRow extends StatelessWidget {
-  const _CategoryRow({
-    super.key,
-    required this.category,
-    required this.iconCode,
-    required this.depth,
-    required this.isSelected,
-    required this.hasChildren,
-    required this.isExpanded,
-    required this.onTap,
-    required this.onToggleExpand,
-  });
-
-  final Category category;
-
-  /// Inherited from the top-level parent, as on the categories page.
-  final IconCode? iconCode;
-  final int depth;
-  final bool isSelected;
-  final bool hasChildren;
-  final bool isExpanded;
-  final VoidCallback onTap;
-  final VoidCallback? onToggleExpand;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: Material(
-        color: isSelected ? _selectedTint(context) : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.sm + depth * AppSpacing.xxl,
-              AppSpacing.sm,
-              0,
-              AppSpacing.sm,
-            ),
-            child: Row(
-              children: [
-                IconDisplay(
-                  type: IconType.category,
-                  size: 32,
-                  iconCode: iconCode,
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    category.name,
-                    style: isSelected
-                        ? textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          )
-                        : textTheme.bodyLarge,
-                  ),
-                ),
-                if (hasChildren)
-                  IconButton(
-                    icon: AnimatedRotation(
-                      turns: isExpanded ? 0.25 : 0,
-                      duration: const Duration(milliseconds: 160),
-                      child: const Icon(AppIcons.chevronRight),
-                    ),
-                    onPressed: onToggleExpand,
-                  )
-                else
-                  // Keep names aligned with expandable rows.
-                  const SizedBox(width: 48, height: 40),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NoneRow extends StatelessWidget {
-  const _NoneRow({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      child: Material(
-        color: selected ? _selectedTint(context) : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHighest,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    AppIcons.category,
-                    size: 18,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: selected ? FontWeight.w700 : null,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }

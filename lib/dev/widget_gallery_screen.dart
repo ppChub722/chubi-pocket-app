@@ -14,6 +14,7 @@ import '../features/app_version/domain/app_version_info.dart';
 import '../features/app_version/presentation/pages/update_required_page.dart';
 import '../features/app_version/presentation/widgets/update_banner.dart';
 import '../features/accounts/domain/account_type.dart';
+import '../features/accounts/presentation/widgets/wallet_summary_title.dart';
 import '../features/categories/domain/category.dart';
 import '../features/categories/domain/category_type.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
@@ -27,11 +28,14 @@ import '../features/tags/presentation/widgets/tag_chip.dart';
 import '../features/tags/presentation/widgets/tag_picker_sheet.dart';
 import '../features/transactions/domain/transaction.dart';
 import '../features/transactions/domain/transaction_type.dart';
+import '../features/transactions/presentation/widgets/event_pick.dart';
 import '../features/transactions/presentation/widgets/period_summary_card.dart';
 import '../features/transactions/presentation/widgets/pick_chip_rows.dart';
 import '../features/transactions/presentation/widgets/transaction_tile.dart';
 import '../features/transactions/presentation/widgets/tx_hero_card.dart';
 import '../features/transactions/presentation/widgets/tx_summary_title.dart';
+import '../features/transactions/presentation/widgets/tx_period_pill.dart';
+import '../features/transactions/presentation/tx_list_filters.dart';
 import '../shared/icon_maker/icon_code.dart';
 import '../shared/icon_maker/icon_display.dart';
 import '../shared/icon_maker/icon_code_widget.dart';
@@ -790,7 +794,7 @@ class _InputsDemoState extends State<_InputsDemo> {
                 ),
                 const _Gap(),
                 // trailing: a picked optional value that clears in place
-                // (quick create's อีเวนต์ card).
+                // (any card whose value can be taken off right there).
                 PickCard(
                   label: 'อีเวนต์',
                   value: 'ทริปเชียงใหม่',
@@ -860,6 +864,118 @@ class _PickRowsDemo extends StatefulWidget {
   State<_PickRowsDemo> createState() => _PickRowsDemoState();
 }
 
+/// The shared picker shell: header + ✕, optional compact search, rows with
+/// a highlight (no ✓), loading / error + retry, a create row — and the
+/// event sheet built on it.
+class _PickerShellDemo extends StatefulWidget {
+  const _PickerShellDemo();
+
+  @override
+  State<_PickerShellDemo> createState() => _PickerShellDemoState();
+}
+
+class _PickerShellDemoState extends State<_PickerShellDemo> {
+  String? _picked = 'มะม่วง';
+  String? _event;
+
+  static const _fruits = [
+    'มะม่วง',
+    'ทุเรียน',
+    'มังคุด',
+    'เงาะ',
+    'ลำไย',
+    'สับปะรด',
+    'กล้วย',
+    'ส้มโอ',
+    'แตงโม',
+    'ฝรั่ง',
+  ];
+
+  Future<void> _open({bool loading = false, bool error = false}) async {
+    final picked = await showAppSheetCustom<String>(
+      context,
+      builder: (ctx) => PickerSheet(
+        title: 'เลือกผลไม้',
+        searchable: true,
+        loading: loading,
+        error: error
+            ? const ApiException(code: 'NETWORK', message: 'โหลดไม่สำเร็จ')
+            : null,
+        onRetry: () => Navigator.of(ctx).pop(),
+        footer: PickerCreateRow(
+          label: 'สร้างผลไม้ใหม่',
+          onTap: () => Navigator.of(ctx).pop('ผลไม้ใหม่'),
+        ),
+        builder: (context, q) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final f in _fruits)
+              if (q.isEmpty || f.contains(q))
+                PickerRow(
+                  leading: const Icon(AppIcons.category),
+                  title: f,
+                  subtitle: f == _picked ? 'เลือกอยู่' : null,
+                  selected: f == _picked,
+                  onTap: () => Navigator.of(context).pop(f),
+                ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _picked = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Demo(
+          title: 'Picker shell — หัว + ✕ · ค้นหาเล็ก · ไฮไลต์ (ไม่มี ✓)',
+          name:
+              'PickerSheet · PickerRow · PickerCreateRow · CompactSearchField',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              ActionPill(label: 'เปิด ($_picked)', onTap: () => _open()),
+              ActionPill(label: 'กำลังโหลด', onTap: () => _open(loading: true)),
+              ActionPill(label: 'error', onTap: () => _open(error: true)),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'อีเวนต์ — แถวในฟอร์ม + sheet เลือก (อีเวนต์จริง)',
+          name: 'EventRow · showEventTargetSheet',
+          child: SectionCard(
+            first: true,
+            children: [
+              EventRow(
+                name: _event,
+                onTap: () async {
+                  final t = await showEventTargetSheet(
+                    context,
+                    suggestedName: 'อีเวนต์ · ทดลอง',
+                  );
+                  if (t != null && mounted) {
+                    setState(
+                      () => _event = eventTargetName(
+                        AppLocalizations.of(context)!,
+                        t,
+                      ),
+                    );
+                  }
+                },
+                onClear: () => setState(() => _event = null),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _PickRowsDemoState extends State<_PickRowsDemo> {
   TransactionType? _type;
   String _unit = 'เดือน';
@@ -870,12 +986,23 @@ class _PickRowsDemoState extends State<_PickRowsDemo> {
   final _categoryOrder = ChipOrder();
   final _tagOrder = ChipOrder();
   final _walletOrder = ChipOrder();
+  TxPeriod _period = TxPeriod.month(DateTime.now());
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _Demo(
+          title: 'ช่วงเวลา — ‹ › ทีละหน่วย, แตะชื่อ → sheet (วัน…กำหนดเอง)',
+          name: 'TxPeriodPill · showPeriodSheet · PeriodPicker',
+          child: Center(
+            child: TxPeriodPill(
+              period: _period,
+              onChanged: (p) => setState(() => _period = p),
+            ),
+          ),
+        ),
         _Demo(
           title: 'ประเภท (ฟอร์ม + ตัวกรอง) — null = ทั้งหมด สีกลาง',
           name: 'TxTypeChip(type: null | expense | income | transfer)',
@@ -1018,6 +1145,7 @@ class _ChipsDemoState extends State<_ChipsDemo> {
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
         const _PickRowsDemo(),
+        const _PickerShellDemo(),
         _Demo(
           title: 'แถวตัวกรอง + เรียงลำดับ (popover)',
           name:
@@ -1749,15 +1877,54 @@ class _LayoutDemo extends StatelessWidget {
           name: 'SelectableFrame',
           child: _SelectableDemo(),
         ),
+        const _HeroSpacingDemo(),
+        const _Demo(
+          title:
+              'แถวรายการคลัง (หมวดหมู่ · แท็ก · ผู้ติดต่อ): ไอคอน · ชื่อ · '
+              'คำอธิบาย · ข้อมูลท้าย — ย่อยเยื้อง · เก็บถาวรจาง · โหมดเลือก',
+          name: 'ListRow(indent, dimmed, checked, body)',
+          child: _ListRowDemo(),
+        ),
         _Demo(
           title: 'หัวข้อ section',
-          name: 'SectionHeader(count, actionLabel)',
-          child: SectionHeader(
-            title: 'รายการล่าสุด',
-            count: 12,
-            actionLabel: 'ดูทั้งหมด',
-            padding: EdgeInsets.zero,
-            onAction: () => showAppSnackBar(context, 'ดูทั้งหมด'),
+          name: 'SectionHeader(count, actionLabel | trailing)',
+          child: Column(
+            children: [
+              SectionHeader(
+                title: 'รายการล่าสุด',
+                count: 12,
+                actionLabel: 'ดูทั้งหมด',
+                padding: EdgeInsets.zero,
+                onAction: () => showAppSnackBar(context, 'ดูทั้งหมด'),
+              ),
+              // trailing: an icon action (the wallet groups' ⇅ จัดลำดับ).
+              SectionHeader(
+                title: 'ของฉัน',
+                count: 4,
+                padding: EdgeInsets.zero,
+                trailing: IconButton(
+                  tooltip: 'จัดลำดับ',
+                  icon: const Icon(AppIcons.reorder),
+                  onPressed: () {},
+                ),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'กระเป๋าในบรรทัดเดียว (top bar ตอนเลื่อนผ่าน hero)',
+          name: 'WalletSummaryTitle — AppTopBar.titleSlot',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: WalletSummaryTitle(
+              account: const Account(
+                id: 'demo',
+                name: 'กสิกร ออมทรัพย์',
+                type: AccountType.bank,
+                balance: 12345,
+                currency: 'THB',
+              ),
+            ),
           ),
         ),
         _Demo(
@@ -1861,6 +2028,90 @@ class _LayoutDemo extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// The library-list row in its uses: a category tree (indent, ▾ on a
+/// parent, a status pill), a tag (×usage), an archived contact (dimmed,
+/// 🔗), and batch-edit mode (tap toggles the check).
+class _ListRowDemo extends StatefulWidget {
+  const _ListRowDemo();
+
+  @override
+  State<_ListRowDemo> createState() => _ListRowDemoState();
+}
+
+class _ListRowDemoState extends State<_ListRowDemo> {
+  final Set<int> _checked = {1};
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    const food = IconCode(icon: 'food');
+    Widget check(int i, String name) => ListRow(
+      checked: _checked.contains(i),
+      onTap: () => setState(
+        () => _checked.contains(i) ? _checked.remove(i) : _checked.add(i),
+      ),
+      leading: const IconDisplay(type: IconType.tag, size: 40),
+      title: name,
+    );
+    return SectionCard(
+      first: true,
+      children: [
+        ListRow(
+          leading: const IconDisplay(
+            type: IconType.category,
+            size: 40,
+            iconCode: food,
+          ),
+          title: 'อาหาร',
+          subtitle: 'มื้อหลัก ขนม เครื่องดื่ม',
+          trailing: IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(AppIcons.collapse),
+            onPressed: () {},
+          ),
+          onTap: () {},
+        ),
+        ListRow(
+          indent: AppSpacing.xxl,
+          leading: const IconDisplay(
+            type: IconType.category,
+            size: 40,
+            iconCode: food,
+          ),
+          title: 'กาแฟ',
+          trailing: const LabelPill(
+            label: 'ซ่อนจากรายงาน',
+            icon: AppIcons.hidden,
+            size: PillSize.small,
+          ),
+          onTap: () {},
+        ),
+        ListRow(
+          leading: const IconDisplay(type: IconType.tag, size: 40),
+          title: 'ทริปเชียงใหม่',
+          trailing: Text(
+            '×12',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          onTap: () {},
+        ),
+        ListRow(
+          leading: const UserAvatar(displayName: 'Aom Chan'),
+          title: 'Aom Chan',
+          subtitle: 'aom@example.com · 081-234-5678',
+          dimmed: true,
+          trailing: Icon(AppIcons.link, size: 18, color: scheme.primary),
+          onTap: () {},
+        ),
+        check(0, 'งาน'),
+        check(1, 'บ้าน'),
       ],
     );
   }
@@ -3387,6 +3638,93 @@ class _MockTxRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           const MoneyText(-60, tone: MoneyTone.expense),
+        ],
+      ),
+    );
+  }
+}
+
+/// The hero spacing rules made visible (owner 2026-10-10): 16 inside,
+/// 12 between rows, 8 between controls, controls 32 high, nested cards
+/// 12 inside with 8 between, 16 to the next block.
+class _HeroSpacingDemo extends StatelessWidget {
+  const _HeroSpacingDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget nested(String label, String value) => Expanded(
+      child: PickCard(
+        label: label,
+        value: value,
+        leading: const PickCardEmptyIcon(AppIcons.category, size: 32),
+        accent: scheme.primary,
+        dense: true,
+        onTap: () {},
+      ),
+    );
+    return _Demo(
+      title:
+          'ระยะของ hero (ทุกการ์ดหัวหน้า): ใน 16 · ระหว่างแถว 12 · '
+          'ระหว่างปุ่ม 8 · ปุ่มสูง 32 · การ์ดซ้อน ใน 12 ห่าง 8 · ถึงบล็อกถัดไป 16',
+      name: 'HeroSpacing · HeroContent · HeroTopRow · PillSize.control',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: scheme.primary.withValues(alpha: 0.06),
+              border: Border.all(color: scheme.primary, width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: HeroContent(
+              rows: [
+                HeroTopRow(
+                  leading: [
+                    LabelPill(
+                      label: 'ธนาคาร',
+                      icon: AppIcons.bank,
+                      color: scheme.primary,
+                      outlined: true,
+                      size: PillSize.control,
+                    ),
+                    LabelPill(
+                      label: 'แชร์ 3 คน',
+                      icon: AppIcons.link,
+                      color: scheme.primary,
+                      size: PillSize.control,
+                    ),
+                  ],
+                  trailing: [
+                    AppIconButton(
+                      icon: AppIcons.edit,
+                      size: HeroSpacing.controlHeight,
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+                Text(
+                  'แถวชื่อ / ยอด',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      nested('หมวดหมู่', 'อาหาร'),
+                      const SizedBox(width: HeroSpacing.nestedGap),
+                      nested('กระเป๋า', 'กสิกร'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: HeroSpacing.after),
+          Text(
+            'บล็อกถัดไป (ห่าง 16)',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );

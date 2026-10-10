@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
@@ -64,10 +64,15 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
 
-  /// The persisted category (edit only) — Save `copyWith`s onto it to keep
-  /// id / sortOrder / isSystem.
+  /// The persisted category — Save `copyWith`s onto it to keep id /
+  /// sortOrder / isSystem. Null while creating, or until the cubit's list
+  /// has it (opened before the list loaded).
   Category? _persisted;
   bool _notFound = false;
+
+  /// Create until the first save — then this page becomes the saved
+  /// category's view in place.
+  bool get _isCreate => widget.isCreate && _persisted == null;
 
   /// The user's fee category (preference `fee_category_id`, spec 15 §7):
   /// fee drafts from bank slips get it. Starts from the signed-in user,
@@ -84,16 +89,52 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         editing: true,
       );
     } else {
-      _persisted = context.read<CategoriesCubit>().byId(widget.editingId!);
-      _notFound = _persisted == null;
+      final cubit = context.read<CategoriesCubit>();
+      _persisted = cubit.byId(widget.editingId!);
       initDraft(
         _persisted == null
             ? const _CategoryDraft()
             : _CategoryDraft.fromCategory(_persisted!),
       );
+      // Opened before the list loaded (a deep link, a cold tab): load it
+      // and take the row when it arrives ([_syncFromCubit]) — not-found
+      // only once a loaded list really lacks it.
+      if (_persisted == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          await cubit.loadIfNeeded();
+          if (mounted) _syncFromCubit(cubit.state);
+        });
+      }
     }
     onDraftRestored();
     if (!widget.isCreate) _loadFeeCategory();
+  }
+
+  /// The cubit's list changed (first load, pull-to-refresh, an edit
+  /// elsewhere): rebase on the fresh row unless an edit is in progress.
+  void _syncFromCubit(CategoriesState state) {
+    final id = _persisted?.id ?? widget.editingId;
+    if (id == null) return;
+    Category? fresh;
+    for (final c in state.categories) {
+      if (c.id == id) fresh = c;
+    }
+    if (fresh == null) {
+      // Never had it, and the list is in: it doesn't exist. (A row that
+      // vanishes later — deleted here — keeps its last view while leaving.)
+      if (_persisted == null &&
+          !_notFound &&
+          state.status == CategoriesStatus.loaded) {
+        setState(() => _notFound = true);
+      }
+      return;
+    }
+    if (fresh == _persisted) return;
+    final first = _persisted == null;
+    _persisted = fresh;
+    if (first) setState(() => _notFound = false);
+    resetDraft(_CategoryDraft.fromCategory(fresh));
   }
 
   Future<void> _loadFeeCategory() async {
@@ -147,7 +188,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   // ── EditModeMixin hooks ─────────────────────────────────────────────
 
   @override
-  bool get leaveOnCancel => widget.isCreate;
+  bool get leaveOnCancel => _isCreate;
 
   @override
   void onDraftRestored() {
@@ -182,7 +223,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
     final cubit = context.read<CategoriesCubit>();
     final l = AppLocalizations.of(context)!;
-    if (widget.isCreate && !cubit.canAddMore) {
+    if (_isCreate && !cubit.canAddMore) {
       showAppSnackBar(context, l.categoriesLimitReached, tone: Tone.warning);
       return;
     }
@@ -193,8 +234,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     FocusScope.of(context).unfocus();
     setSaving(true);
     try {
-      if (widget.isCreate) {
-        await cubit.add(
+      if (_isCreate) {
+        final created = await cubit.add(
           Category(
             id: 'draft',
             name: w.name.trim(),
@@ -206,6 +247,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             includeInReport: w.includeInReport,
           ),
         );
+        if (!mounted) return;
+        HapticFeedback.mediumImpact();
+        // Become the saved category right here — edit → view in place, as
+        // contacts do. `replace` only fixes the URL: same page key, so no
+        // transition and this state is kept.
+        setState(() => _persisted = created);
+        commitSaved(_CategoryDraft.fromCategory(created));
+        context.replace('/categories/${created.id}');
+        _loadFeeCategory();
+        return;
       } else {
         final next = _persisted!.copyWith(
           name: w.name.trim(),
@@ -220,7 +271,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           includeInReport: w.includeInReport,
         );
         await cubit.update(next);
-        _persisted = next;
+        _persisted = cubit.byId(next.id) ?? next;
       }
     } on CategoryLimitExceeded {
       if (!mounted) return;
@@ -235,10 +286,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     }
     if (!mounted) return;
     HapticFeedback.mediumImpact();
-    if (widget.isCreate) {
-      leavePage();
-      return;
-    }
     commitSaved(working.trimmed());
   }
 
@@ -396,19 +443,25 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    return BlocListener<CategoriesCubit, CategoriesState>(
+      listener: (context, state) => _syncFromCubit(state),
+      child: _isCreate || _persisted != null
+          ? _page(l)
+          : Scaffold(
+              extendBodyBehindAppBar: true,
+              appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
+              body: _notFound
+                  ? EmptyView(
+                      icon: AppIcons.empty,
+                      title: l.categoryDetailNotFound,
+                      message: l.categoryDetailNotFoundMessage,
+                    )
+                  : const LoadingView(),
+            ),
+    );
+  }
 
-    if (_notFound) {
-      return Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
-        body: EmptyView(
-          icon: AppIcons.empty,
-          title: l.categoryDetailNotFound,
-          message: l.categoryDetailNotFoundMessage,
-        ),
-      );
-    }
-
+  Widget _page(AppLocalizations l) {
     return editScope(
       Scaffold(
         // The bar floats over the list; its first item is padded below it.
@@ -425,7 +478,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           builder: (context, state) => Form(
             key: _formKey,
             child: PullToRefresh(
-              enabled: !widget.isCreate,
+              enabled: !_isCreate,
               onRefresh: context.read<CategoriesCubit>().load,
               child: _body(
                 l,
@@ -442,7 +495,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   String _title(AppLocalizations l) {
-    if (widget.isCreate) return l.categoryFormTitleNew;
+    if (_isCreate) return l.categoryFormTitleNew;
     if (isEditing) return l.categoryFormTitleEdit;
     return working.name.isEmpty ? l.categoriesTitle : working.name;
   }
@@ -458,7 +511,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final editing = isEditing;
     final preview = _previewCategory();
     final breadcrumb = _parentBreadcrumb(all);
-    final canDelete = !widget.isCreate && !(_persisted?.isSystem ?? true);
+    final canDelete = !_isCreate && !(_persisted?.isSystem ?? true);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
@@ -493,24 +546,15 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             // Type is immutable once created (spec §3.4).
             DetailRow(
               label: l.categoryFormTypeLabel,
-              helper: widget.isCreate
-                  ? null
-                  : l.categoryFormTypeImmutableHelper,
-              trailing: _typeTrailing(),
+              helper: _isCreate ? null : l.categoryFormTypeImmutableHelper,
+              trailing: _typeTrailing(l),
             ),
+            // The parent picker — the row opens the category picker.
             DetailRow(
               label: l.categoryFormParentLabel,
-              trailing: _ParentBox(
-                breadcrumb: breadcrumb,
-                iconCode: working.parentId == null
-                    ? null
-                    : context
-                          .read<CategoriesCubit>()
-                          .byId(working.parentId!)
-                          ?.iconCode,
-                noneLabel: l.categoryFormParentNone,
-                onTap: () => _openParentPicker(all),
-              ),
+              showChevron: true,
+              onTap: () => _openParentPicker(all),
+              trailing: _parentValue(l, breadcrumb),
             ),
             // maxLength caps the input, so no length validator.
             DetailStacked(
@@ -587,20 +631,46 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return null;
   }
 
-  Widget _typeTrailing() {
+  /// Type: a fixed [TypeIndicator] once saved; while creating, an
+  /// expense / income [ChoicePill] pair (changing it clears the parent).
+  Widget _typeTrailing(AppLocalizations l) {
     final isIncome = working.type == CategoryType.income;
-    if (!widget.isCreate) return TypeIndicator(isIncome: isIncome);
-    Widget pill(CategoryType t) => _TypePill(
-      isIncome: t == CategoryType.income,
+    if (!_isCreate) return TypeIndicator(isIncome: isIncome);
+    Widget pill(CategoryType t, String label) => ChoicePill(
+      label: label,
+      size: PillSize.medium,
       selected: working.type == t,
       onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
     );
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        pill(CategoryType.expense),
+        pill(CategoryType.expense, l.categoryTypeExpense),
         const SizedBox(width: AppSpacing.sm),
-        pill(CategoryType.income),
+        pill(CategoryType.income, l.categoryTypeIncome),
+      ],
+    );
+  }
+
+  /// The parent row's value: its icon + breadcrumb, or "none".
+  Widget _parentValue(AppLocalizations l, String? breadcrumb) {
+    final iconCode = working.parentId == null
+        ? null
+        : context.read<CategoriesCubit>().byId(working.parentId!)?.iconCode;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (breadcrumb != null && iconCode != null) ...[
+          IconDisplay(type: IconType.category, size: 20, iconCode: iconCode),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        Flexible(
+          child: Text(
+            breadcrumb ?? l.categoryFormParentNone,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }
@@ -667,96 +737,17 @@ class _Header extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 if (!category.includeInReport)
-                  Text(
-                    l.categoryHiddenFromReport,
-                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: LabelPill(
+                      label: l.categoryHiddenFromReport,
+                      icon: AppIcons.hidden,
+                      size: PillSize.small,
+                    ),
                   ),
               ],
             )
           : null,
-    );
-  }
-}
-
-/// Income/expense choice while creating; the unselected one dims.
-class _TypePill extends StatelessWidget {
-  const _TypePill({
-    required this.isIncome,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final bool isIncome;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.pill),
-      child: Opacity(
-        opacity: selected ? 1 : 0.4,
-        child: TypeIndicator(isIncome: isIncome),
-      ),
-    );
-  }
-}
-
-/// Current parent (icon + breadcrumb) or "none"; opens the category picker.
-class _ParentBox extends StatelessWidget {
-  const _ParentBox({
-    required this.breadcrumb,
-    required this.iconCode,
-    required this.noneLabel,
-    required this.onTap,
-  });
-
-  final String? breadcrumb;
-  final IconCode? iconCode;
-  final String noneLabel;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isNone = breadcrumb == null;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          border: Border.all(color: scheme.outline),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isNone && iconCode != null) ...[
-              IconDisplay(
-                type: IconType.category,
-                size: 20,
-                iconCode: iconCode,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
-            Flexible(
-              child: Text(
-                breadcrumb ?? noneLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Icon(AppIcons.dropdown, size: 20, color: scheme.onSurfaceVariant),
-          ],
-        ),
-      ),
     );
   }
 }

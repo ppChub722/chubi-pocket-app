@@ -63,7 +63,10 @@ String? transactionEditProblem(AppLocalizations l, DraftFormController c) {
     final total = c.splits
         .where((s) => s.isComplete)
         .fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
-    if (total > c.amountValue + 0.005) return l.txSplitExceeds;
+    // An event bill: my splits share my part only (SPLITS_EXCEED_SHARE).
+    if (total > c.splitCap + 0.005) {
+      return c.eventOthers > 0 ? l.txSplitExceedsShare : l.txSplitExceeds;
+    }
   }
   return null;
 }
@@ -73,7 +76,14 @@ String? transactionEditProblem(AppLocalizations l, DraftFormController c) {
 String? splitErrorMessage(AppLocalizations l, ApiException e) =>
     switch (e.code) {
       'SPLITS_EXCEED_AMOUNT' => l.txSplitExceeds,
-      'SPLIT_CONTACT_NOT_FOUND' || 'CONTACT_ARCHIVED' => l.txSplitErrorContact,
+      // An event bill: past what the other members leave me.
+      'SPLITS_EXCEED_SHARE' => l.txSplitExceedsShare,
+      'SPLIT_CONTACT_NOT_FOUND' ||
+      'CONTACT_NOT_FOUND' ||
+      'CONTACT_ARCHIVED' => l.txSplitErrorContact,
+      // A saved row linked to a contact can't change who it is.
+      'SPLIT_IDENTITY_LOCKED' => l.txSplitPersonLocked,
+      'SPLITS_AUTHOR_ONLY' => l.txSplitAuthorOnly,
       _ => null,
     };
 

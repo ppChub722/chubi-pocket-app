@@ -5,7 +5,8 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
-import '../../data/contacts_repository.dart';
+import '../../../../core/network/api_exception.dart';
+import '../cubit/contacts_cubit.dart';
 import '../../domain/contact.dart';
 
 /// Result of [showContactPickerSheet]. `null` = dismissed.
@@ -25,39 +26,37 @@ class ContactNameTyped extends ContactPickResult {
   final String name;
 }
 
-/// "กับใคร" — search the user's active contacts, or (when [allowFreeText])
-/// use the typed name for someone not in the book. Used by debts, bill
-/// splits and project members.
+/// "กับใคร" — on the kit [PickerSheet]: search the user's active contacts,
+/// or (when [allowFreeText]) a typed name for someone not in the book —
+/// "ใช้ชื่อนี้" as it is, or "＋ บันทึกเป็นผู้ติดต่อ" (made, then picked).
+/// The current one is highlighted (no ✓). Used by debts, bill splits and
+/// project members. Contacts come from [ContactsCubit], so a failed load
+/// shows an error with retry, not "no contacts".
 Future<ContactPickResult?> showContactPickerSheet(
   BuildContext context, {
   String? selectedContactId,
   bool allowFreeText = true,
   String? title,
 }) {
-  return showAppSheet<ContactPickResult>(
+  context.read<ContactsCubit>().loadIfNeeded();
+  return showAppSheetCustom<ContactPickResult>(
     context,
-    title: title ?? AppLocalizations.of(context)!.contactPickerTitle,
-    // Fixed height so the results list scrolls inside the sheet, under the
-    // title row; shrinks with the keyboard (the search field autofocuses).
-    builder: (ctx) => SizedBox(
-      height:
-          (MediaQuery.sizeOf(ctx).height -
-              MediaQuery.viewInsetsOf(ctx).bottom) *
-          0.7,
-      child: _ContactPicker(
-        selectedContactId: selectedContactId,
-        allowFreeText: allowFreeText,
-      ),
+    builder: (_) => _ContactPicker(
+      title: title ?? AppLocalizations.of(context)!.contactPickerTitle,
+      selectedContactId: selectedContactId,
+      allowFreeText: allowFreeText,
     ),
   );
 }
 
 class _ContactPicker extends StatefulWidget {
   const _ContactPicker({
+    required this.title,
     required this.selectedContactId,
     required this.allowFreeText,
   });
 
+  final String title;
   final String? selectedContactId;
   final bool allowFreeText;
 
@@ -66,129 +65,138 @@ class _ContactPicker extends StatefulWidget {
 }
 
 class _ContactPickerState extends State<_ContactPicker> {
-  late final Future<List<Contact>> _future = context
-      .read<ContactsRepository>()
-      .list(status: 'active');
-  String _query = '';
+  final _search = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   static String? _subtitleOf(Contact c) {
+    // Description (who they are) wins over email — as on the contacts list.
     final description = c.description?.trim() ?? '';
     if (description.isNotEmpty) return description;
     final email = c.effectiveEmail ?? '';
     return email.isEmpty ? null : email;
   }
 
+  /// "＋ บันทึกเป็นผู้ติดต่อ": make the typed name a contact, then pick it.
+  Future<void> _saveAsContact(String name) async {
+    final l = AppLocalizations.of(context)!;
+    final cubit = context.read<ContactsCubit>();
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+    try {
+      final c = await cubit.create(displayName: name);
+      navigator.pop(ContactPicked(c));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showAppSnackBar(
+        context,
+        e.message.isEmpty ? l.contactPickerSaveFailed : e.message,
+        tone: Tone.danger,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final q = _query.trim();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        AppSearchBar(
-          autofocus: true,
-          hint: widget.allowFreeText ? l.contactPickerSearchHint : null,
-          onChanged: (v) => setState(() => _query = v),
-        ),
-        Expanded(
-          child: FutureBuilder<List<Contact>>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.connectionState != ConnectionState.done) {
-                return ListView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    for (var i = 0; i < 6; i++) const SkeletonListTile(),
-                  ],
-                );
-              }
-              final all = snap.data ?? const <Contact>[];
-              final lower = q.toLowerCase();
-              final hits = lower.isEmpty
-                  ? all
-                  : all
-                        .where(
-                          (c) =>
-                              c.effectiveName.toLowerCase().contains(lower) ||
-                              (c.description?.toLowerCase().contains(lower) ??
-                                  false) ||
-                              (c.effectiveEmail?.toLowerCase().contains(
-                                    lower,
-                                  ) ??
-                                  false) ||
-                              (c.phone?.contains(lower) ?? false),
-                        )
-                        .toList();
-              final exact = all.any(
-                (c) => c.effectiveName.toLowerCase() == lower,
-              );
-              final offerName = widget.allowFreeText && q.isNotEmpty && !exact;
-
-              return ListView(
-                padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                children: [
-                  if (offerName)
-                    ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: scheme.primary.withValues(alpha: 0.12),
-                        child: Icon(AppIcons.add, color: scheme.primary),
-                      ),
-                      title: Text(l.contactPickerUseName(q)),
-                      subtitle: Text(l.contactPickerUseNameHint),
-                      onTap: () => Navigator.pop(context, ContactNameTyped(q)),
-                    ),
-                  if (all.isEmpty && !offerName)
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xl),
-                      child: Text(
-                        l.contactPickerEmpty,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
+    final state = context.watch<ContactsCubit>().state;
+    final all = state.contacts
+        .where((c) => c.status == ContactStatus.active)
+        .toList();
+    return PickerSheet(
+      title: widget.title,
+      searchable: true,
+      searchAutofocus: true,
+      searchController: _search,
+      searchHint: widget.allowFreeText ? l.contactPickerSearchHint : null,
+      loading:
+          all.isEmpty &&
+          (state.status == ContactsStatus.loading ||
+              state.status == ContactsStatus.initial),
+      error: state.status == ContactsStatus.error && all.isEmpty
+          ? state.error
+          : null,
+      onRetry: context.read<ContactsCubit>().load,
+      builder: (context, lower) {
+        final scheme = Theme.of(context).colorScheme;
+        final typed = _search.text.trim();
+        final hits = lower.isEmpty
+            ? all
+            : all
+                  .where(
+                    (c) =>
+                        c.effectiveName.toLowerCase().contains(lower) ||
+                        (c.description?.toLowerCase().contains(lower) ??
+                            false) ||
+                        (c.effectiveEmail?.toLowerCase().contains(lower) ??
+                            false) ||
+                        (c.phone?.contains(lower) ?? false),
+                  )
+                  .toList();
+        final exact = all.any((c) => c.effectiveName.toLowerCase() == lower);
+        final offerName = widget.allowFreeText && typed.isNotEmpty && !exact;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Someone not in the book: their name as it is, or saved as a
+            // contact first.
+            if (offerName) ...[
+              PickerRow(
+                leading: const Icon(AppIcons.profile),
+                title: l.contactPickerUseName(typed),
+                subtitle: l.contactPickerUseNameHint,
+                onTap: () => Navigator.pop(context, ContactNameTyped(typed)),
+              ),
+              PickerCreateRow(
+                label: l.contactPickerSaveAsContact,
+                onTap: _saving ? () {} : () => _saveAsContact(typed),
+              ),
+            ],
+            if (all.isEmpty && !offerName)
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Text(
+                  l.contactPickerEmpty,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            for (final c in hits)
+              PickerRow(
+                leading: UserAvatar(
+                  displayName: c.effectiveName,
+                  iconCode: c.effectiveIconCode,
+                  size: 36,
+                ),
+                title: c.effectiveName,
+                subtitle: _subtitleOf(c),
+                selected: c.id == widget.selectedContactId,
+                // 🔗 in the contacts list's colour.
+                trailing: c.isLinked
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: AppSpacing.md),
+                        child: Icon(
+                          AppIcons.link,
+                          size: 18,
+                          color: scheme.primary,
                         ),
-                      ),
-                    ),
-                  for (final c in hits)
-                    ListTile(
-                      leading: UserAvatar(
-                        displayName: c.effectiveName,
-                        iconCode: c.effectiveIconCode,
-                      ),
-                      title: Text(c.effectiveName),
-                      // Description (who they are) wins over email.
-                      subtitle: _subtitleOf(c) == null
-                          ? null
-                          : Text(
-                              _subtitleOf(c)!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (c.isLinked)
-                            Icon(
-                              AppIcons.link,
-                              size: 18,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          if (c.id == widget.selectedContactId) ...[
-                            const SizedBox(width: AppSpacing.sm),
-                            Icon(AppIcons.check, color: scheme.primary),
-                          ],
-                        ],
-                      ),
-                      selected: c.id == widget.selectedContactId,
-                      onTap: () => Navigator.pop(context, ContactPicked(c)),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
+                      )
+                    : null,
+                onTap: () => Navigator.pop(context, ContactPicked(c)),
+              ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        );
+      },
     );
   }
 }

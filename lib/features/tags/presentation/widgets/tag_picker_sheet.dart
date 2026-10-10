@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
@@ -11,9 +10,10 @@ import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
 import 'tag_chip.dart';
 
-/// Pick tags — search, several at once, and "+ แท็กใหม่" without leaving
-/// (the name is what's in the search box, or asked for). Resolves the new
-/// selection on ตกลง, null when dismissed.
+/// Pick tags, on the kit [PickerSheet] — search, several at once (chips),
+/// and "＋ แท็กใหม่" without leaving (the name is what's in the search box,
+/// or asked for). No tags and no creating (the filter): an empty line.
+/// Resolves the new selection on ตกลง, null when dismissed.
 ///
 /// Reusable: the quick-create form's "⋯ เพิ่มเติม", and later the
 /// transactions list's tag filter ([allowCreate] false there).
@@ -131,7 +131,6 @@ class _TagPicker extends StatefulWidget {
 class _TagPickerState extends State<_TagPicker> {
   late final Set<String> _picked = {...widget.selected};
   final _search = TextEditingController();
-  String _query = '';
 
   @override
   void dispose() {
@@ -140,79 +139,98 @@ class _TagPickerState extends State<_TagPicker> {
   }
 
   Future<void> _create() async {
-    final name = _query.trim().isNotEmpty
-        ? _query.trim()
-        : await askNewTagName(context);
+    final typed = _search.text.trim();
+    final name = typed.isNotEmpty ? typed : await askNewTagName(context);
     if (name == null || !mounted) return;
     final tag = await createOrFindTag(context, name);
     if (tag == null || !mounted) return;
-    setState(() {
-      _picked.add(tag.id);
-      _search.clear();
-      _query = '';
-    });
+    setState(() => _picked.add(tag.id));
+    _search.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final q = _query.trim().toLowerCase();
-    final tags = context
-        .watch<TagsCubit>()
-        .state
-        .tags
-        .where((t) => q.isEmpty || t.name.toLowerCase().contains(q))
-        .toList();
-    final exact = tags.any((t) => t.name.toLowerCase() == q);
-    return AppSheetScaffold(
+    final state = context.watch<TagsCubit>().state;
+    return PickerSheet(
       title: widget.title,
-      footer: AppButton(
-        label: l.commonOk,
-        expand: true,
-        onPressed: () => Navigator.pop(context, _picked),
+      searchable: true,
+      searchHint: l.tagPickerSearchHint,
+      searchController: _search,
+      loading: state.status == TagsStatus.loading && state.tags.isEmpty,
+      error: state.status == TagsStatus.error && state.tags.isEmpty
+          ? state.error
+          : null,
+      onRetry: context.read<TagsCubit>().load,
+      footer: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
+        child: AppButton(
+          label: l.commonOk,
+          expand: true,
+          onPressed: () => Navigator.pop(context, _picked),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppSearchBar(
-            controller: _search,
-            onChanged: (v) => setState(() => _query = v),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.sm,
-              AppSpacing.lg,
-              AppSpacing.sm,
-            ),
-            child: Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
-              children: [
-                for (final t in tags)
-                  TagChip(
-                    tag: t,
-                    selected: _picked.contains(t.id),
-                    onTap: () => setState(() {
-                      if (!_picked.remove(t.id)) _picked.add(t.id);
-                    }),
+      builder: (context, q) {
+        final scheme = Theme.of(context).colorScheme;
+        final tags = state.tags
+            .where((t) => q.isEmpty || t.name.toLowerCase().contains(q))
+            .toList();
+        final exact = state.tags.any((t) => t.name.toLowerCase() == q);
+        final typed = _search.text.trim();
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (tags.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                ),
+                child: Wrap(
+                  spacing: AppSpacing.xs,
+                  runSpacing: AppSpacing.xs,
+                  children: [
+                    for (final t in tags)
+                      TagChip(
+                        tag: t,
+                        selected: _picked.contains(t.id),
+                        onTap: () => setState(() {
+                          if (!_picked.remove(t.id)) _picked.add(t.id);
+                        }),
+                      ),
+                  ],
+                ),
+              )
+            // Nothing to pick and nothing to make here (the filter).
+            else if (!widget.allowCreate)
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Text(
+                  q.isEmpty ? l.tagPickerEmpty : l.tagPickerNoMatch,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
-                // Typed a name that isn't there → make it, right here.
-                if (widget.allowCreate && !exact)
-                  ActionChip(
-                    avatar: const Icon(AppIcons.add, size: 16),
-                    label: Text(
-                      q.isEmpty
-                          ? l.projectTxAddTag
-                          : l.tagPickerCreateNamed(_query.trim()),
-                    ),
-                    onPressed: _create,
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                ),
+              ),
+            // Typed a name that isn't there → make it, right here.
+            if (widget.allowCreate && !exact)
+              PickerCreateRow(
+                label: typed.isEmpty
+                    ? l.projectTxAddTag
+                    : l.tagPickerCreateNamed(typed),
+                onTap: _create,
+              ),
+          ],
+        );
+      },
     );
   }
 }

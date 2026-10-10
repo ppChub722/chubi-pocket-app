@@ -271,9 +271,20 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     }
   }
 
+  /// Archive asks first (it leaves the pickers); restore just does it.
   Future<void> _toggleArchive() async {
+    final l = AppLocalizations.of(context)!;
     final cubit = context.read<ContactsCubit>();
     final c = _contact!;
+    if (!c.isArchived) {
+      final ok = await showConfirmDialog(
+        context,
+        title: l.contactArchiveConfirmTitle,
+        message: l.contactArchiveHint,
+        confirmLabel: l.contactArchive,
+      );
+      if (!ok || !mounted) return;
+    }
     await _run(() => c.isArchived ? cubit.restore(c.id) : cubit.archive(c.id));
   }
 
@@ -403,20 +414,23 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       ),
       subtitle: c == null || (!c.isLinked && !c.isArchived)
           ? null
+          // Kit pills (owner 2026-10-10), 8 apart (HeroSpacing.itemGap).
           : Wrap(
-              spacing: AppSpacing.xs,
+              spacing: HeroSpacing.itemGap,
               runSpacing: AppSpacing.xs,
               children: [
                 if (c.isLinked)
-                  AppBadge(
+                  LabelPill(
                     label: l.contactLinkedBadge,
                     icon: AppIcons.link,
                     tone: Tone.info,
+                    size: PillSize.small,
                   ),
                 if (c.isArchived)
-                  AppBadge(
+                  LabelPill(
                     label: l.contactArchivedBadge,
                     icon: AppIcons.archive,
+                    size: PillSize.small,
                   ),
               ],
             ),
@@ -459,7 +473,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       l.contactEmailLabel,
       hint: l.contactEmailHint,
       locked: _linked,
-      maxLength: 255,
+      maxLength: TextLimits.email,
       keyboard: TextInputType.emailAddress,
       validator: (v) {
         final s = v?.trim() ?? '';
@@ -510,7 +524,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           _Field.phone,
           l.contactPhoneLabel,
           hint: l.contactPhoneHint,
-          maxLength: 50,
+          maxLength: TextLimits.phone,
           keyboard: TextInputType.phone,
         ),
         field(

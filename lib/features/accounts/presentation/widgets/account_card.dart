@@ -19,7 +19,9 @@ import 'member_avatar_stack.dart';
 ///
 /// The account's [iconCode] accent drives the card wash, border and
 /// balance text — styled like the เพิ่มเติม hub cards. [horizontal] is the
-/// list-row form (reorder mode); the grid uses the vertical card.
+/// list-row form (the reorder list, the icon maker's preview); the grid
+/// uses the vertical card. A card's credit bar is its used credit — an
+/// overpaid card shows none ([Account.creditUtilization]).
 ///
 /// Shared wallets (spec §14, [Account.isShared]) additionally show a
 /// small chain-link badge overlaid on the icon's corner (the user's own
