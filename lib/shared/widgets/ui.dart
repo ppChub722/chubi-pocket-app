@@ -72,6 +72,7 @@ export 'data/money_list_tile.dart';
 export 'data/money_text.dart';
 export 'data/people.dart';
 export 'data/summary_stats.dart';
+export 'brand_logo.dart';
 export 'editable_circle.dart';
 export 'secret_tap.dart';
 export 'user_avatar.dart';

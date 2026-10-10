@@ -3634,4 +3634,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monthPickerNextMonth => 'Next month';
+
+  @override
+  String get appUpdateRequiredTitle => 'Update required';
+
+  @override
+  String get appUpdateRequiredBody =>
+      'This version of the app is too old. Download the new version to keep using it.';
+
+  @override
+  String get appUpdateDownload => 'Download the new version';
+
+  @override
+  String get appUpdateNoLink => 'No download link yet — contact the admin';
+
+  @override
+  String get appUpdateOpenFailed => 'Couldn\'t open the download link';
+
+  @override
+  String appUpdateBuildLine(int current, int required) {
+    return 'This is build $current · $required or newer is needed';
+  }
+
+  @override
+  String get appUpdateAvailable => 'A new version is available';
+
+  @override
+  String get appUpdateAvailableAction => 'Update';
+
+  @override
+  String get appUpdateLater => 'Later';
 }

@@ -9,6 +9,7 @@ import 'app/app.dart';
 import 'app/boot_error_app.dart';
 import 'core/fonts/font_preloader.dart';
 import 'core/logger/app_logger.dart';
+import 'shared/widgets/brand_logo.dart';
 
 Future<void> main() async {
   // Boot guard: anything that escapes below lands in the zone handler —
@@ -60,6 +61,10 @@ Future<void> main() async {
           fields: {'error': '$e', 'fallback': 'system fonts'},
         );
       }
+
+      // The splash's logo, decoded before the first frame — the native
+      // launch screen hands off to it with no blank beat.
+      await BrandLogo.precache();
 
       runApp(ChubiPocketApp(prefs: prefs));
     },

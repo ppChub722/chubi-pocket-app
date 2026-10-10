@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../storage/secure_token_storage.dart';
 import 'http_logger_interceptor.dart';
@@ -43,8 +44,10 @@ class ApiClient {
     required SecureTokenStorage tokenStorage,
     Dio? dio,
     String? baseUrl,
+    Future<String?> Function()? appBuild,
   }) : _tokenStorage = tokenStorage,
-       _dio = dio ?? Dio() {
+       _dio = dio ?? Dio(),
+       _appBuild = (appBuild ?? _platformBuild)() {
     _dio.options
       ..baseUrl = baseUrl ?? _devBaseUrl()
       ..connectTimeout = const Duration(seconds: 10)
@@ -61,24 +64,52 @@ class ApiClient {
     _dio.interceptors.add(_authInterceptor());
     _dio.interceptors.add(HttpLoggerInterceptor());
     _dio.interceptors.add(_unauthorizedNotifier());
+    _dio.interceptors.add(_outdatedNotifier());
   }
 
   final Dio _dio;
   final SecureTokenStorage _tokenStorage;
   final StreamController<void> _unauthorizedController =
       StreamController<void>.broadcast();
+  final StreamController<Map<String, dynamic>?> _outdatedController =
+      StreamController<Map<String, dynamic>?>.broadcast();
+
+  /// This app's build number (resolved once) — sent as `X-App-Build`.
+  final Future<String?> _appBuild;
 
   Dio get dio => _dio;
+
+  /// This app's build number as an int, or null when unknown.
+  Future<int?> appBuild() async => int.tryParse(await _appBuild ?? '');
 
   /// Emits when any request returns a 401. The auth feature subscribes to
   /// clear the stored token and route to `/auth/login`.
   Stream<void> get onUnauthorized => _unauthorizedController.stream;
+
+  /// Emits the error `details` (min / latest build, download URL, message)
+  /// when any request comes back 426 `APP_OUTDATED` — the server refuses
+  /// this build. The version gate subscribes and blocks at once.
+  Stream<Map<String, dynamic>?> get onOutdated => _outdatedController.stream;
+
+  static Future<String?> _platformBuild() async {
+    try {
+      return (await PackageInfo.fromPlatform()).buildNumber;
+    } catch (_) {
+      return null; // no build header — the server lets it through
+    }
+  }
 
   Interceptor _authInterceptor() => InterceptorsWrapper(
     onRequest: (options, handler) async {
       final token = await _tokenStorage.readAuthToken();
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
+      }
+      // The version gate (BE contract v1): the server answers 426 when
+      // this build is below its minimum.
+      final build = await _appBuild;
+      if (build != null && build.isNotEmpty) {
+        options.headers['X-App-Build'] = build;
       }
       handler.next(options);
     },
@@ -93,8 +124,25 @@ class ApiClient {
     },
   );
 
+  Interceptor _outdatedNotifier() => InterceptorsWrapper(
+    onError: (e, handler) {
+      final data = e.response?.data;
+      final error = data is Map && data['error'] is Map
+          ? data['error'] as Map
+          : null;
+      if (e.response?.statusCode == 426 || error?['code'] == 'APP_OUTDATED') {
+        final details = error?['details'];
+        _outdatedController.add(
+          details is Map ? Map<String, dynamic>.from(details) : null,
+        );
+      }
+      handler.next(e);
+    },
+  );
+
   Future<void> dispose() async {
     await _unauthorizedController.close();
+    await _outdatedController.close();
     _dio.close(force: true);
   }
 }

@@ -17,6 +17,9 @@ import '../../dev/theme_preview_screen.dart';
 import '../../dev/widget_gallery_screen.dart';
 import '../../app/shell/fade_branch_container.dart';
 import '../../features/accounts/presentation/cubit/accounts_cubit.dart';
+import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
+import '../../features/app_version/presentation/pages/update_required_page.dart';
+import '../../features/app_version/presentation/version_gate.dart';
 import '../../features/accounts/presentation/pages/archived_accounts_page.dart';
 import '../../features/transactions/data/transactions_repository.dart';
 import '../../features/transactions/presentation/cubit/transactions_cubit.dart';
@@ -78,11 +81,18 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 ///   another tab, the page lands alone, so back returns to where the user
 ///   came from instead of the list.
 /// - **Outside the shell** — `/auth/*` and `/dev/*`.
-GoRouter buildAppRouter(AuthCubit authCubit) {
+///
+/// [versionCubit] is the app version gate: while it says this build is too
+/// old, every route but `/dev/*` goes to the blocking update page; the
+/// first check holds the splash.
+GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: kDebugMode,
-    refreshListenable: _StreamToListenable(authCubit.stream),
+    refreshListenable: Listenable.merge([
+      _StreamToListenable(authCubit.stream),
+      if (versionCubit != null) _StreamToListenable(versionCubit.stream),
+    ]),
     redirect: (context, state) {
       final auth = authCubit.state;
       final loc = state.matchedLocation;
@@ -90,6 +100,13 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
       final goingToDev = loc.startsWith('/dev');
 
       if (goingToDev) return null;
+      // Too old to use (version gate) — before anything else, signed in
+      // or not.
+      final gate = versionGateRedirect(
+        state.uri.path,
+        blocked: versionCubit?.state.blocked ?? false,
+      );
+      if (gate != null || state.uri.path == updateRequiredPath) return gate;
       if (auth is AuthInitial) return null; // splash handled inside shell
 
       if (!auth.isAuthenticated && !goingToAuth) return '/auth/login';
@@ -111,11 +128,24 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
           // AuthInitial → AuthAuthenticated, the router redirect returns
           // null (no nav change), so without a Bloc subscription the builder
           // would not re-run and the splash would stay on screen.
-          return BlocBuilder<AuthCubit, AuthState>(
+          final shell = BlocBuilder<AuthCubit, AuthState>(
             builder: (context, auth) {
               if (auth is AuthInitial) return const SplashPage();
               return MainShell(navigationShell: navigationShell);
             },
+          );
+          if (versionCubit == null) return shell;
+          // The first version check holds the splash too (it times out
+          // fast), so an outdated build never flashes the app first.
+          return BlocBuilder<AppVersionCubit, AppVersionState>(
+            bloc: versionCubit,
+            buildWhen: (a, b) =>
+                (a.status == AppVersionStatus.checking) !=
+                (b.status == AppVersionStatus.checking),
+            builder: (context, version) =>
+                version.status == AppVersionStatus.checking
+                ? const SplashPage()
+                : shell,
           );
         },
         // In [ShellTab] order — branch index == `ShellTab.index`.
@@ -123,6 +153,12 @@ GoRouter buildAppRouter(AuthCubit authCubit) {
           for (final tab in ShellTab.values)
             StatefulShellBranch(routes: _tabRoutes(tab)),
         ],
+      ),
+      // The version gate's wall — reached only by the redirect above.
+      GoRoute(
+        path: updateRequiredPath,
+        name: 'update-required',
+        builder: (context, state) => const UpdateRequiredPage(),
       ),
       GoRoute(
         path: '/auth/login',

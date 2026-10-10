@@ -3543,4 +3543,34 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get monthPickerNextMonth => 'เดือนถัดไป';
+
+  @override
+  String get appUpdateRequiredTitle => 'ต้องอัปเดตก่อนใช้งาน';
+
+  @override
+  String get appUpdateRequiredBody =>
+      'แอปเวอร์ชันนี้เก่าเกินไปแล้ว ดาวน์โหลดเวอร์ชันใหม่เพื่อใช้งานต่อ';
+
+  @override
+  String get appUpdateDownload => 'ดาวน์โหลดเวอร์ชันใหม่';
+
+  @override
+  String get appUpdateNoLink => 'ยังไม่มีลิงก์ดาวน์โหลด — ติดต่อผู้ดูแล';
+
+  @override
+  String get appUpdateOpenFailed => 'เปิดลิงก์ดาวน์โหลดไม่ได้';
+
+  @override
+  String appUpdateBuildLine(int current, int required) {
+    return 'เวอร์ชันนี้ build $current · ต้องการ $required ขึ้นไป';
+  }
+
+  @override
+  String get appUpdateAvailable => 'มีเวอร์ชันใหม่';
+
+  @override
+  String get appUpdateAvailableAction => 'อัปเดต';
+
+  @override
+  String get appUpdateLater => 'ไว้ทีหลัง';
 }

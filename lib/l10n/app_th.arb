@@ -1185,5 +1185,15 @@
   "monthPickerPrevYear": "ปีก่อน",
   "monthPickerNextYear": "ปีถัดไป",
   "monthPickerPrevMonth": "เดือนก่อน",
-  "monthPickerNextMonth": "เดือนถัดไป"
+  "monthPickerNextMonth": "เดือนถัดไป",
+  "appUpdateRequiredTitle": "ต้องอัปเดตก่อนใช้งาน",
+  "appUpdateRequiredBody": "แอปเวอร์ชันนี้เก่าเกินไปแล้ว ดาวน์โหลดเวอร์ชันใหม่เพื่อใช้งานต่อ",
+  "appUpdateDownload": "ดาวน์โหลดเวอร์ชันใหม่",
+  "appUpdateNoLink": "ยังไม่มีลิงก์ดาวน์โหลด — ติดต่อผู้ดูแล",
+  "appUpdateOpenFailed": "เปิดลิงก์ดาวน์โหลดไม่ได้",
+  "appUpdateBuildLine": "เวอร์ชันนี้ build {current} · ต้องการ {required} ขึ้นไป",
+  "@appUpdateBuildLine": {"placeholders": {"current": {"type": "int"}, "required": {"type": "int"}}},
+  "appUpdateAvailable": "มีเวอร์ชันใหม่",
+  "appUpdateAvailableAction": "อัปเดต",
+  "appUpdateLater": "ไว้ทีหลัง"
 }

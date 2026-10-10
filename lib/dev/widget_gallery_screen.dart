@@ -10,6 +10,9 @@ import '../core/network/api_exception.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/date_formatter.dart';
 import '../features/accounts/domain/account.dart';
+import '../features/app_version/domain/app_version_info.dart';
+import '../features/app_version/presentation/pages/update_required_page.dart';
+import '../features/app_version/presentation/widgets/update_banner.dart';
 import '../features/accounts/domain/account_type.dart';
 import '../features/categories/domain/category.dart';
 import '../features/categories/domain/category_type.dart';
@@ -1143,6 +1146,32 @@ class _ChipsDemoState extends State<_ChipsDemo> {
             ],
           ),
         ),
+        // ── App version gate (owner 2026-10-10) ────────────────────────
+        _Demo(
+          title: 'มีเวอร์ชันใหม่ — แถบบนสุด (ปิดแล้วไม่โผล่อีก 1 วัน)',
+          name: 'UpdateBannerStrip (UpdateBanner)',
+          child: UpdateBannerStrip(
+            onUpdate: () => showAppSnackBar(context, 'เปิดลิงก์ดาวน์โหลด'),
+            onDismiss: () => showAppSnackBar(context, 'ไว้ทีหลัง'),
+          ),
+        ),
+        const _Demo(
+          title:
+              'ต้องอัปเดตก่อนใช้งาน — หน้าบล็อก (ผ่านไม่ได้ · back = ปิดแอป)',
+          name: 'UpdateRequiredView (/update-required)',
+          child: SizedBox(
+            height: 560,
+            child: UpdateRequiredView(
+              info: AppVersionInfo(
+                minBuild: 44,
+                latestBuild: 44,
+                downloadUrl: 'https://example.com/apk',
+              ),
+              currentBuild: 43,
+              exitOnBack: false,
+            ),
+          ),
+        ),
         // ── The pill family (owner 2026-10-10) ─────────────────────────
         _Demo(
           title: 'ตระกูล pill — ขนาด (mini · small · medium · large)',
@@ -1413,6 +1442,15 @@ class _LayoutDemo extends StatelessWidget {
                 ],
               );
             },
+          ),
+        ),
+        const _Demo(
+          title: 'โลโก้แอป (splash 128 · หัว login 88 · register 56)',
+          name: 'BrandLogo',
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [BrandLogo(), BrandLogo(size: 88), BrandLogo(size: 56)],
           ),
         ),
         _Demo(

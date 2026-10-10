@@ -6391,6 +6391,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next month'**
   String get monthPickerNextMonth;
+
+  /// No description provided for @appUpdateRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get appUpdateRequiredTitle;
+
+  /// No description provided for @appUpdateRequiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of the app is too old. Download the new version to keep using it.'**
+  String get appUpdateRequiredBody;
+
+  /// No description provided for @appUpdateDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the new version'**
+  String get appUpdateDownload;
+
+  /// No description provided for @appUpdateNoLink.
+  ///
+  /// In en, this message translates to:
+  /// **'No download link yet — contact the admin'**
+  String get appUpdateNoLink;
+
+  /// No description provided for @appUpdateOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the download link'**
+  String get appUpdateOpenFailed;
+
+  /// No description provided for @appUpdateBuildLine.
+  ///
+  /// In en, this message translates to:
+  /// **'This is build {current} · {required} or newer is needed'**
+  String appUpdateBuildLine(int current, int required);
+
+  /// No description provided for @appUpdateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version is available'**
+  String get appUpdateAvailable;
+
+  /// No description provided for @appUpdateAvailableAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get appUpdateAvailableAction;
+
+  /// No description provided for @appUpdateLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get appUpdateLater;
 }
 
 class _AppLocalizationsDelegate

@@ -14,6 +14,9 @@ import '../core/theme/theme_builder.dart';
 import '../core/theme/theme_registry.dart';
 import '../features/accounts/data/accounts_repository.dart';
 import '../features/accounts/presentation/cubit/accounts_cubit.dart';
+import '../features/app_version/data/app_version_repository.dart';
+import '../features/app_version/presentation/cubit/app_version_cubit.dart';
+import '../features/app_version/presentation/widgets/update_banner.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/budgets/data/budgets_repository.dart';
 import '../features/budgets/presentation/cubit/budgets_cubit.dart';
@@ -80,6 +83,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final DashboardRepository _dashboardRepository;
   late final PendingRepository _pendingRepository;
   late final AuthCubit _authCubit;
+  late final AppVersionCubit _versionCubit;
+  late final AppLifecycleListener _lifecycle;
   late final GoRouter _router;
 
   @override
@@ -109,7 +114,17 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
       tokenStorage: _tokenStorage,
       apiClient: _apiClient,
     );
-    _router = buildAppRouter(_authCubit);
+    // App version gate: checked on cold start and every resume; a 426 on
+    // any request (onOutdated) blocks at once.
+    _versionCubit = AppVersionCubit(
+      repository: AppVersionRepository(client: _apiClient),
+      currentBuild: _apiClient.appBuild,
+      outdated: _apiClient.onOutdated,
+      prefs: widget.prefs,
+    );
+    _lifecycle = AppLifecycleListener(onResume: _versionCubit.check);
+    _router = buildAppRouter(_authCubit, versionCubit: _versionCubit);
+    _versionCubit.check();
 
     // Resolve cold-start auth state.
     _authCubit.init();
@@ -117,6 +132,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
 
   @override
   void dispose() {
+    _lifecycle.dispose();
+    _versionCubit.close();
     _authCubit.close();
     _apiClient.dispose();
     super.dispose();
@@ -167,6 +184,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         providers: [
           BlocProvider<AuthCubit>.value(value: _authCubit),
           BlocProvider<ConnectivityCubit>(create: (_) => ConnectivityCubit()),
+          BlocProvider<AppVersionCubit>.value(value: _versionCubit),
           BlocProvider<ThemeIdCubit>(create: (_) => ThemeIdCubit(widget.prefs)),
           BlocProvider<ThemeModeCubit>(
             create: (_) => ThemeModeCubit(widget.prefs),
@@ -284,6 +302,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                       child: Column(
                         children: [
                           const OfflineBanner(),
+                          const UpdateBanner(),
                           Expanded(child: child ?? const SizedBox.shrink()),
                         ],
                       ),

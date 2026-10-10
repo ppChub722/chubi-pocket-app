@@ -1343,5 +1343,15 @@
   "monthPickerPrevYear": "Previous year",
   "monthPickerNextYear": "Next year",
   "monthPickerPrevMonth": "Previous month",
-  "monthPickerNextMonth": "Next month"
+  "monthPickerNextMonth": "Next month",
+  "appUpdateRequiredTitle": "Update required",
+  "appUpdateRequiredBody": "This version of the app is too old. Download the new version to keep using it.",
+  "appUpdateDownload": "Download the new version",
+  "appUpdateNoLink": "No download link yet — contact the admin",
+  "appUpdateOpenFailed": "Couldn't open the download link",
+  "appUpdateBuildLine": "This is build {current} · {required} or newer is needed",
+  "@appUpdateBuildLine": {"placeholders": {"current": {"type": "int"}, "required": {"type": "int"}}},
+  "appUpdateAvailable": "A new version is available",
+  "appUpdateAvailableAction": "Update",
+  "appUpdateLater": "Later"
 }

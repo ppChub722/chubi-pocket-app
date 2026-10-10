@@ -27,15 +27,7 @@ class AuthBrandHeader extends StatelessWidget {
       children: [
         SecretTapDetector(
           onUnlock: () => context.push('/dev'),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(size * 0.24),
-            child: Image.asset(
-              'assets/icon/logo.png',
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-            ),
-          ),
+          child: BrandLogo(size: size),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(

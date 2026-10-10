@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../shared/widgets/error_view.dart';
+import '../../../../shared/widgets/ui.dart';
 import '../cubit/auth_cubit.dart';
 
 /// Cold-launch screen: `AuthCubit.init()` resolves the stored token while we
-/// show the brand mark + spinner. Router redirect logic handles the actual
-/// navigation away from `/` once state settles.
+/// show the logo ([BrandLogo]) + spinner, picking up where the native launch
+/// screen left off (same background, logo on the same spot). Router
+/// redirect logic handles the actual navigation away from `/` once state
+/// settles.
 ///
 /// Min display duration is enforced (~600 ms) to avoid the splash flashing on
 /// fast token-validation responses.
@@ -54,88 +55,76 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // No SafeArea: the native launch screen centres the logo in the whole
+    // window, so it's centred in the whole screen here too — the two equal
+    // flex slots around it keep it on that exact spot.
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 360),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _LogoMark(color: theme.colorScheme.primary),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text('ChubiPocket', style: theme.textTheme.headlineMedium),
-                    const SizedBox(height: AppSpacing.xl),
-                    // Couldn't reach the server → why + retry (the stored
-                    // token is kept); otherwise the spinner.
-                    BlocBuilder<AuthCubit, AuthState>(
-                      builder: (context, state) {
-                        final error = state is AuthInitial
-                            ? state.startupError
-                            : null;
-                        if (error == null) {
-                          return const SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: CircularProgressIndicator(strokeWidth: 3),
-                          );
-                        }
-                        return ErrorView(
-                          error: error,
-                          onRetry: context.read<AuthCubit>().init,
-                        );
-                      },
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              const Spacer(),
+              const BrandLogo(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(
+                            'ChubiPocket',
+                            style: theme.textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          // Couldn't reach the server → why + retry (the
+                          // stored token is kept); otherwise the spinner.
+                          BlocBuilder<AuthCubit, AuthState>(
+                            builder: (context, state) {
+                              final error = state is AuthInitial
+                                  ? state.startupError
+                                  : null;
+                              if (error == null) {
+                                return const SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                  ),
+                                );
+                              }
+                              return ErrorView(
+                                error: error,
+                                onRetry: context.read<AuthCubit>().init,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            // Build identifier, bottom-centered — testers quote this.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: AppSpacing.lg,
-              child: Text(
-                _version,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+            ],
+          ),
+          // Build identifier, bottom-centered — testers quote this.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: AppSpacing.lg + MediaQuery.viewPaddingOf(context).bottom,
+            child: Text(
+              _version,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Placeholder "C" mark — replaced when a real logo is commissioned.
-/// See `chubi-pocket-docs/product/ui-design/app/design-sheet.md §2`.
-class _LogoMark extends StatelessWidget {
-  const _LogoMark({required this.color});
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 96,
-      height: 96,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        'C',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 56,
-          fontWeight: FontWeight.w700,
-          height: 1.0,
-        ),
+          ),
+        ],
       ),
     );
   }
