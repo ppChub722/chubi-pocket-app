@@ -3812,4 +3812,20 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get transactionsFilterRemove => 'เอาตัวกรองนี้ออก';
+
+  @override
+  String get commonMore => 'เพิ่มเติม';
+
+  @override
+  String get txShareMine => 'ส่วนของคุณ';
+
+  @override
+  String txShareOthersOwe(String amount) {
+    return 'คนอื่นติด $amount';
+  }
+
+  @override
+  String txShareOthers(String amount) {
+    return 'ของคนอื่น $amount';
+  }
 }

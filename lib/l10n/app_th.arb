@@ -1261,5 +1261,9 @@
   "txPeriodPrev": "ช่วงก่อนหน้า",
   "txPeriodNext": "ช่วงถัดไป",
   "transactionsEmptyPeriodTitle": "ไม่มีรายการในช่วงนี้",
-  "transactionsFilterRemove": "เอาตัวกรองนี้ออก"
+  "transactionsFilterRemove": "เอาตัวกรองนี้ออก",
+  "commonMore": "เพิ่มเติม",
+  "txShareMine": "ส่วนของคุณ",
+  "txShareOthersOwe": "คนอื่นติด {amount}",
+  "txShareOthers": "ของคนอื่น {amount}"
 }

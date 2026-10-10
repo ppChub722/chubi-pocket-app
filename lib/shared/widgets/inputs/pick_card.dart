@@ -14,7 +14,8 @@ import '../dashed_rect_border.dart';
 ///
 /// - [value] null → empty state: dashed outline, [placeholder] in muted text
 ///   (an optional field the user left blank, e.g. "ไม่ระบุหมวด").
-/// - No ✕: the whole card opens the picker, and the picker offers the
+/// - No ✕ (unless [trailing] adds one): the whole card opens the picker,
+///   and the picker offers the
 ///   "none" option for optional fields (owner 2026-10-09). No › either
 ///   (owner 2026-10-10): the tinted / dashed card already reads as
 ///   tappable, and half-width cards need the room for the value.
@@ -34,8 +35,14 @@ class PickCard extends StatelessWidget {
     this.errorText,
     this.watermark,
     this.dense = false,
+    this.trailing,
     super.key,
   });
+
+  /// At the end of the row — e.g. a ✕ on an optional value that clears in
+  /// place (the quick create's อีเวนต์ card). Most cards have none: the
+  /// picker offers "none" instead.
+  final Widget? trailing;
 
   /// Large faded glyph in the bottom-right corner once a value is picked
   /// (the wallet's type icon, as on the wallet cards).
@@ -159,6 +166,7 @@ class PickCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      ?trailing,
                     ],
                   ),
                 ),

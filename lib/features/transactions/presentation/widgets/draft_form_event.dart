@@ -37,6 +37,7 @@ class _EventForm extends StatelessWidget {
     required this.locked,
     required this.readOnly,
     required this.onPickDate,
+    this.heroKey,
   });
 
   final DraftFormController controller;
@@ -48,6 +49,9 @@ class _EventForm extends StatelessWidget {
   final bool locked;
   final bool readOnly;
   final VoidCallback onPickDate;
+
+  /// On the hero — see [DraftForm.heroKey].
+  final GlobalKey? heroKey;
 
   ProjectMember? _member(String? id) =>
       event.members.where((m) => m.id == id).firstOrNull;
@@ -89,6 +93,7 @@ class _EventForm extends StatelessWidget {
           children: [
             // The hero's "what for" line is the row's คำอธิบาย here.
             TxHeroCard(
+              key: heroKey,
               type: c.type,
               allowTransfer: false,
               onTypeChanged: locked ? null : c.setType,

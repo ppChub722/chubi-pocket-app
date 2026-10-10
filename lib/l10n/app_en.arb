@@ -1434,5 +1434,11 @@
   "txPeriodPrev": "Previous period",
   "txPeriodNext": "Next period",
   "transactionsEmptyPeriodTitle": "No transactions in this period",
-  "transactionsFilterRemove": "Remove this filter"
+  "transactionsFilterRemove": "Remove this filter",
+  "commonMore": "More",
+  "txShareMine": "Your share",
+  "txShareOthersOwe": "others owe {amount}",
+  "@txShareOthersOwe": { "placeholders": { "amount": { "type": "String" } } },
+  "txShareOthers": "others' share {amount}",
+  "@txShareOthers": { "placeholders": { "amount": { "type": "String" } } }
 }

@@ -29,6 +29,7 @@ import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../transaction_edit.dart';
 import '../widgets/draft_form.dart';
+import '../widgets/tx_summary_title.dart';
 
 /// `/transactions/:id` (§9) — the quick-create form's own layout, in the
 /// page (owner design 2026-10-10): hero (type · amount · ค่าอะไร · date),
@@ -132,18 +133,38 @@ class _LoadedState extends State<_Loaded>
   /// Pushing a draft into the controller — not a user edit.
   bool _restoring = false;
 
+  /// The form was filled with the row's split people (or it has none).
+  /// False = a list row with only split_count: the form's split list is
+  /// empty, not "no splits" — editing them then would wipe the real ones.
+  bool _splitsPrefilled = true;
+
+  /// Edit mode: the hero's amount has scrolled under the top bar → the
+  /// bar's title says amount · category instead (as the quick create).
+  final _scroll = ScrollController();
+  final _heroKey = GlobalKey();
+  final _listKey = GlobalKey();
+  bool _collapsed = false;
+
+  /// The top bar's height over the body (status bar included) — the list
+  /// runs beneath it. Read from the body's context each build.
+  double _barInset = 0;
+
   @override
   void initState() {
     super.initState();
     _prefill();
     initDraft(_c.toDraft());
     _c.addListener(_onFormChanged);
+    _scroll.addListener(_onScroll);
     _fetchTwinIfMissing();
     _fetchSplitsIfMissing();
   }
 
   /// List rows carry only `split_count`; the people (the split list) come
-  /// with GET /:id. Once, on open.
+  /// with GET /:id. On open, and again before editing if that failed.
+  /// refreshOne is a plain read — it doesn't re-fetch the list, which would
+  /// put a row without splits back. Never retried from didUpdateWidget
+  /// (refresh → didUpdateWidget → fetch would loop).
   Future<void> _fetchSplitsIfMissing() async {
     final tx = widget.tx;
     if (tx.splitCount == 0 || tx.splits.isNotEmpty) return;
@@ -152,6 +173,49 @@ class _LoadedState extends State<_Loaded>
     } on ApiException {
       // The row still opens the debts list.
     }
+  }
+
+  /// ✏️ / long-press: get the split people first when they're missing, so
+  /// the form edits the real list. Still missing (offline) → edit mode
+  /// opens with splits read-only ([_splitsPrefilled]).
+  Future<void> _enterEdit({FocusNode? focus}) async {
+    if (!_splitsPrefilled) {
+      await _fetchSplitsIfMissing();
+      if (!mounted || isEditing) return;
+      _reload();
+    }
+    enterEdit(focus: focus);
+  }
+
+  void _scrollToTop() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(0);
+    } else {
+      _scroll.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _onScroll() {
+    final c = isEditing && _amountHidden();
+    if (c != _collapsed) setState(() => _collapsed = c);
+  }
+
+  /// The hero's amount line is above the list's visible top (under the
+  /// top bar, which the body runs beneath).
+  bool _amountHidden() {
+    final hero = _heroKey.currentContext?.findRenderObject();
+    final list = _listKey.currentContext?.findRenderObject();
+    if (hero is! RenderBox || list is! RenderBox) return false;
+    if (!hero.attached || !list.attached) return false;
+    final top = list.localToGlobal(Offset.zero).dy + _barInset;
+    final amountBottom = hero
+        .localToGlobal(Offset(0, hero.size.height - AppSpacing.md))
+        .dy;
+    return amountBottom < top;
   }
 
   /// Opened from a wallet's tab, a deep link or a filtered list, the
@@ -178,6 +242,7 @@ class _LoadedState extends State<_Loaded>
   @override
   void dispose() {
     _c.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -201,6 +266,7 @@ class _LoadedState extends State<_Loaded>
           : context.read<AccountsCubit>().byId(other!.accountId!),
     );
     _restoring = false;
+    _splitsPrefilled = edited.splitCount == 0 || edited.splits.isNotEmpty;
     _initialAccountId = _c.account?.id;
     _initialToAccountId = _c.toAccount?.id;
   }
@@ -314,10 +380,12 @@ class _LoadedState extends State<_Loaded>
             cat?.iconCode?.icon == 'system_debt_received');
     // The row's author edits its splits in place (expense / income only);
     // anyone else sees them read-only, with the way to the debts.
+    // Only once the form holds the real people — see [_splitsPrefilled].
     final canEditSplits =
         canEdit &&
         tx.type != TransactionType.transfer &&
-        _edited.canEditCategory;
+        _edited.canEditCategory &&
+        _splitsPrefilled;
     final editing = isEditing;
 
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -348,7 +416,8 @@ class _LoadedState extends State<_Loaded>
                       ? l.txDetailSplitEditElsewhere(splitCount)
                       : l.txSplitEditOnDebts,
                   locked: true,
-                  onTap: () => _openSplits(),
+                  // Edit mode: nothing in splits pushes a page.
+                  onTap: null,
                 ),
               ),
             if (tx.projectId != null)
@@ -372,7 +441,9 @@ class _LoadedState extends State<_Loaded>
                 label: l.txSplitWith,
                 child: _LinkValue(
                   text: l.txSplitSeeDebts,
-                  onTap: () => _openSplits(),
+                  // Says where to look; tapping goes nowhere (owner
+                  // 2026-10-10: no page pushes from this row).
+                  onTap: null,
                 ),
               ),
             if (tx.projectId != null)
@@ -403,6 +474,17 @@ class _LoadedState extends State<_Loaded>
           title: editing
               ? l.transactionFormTitleEdit
               : _titleForType(l, tx.type),
+          // Scrolled past the hero while editing: the type-coloured
+          // "฿1,250  อาหาร", as in the quick create (the bar cross-fades
+          // it in and out; tap → back to the top).
+          titleSlot: editing && _collapsed
+              ? TxSummaryTitle(
+                  type: _c.type,
+                  amount: _c.amountValue,
+                  category: _c.isTransfer ? null : _c.category,
+                  onTap: _scrollToTop,
+                )
+              : null,
           showBack: true,
           editing: editing,
           onBack: handleBack,
@@ -410,83 +492,86 @@ class _LoadedState extends State<_Loaded>
         extendBodyBehindAppBar: true,
         // Builder: the body's context sees the bar height in padding.top.
         body: Builder(
-          builder: (context) => PullToRefresh(
-            enabled: !editing,
-            onRefresh: () async {
-              try {
-                await context.read<TransactionsCubit>().refreshOne(tx.id);
-              } on ApiException catch (e) {
-                if (context.mounted) {
-                  showAppSnackBar(context, e.message, tone: Tone.danger);
+          builder: (context) {
+            _barInset = MediaQuery.paddingOf(context).top;
+            return PullToRefresh(
+              enabled: !editing,
+              onRefresh: () async {
+                try {
+                  await context.read<TransactionsCubit>().refreshOne(tx.id);
+                } on ApiException catch (e) {
+                  if (context.mounted) {
+                    showAppSnackBar(context, e.message, tone: Tone.danger);
+                  }
                 }
-              }
-            },
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.md,
-                AppSpacing.lg,
-                96 + MediaQuery.paddingOf(context).bottom,
-              ),
-              children: [
-                if (isSystemRow) ...[
-                  _LockNote(
-                    text: isRepayment
-                        ? l.txDetailRepaymentBanner
-                        : l.transactionDetailSystemRowBanner,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                ] else if (tx.isLocked) ...[
-                  MessageBanner(
-                    message: l.transactionFormLockedBanner,
-                    tone: Tone.warning,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-                DraftForm(
-                  controller: _c,
-                  autofocus: false,
-                  // The type can't change after saving; splits can, by the
-                  // author (PUT /transactions/:id/splits).
-                  typeLocked: true,
-                  allowSplits: canEditSplits,
-                  editing: editing,
-                  categoryLockedHint: _edited.canEditCategory
-                      ? null
-                      : l.transactionFormCategoryAuthorOnlyHint,
-                  onEdit: canEdit ? enterEdit : null,
-                  onEnterEdit: canEdit ? (f) => enterEdit(focus: f) : null,
-                  onOpenCategory: (c) =>
-                      openPage(context, '/categories/${c.id}'),
-                  onOpenAccount: (a) => openPage(context, '/accounts/${a.id}'),
-                  trailingRows: trailingRows,
+              },
+              child: ListView(
+                key: _listKey,
+                controller: _scroll,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  MediaQuery.paddingOf(context).top + AppSpacing.md,
+                  AppSpacing.lg,
+                  96 + MediaQuery.paddingOf(context).bottom,
                 ),
-                if ((editing && canEdit) || isRepayment)
-                  DangerRow(
-                    icon: AppIcons.delete,
-                    label: l.transactionDeleteThis,
-                    onTap: isSaving
+                children: [
+                  if (isSystemRow) ...[
+                    _LockNote(
+                      text: isRepayment
+                          ? l.txDetailRepaymentBanner
+                          : l.transactionDetailSystemRowBanner,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ] else if (tx.isLocked) ...[
+                    MessageBanner(
+                      message: l.transactionFormLockedBanner,
+                      tone: Tone.warning,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  DraftForm(
+                    controller: _c,
+                    heroKey: _heroKey,
+                    autofocus: false,
+                    // The type can't change after saving; splits can, by the
+                    // author (PUT /transactions/:id/splits).
+                    typeLocked: true,
+                    allowSplits: canEditSplits,
+                    editing: editing,
+                    categoryLockedHint: _edited.canEditCategory
                         ? null
-                        : () => _confirmDelete(
-                            context,
-                            l,
-                            repayment: isRepayment,
-                          ),
+                        : l.transactionFormCategoryAuthorOnlyHint,
+                    onEdit: canEdit ? _enterEdit : null,
+                    onEnterEdit: canEdit ? (f) => _enterEdit(focus: f) : null,
+                    trailingRows: trailingRows,
                   ),
-                if (metaLines.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xl),
-                    child: Text(
-                      metaLines.join('\n'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  if ((editing && canEdit) || isRepayment)
+                    DangerRow(
+                      icon: AppIcons.delete,
+                      label: l.transactionDeleteThis,
+                      onTap: isSaving
+                          ? null
+                          : () => _confirmDelete(
+                              context,
+                              l,
+                              repayment: isRepayment,
+                            ),
+                    ),
+                  if (metaLines.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xl),
+                      child: Text(
+                        metaLines.join('\n'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          },
         ),
         bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
       ),
@@ -601,7 +686,9 @@ class _LinkValue extends StatelessWidget {
     this.locked = false,
   });
   final String text;
-  final VoidCallback onTap;
+
+  /// Null = information only: no ripple, no ›.
+  final VoidCallback? onTap;
   final bool locked;
 
   @override
@@ -629,7 +716,8 @@ class _LinkValue extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
+            if (onTap != null)
+              Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -638,7 +726,8 @@ class _LinkValue extends StatelessWidget {
 }
 
 /// "หารกับ" as the people themselves — each with what they owe and where
-/// it stands (owner 2026-10-10). Tapping a person opens their debts.
+/// it stands (owner 2026-10-10). Only a person's icon + name are tappable
+/// — they open that person's debts; the rest of the row is just text.
 class _SplitList extends StatelessWidget {
   const _SplitList({required this.splits, required this.onOpen});
   final List<TxSplit> splits;
@@ -659,71 +748,78 @@ class _SplitList extends StatelessWidget {
           style: textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
         ),
         for (final s in splits)
-          InkWell(
-            onTap: () => onOpen(s),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              child: Row(
-                children: [
-                  UserAvatar(displayName: s.personName, size: 28),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      s.personName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyLarge,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: InkWell(
+                      onTap: () => onOpen(s),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xs,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            UserAvatar(displayName: s.personName, size: 28),
+                            const SizedBox(width: AppSpacing.sm),
+                            Flexible(
+                              child: Text(
+                                s.personName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.bodyLarge,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  Text(money(s.amount), style: textTheme.bodyLarge),
-                  const SizedBox(width: AppSpacing.md),
-                  // Where it stands, from my side of it.
-                  Text(
-                    switch (s.status) {
-                      // Repaid more than the (edited) amount: say which way
-                      // the difference goes back (owner 2026-10-10).
-                      _ when s.isOverpaid =>
-                        s.owedToMe
-                            ? l.txSplitStatusOverpaidToThem(
-                                money(-s.outstanding),
-                              )
-                            : l.txSplitStatusOverpaidByMe(
-                                money(-s.outstanding),
-                              ),
-                      'settled' =>
-                        s.owedToMe
-                            ? l.txSplitStatusPaid
-                            : l.txSplitStatusRepaid,
-                      'cancelled' => l.txSplitStatusCancelled,
-                      _ when s.settledAmount > 0.005 =>
-                        s.owedToMe
-                            ? l.txSplitStatusPartPaid(
-                                money(s.settledAmount),
-                                money(s.amount),
-                              )
-                            : l.txSplitStatusPartRepaid(
-                                money(s.settledAmount),
-                                money(s.amount),
-                              ),
-                      _ =>
-                        s.owedToMe
-                            ? l.txSplitStatusAwaiting(money(s.outstanding))
-                            : l.txSplitStatusToPay(money(s.outstanding)),
-                    },
-                    style: textTheme.bodySmall?.copyWith(
-                      color: s.isOverpaid
-                          ? palette.warning
-                          : s.status == 'settled'
-                          ? palette.income
-                          : scheme.onSurfaceVariant,
-                      fontWeight: s.status == 'settled'
-                          ? FontWeight.w600
-                          : null,
-                    ),
+                ),
+                Text(money(s.amount), style: textTheme.bodyLarge),
+                const SizedBox(width: AppSpacing.md),
+                // Where it stands, from my side of it.
+                Text(
+                  switch (s.status) {
+                    // Repaid more than the (edited) amount: say which way
+                    // the difference goes back (owner 2026-10-10).
+                    _ when s.isOverpaid =>
+                      s.owedToMe
+                          ? l.txSplitStatusOverpaidToThem(money(-s.outstanding))
+                          : l.txSplitStatusOverpaidByMe(money(-s.outstanding)),
+                    'settled' =>
+                      s.owedToMe ? l.txSplitStatusPaid : l.txSplitStatusRepaid,
+                    'cancelled' => l.txSplitStatusCancelled,
+                    _ when s.settledAmount > 0.005 =>
+                      s.owedToMe
+                          ? l.txSplitStatusPartPaid(
+                              money(s.settledAmount),
+                              money(s.amount),
+                            )
+                          : l.txSplitStatusPartRepaid(
+                              money(s.settledAmount),
+                              money(s.amount),
+                            ),
+                    _ =>
+                      s.owedToMe
+                          ? l.txSplitStatusAwaiting(money(s.outstanding))
+                          : l.txSplitStatusToPay(money(s.outstanding)),
+                  },
+                  style: textTheme.bodySmall?.copyWith(
+                    color: s.isOverpaid
+                        ? palette.warning
+                        : s.status == 'settled'
+                        ? palette.income
+                        : scheme.onSurfaceVariant,
+                    fontWeight: s.status == 'settled' ? FontWeight.w600 : null,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
       ],

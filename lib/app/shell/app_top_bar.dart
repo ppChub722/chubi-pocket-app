@@ -64,10 +64,22 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.showUniversal = true,
     this.parent,
     this.showParent = true,
+    this.titleSlot,
     super.key,
   });
 
   final String? title;
+
+  /// A page's own title widget, shown in place of [title] — anything (the
+  /// transaction detail's "฿1,250 · อาหาร" once its amount scrolls away).
+  /// Null = the plain [title]. Switching between the two, or to a slot
+  /// with a different key, cross-fades like a title change; changes inside
+  /// one slot don't (give it a new key to fade). It's styled as the title
+  /// by default (titleMedium, one line, ellipsis).
+  ///
+  /// It rides the bar's left [Hero]: no Heroes or GlobalKeys inside (the
+  /// flight builds a copy of it).
+  final Widget? titleSlot;
   final bool showBack;
 
   /// Custom back handler; defaults to popping the current route.
@@ -98,6 +110,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       showBack: showBack || editing,
       backIcon: editing ? AppIcons.close : AppIcons.back,
       title: title,
+      titleSlot: titleSlot,
       parent: showParent ? (parent ?? defaultTopBarCrumb(context)) : null,
       // Editing: leave only via ✕ (it asks before discarding).
       parentEnabled: !editing,
@@ -310,22 +323,25 @@ class _LeftData {
     required this.parent,
     required this.parentEnabled,
     required this.onBack,
+    this.titleSlot,
   });
 
   final bool showBack;
   final IconData backIcon;
   final String? title;
+  final Widget? titleSlot;
   final TopBarCrumb? parent;
   final bool parentEnabled;
   final VoidCallback onBack;
 
   /// No ← and no title (the เพิ่มเติม hub) — nothing to show.
-  bool get isEmpty => !showBack && title == null;
+  bool get isEmpty => !showBack && title == null && titleSlot == null;
 
   _LeftGroup toWidget() => _LeftGroup(
     showBack: showBack,
     backIcon: backIcon,
     title: title,
+    titleSlot: titleSlot,
     parent: parent,
     parentEnabled: parentEnabled,
     onBack: onBack,
@@ -531,10 +547,14 @@ class _LeftGroup extends StatelessWidget {
     this.parent,
     this.parentEnabled = true,
     this.backIcon = AppIcons.back,
+    this.titleSlot,
   });
 
   final bool showBack;
   final String? title;
+
+  /// Replaces [title] — see [AppTopBar.titleSlot].
+  final Widget? titleSlot;
   final VoidCallback onBack;
   final TopBarCrumb? parent;
   final bool parentEnabled;
@@ -545,7 +565,9 @@ class _LeftGroup extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final crumb = parent;
-    if (!showBack && title == null) return const SizedBox.shrink();
+    final slot = titleSlot;
+    final hasTitle = title != null || slot != null;
+    if (!showBack && !hasTitle) return const SizedBox.shrink();
     return Material(
       color: scheme.surfaceContainerHigh,
       elevation: 1.5,
@@ -629,7 +651,7 @@ class _LeftGroup extends StatelessWidget {
                   color: scheme.onSurfaceVariant,
                 ),
               ],
-              if (title != null)
+              if (hasTitle)
                 Flexible(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -638,21 +660,37 @@ class _LeftGroup extends StatelessWidget {
                       AppSpacing.md,
                       AppSpacing.sm,
                     ),
+                    // Title ↔ title, title ↔ slot: a cross-fade in place
+                    // (none with animations off).
                     child: AnimatedSwitcher(
-                      duration: AppDurations.chrome,
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : AppDurations.chrome,
                       switchInCurve: AppDurations.chromeCurve,
                       switchOutCurve: AppDurations.chromeCurve,
                       layoutBuilder: (current, previous) => Stack(
                         alignment: Alignment.centerLeft,
                         children: [...previous, ?current],
                       ),
-                      child: Text(
-                        title!,
-                        key: ValueKey(title),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium,
-                      ),
+                      child: slot != null
+                          ? KeyedSubtree(
+                              key:
+                                  slot.key ??
+                                  const ValueKey('app-top-bar-title-slot'),
+                              child: DefaultTextStyle.merge(
+                                style: textTheme.titleMedium,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                child: slot,
+                              ),
+                            )
+                          : Text(
+                              title!,
+                              key: ValueKey(title),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.titleMedium,
+                            ),
                     ),
                   ),
                 )

@@ -151,9 +151,14 @@ Future<String?> saveTransactionEdit(
   final splitsBefore = [
     for (final s in t.splits) {'debt_id': s.debtId, 'owed_amount': s.amount},
   ];
+  // A row with split_count but no people was edited from a list row — the
+  // form never had its splits. PUT replaces the whole set, so sending
+  // anything would wipe the real ones: leave them alone.
+  final splitsLoaded = t.splitCount == 0 || t.splits.isNotEmpty;
   final splitsChanged =
       !isTransfer &&
       t.canEditCategory &&
+      splitsLoaded &&
       jsonEncode(splits) != jsonEncode(splitsBefore);
   Future<void> putSplits() async {
     if (!splitsChanged) return;
@@ -178,7 +183,7 @@ Future<String?> saveTransactionEdit(
   );
   if (!lowering) await putSplits();
   // The cache row picks up the new splits (and split_count).
-  if (splitsChanged) await txCubit.refreshOne(t.id);
+  if (splitsChanged) await txCubit.refreshOne(t.id, afterWrite: true);
   String? warn;
   // A transfer's tags live on its OUT row.
   final tagTarget = result.transfer != null

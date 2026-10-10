@@ -72,17 +72,25 @@ class SplitDraft {
 }
 
 /// The "หารกับ" editor of the transaction form, always open (owner
-/// 2026-10-10). Empty, it's just [+ เพิ่มคน] — no blank row; with rows:
-/// each row, then [+ เพิ่มคน] [หารเท่ากัน] · "ส่วนของคุณ ฿x". Removing the
-/// last row empties it again. The row's label ("หารกับ" / "แบ่งให้") sits
-/// beside it in the form. Returns the drafts via [onChanged].
+/// 2026-10-10):
+///
+///   หารกับ                      [+ เพิ่มคน] [หารเท่ากัน]
+///   👤 ลี                                  ฿120.00  ✕
+///
+/// One line per person — no blank row until [+ เพิ่มคน]. "ส่วนของคุณ"
+/// isn't here: the hero card shows it under the total. Returns the drafts
+/// via [onChanged].
 class SplitsSection extends StatefulWidget {
   const SplitsSection({
+    required this.label,
     required this.totalAmount,
     required this.drafts,
     required this.onChanged,
     super.key,
   });
+
+  /// "หารกับ" (expense: they owe me) / "แบ่งให้" (income: I owe them).
+  final String label;
 
   /// Parent transaction's amount — used for "split equally" + validation
   /// of total ≤ tx amount.
@@ -123,23 +131,40 @@ class _SplitsSectionState extends State<SplitsSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
-    final remaining = widget.totalAmount - _splitTotal;
-    final overflow = remaining < -0.005;
-    final addPerson = TextButton.icon(
-      icon: const Icon(AppIcons.add, size: 18),
-      label: Text(l.txSplitAddPerson),
-      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-      onPressed: _addPerson,
-    );
-
-    if (widget.drafts.isEmpty) {
-      return Align(alignment: Alignment.centerLeft, child: addPerson);
-    }
+    final overflow = _splitTotal > widget.totalAmount + 0.005;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            ActionPill(
+              icon: AppIcons.add,
+              label: l.txSplitAddPerson,
+              size: PillSize.medium,
+              onTap: _addPerson,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            ActionPill(
+              icon: AppIcons.split,
+              label: l.txSplitEqually,
+              size: PillSize.medium,
+              onTap: widget.drafts.isEmpty || widget.totalAmount <= 0
+                  ? null
+                  : _splitEqually,
+            ),
+          ],
+        ),
         for (var i = 0; i < widget.drafts.length; i++) ...[
+          const SizedBox(height: AppSpacing.xs),
           _DraftRow(
             // Key by the draft object itself: removing a middle row must
             // drop THAT row's controllers, not shift names onto siblings.
@@ -151,30 +176,7 @@ class _SplitsSectionState extends State<SplitsSection> {
               widget.onChanged(next);
             },
           ),
-          const SizedBox(height: AppSpacing.sm),
         ],
-        Row(
-          children: [
-            addPerson,
-            TextButton.icon(
-              icon: const Icon(AppIcons.split, size: 18),
-              label: Text(l.txSplitEqually),
-              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-              onPressed: widget.totalAmount <= 0 ? null : _splitEqually,
-            ),
-            const Spacer(),
-            Flexible(
-              child: Text(
-                l.txSplitRemaining(moneyString(context, remaining)),
-                textAlign: TextAlign.right,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: overflow ? theme.colorScheme.error : null,
-                  fontWeight: overflow ? FontWeight.w600 : null,
-                ),
-              ),
-            ),
-          ],
-        ),
         if (overflow)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
@@ -230,6 +232,8 @@ class _DraftRowState extends State<_DraftRow> {
 
   static String _formatted(double? v) => v == null ? '' : AmountField.format(v);
 
+  static const _amountWidth = 120.0;
+
   @override
   void didUpdateWidget(covariant _DraftRow old) {
     super.didUpdateWidget(old);
@@ -263,7 +267,28 @@ class _DraftRowState extends State<_DraftRow> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final textStyle = Theme.of(context).textTheme.bodyLarge;
     final draft = widget.draft;
+    // One line, no floating labels (they ran into the row above): a hint
+    // in the empty field, an underline to show it's editable.
+    InputDecoration lineField({String? hint, String? prefix}) =>
+        InputDecoration(
+          hintText: hint,
+          prefixText: prefix,
+          isDense: true,
+          filled: false,
+          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          border: UnderlineInputBorder(
+            borderSide: BorderSide(color: scheme.outlineVariant),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: scheme.outlineVariant),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: scheme.primary),
+          ),
+        );
     return BlocBuilder<ContactsCubit, ContactsState>(
       builder: (context, state) {
         final row = Row(
@@ -273,34 +298,21 @@ class _DraftRowState extends State<_DraftRow> {
               message: draft.isWired
                   ? l.txSplitWiredContact
                   : l.txSplitFreeText,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-                child: Icon(
-                  draft.isWired ? AppIcons.contact : AppIcons.profile,
-                  color: draft.isWired
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
+              child: Icon(
+                draft.isWired ? AppIcons.contact : AppIcons.profile,
+                color: draft.isWired ? scheme.primary : scheme.onSurfaceVariant,
+                size: 20,
               ),
             ),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
-              flex: 3,
               // A saved split's person is fixed (remove + add to change).
               child: draft.isSaved
-                  ? InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: l.txSplitName,
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                      ),
-                      child: Text(
-                        draft.personName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  ? Text(
+                      draft.personName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textStyle,
                     )
                   : Autocomplete<Contact>(
                       initialValue: TextEditingValue(text: draft.personName),
@@ -318,10 +330,11 @@ class _DraftRowState extends State<_DraftRow> {
                         widget.onChange();
                       },
                       fieldViewBuilder: (context, controller, focusNode, onSubmit) {
-                        return AppTextField(
+                        return TextField(
                           controller: controller,
                           focusNode: focusNode,
-                          label: l.txSplitName,
+                          style: textStyle,
+                          decoration: lineField(hint: l.txSplitName),
                           onChanged: (v) {
                             // Typing past or away from a picked contact clears
                             // the wire — otherwise the BE would receive a stale
@@ -390,16 +403,22 @@ class _DraftRowState extends State<_DraftRow> {
                     ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              flex: 2,
+            SizedBox(
+              // Room for "฿96,248.33".
+              width: _amountWidth,
               // Same thousands formatting / parsing as [AmountField].
-              child: AppTextField(
+              child: TextField(
                 controller: _amount,
-                label: l.txSplitOwes,
+                textAlign: TextAlign.end,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 inputFormatters: [ThousandsInputFormatter()],
+                style: textStyle?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+                decoration: lineField(hint: '0', prefix: '฿'),
                 onChanged: (v) {
                   draft.owedAmount = AmountField.parse(v);
                   widget.onChange();
@@ -410,7 +429,11 @@ class _DraftRowState extends State<_DraftRow> {
             // removed, whatever they paid back.
             IconButton(
               tooltip: l.txSplitRemove,
-              icon: const Icon(AppIcons.delete),
+              icon: const Icon(AppIcons.close, size: 18),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              color: scheme.onSurfaceVariant,
               onPressed: widget.onRemove,
             ),
           ],
@@ -421,8 +444,9 @@ class _DraftRowState extends State<_DraftRow> {
           children: [
             row,
             Padding(
+              // Under the name (past the 20 px icon).
               padding: const EdgeInsets.only(
-                left: AppSpacing.xl + AppSpacing.xs,
+                left: 20 + AppSpacing.sm,
                 top: AppSpacing.xs,
               ),
               child: Text(

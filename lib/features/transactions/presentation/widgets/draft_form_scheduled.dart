@@ -280,12 +280,16 @@ class _ScheduledForm extends StatelessWidget {
     required this.schedule,
     required this.compact,
     required this.autofocus,
+    this.heroKey,
   });
 
   final DraftFormController controller;
   final DraftSchedule schedule;
   final bool compact;
   final bool autofocus;
+
+  /// On the hero — see [DraftForm.heroKey].
+  final GlobalKey? heroKey;
 
   Future<void> _pickCategory(BuildContext context) async {
     final c = controller;
@@ -385,6 +389,7 @@ class _ScheduledForm extends StatelessWidget {
             // The variant (above) says what the amount is; the hero's date
             // is the next billing date.
             TxHeroCard(
+              key: heroKey,
               type: c.type,
               allowTransfer: false,
               onTypeChanged: locked ? null : c.setType,

@@ -22,6 +22,13 @@ void main() {
             StatusPill(key: const Key('s'), label: 'ค้าง', size: s),
             LabelPill(key: const Key('l'), label: 'ผ่อน', size: s),
             ActionPill(key: const Key('a'), label: 'ลบ', onTap: () {}, size: s),
+            ChoicePill(
+              key: const Key('c'),
+              label: 'เดือน',
+              selected: true,
+              onTap: () {},
+              size: s,
+            ),
             TagPill(
               key: const Key('t'),
               name: 'เที่ยว',
@@ -31,7 +38,7 @@ void main() {
           ],
         ),
       );
-      for (final k in ['s', 'l', 'a', 't']) {
+      for (final k in ['s', 'l', 'a', 'c', 't']) {
         expect(
           t.getSize(find.byKey(Key(k))).height,
           s.height,

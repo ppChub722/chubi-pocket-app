@@ -120,4 +120,35 @@ void main() {
     navHidden.value = false;
     expect(await track(t, 'List'), {rest});
   });
+
+  testWidgets('titleSlot replaces the title; null falls back to it', (t) async {
+    await pumpApp(t);
+    final slotOn = ValueNotifier(true);
+    nav.currentState!.push(
+      MaterialPageRoute<void>(
+        builder: (_) => ValueListenableBuilder<bool>(
+          valueListenable: slotOn,
+          builder: (_, on, _) => Scaffold(
+            extendBodyBehindAppBar: true,
+            appBar: AppTopBar(
+              title: 'Edit',
+              editing: true,
+              titleSlot: on ? const Text('฿1,250') : null,
+            ),
+            body: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(find.text('฿1,250'), findsOneWidget);
+    expect(find.text('Edit'), findsNothing);
+
+    // Back to the plain title — a cross-fade, then only the title.
+    slotOn.value = false;
+    await t.pump();
+    await t.pumpAndSettle();
+    expect(find.text('Edit'), findsOneWidget);
+    expect(find.text('฿1,250'), findsNothing);
+  });
 }

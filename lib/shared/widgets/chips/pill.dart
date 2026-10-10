@@ -4,12 +4,14 @@ import '../../../core/constants/app_spacing.dart';
 import 'tone.dart';
 
 /// The pill family (owner 2026-10-10) — every rounded label / status /
-/// small action in the app is one of three kit pills, by role:
+/// small action / choice in the app is one of the kit pills, by role:
 ///
 /// - **status** ([StatusPill]): dot + label in a tone; tappable = a picker.
 /// - **label** ([LabelPill], and [TagPill] for tags): what kind of thing
 ///   this is — no dot ("ผ่อน", "ธนาคาร", "− รายจ่าย", "#เที่ยว").
 /// - **action** ([ActionPill]): icon + label button ("ปรับยอด", "ลบ").
+/// - **choice** ([ChoicePill], in a [ChoicePillRow]): one option of a
+///   pick-one row ("เดือน · สัปดาห์ · ปี").
 ///
 /// They share one size scale ([PillSize]), so a status, a type and an
 /// action in the same row line up. [AppBadge] (a counter) stays apart.
@@ -207,6 +209,96 @@ class LabelPill extends StatelessWidget {
         size: size,
         leading: icon == null ? null : Icon(icon, size: size.icon, color: fg),
       ),
+    );
+  }
+}
+
+/// One option of a pick-one row of pills — "เดือน · สัปดาห์ · ปี",
+/// "ใหม่สุด · เก่าสุด" (the filter sheet). [selected] = primary-tinted fill,
+/// border and text; otherwise a quiet outline. The kit's answer to a
+/// Material ChoiceChip, sized on the pill scale ([PillSize.large] = a tap
+/// target).
+class ChoicePill extends StatelessWidget {
+  const ChoicePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    this.size = PillSize.large,
+    super.key,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+  final IconData? icon;
+  final PillSize size;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = selected ? scheme.primary : scheme.onSurfaceVariant;
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: PillShell(
+        size: size,
+        background: selected
+            ? scheme.primary.withValues(alpha: 0.12)
+            : Colors.transparent,
+        border: selected ? scheme.primary : scheme.outlineVariant,
+        onTap: onTap,
+        child: PillContent(
+          label: label,
+          color: fg,
+          size: size,
+          weight: selected ? FontWeight.w700 : FontWeight.w500,
+          leading: icon == null ? null : Icon(icon, size: size.icon, color: fg),
+        ),
+      ),
+    );
+  }
+}
+
+/// A row of [ChoicePill]s, one of [values] selected; wraps when long.
+/// [reselect] values fire [onSelected] again when tapped while selected
+/// (กำหนดเอง re-opens its range picker).
+class ChoicePillRow<T> extends StatelessWidget {
+  const ChoicePillRow({
+    required this.values,
+    required this.selected,
+    required this.label,
+    required this.onSelected,
+    this.reselect,
+    this.size = PillSize.large,
+    super.key,
+  });
+
+  final List<T> values;
+  final T selected;
+  final String Function(T) label;
+  final ValueChanged<T> onSelected;
+  final bool Function(T)? reselect;
+  final PillSize size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
+      children: [
+        for (final v in values)
+          ChoicePill(
+            label: label(v),
+            selected: v == selected,
+            size: size,
+            onTap: () {
+              if (v != selected || (reselect?.call(v) ?? false)) {
+                onSelected(v);
+              }
+            },
+          ),
+      ],
     );
   }
 }

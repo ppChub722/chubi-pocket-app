@@ -3908,4 +3908,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionsFilterRemove => 'Remove this filter';
+
+  @override
+  String get commonMore => 'More';
+
+  @override
+  String get txShareMine => 'Your share';
+
+  @override
+  String txShareOthersOwe(String amount) {
+    return 'others owe $amount';
+  }
+
+  @override
+  String txShareOthers(String amount) {
+    return 'others\' share $amount';
+  }
 }

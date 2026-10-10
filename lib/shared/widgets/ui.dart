@@ -31,6 +31,7 @@ export 'charts/donut_chart.dart';
 export 'charts/paired_bar_chart.dart';
 
 // Chips & pills
+export 'chips/chip_row.dart';
 export 'chips/filter_chips.dart';
 export 'chips/pill.dart';
 export 'chips/status_pill.dart';

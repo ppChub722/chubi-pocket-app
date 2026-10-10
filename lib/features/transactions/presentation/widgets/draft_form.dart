@@ -28,16 +28,14 @@ import '../../../projects/presentation/widgets/member_pick_card.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../scheduled_transactions/domain/scheduled_enums.dart';
 import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
 import 'account_picker_sheet.dart';
+import 'pick_chip_rows.dart';
 import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
-import '../../../categories/presentation/widgets/category_chip.dart';
-import '../cubit/transactions_cubit.dart';
 import 'tx_hero_card.dart';
 
 part 'draft_form_event.dart';
@@ -453,9 +451,9 @@ String _dayLabel(BuildContext context, DateTime d) {
 ///
 /// [editing] false = the detail page's view mode: the same layout, nothing
 /// editable. A long-press on a field calls [onEnterEdit] (with the field's
-/// focus node, if it's a text field), [onEdit] adds the hero's ✏️, and the
-/// category / wallet cards open their pages ([onOpenCategory] /
-/// [onOpenAccount]).
+/// focus node, if it's a text field) and [onEdit] adds the hero's ✏️. The
+/// category / wallet cards open nothing there (owner 2026-10-10: a tap in
+/// view mode never leaves the page).
 class DraftForm extends StatefulWidget {
   const DraftForm({
     required this.controller,
@@ -470,13 +468,16 @@ class DraftForm extends StatefulWidget {
     this.editing = true,
     this.onEnterEdit,
     this.onEdit,
-    this.onOpenCategory,
-    this.onOpenAccount,
     this.trailingRows = const [],
     this.event,
     this.schedule,
+    this.heroKey,
     super.key,
   });
+
+  /// Put on the [TxHeroCard] — the quick create watches where it scrolled
+  /// to (its title row shows the amount once the card is out of view).
+  final GlobalKey? heroKey;
 
   /// Non-null → event mode: the form is a project row (see [DraftEvent]).
   final DraftEvent? event;
@@ -503,10 +504,6 @@ class DraftForm extends StatefulWidget {
   /// View mode: the hero's ✏️.
   final VoidCallback? onEdit;
 
-  /// View mode: tapping the category / wallet card.
-  final ValueChanged<Category>? onOpenCategory;
-  final ValueChanged<Account>? onOpenAccount;
-
   /// Rows the page adds after the labelled ones (the detail page: the
   /// split list and "มาจาก" in view mode; read-only splits / event in edit
   /// mode — what a saved row can't change).
@@ -532,6 +529,11 @@ class _DraftFormState extends State<DraftForm> {
   final _amountFocus = FocusNode();
   final _descriptionFocus = FocusNode();
   final _noteFocus = FocusNode();
+
+  /// The chip rows' orders, fixed for the form's life (one per type for
+  /// categories) — see [ChipOrder].
+  final _categoryOrders = <TransactionType, ChipOrder>{};
+  final _tagOrder = ChipOrder();
 
   DraftFormController get _c => widget.controller;
 
@@ -580,6 +582,12 @@ class _DraftFormState extends State<DraftForm> {
     }
   }
 
+  /// Tags "เพิ่มเติม": the full picker (search, "+ แท็กใหม่").
+  Future<void> _moreTags() async {
+    final next = await showTagPickerSheet(context, selected: _c.tagIds);
+    if (next != null && mounted) _c.setTagIds(next);
+  }
+
   Future<void> _pickDate() async {
     final d = await showDatePicker(
       context: context,
@@ -590,7 +598,7 @@ class _DraftFormState extends State<DraftForm> {
     if (d != null) _c.setDate(d);
   }
 
-  /// A wallet card: picker in edit mode, the wallet's page in view mode.
+  /// A wallet card: the picker in edit mode, not tappable in view mode.
   /// One that isn't in this user's list (someone else's, on a shared
   /// wallet) still shows its name, just not tappable.
   Widget _walletCard({
@@ -609,15 +617,12 @@ class _DraftFormState extends State<DraftForm> {
         onTap: null,
       );
     }
-    final open = widget.onOpenAccount;
     return WalletPickCard(
       account: account,
       label: label,
       placeholder: placeholder,
       dense: true,
-      onTap: widget.editing
-          ? onPick
-          : (account == null || open == null ? null : () => open(account)),
+      onTap: widget.editing ? onPick : null,
     );
   }
 
@@ -633,15 +638,14 @@ class _DraftFormState extends State<DraftForm> {
         onTap: null,
       );
     }
-    final open = widget.onOpenCategory;
     return CategoryPickCard(
       category: c,
       label: l.transactionFormCategoryLabel,
       placeholder: l.transactionFormCategoryNone,
       dense: true,
-      onTap: widget.editing
-          ? (widget.categoryLockedHint == null ? _pickCategory : null)
-          : (c == null || c.isSystem || open == null ? null : () => open(c)),
+      onTap: widget.editing && widget.categoryLockedHint == null
+          ? _pickCategory
+          : null,
     );
   }
 
@@ -658,6 +662,7 @@ class _DraftFormState extends State<DraftForm> {
         locked: widget.typeLocked,
         readOnly: widget.readOnly,
         onPickDate: _pickDate,
+        heroKey: widget.heroKey,
       );
     }
     final accounts = context.watch<AccountsCubit>().state.accounts;
@@ -669,6 +674,7 @@ class _DraftFormState extends State<DraftForm> {
         schedule: schedule,
         compact: widget.compact,
         autofocus: widget.autofocus && !widget.readOnly,
+        heroKey: widget.heroKey,
       );
     }
 
@@ -689,6 +695,7 @@ class _DraftFormState extends State<DraftForm> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TxHeroCard(
+              key: widget.heroKey,
               type: _c.type,
               onTypeChanged: widget.typeLocked ? null : _c.setType,
               amount: _c.amount,
@@ -703,72 +710,20 @@ class _DraftFormState extends State<DraftForm> {
               onEdit: widget.onEdit,
               onLongPressField: enterEdit,
               inline: true,
-              // View mode: category · wallet · date as small chips in the card
-              // (owner 2026-10-10) instead of the big cards below.
-              footer: editing ? null : _viewChips(l, isTransfer: isTransfer),
+              // View mode: the same category · wallet cards as editing, inside
+              // the card (owner 2026-10-10); they open their pages.
+              footer: editing
+                  ? null
+                  : longPressable(_cardsRow(l, isTransfer: isTransfer)),
+              // "ส่วนของคุณ" under the total — while editing only where
+              // splits can be edited; in view whenever the people loaded.
+              amountNote: !isTransfer && (!editing || widget.allowSplits)
+                  ? _ShareLine.of(_c)
+                  : null,
             ),
             if (editing) ...[
               const SizedBox(height: AppSpacing.md),
-              if (isTransfer)
-                // One row, money flows left → right (owner 2026-10-10). The
-                // arrow never turns: tapping it swaps the wallets instead.
-                longPressable(
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: _walletCard(
-                            account: _c.account,
-                            label: l.quickFrom,
-                            placeholder: l.quickPickWallet,
-                            onPick: () => _pickAccount(),
-                            foreignName: _c.foreignAccountName,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: editing ? l.quickSwap : null,
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 32),
-                          icon: const Icon(AppIcons.arrowForward),
-                          onPressed: editing ? _c.swapAccounts : null,
-                        ),
-                        Expanded(
-                          child: _walletCard(
-                            account: _c.toAccount,
-                            label: l.quickTo,
-                            placeholder: l.quickPickWallet,
-                            onPick: () => _pickAccount(to: true),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                // Picked → the card takes the category's / wallet's own
-                // colour; blank (both optional) → dashed. Same height both.
-                longPressable(
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: _categoryCard(l)),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: _walletCard(
-                            account: _c.account,
-                            label: l.transactionFormAccountLabel,
-                            placeholder: l.transactionFormAccountNone,
-                            onPick: () => _pickAccount(),
-                            foreignName: _c.foreignAccountName,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              _cardsRow(l, isTransfer: isTransfer),
               if (editing && !isTransfer && categoryHint != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -787,44 +742,63 @@ class _DraftFormState extends State<DraftForm> {
               // One tap on a recent category picks it (owner 2026-10-10).
               if (editing && !isTransfer && categoryHint == null) ...[
                 const SizedBox(height: AppSpacing.sm),
-                _RecentCategories(
+                CategoryChipRow(
                   type: _c.type,
                   selected: _c.category,
                   onPick: _c.setCategory,
+                  onMore: _pickCategory,
+                  order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
                 ),
               ],
               // View mode shows only the row's own tags — none, no row.
               if (editing || _c.tagIds.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
                 longPressable(
-                  _TagsRow(
+                  TagChipRow(
                     selected: _c.tagIds,
                     onToggle: _c.toggleTag,
-                    onPicked: _c.setTagIds,
+                    onMore: _moreTags,
                     editing: editing,
                     known: _c.knownTags,
+                    order: _tagOrder,
                   ),
                 ),
               ],
             ] else if (_c.tagIds.isNotEmpty) ...[
-              // Right under the card, as chips with their icons (owner
-              // 2026-10-10).
+              // Right under the card, as chips with their icons, led by the
+              // tag icon like the edit row (owner 2026-10-10).
               const SizedBox(height: AppSpacing.md),
               longPressable(
-                Wrap(
-                  spacing: AppSpacing.xs,
-                  runSpacing: AppSpacing.xs,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final id in _c.tagIds)
-                      ?_tagChip(
-                        context
-                                .read<TagsCubit>()
-                                .state
-                                .tags
-                                .where((t) => t.id == id)
-                                .firstOrNull ??
-                            _c.knownTags[id],
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: Icon(
+                        AppIcons.tag,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Wrap(
+                        spacing: AppSpacing.xs,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          for (final id in _c.tagIds)
+                            ?_tagChip(
+                              context
+                                      .read<TagsCubit>()
+                                      .state
+                                      .tags
+                                      .where((t) => t.id == id)
+                                      .firstOrNull ??
+                                  _c.knownTags[id],
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -840,59 +814,67 @@ class _DraftFormState extends State<DraftForm> {
 
   Widget? _tagChip(Tag? tag) => tag == null ? null : TagChip(tag: tag);
 
-  /// View mode's card footer: [🍜 category][🏦 wallet], half each — a
-  /// transfer [🏦 from] → [🏦 to]. Tapping a category / wallet
-  /// opens its page; a long-press enters edit.
-  Widget _viewChips(AppLocalizations l, {required bool isTransfer}) {
-    final enter = widget.onEnterEdit;
-    Widget wallet(Account? a, {String? foreign}) => a != null
-        ? _InfoChip(
-            icon: IconRegistry.get(a.iconCode?.icon, fallback: AppIcons.bank),
-            label: a.name,
-            onTap: widget.onOpenAccount == null
-                ? null
-                : () => widget.onOpenAccount!(a),
-          )
-        : _InfoChip(
-            icon: AppIcons.noWallet,
-            label: foreign ?? l.transactionFormAccountNone,
-            muted: foreign == null,
-          );
-    final c = _c.category;
-    // Two halves, full labels (ellipsis only when truly long). The date
-    // sits up by ✏️ (owner 2026-10-10).
-    final chips = <Widget>[
-      if (isTransfer) ...[
-        Expanded(child: wallet(_c.account, foreign: _c.foreignAccountName)),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          child: Icon(AppIcons.arrowForward, size: 16),
+  /// Category + wallet cards, one row — a transfer [จาก] → [ไป]. Editing:
+  /// under the hero, tapping opens the pickers; view mode: inside the hero
+  /// (its footer), tapping opens the category's / wallet's page.
+  Widget _cardsRow(AppLocalizations l, {required bool isTransfer}) {
+    final editing = widget.editing;
+    if (isTransfer) {
+      // One row, money flows left → right (owner 2026-10-10). The arrow
+      // never turns: tapping it swaps the wallets instead.
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _walletCard(
+                account: _c.account,
+                label: l.quickFrom,
+                placeholder: l.quickPickWallet,
+                onPick: () => _pickAccount(),
+                foreignName: _c.foreignAccountName,
+              ),
+            ),
+            IconButton(
+              tooltip: editing ? l.quickSwap : null,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32),
+              icon: const Icon(AppIcons.arrowForward),
+              onPressed: editing ? _c.swapAccounts : null,
+            ),
+            Expanded(
+              child: _walletCard(
+                account: _c.toAccount,
+                label: l.quickTo,
+                placeholder: l.quickPickWallet,
+                onPick: () => _pickAccount(to: true),
+              ),
+            ),
+          ],
         ),
-        Expanded(child: wallet(_c.toAccount)),
-      ] else ...[
-        Expanded(
-          child: c != null
-              ? CategoryChip(
-                  category: c,
-                  selected: true,
-                  onTap: c.isSystem || widget.onOpenCategory == null
-                      ? null
-                      : () => widget.onOpenCategory!(c),
-                )
-              : _InfoChip(
-                  icon: AppIcons.category,
-                  label:
-                      _c.foreignCategoryName ?? l.transactionFormCategoryNone,
-                  muted: _c.foreignCategoryName == null,
-                ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(child: wallet(_c.account, foreign: _c.foreignAccountName)),
-      ],
-    ];
-    final row = Row(children: chips);
-    if (enter == null) return row;
-    return GestureDetector(onLongPress: () => enter(null), child: row);
+      );
+    }
+    // Picked → the card takes the category's / wallet's own colour; blank
+    // (both optional) → dashed. Same height both.
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: _categoryCard(l)),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: _walletCard(
+              account: _c.account,
+              label: l.transactionFormAccountLabel,
+              placeholder: l.transactionFormAccountNone,
+              onPick: () => _pickAccount(),
+              foreignName: _c.foreignAccountName,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// โน้ต · หารกับ · อีเวนต์ under a hairline — always open while editing
@@ -904,32 +886,40 @@ class _DraftFormState extends State<DraftForm> {
     required bool isTransfer,
   }) {
     final enter = widget.onEnterEdit;
+    final note = InlineField(
+      editing: editing,
+      controller: _c.note,
+      focusNode: _noteFocus,
+      maxLines: 5,
+      maxLength: TextLimits.note,
+      hint: l.txNoteAddHint,
+      onEnterEdit: enter == null ? null : () => enter(_noteFocus),
+    );
     final rows = <Widget>[
-      if (editing || _c.note.text.trim().isNotEmpty)
-        DraftFieldRow(
-          label: l.commonNote,
-          // One line, grows while typing.
-          child: InlineField(
-            editing: editing,
-            controller: _c.note,
-            focusNode: _noteFocus,
-            maxLines: 5,
-            maxLength: TextLimits.note,
-            hint: l.txNoteAddHint,
-            onEnterEdit: enter == null ? null : () => enter(_noteFocus),
-          ),
+      if (editing)
+        // One line, grows while typing.
+        DraftFieldRow(label: l.commonNote, child: note)
+      else if (_c.note.text.trim().isNotEmpty)
+        // View: label on top, the text full width under it — the wallet
+        // page's note (owner 2026-10-10).
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l.commonNote, style: detailLabelStyle(context)),
+            const SizedBox(height: AppSpacing.xs),
+            note,
+          ],
         ),
+      // Full width: its own header row carries the label and the pills.
       if (editing && widget.allowSplits && !isTransfer)
-        DraftFieldRow(
+        SplitsSection(
           // Expense: they owe me; income: I owe them (spec §12).
           label: _c.type == TransactionType.income
               ? l.txSplitShareShort
               : l.txSplitWith,
-          child: SplitsSection(
-            totalAmount: _c.amountValue,
-            drafts: _c.splits,
-            onChanged: _c.setSplits,
-          ),
+          totalAmount: _c.amountValue,
+          drafts: _c.splits,
+          onChanged: _c.setSplits,
         ),
       if (!isTransfer && widget.extra != null) widget.extra!,
       ...widget.trailingRows,
@@ -1021,225 +1011,66 @@ class DraftFieldRow extends StatelessWidget {
   }
 }
 
-/// The categories most used lately for the current [type] — one tap picks
-/// (owner 2026-10-10). From the cached transactions: the most frequent of
-/// the latest 100 of that type, ties to the most recent; topped up with the
-/// type's categories in their own order. The picked one is always shown.
-class _RecentCategories extends StatelessWidget {
-  const _RecentCategories({
+/// "ส่วนของคุณ ฿x · คนอื่นติด ฿y" under the hero's amount once the row is
+/// split — the key number (owner 2026-10-10; the dashboard counts it).
+/// Income splits are what I pass on: "· ของคนอื่น ฿y". Split past the
+/// total → my share goes negative, in the error colour.
+class _ShareLine extends StatelessWidget {
+  const _ShareLine({
     required this.type,
-    required this.selected,
-    required this.onPick,
+    required this.total,
+    required this.others,
   });
 
   final TransactionType type;
-  final Category? selected;
-  final ValueChanged<Category?> onPick;
+  final double total;
+  final double others;
 
-  static const _max = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    final all = context.watch<CategoriesCubit>().state.categories;
-    final txs = context.watch<TransactionsCubit>().state.transactions;
-    final catType = type == TransactionType.income
-        ? CategoryType.income
-        : CategoryType.expense;
-    final usable = {
-      for (final c in all)
-        if (c.type == catType && !c.isSystem) c.id: c,
-    };
-    final counts = <String, int>{};
-    final firstSeen = <String, int>{};
-    var seen = 0;
-    for (final t in txs) {
-      if (seen >= 100) break;
-      final id = t.categoryId;
-      if (t.type != type || id == null || !usable.containsKey(id)) continue;
-      seen++;
-      counts.update(id, (n) => n + 1, ifAbsent: () => 1);
-      firstSeen.putIfAbsent(id, () => seen);
-    }
-    final ranked = counts.keys.toList()
-      ..sort((a, b) {
-        final byCount = counts[b]!.compareTo(counts[a]!);
-        return byCount != 0 ? byCount : firstSeen[a]!.compareTo(firstSeen[b]!);
-      });
-    final ids = <String>[
-      if (selected != null && usable.containsKey(selected!.id)) selected!.id,
-      ...ranked,
-      ...(usable.values.toList()
-            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)))
-          .map((c) => c.id),
-    ];
-    final picks = <Category>[];
-    for (final id in ids) {
-      if (picks.length >= _max) break;
-      if (picks.any((c) => c.id == id)) continue;
-      picks.add(usable[id]!);
-    }
-    if (picks.isEmpty) return const SizedBox.shrink();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final c in picks) ...[
-            CategoryChip(
-              category: c,
-              selected: c.id == selected?.id,
-              onTap: () => onPick(c),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-          ],
-        ],
-      ),
-    );
+  /// Null until someone has an amount.
+  static Widget? of(DraftFormController c) {
+    final others = c.splits.fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
+    if (others <= 0) return null;
+    return _ShareLine(type: c.type, total: c.amountValue, others: others);
   }
-}
-
-/// 🏷 Tags: the picked ones first, then the latest used to make three,
-/// then "⋯ เพิ่มเติม" (the full picker, with search and "+ แท็กใหม่"). The
-/// row scrolls sideways when many are picked. View mode: only the row's
-/// own tags. [known] resolves picked tags missing from this user's list
-/// (another member's, on a shared wallet).
-class _TagsRow extends StatelessWidget {
-  const _TagsRow({
-    required this.selected,
-    required this.onToggle,
-    required this.onPicked,
-    this.editing = true,
-    this.known = const {},
-  });
-
-  final Set<String> selected;
-  final ValueChanged<String> onToggle;
-  final ValueChanged<Set<String>> onPicked;
-  final bool editing;
-  final Map<String, Tag> known;
-
-  static const _shown = 3;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final mine = context.watch<TagsCubit>().state.tags;
-    final byId = {for (final t in mine) t.id: t};
-    final picked = [for (final id in selected) ?(byId[id] ?? known[id])];
-    final List<Tag> fill;
-    if (!editing || picked.length >= _shown) {
-      fill = const [];
-    } else {
-      // Latest used first (the cache is newest first), then by usage.
-      final txs = context.watch<TransactionsCubit>().state.transactions;
-      final recent = <Tag>[];
-      for (final t in txs) {
-        for (final e in t.tags) {
-          final tag = byId[e.id];
-          if (tag != null &&
-              !selected.contains(tag.id) &&
-              !recent.contains(tag)) {
-            recent.add(tag);
-          }
-        }
-        if (recent.length >= _shown) break;
-      }
-      final byUsage = mine.where((t) => !selected.contains(t.id)).toList()
-        ..sort((a, b) => b.usageCount.compareTo(a.usageCount));
-      fill = [
-        ...recent,
-        for (final t in byUsage)
-          if (!recent.contains(t)) t,
-      ].take(_shown - picked.length).toList();
-    }
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final mine = total - others;
+    final over = mine < -0.005;
+    final othersText = moneyString(context, others);
     return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
       children: [
-        Icon(AppIcons.tag, size: 18, color: scheme.onSurfaceVariant),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final t in [...picked, ...fill]) ...[
-                  TagChip(
-                    tag: t,
-                    selected: editing ? selected.contains(t.id) : null,
-                    onTap: editing ? () => onToggle(t.id) : null,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                ],
-                if (editing)
-                  ActionChip(
-                    avatar: const Icon(AppIcons.more, size: 16),
-                    label: Text(l.tagsMore),
-                    onPressed: () async {
-                      final next = await showTagPickerSheet(
-                        context,
-                        selected: selected,
-                      );
-                      if (next != null) onPicked(next);
-                    },
-                  ),
-              ],
+        Text(
+          l.txShareMine,
+          style: textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        MoneyText(
+          mine,
+          hideable: false,
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: over ? scheme.error : txTypeColor(context, type),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Flexible(
+          child: Text(
+            '· ${type == TransactionType.income ? l.txShareOthers(othersText) : l.txShareOthersOwe(othersText)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-/// A small outlined pill — icon + text — for the detail card's wallet and
-/// date. [muted] for a "none" value; [onTap] null = plain.
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-    this.onTap,
-    this.muted = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final bool muted;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final fg = muted ? scheme.onSurfaceVariant : scheme.onSurface;
-    return Material(
-      color: Colors.transparent,
-      shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md - 2,
-            vertical: AppSpacing.xs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.xs),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

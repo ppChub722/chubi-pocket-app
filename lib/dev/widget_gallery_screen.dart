@@ -28,8 +28,10 @@ import '../features/tags/presentation/widgets/tag_picker_sheet.dart';
 import '../features/transactions/domain/transaction.dart';
 import '../features/transactions/domain/transaction_type.dart';
 import '../features/transactions/presentation/widgets/period_summary_card.dart';
+import '../features/transactions/presentation/widgets/pick_chip_rows.dart';
 import '../features/transactions/presentation/widgets/transaction_tile.dart';
 import '../features/transactions/presentation/widgets/tx_hero_card.dart';
+import '../features/transactions/presentation/widgets/tx_summary_title.dart';
 import '../shared/icon_maker/icon_code.dart';
 import '../shared/icon_maker/icon_display.dart';
 import '../shared/icon_maker/icon_code_widget.dart';
@@ -786,6 +788,22 @@ class _InputsDemoState extends State<_InputsDemo> {
                   errorText: 'กรุณาเลือกหมวดหมู่',
                   onTap: _pickCategory,
                 ),
+                const _Gap(),
+                // trailing: a picked optional value that clears in place
+                // (quick create's อีเวนต์ card).
+                PickCard(
+                  label: 'อีเวนต์',
+                  value: 'ทริปเชียงใหม่',
+                  leading: const PickCardEmptyIcon(AppIcons.project, size: 32),
+                  accent: ModuleColors.of(context).people,
+                  watermark: AppIcons.project,
+                  dense: true,
+                  trailing: IconButton(
+                    icon: const Icon(AppIcons.clear, size: 18),
+                    onPressed: () {},
+                  ),
+                  onTap: () {},
+                ),
               ],
             ),
           ),
@@ -831,6 +849,124 @@ class _InputsDemoState extends State<_InputsDemo> {
 }
 
 // ── Chips ──────────────────────────────────────────────────────────────
+
+/// The pick rows the transaction form and the filter sheet share: the kit
+/// ([ChoicePillRow], [ChipRow] + [RowChip], [ChipOrder]) and the feature
+/// rows on top of it (หมวด / แท็ก / กระเป๋า, ranked from the real caches).
+class _PickRowsDemo extends StatefulWidget {
+  const _PickRowsDemo();
+
+  @override
+  State<_PickRowsDemo> createState() => _PickRowsDemoState();
+}
+
+class _PickRowsDemoState extends State<_PickRowsDemo> {
+  TransactionType? _type;
+  String _unit = 'เดือน';
+  bool _all = true;
+  Category? _category;
+  final Set<String> _tags = {};
+  String? _wallet;
+  final _categoryOrder = ChipOrder();
+  final _tagOrder = ChipOrder();
+  final _walletOrder = ChipOrder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Demo(
+          title: 'ประเภท (ฟอร์ม + ตัวกรอง) — null = ทั้งหมด สีกลาง',
+          name: 'TxTypeChip(type: null | expense | income | transfer)',
+          child: Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final t in const [
+                null,
+                TransactionType.expense,
+                TransactionType.income,
+                TransactionType.transfer,
+              ])
+                TxTypeChip(
+                  type: t,
+                  selected: t == _type,
+                  onTap: () => setState(() => _type = t),
+                ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'เลือกหนึ่งอย่าง (ช่วงเวลา · เรียงตาม ในตัวกรอง)',
+          name: 'ChoicePillRow · ChoicePill (pill kit, ไม่ใช่ ChoiceChip)',
+          child: ChoicePillRow<String>(
+            values: const ['เดือน', 'สัปดาห์', 'ปี', 'ทั้งหมด', 'กำหนดเอง'],
+            selected: _unit,
+            size: PillSize.medium,
+            label: (v) => v,
+            onSelected: (v) => setState(() => _unit = v),
+          ),
+        ),
+        _Demo(
+          title: 'แถวเลือก: [ไอคอน] ชิป … [เพิ่มเติม]',
+          name: 'ChipRow · RowChip (ขนาดเท่าชิปหมวด / แท็ก)',
+          child: ChipRow(
+            icon: AppIcons.wallet,
+            moreLabel: 'เพิ่มเติม',
+            onMore: () {},
+            chips: [
+              RowChip(
+                label: 'ทั้งหมด',
+                selected: _all,
+                onTap: () => setState(() => _all = true),
+              ),
+              RowChip(
+                label: 'กสิกร',
+                icon: AppIcons.bank,
+                color: Colors.green,
+                selected: !_all,
+                onTap: () => setState(() => _all = false),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'หมวด · แท็ก · กระเป๋า (ฟอร์ม + ตัวกรอง) — ลำดับคงที่',
+          name: 'CategoryChipRow · TagChipRow · WalletChipRow (ChipOrder)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CategoryChipRow(
+                type: TransactionType.expense,
+                selected: _category,
+                order: _categoryOrder,
+                onPick: (c) => setState(() => _category = c),
+                onMore: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TagChipRow(
+                selected: _tags,
+                order: _tagOrder,
+                onToggle: (id) => setState(() {
+                  if (!_tags.remove(id)) _tags.add(id);
+                }),
+                onMore: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              WalletChipRow(
+                selectedId: _wallet,
+                order: _walletOrder,
+                onPick: (a) => setState(() => _wallet = a.id),
+                onMore: () {},
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _ChipsDemo extends StatefulWidget {
   const _ChipsDemo();
@@ -881,6 +1017,7 @@ class _ChipsDemoState extends State<_ChipsDemo> {
     return ListView(
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
+        const _PickRowsDemo(),
         _Demo(
           title: 'แถวตัวกรอง + เรียงลำดับ (popover)',
           name:
@@ -1445,6 +1582,53 @@ class _Dot extends StatelessWidget {
 
 // ── Layout ─────────────────────────────────────────────────────────────
 
+/// `AppTopBar(titleSlot: …)` — a page's own title widget in place of the
+/// title text; the button swaps it in / out (it cross-fades like a title
+/// change). The tx detail's edit mode shows this summary once the amount
+/// scrolls away.
+class _TitleSlotBar extends StatefulWidget {
+  const _TitleSlotBar();
+
+  @override
+  State<_TitleSlotBar> createState() => _TitleSlotBarState();
+}
+
+class _TitleSlotBarState extends State<_TitleSlotBar> {
+  bool _on = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: kToolbarHeight,
+          child: AppTopBar(
+            title: 'แก้ไขรายการ',
+            showBack: true,
+            editing: true,
+            showParent: false,
+            titleSlot: _on
+                ? TxSummaryTitle(
+                    type: TransactionType.expense,
+                    amount: 1250,
+                    onTap: () => setState(() => _on = false),
+                  )
+                : null,
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: () => setState(() => _on = !_on),
+            child: Text('titleSlot: ${_on ? 'on' : 'off'}'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _LayoutDemo extends StatelessWidget {
   const _LayoutDemo();
 
@@ -1490,6 +1674,7 @@ class _LayoutDemo extends StatelessWidget {
                     ),
                   ),
                 ),
+                _TitleSlotBar(),
               ],
             ),
           ),

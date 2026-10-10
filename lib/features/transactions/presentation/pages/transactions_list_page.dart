@@ -24,6 +24,7 @@ import '../tx_list_filters.dart';
 import '../widgets/quick_create_sheet.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/tx_filter_sheet.dart';
+import '../widgets/tx_period_pill.dart';
 
 /// `/transactions` (owner 2026-10-10 redesign):
 ///
@@ -299,7 +300,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                 state.transactions.isEmpty);
         final header = <Widget>[
           const SizedBox(height: AppSpacing.sm),
-          Center(child: _periodPill(l)),
+          Center(child: _periodPill()),
           if (state.totals case final t?) _TotalsCard(totals: t),
           Row(
             children: [
@@ -401,33 +402,12 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     );
   }
 
-  Widget _periodPill(AppLocalizations l) {
-    final p = _f.period;
-    final now = DateTime.now();
-    if (p.kind == TxPeriodKind.month) {
-      return MonthPill(
-        month: p.start,
-        last: now,
-        onChanged: (m) => _apply(_f.copyWith(period: TxPeriod.month(m))),
-      );
-    }
-    final prev = p.step(-1);
-    final canNext = p.canStepForward(now);
-    final stepping = prev != null;
-    return PeriodPill(
-      label: p.label(context),
-      prevTooltip: l.txPeriodPrev,
-      nextTooltip: l.txPeriodNext,
-      onPrev: stepping ? () => _apply(_f.copyWith(period: prev)) : null,
-      // Forward stops at today's period (›dimmed); ทั้งหมด / a custom range
-      // have no neighbours, so no arrows at all.
-      onNext: stepping && canNext
-          ? () => _apply(_f.copyWith(period: p.step(1)))
-          : null,
-      // The label opens the filter sheet (its ช่วงเวลา section).
-      onTap: _openFilters,
-    );
-  }
+  Widget _periodPill() => TxPeriodPill(
+    period: _f.period,
+    onChanged: (p) => _apply(_f.copyWith(period: p)),
+    // A non-month label opens the filter sheet (its ช่วงเวลา section).
+    onTapLabel: _openFilters,
+  );
 
   /// Filters changed → "nothing matches" + clear (back to how the page
   /// opened, keeping the period); as opened → nothing here yet + add.

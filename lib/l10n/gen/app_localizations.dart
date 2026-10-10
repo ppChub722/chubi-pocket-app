@@ -6846,6 +6846,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove this filter'**
   String get transactionsFilterRemove;
+
+  /// No description provided for @commonMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get commonMore;
+
+  /// No description provided for @txShareMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share'**
+  String get txShareMine;
+
+  /// No description provided for @txShareOthersOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'others owe {amount}'**
+  String txShareOthersOwe(String amount);
+
+  /// No description provided for @txShareOthers.
+  ///
+  /// In en, this message translates to:
+  /// **'others\' share {amount}'**
+  String txShareOthers(String amount);
 }
 
 class _AppLocalizationsDelegate

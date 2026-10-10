@@ -128,7 +128,7 @@ void main() {
     expect(focused, noteFocus);
   });
 
-  testWidgets('inline view mode: date + ✏️ top-right, amount, then chips', (
+  testWidgets('inline view mode: type chip, date + ✏️, amount, then footer', (
     t,
   ) async {
     amount.text = '182';
@@ -145,10 +145,12 @@ void main() {
         footer: const Text('chips'),
       ),
     );
-    // Row 1: the date, then ✏️ in the top-right corner; row 2: the
-    // amount; row 3: the footer chips.
+    // Row 1: the type chip on the left, the date then ✏️ top-right; row 2:
+    // the amount; row 3: the footer.
     final edit = t.getTopLeft(find.byTooltip('แก้ไข'));
     final date = t.getTopLeft(find.text('วันนี้'));
+    final type = t.getTopLeft(find.text('รายจ่าย'));
+    expect(type.dx, lessThan(date.dx));
     expect(date.dx, lessThan(edit.dx));
     expect(edit.dy, lessThan(t.getTopLeft(find.text('182')).dy));
     expect(
@@ -157,8 +159,9 @@ void main() {
     );
     // An empty description shows nothing in view mode.
     expect(find.byType(TextField), findsOneWidget); // just the amount
-    expect(find.byType(TxTypeChip), findsNothing);
-    expect(find.text('รายจ่าย'), findsNothing); // the colour says it
+    // Only its own type, and no 🔒 in view (owner 2026-10-10).
+    expect(find.byType(TxTypeChip), findsOneWidget);
+    expect(find.byIcon(AppIcons.lock), findsNothing);
     expect(find.text('฿'), findsOneWidget); // no −/+ before it
     expect(find.text('182'), findsOneWidget);
   });

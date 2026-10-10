@@ -4,8 +4,17 @@ import 'package:intl/intl.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../accounts/domain/account.dart';
 import '../../categories/domain/category.dart';
+import '../../categories/domain/category_type.dart';
 import '../../tags/domain/tag.dart';
 import '../domain/transaction_type.dart';
+
+/// A category belongs to one type — does [c] fit [type]? (null = any.)
+bool categoryFitsType(Category c, TransactionType? type) => switch (type) {
+  null => true,
+  TransactionType.income => c.type == CategoryType.income,
+  TransactionType.expense => c.type == CategoryType.expense,
+  TransactionType.transfer => false,
+};
 
 /// The unit a transactions list period is measured in.
 enum TxPeriodKind { month, week, year, all, custom }

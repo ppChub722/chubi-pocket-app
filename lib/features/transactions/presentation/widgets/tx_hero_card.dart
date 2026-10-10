@@ -19,11 +19,14 @@ import '../../domain/transaction_type.dart';
 ///   [−รายจ่าย] [+รายรับ] [⇄โอน]          [📅 วันนี้]
 ///   ค่าอะไร?                               ฿1,250
 ///
-/// [inline], view mode (the detail page) — no type row, the colour says it:
+/// [inline], view mode (the detail page) — the same rows, only the type's
+/// own chip (no 🔒), plus ✏️ and the footer:
 ///
-///   ข้าวมันไก่ (≤ 2 lines, blank if none)  [📅 วันนี้] ✏️
-///                                          ฿1,250
-///   [footer: category · wallet]
+///   [−รายจ่าย]                      [📅 วันนี้] ✏️
+///   ข้าวมันไก่ (blank if none)            ฿1,250
+///   [footer: category · wallet cards]
+///
+/// [amountNote] goes under the amount in both ("ส่วนของคุณ ฿x · …").
 ///
 /// Event rows and scheduled entries stack it: chips · amount · title ·
 /// date. The title line is the "what for": a record's description, a
@@ -63,6 +66,7 @@ class TxHeroCard extends StatelessWidget {
     this.onLongPressField,
     this.inline = false,
     this.footer,
+    this.amountNote,
     super.key,
   });
 
@@ -127,6 +131,10 @@ class TxHeroCard extends StatelessWidget {
   /// Inline view mode: a row under the description · amount (the detail
   /// page's category · wallet · date chips).
   final Widget? footer;
+
+  /// Inline edit mode: a line under the amount, right-aligned (the
+  /// transaction form's "ส่วนของคุณ ฿x · คนอื่นติด ฿y" once it's split).
+  final Widget? amountNote;
 
   List<TransactionType> get _types => [
     TransactionType.expense,
@@ -264,16 +272,20 @@ class TxHeroCard extends StatelessWidget {
     // Inline: a transaction (owner 2026-10-10).
     final List<Widget> rows = !inline
         ? const []
-        : editing
-        // Edit / create:
-        //   [chips]                     [📅 date]
+        // Edit / create and view alike (owner 2026-10-10 — view got its type
+        // chip back, no 🔒 there):
+        //   [chips]                     [📅 date] (✏️ in view)
         //   ค่าอะไร? (≤ 2 lines)           ฿120
-        ? [
+        //                    [amountNote: ส่วนของคุณ …]
+        //   [footer, view: category · wallet cards]
+        // View: an empty description shows nothing.
+        : [
             Row(
               children: [
                 Expanded(child: chips),
                 const SizedBox(width: AppSpacing.xs),
                 datePill,
+                ?editChip,
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -281,7 +293,11 @@ class TxHeroCard extends StatelessWidget {
               builder: (context, box) => Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(child: titleField(maxLines: 2)),
+                  Expanded(
+                    child: !editing && title.text.trim().isEmpty
+                        ? const SizedBox.shrink()
+                        : titleField(maxLines: 2),
+                  ),
                   // The amount keeps its spot however long the
                   // description wraps.
                   SizedBox(
@@ -292,28 +308,19 @@ class TxHeroCard extends StatelessWidget {
               ),
             ),
             ?amountErrorText,
-          ]
-        // View (owner 2026-10-10) — no type row, the colour says it:
-        //   ข้าวมันไก่ (≤ 2 lines, blank if none)   [📅 date] ✏️
-        //                                              ฿182
-        //   [footer: category · wallet]
-        : [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: title.text.trim().isEmpty
-                      ? const SizedBox.shrink()
-                      : titleField(maxLines: 2),
+            if (amountNote != null)
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppSpacing.xs,
+                  right: AppSpacing.xs,
                 ),
-                const SizedBox(width: AppSpacing.xs),
-                datePill,
-                ?editChip,
-              ],
-            ),
-            amountField(align: TextAlign.end),
-            if (footer != null) ...[
-              const SizedBox(height: AppSpacing.sm),
+                child: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: amountNote,
+                ),
+              ),
+            if (!editing && footer != null) ...[
+              const SizedBox(height: AppSpacing.md),
               footer!,
             ],
           ];
@@ -446,7 +453,8 @@ Color txTypeColor(BuildContext context, TransactionType t) {
 }
 
 /// One small type chip — `[− รายจ่าย]`: filled in the type's colour when
-/// [selected], faint text otherwise.
+/// [selected], faint text otherwise. [type] null = "ทั้งหมด" (the filter's
+/// any-type chip), in a neutral ink — no icon.
 class TxTypeChip extends StatelessWidget {
   const TxTypeChip({
     required this.type,
@@ -456,7 +464,7 @@ class TxTypeChip extends StatelessWidget {
     super.key,
   });
 
-  final TransactionType type;
+  final TransactionType? type;
   final bool selected;
   final VoidCallback? onTap;
 
@@ -468,11 +476,15 @@ class TxTypeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final color = txTypeColor(context, type);
+    final t = type;
+    final color = t == null ? scheme.onSurface : txTypeColor(context, t);
     final fg = selected
-        ? (type == TransactionType.transfer ? scheme.surface : Colors.white)
+        ? (t == TransactionType.expense || t == TransactionType.income
+              ? Colors.white
+              : scheme.surface)
         : scheme.onSurfaceVariant.withValues(alpha: 0.7);
-    final (icon, label) = switch (type) {
+    final (IconData? icon, label) = switch (t) {
+      null => (null, l.transactionsListFilterAll),
       TransactionType.expense => (AppIcons.expense, l.transactionTypeExpense),
       TransactionType.income => (AppIcons.income, l.transactionTypeIncome),
       TransactionType.transfer => (
@@ -498,8 +510,10 @@ class TxTypeChip extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 16, color: fg),
-                const SizedBox(width: 2),
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: fg),
+                  const SizedBox(width: 2),
+                ],
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(

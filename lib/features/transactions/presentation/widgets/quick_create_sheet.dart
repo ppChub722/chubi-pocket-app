@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -5,20 +6,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/module_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
-import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
@@ -35,6 +34,7 @@ import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../transaction_edit.dart';
 import 'draft_form.dart';
+import 'tx_summary_title.dart';
 
 /// Maps the pinned quick-create error codes (API §10) to friendly copy;
 /// falls back to the BE message for anything unmapped.
@@ -63,9 +63,9 @@ String _eventErrorMessage(AppLocalizations l, ApiException e) {
 /// remembered per type.
 ///
 /// The fields are the shared [DraftForm] — the same one "เพิ่มร่าง" and
-/// "แก้ร่าง" use. Save sits pinned above the keyboard. Scrolling past the
-/// amount slides in a compact summary (type · amount · category) at the
-/// top; tap it to scroll back.
+/// "แก้ร่าง" use. Save sits pinned above the keyboard. Once the hero's
+/// amount scrolls out of view, the title row shows amount · category
+/// instead of the title; tap it to scroll back.
 ///
 /// Defaults: the last wallet used (else the first) and today.
 /// "เพิ่มเข้าอีเวนต์" files the bill into a new event or an existing one
@@ -214,10 +214,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   double _drag = 0;
   bool _dragging = false;
 
-  /// Scrolled past the amount → show the compact summary bar.
+  /// The hero card's amount is scrolled out of view → the title row shows
+  /// the amount + category instead of the title.
   bool _collapsed = false;
-  // The amount sits in the hero's second row now (owner 2026-10-10).
-  static const _collapseAt = 110.0;
+  final _heroKey = GlobalKey();
+  final _listKey = GlobalKey();
 
   bool get _editingDraft => widget.draft != null;
 
@@ -415,7 +416,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   void initState() {
     super.initState();
     _scroll.addListener(() {
-      final c = _scroll.offset > _collapseAt;
+      final c = _amountHidden();
       if (c != _collapsed) setState(() => _collapsed = c);
     });
     if (_isEvent) _initEvent();
@@ -667,8 +668,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final accounts = context.read<AccountsCubit>();
     final projects = context.read<ProjectsRepository>();
     final txRepo = context.read<TransactionsRepository>();
+    final projectsCubit = context.read<ProjectsCubit>();
     final navigator = Navigator.of(context);
-    final open = pageOpener(context);
     final messenger = ScaffoldMessenger.of(context);
     final splits = _c.isTransfer
         ? const <Map<String, dynamic>>[]
@@ -685,7 +686,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
     setState(() => _saving = true);
     String? warn;
-    String? openProject;
     try {
       if (event == null) {
         try {
@@ -725,7 +725,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             newTransaction: body,
           ),
         };
-        openProject = result.project.id;
         final txId = result.transactionId;
         if (txId != null && tagIds.isNotEmpty) {
           try {
@@ -735,21 +734,52 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           }
         }
         await TransactionsCubit.bookChanged();
+        // The events list picks up a new event / bill — in place, no page.
+        unawaited(projectsCubit.load());
       }
       await accounts.load();
       await _remember();
+      // Stay where the user is: close + snackbar, never a tab switch or a
+      // page push — an event bill too (owner 2026-10-10).
       navigator.pop(true);
       showAppSnackBarOn(
         messenger,
         warn ?? l.quickSaved,
         tone: warn == null ? Tone.success : Tone.warning,
       );
-      if (openProject != null) open('/projects/$openProject');
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
       _toast(
         event == null ? walletErrorMessage(l, e) : _eventErrorMessage(l, e),
+      );
+    }
+  }
+
+  // ── Title-row summary ─────────────────────────────────────────────
+
+  /// The hero's amount has scrolled up past the list's top edge. The
+  /// amount ends the card's content (inline layout), so its bottom minus
+  /// the card's padding is the line to watch.
+  bool _amountHidden() {
+    final hero = _heroKey.currentContext?.findRenderObject();
+    final list = _listKey.currentContext?.findRenderObject();
+    if (hero is! RenderBox || list is! RenderBox) return false;
+    if (!hero.attached || !list.attached) return false;
+    final amountBottom = hero
+        .localToGlobal(Offset(0, hero.size.height - AppSpacing.md))
+        .dy;
+    return amountBottom < list.localToGlobal(Offset.zero).dy;
+  }
+
+  void _scrollToTop() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(0);
+    } else {
+      _scroll.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
       );
     }
   }
@@ -828,21 +858,51 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         ),
                         child: Row(
                           children: [
+                            // The title, or — once the hero's amount has
+                            // scrolled away — amount + category (tap: back
+                            // to the top). Cross-fades in place; nothing
+                            // floats over the form any more.
                             Expanded(
-                              child: Text(
-                                _isScheduled
-                                    ? (_editingScheduled
-                                          ? l.scheduledSheetTitleEdit
-                                          : l.scheduledSheetTitleNew)
-                                    : _isEvent
-                                    ? (_editingRow
-                                          ? l.projectTxEditTitle
-                                          : l.projectTxNewTitle)
-                                    : _editingDraft
-                                    ? l.pendingEditTitle
-                                    : l.transactionFormTitleNew,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              child: AnimatedSwitcher(
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 200),
+                                layoutBuilder: (current, previous) => Stack(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  children: [...previous, ?current],
+                                ),
+                                child: _collapsed
+                                    ? TxSummaryTitle(
+                                        key: const ValueKey('summary'),
+                                        type: _c.type,
+                                        amount: _c.amountValue,
+                                        category: _c.isTransfer
+                                            ? null
+                                            : _c.category,
+                                        symbol: widget.project?.symbol ?? '฿',
+                                        onTap: _scrollToTop,
+                                      )
+                                    : Text(
+                                        key: const ValueKey('title'),
+                                        _isScheduled
+                                            ? (_editingScheduled
+                                                  ? l.scheduledSheetTitleEdit
+                                                  : l.scheduledSheetTitleNew)
+                                            : _isEvent
+                                            ? (_editingRow
+                                                  ? l.projectTxEditTitle
+                                                  : l.projectTxNewTitle)
+                                            : _editingDraft
+                                            ? l.pendingEditTitle
+                                            : l.transactionFormTitleNew,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
                               ),
                             ),
                             if (_editingDraft)
@@ -865,76 +925,42 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                   ),
                 ),
                 Expanded(
-                  child: Stack(
+                  child: ListView(
+                    key: _listKey,
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                      AppSpacing.lg,
+                      AppSpacing.xxl,
+                    ),
                     children: [
-                      ListView(
-                        controller: _scroll,
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.xs,
-                          AppSpacing.lg,
-                          AppSpacing.xxl,
-                        ),
-                        children: [
-                          DraftForm(
-                            controller: _c,
-                            defaultAccount: _defaultAccount(accounts),
-                            // A saved project row keeps its type.
-                            typeLocked: _editingRow,
-                            event: _isEvent
-                                ? DraftEvent(
-                                    members: widget.project!.currentMembers,
-                                    symbol: widget.project!.symbol,
-                                    pastDescriptions: _pastDescriptions,
-                                    tags: _eventTags,
-                                  )
-                                : null,
-                            schedule: _isScheduled
-                                ? DraftSchedule(editing: _editingScheduled)
-                                : null,
-                            // Drafts don't go to events (submit is a plain
-                            // create) — the tile only exists when creating.
-                            extra: _editingDraft || _isEvent || _isScheduled
-                                ? null
-                                : _EventTile(
-                                    target: _event,
-                                    onTap: _pickEvent,
-                                    onClear: () =>
-                                        setState(() => _event = null),
-                                  ),
-                          ),
-                        ],
-                      ),
-                      // Compact summary — slides in once the amount scrolls off.
-                      Positioned(
-                        left: AppSpacing.lg,
-                        right: AppSpacing.lg,
-                        top: AppSpacing.xs,
-                        child: IgnorePointer(
-                          ignoring: !_collapsed,
-                          child: AnimatedSlide(
-                            offset: _collapsed
-                                ? Offset.zero
-                                : const Offset(0, -0.6),
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeOutCubic,
-                            child: AnimatedOpacity(
-                              opacity: _collapsed ? 1 : 0,
-                              duration: const Duration(milliseconds: 180),
-                              child: _SummaryBar(
-                                type: _c.type,
-                                amount: _c.amountValue,
-                                category: _c.category,
-                                symbol: widget.project?.symbol ?? '฿',
-                                onTap: () => _scroll.animateTo(
-                                  0,
-                                  duration: const Duration(milliseconds: 280),
-                                  curve: Curves.easeOutCubic,
-                                ),
+                      DraftForm(
+                        controller: _c,
+                        heroKey: _heroKey,
+                        defaultAccount: _defaultAccount(accounts),
+                        // A saved project row keeps its type.
+                        typeLocked: _editingRow,
+                        event: _isEvent
+                            ? DraftEvent(
+                                members: widget.project!.currentMembers,
+                                symbol: widget.project!.symbol,
+                                pastDescriptions: _pastDescriptions,
+                                tags: _eventTags,
+                              )
+                            : null,
+                        schedule: _isScheduled
+                            ? DraftSchedule(editing: _editingScheduled)
+                            : null,
+                        // Drafts don't go to events (submit is a plain
+                        // create) — the card only exists when creating.
+                        extra: _editingDraft || _isEvent || _isScheduled
+                            ? null
+                            : _EventCard(
+                                target: _event,
+                                onTap: _pickEvent,
+                                onClear: () => setState(() => _event = null),
                               ),
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -998,10 +1024,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
 // ── Pieces ────────────────────────────────────────────────────────────
 
-/// "อีเวนต์  [ไม่ได้เลือก ▾]" — one picker row (owner 2026-10-10); picked
-/// → "🎉 name ✕" (✕ takes it off). Opens the event sheet.
-class _EventTile extends StatelessWidget {
-  const _EventTile({
+/// "อีเวนต์" as a full-width card, like the category / wallet cards (owner
+/// 2026-10-10): nothing picked → the dashed "ไม่ได้เลือก" card; picked → a
+/// card tinted in the events colour with the name and ✕ (takes it off).
+/// Tapping opens the event sheet.
+class _EventCard extends StatelessWidget {
+  const _EventCard({
     required this.target,
     required this.onTap,
     required this.onClear,
@@ -1013,134 +1041,38 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final t = target;
-    final name = switch (t) {
+    final accent = ModuleColors.of(context).people;
+    final name = switch (target) {
       null => null,
       _NewEvent(:final name) => l.quickEventNewNamed(name),
       _ExistingEvent(:final project) => project.name,
     };
-    return DraftFieldRow(
+    return PickCard(
       label: l.quickEventLabel,
-      child: Material(
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          side: BorderSide(color: scheme.outlineVariant),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.md),
-            child: Row(
-              children: [
-                if (name != null) ...[
-                  const Icon(AppIcons.project, size: 18),
-                  const SizedBox(width: AppSpacing.sm),
-                ],
-                Expanded(
-                  child: Text(
-                    name ?? l.quickEventNone,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: name == null ? scheme.onSurfaceVariant : null,
-                    ),
-                  ),
-                ),
-                if (name != null)
-                  IconButton(
-                    tooltip: l.quickEventRemove,
-                    icon: const Icon(AppIcons.clear, size: 18),
-                    onPressed: onClear,
-                  )
-                else
-                  const Padding(
-                    padding: EdgeInsets.all(AppSpacing.sm + 2),
-                    child: Icon(AppIcons.expand, size: 20),
-                  ),
-              ],
+      value: name,
+      placeholder: l.quickEventNone,
+      leading: name == null
+          ? const PickCardEmptyIcon(AppIcons.project, size: 32)
+          : Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(AppIcons.project, size: 18, color: accent),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Slides in at the top once the amount scrolls away.
-class _SummaryBar extends StatelessWidget {
-  const _SummaryBar({
-    required this.type,
-    required this.amount,
-    required this.category,
-    required this.onTap,
-    this.symbol = '฿',
-  });
-  final TransactionType type;
-  final double amount;
-  final Category? category;
-  final VoidCallback onTap;
-  final String symbol;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final typeLabel = switch (type) {
-      TransactionType.expense => l.transactionTypeExpense,
-      TransactionType.income => l.transactionTypeIncome,
-      TransactionType.transfer => l.transactionTypeTransfer,
-    };
-    return Material(
-      color: scheme.surface,
-      elevation: 3,
-      shadowColor: scheme.shadow.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              Text(
-                typeLabel,
-                style: textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: MoneyText(
-                  amount,
-                  symbol: symbol,
-                  tone: switch (type) {
-                    TransactionType.expense => MoneyTone.expense,
-                    TransactionType.income => MoneyTone.income,
-                    TransactionType.transfer => MoneyTone.plain,
-                  },
-                  hideable: false,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              if (category != null)
-                Chip(
-                  label: Text(category!.name),
-                  visualDensity: VisualDensity.compact,
-                ),
-            ],
-          ),
-        ),
-      ),
+      accent: accent,
+      watermark: AppIcons.project,
+      dense: true,
+      onTap: onTap,
+      trailing: name == null
+          ? null
+          : IconButton(
+              tooltip: l.quickEventRemove,
+              icon: const Icon(AppIcons.clear, size: 18),
+              onPressed: onClear,
+            ),
     );
   }
 }
@@ -1190,14 +1122,17 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
         children: [
           SectionHeader(
             title: l.quickEventNew,
-            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           ),
           Row(
             children: [
               Expanded(
+                // No floating label — it ran into the heading above, which
+                // already says what this is; the name shows as a hint when
+                // emptied.
                 child: AppTextField(
                   controller: _name,
-                  label: l.quickEventNameLabel,
+                  hint: l.quickEventNameLabel,
                   // Nothing is created here — the event is made with the
                   // bill, on บันทึก (owner 2026-10-10).
                   helper: l.quickEventCreatedOnSave,

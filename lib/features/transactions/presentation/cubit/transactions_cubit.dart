@@ -222,7 +222,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       if (seq != _seq || isClosed) return;
       emit(
         state.copyWith(
-          transactions: pageRes.transactions,
+          transactions: _keepSplits(pageRes.transactions),
           status: TransactionsStatus.loaded,
           loadingMore: false,
           page: pageRes.page,
@@ -485,21 +485,30 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return null;
   }
 
-  /// Re-fetches one row in place (the detail page's pull to refresh) —
-  /// a full [load] would re-run the list's filters, which may not include
-  /// this row. Re-throws [ApiException].
-  Future<void> refreshOne(String id) async {
+  /// Re-fetches one row in place (the detail page's pull to refresh, its
+  /// split people) — a full [load] would re-run the list's filters, which
+  /// may not include this row. Re-throws [ApiException].
+  ///
+  /// A read: a plain emit, no [refresh] — that would put page 1's list rows
+  /// (no `splits`) straight back over the row just fetched. [afterWrite]:
+  /// the row changed on the server (its splits were saved), so this goes
+  /// the write path and the other lists re-fetch too.
+  Future<void> refreshOne(String id, {bool afterWrite = false}) async {
     final fresh = await _repo.get(id);
+    if (isClosed) return;
     final known = state.transactions.any((t) => t.id == id);
-    _emitWrite(
-      state.copyWith(
-        // A row this list doesn't hold (opened from elsewhere) is placed
-        // only if the list's filters want it.
-        transactions: known
-            ? _patch(state.transactions, [fresh])
-            : _place([fresh]),
-      ),
+    final next = state.copyWith(
+      // A row this list doesn't hold (opened from elsewhere) is placed
+      // only if the list's filters want it.
+      transactions: known
+          ? _patch(state.transactions, [fresh])
+          : _place([fresh]),
     );
+    if (afterWrite) {
+      _emitWrite(next);
+    } else {
+      emit(next);
+    }
   }
 
   /// Server returns transactions in date_desc order; this is just a
@@ -526,7 +535,8 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   /// [state]'s rows with [rows] put where this list's filters and sort
   /// want them: an old copy is dropped; a row the filters exclude stays
   /// out; one sorting past the last loaded row waits for its page.
-  List<Transaction> _place(List<Transaction> rows) {
+  List<Transaction> _place(List<Transaction> incoming) {
+    final rows = _keepSplits(incoming);
     final ids = {for (final r in rows) r.id};
     final out = [
       for (final t in state.transactions)
@@ -543,6 +553,25 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       }
     }
     return out;
+  }
+
+  /// [incoming] with the cached rows' `splits` carried over: list rows and
+  /// write results come without the people (only GET /:id has them), so a
+  /// row whose split_count didn't change keeps the ones already fetched.
+  List<Transaction> _keepSplits(List<Transaction> incoming) {
+    final cached = {
+      for (final t in state.transactions)
+        if (t.splits.isNotEmpty) t.id: t,
+    };
+    if (cached.isEmpty) return incoming;
+    return [
+      for (final r in incoming)
+        switch (cached[r.id]) {
+          final old? when r.splits.isEmpty && r.splitCount == old.splitCount =>
+            r.copyWith(splits: old.splits),
+          _ => r,
+        },
+    ];
   }
 
   /// Replaces existing rows whose id matches one of [updates]; rows
