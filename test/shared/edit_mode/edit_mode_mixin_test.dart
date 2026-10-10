@@ -42,6 +42,7 @@ void main() {
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('th'),
         home: ShellChrome(controller: chrome, child: const _Page()),
       ),
     );
@@ -92,22 +93,57 @@ void main() {
     expect(s.canUndo, isFalse);
   });
 
-  testWidgets('back while dirty = Cancel: drops changes, no prompt', (t) async {
+  testWidgets('back while dirty asks; แก้ต่อ keeps the changes', (t) async {
     final s = await pump(t);
     s.applyChange('b');
     await t.pump();
     s.handleBack();
     await t.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await t.tap(find.text('แก้ต่อ'));
+    await t.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
+    expect(s.working, 'b');
+    expect(s.isEditing, isTrue);
+  });
+
+  testWidgets('back while dirty, confirmed: drops the changes', (t) async {
+    final s = await pump(t);
+    s.applyChange('b');
+    await t.pump();
+    s.handleBack();
+    await t.pumpAndSettle();
+    await t.tap(find.text('ยกเลิกการแก้ไข'));
+    await t.pumpAndSettle();
     expect(s.working, 'a');
     expect(s.isEditing, isFalse);
   });
 
-  testWidgets('system back while editing = Cancel too', (t) async {
+  testWidgets('system back while dirty asks too', (t) async {
     final s = await pump(t);
     s.applyChange('b');
     await t.pump();
     await t.binding.handlePopRoute();
+    await t.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(s.working, 'b');
+  });
+
+  testWidgets('back with nothing changed just leaves edit mode', (t) async {
+    final s = await pump(t);
+    s.enterEdit();
+    await t.pump();
+    s.handleBack();
+    await t.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(s.isEditing, isFalse);
+  });
+
+  testWidgets('the ยกเลิก button stays direct, even when dirty', (t) async {
+    final s = await pump(t);
+    s.applyChange('b');
+    await t.pumpAndSettle();
+    await t.tap(find.text('ยกเลิก'));
     await t.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
     expect(s.working, 'a');

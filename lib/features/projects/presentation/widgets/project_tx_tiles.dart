@@ -500,7 +500,6 @@ class _ResolveSheetState extends State<_ResolveSheet> {
       setState(() => _accountError = l.debtSettleAccountRequired);
       return;
     }
-    final txCubit = context.read<TransactionsCubit>();
     final accounts = context.read<AccountsCubit>();
     setState(() => _saving = true);
     try {
@@ -516,7 +515,7 @@ class _ResolveSheetState extends State<_ResolveSheet> {
           categoryId: _category?.id,
           sourceProjectTransactionId: widget.tx.id,
         );
-        await Future.wait([txCubit.load(), accounts.load()]);
+        await Future.wait([TransactionsCubit.bookChanged(), accounts.load()]);
       } else {
         await context.read<PersonalDebtsRepository>().create(
           direction: _iAmDebtor ? DebtDirection.iOwe : DebtDirection.owedToMe,

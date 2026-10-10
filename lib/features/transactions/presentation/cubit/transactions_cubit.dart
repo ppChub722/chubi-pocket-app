@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -22,6 +24,7 @@ class TransactionsState extends Equatable {
     this.totalPages = 0,
     this.revision = 0,
     this.loadingMore = false,
+    this.totals,
   });
 
   final List<Transaction> transactions;
@@ -43,6 +46,10 @@ class TransactionsState extends Equatable {
   /// doesn't read as "loading the next page".
   final bool loadingMore;
 
+  /// What the whole filtered set adds up to (every page) — the summary
+  /// card. Null when the server doesn't send it.
+  final ListTotals? totals;
+
   bool get hasMore => page > 0 && page < totalPages;
 
   TransactionsState copyWith({
@@ -54,6 +61,8 @@ class TransactionsState extends Equatable {
     int? revision,
     bool? loadingMore,
     bool clearError = false,
+    ListTotals? totals,
+    bool clearTotals = false,
   }) {
     return TransactionsState(
       transactions: transactions ?? this.transactions,
@@ -63,6 +72,7 @@ class TransactionsState extends Equatable {
       totalPages: totalPages ?? this.totalPages,
       revision: revision ?? this.revision,
       loadingMore: loadingMore ?? this.loadingMore,
+      totals: clearTotals ? null : (totals ?? this.totals),
     );
   }
 
@@ -75,6 +85,7 @@ class TransactionsState extends Equatable {
     totalPages,
     revision,
     loadingMore,
+    totals,
   ];
 }
 
@@ -84,12 +95,41 @@ enum TransactionsStatus { initial, loading, loaded, error }
 /// the API and are reflected via **surgical updates** — single-row
 /// mutations replace one row in state; transfer mutations replace two
 /// (matched by id). No full reload after a write.
+///
+/// A row only lands in the list when it matches the list's filters, at
+/// its sorted place (owner 2026-10-10: a new expense showed under a
+/// รายรับ filter; a back-dated one opened a new day at the top). When a
+/// filter can't be judged here (search, tags, sub-categories) the list
+/// re-fetches instead.
+///
+/// Several lists can be alive at once — the app's own, a wallet's รายการ
+/// tab, the dashboard drill-down — each with its own cubit. A write
+/// through any of them refreshes the others ([_live]); a write made
+/// elsewhere (pending submit, debt settle, adjust balance) calls
+/// [bookChanged].
 class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   TransactionsCubit({required TransactionsRepository repository})
     : _repo = repository,
-      super(const TransactionsState());
+      super(const TransactionsState()) {
+    _live.add(this);
+  }
 
   final TransactionsRepository _repo;
+
+  /// Every transactions list that's alive right now.
+  static final Set<TransactionsCubit> _live = {};
+
+  /// The book changed outside these cubits (a server-side write: pending
+  /// submit, debt settle, copy-to-book, adjust balance, …) — every live
+  /// list re-fetches, keeping its own filters and sort.
+  static Future<void> bookChanged() =>
+      Future.wait([for (final c in _live.toList()) c.refresh()]);
+
+  @override
+  Future<void> close() {
+    _live.remove(this);
+    return super.close();
+  }
 
   @override
   void clear() {
@@ -153,6 +193,8 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
           transactions: pageRes.transactions,
           status: TransactionsStatus.loaded,
           page: pageRes.page,
+          totals: pageRes.totals,
+          clearTotals: pageRes.totals == null,
           totalPages: pageRes.totalPages,
         ),
       );
@@ -164,6 +206,34 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
           error: ApiException.from(e, st),
         ),
       );
+    }
+  }
+
+  /// Re-fetches page 1 with the **current** filters and sort — after a
+  /// write the list should show, without resetting what the user picked
+  /// (a bare [load] means all-time, no filters, while the chips still say
+  /// "เดือนนี้"). Quiet: the rows stay on screen while it runs, and a
+  /// failure keeps them. Does nothing before the first load.
+  Future<void> refresh() async {
+    if (isClosed || state.status == TransactionsStatus.initial) return;
+    final seq = ++_seq;
+    try {
+      final pageRes = await _fetch(_last, page: 1);
+      if (seq != _seq || isClosed) return;
+      emit(
+        state.copyWith(
+          transactions: pageRes.transactions,
+          status: TransactionsStatus.loaded,
+          loadingMore: false,
+          page: pageRes.page,
+          totals: pageRes.totals,
+          clearTotals: pageRes.totals == null,
+          totalPages: pageRes.totalPages,
+          clearError: true,
+        ),
+      );
+    } catch (_) {
+      // Keep what's on screen; the next pull / load tries again.
     }
   }
 
@@ -285,9 +355,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         // so the in-memory state reflects the attached tags.
         final patchedRow = target.copyWith(tags: tags);
         if (result.single != null) {
-          _emitWrite(
-            state.copyWith(transactions: [patchedRow, ...state.transactions]),
-          );
+          _emitWrite(state.copyWith(transactions: _place([patchedRow])));
           return TransactionMutationResult.single(patchedRow);
         }
         // Transfer — replace OUT row with the patched one.
@@ -295,9 +363,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
           for (final r in result.transfer!.rows)
             if (r.id == target.id) patchedRow else r,
         ];
-        _emitWrite(
-          state.copyWith(transactions: [...newRows, ...state.transactions]),
-        );
+        _emitWrite(state.copyWith(transactions: _place(newRows)));
         return TransactionMutationResult.transfer(
           TransferResult(
             transferGroupId: result.transfer!.transferGroupId,
@@ -308,18 +374,12 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         // Attach failed — but the transaction IS created. Never rethrow the
         // ApiException: a form would stay open and a second Save would
         // create a duplicate. [TagsAttachFailed] says "saved, tags not".
-        _emitWrite(
-          state.copyWith(transactions: [...result.rows, ...state.transactions]),
-        );
+        _emitWrite(state.copyWith(transactions: _place(result.rows)));
         throw TagsAttachFailed(result, e);
       }
     }
-    // Insert the new row(s) at the front of the cache assuming
-    // sort=date_desc and that the user just created today's transaction.
-    // For older dates the order will be slightly off until next load.
-    _emitWrite(
-      state.copyWith(transactions: [...result.rows, ...state.transactions]),
-    );
+    // Only where the list's filters and sort put it (see [_place]).
+    _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;
   }
 
@@ -351,8 +411,9 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       clearAccount: clearAccount,
       transferToAccountId: transferToAccountId,
     );
-    final patched = _patch(state.transactions, result.rows);
-    _emitWrite(state.copyWith(transactions: patched));
+    // An edit can move the row (new date / amount) or take it out of the
+    // filters (new type / wallet / category).
+    _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;
   }
 
@@ -389,14 +450,8 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     // the BE's authoritative ordered tag list with full embedded
     // metadata (color/icon).
     final fresh = await _repo.get(transactionId);
-    _emitWrite(
-      state.copyWith(
-        transactions: [
-          for (final t in state.transactions)
-            if (t.id == fresh.id) fresh else t,
-        ],
-      ),
-    );
+    // Tags can take it in / out of a tag filter.
+    _emitWrite(state.copyWith(transactions: _place([fresh])));
   }
 
   /// Deletes a transaction. For transfers, the BE cascades to the
@@ -438,9 +493,11 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     final known = state.transactions.any((t) => t.id == id);
     _emitWrite(
       state.copyWith(
+        // A row this list doesn't hold (opened from elsewhere) is placed
+        // only if the list's filters want it.
         transactions: known
             ? _patch(state.transactions, [fresh])
-            : [fresh, ...state.transactions],
+            : _place([fresh]),
       ),
     );
   }
@@ -452,9 +509,41 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
 
   // ── Internal ──────────────────────────────────────────────────────
 
-  /// Emits a post-write state and bumps [TransactionsState.revision].
-  void _emitWrite(TransactionsState next) =>
-      emit(next.copyWith(revision: state.revision + 1));
+  /// Emits a post-write state and bumps [TransactionsState.revision]; the
+  /// other live lists re-fetch (a create from the + sheet shows up in the
+  /// wallet's รายการ tab too). A list whose filters [_place] can't judge
+  /// re-fetches itself.
+  void _emitWrite(TransactionsState next) {
+    emit(next.copyWith(revision: state.revision + 1));
+    // Totals (summary card) and filters this list can't judge need the
+    // server.
+    if (!_last.judgeable || state.totals != null) unawaited(refresh());
+    for (final other in _live.toList()) {
+      if (other != this) unawaited(other.refresh());
+    }
+  }
+
+  /// [state]'s rows with [rows] put where this list's filters and sort
+  /// want them: an old copy is dropped; a row the filters exclude stays
+  /// out; one sorting past the last loaded row waits for its page.
+  List<Transaction> _place(List<Transaction> rows) {
+    final ids = {for (final r in rows) r.id};
+    final out = [
+      for (final t in state.transactions)
+        if (!ids.contains(t.id)) t,
+    ];
+    if (!_last.judgeable) return [...rows, ...out]; // refresh fixes it
+    for (final r in rows) {
+      if (!_last.matches(r)) continue;
+      final at = out.indexWhere((t) => _last.compare(r, t) < 0);
+      if (at >= 0) {
+        out.insert(at, r);
+      } else if (!state.hasMore) {
+        out.add(r);
+      }
+    }
+    return out;
+  }
 
   /// Replaces existing rows whose id matches one of [updates]; rows
   /// not in [updates] are preserved as-is. Order preserved.
@@ -500,6 +589,40 @@ class _ListQuery {
   final bool uncategorized;
   final String sort;
   final int perPage;
+
+  /// Whether [matches] can tell, here, if a row belongs: a search, tags
+  /// or "with sub-categories" need the server.
+  bool get judgeable =>
+      (q == null || q!.trim().isEmpty) &&
+      tagIds.isEmpty &&
+      !(includeChildren && categoryId != null);
+
+  /// [t] passes this query's filters (only meaningful when [judgeable]).
+  bool matches(Transaction t) {
+    final day = t.date.length >= 10 ? t.date.substring(0, 10) : t.date;
+    if (accountId != null && t.accountId != accountId) return false;
+    if (noWallet && t.accountId != null) return false;
+    if (categoryId != null && t.categoryId != categoryId) return false;
+    if (uncategorized && t.categoryId != null) return false;
+    if (type != null && t.type != type) return false;
+    if (from != null && day.compareTo(from!) < 0) return false;
+    if (to != null && day.compareTo(to!) > 0) return false;
+    return true;
+  }
+
+  /// < 0 when [a] comes before [b] in this query's sort. A new row goes
+  /// first among equals for the newest-first / largest-first sorts (it's
+  /// the latest of its day) and last for the oldest-first ones.
+  int compare(Transaction a, Transaction b) {
+    final byDate = a.date.compareTo(b.date);
+    final byAmount = a.amount.compareTo(b.amount);
+    return switch (sort) {
+      'date_asc' => byDate == 0 ? 1 : byDate,
+      'amount_desc' => byAmount == 0 ? -1 : -byAmount,
+      'amount_asc' => byAmount == 0 ? 1 : byAmount,
+      _ => byDate == 0 ? -1 : -byDate, // date_desc
+    };
+  }
 }
 
 /// Thrown by [TransactionsCubit.add] when the transaction was created but

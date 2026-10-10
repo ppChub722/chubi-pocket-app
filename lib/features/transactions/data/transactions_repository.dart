@@ -14,6 +14,7 @@ class TransactionsPage {
     required this.perPage,
     required this.total,
     required this.totalPages,
+    this.totals,
   });
 
   final List<Transaction> transactions;
@@ -22,7 +23,40 @@ class TransactionsPage {
   final int total;
   final int totalPages;
 
+  /// Income / expense / net of the WHOLE filtered set (every page) — the
+  /// list's summary card. Null when the server doesn't send it.
+  final ListTotals? totals;
+
   bool get hasMore => page < totalPages;
+}
+
+/// `totals` of a list response: what the rows matching the filters add up
+/// to, transfers left out of both sides.
+class ListTotals {
+  const ListTotals({
+    required this.income,
+    required this.expense,
+    required this.net,
+    this.count = 0,
+  });
+
+  static ListTotals? fromJson(Object? json) {
+    if (json is! Map) return null;
+    double n(Object? v) => (v as num?)?.toDouble() ?? 0;
+    final income = n(json['income']);
+    final expense = n(json['expense']);
+    return ListTotals(
+      income: income,
+      expense: expense,
+      net: json['net'] is num ? n(json['net']) : income - expense,
+      count: (json['count'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  final double income;
+  final double expense;
+  final double net;
+  final int count;
 }
 
 /// `/v1/transactions/*` endpoints.
@@ -75,6 +109,7 @@ class TransactionsRepository {
         perPage: pag['per_page'] as int,
         total: pag['total'] as int,
         totalPages: pag['total_pages'] as int,
+        totals: ListTotals.fromJson(res.data!['totals']),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
@@ -85,6 +120,29 @@ class TransactionsRepository {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/transactions/$id',
+      );
+      return Transaction.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `PUT /v1/transactions/:id/splits` — the WHOLE new split list
+  /// (replace): a saved split as `{debt_id, owed_amount}`, a new person as
+  /// at create; one left out is removed, `[]` removes them all. Author only,
+  /// expense / income only. Returns the row with its new `splits`.
+  ///
+  /// Refusals: 400 SPLITS_EXCEED_AMOUNT · 404 SPLIT_CONTACT_NOT_FOUND ·
+  /// 409 CONTACT_ARCHIVED. Repayments never limit an edit: a repaid person
+  /// removed stays at 0 (overpaid) — contract v2.
+  Future<Transaction> updateSplits(
+    String id,
+    List<Map<String, dynamic>> splits,
+  ) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/transactions/$id/splits',
+        data: {'splits': splits},
       );
       return Transaction.fromJson(res.data!);
     } on DioException catch (e) {

@@ -128,6 +128,66 @@ abstract class AppLocalizations {
   /// **'Note'**
   String get commonNote;
 
+  /// No description provided for @editDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard your changes?'**
+  String get editDiscardTitle;
+
+  /// No description provided for @editDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'What you changed won\'t be saved.'**
+  String get editDiscardMessage;
+
+  /// No description provided for @editKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get editKeepEditing;
+
+  /// No description provided for @editDiscardConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes'**
+  String get editDiscardConfirm;
+
+  /// No description provided for @categorySystemOpening.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening balance'**
+  String get categorySystemOpening;
+
+  /// No description provided for @categorySystemAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance adjustment'**
+  String get categorySystemAdjustment;
+
+  /// No description provided for @categorySystemTransferIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer in'**
+  String get categorySystemTransferIn;
+
+  /// No description provided for @categorySystemTransferOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer out'**
+  String get categorySystemTransferOut;
+
+  /// No description provided for @categorySystemDebtReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt received'**
+  String get categorySystemDebtReceived;
+
+  /// No description provided for @categorySystemDebtPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt paid'**
+  String get categorySystemDebtPaid;
+
   /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:
@@ -1085,7 +1145,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectsPlaceholderMessage.
   ///
   /// In en, this message translates to:
-  /// **'Shared projects ship in Phase 1b.'**
+  /// **'Create a project to track costs you share with others.'**
   String get projectsPlaceholderMessage;
 
   /// No description provided for @moreCategories.
@@ -3188,12 +3248,6 @@ abstract class AppLocalizations {
   /// **'Split'**
   String get txDetailSplits;
 
-  /// No description provided for @txDetailHasSplits.
-  ///
-  /// In en, this message translates to:
-  /// **'Split with others'**
-  String get txDetailHasSplits;
-
   /// No description provided for @txDetailRecordedBy.
   ///
   /// In en, this message translates to:
@@ -3974,24 +4028,6 @@ abstract class AppLocalizations {
   /// **'Color'**
   String get tagFormColorLabel;
 
-  /// No description provided for @tagDetailsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Description · Note'**
-  String get tagDetailsTitle;
-
-  /// No description provided for @tagDescriptionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional · e.g. Japan trip spending'**
-  String get tagDescriptionHint;
-
-  /// No description provided for @tagNoteHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Optional'**
-  String get tagNoteHint;
-
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -4328,6 +4364,311 @@ abstract class AppLocalizations {
   /// **'What\'s it for?'**
   String get txHeroTitleHint;
 
+  /// No description provided for @txDetailRepaymentBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded from a debt repayment — it can\'t be edited, but it can be deleted (the debt\'s repaid amount goes down).'**
+  String get txDetailRepaymentBanner;
+
+  /// No description provided for @debtOverpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpaid'**
+  String get debtOverpaid;
+
+  /// No description provided for @debtOverpaidIOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpaid · I owe them back'**
+  String get debtOverpaidIOwe;
+
+  /// No description provided for @debtOverpaidTheyOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpaid · they owe me back'**
+  String get debtOverpaidTheyOwe;
+
+  /// No description provided for @debtOverpaidCantSettle.
+  ///
+  /// In en, this message translates to:
+  /// **'This debt is already overpaid — nothing more to record'**
+  String get debtOverpaidCantSettle;
+
+  /// No description provided for @txDetailDeleteRepaymentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The debt\'s repaid amount goes down by {amount}.'**
+  String txDetailDeleteRepaymentBody(String amount);
+
+  /// No description provided for @notifTypeSplitChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone changes a split with me'**
+  String get notifTypeSplitChanged;
+
+  /// No description provided for @notifAutoApplySplitChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto: update my debt to match'**
+  String get notifAutoApplySplitChange;
+
+  /// No description provided for @notifSplitAmountChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} changed the split {what}: {from} → {to}'**
+  String notifSplitAmountChanged(
+    String who,
+    String what,
+    String from,
+    String to,
+  );
+
+  /// No description provided for @notifSplitRemovedYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} removed you from the split {what}'**
+  String notifSplitRemovedYou(String who, String what);
+
+  /// No description provided for @notifSplitChangeUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your debt was updated'**
+  String get notifSplitChangeUpdated;
+
+  /// No description provided for @notifSplitChangeDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'That debt was removed'**
+  String get notifSplitChangeDeleted;
+
+  /// No description provided for @notifSplitChangeZeroed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share is now 0 — what you paid counts as overpaid'**
+  String get notifSplitChangeZeroed;
+
+  /// No description provided for @notifSplitChangeUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Already updated'**
+  String get notifSplitChangeUsed;
+
+  /// No description provided for @notifSplitChangeStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t update any more — there\'s a newer change'**
+  String get notifSplitChangeStale;
+
+  /// No description provided for @notifSplitChangeGone.
+  ///
+  /// In en, this message translates to:
+  /// **'That debt was deleted'**
+  String get notifSplitChangeGone;
+
+  /// No description provided for @txSplitStatusOverpaidToThem.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpaid {amount} · you owe it back'**
+  String txSplitStatusOverpaidToThem(String amount);
+
+  /// No description provided for @txSplitStatusOverpaidByMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpaid {amount} · they owe it back'**
+  String txSplitStatusOverpaidByMe(String amount);
+
+  /// No description provided for @txSplitRepaidSoFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid back {amount}'**
+  String txSplitRepaidSoFar(String amount);
+
+  /// No description provided for @txSplitErrorContact.
+  ///
+  /// In en, this message translates to:
+  /// **'That contact can\'t be used any more'**
+  String get txSplitErrorContact;
+
+  /// No description provided for @txSplitSeeDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'See on the debts page'**
+  String get txSplitSeeDebts;
+
+  /// No description provided for @txSplitEditOnDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit on the debts page'**
+  String get txSplitEditOnDebts;
+
+  /// No description provided for @txSplitStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Paid'**
+  String get txSplitStatusPaid;
+
+  /// No description provided for @txSplitStatusRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Repaid'**
+  String get txSplitStatusRepaid;
+
+  /// No description provided for @txSplitStatusAwaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes you {amount}'**
+  String txSplitStatusAwaiting(String amount);
+
+  /// No description provided for @txSplitStatusToPay.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe {amount}'**
+  String txSplitStatusToPay(String amount);
+
+  /// No description provided for @txSplitStatusPartPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {paid} of {total}'**
+  String txSplitStatusPartPaid(String paid, String total);
+
+  /// No description provided for @txSplitStatusPartRepaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Repaid {paid} of {total}'**
+  String txSplitStatusPartRepaid(String paid, String total);
+
+  /// No description provided for @txSplitStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get txSplitStatusCancelled;
+
+  /// No description provided for @txDetailMetaRecordedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded by {name}'**
+  String txDetailMetaRecordedBy(String name);
+
+  /// No description provided for @txTypeLockedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The type can\'t change after saving'**
+  String get txTypeLockedHint;
+
+  /// No description provided for @txDetailSplitEditElsewhere.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person} other{{count} people}} · edit on the debts page'**
+  String txDetailSplitEditElsewhere(int count);
+
+  /// No description provided for @txDetailCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded'**
+  String get txDetailCreatedAt;
+
+  /// No description provided for @txDetailUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last edited'**
+  String get txDetailUpdatedAt;
+
+  /// No description provided for @txSplitShareShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with'**
+  String get txSplitShareShort;
+
+  /// No description provided for @tagPickerCreateNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Create “{name}”'**
+  String tagPickerCreateNamed(String name);
+
+  /// No description provided for @tagsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get tagsMore;
+
+  /// No description provided for @txNoteAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note...'**
+  String get txNoteAddHint;
+
+  /// No description provided for @quickEventNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get quickEventNone;
+
+  /// No description provided for @quickUnsavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not saved yet'**
+  String get quickUnsavedTitle;
+
+  /// No description provided for @quickUnsavedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Close now and this entry is lost.'**
+  String get quickUnsavedMessage;
+
+  /// No description provided for @quickDiscardEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this entry'**
+  String get quickDiscardEntry;
+
+  /// No description provided for @txSplitIncompleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Some split rows aren\'t complete'**
+  String get txSplitIncompleteTitle;
+
+  /// No description provided for @txSplitIncompleteNoName.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} — no name yet'**
+  String txSplitIncompleteNoName(String amount);
+
+  /// No description provided for @txSplitIncompleteNoAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} — no amount yet'**
+  String txSplitIncompleteNoAmount(String name);
+
+  /// No description provided for @txSplitSkipIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Save without these rows'**
+  String get txSplitSkipIncomplete;
+
+  /// No description provided for @txTagCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the tag'**
+  String get txTagCreateFailed;
+
+  /// No description provided for @quickEventUseName.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this name'**
+  String get quickEventUseName;
+
+  /// No description provided for @quickEventCreatedOnSave.
+  ///
+  /// In en, this message translates to:
+  /// **'The event is created when you save.'**
+  String get quickEventCreatedOnSave;
+
+  /// No description provided for @projectTxPayerRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a member first'**
+  String get projectTxPayerRequired;
+
   /// No description provided for @scheduledHeroNameHint.
   ///
   /// In en, this message translates to:
@@ -4364,29 +4705,11 @@ abstract class AppLocalizations {
   /// **'Enter an amount first'**
   String get quickAmountRequired;
 
-  /// No description provided for @quickDiscardTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Close without saving?'**
-  String get quickDiscardTitle;
-
-  /// No description provided for @quickDiscardMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'What you entered will be lost.'**
-  String get quickDiscardMessage;
-
   /// No description provided for @quickDiscardConfirm.
   ///
   /// In en, this message translates to:
   /// **'Discard'**
   String get quickDiscardConfirm;
-
-  /// No description provided for @quickDiscardKeep.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep editing'**
-  String get quickDiscardKeep;
 
   /// No description provided for @quickAddToEvent.
   ///
@@ -4423,12 +4746,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Event name'**
   String get quickEventNameLabel;
-
-  /// No description provided for @quickEventCreate.
-  ///
-  /// In en, this message translates to:
-  /// **'Create'**
-  String get quickEventCreate;
 
   /// No description provided for @quickEventExisting.
   ///
@@ -4706,18 +5023,6 @@ abstract class AppLocalizations {
   /// **'Keep as a draft'**
   String get pendingKeepAsDraft;
 
-  /// No description provided for @pendingDropEditsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Drop your changes?'**
-  String get pendingDropEditsTitle;
-
-  /// No description provided for @pendingDropEditsMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'The draft goes back to how it was.'**
-  String get pendingDropEditsMessage;
-
   /// No description provided for @pendingBlockTitle.
   ///
   /// In en, this message translates to:
@@ -4837,12 +5142,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tags'**
   String get transactionFormTagsLabel;
-
-  /// No description provided for @transactionFormTagsEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No tags yet. Create one from the Tags page.'**
-  String get transactionFormTagsEmpty;
 
   /// No description provided for @transactionFormSave.
   ///
@@ -4973,7 +5272,7 @@ abstract class AppLocalizations {
   /// No description provided for @transactionsListEmptyMessage.
   ///
   /// In en, this message translates to:
-  /// **'No transactions match these filters.'**
+  /// **'Record the first income or expense of the month.'**
   String get transactionsListEmptyMessage;
 
   /// No description provided for @accountAdjustBalanceViewTransaction.
@@ -5693,7 +5992,7 @@ abstract class AppLocalizations {
   /// No description provided for @scheduledGenerateNowBody.
   ///
   /// In en, this message translates to:
-  /// **'Manually create the next transaction and advance the schedule. Phase 1c only — Phase 3 adds an automatic scheduler.'**
+  /// **'Record the next payment now and move the due date to the next period.'**
   String get scheduledGenerateNowBody;
 
   /// No description provided for @scheduledGenerateNowAction.
@@ -6445,6 +6744,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Later'**
   String get appUpdateLater;
+
+  /// No description provided for @transactionsEmptyMonthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions this month yet'**
+  String get transactionsEmptyMonthTitle;
+
+  /// No description provided for @transactionsNoMatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try other filters, or clear them to see everything.'**
+  String get transactionsNoMatchMessage;
+
+  /// No description provided for @notifCopyUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your copy is updated'**
+  String get notifCopyUpdated;
+
+  /// No description provided for @homeTodoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'To do'**
+  String get homeTodoTitle;
+
+  /// No description provided for @homeTodoPending.
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm'**
+  String get homeTodoPending;
+
+  /// No description provided for @homeTodoComingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get homeTodoComingUp;
+
+  /// No description provided for @transactionsFiltersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get transactionsFiltersTitle;
+
+  /// No description provided for @transactionsFiltersApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get transactionsFiltersApply;
+
+  /// No description provided for @transactionsSortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get transactionsSortBy;
+
+  /// No description provided for @txPeriodMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get txPeriodMonth;
+
+  /// No description provided for @txPeriodWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get txPeriodWeek;
+
+  /// No description provided for @txPeriodYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get txPeriodYear;
+
+  /// No description provided for @txPeriodCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get txPeriodCustom;
+
+  /// No description provided for @txPeriodPrev.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous period'**
+  String get txPeriodPrev;
+
+  /// No description provided for @txPeriodNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next period'**
+  String get txPeriodNext;
+
+  /// No description provided for @transactionsEmptyPeriodTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions in this period'**
+  String get transactionsEmptyPeriodTitle;
+
+  /// No description provided for @transactionsFilterRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this filter'**
+  String get transactionsFilterRemove;
 }
 
 class _AppLocalizationsDelegate

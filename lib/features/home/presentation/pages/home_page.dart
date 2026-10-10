@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +20,12 @@ import '../../../../shared/widgets/skeleton_box.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../budgets/presentation/cubit/budgets_cubit.dart';
+import '../../../notifications/data/notifications_repository.dart';
+import '../../../notifications/domain/notification.dart';
+import '../../../notifications/presentation/cubit/notifications_inbox_cubit.dart';
+import '../../../notifications/presentation/cubit/unread_badge_cubit.dart';
+import '../../../notifications/presentation/notification_actions.dart';
+import '../../../notifications/presentation/widgets/notification_tile.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
 import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
@@ -95,7 +103,14 @@ class _HomePageState extends State<HomePage> implements ShellSwipeHandler {
   @override
   Widget build(BuildContext context) => TabRootScaffold(
     title: AppLocalizations.of(context)!.navDashboard,
-    body: const _HomeView(),
+    // The inbox's own cubit, for "ต้องจัดการ"'s notifications — rows act
+    // on it exactly as they do in the inbox (NotificationActions).
+    body: BlocProvider(
+      create: (ctx) => NotificationsInboxCubit(
+        repository: ctx.read<NotificationsRepository>(),
+      )..load(),
+      child: const _HomeView(),
+    ),
   );
 }
 
@@ -133,6 +148,23 @@ class _HomeView extends StatelessWidget {
           listenWhen: (a, b) => a.entries != b.entries,
           listener: (c, _) => c.read<DashboardCubit>().markStale(),
         ),
+        // Notifications: the badge (polled, and refreshed by the inbox)
+        // moving means something changed elsewhere → re-fetch ours.
+        BlocListener<UnreadBadgeCubit, int>(
+          listener: (c, _) => c.read<NotificationsInboxCubit>().load(),
+        ),
+        // Acting here: keep the badge in step, and surface row-action
+        // failures like the inbox does.
+        BlocListener<NotificationsInboxCubit, InboxState>(
+          listenWhen: (a, b) =>
+              a.unreadCount != b.unreadCount || a.error != b.error,
+          listener: (c, s) {
+            c.read<UnreadBadgeCubit>().refresh();
+            if (s.error != null && s.status != InboxStatus.error) {
+              showAppSnackBar(c, s.errorMessage!, tone: Tone.danger);
+            }
+          },
+        ),
       ],
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
@@ -166,7 +198,11 @@ class _HomeView extends StatelessWidget {
             builder: (context) {
               final d = state.data!;
               return PullToRefresh(
-                onRefresh: cubit.load,
+                onRefresh: () => Future.wait([
+                  cubit.load(),
+                  context.read<NotificationsInboxCubit>().load(),
+                  context.read<PendingCubit>().load(),
+                ]),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   // Body sits under the transparent top bar.
@@ -177,8 +213,6 @@ class _HomeView extends StatelessWidget {
                     96 + MediaQuery.paddingOf(context).bottom,
                   ),
                   children: [
-                    _MonthBar(month: d.month),
-                    const SizedBox(height: AppSpacing.sm),
                     if (state.status == DashboardStatus.error) ...[
                       MessageBanner(
                         message: l.homeLoadError,
@@ -186,19 +220,29 @@ class _HomeView extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.md),
                     ],
-                    // Loading another month (or refreshing): the old
-                    // numbers dim instead of a spinner beside the month.
-                    AnimatedOpacity(
-                      duration: AppDurations.fast,
-                      opacity: state.status == DashboardStatus.loading
-                          ? 0.5
-                          : 1,
+                    // "Right now" first: net worth, then everything waiting
+                    // on the user (owner 2026-10-10) — none of it follows
+                    // the selected month.
+                    _Dimmed(
+                      loading: state.status == DashboardStatus.loading,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _NetWorthCard(netWorth: d.netWorth),
-                          const _PendingBlock(),
-                          const SizedBox(height: AppSpacing.md),
+                          _TodoSection(upcoming: d.upcoming),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    // The month bar heads the month-scoped blocks below it;
+                    // it never dims (the month is what's loading).
+                    _MonthBar(month: d.month),
+                    const SizedBox(height: AppSpacing.sm),
+                    _Dimmed(
+                      loading: state.status == DashboardStatus.loading,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           _MonthSlide(
                             month: d.month,
                             child: _MonthCard(
@@ -206,8 +250,6 @@ class _HomeView extends StatelessWidget {
                               previous: d.previous,
                             ),
                           ),
-                          if (d.upcoming.items.isNotEmpty)
-                            _ComingUp(block: d.upcoming),
                           _MonthSlide(
                             month: d.month,
                             child: _WhereItWent(d: d),
@@ -266,6 +308,22 @@ class _MonthBar extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Loading another month (or refreshing): the old numbers dim instead of a
+/// spinner beside the month.
+class _Dimmed extends StatelessWidget {
+  const _Dimmed({required this.loading, required this.child});
+
+  final bool loading;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedOpacity(
+    duration: AppDurations.fast,
+    opacity: loading ? 0.5 : 1,
+    child: child,
+  );
 }
 
 /// A month-scoped block: when the month changes (swipe, ‹ ›, the picker)
@@ -475,52 +533,10 @@ class _MonthCard extends StatelessWidget {
   }
 }
 
-// ── Coming up ─────────────────────────────────────────────────────────
+// ── Coming up (a "ต้องจัดการ" group) ───────────────────────────────────
 
-class _ComingUp extends StatelessWidget {
-  const _ComingUp({required this.block});
-
-  final UpcomingBlock block;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final muted = Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.lg),
-          child: Row(
-            children: [
-              Expanded(
-                child: SectionHeader(
-                  title: l.homeComingUp,
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-              Text('${l.homeComingUpWindow(block.days)}  ', style: muted),
-              MoneyText(-block.totalExpense, tone: MoneyTone.signed),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        SizedBox(
-          height: 128,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: block.items.length,
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-            itemBuilder: (context, i) => _UpcomingCard(item: block.items[i]),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
+/// One subscription / installment / card due — overdue ones get a red
+/// edge. Tap → its schedule or card.
 class _UpcomingCard extends StatelessWidget {
   const _UpcomingCard({required this.item});
 
@@ -1035,18 +1051,191 @@ class _Recent extends StatelessWidget {
   }
 }
 
-// ── Pending drafts ────────────────────────────────────────────────────
+// ── ต้องจัดการ ─────────────────────────────────────────────────────────
 
-/// "รอยืนยัน N รายการ" — the first two drafts, tap for the page. Hidden
-/// when nothing is pending. Drafts aren't in any total on this screen.
-class _PendingBlock extends StatelessWidget {
-  const _PendingBlock();
+/// "ต้องจัดการ" — everything waiting on the user, in one section (owner
+/// 2026-10-10): drafts to confirm, notifications to answer, payments
+/// coming up. Each group hides when empty; the section hides when all
+/// are. None of it follows the selected month.
+class _TodoSection extends StatelessWidget {
+  const _TodoSection({required this.upcoming});
+
+  final UpcomingBlock upcoming;
+
+  /// Notification rows shown here: unread, or still awaiting an answer.
+  static List<AppNotification> _waiting(InboxState s) => [
+    for (final n in s.notifications)
+      if (n.dismissedAt == null &&
+          (n.isUnread || NotificationTile.awaitsAnswer(n)))
+        n,
+  ];
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final items = context.watch<PendingCubit>().state.items;
-    if (items.isEmpty) return const SizedBox.shrink();
+    final drafts = context.watch<PendingCubit>().state.items;
+    final notes = _waiting(context.watch<NotificationsInboxCubit>().state);
+    // Unread may run past the first page — the badge knows the total.
+    final noteCount = math.max(
+      context.watch<UnreadBadgeCubit>().state,
+      notes.length,
+    );
+    final soon = upcoming.items;
+    if (drafts.isEmpty && notes.isEmpty && soon.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final muted = Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(
+          title: l.homeTodoTitle,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xs,
+            AppSpacing.lg,
+            0,
+            0,
+          ),
+        ),
+        if (drafts.isNotEmpty)
+          _TodoGroup(
+            icon: AppIcons.pending,
+            title: l.homeTodoPending,
+            count: drafts.length,
+            onViewAll: () => openPage(context, '/pending'),
+            child: _DraftsCard(drafts: drafts),
+          ),
+        if (notes.isNotEmpty)
+          _TodoGroup(
+            icon: AppIcons.notifications,
+            title: l.notificationsTitle,
+            count: noteCount,
+            onViewAll: () => openPage(context, '/notifications'),
+            child: _NotificationsCard(notes: notes, total: noteCount),
+          ),
+        if (soon.isNotEmpty)
+          _TodoGroup(
+            icon: AppIcons.scheduled,
+            title: l.homeTodoComingUp,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${l.homeComingUpWindow(upcoming.days)}  ', style: muted),
+                MoneyText(-upcoming.totalExpense, tone: MoneyTone.signed),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+            ),
+            child: SizedBox(
+              height: 128,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: soon.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: AppSpacing.sm),
+                itemBuilder: (context, i) => _UpcomingCard(item: soon[i]),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One "ต้องจัดการ" group: an icon + title · count sub-header (with
+/// "ดูทั้งหมด ›" or a [trailing] figure), then its compact content — the
+/// same treatment for all three so they read as one family.
+class _TodoGroup extends StatelessWidget {
+  const _TodoGroup({
+    required this.icon,
+    required this.title,
+    required this.child,
+    this.count,
+    this.onViewAll,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final int? count;
+  final VoidCallback? onViewAll;
+  final Widget? trailing;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 40,
+            child: Row(
+              children: [
+                const SizedBox(width: AppSpacing.xs),
+                Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+                const SizedBox(width: AppSpacing.sm),
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (count != null)
+                  Text(
+                    ' · $count',
+                    style: textTheme.titleSmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                const Spacer(),
+                ?trailing,
+                if (onViewAll != null)
+                  TextButton(
+                    onPressed: onViewAll,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(l.homeRecentViewAll),
+                        const Icon(AppIcons.chevronRight, size: 18),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// รอยืนยัน — the first two drafts + "+ อีก N" (tap → the pending tab).
+/// Drafts aren't in any total on this screen.
+class _DraftsCard extends StatelessWidget {
+  const _DraftsCard({required this.drafts});
+
+  final List<PendingTransaction> drafts;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -1081,66 +1270,81 @@ class _PendingBlock extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md),
-      child: Card(
-        margin: EdgeInsets.zero,
-        color: scheme.primaryContainer,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => openPage(context, '/pending'),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      AppIcons.pending,
-                      size: 18,
-                      color: scheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        l.pendingBlockTitle(items.length),
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: scheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      l.homeRecentViewAll,
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onPrimaryContainer,
-                      ),
-                    ),
-                    Icon(
-                      AppIcons.chevronRight,
-                      size: 18,
-                      color: scheme.onPrimaryContainer,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                for (final p in items.take(2)) ...[
-                  row(p),
-                  const SizedBox(height: AppSpacing.xxs),
-                ],
-                Text(
-                  items.length > 2
-                      ? '${l.pendingBlockMore(items.length - 2)} · ${l.pendingNotCounted}'
-                      : l.pendingNotCounted,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: scheme.onPrimaryContainer,
-                  ),
-                ),
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => openPage(context, '/pending'),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final p in drafts.take(2)) ...[
+                row(p),
+                const SizedBox(height: AppSpacing.xxs),
               ],
-            ),
+              Text(
+                drafts.length > 2
+                    ? '${l.pendingBlockMore(drafts.length - 2)} · ${l.pendingNotCounted}'
+                    : l.pendingNotCounted,
+                style: textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// การแจ้งเตือน — the latest three waiting rows with their one-tap
+/// actions (the inbox's own [NotificationActions]) + "+ อีก N".
+class _NotificationsCard extends StatelessWidget {
+  const _NotificationsCard({required this.notes, required this.total});
+
+  final List<AppNotification> notes;
+
+  /// Unread / waiting in all — may be more than [notes].
+  final int total;
+
+  static const _shown = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final shown = notes.take(_shown).toList();
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final n in shown)
+            NotificationTile(
+              notification: n,
+              onTap: (notif) => NotificationActions.tap(context, notif),
+              onAccept: (_) => NotificationActions.accept(context, n),
+              onReject: (_) => NotificationActions.reject(context, n),
+            ),
+          if (total > shown.length)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+              child: Text(
+                l.pendingBlockMore(total - shown.length),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

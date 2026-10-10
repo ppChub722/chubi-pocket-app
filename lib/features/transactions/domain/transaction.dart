@@ -130,6 +130,11 @@ class Transaction extends Equatable {
     this.categoryRender,
     this.isLocked = false,
     this.canEditCategory = true,
+    this.createdAt,
+    this.updatedAt,
+    this.splitCount = 0,
+    this.splits = const [],
+    this.project,
   });
 
   final String id;
@@ -193,6 +198,20 @@ class Transaction extends Equatable {
   final CategoryRender? categoryRender;
   final bool isLocked;
   final bool canEditCategory;
+
+  /// When the row was recorded / last changed (server time, local here).
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  /// Debt rows this transaction made in its owner's book ("หารกับ N คน").
+  final int splitCount;
+
+  /// Those debt rows — GET /:id only, and only the caller's own (empty for
+  /// another member's row on a shared wallet, while [splitCount] shows).
+  final List<TxSplit> splits;
+
+  /// `{id, name}` of [projectId]'s project, for "มาจาก".
+  final EmbeddedRef? project;
 
   bool get isTransferOut =>
       type == TransactionType.transfer && _isTransferOutCategory;
@@ -258,6 +277,22 @@ class Transaction extends Equatable {
           : null,
       isLocked: (json['is_locked'] as bool?) ?? false,
       canEditCategory: (json['can_edit_category'] as bool?) ?? true,
+      createdAt: DateTime.tryParse(
+        (json['created_at'] as String?) ?? '',
+      )?.toLocal(),
+      updatedAt: DateTime.tryParse(
+        (json['updated_at'] as String?) ?? '',
+      )?.toLocal(),
+      splitCount: (json['split_count'] as num?)?.toInt() ?? 0,
+      splits: json['splits'] is List
+          ? (json['splits'] as List)
+                .cast<Map<String, dynamic>>()
+                .map(TxSplit.fromJson)
+                .toList()
+          : const [],
+      project: json['project'] is Map<String, dynamic>
+          ? EmbeddedRef.fromJson(json['project'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -283,6 +318,11 @@ class Transaction extends Equatable {
     CategoryRender? categoryRender,
     bool? isLocked,
     bool? canEditCategory,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    int? splitCount,
+    List<TxSplit>? splits,
+    EmbeddedRef? project,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -306,6 +346,11 @@ class Transaction extends Equatable {
       categoryRender: categoryRender ?? this.categoryRender,
       isLocked: isLocked ?? this.isLocked,
       canEditCategory: canEditCategory ?? this.canEditCategory,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      splitCount: splitCount ?? this.splitCount,
+      splits: splits ?? this.splits,
+      project: project ?? this.project,
     );
   }
 
@@ -332,6 +377,11 @@ class Transaction extends Equatable {
     categoryRender,
     isLocked,
     canEditCategory,
+    createdAt,
+    updatedAt,
+    splitCount,
+    splits,
+    project,
   ];
 }
 
@@ -378,4 +428,56 @@ class TransferResult {
       rows: raw.map(Transaction.fromJson).toList(),
     );
   }
+}
+
+/// One debt row a transaction's split made (GET /transactions/:id).
+class TxSplit extends Equatable {
+  const TxSplit({
+    required this.debtId,
+    required this.personName,
+    required this.amount,
+    this.contactId,
+    this.settledAmount = 0,
+    this.status = 'open',
+    this.owedToMe = true,
+  });
+
+  final String debtId;
+  final String personName;
+  final String? contactId;
+  final double amount;
+  final double settledAmount;
+
+  /// open · settled · cancelled.
+  final String status;
+
+  /// owed_to_me (they pay me back) vs i_owe (I pay them).
+  final bool owedToMe;
+
+  /// amount − repaid. Negative = overpaid (repayments don't limit edits,
+  /// owner 2026-10-10).
+  double get outstanding => amount - settledAmount;
+
+  bool get isOverpaid => outstanding < -0.005;
+
+  factory TxSplit.fromJson(Map<String, dynamic> json) => TxSplit(
+    debtId: json['debt_id'] as String,
+    personName: (json['person_name'] as String?) ?? '',
+    contactId: json['contact_id'] as String?,
+    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    settledAmount: (json['settled_amount'] as num?)?.toDouble() ?? 0,
+    status: (json['status'] as String?) ?? 'open',
+    owedToMe: json['direction'] != 'i_owe',
+  );
+
+  @override
+  List<Object?> get props => [
+    debtId,
+    personName,
+    contactId,
+    amount,
+    settledAmount,
+    status,
+    owedToMe,
+  ];
 }

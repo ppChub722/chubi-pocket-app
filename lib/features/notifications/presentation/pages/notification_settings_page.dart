@@ -144,6 +144,12 @@ class _Body extends StatelessWidget {
                     l.notifTypeSplitCreated,
                     autoLabel: l.notifAutoAddDebt,
                   ),
+                  // Off by default: auto = my debt follows each change.
+                  typeRow(
+                    NotificationType.splitChanged,
+                    l.notifTypeSplitChanged,
+                    autoLabel: l.notifAutoApplySplitChange,
+                  ),
                   typeRow(
                     NotificationType.splitPaid,
                     l.notifTypeSplitPaid,

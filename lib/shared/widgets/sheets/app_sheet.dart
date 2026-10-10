@@ -45,7 +45,8 @@ Future<T?> showAppSheetCustom<T>(
 
 /// Layout used by [showAppSheet] — exposed so custom sheets (stateful
 /// pickers) can share the same chrome (open them with
-/// [showAppSheetCustom]).
+/// [showAppSheetCustom]). It pads for the keyboard itself, so content
+/// inside must not add `viewInsets` again.
 class AppSheetScaffold extends StatelessWidget {
   const AppSheetScaffold({
     required this.child,
@@ -61,40 +62,48 @@ class AppSheetScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final body = SafeArea(
+      top: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (title != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
+              child: Text(
+                title!,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+          Flexible(child: SingleChildScrollView(child: child)),
+          if (footer != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.md,
+              ),
+              child: footer!,
+            ),
+        ],
+      ),
+    );
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (title != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  0,
-                  AppSpacing.lg,
-                  AppSpacing.md,
-                ),
-                child: Text(
-                  title!,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-            Flexible(child: SingleChildScrollView(child: child)),
-            if (footer != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.md,
-                ),
-                child: footer!,
-              ),
-          ],
-        ),
+      // The keyboard is handled right here — below this, viewInsets read
+      // zero, so a sheet's own content can't pad for it a second time (a
+      // double gap above the keyboard).
+      child: MediaQuery.removeViewInsets(
+        context: context,
+        removeBottom: true,
+        child: body,
       ),
     );
   }

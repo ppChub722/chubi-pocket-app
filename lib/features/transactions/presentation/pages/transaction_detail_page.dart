@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,12 +14,15 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/edit_mode/edit_mode_mixin.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
@@ -29,9 +36,9 @@ import '../widgets/draft_form.dart';
 /// after, split, recorded by, source project.
 ///
 /// ✏️ on the hero, or a long-press on a field, edits in place
-/// ([EditModeMixin]): ยกเลิก · ↶ · บันทึก, the nav hidden, back = cancel,
-/// 🗑 as the last row. Saves the same way as the sheet's edit mode
-/// ([saveTransactionEdit]). System rows (opening balance / adjustment) and
+/// ([EditModeMixin]): ยกเลิก · ↶ · บันทึก, the nav hidden, back asks before
+/// dropping changes, 🗑 as the last row. Saves through
+/// [saveTransactionEdit]. System rows (opening balance / adjustment) and
 /// an ex-member's locked rows stay read-only, with a banner.
 class TransactionDetailPage extends StatefulWidget {
   const TransactionDetailPage({required this.transactionId, super.key});
@@ -114,8 +121,11 @@ class _LoadedState extends State<_Loaded>
 
   /// The row the form edits: the page's row, or for an incoming transfer
   /// its outgoing twin — so the wallets read [จาก] → [ไป] and the save is
-  /// the one the sheet makes for that transfer.
+  /// the one made for that transfer.
   late Transaction _edited;
+
+  /// A transfer's other row fetched because it wasn't cached.
+  Transaction? _fetchedTwin;
   String? _initialAccountId;
   String? _initialToAccountId;
 
@@ -128,6 +138,34 @@ class _LoadedState extends State<_Loaded>
     _prefill();
     initDraft(_c.toDraft());
     _c.addListener(_onFormChanged);
+    _fetchTwinIfMissing();
+    _fetchSplitsIfMissing();
+  }
+
+  /// List rows carry only `split_count`; the people (the split list) come
+  /// with GET /:id. Once, on open.
+  Future<void> _fetchSplitsIfMissing() async {
+    final tx = widget.tx;
+    if (tx.splitCount == 0 || tx.splits.isNotEmpty) return;
+    try {
+      await context.read<TransactionsCubit>().refreshOne(tx.id);
+    } on ApiException {
+      // The row still opens the debts list.
+    }
+  }
+
+  /// Opened from a wallet's tab, a deep link or a filtered list, the
+  /// transfer's other row may not be cached — without it the form shows no
+  /// destination wallet and saving fails.
+  Future<void> _fetchTwinIfMissing() async {
+    final tx = widget.tx;
+    if (tx.transferGroupId == null || transferSibling(context, tx) != null) {
+      return;
+    }
+    final twin = await fetchTransferSibling(context, tx);
+    if (!mounted || twin == null) return;
+    _fetchedTwin = twin;
+    if (!isEditing) _reload();
   }
 
   @override
@@ -145,8 +183,11 @@ class _LoadedState extends State<_Loaded>
 
   void _prefill() {
     final tx = widget.tx;
-    var edited = tx;
-    if (tx.isTransferIn) edited = transferSibling(context, tx) ?? tx;
+    final twin = tx.transferGroupId == null
+        ? null
+        : transferSibling(context, tx) ?? _fetchedTwin;
+    final edited = tx.isTransferIn && twin != null ? twin : tx;
+    final other = identical(edited, tx) ? twin : tx;
     _edited = edited;
     _restoring = true;
     _c.tagIds.clear();
@@ -155,7 +196,9 @@ class _LoadedState extends State<_Loaded>
       edited,
       accounts: context.read<AccountsCubit>().state.accounts,
       categories: context.read<CategoriesCubit>().state.categories,
-      toAccount: transferOtherAccount(context, edited),
+      toAccount: other?.accountId == null
+          ? null
+          : context.read<AccountsCubit>().byId(other!.accountId!),
     );
     _restoring = false;
     _initialAccountId = _c.account?.id;
@@ -199,6 +242,8 @@ class _LoadedState extends State<_Loaded>
           ? 'note'
           : next.description != w.description
           ? 'description'
+          : jsonEncode(next.splits) != jsonEncode(w.splits)
+          ? 'splits'
           : 'amount';
       applyTextChange(field, next);
     } else {
@@ -215,6 +260,8 @@ class _LoadedState extends State<_Loaded>
       showAppSnackBar(context, problem, tone: Tone.danger);
       return;
     }
+    if (!await confirmIncompleteSplits(context, _c)) return;
+    if (!mounted) return;
     setSaving(true);
     try {
       final warn = await saveTransactionEdit(
@@ -236,7 +283,11 @@ class _LoadedState extends State<_Loaded>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, walletErrorMessage(l, e), tone: Tone.danger);
+      showAppSnackBar(
+        context,
+        splitErrorMessage(l, e) ?? walletErrorMessage(l, e),
+        tone: Tone.danger,
+      );
     }
   }
 
@@ -254,38 +305,96 @@ class _LoadedState extends State<_Loaded>
     final isSystemRow =
         tx.type != TransactionType.transfer && (cat?.isSystem ?? false);
     final canEdit = !isSystemRow && !tx.isLocked;
+    // A debt repayment (system Debt Paid / Received): not editable, but
+    // deletable — its amount comes off the debt's repaid (BE v2).
+    final isRepayment =
+        isSystemRow &&
+        !tx.isLocked &&
+        (cat?.iconCode?.icon == 'system_debt_paid' ||
+            cat?.iconCode?.icon == 'system_debt_received');
+    // The row's author edits its splits in place (expense / income only);
+    // anyone else sees them read-only, with the way to the debts.
+    final canEditSplits =
+        canEdit &&
+        tx.type != TransactionType.transfer &&
+        _edited.canEditCategory;
     final editing = isEditing;
 
-    final info = <Widget>[
-      if (tx.accountBalanceAfter != null)
-        DetailRow(
-          label: l.txDetailBalanceAfter,
-          trailing: MoneyText(tx.accountBalanceAfter!),
-        ),
-      if (tx.hasSplits)
-        DetailRow(
-          leading: const Icon(AppIcons.split),
-          label: l.txDetailSplits,
-          trailing: Text(l.txDetailHasSplits),
-        ),
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    String stamp(DateTime d) =>
+        '${DateFormatter.medium(d, locale: locale)} '
+        '${DateFormatter.time(d, locale: locale)}';
+    final splitCount = math.max(tx.splitCount, tx.splits.length);
+    final hasSplits = splitCount > 0;
+    final created = tx.createdAt;
+    final updated = tx.updatedAt;
+    // Only an edit after the row was made counts as "แก้ไขล่าสุด".
+    final edited =
+        created != null &&
+        updated != null &&
+        updated.difference(created).inSeconds.abs() >= 60;
+    void openProject() => openPage(context, '/projects/${tx.projectId}');
+
+    // After the note (owner 2026-10-10). View: who it's split with, each
+    // with where they stand, then "มาจาก ›". Edit: what a saved row can't
+    // change, read-only with the way to it.
+    final trailingRows = editing
+        ? <Widget>[
+            if (hasSplits && !canEditSplits)
+              DraftFieldRow(
+                label: l.txSplitWith,
+                child: _LinkValue(
+                  text: splitCount > 0
+                      ? l.txDetailSplitEditElsewhere(splitCount)
+                      : l.txSplitEditOnDebts,
+                  locked: true,
+                  onTap: () => _openSplits(),
+                ),
+              ),
+            if (tx.projectId != null)
+              DraftFieldRow(
+                label: l.quickEventLabel,
+                child: _LinkValue(
+                  text: tx.project?.name ?? l.txDetailSourceProject,
+                  locked: true,
+                  onTap: openProject,
+                ),
+              ),
+          ]
+        : <Widget>[
+            if (tx.splits.isNotEmpty)
+              _SplitList(splits: tx.splits, onOpen: _openSplits)
+            else if (hasSplits)
+              // Another member's row on a shared wallet: the BE keeps the
+              // people to their author — say where to look, never a bare
+              // count (owner 2026-10-10).
+              DraftFieldRow(
+                label: l.txSplitWith,
+                child: _LinkValue(
+                  text: l.txSplitSeeDebts,
+                  onTap: () => _openSplits(),
+                ),
+              ),
+            if (tx.projectId != null)
+              DraftFieldRow(
+                label: l.txDetailSource,
+                child: _LinkValue(
+                  text: tx.project?.name ?? l.txDetailSourceProject,
+                  onTap: openProject,
+                ),
+              ),
+          ];
+
+    // The very bottom: small muted record info, one item per line (owner
+    // 2026-10-10).
+    final metaLines = <String>[
       if (tx.createdBy != null)
-        DetailRow(
-          leading: UserAvatar(
-            displayName: tx.createdBy!.displayName,
-            iconCode: tx.createdBy!.iconCode,
-            size: 24,
-          ),
-          label: l.txDetailRecordedBy,
-          trailing: Text(tx.createdBy!.displayName),
-        ),
-      if (tx.projectId != null)
-        DetailRow(
-          leading: const Icon(AppIcons.project),
-          label: l.txDetailSource,
-          trailing: Text(l.txDetailSourceProject),
-          showChevron: true,
-          onTap: () => openPage(context, '/projects/${tx.projectId}'),
-        ),
+        l.txDetailMetaRecordedBy(tx.createdBy!.displayName),
+      if (tx.accountBalanceAfter != null)
+        '${l.txDetailBalanceAfter} '
+            '${moneyString(context, tx.accountBalanceAfter!)}',
+      if (created != null) '${l.txDetailCreatedAt} ${stamp(created)}',
+      if (edited) '${l.txDetailUpdatedAt} ${stamp(updated)}',
     ];
 
     return editScope(
@@ -322,7 +431,11 @@ class _LoadedState extends State<_Loaded>
               ),
               children: [
                 if (isSystemRow) ...[
-                  _LockNote(text: l.transactionDetailSystemRowBanner),
+                  _LockNote(
+                    text: isRepayment
+                        ? l.txDetailRepaymentBanner
+                        : l.transactionDetailSystemRowBanner,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                 ] else if (tx.isLocked) ...[
                   MessageBanner(
@@ -334,9 +447,10 @@ class _LoadedState extends State<_Loaded>
                 DraftForm(
                   controller: _c,
                   autofocus: false,
-                  // The update API can't change these.
+                  // The type can't change after saving; splits can, by the
+                  // author (PUT /transactions/:id/splits).
                   typeLocked: true,
-                  allowSplits: false,
+                  allowSplits: canEditSplits,
                   editing: editing,
                   categoryLockedHint: _edited.canEditCategory
                       ? null
@@ -346,14 +460,29 @@ class _LoadedState extends State<_Loaded>
                   onOpenCategory: (c) =>
                       openPage(context, '/categories/${c.id}'),
                   onOpenAccount: (a) => openPage(context, '/accounts/${a.id}'),
+                  trailingRows: trailingRows,
                 ),
-                if (info.isNotEmpty)
-                  SectionCard(locked: editing, children: info),
-                if (editing && canEdit)
+                if ((editing && canEdit) || isRepayment)
                   DangerRow(
                     icon: AppIcons.delete,
                     label: l.transactionDeleteThis,
-                    onTap: isSaving ? null : () => _confirmDelete(context, l),
+                    onTap: isSaving
+                        ? null
+                        : () => _confirmDelete(
+                            context,
+                            l,
+                            repayment: isRepayment,
+                          ),
+                  ),
+                if (metaLines.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xl),
+                    child: Text(
+                      metaLines.join('\n'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -364,7 +493,27 @@ class _LoadedState extends State<_Loaded>
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, AppLocalizations l) async {
+  /// A split person → their debts page (by contact, else by name). No
+  /// person given: the only one, or — several, or not loaded — the debts
+  /// list.
+  void _openSplits([TxSplit? person]) {
+    final splits = widget.tx.splits;
+    if (person == null && splits.length != 1) {
+      openPage(context, '/personal-debts');
+      return;
+    }
+    final s = person ?? splits.single;
+    final query = Uri(
+      queryParameters: {'contact': ?s.contactId, 'name': s.personName},
+    ).query;
+    openPage(context, '/personal-debts/person?$query');
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    AppLocalizations l, {
+    bool repayment = false,
+  }) async {
     final tx = widget.tx;
     final isTransfer = tx.type == TransactionType.transfer;
     final ok = await showConfirmDialog(
@@ -372,7 +521,9 @@ class _LoadedState extends State<_Loaded>
       title: isTransfer
           ? l.transactionDetailDeleteConfirmTitleTransfer
           : l.transactionDetailDeleteConfirmTitle,
-      message: isTransfer
+      message: repayment
+          ? l.txDetailDeleteRepaymentBody(moneyString(context, tx.amount))
+          : isTransfer
           ? l.transactionDetailDeleteConfirmBodyTransfer
           : l.transactionDetailDeleteConfirmBody,
       confirmLabel: l.transactionDetailDeleteConfirmAction,
@@ -382,12 +533,15 @@ class _LoadedState extends State<_Loaded>
     final router = GoRouter.of(context);
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
+    final debtsCubit = context.read<PersonalDebtsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final back = ShellBackScope.maybeOf(context);
     try {
       await txCubit.remove(tx.id);
       // A transfer moves two balances — a full reload keeps it simple.
       await accountsCubit.load();
+      // A repayment gone lowers its debt's repaid amount.
+      if (repayment) unawaited(debtsCubit.load());
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       // Opened alone in its tab (from another tab) there's nothing to pop
       // — back to where the user came from.
@@ -434,6 +588,145 @@ class _LockNote extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A value that leads somewhere else — "มาจาก Japan Trip ›"; [locked] adds
+/// a 🔒 for what a saved row can't change ("2 คน · แก้ได้ที่หน้าหนี้ ›").
+class _LinkValue extends StatelessWidget {
+  const _LinkValue({
+    required this.text,
+    required this.onTap,
+    this.locked = false,
+  });
+  final String text;
+  final VoidCallback onTap;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 10,
+        ),
+        child: Row(
+          children: [
+            if (locked) ...[
+              Icon(AppIcons.lock, size: 16, color: scheme.onSurfaceVariant),
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            Expanded(
+              child: Text(
+                text,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: locked ? scheme.onSurfaceVariant : null,
+                ),
+              ),
+            ),
+            Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "หารกับ" as the people themselves — each with what they owe and where
+/// it stands (owner 2026-10-10). Tapping a person opens their debts.
+class _SplitList extends StatelessWidget {
+  const _SplitList({required this.splits, required this.onOpen});
+  final List<TxSplit> splits;
+  final ValueChanged<TxSplit> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    String money(double v) => moneyString(context, v);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l.txSplitWith,
+          style: textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        for (final s in splits)
+          InkWell(
+            onTap: () => onOpen(s),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Row(
+                children: [
+                  UserAvatar(displayName: s.personName, size: 28),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      s.personName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodyLarge,
+                    ),
+                  ),
+                  Text(money(s.amount), style: textTheme.bodyLarge),
+                  const SizedBox(width: AppSpacing.md),
+                  // Where it stands, from my side of it.
+                  Text(
+                    switch (s.status) {
+                      // Repaid more than the (edited) amount: say which way
+                      // the difference goes back (owner 2026-10-10).
+                      _ when s.isOverpaid =>
+                        s.owedToMe
+                            ? l.txSplitStatusOverpaidToThem(
+                                money(-s.outstanding),
+                              )
+                            : l.txSplitStatusOverpaidByMe(
+                                money(-s.outstanding),
+                              ),
+                      'settled' =>
+                        s.owedToMe
+                            ? l.txSplitStatusPaid
+                            : l.txSplitStatusRepaid,
+                      'cancelled' => l.txSplitStatusCancelled,
+                      _ when s.settledAmount > 0.005 =>
+                        s.owedToMe
+                            ? l.txSplitStatusPartPaid(
+                                money(s.settledAmount),
+                                money(s.amount),
+                              )
+                            : l.txSplitStatusPartRepaid(
+                                money(s.settledAmount),
+                                money(s.amount),
+                              ),
+                      _ =>
+                        s.owedToMe
+                            ? l.txSplitStatusAwaiting(money(s.outstanding))
+                            : l.txSplitStatusToPay(money(s.outstanding)),
+                    },
+                    style: textTheme.bodySmall?.copyWith(
+                      color: s.isOverpaid
+                          ? palette.warning
+                          : s.status == 'settled'
+                          ? palette.income
+                          : scheme.onSurfaceVariant,
+                      fontWeight: s.status == 'settled'
+                          ? FontWeight.w600
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

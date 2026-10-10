@@ -56,6 +56,9 @@ abstract final class AppIcons {
   static const expense = Icons.remove;
   static const transfer = Icons.swap_horiz;
   static const noWallet = Icons.money_off_outlined;
+
+  /// "ไม่ระบุหมวด" — rows without a category (filters, pickers).
+  static const noCategory = Icons.label_off_outlined;
   static const currency = Icons.currency_exchange;
   static const date = Icons.calendar_today_outlined;
   static const note = Icons.sticky_note_2_outlined;
@@ -169,6 +172,7 @@ abstract final class AppIcons {
       'expense': expense,
       'transfer': transfer,
       'noWallet': noWallet,
+      'noCategory': noCategory,
       'currency': currency,
       'date': date,
       'note': note,

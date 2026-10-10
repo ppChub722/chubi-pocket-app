@@ -24,6 +24,36 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonNote => 'โน้ต';
 
   @override
+  String get editDiscardTitle => 'ยกเลิกการแก้ไข?';
+
+  @override
+  String get editDiscardMessage => 'สิ่งที่แก้ไว้จะไม่ถูกบันทึก';
+
+  @override
+  String get editKeepEditing => 'แก้ต่อ';
+
+  @override
+  String get editDiscardConfirm => 'ยกเลิกการแก้ไข';
+
+  @override
+  String get categorySystemOpening => 'ยอดยกมา';
+
+  @override
+  String get categorySystemAdjustment => 'ปรับยอด';
+
+  @override
+  String get categorySystemTransferIn => 'โอนเข้า';
+
+  @override
+  String get categorySystemTransferOut => 'โอนออก';
+
+  @override
+  String get categorySystemDebtReceived => 'รับชำระหนี้';
+
+  @override
+  String get categorySystemDebtPaid => 'ชำระหนี้';
+
+  @override
   String get commonCancel => 'ยกเลิก';
 
   @override
@@ -536,7 +566,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectsPlaceholderTitle => 'ยังไม่มีโปรเจกต์';
 
   @override
-  String get projectsPlaceholderMessage => 'โปรเจกต์ร่วมจะมาในเฟส 1b';
+  String get projectsPlaceholderMessage =>
+      'สร้างโปรเจกต์เพื่อบันทึกค่าใช้จ่ายร่วมกับคนอื่น';
 
   @override
   String get moreCategories => 'หมวดหมู่';
@@ -1647,7 +1678,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get homeOther => 'อื่นๆ';
 
   @override
-  String get homeUncategorized => 'ไม่มีหมวด';
+  String get homeUncategorized => 'ไม่ระบุหมวด';
 
   @override
   String get homeNoExpense => 'เดือนนี้ยังไม่มีรายจ่าย';
@@ -1754,13 +1785,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txDetailSplits => 'การหาร';
 
   @override
-  String get txDetailHasSplits => 'มีการหารกับคนอื่น';
-
-  @override
   String get txDetailRecordedBy => 'ผู้บันทึก';
 
   @override
-  String get txDetailSource => 'ที่มา';
+  String get txDetailSource => 'มาจาก';
 
   @override
   String get txDetailSourceProject => 'โปรเจกต์';
@@ -2075,7 +2103,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String categoryDeleteTxImpact(int count) {
-    return 'รายการ $count รายการจะกลายเป็น ไม่มีหมวด';
+    return 'รายการ $count รายการจะกลายเป็น ไม่ระบุหมวด';
   }
 
   @override
@@ -2202,15 +2230,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get tagFormColorLabel => 'สี';
-
-  @override
-  String get tagDetailsTitle => 'คำอธิบาย · โน้ต';
-
-  @override
-  String get tagDescriptionHint => 'ไม่บังคับ · เช่น ค่าใช้จ่ายทริปญี่ปุ่น';
-
-  @override
-  String get tagNoteHint => 'ไม่บังคับ';
 
   @override
   String get settingsTitle => 'การตั้งค่า';
@@ -2384,6 +2403,194 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txHeroTitleHint => 'ค่าอะไร?';
 
   @override
+  String get txDetailRepaymentBanner =>
+      'รายการนี้บันทึกจากการจ่ายหนี้ แก้ไขไม่ได้ แต่ลบได้ (ยอดที่จ่ายคืนของหนี้จะลดลงตาม)';
+
+  @override
+  String get debtOverpaid => 'จ่ายเกิน';
+
+  @override
+  String get debtOverpaidIOwe => 'จ่ายเกินมา · ฉันต้องคืนเขา';
+
+  @override
+  String get debtOverpaidTheyOwe => 'จ่ายเกินไป · เขาต้องคืนฉัน';
+
+  @override
+  String get debtOverpaidCantSettle =>
+      'หนี้นี้จ่ายเกินแล้ว บันทึกรับ/จ่ายเพิ่มไม่ได้';
+
+  @override
+  String txDetailDeleteRepaymentBody(String amount) {
+    return 'ยอดที่จ่ายคืนของหนี้นี้จะลดลง $amount';
+  }
+
+  @override
+  String get notifTypeSplitChanged => 'มีคนแก้การหารบิลกับฉัน';
+
+  @override
+  String get notifAutoApplySplitChange => 'อัตโนมัติ: อัปเดตหนี้ของฉันตาม';
+
+  @override
+  String notifSplitAmountChanged(
+    String who,
+    String what,
+    String from,
+    String to,
+  ) {
+    return '$who แก้ยอดหาร $what: $from → $to';
+  }
+
+  @override
+  String notifSplitRemovedYou(String who, String what) {
+    return '$who เอาคุณออกจากการหาร $what';
+  }
+
+  @override
+  String get notifSplitChangeUpdated => 'อัปเดตหนี้ตามแล้ว';
+
+  @override
+  String get notifSplitChangeDeleted => 'ลบหนี้นี้ออกแล้ว';
+
+  @override
+  String get notifSplitChangeZeroed =>
+      'ยอดของคุณเป็น 0 แล้ว — ที่คืนไปถือว่าจ่ายเกิน';
+
+  @override
+  String get notifSplitChangeUsed => 'อัปเดตไปแล้ว';
+
+  @override
+  String get notifSplitChangeStale => 'อัปเดตไม่ได้แล้ว — มีการแก้ใหม่กว่านี้';
+
+  @override
+  String get notifSplitChangeGone => 'หนี้นี้ถูกลบไปแล้ว';
+
+  @override
+  String txSplitStatusOverpaidToThem(String amount) {
+    return 'จ่ายเกิน $amount · ต้องคืนให้เขา';
+  }
+
+  @override
+  String txSplitStatusOverpaidByMe(String amount) {
+    return 'จ่ายเกิน $amount · เขาต้องคืน';
+  }
+
+  @override
+  String txSplitRepaidSoFar(String amount) {
+    return 'คืนแล้ว $amount';
+  }
+
+  @override
+  String get txSplitErrorContact => 'ผู้ติดต่อนี้ใช้ไม่ได้แล้ว';
+
+  @override
+  String get txSplitSeeDebts => 'ดูในหน้าหนี้';
+
+  @override
+  String get txSplitEditOnDebts => 'แก้ได้ที่หน้าหนี้';
+
+  @override
+  String get txSplitStatusPaid => '✓ จ่ายแล้ว';
+
+  @override
+  String get txSplitStatusRepaid => '✓ คืนแล้ว';
+
+  @override
+  String txSplitStatusAwaiting(String amount) {
+    return 'รอคืน $amount';
+  }
+
+  @override
+  String txSplitStatusToPay(String amount) {
+    return 'ต้องคืน $amount';
+  }
+
+  @override
+  String txSplitStatusPartPaid(String paid, String total) {
+    return 'จ่ายแล้ว $paid จาก $total';
+  }
+
+  @override
+  String txSplitStatusPartRepaid(String paid, String total) {
+    return 'คืนแล้ว $paid จาก $total';
+  }
+
+  @override
+  String get txSplitStatusCancelled => 'ยกเลิก';
+
+  @override
+  String txDetailMetaRecordedBy(String name) {
+    return 'ผู้บันทึก $name';
+  }
+
+  @override
+  String get txTypeLockedHint => 'เปลี่ยนประเภทไม่ได้หลังบันทึก';
+
+  @override
+  String txDetailSplitEditElsewhere(int count) {
+    return '$count คน · แก้ได้ที่หน้าหนี้';
+  }
+
+  @override
+  String get txDetailCreatedAt => 'บันทึกเมื่อ';
+
+  @override
+  String get txDetailUpdatedAt => 'แก้ไขล่าสุด';
+
+  @override
+  String get txSplitShareShort => 'แบ่งให้';
+
+  @override
+  String tagPickerCreateNamed(String name) {
+    return 'สร้าง “$name”';
+  }
+
+  @override
+  String get tagsMore => 'เพิ่มเติม';
+
+  @override
+  String get txNoteAddHint => 'เพิ่มโน้ต...';
+
+  @override
+  String get quickEventNone => 'ไม่ได้เลือก';
+
+  @override
+  String get quickUnsavedTitle => 'ยังไม่ได้บันทึก';
+
+  @override
+  String get quickUnsavedMessage => 'ถ้าปิดตอนนี้ รายการนี้จะหายไป';
+
+  @override
+  String get quickDiscardEntry => 'ยกเลิกรายการนี้';
+
+  @override
+  String get txSplitIncompleteTitle => 'มีแถวหารที่ยังไม่ครบ';
+
+  @override
+  String txSplitIncompleteNoName(String amount) {
+    return '$amount — ยังไม่ใส่ชื่อ';
+  }
+
+  @override
+  String txSplitIncompleteNoAmount(String name) {
+    return '$name — ยังไม่ใส่จำนวน';
+  }
+
+  @override
+  String get txSplitSkipIncomplete => 'บันทึกโดยไม่รวมแถวนี้';
+
+  @override
+  String get txTagCreateFailed => 'สร้างแท็กไม่สำเร็จ';
+
+  @override
+  String get quickEventUseName => 'ใช้ชื่อนี้';
+
+  @override
+  String get quickEventCreatedOnSave => 'จะสร้างอีเวนต์เมื่อกดบันทึก';
+
+  @override
+  String get projectTxPayerRequired => 'เลือกสมาชิกก่อน';
+
+  @override
   String get scheduledHeroNameHint => 'จ่ายค่าอะไร เช่น Netflix';
 
   @override
@@ -2402,16 +2609,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickAmountRequired => 'ใส่ยอดเงินก่อน';
 
   @override
-  String get quickDiscardTitle => 'ปิดโดยไม่บันทึก?';
-
-  @override
-  String get quickDiscardMessage => 'สิ่งที่กรอกไว้จะหายไป';
-
-  @override
   String get quickDiscardConfirm => 'ทิ้ง';
-
-  @override
-  String get quickDiscardKeep => 'กลับไปแก้ต่อ';
 
   @override
   String get quickAddToEvent => 'เพิ่มเข้าอีเวนต์';
@@ -2432,9 +2630,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get quickEventNameLabel => 'ชื่ออีเวนต์';
-
-  @override
-  String get quickEventCreate => 'สร้าง';
 
   @override
   String get quickEventExisting => 'หรือเพิ่มเข้าอีเวนต์ที่มีอยู่';
@@ -2596,12 +2791,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pendingKeepAsDraft => 'เก็บเป็นร่าง';
 
   @override
-  String get pendingDropEditsTitle => 'ทิ้งการแก้ไข?';
-
-  @override
-  String get pendingDropEditsMessage => 'ร่างจะกลับไปเป็นแบบเดิม';
-
-  @override
   String pendingBlockTitle(int count) {
     return 'รอยืนยัน $count รายการ';
   }
@@ -2667,13 +2856,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionFormTagsLabel => 'แท็ก';
 
   @override
-  String get transactionFormTagsEmpty => 'ยังไม่มีแท็ก สร้างได้จากหน้าแท็ก';
-
-  @override
   String get transactionFormSave => 'บันทึก';
 
   @override
-  String get transactionFormAccountNone => 'ไม่มีกระเป๋า';
+  String get transactionFormAccountNone => 'ไม่ผูกกระเป๋า';
 
   @override
   String get transactionFormAccountPickerTitle => 'เลือกกระเป๋า';
@@ -2736,7 +2922,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionsListFilterAll => 'ทั้งหมด';
 
   @override
-  String get transactionsListEmptyMessage => 'ไม่มีรายการตรงตัวกรอง';
+  String get transactionsListEmptyMessage =>
+      'บันทึกรายรับรายจ่ายแรกของเดือนได้เลย';
 
   @override
   String get accountAdjustBalanceViewTransaction => 'ดู';
@@ -3133,7 +3320,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get scheduledGenerateNowBody =>
-      'สร้างรายการถัดไปและเลื่อนงวด — เฟส 1c เท่านั้น เฟส 3 จะมีระบบสร้างอัตโนมัติ';
+      'บันทึกรายการของงวดถัดไปตอนนี้เลย แล้วเลื่อนวันครบกำหนดไปงวดหน้า';
 
   @override
   String get scheduledGenerateNowAction => 'สร้าง';
@@ -3573,4 +3760,56 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get appUpdateLater => 'ไว้ทีหลัง';
+
+  @override
+  String get transactionsEmptyMonthTitle => 'เดือนนี้ยังไม่มีรายการ';
+
+  @override
+  String get transactionsNoMatchMessage =>
+      'ลองเปลี่ยนตัวกรอง หรือล้างตัวกรองเพื่อดูทั้งหมด';
+
+  @override
+  String get notifCopyUpdated => 'อัปเดตรายการของคุณแล้ว';
+
+  @override
+  String get homeTodoTitle => 'ต้องจัดการ';
+
+  @override
+  String get homeTodoPending => 'รอยืนยัน';
+
+  @override
+  String get homeTodoComingUp => 'กำลังจะถึง';
+
+  @override
+  String get transactionsFiltersTitle => 'ตัวกรอง';
+
+  @override
+  String get transactionsFiltersApply => 'ใช้ตัวกรอง';
+
+  @override
+  String get transactionsSortBy => 'เรียงตาม';
+
+  @override
+  String get txPeriodMonth => 'เดือน';
+
+  @override
+  String get txPeriodWeek => 'สัปดาห์';
+
+  @override
+  String get txPeriodYear => 'ปี';
+
+  @override
+  String get txPeriodCustom => 'กำหนดเอง';
+
+  @override
+  String get txPeriodPrev => 'ช่วงก่อนหน้า';
+
+  @override
+  String get txPeriodNext => 'ช่วงถัดไป';
+
+  @override
+  String get transactionsEmptyPeriodTitle => 'ไม่มีรายการในช่วงนี้';
+
+  @override
+  String get transactionsFilterRemove => 'เอาตัวกรองนี้ออก';
 }

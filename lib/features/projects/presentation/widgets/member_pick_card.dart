@@ -14,12 +14,16 @@ class MemberPickCard extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.placeholder,
+    this.errorText,
     super.key,
   });
 
   final ProjectMember? member;
   final String label;
   final String? placeholder;
+
+  /// Error border + message (a save tried with nobody picked).
+  final String? errorText;
 
   /// Null = fixed (e.g. the payer of a saved row).
   final VoidCallback? onTap;
@@ -35,6 +39,7 @@ class MemberPickCard extends StatelessWidget {
           ? const PickCardEmptyIcon(AppIcons.member)
           : ProjectMemberAvatar(member: m, size: 40),
       onTap: onTap,
+      errorText: errorText,
     );
   }
 }

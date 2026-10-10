@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:equatable/equatable.dart';
 
 enum DebtDirection { iOwe, owedToMe }
@@ -83,7 +85,10 @@ class PersonalDebt extends Equatable {
   final String? note;
   final DateTime? createdAt;
 
-  double get outstanding => (amount - settledAmount).clamp(0, double.infinity);
+  /// amount − repaid. Negative = overpaid: the difference is owed the
+  /// other way (BE contract v2, 2026-10-10).
+  double get outstanding => amount - settledAmount;
+  bool get isOverpaid => outstanding < -0.005;
   bool get isOpen => status == DebtStatus.open;
   bool get isIOwe => direction == DebtDirection.iOwe;
   bool get isOwedToMe => direction == DebtDirection.owedToMe;
@@ -240,10 +245,15 @@ class DebtPerson {
 
   Iterable<PersonalDebt> get open => debts.where((d) => d.isOpen);
 
-  double get owedToMeOpen =>
-      open.where((d) => d.isOwedToMe).fold(0, (a, d) => a + d.outstanding);
-  double get iOweOpen =>
-      open.where((d) => d.isIOwe).fold(0, (a, d) => a + d.outstanding);
+  // An overpaid debt counts on the opposite side, as the BE totals do.
+  double get owedToMeOpen => open.fold(
+    0,
+    (a, d) => a + math.max(0, d.isOwedToMe ? d.outstanding : -d.outstanding),
+  );
+  double get iOweOpen => open.fold(
+    0,
+    (a, d) => a + math.max(0, d.isIOwe ? d.outstanding : -d.outstanding),
+  );
 
   /// > 0 → they owe me (net); < 0 → I owe them.
   double get net => owedToMeOpen - iOweOpen;

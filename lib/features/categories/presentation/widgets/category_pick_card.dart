@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
+import '../category_label.dart';
 import '../cubit/categories_cubit.dart';
 
 /// A category as a [PickCard]: once picked, the card takes the category's
@@ -45,7 +47,9 @@ class CategoryPickCard extends StatelessWidget {
     final path = c == null ? '' : CategoryTree.breadcrumb(c, all);
     return PickCard(
       label: label,
-      value: c?.name,
+      value: c == null
+          ? null
+          : categoryDisplayName(AppLocalizations.of(context)!, c),
       placeholder: placeholder,
       leading: c == null
           ? PickCardEmptyIcon(AppIcons.category, size: _icon)

@@ -257,7 +257,9 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
                 ),
                 children: [
                   LockedInEdit(locked: isEditing, child: _header(l, debt)),
-                  if (debt.isOpen && !isEditing) ...[
+                  // Overpaid: nothing left to receive / pay this way (BE
+                  // refuses with DEBT_OVERPAID).
+                  if (debt.isOpen && !debt.isOverpaid && !isEditing) ...[
                     const SizedBox(height: AppSpacing.md),
                     AppButton(
                       label: debt.isOwedToMe ? l.debtReceive : l.debtPay,
@@ -323,12 +325,22 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
       footer: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l.debtOutstanding, style: textTheme.labelMedium),
+          // Overpaid: the difference, owed the other way.
+          Text(
+            !debt.isOverpaid
+                ? l.debtOutstanding
+                : debt.isOwedToMe
+                ? l.debtOverpaidIOwe
+                : l.debtOverpaidTheyOwe,
+            style: textTheme.labelMedium,
+          ),
           MoneyText(
-            debt.outstanding,
+            debt.outstanding.abs(),
             symbol: symbol,
             tone: debt.isOpen
-                ? (debt.isOwedToMe ? MoneyTone.income : MoneyTone.expense)
+                ? ((debt.isOwedToMe != debt.isOverpaid)
+                      ? MoneyTone.income
+                      : MoneyTone.expense)
                 : MoneyTone.plain,
             style: textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w800,

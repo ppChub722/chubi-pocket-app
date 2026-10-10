@@ -448,7 +448,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final result = await showAdjustBalanceSheet(context, a);
     if (result == null || !mounted) return;
     final cubit = context.read<AccountsCubit>();
-    final txCubit = context.read<TransactionsCubit>();
     final open = pageOpener(context);
     try {
       final outcome = await cubit.adjustBalance(
@@ -457,7 +456,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         description: result.description,
         note: result.note,
       );
-      await txCubit.load(accountId: a.id);
+      // The wallet's own list and the app's list both re-fetch, each
+      // keeping its filters (a bare load narrowed the global one to this
+      // wallet with no chip saying so).
+      await TransactionsCubit.bookChanged();
       if (!mounted) return;
       showAppSnackBar(
         context,
@@ -714,6 +716,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       onIconLongPress: viewing && owner ? _enterEditThenOpenMaker : null,
       onAdjust: _isCreate ? null : _adjustBalance,
       actionsActive: viewing,
+      showLabels: editing,
     );
   }
 
@@ -1015,6 +1018,7 @@ class _HeroHeader extends StatelessWidget {
     this.onIconLongPress,
     this.onAdjust,
     this.actionsActive = true,
+    this.showLabels = false,
   });
 
   /// The draft as a wallet (live preview).
@@ -1036,6 +1040,10 @@ class _HeroHeader extends StatelessWidget {
   /// false (edit mode) fades ✏️ / ปรับยอด out but keeps their space, so
   /// the name column — and the card — keep their size between modes.
   final bool actionsActive;
+
+  /// Edit mode: a small ชื่อ / คำอธิบาย label slides in left of each field
+  /// (owner 2026-10-10); view mode keeps the bare, label-less header.
+  final bool showLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -1075,7 +1083,19 @@ class _HeroHeader extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
-                    children: [nameField, ?descriptionField],
+                    children: [
+                      _EditLabel(
+                        label: l.commonName,
+                        show: showLabels,
+                        child: nameField,
+                      ),
+                      if (descriptionField != null)
+                        _EditLabel(
+                          label: l.commonDescription,
+                          show: showLabels,
+                          child: descriptionField!,
+                        ),
+                    ],
                   ),
                 ),
                 if (account.isShared) ...[
@@ -1461,4 +1481,54 @@ class _AccountDraft {
     minPayment,
     Object.hashAll(identifiers),
   );
+}
+
+/// A header field with a small label to its left that slides in while
+/// editing — the field shifts right instead of the card growing taller.
+class _EditLabel extends StatelessWidget {
+  const _EditLabel({
+    required this.label,
+    required this.show,
+    required this.child,
+  });
+
+  final String label;
+  final bool show;
+  final Widget child;
+
+  /// Wide enough for "คำอธิบาย" / "Description" at labelMedium, and the
+  /// same for both rows so the fields line up.
+  static const _width = 76.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: show ? 1 : 0),
+      duration: AppDurations.chrome,
+      curve: AppDurations.chromeCurve,
+      builder: (context, t, field) => Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: _width * t,
+            child: Opacity(
+              opacity: t,
+              child: Text(
+                label,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.clip,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: field!),
+        ],
+      ),
+      child: child,
+    );
+  }
 }

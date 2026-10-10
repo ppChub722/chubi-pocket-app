@@ -1,3 +1,4 @@
+import 'package:chubi_pocket/core/constants/app_icons.dart';
 import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/tx_hero_card.dart';
@@ -125,5 +126,56 @@ void main() {
     // The field absorbs pointers in view mode — the wrapper gets it.
     await t.longPress(find.text('ข้าวมันไก่'), warnIfMissed: false);
     expect(focused, noteFocus);
+  });
+
+  testWidgets('inline view mode: date + ✏️ top-right, amount, then chips', (
+    t,
+  ) async {
+    amount.text = '182';
+    await pump(
+      t,
+      TxHeroCard(
+        type: TransactionType.expense,
+        amount: amount,
+        title: note,
+        dateLabel: 'วันนี้',
+        editing: false,
+        inline: true,
+        onEdit: () {},
+        footer: const Text('chips'),
+      ),
+    );
+    // Row 1: the date, then ✏️ in the top-right corner; row 2: the
+    // amount; row 3: the footer chips.
+    final edit = t.getTopLeft(find.byTooltip('แก้ไข'));
+    final date = t.getTopLeft(find.text('วันนี้'));
+    expect(date.dx, lessThan(edit.dx));
+    expect(edit.dy, lessThan(t.getTopLeft(find.text('182')).dy));
+    expect(
+      t.getTopLeft(find.text('chips')).dy,
+      greaterThan(t.getTopLeft(find.text('182')).dy),
+    );
+    // An empty description shows nothing in view mode.
+    expect(find.byType(TextField), findsOneWidget); // just the amount
+    expect(find.byType(TxTypeChip), findsNothing);
+    expect(find.text('รายจ่าย'), findsNothing); // the colour says it
+    expect(find.text('฿'), findsOneWidget); // no −/+ before it
+    expect(find.text('182'), findsOneWidget);
+  });
+
+  testWidgets('a locked type in edit mode shows the 🔒 chip', (t) async {
+    await pump(
+      t,
+      TxHeroCard(
+        type: TransactionType.income,
+        amount: amount,
+        title: note,
+        dateLabel: 'วันนี้',
+        inline: true,
+      ),
+    );
+    expect(find.byType(TxTypeChip), findsOneWidget);
+    expect(find.byIcon(AppIcons.lock), findsOneWidget);
+    expect(find.byType(Tooltip), findsWidgets);
   });
 }

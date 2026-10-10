@@ -14,19 +14,29 @@ import '../../domain/transaction_type.dart';
 /// rows, scheduled entries — and of the transaction detail page (owner
 /// design 2026-10-10):
 ///
-///   [−รายจ่าย] [+รายรับ] [⇄โอน]                ✏️
-///   −฿ 1,250
-///   ค่าอะไร?          ← the "what for" line: a record's description, a
-///                      scheduled entry's name
-///   [📅 วันนี้]
+/// [inline] (a transaction), editing / creating:
+///
+///   [−รายจ่าย] [+รายรับ] [⇄โอน]          [📅 วันนี้]
+///   ค่าอะไร?                               ฿1,250
+///
+/// [inline], view mode (the detail page) — no type row, the colour says it:
+///
+///   ข้าวมันไก่ (≤ 2 lines, blank if none)  [📅 วันนี้] ✏️
+///                                          ฿1,250
+///   [footer: category · wallet]
+///
+/// Event rows and scheduled entries stack it: chips · amount · title ·
+/// date. The title line is the "what for": a record's description, a
+/// scheduled entry's name. The amount never carries a +/−; the symbol hugs
+/// the digits.
 ///
 /// The card's border and wash follow the type colour (expense red, income
 /// green, transfer neutral). Swiping the card left / right steps through
 /// the types, like tapping the chips.
 ///
-/// [editing] false = the detail page's view mode: the same box, fields
-/// read-only and borderless; a long-press on the amount or the title line calls
-/// [onLongPressField] with that field's focus node (enter edit + focus).
+/// [editing] false = view mode: fields read-only and borderless; a
+/// long-press on the amount or the title line calls [onLongPressField] with
+/// that field's focus node (enter edit + focus).
 class TxHeroCard extends StatelessWidget {
   const TxHeroCard({
     required this.type,
@@ -51,6 +61,8 @@ class TxHeroCard extends StatelessWidget {
     this.titleFocus,
     this.onEdit,
     this.onLongPressField,
+    this.inline = false,
+    this.footer,
     super.key,
   });
 
@@ -107,6 +119,15 @@ class TxHeroCard extends StatelessWidget {
   /// View mode: long-press on a field → enter edit focused on it.
   final ValueChanged<FocusNode?>? onLongPressField;
 
+  /// A transaction's layout: the date pill in the chip row, description
+  /// and amount side by side. Off (event rows, scheduled entries): chips,
+  /// amount, title and date stacked.
+  final bool inline;
+
+  /// Inline view mode: a row under the description · amount (the detail
+  /// page's category · wallet · date chips).
+  final Widget? footer;
+
   List<TransactionType> get _types => [
     TransactionType.expense,
     TransactionType.income,
@@ -148,6 +169,187 @@ class TxHeroCard extends StatelessWidget {
       );
     }
 
+    final chips = Wrap(
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
+      children: [
+        for (final t in _types)
+          if (canSwitch || t == type)
+            TxTypeChip(
+              type: t,
+              selected: t == type,
+              onTap: canSwitch && t != type ? () => onTypeChanged!(t) : null,
+              locked: editing && onTypeChanged == null,
+            ),
+      ],
+    );
+    final datePill = _DatePill(
+      label: dateLabel,
+      onTap: editing ? onPickDate : null,
+    );
+    final editChip = !editing && onEdit != null
+        ? AppIconButton(
+            icon: AppIcons.edit,
+            size: 32,
+            tooltip: l.commonEdit,
+            onPressed: onEdit,
+          )
+        : null;
+    Widget amountField({TextAlign align = TextAlign.start}) => longPressable(
+      _AmountInput(
+        controller: amount,
+        type: type,
+        compact: compact,
+        autofocus: autofocus && editing,
+        editing: editing,
+        symbol: symbol,
+        focusNode: amountFocus,
+        textAlign: align,
+      ),
+      amountFocus,
+    );
+    final amountErrorText = amountError == null
+        ? null
+        : Text(
+            amountError!,
+            style: textTheme.bodySmall?.copyWith(color: scheme.error),
+          );
+    Widget titleField({int maxLines = 3}) => longPressable(
+      Padding(
+        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        child: TextField(
+          controller: title,
+          focusNode: titleFocus,
+          readOnly: !editing || onTitleTap != null,
+          onTap: editing ? onTitleTap : null,
+          showCursor: editing && onTitleTap == null ? null : false,
+          enableInteractiveSelection: editing && onTitleTap == null,
+          maxLength: titleMaxLength,
+          minLines: 1,
+          maxLines: maxLines,
+          textInputAction: TextInputAction.done,
+          style: titleStyle,
+          decoration: InputDecoration(
+            hintText: editing
+                ? (titleHint ?? l.txHeroTitleHint)
+                : (onLongPressField != null ? l.commonLongPressToEdit : null),
+            hintStyle: titleStyle?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            counterText: '',
+            isDense: true,
+            filled: false,
+            contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            border: InputBorder.none,
+            enabledBorder: editing
+                ? UnderlineInputBorder(
+                    borderSide: BorderSide(color: scheme.outlineVariant),
+                  )
+                : InputBorder.none,
+            focusedBorder: editing
+                ? UnderlineInputBorder(borderSide: BorderSide(color: accent))
+                : InputBorder.none,
+          ),
+        ),
+      ),
+      titleFocus,
+    );
+    final titleErrorText = titleError == null
+        ? null
+        : Text(
+            titleError!,
+            style: textTheme.bodySmall?.copyWith(color: scheme.error),
+          );
+
+    // Inline: a transaction (owner 2026-10-10).
+    final List<Widget> rows = !inline
+        ? const []
+        : editing
+        // Edit / create:
+        //   [chips]                     [📅 date]
+        //   ค่าอะไร? (≤ 2 lines)           ฿120
+        ? [
+            Row(
+              children: [
+                Expanded(child: chips),
+                const SizedBox(width: AppSpacing.xs),
+                datePill,
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            LayoutBuilder(
+              builder: (context, box) => Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: titleField(maxLines: 2)),
+                  // The amount keeps its spot however long the
+                  // description wraps.
+                  SizedBox(
+                    width: box.maxWidth * 0.48,
+                    child: amountField(align: TextAlign.end),
+                  ),
+                ],
+              ),
+            ),
+            ?amountErrorText,
+          ]
+        // View (owner 2026-10-10) — no type row, the colour says it:
+        //   ข้าวมันไก่ (≤ 2 lines, blank if none)   [📅 date] ✏️
+        //                                              ฿182
+        //   [footer: category · wallet]
+        : [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: title.text.trim().isEmpty
+                      ? const SizedBox.shrink()
+                      : titleField(maxLines: 2),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                datePill,
+                ?editChip,
+              ],
+            ),
+            amountField(align: TextAlign.end),
+            if (footer != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              footer!,
+            ],
+          ];
+    // Stacked (event row, scheduled entry): chips · amount · title · date.
+    final List<Widget> stacked = [
+      Row(
+        children: [
+          Expanded(child: chips),
+          // Keeps the row the same height with or without the ✏️.
+          editChip ?? const SizedBox(height: 32),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      if (amountLabel != null)
+        Text(
+          amountLabel!,
+          style: textTheme.labelMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      amountField(),
+      ?amountErrorText,
+      Row(
+        children: [
+          if (titleLeading != null) ...[
+            titleLeading!,
+            const SizedBox(width: AppSpacing.sm),
+          ],
+          Expanded(child: titleField()),
+        ],
+      ),
+      ?titleErrorText,
+      const SizedBox(height: AppSpacing.sm),
+      Align(alignment: Alignment.centerLeft, child: datePill),
+    ];
+
     final body = Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
@@ -158,135 +360,7 @@ class TxHeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Wrap(
-                  spacing: AppSpacing.xs,
-                  runSpacing: AppSpacing.xs,
-                  children: [
-                    for (final t in _types)
-                      if (canSwitch || t == type)
-                        TxTypeChip(
-                          type: t,
-                          selected: t == type,
-                          onTap: canSwitch && t != type
-                              ? () => onTypeChanged!(t)
-                              : null,
-                        ),
-                  ],
-                ),
-              ),
-              if (!editing && onEdit != null)
-                AppIconButton(
-                  icon: AppIcons.edit,
-                  size: 32,
-                  tooltip: l.commonEdit,
-                  onPressed: onEdit,
-                )
-              else
-                // Keeps the row the same height with or without the ✏️.
-                const SizedBox(height: 32),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          if (amountLabel != null)
-            Text(
-              amountLabel!,
-              style: textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          longPressable(
-            _AmountInput(
-              controller: amount,
-              type: type,
-              compact: compact,
-              autofocus: autofocus && editing,
-              editing: editing,
-              symbol: symbol,
-              focusNode: amountFocus,
-            ),
-            amountFocus,
-          ),
-          if (amountError != null)
-            Text(
-              amountError!,
-              style: textTheme.bodySmall?.copyWith(color: scheme.error),
-            ),
-          Row(
-            children: [
-              if (titleLeading != null) ...[
-                titleLeading!,
-                const SizedBox(width: AppSpacing.sm),
-              ],
-              Expanded(
-                child: longPressable(
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppSpacing.sm),
-                    child: TextField(
-                      controller: title,
-                      focusNode: titleFocus,
-                      readOnly: !editing || onTitleTap != null,
-                      onTap: editing ? onTitleTap : null,
-                      showCursor: editing && onTitleTap == null ? null : false,
-                      enableInteractiveSelection: editing && onTitleTap == null,
-                      maxLength: titleMaxLength,
-                      minLines: 1,
-                      maxLines: 3,
-                      textInputAction: TextInputAction.done,
-                      style: titleStyle,
-                      decoration: InputDecoration(
-                        hintText: editing
-                            ? (titleHint ?? l.txHeroTitleHint)
-                            : (onLongPressField != null
-                                  ? l.commonLongPressToEdit
-                                  : null),
-                        hintStyle: titleStyle?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
-                        ),
-                        counterText: '',
-                        isDense: true,
-                        filled: false,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.xs,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: editing
-                            ? UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: scheme.outlineVariant,
-                                ),
-                              )
-                            : InputBorder.none,
-                        focusedBorder: editing
-                            ? UnderlineInputBorder(
-                                borderSide: BorderSide(color: accent),
-                              )
-                            : InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  titleFocus,
-                ),
-              ),
-            ],
-          ),
-          if (titleError != null)
-            Text(
-              titleError!,
-              style: textTheme.bodySmall?.copyWith(color: scheme.error),
-            ),
-          const SizedBox(height: AppSpacing.sm),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: _DatePill(
-              label: dateLabel,
-              onTap: editing ? onPickDate : null,
-            ),
-          ),
-        ],
+        children: inline ? rows : stacked,
       ),
     );
 
@@ -371,12 +445,6 @@ Color txTypeColor(BuildContext context, TransactionType t) {
   };
 }
 
-String _typeSign(TransactionType t) => switch (t) {
-  TransactionType.expense => '−',
-  TransactionType.income => '+',
-  TransactionType.transfer => '',
-};
-
 /// One small type chip — `[− รายจ่าย]`: filled in the type's colour when
 /// [selected], faint text otherwise.
 class TxTypeChip extends StatelessWidget {
@@ -384,12 +452,17 @@ class TxTypeChip extends StatelessWidget {
     required this.type,
     required this.selected,
     this.onTap,
+    this.locked = false,
     super.key,
   });
 
   final TransactionType type;
   final bool selected;
   final VoidCallback? onTap;
+
+  /// A saved row's type: a 🔒 on the chip and a tap-to-read tooltip ("can't
+  /// change after saving") instead of silently doing nothing.
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -407,7 +480,7 @@ class TxTypeChip extends StatelessWidget {
         l.transactionTypeTransfer,
       ),
     };
-    return Semantics(
+    final chip = Semantics(
       selected: selected,
       button: onTap != null,
       child: Material(
@@ -434,11 +507,21 @@ class TxTypeChip extends StatelessWidget {
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
+                if (locked) ...[
+                  const SizedBox(width: AppSpacing.xs),
+                  Icon(AppIcons.lock, size: 14, color: fg),
+                ],
               ],
             ),
           ),
         ),
       ),
+    );
+    if (!locked) return chip;
+    return Tooltip(
+      message: l.txTypeLockedHint,
+      triggerMode: TooltipTriggerMode.tap,
+      child: chip,
     );
   }
 }
@@ -453,6 +536,7 @@ class _AmountInput extends StatefulWidget {
     required this.editing,
     required this.symbol,
     this.focusNode,
+    this.textAlign = TextAlign.start,
   });
   final TextEditingController controller;
   final TransactionType type;
@@ -461,6 +545,7 @@ class _AmountInput extends StatefulWidget {
   final bool editing;
   final String symbol;
   final FocusNode? focusNode;
+  final TextAlign textAlign;
 
   @override
   State<_AmountInput> createState() => _AmountInputState();
@@ -508,29 +593,55 @@ class _AmountInputState extends State<_AmountInput> {
       color: color,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
-    return TextField(
-      controller: widget.controller,
-      focusNode: _focus,
-      autofocus: widget.autofocus,
-      readOnly: !widget.editing,
-      enableInteractiveSelection: widget.editing,
-      showCursor: widget.editing ? null : false,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [ThousandsInputFormatter()],
-      style: big,
-      cursorColor: Theme.of(context).colorScheme.primary,
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        filled: false,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        hintText: _focus.hasFocus ? null : '0',
-        hintStyle: big?.copyWith(color: color.withValues(alpha: 0.35)),
-        prefixText: '${_typeSign(widget.type)}${widget.symbol} ',
-        prefixStyle: big?.copyWith(fontSize: (big.fontSize ?? 28) * 0.7),
-        semanticCounterText: l.transactionFormAmountLabel,
+    // "฿182" as one unit (owner 2026-10-10): no +/− (the colour says
+    // which), and the symbol hugs the digits — the field is only as wide
+    // as what's typed, so the pair grows together from the aligned side.
+    final field = IntrinsicWidth(
+      child: TextField(
+        controller: widget.controller,
+        focusNode: _focus,
+        autofocus: widget.autofocus,
+        readOnly: !widget.editing,
+        enableInteractiveSelection: widget.editing,
+        showCursor: widget.editing ? null : false,
+        textAlign: widget.textAlign,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [ThousandsInputFormatter()],
+        style: big,
+        cursorColor: Theme.of(context).colorScheme.primary,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          filled: false,
+          isDense: true,
+          constraints: const BoxConstraints(minWidth: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          hintText: _focus.hasFocus ? null : '0',
+          hintStyle: big?.copyWith(color: color.withValues(alpha: 0.35)),
+          semanticCounterText: l.transactionFormAmountLabel,
+        ),
+      ),
+    );
+    return Align(
+      alignment: widget.textAlign == TextAlign.end
+          ? AlignmentDirectional.centerEnd
+          : AlignmentDirectional.centerStart,
+      child: GestureDetector(
+        // The symbol is part of the field: tapping it types into it.
+        onTap: widget.editing ? _focus.requestFocus : null,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              widget.symbol,
+              style: big?.copyWith(fontSize: (big.fontSize ?? 28) * 0.7),
+            ),
+            Flexible(child: field),
+          ],
+        ),
       ),
     );
   }

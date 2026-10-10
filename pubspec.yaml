@@ -5,7 +5,7 @@ publish_to: 'none'
 # Versioning: matches the git tag of the release line (v0.1.0). Bump the
 # +build number on every distributed build; bump the version itself only
 # when the owner says so. Shown on the splash screen.
-version: 0.3.1-3+3
+version: 0.3.1-4+4
 
 environment:
   sdk: ^3.11.4

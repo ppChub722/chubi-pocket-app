@@ -16,9 +16,9 @@ import '../../../transactions/presentation/widgets/draft_form.dart';
 import '../cubit/pending_cubit.dart';
 
 /// `/pending/new` — jot several drafts at once (owner design 2026-10-08).
-/// Every row is the same [DraftForm] the `+` quick create uses (type, amount,
-/// category + wallet cards, date, note, and the closed "รายละเอียดเพิ่ม"
-/// section for tags / splits); a row only needs an amount.
+/// Every row is the same [DraftForm] the `+` quick create uses (the hero —
+/// type, amount, description, date — then note, category + wallet cards,
+/// tags and splits, all shown); a row only needs an amount.
 /// "เก็บเป็นร่าง" parks them in รอยืนยัน; "ยืนยันเลยทั้งหมด" also submits.
 class PendingBatchAddPage extends StatefulWidget {
   const PendingBatchAddPage({super.key});
@@ -80,7 +80,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
     }
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
-    final txCubit = context.read<TransactionsCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
@@ -91,7 +90,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
       if (submit) {
         final r = await pending.submit([for (final p in created) p.id]);
         if (r.submitted.isNotEmpty) {
-          await Future.wait([accounts.load(), txCubit.load()]);
+          await Future.wait([accounts.load(), TransactionsCubit.bookChanged()]);
         }
         msg = l.pendingResult(r.submitted.length, r.failed.length);
         if (r.failed.isNotEmpty) tone = Tone.warning;

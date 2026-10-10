@@ -11,6 +11,7 @@ import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../categories/domain/category_tree.dart';
+import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../domain/transaction.dart';
@@ -22,11 +23,12 @@ import '../../domain/transaction_type.dart';
 ///
 /// Leading: the category's icon exactly as on the categories page (L2/L3
 /// inherit their top-level parent's icon code); no category → a type glyph
-/// tinted expense / income. Title: category name, else the note. Subtitle: the context
-/// the current screen doesn't already show — toggle with [showAccount] /
+/// tinted expense / income. Title: the description, else the category name
+/// (system ones in the user's language). Subtitle: the context the current
+/// screen doesn't already show — toggle with [showAccount] /
 /// [showDate] (e.g. hide the account on that account's own page, hide the
-/// date under a date header) — plus a split marker. Tags, if any, take a
-/// third line in their short form ([TagShortList]).
+/// date under a date header) — plus the tags (`#name` in each tag's
+/// colour) on the same line, and a split marker.
 class TransactionTile extends StatelessWidget {
   const TransactionTile({
     required this.transaction,
@@ -72,7 +74,9 @@ class TransactionTile extends StatelessWidget {
           );
 
     // The record's own title ("what for") first, else its category.
-    final categoryName = tx.category?.name ?? '';
+    final categoryName = cat != null
+        ? categoryDisplayName(l, cat)
+        : (tx.category?.name ?? '');
     final description = tx.description?.trim() ?? '';
     final title = description.isNotEmpty
         ? description
@@ -84,6 +88,33 @@ class TransactionTile extends StatelessWidget {
       if (showDate) _date(context, l, tx.date),
     ];
 
+    // Two lines (owner 2026-10-10): title, then `category · wallet · #tags`
+    // in one ellipsised line — tags in their own colour — and ⑂ for splits.
+    final line = Text.rich(
+      TextSpan(
+        children: [
+          if (parts.isNotEmpty) TextSpan(text: parts.join(' · ')),
+          for (final (i, t) in tx.tags.indexed)
+            TextSpan(
+              text:
+                  '${i == 0 && parts.isEmpty
+                      ? ''
+                      : i == 0
+                      ? ' · '
+                      : ' '}'
+                  '#${t.name}',
+              style: TextStyle(
+                color: tagColor(t.asTag.iconCode, palette),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    final hasLine = parts.isNotEmpty || tx.tags.isNotEmpty;
+
     return MoneyListTile(
       leading: leading,
       title: title,
@@ -92,19 +123,15 @@ class TransactionTile extends StatelessWidget {
         children: [
           if (showAccount && tx.account == null) ...[
             AppBadge(label: l.transactionFormAccountNone),
-            if (parts.isNotEmpty) const SizedBox(width: AppSpacing.xs),
+            if (hasLine) const SizedBox(width: AppSpacing.xs),
           ],
-          if (parts.isNotEmpty) Flexible(child: Text(parts.join(' · '))),
+          if (hasLine) Flexible(child: line),
           if (tx.hasSplits) ...[
             const SizedBox(width: AppSpacing.sm),
             const Icon(AppIcons.split),
           ],
         ],
       ),
-      // Third line: the short tags (`#name` in each tag's colour).
-      footer: tx.tags.isEmpty
-          ? null
-          : TagShortList(tags: [for (final t in tx.tags) t.asTag]),
       onTap: onTap ?? () => openPage(context, '/transactions/${tx.id}'),
     );
   }

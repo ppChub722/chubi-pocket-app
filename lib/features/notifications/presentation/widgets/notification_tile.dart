@@ -28,29 +28,40 @@ class NotificationTile extends StatelessWidget {
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
+  /// Whether [n] still shows its answer buttons — a request or one-tap
+  /// action not yet taken (the dashboard's "ต้องจัดการ" lists these).
+  static bool awaitsAnswer(AppNotification n) =>
+      (_isRequestOf(n) || _hasActionOf(n)) && n.actionedAt == null;
+
   /// Requests need an answer (accept / reject, with a confirm on reject).
-  bool get _isRequest =>
-      notification.type == NotificationType.contactLinkRequest ||
-      notification.type == NotificationType.accountInvite;
+  static bool _isRequestOf(AppNotification n) =>
+      n.type == NotificationType.contactLinkRequest ||
+      n.type == NotificationType.accountInvite;
 
   /// One-tap actions (contract §5) — "skip" just hides the row. Auto-run
   /// ones arrive already actioned and show "ทำแล้ว".
-  bool get _hasAction => switch (notification.type) {
+  static bool _hasActionOf(AppNotification n) => switch (n.type) {
+    // A split that was removed / changed again since: nothing to do.
     NotificationType.splitCreated ||
+    NotificationType.splitChanged => n.payload['superseded'] != true,
     NotificationType.splitPaid ||
     NotificationType.projectTxRecordedForYou => true,
     // Only when I have a personal copy to update.
     NotificationType.projectTxChanged =>
-      notification.payload['personal_transaction_id'] != null &&
-          notification.payload['suggested'] != null,
+      n.payload['personal_transaction_id'] != null &&
+          n.payload['suggested'] != null,
     _ => false,
   };
+
+  bool get _isRequest => _isRequestOf(notification);
+  bool get _hasAction => _hasActionOf(notification);
 
   String _actionLabel(AppLocalizations l) => switch (notification.type) {
     NotificationType.splitCreated => l.notifActionAddDebt,
     NotificationType.splitPaid => l.notifActionRecordReceipt,
     NotificationType.projectTxRecordedForYou => l.notifActionCopyToBook,
     NotificationType.projectTxChanged => l.notifActionUpdateCopy,
+    NotificationType.splitChanged => l.notifActionUpdateCopy,
     _ => l.notificationAccept,
   };
 
@@ -90,7 +101,7 @@ class NotificationTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _title(l, n, actor),
+                      _title(context, l, n, actor),
                       style: textTheme.bodyMedium?.copyWith(
                         fontWeight: n.isUnread
                             ? FontWeight.w600
@@ -189,6 +200,7 @@ class NotificationTile extends StatelessWidget {
 
   static IconData _iconFor(NotificationType t) => switch (t) {
     NotificationType.splitCreated ||
+    NotificationType.splitChanged ||
     NotificationType.splitPaid ||
     NotificationType.splitReceived => AppIcons.split,
     NotificationType.projectTxRecordedForYou ||
@@ -200,28 +212,56 @@ class NotificationTile extends StatelessWidget {
     NotificationType.unknown => AppIcons.notifications,
   };
 
-  static String _title(AppLocalizations l, AppNotification n, String actor) =>
-      switch (n.type) {
-        NotificationType.splitCreated => l.notifSplitCreated(actor),
-        NotificationType.splitPaid => l.notifSplitPaid(actor),
-        NotificationType.splitReceived => l.notifSplitReceived(actor),
-        NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(
-          actor,
-        ),
-        NotificationType.projectTxChanged => l.notifProjectTxChanged(actor),
-        NotificationType.projectInvite => l.notifProjectInvite(
-          actor,
-          (n.payload['project_name'] as String?) ?? '',
-        ),
-        NotificationType.contactLinkRequest => l.notifContactLink(actor),
-        NotificationType.projectAdded => l.notifProjectAdded(
-          actor,
-          (n.payload['project_name'] as String?) ?? '',
-        ),
-        NotificationType.accountInvite => l.notificationWalletInviteTitle(
-          actor,
-          (n.payload['account_name'] as String?) ?? '',
-        ),
-        NotificationType.unknown => l.notifUnknown,
-      };
+  String _title(
+    BuildContext context,
+    AppLocalizations l,
+    AppNotification n,
+    String actor,
+  ) => switch (n.type) {
+    NotificationType.splitCreated => l.notifSplitCreated(actor),
+    NotificationType.splitChanged => _splitChangeTitle(context, l, n),
+    NotificationType.splitPaid => l.notifSplitPaid(actor),
+    NotificationType.splitReceived => l.notifSplitReceived(actor),
+    NotificationType.projectTxRecordedForYou => l.notifProjectTxForYou(actor),
+    NotificationType.projectTxChanged => l.notifProjectTxChanged(actor),
+    NotificationType.projectInvite => l.notifProjectInvite(
+      actor,
+      (n.payload['project_name'] as String?) ?? '',
+    ),
+    NotificationType.contactLinkRequest => l.notifContactLink(actor),
+    NotificationType.projectAdded => l.notifProjectAdded(
+      actor,
+      (n.payload['project_name'] as String?) ?? '',
+    ),
+    NotificationType.accountInvite => l.notificationWalletInviteTitle(
+      actor,
+      (n.payload['account_name'] as String?) ?? '',
+    ),
+    NotificationType.unknown => l.notifUnknown,
+  };
+}
+
+/// split_changed: "Poom แก้ยอดหาร Dinner: ฿150 → ฿120" / "Poom เอาคุณออกจาก
+/// การหาร Dinner".
+String _splitChangeTitle(
+  BuildContext context,
+  AppLocalizations l,
+  AppNotification n,
+) {
+  final p = n.payload;
+  final who =
+      (p['splitter_display_name'] as String?) ??
+      n.actorDisplayName ??
+      l.notificationsSomeone;
+  final what = (p['description'] as String?)?.trim() ?? '';
+  if (p['change'] == 'removed') return l.notifSplitRemovedYou(who, what);
+  final symbol = Currencies.symbolOf((p['currency'] as String?) ?? 'THB');
+  String money(Object? v) =>
+      v is num ? moneyString(context, v, symbol: symbol) : '—';
+  return l.notifSplitAmountChanged(
+    who,
+    what,
+    money(p['old_amount']),
+    money(p['new_amount']),
+  );
 }

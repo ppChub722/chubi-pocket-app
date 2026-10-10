@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/shell/shell_chrome.dart';
 import '../../app/shell/tab_nav.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../widgets/feedback/confirm_dialog.dart';
 import '../widgets/mode_action_bar.dart';
 
 /// The app's in-place edit-mode lifecycle, shared by every detail page
@@ -20,9 +21,10 @@ import '../widgets/mode_action_bar.dart';
 /// * undo — every discrete change is one step; typing bursts in one field
 ///   collapse into one step (500 ms debounce, or switching field);
 ///   undoing back to the original leaves edit mode;
-/// * back (system gesture / the top bar's ✕) while editing = ยกเลิก: drops
-///   the changes and returns to view mode — or leaves, for create — with
-///   no "discard?" prompt (owner 2026-10-10).
+/// * back (system gesture / the top bar's ✕) while editing asks before
+///   dropping unsaved changes ([handleBack]); with nothing changed it just
+///   returns to view mode — or leaves, for create. The ยกเลิก button is
+///   direct.
 ///
 /// Usage:
 /// ```dart
@@ -49,6 +51,7 @@ import '../widgets/mode_action_bar.dart';
 /// ```
 mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool _editing = false;
+  bool _askingToDiscard = false;
   bool _saving = false;
   late D _original;
   late D _working;
@@ -159,15 +162,31 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     onDraftRestored();
   }
 
-  /// Top-bar ← / ✕ and system back. While editing it's exactly the ยกเลิก
-  /// button: [cancelEdit], no prompt (owner 2026-10-10).
-  void handleBack() {
-    if (_saving) return;
-    if (_editing) {
-      cancelEdit();
-    } else {
+  /// Top-bar ← / ✕ and system back. While editing with unsaved changes it
+  /// asks first ("ยกเลิกการแก้ไข?" [แก้ต่อ] [ยกเลิกการแก้ไข]); with none it
+  /// just leaves edit mode (owner 2026-10-10, reversing "back = cancel, no
+  /// prompt"). The ยกเลิก button itself stays direct ([cancelEdit]).
+  Future<void> handleBack() async {
+    if (_saving || _askingToDiscard) return;
+    if (!_editing) {
       leavePage();
+      return;
     }
+    if (isDirty || _sessionStart != null) {
+      final l = AppLocalizations.of(context)!;
+      _askingToDiscard = true;
+      final ok = await showConfirmDialog(
+        context,
+        title: l.editDiscardTitle,
+        message: l.editDiscardMessage,
+        cancelLabel: l.editKeepEditing,
+        confirmLabel: l.editDiscardConfirm,
+        destructive: true,
+      );
+      _askingToDiscard = false;
+      if (!ok || !mounted || !_editing) return;
+    }
+    cancelEdit();
   }
 
   // ── Changes ─────────────────────────────────────────────────────────

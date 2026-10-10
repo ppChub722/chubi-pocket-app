@@ -6,6 +6,11 @@ import 'package:equatable/equatable.dart';
 /// Phase 2 per spec §2.7.
 enum NotificationType {
   splitCreated('split_created'),
+
+  /// The splitter changed or removed my share of their split (spec: BE
+  /// contract 2026-10-10). Pending, one action "อัปเดตตาม" — unless a newer
+  /// change superseded it (payload.superseded).
+  splitChanged('split_changed'),
   splitPaid('split_paid'),
   splitReceived('split_received'),
   projectTxRecordedForYou('project_tx_recorded_for_you'),

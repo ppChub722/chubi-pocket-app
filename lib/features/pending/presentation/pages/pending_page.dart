@@ -68,14 +68,13 @@ class _PendingPageState extends State<PendingPage> {
     final l = AppLocalizations.of(context)!;
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
-    final txCubit = context.read<TransactionsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final ids = _selected.toList();
     setState(() => _submitting = true);
     try {
       final r = await pending.submit(ids);
       if (r.submitted.isNotEmpty) {
-        await Future.wait([accounts.load(), txCubit.load()]);
+        await Future.wait([accounts.load(), TransactionsCubit.bookChanged()]);
       }
       if (!mounted) return;
       setState(() {
@@ -204,7 +203,14 @@ class _PendingPageState extends State<PendingPage> {
                             _Filter.others => l.pendingFilterOthers(others),
                           },
                           active: _filter == f,
-                          onTap: () => setState(() => _filter = f),
+                          // Ticks the new filter hides are dropped, so
+                          // "ยืนยันที่เลือก (n)" counts and sends only
+                          // what's on screen (owner 2026-10-10).
+                          onTap: () => setState(() {
+                            _filter = f;
+                            final shown = _visible(all).map((p) => p.id);
+                            _selected.retainAll(shown);
+                          }),
                         ),
                     ],
                   ),

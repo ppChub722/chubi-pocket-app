@@ -24,6 +24,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonNote => 'Note';
 
   @override
+  String get editDiscardTitle => 'Discard your changes?';
+
+  @override
+  String get editDiscardMessage => 'What you changed won\'t be saved.';
+
+  @override
+  String get editKeepEditing => 'Keep editing';
+
+  @override
+  String get editDiscardConfirm => 'Discard changes';
+
+  @override
+  String get categorySystemOpening => 'Opening balance';
+
+  @override
+  String get categorySystemAdjustment => 'Balance adjustment';
+
+  @override
+  String get categorySystemTransferIn => 'Transfer in';
+
+  @override
+  String get categorySystemTransferOut => 'Transfer out';
+
+  @override
+  String get categorySystemDebtReceived => 'Debt received';
+
+  @override
+  String get categorySystemDebtPaid => 'Debt paid';
+
+  @override
   String get commonCancel => 'Cancel';
 
   @override
@@ -540,7 +570,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectsPlaceholderTitle => 'No projects yet';
 
   @override
-  String get projectsPlaceholderMessage => 'Shared projects ship in Phase 1b.';
+  String get projectsPlaceholderMessage =>
+      'Create a project to track costs you share with others.';
 
   @override
   String get moreCategories => 'Categories';
@@ -1781,9 +1812,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txDetailSplits => 'Split';
 
   @override
-  String get txDetailHasSplits => 'Split with others';
-
-  @override
   String get txDetailRecordedBy => 'Recorded by';
 
   @override
@@ -2253,15 +2281,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagFormColorLabel => 'Color';
 
   @override
-  String get tagDetailsTitle => 'Description · Note';
-
-  @override
-  String get tagDescriptionHint => 'Optional · e.g. Japan trip spending';
-
-  @override
-  String get tagNoteHint => 'Optional';
-
-  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -2435,6 +2454,201 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txHeroTitleHint => 'What\'s it for?';
 
   @override
+  String get txDetailRepaymentBanner =>
+      'Recorded from a debt repayment — it can\'t be edited, but it can be deleted (the debt\'s repaid amount goes down).';
+
+  @override
+  String get debtOverpaid => 'Overpaid';
+
+  @override
+  String get debtOverpaidIOwe => 'Overpaid · I owe them back';
+
+  @override
+  String get debtOverpaidTheyOwe => 'Overpaid · they owe me back';
+
+  @override
+  String get debtOverpaidCantSettle =>
+      'This debt is already overpaid — nothing more to record';
+
+  @override
+  String txDetailDeleteRepaymentBody(String amount) {
+    return 'The debt\'s repaid amount goes down by $amount.';
+  }
+
+  @override
+  String get notifTypeSplitChanged => 'Someone changes a split with me';
+
+  @override
+  String get notifAutoApplySplitChange => 'Auto: update my debt to match';
+
+  @override
+  String notifSplitAmountChanged(
+    String who,
+    String what,
+    String from,
+    String to,
+  ) {
+    return '$who changed the split $what: $from → $to';
+  }
+
+  @override
+  String notifSplitRemovedYou(String who, String what) {
+    return '$who removed you from the split $what';
+  }
+
+  @override
+  String get notifSplitChangeUpdated => 'Your debt was updated';
+
+  @override
+  String get notifSplitChangeDeleted => 'That debt was removed';
+
+  @override
+  String get notifSplitChangeZeroed =>
+      'Your share is now 0 — what you paid counts as overpaid';
+
+  @override
+  String get notifSplitChangeUsed => 'Already updated';
+
+  @override
+  String get notifSplitChangeStale =>
+      'Can\'t update any more — there\'s a newer change';
+
+  @override
+  String get notifSplitChangeGone => 'That debt was deleted';
+
+  @override
+  String txSplitStatusOverpaidToThem(String amount) {
+    return 'Overpaid $amount · you owe it back';
+  }
+
+  @override
+  String txSplitStatusOverpaidByMe(String amount) {
+    return 'Overpaid $amount · they owe it back';
+  }
+
+  @override
+  String txSplitRepaidSoFar(String amount) {
+    return 'Paid back $amount';
+  }
+
+  @override
+  String get txSplitErrorContact => 'That contact can\'t be used any more';
+
+  @override
+  String get txSplitSeeDebts => 'See on the debts page';
+
+  @override
+  String get txSplitEditOnDebts => 'Edit on the debts page';
+
+  @override
+  String get txSplitStatusPaid => '✓ Paid';
+
+  @override
+  String get txSplitStatusRepaid => '✓ Repaid';
+
+  @override
+  String txSplitStatusAwaiting(String amount) {
+    return 'Owes you $amount';
+  }
+
+  @override
+  String txSplitStatusToPay(String amount) {
+    return 'You owe $amount';
+  }
+
+  @override
+  String txSplitStatusPartPaid(String paid, String total) {
+    return 'Paid $paid of $total';
+  }
+
+  @override
+  String txSplitStatusPartRepaid(String paid, String total) {
+    return 'Repaid $paid of $total';
+  }
+
+  @override
+  String get txSplitStatusCancelled => 'Cancelled';
+
+  @override
+  String txDetailMetaRecordedBy(String name) {
+    return 'Recorded by $name';
+  }
+
+  @override
+  String get txTypeLockedHint => 'The type can\'t change after saving';
+
+  @override
+  String txDetailSplitEditElsewhere(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return '$_temp0 · edit on the debts page';
+  }
+
+  @override
+  String get txDetailCreatedAt => 'Recorded';
+
+  @override
+  String get txDetailUpdatedAt => 'Last edited';
+
+  @override
+  String get txSplitShareShort => 'Share with';
+
+  @override
+  String tagPickerCreateNamed(String name) {
+    return 'Create “$name”';
+  }
+
+  @override
+  String get tagsMore => 'More';
+
+  @override
+  String get txNoteAddHint => 'Add a note...';
+
+  @override
+  String get quickEventNone => 'None';
+
+  @override
+  String get quickUnsavedTitle => 'Not saved yet';
+
+  @override
+  String get quickUnsavedMessage => 'Close now and this entry is lost.';
+
+  @override
+  String get quickDiscardEntry => 'Discard this entry';
+
+  @override
+  String get txSplitIncompleteTitle => 'Some split rows aren\'t complete';
+
+  @override
+  String txSplitIncompleteNoName(String amount) {
+    return '$amount — no name yet';
+  }
+
+  @override
+  String txSplitIncompleteNoAmount(String name) {
+    return '$name — no amount yet';
+  }
+
+  @override
+  String get txSplitSkipIncomplete => 'Save without these rows';
+
+  @override
+  String get txTagCreateFailed => 'Couldn\'t create the tag';
+
+  @override
+  String get quickEventUseName => 'Use this name';
+
+  @override
+  String get quickEventCreatedOnSave => 'The event is created when you save.';
+
+  @override
+  String get projectTxPayerRequired => 'Pick a member first';
+
+  @override
   String get scheduledHeroNameHint => 'What\'s it for, e.g. Netflix';
 
   @override
@@ -2453,16 +2667,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickAmountRequired => 'Enter an amount first';
 
   @override
-  String get quickDiscardTitle => 'Close without saving?';
-
-  @override
-  String get quickDiscardMessage => 'What you entered will be lost.';
-
-  @override
   String get quickDiscardConfirm => 'Discard';
-
-  @override
-  String get quickDiscardKeep => 'Keep editing';
 
   @override
   String get quickAddToEvent => 'Add to an event';
@@ -2483,9 +2688,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quickEventNameLabel => 'Event name';
-
-  @override
-  String get quickEventCreate => 'Create';
 
   @override
   String get quickEventExisting => 'Or add to an existing event';
@@ -2666,12 +2868,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingKeepAsDraft => 'Keep as a draft';
 
   @override
-  String get pendingDropEditsTitle => 'Drop your changes?';
-
-  @override
-  String get pendingDropEditsMessage => 'The draft goes back to how it was.';
-
-  @override
   String pendingBlockTitle(int count) {
     return '$count pending';
   }
@@ -2736,10 +2932,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionFormTagsLabel => 'Tags';
-
-  @override
-  String get transactionFormTagsEmpty =>
-      'No tags yet. Create one from the Tags page.';
 
   @override
   String get transactionFormSave => 'Save';
@@ -2813,7 +3005,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get transactionsListEmptyMessage =>
-      'No transactions match these filters.';
+      'Record the first income or expense of the month.';
 
   @override
   String get accountAdjustBalanceViewTransaction => 'View';
@@ -3213,7 +3405,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduledGenerateNowBody =>
-      'Manually create the next transaction and advance the schedule. Phase 1c only — Phase 3 adds an automatic scheduler.';
+      'Record the next payment now and move the due date to the next period.';
 
   @override
   String get scheduledGenerateNowAction => 'Generate';
@@ -3664,4 +3856,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appUpdateLater => 'Later';
+
+  @override
+  String get transactionsEmptyMonthTitle => 'No transactions this month yet';
+
+  @override
+  String get transactionsNoMatchMessage =>
+      'Try other filters, or clear them to see everything.';
+
+  @override
+  String get notifCopyUpdated => 'Your copy is updated';
+
+  @override
+  String get homeTodoTitle => 'To do';
+
+  @override
+  String get homeTodoPending => 'To confirm';
+
+  @override
+  String get homeTodoComingUp => 'Coming up';
+
+  @override
+  String get transactionsFiltersTitle => 'Filters';
+
+  @override
+  String get transactionsFiltersApply => 'Apply filters';
+
+  @override
+  String get transactionsSortBy => 'Sort by';
+
+  @override
+  String get txPeriodMonth => 'Month';
+
+  @override
+  String get txPeriodWeek => 'Week';
+
+  @override
+  String get txPeriodYear => 'Year';
+
+  @override
+  String get txPeriodCustom => 'Custom';
+
+  @override
+  String get txPeriodPrev => 'Previous period';
+
+  @override
+  String get txPeriodNext => 'Next period';
+
+  @override
+  String get transactionsEmptyPeriodTitle => 'No transactions in this period';
+
+  @override
+  String get transactionsFilterRemove => 'Remove this filter';
 }

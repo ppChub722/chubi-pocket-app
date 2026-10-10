@@ -17,12 +17,14 @@ import '../features/accounts/domain/account_type.dart';
 import '../features/categories/domain/category.dart';
 import '../features/categories/domain/category_type.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
+import '../features/categories/presentation/widgets/category_chip.dart';
 import '../features/categories/presentation/widgets/category_picker_sheet.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../features/contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../features/transactions/presentation/widgets/account_picker_sheet.dart';
 import '../features/tags/domain/tag.dart';
 import '../features/tags/presentation/widgets/tag_chip.dart';
+import '../features/tags/presentation/widgets/tag_picker_sheet.dart';
 import '../features/transactions/domain/transaction.dart';
 import '../features/transactions/domain/transaction_type.dart';
 import '../features/transactions/presentation/widgets/period_summary_card.dart';
@@ -1144,6 +1146,94 @@ class _ChipsDemoState extends State<_ChipsDemo> {
               AppBadge(label: 'รอตอบรับ', tone: Tone.warning),
               AppBadge(label: '3', icon: Icons.sell_outlined),
             ],
+          ),
+        ),
+        // ── Period pill + side sheet (transactions list, 2026-10-10) ──
+        _Demo(
+          title: 'Pill ช่วงเวลา (สัปดาห์ · ปี · กำหนดเอง · ทั้งหมด)',
+          name: 'PeriodPill(label, onPrev, onNext, onTap)',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              PeriodPill(
+                label: '6 ต.ค. – 12 ต.ค. 2569',
+                onPrev: () => showAppSnackBar(context, 'ก่อนหน้า'),
+                onTap: () => showAppSnackBar(context, 'เปิดตัวกรอง'),
+              ),
+              PeriodPill(
+                label: '2569',
+                onPrev: () => showAppSnackBar(context, 'ก่อนหน้า'),
+                onNext: () => showAppSnackBar(context, 'ถัดไป'),
+              ),
+              PeriodPill(
+                label: 'ทั้งหมด',
+                onTap: () => showAppSnackBar(context, 'เปิดตัวกรอง'),
+              ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'Side sheet จากขวา (ตัวกรอง — ปัดขวา / แตะพื้นหลังเพื่อปิด)',
+          name: 'showSideSheet · SideSheetScaffold · SideSheetSection',
+          child: AppButton(
+            label: 'เปิด side sheet',
+            icon: Icons.tune,
+            variant: AppButtonVariant.outlined,
+            onPressed: () => showSideSheet<void>(
+              context,
+              builder: (sheet) => SideSheetScaffold(
+                title: 'ตัวกรอง',
+                body: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SideSheetSection(
+                      title: 'ประเภท',
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        children: [
+                          for (final t in ['ทั้งหมด', 'รายจ่าย', 'รายรับ'])
+                            ChoiceChip(
+                              label: Text(t),
+                              selected: t == 'ทั้งหมด',
+                              showCheckmark: false,
+                            ),
+                        ],
+                      ),
+                    ),
+                    SideSheetSection(
+                      title: 'กระเป๋า',
+                      child: PickerTile(
+                        label: 'กระเป๋า',
+                        placeholder: 'ทั้งหมด',
+                        onTap: () {},
+                      ),
+                    ),
+                  ],
+                ),
+                footer: Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        label: 'ล้าง',
+                        variant: AppButtonVariant.outlined,
+                        expand: true,
+                        onPressed: () {},
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      flex: 2,
+                      child: AppButton(
+                        label: 'ใช้ตัวกรอง',
+                        expand: true,
+                        onPressed: () => Navigator.of(sheet).pop(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
         // ── App version gate (owner 2026-10-10) ────────────────────────
@@ -2702,6 +2792,8 @@ class _DomainDemoState extends State<_DomainDemo> {
   String _picked = '—';
   String? _pickedId;
   TransactionType _heroType = TransactionType.expense;
+  String? _chipCategoryId;
+  Set<String> _pickedTags = {};
   final _heroAmount = TextEditingController();
   final _heroNote = TextEditingController();
   final _heroViewAmount = TextEditingController(text: '1,250');
@@ -2811,8 +2903,8 @@ class _DomainDemoState extends State<_DomainDemo> {
         ),
         _Demo(
           title:
-              'การ์ดหัวรายการ (ชิปประเภท · ปัดซ้าย/ขวาเปลี่ยนประเภท · '
-              'ยอด · ค่าอะไร (คำอธิบาย) · วันที่) — สร้าง / ดู',
+              'การ์ดหัวรายการ (ชิปประเภท + วันที่ · ปัดซ้าย/ขวาเปลี่ยนประเภท · '
+              'ค่าอะไร | ยอด) — สร้าง / ดู · แบบซ้อน (อีเวนต์ / รายการประจำ)',
           name: 'TxHeroCard',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2824,6 +2916,7 @@ class _DomainDemoState extends State<_DomainDemo> {
                 title: _heroNote,
                 dateLabel: 'วันนี้',
                 onPickDate: () => showAppSnackBar(context, 'เลือกวันที่'),
+                inline: true,
               ),
               const _Gap(),
               TxHeroCard(
@@ -2835,8 +2928,58 @@ class _DomainDemoState extends State<_DomainDemo> {
                 onEdit: () => showAppSnackBar(context, '✏️ เข้าโหมดแก้ไข'),
                 onLongPressField: (_) =>
                     showAppSnackBar(context, 'กดค้าง → เข้าโหมดแก้ไข'),
+                inline: true,
+              ),
+              const _Gap(),
+              TxHeroCard(
+                type: TransactionType.income,
+                allowTransfer: false,
+                onTypeChanged: (_) {},
+                amount: _heroAmount,
+                title: _heroNote,
+                dateLabel: 'วันนี้',
               ),
             ],
+          ),
+        ),
+        _Demo(
+          title: 'ชิปหมวด (หมวดล่าสุดใน quick create — แตะเพื่อเลือก)',
+          name: 'CategoryChip',
+          child: Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final c
+                  in context
+                      .watch<CategoriesCubit>()
+                      .state
+                      .categories
+                      .where((c) => !c.isSystem && c.parentId == null)
+                      .take(5))
+                CategoryChip(
+                  category: c,
+                  selected: c.id == _chipCategoryId,
+                  onTap: () => setState(() => _chipCategoryId = c.id),
+                ),
+            ],
+          ),
+        ),
+        _Demo(
+          title: 'เลือกแท็ก (ค้นหา · เลือกหลายอัน · + แท็กใหม่)',
+          name: 'showTagPickerSheet',
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AppButton(
+              label: 'เลือกแท็ก (${_pickedTags.length})',
+              variant: AppButtonVariant.outlined,
+              onPressed: () async {
+                final next = await showTagPickerSheet(
+                  context,
+                  selected: _pickedTags,
+                );
+                if (next != null) setState(() => _pickedTags = next);
+              },
+            ),
           ),
         ),
         _Demo(

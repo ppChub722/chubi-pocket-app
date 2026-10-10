@@ -107,6 +107,9 @@ class _EventForm extends StatelessWidget {
               member: _member(c.payerId),
               label: isIncome ? l.projectTxReceivedBy : l.projectTxPaidBy,
               onTap: locked ? null : () => _pickPayer(context),
+              errorText: c.payerMissing && c.payerId == null
+                  ? l.projectTxPayerRequired
+                  : null,
             ),
             const SizedBox(height: AppSpacing.md),
             _TextBlock(
@@ -140,35 +143,9 @@ class _EventTags extends StatelessWidget {
   final List<String> known;
 
   Future<void> _addNew(BuildContext context) async {
-    final l = AppLocalizations.of(context)!;
-    final text = TextEditingController();
-    // The app's sheet + field, like the other pickers (was a raw dialog).
-    final name = await showAppSheet<String>(
-      context,
-      title: l.projectTxAddTag,
-      builder: (sheet) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: AppTextField(
-          controller: text,
-          autofocus: true,
-          maxLength: 40,
-          hint: l.projectTxTagHint,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (v) => Navigator.pop(sheet, v),
-        ),
-      ),
-      // Builder: pop the sheet's route, not the caller's navigator.
-      footer: Builder(
-        builder: (sheet) => AppButton(
-          label: l.commonSave,
-          expand: true,
-          onPressed: () => Navigator.pop(sheet, text.text),
-        ),
-      ),
-    );
-    text.dispose();
-    final n = name?.trim() ?? '';
-    if (n.isEmpty) return;
+    // The shared name sheet (it owns its controller — see askNewTagName).
+    final n = await askNewTagName(context, maxLength: 40);
+    if (n == null) return;
     final picked = controller.tagNames.any(
       (t) => t.toLowerCase() == n.toLowerCase(),
     );

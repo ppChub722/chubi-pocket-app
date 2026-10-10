@@ -88,7 +88,8 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
           AppSpacing.lg,
           0,
           AppSpacing.lg,
-          AppSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
+          // No keyboard inset here — AppSheetScaffold (showAppSheet) adds it.
+          AppSpacing.lg,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

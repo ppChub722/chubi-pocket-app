@@ -24,6 +24,9 @@ class SplitDraft {
     this.contactId,
     this.contactDisplayName,
     this.owedAmount,
+    this.debtId,
+    this.settledAmount = 0,
+    this.cancelled = false,
   }) : personName = personName ?? '';
 
   String personName;
@@ -31,41 +34,59 @@ class SplitDraft {
   String? contactDisplayName;
   double? owedAmount;
 
+  /// A saved transaction's split: the debt row it made. Its person is fixed
+  /// (to change who, remove + add); only the amount changes.
+  final String? debtId;
+
+  /// Already paid back on that debt — shown, never a limit: the amount may
+  /// go below it (then it's overpaid) and the row may be removed.
+  final double settledAmount;
+
+  /// That debt was cancelled (it stays so; its amount can still change).
+  final bool cancelled;
+
+  bool get isSaved => debtId != null;
+  bool get hasRepayments => settledAmount > 0.005;
+
   Map<String, dynamic> toJson() => <String, dynamic>{
+    'debt_id': ?debtId,
     'person_name': personName.trim(),
     if (contactId != null) 'contact_id': contactId,
     'owed_amount': owedAmount ?? 0,
     'split_type': 'fixed',
   };
 
+  /// One entry of PUT /transactions/:id/splits: a saved split by its debt
+  /// (only the amount is read), a new one like at create.
+  Map<String, dynamic> toUpdateJson() => isSaved
+      ? {'debt_id': debtId, 'owed_amount': owedAmount ?? 0}
+      : {
+          'person_name': personName.trim(),
+          'contact_id': ?contactId,
+          'owed_amount': owedAmount ?? 0,
+        };
+
   bool get isComplete => personName.trim().isNotEmpty && (owedAmount ?? 0) > 0;
 
   bool get isWired => contactId != null;
 }
 
-/// Collapsible splits editor. Sits inside the transaction form body for
-/// non-transfer transactions. Returns the current draft list via the
-/// `onChanged` callback so the parent can pass it to `cubit.add`.
-///
-/// [title] adapts the header/toggle to the debt direction the split
-/// will create (spec §12): expense → "หารกับ…" (they owe me), income →
-/// "แบ่งให้…" (I owe them).
+/// The "หารกับ" editor of the transaction form, always open (owner
+/// 2026-10-10). Empty, it's just [+ เพิ่มคน] — no blank row; with rows:
+/// each row, then [+ เพิ่มคน] [หารเท่ากัน] · "ส่วนของคุณ ฿x". Removing the
+/// last row empties it again. The row's label ("หารกับ" / "แบ่งให้") sits
+/// beside it in the form. Returns the drafts via [onChanged].
 class SplitsSection extends StatefulWidget {
   const SplitsSection({
     required this.totalAmount,
     required this.drafts,
     required this.onChanged,
-    this.title,
     super.key,
   });
 
   /// Parent transaction's amount — used for "split equally" + validation
   /// of total ≤ tx amount.
   final double totalAmount;
-
-  /// Contextual label for the toggle + expanded header. Falls back to
-  /// the legacy "Split with…" when null.
-  final String? title;
 
   final List<SplitDraft> drafts;
   final ValueChanged<List<SplitDraft>> onChanged;
@@ -75,12 +96,9 @@ class SplitsSection extends StatefulWidget {
 }
 
 class _SplitsSectionState extends State<SplitsSection> {
-  bool _expanded = false;
-
   @override
   void initState() {
     super.initState();
-    _expanded = widget.drafts.isNotEmpty;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // Warm the contacts cache so the typeahead has data ready.
@@ -99,60 +117,28 @@ class _SplitsSectionState extends State<SplitsSection> {
     return total;
   }
 
+  void _addPerson() => widget.onChanged([...widget.drafts, SplitDraft()]);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
     final remaining = widget.totalAmount - _splitTotal;
     final overflow = remaining < -0.005;
+    final addPerson = TextButton.icon(
+      icon: const Icon(AppIcons.add, size: 18),
+      label: Text(l.txSplitAddPerson),
+      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+      onPressed: _addPerson,
+    );
 
-    if (!_expanded) {
-      return AddTile(
-        label: widget.title ?? l.txSplitAdd,
-        variant: AddTileVariant.row,
-        icon: AppIcons.split,
-        onTap: () {
-          setState(() {
-            _expanded = true;
-            if (widget.drafts.isEmpty) {
-              widget.onChanged([SplitDraft()]);
-            }
-          });
-        },
-      );
+    if (widget.drafts.isEmpty) {
+      return Align(alignment: Alignment.centerLeft, child: addPerson);
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                widget.title ?? l.txSplitWith,
-                style: theme.textTheme.titleSmall,
-              ),
-            ),
-            TextButton.icon(
-              icon: const Icon(AppIcons.split, size: 18),
-              label: Text(l.txSplitEqually),
-              onPressed: widget.drafts.isEmpty || widget.totalAmount <= 0
-                  ? null
-                  : _splitEqually,
-            ),
-            IconButton(
-              tooltip: l.txSplitCollapse,
-              icon: const Icon(AppIcons.close),
-              onPressed: () {
-                setState(() {
-                  _expanded = false;
-                  widget.onChanged(const []);
-                });
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
         for (var i = 0; i < widget.drafts.length; i++) ...[
           _DraftRow(
             // Key by the draft object itself: removing a middle row must
@@ -169,19 +155,22 @@ class _SplitsSectionState extends State<SplitsSection> {
         ],
         Row(
           children: [
+            addPerson,
             TextButton.icon(
-              icon: const Icon(AppIcons.add),
-              label: Text(l.txSplitAddPerson),
-              onPressed: () {
-                widget.onChanged([...widget.drafts, SplitDraft()]);
-              },
+              icon: const Icon(AppIcons.split, size: 18),
+              label: Text(l.txSplitEqually),
+              style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+              onPressed: widget.totalAmount <= 0 ? null : _splitEqually,
             ),
             const Spacer(),
-            Text(
-              l.txSplitRemaining(moneyString(context, remaining)),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: overflow ? theme.colorScheme.error : null,
-                fontWeight: overflow ? FontWeight.w600 : null,
+            Flexible(
+              child: Text(
+                l.txSplitRemaining(moneyString(context, remaining)),
+                textAlign: TextAlign.right,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: overflow ? theme.colorScheme.error : null,
+                  fontWeight: overflow ? FontWeight.w600 : null,
+                ),
               ),
             ),
           ],
@@ -277,7 +266,7 @@ class _DraftRowState extends State<_DraftRow> {
     final draft = widget.draft;
     return BlocBuilder<ContactsCubit, ContactsState>(
       builder: (context, state) {
-        return Row(
+        final row = Row(
           children: [
             // Visual cue: filled link icon when wired, outline when free text.
             Tooltip(
@@ -297,90 +286,108 @@ class _DraftRowState extends State<_DraftRow> {
             ),
             Expanded(
               flex: 3,
-              child: Autocomplete<Contact>(
-                initialValue: TextEditingValue(text: draft.personName),
-                displayStringForOption: (c) => c.effectiveName,
-                optionsBuilder: (textEditingValue) =>
-                    _suggestionsFor(textEditingValue.text, state.contacts),
-                onSelected: (c) {
-                  setState(() {
-                    draft.personName = c.effectiveName;
-                    draft.contactId = c.id;
-                    draft.contactDisplayName = c.effectiveName;
-                  });
-                  widget.onChange();
-                },
-                fieldViewBuilder: (context, controller, focusNode, onSubmit) {
-                  return AppTextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    label: l.txSplitName,
-                    onChanged: (v) {
-                      // Typing past or away from a picked contact clears
-                      // the wire — otherwise the BE would receive a stale
-                      // contact_id that no longer matches the name.
-                      final stale =
-                          draft.contactDisplayName != null &&
-                          v != draft.contactDisplayName;
-                      setState(() {
-                        draft.personName = v;
-                        if (stale) {
-                          draft.contactId = null;
-                          draft.contactDisplayName = null;
-                        }
-                      });
-                      widget.onChange();
-                    },
-                  );
-                },
-                optionsViewBuilder: (context, onSelected, options) {
-                  // Default Material 3 dropdown shape constrained so it
-                  // doesn't grow taller than 280 px (typical 6 rows).
-                  final list = options.toList(growable: false);
-                  return Align(
-                    alignment: Alignment.topLeft,
-                    child: Material(
-                      elevation: 4,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxHeight: 280,
-                          maxWidth: 320,
-                        ),
-                        child: ListView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          itemCount: list.length,
-                          itemBuilder: (context, i) {
-                            final c = list[i];
-                            return ListTile(
-                              dense: true,
-                              leading: UserAvatar(
-                                displayName: c.effectiveName,
-                                iconCode: c.effectiveIconCode,
-                                size: 28,
-                              ),
-                              title: Text(c.effectiveName),
-                              subtitle: c.email != null
-                                  ? Text(
-                                      c.email!,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    )
-                                  : null,
-                              trailing: c.isLinked
-                                  ? const Icon(AppIcons.link, size: 14)
-                                  : null,
-                              onTap: () => onSelected(c),
-                            );
-                          },
+              // A saved split's person is fixed (remove + add to change).
+              child: draft.isSaved
+                  ? InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: l.txSplitName,
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
+                      child: Text(
+                        draft.personName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  : Autocomplete<Contact>(
+                      initialValue: TextEditingValue(text: draft.personName),
+                      displayStringForOption: (c) => c.effectiveName,
+                      optionsBuilder: (textEditingValue) => _suggestionsFor(
+                        textEditingValue.text,
+                        state.contacts,
+                      ),
+                      onSelected: (c) {
+                        setState(() {
+                          draft.personName = c.effectiveName;
+                          draft.contactId = c.id;
+                          draft.contactDisplayName = c.effectiveName;
+                        });
+                        widget.onChange();
+                      },
+                      fieldViewBuilder: (context, controller, focusNode, onSubmit) {
+                        return AppTextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          label: l.txSplitName,
+                          onChanged: (v) {
+                            // Typing past or away from a picked contact clears
+                            // the wire — otherwise the BE would receive a stale
+                            // contact_id that no longer matches the name.
+                            final stale =
+                                draft.contactDisplayName != null &&
+                                v != draft.contactDisplayName;
+                            setState(() {
+                              draft.personName = v;
+                              if (stale) {
+                                draft.contactId = null;
+                                draft.contactDisplayName = null;
+                              }
+                            });
+                            widget.onChange();
+                          },
+                        );
+                      },
+                      optionsViewBuilder: (context, onSelected, options) {
+                        // Default Material 3 dropdown shape constrained so it
+                        // doesn't grow taller than 280 px (typical 6 rows).
+                        final list = options.toList(growable: false);
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxHeight: 280,
+                                maxWidth: 320,
+                              ),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                itemCount: list.length,
+                                itemBuilder: (context, i) {
+                                  final c = list[i];
+                                  return ListTile(
+                                    dense: true,
+                                    leading: UserAvatar(
+                                      displayName: c.effectiveName,
+                                      iconCode: c.effectiveIconCode,
+                                      size: 28,
+                                    ),
+                                    title: Text(c.effectiveName),
+                                    subtitle: c.email != null
+                                        ? Text(
+                                            c.email!,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          )
+                                        : null,
+                                    trailing: c.isLinked
+                                        ? const Icon(AppIcons.link, size: 14)
+                                        : null,
+                                    onTap: () => onSelected(c),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
@@ -399,10 +406,35 @@ class _DraftRowState extends State<_DraftRow> {
                 },
               ),
             ),
+            // Repayments don't limit edits (owner 2026-10-10): anyone can be
+            // removed, whatever they paid back.
             IconButton(
               tooltip: l.txSplitRemove,
               icon: const Icon(AppIcons.delete),
               onPressed: widget.onRemove,
+            ),
+          ],
+        );
+        if (!draft.hasRepayments && !draft.cancelled) return row;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            row,
+            Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpacing.xl + AppSpacing.xs,
+                top: AppSpacing.xs,
+              ),
+              child: Text(
+                draft.cancelled
+                    ? l.txSplitStatusCancelled
+                    : l.txSplitRepaidSoFar(
+                        moneyString(context, draft.settledAmount),
+                      ),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
             ),
           ],
         );

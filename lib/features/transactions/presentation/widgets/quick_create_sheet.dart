@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +9,8 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/storage_keys.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -27,7 +31,6 @@ import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
 import '../../../scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../data/transactions_repository.dart';
-import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../transaction_edit.dart';
@@ -51,13 +54,18 @@ String _eventErrorMessage(AppLocalizations l, ApiException e) {
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
 /// — never a new page:
 ///
-///   type · big amount · category + wallet cards · date · note
-///   ▸ รายละเอียดเพิ่ม (closed; tap to open): tags · หารกับ… · เพิ่มเข้าอีเวนต์
+///   hero (type · amount · ค่าอะไร · date) · โน้ต · category + wallet cards
+///   · tags (+ แท็กใหม่) · หารกับ… · เพิ่มเข้าอีเวนต์ — all shown, no toggle
+///
+/// Drag the handle / title row down to close. Closing asks first only when
+/// there's something worth keeping (an amount or a description; an edit:
+/// any change). Switching type keeps everything; the category is
+/// remembered per type.
 ///
 /// The fields are the shared [DraftForm] — the same one "เพิ่มร่าง" and
 /// "แก้ร่าง" use. Save sits pinned above the keyboard. Scrolling past the
 /// amount slides in a compact summary (type · amount · category) at the
-/// top; tap it to scroll back. Closing with anything entered asks first.
+/// top; tap it to scroll back.
 ///
 /// Defaults: the last wallet used (else the first) and today.
 /// "เพิ่มเข้าอีเวนต์" files the bill into a new event or an existing one
@@ -68,10 +76,8 @@ String _eventErrorMessage(AppLocalizations l, ApiException e) {
 /// "บันทึกร่าง" saves it back, "ยืนยันรายการนี้" submits it, "ทิ้ง" removes
 /// it; the event tile is hidden (drafts don't go to events).
 ///
-/// With [transaction] it edits a saved transaction (title "แก้ไขรายการ"):
-/// one "บันทึก" button; the type is fixed, splits and events are hidden
-/// (both are create-only), another member's row keeps its category, and an
-/// ex-member's locked row is read-only.
+/// A saved transaction isn't edited here — its detail page edits it in
+/// place.
 ///
 /// With [project] it's event mode — a row on that project's board (no
 /// wallet or category; payer, description, note, tags, member splits; see
@@ -92,7 +98,6 @@ String _eventErrorMessage(AppLocalizations l, ApiException e) {
 Future<bool> showQuickCreateSheet(
   BuildContext context, {
   PendingTransaction? draft,
-  Transaction? transaction,
   ProjectView? project,
   ProjectTxTree? projectRow,
   bool scheduled = false,
@@ -100,12 +105,7 @@ Future<bool> showQuickCreateSheet(
   Account? account,
 }) async {
   assert(
-    [
-          draft,
-          transaction,
-          project,
-          scheduled ? true : null,
-        ].where((x) => x != null).length <=
+    [draft, project, scheduled ? true : null].where((x) => x != null).length <=
         1,
   );
   assert(projectRow == null || project != null);
@@ -115,7 +115,7 @@ Future<bool> showQuickCreateSheet(
   context.read<TagsCubit>().loadIfNeeded();
   // Prefilling resolves wallet / category ids against the caches — wait
   // for them, or a cold start would open with both empty.
-  if (draft != null || transaction != null || scheduledEntry != null) {
+  if (draft != null || scheduledEntry != null) {
     await Future.wait([accounts, categories]);
   }
   if (!context.mounted) return false;
@@ -128,13 +128,13 @@ Future<bool> showQuickCreateSheet(
     // Over the whole shell, wherever it's opened from: inside a tab it
     // would sit under the floating nav (the tab body runs on beneath it).
     useRootNavigator: true,
-    // Drag-to-dismiss would skip the "discard?" question; the ✕, the
-    // barrier and back all go through PopScope instead.
+    // The route's drag-to-dismiss would skip the "discard?" question —
+    // the sheet drags itself instead (see _onDragEnd); ✕, the barrier and
+    // back all go through PopScope.
     enableDrag: false,
     builder: (_) => _QuickCreateSheet(
       prefs: prefs,
       draft: draft,
-      transaction: transaction,
       project: project,
       projectRow: projectRow,
       scheduled: scheduled,
@@ -147,7 +147,7 @@ Future<bool> showQuickCreateSheet(
 
 // ── Remembered defaults ───────────────────────────────────────────────
 
-const _kLastAccount = 'quick.last_account_id';
+// The last wallet used: [StorageKeys.lastAccountId].
 
 enum _CloseChoice { draft, keepEditing, discard }
 
@@ -170,7 +170,6 @@ class _QuickCreateSheet extends StatefulWidget {
   const _QuickCreateSheet({
     required this.prefs,
     this.draft,
-    this.transaction,
     this.project,
     this.projectRow,
     this.scheduled = false,
@@ -184,9 +183,6 @@ class _QuickCreateSheet extends StatefulWidget {
 
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
-
-  /// Editing this saved transaction instead of creating.
-  final Transaction? transaction;
 
   /// Event mode: a row on this project's board.
   final ProjectView? project;
@@ -209,22 +205,21 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   final _scroll = ScrollController();
 
   _EventTarget? _event;
+
+  /// The event pick, unless it's a transfer (kept for switching back).
+  _EventTarget? get _activeEvent => _c.isTransfer ? null : _event;
   bool _saving = false;
+
+  /// How far the sheet is dragged down by its handle / title row.
+  double _drag = 0;
+  bool _dragging = false;
 
   /// Scrolled past the amount → show the compact summary bar.
   bool _collapsed = false;
-  static const _collapseAt = 170.0;
+  // The amount sits in the hero's second row now (owner 2026-10-10).
+  static const _collapseAt = 110.0;
 
   bool get _editingDraft => widget.draft != null;
-  bool get _editingTx => widget.transaction != null;
-
-  /// Ex-member's row on a shared wallet — shown, not editable.
-  bool get _locked => widget.transaction?.isLocked ?? false;
-
-  /// The saved transaction as first loaded — what "changed?" compares to.
-  PendingDraft? _txBaseline;
-  String? _initialAccountId;
-  String? _initialToAccountId;
 
   bool get _isEvent => widget.project != null;
   bool get _editingRow => widget.projectRow != null;
@@ -245,15 +240,31 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// Scheduled mode: the fields as first shown.
   String? _scheduledBaseline;
 
+  /// A draft as first shown — after prefill, so the defaults it fills in
+  /// (today, expense) for a draft without them don't count as edits.
+  PendingDraft? _draftBaseline;
+
+  /// Worth asking before closing (owner 2026-10-10): an edit asks when
+  /// anything changed; a new entry only once it has an amount or a
+  /// description (a scheduled one: a name) — anything less closes quietly.
   bool get _dirty => _isScheduled
-      ? _c.scheduledSnapshot() != _scheduledBaseline
+      ? (_editingScheduled
+            ? _c.scheduledSnapshot() != _scheduledBaseline
+            : _hasKeyData)
       : _isEvent
-      ? _c.eventSnapshot() != _eventBaseline
+      ? (_editingRow ? _c.eventSnapshot() != _eventBaseline : _hasKeyData)
       : _editingDraft
-      ? _c.toDraft() != widget.draft!.draft
-      : _editingTx
-      ? !_locked && _c.toDraft() != _txBaseline
-      : _c.hasContent || _event != null;
+      ? _c.toDraft() != _draftBaseline
+      : _hasKeyData;
+
+  bool get _hasKeyData =>
+      _c.amountValue > 0 ||
+      _c.description.text.trim().isNotEmpty ||
+      (_isScheduled && _c.schedule.name.text.trim().isNotEmpty);
+
+  /// A new entry with nothing in it — its save buttons are off, and a save
+  /// that slips through just closes (never an empty draft).
+  bool get _isEmpty => !_editingDraft && !_c.hasContent && _event == null;
 
   /// Distinct values, most frequent first.
   static List<String> _mostUsed(Iterable<String> values) {
@@ -298,9 +309,13 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         moneyString(context, _c.memberSplitSum, symbol: view.symbol),
       );
     }
+    if (problem == null && payer == null) {
+      _c.flagMissingPayer();
+      problem = l.projectTxPayerRequired;
+    }
     if (problem != null || payer == null) {
       HapticFeedback.lightImpact();
-      if (problem != null) _toast(problem);
+      _toast(problem!);
       return;
     }
     final repo = context.read<ProjectsRepository>();
@@ -412,33 +427,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         accounts: context.read<AccountsCubit>().state.accounts,
         categories: context.read<CategoriesCubit>().state.categories,
       );
+      _draftBaseline = _c.toDraft();
     }
-    final t = widget.transaction;
-    if (t != null) {
-      _c.prefillTransaction(
-        t,
-        accounts: context.read<AccountsCubit>().state.accounts,
-        categories: context.read<CategoriesCubit>().state.categories,
-        // A transfer's other side is its sibling row in the same group.
-        toAccount: transferOtherAccount(context, t),
-      );
-      _txBaseline = _c.toDraft();
-      _initialAccountId = _c.account?.id;
-      _initialToAccountId = _c.toAccount?.id;
-    }
-    // Typing / picking rebuilds the sheet (summary bar, close guard); a
-    // transfer can't go to an event.
+    // Typing / picking rebuilds the sheet (summary bar, close guard). A
+    // switch to transfer keeps the event pick and splits, just unused, so
+    // switching back finds them (owner 2026-10-10).
     _c.addListener(() {
-      if (!mounted) return;
-      setState(() {
-        if (_c.isTransfer) _event = null;
-      });
+      if (mounted) setState(() {});
     });
   }
 
   /// "บันทึกร่าง": park it in รอยืนยัน (new) or save the edits back.
   Future<void> _saveDraft() async {
     final l = AppLocalizations.of(context)!;
+    if (_isEmpty) {
+      Navigator.of(context).pop(false);
+      return;
+    }
+    if (!await _confirmIncompleteSplits()) return;
+    if (!mounted) return;
     final pending = context.read<PendingCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -470,9 +477,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       _toast(problem);
       return;
     }
+    if (!await _confirmIncompleteSplits()) return;
+    if (!mounted) return;
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
-    final txCubit = context.read<TransactionsCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final id = widget.draft!.id;
@@ -487,7 +495,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         _toast(pendingErrorText(l, failed));
         return;
       }
-      await Future.wait([accounts.load(), txCubit.load()]);
+      await Future.wait([accounts.load(), TransactionsCubit.bookChanged()]);
       await _remember();
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
@@ -498,7 +506,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Draft mode "ทิ้ง".
+  /// Draft mode "ลบ": deletes the whole draft.
   Future<void> _discardDraft() async {
     final l = AppLocalizations.of(context)!;
     final pending = context.read<PendingCubit>();
@@ -506,7 +514,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final ok = await showConfirmDialog(
       context,
       title: l.pendingDiscardTitle,
-      confirmLabel: l.quickDiscardConfirm,
+      confirmLabel: l.commonDelete,
       destructive: true,
     );
     if (!ok || !mounted) return;
@@ -534,13 +542,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       return accounts.where((a) => a.id == preset.id).firstOrNull ?? preset;
     }
     if (accounts.isEmpty) return null;
-    final last = widget.prefs.getString(_kLastAccount);
+    final last = widget.prefs.getString(StorageKeys.lastAccountId);
     return accounts.where((a) => a.id == last).firstOrNull ?? accounts.first;
   }
 
   Future<void> _remember() async {
     final acc = _c.account;
-    if (acc != null) await widget.prefs.setString(_kLastAccount, acc.id);
+    if (acc != null) {
+      await widget.prefs.setString(StorageKeys.lastAccountId, acc.id);
+    }
   }
 
   // ── Event ─────────────────────────────────────────────────────────
@@ -572,30 +582,28 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   // ── Close / save ──────────────────────────────────────────────────
 
-  /// Closing with something entered: keep it as a draft, keep editing, or
-  /// throw it away. (Editing a draft: keep editing or drop the changes.)
+  /// Closing with something worth keeping ([_dirty]). One look in every
+  /// mode (owner 2026-10-10): a short title, one line of context, labelled
+  /// buttons. A new entry: [เก็บเป็นร่าง] (plain transactions only) ·
+  /// [แก้ต่อ] · [ยกเลิกรายการนี้]. An edit: [แก้ต่อ] · [ยกเลิกการแก้ไข].
   Future<void> _confirmClose() async {
     final l = AppLocalizations.of(context)!;
+    final editing = _editingDraft || _editingRow || _editingScheduled;
     final choice = await showChoiceDialog<_CloseChoice>(
       context,
-      title: _editingDraft ? l.pendingDropEditsTitle : l.quickDiscardTitle,
-      message: _editingDraft
-          ? l.pendingDropEditsMessage
-          : l.quickDiscardMessage,
+      title: editing ? l.editDiscardTitle : l.quickUnsavedTitle,
+      message: editing ? l.editDiscardMessage : l.quickUnsavedMessage,
       choices: [
-        if (!_editingDraft && !_editingTx && !_isEvent && !_isScheduled)
+        if (!editing && !_isEvent && !_isScheduled)
           DialogChoice(
             value: _CloseChoice.draft,
             label: l.pendingKeepAsDraft,
             variant: AppButtonVariant.primary,
           ),
-        DialogChoice(
-          value: _CloseChoice.keepEditing,
-          label: l.quickDiscardKeep,
-        ),
+        DialogChoice(value: _CloseChoice.keepEditing, label: l.editKeepEditing),
         DialogChoice(
           value: _CloseChoice.discard,
-          label: l.quickDiscardConfirm,
+          label: editing ? l.editDiscardConfirm : l.quickDiscardEntry,
           variant: AppButtonVariant.destructive,
         ),
       ],
@@ -611,6 +619,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
+  /// Asks about half-filled split rows before saving ([confirmIncompleteSplits]).
+  Future<bool> _confirmIncompleteSplits() =>
+      confirmIncompleteSplits(context, _c);
+
   void _toast(String msg) => showAppSnackBar(context, msg, tone: Tone.danger);
 
   String _ymd(DateTime d) =>
@@ -625,22 +637,32 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       }
       if (_c.account!.id == _c.toAccount!.id) return l.txTransferSameWallet;
     }
-    final splitTotal = _c.splits
-        .where((s) => s.isComplete)
-        .fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
-    if (splitTotal > _c.amountValue + 0.005) return l.txSplitExceeds;
-    if (_event != null && _c.account == null) return l.quickEventNeedsWallet;
+    if (!_c.isTransfer) {
+      final splitTotal = _c.splits
+          .where((s) => s.isComplete)
+          .fold<double>(0, (a, s) => a + (s.owedAmount ?? 0));
+      if (splitTotal > _c.amountValue + 0.005) return l.txSplitExceeds;
+    }
+    if (_activeEvent != null && _c.account == null) {
+      return l.quickEventNeedsWallet;
+    }
     return null;
   }
 
   Future<void> _save() async {
     final l = AppLocalizations.of(context)!;
+    if (_isEmpty) {
+      Navigator.of(context).pop(false);
+      return;
+    }
     final problem = _problem(l);
     if (problem != null) {
       HapticFeedback.lightImpact();
       _toast(problem);
       return;
     }
+    if (!await _confirmIncompleteSplits()) return;
+    if (!mounted) return;
     final txCubit = context.read<TransactionsCubit>();
     final accounts = context.read<AccountsCubit>();
     final projects = context.read<ProjectsRepository>();
@@ -648,15 +670,14 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final navigator = Navigator.of(context);
     final open = pageOpener(context);
     final messenger = ScaffoldMessenger.of(context);
-    final splits = _c.splits
-        .where((s) => s.isComplete)
-        .map((s) => s.toJson())
-        .toList();
+    final splits = _c.isTransfer
+        ? const <Map<String, dynamic>>[]
+        : _c.splits.where((s) => s.isComplete).map((s) => s.toJson()).toList();
     final description = _c.description.text.trim().isEmpty
         ? null
         : _c.description.text.trim();
     final note = _c.note.text.trim().isEmpty ? null : _c.note.text.trim();
-    final event = _event;
+    final event = _activeEvent;
     final type = _c.type;
     final amount = _c.amountValue;
     final account = _c.account;
@@ -713,7 +734,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
             warn = l.txSavedTagsFailed;
           }
         }
-        await txCubit.load();
+        await TransactionsCubit.bookChanged();
       }
       await accounts.load();
       await _remember();
@@ -733,38 +754,25 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  /// Edit mode "บันทึก": the same save as the detail page's in-place edit
-  /// ([saveTransactionEdit]).
-  Future<void> _saveEdit() async {
-    final l = AppLocalizations.of(context)!;
-    final problem = _problem(l);
-    if (problem != null) {
-      HapticFeedback.lightImpact();
-      _toast(problem);
-      return;
-    }
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _saving = true);
-    try {
-      final warn = await saveTransactionEdit(
-        context,
-        t: widget.transaction!,
-        c: _c,
-        initialAccountId: _initialAccountId,
-        initialToAccountId: _initialToAccountId,
-      );
-      navigator.pop(true);
-      showAppSnackBarOn(
-        messenger,
-        warn ?? l.quickSaved,
-        tone: warn == null ? Tone.success : Tone.warning,
-      );
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      _toast(walletErrorMessage(l, e));
-    }
+  // ── Drag to dismiss ───────────────────────────────────────────────
+
+  // The route's own drag would pop straight past PopScope (losing what
+  // was typed), so the sheet drags itself and closes through maybePop —
+  // the same unsaved-changes question as ✕ and back.
+
+  void _onDragUpdate(DragUpdateDetails d) => setState(() {
+    _dragging = true;
+    _drag = math.max(0, _drag + d.delta.dy);
+  });
+
+  void _onDragEnd(DragEndDetails d) {
+    final close = _drag > 120 || (d.primaryVelocity ?? 0) > 700;
+    setState(() {
+      _dragging = false;
+      // Staying (or about to ask) → spring back; leaving → exit from here.
+      if (!close || (_dirty && !_saving)) _drag = 0;
+    });
+    if (close) Navigator.of(context).maybePop();
   }
 
   // ── Build ─────────────────────────────────────────────────────────
@@ -781,212 +789,206 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _confirmClose();
       },
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.94,
-        child: Padding(
-          padding: EdgeInsets.only(bottom: insets),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: scheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.xs,
-                  AppSpacing.xs,
-                  0,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _isScheduled
-                            ? (_editingScheduled
-                                  ? l.scheduledSheetTitleEdit
-                                  : l.scheduledSheetTitleNew)
-                            : _isEvent
-                            ? (_editingRow
-                                  ? l.projectTxEditTitle
-                                  : l.projectTxNewTitle)
-                            : _editingDraft
-                            ? l.pendingEditTitle
-                            : _editingTx
-                            ? l.transactionFormTitleEdit
-                            : l.transactionFormTitleNew,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    if (_editingDraft)
-                      TextButton(
-                        onPressed: _saving ? null : _discardDraft,
-                        style: TextButton.styleFrom(
-                          foregroundColor: scheme.error,
-                        ),
-                        child: Text(l.quickDiscardConfirm),
-                      ),
-                    IconButton(
-                      tooltip: l.commonClose,
-                      icon: const Icon(AppIcons.close),
-                      onPressed: () => Navigator.of(context).maybePop(),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    ListView(
-                      controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xs,
-                        AppSpacing.lg,
-                        AppSpacing.xxl,
-                      ),
-                      children: [
-                        if (_locked) ...[
-                          MessageBanner(
-                            message: l.transactionFormLockedBanner,
-                            tone: Tone.warning,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: _drag),
+        duration: _dragging ? Duration.zero : const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        builder: (context, dy, sheet) =>
+            Transform.translate(offset: Offset(0, dy), child: sheet),
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.94,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: insets),
+            child: Column(
+              children: [
+                // Handle + title row: drag down to close.
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onVerticalDragUpdate: _onDragUpdate,
+                  onVerticalDragEnd: _onDragEnd,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.sm),
+                        child: Container(
+                          width: 36,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: scheme.outlineVariant,
+                            borderRadius: BorderRadius.circular(2),
                           ),
-                          const SizedBox(height: AppSpacing.sm),
-                        ],
-                        DraftForm(
-                          controller: _c,
-                          defaultAccount: _defaultAccount(accounts),
-                          // Saved rows: type, splits and events are
-                          // create-only (the update API can't change them).
-                          typeLocked: _editingTx || _editingRow,
-                          allowSplits: !_editingTx,
-                          event: _isEvent
-                              ? DraftEvent(
-                                  members: widget.project!.currentMembers,
-                                  symbol: widget.project!.symbol,
-                                  pastDescriptions: _pastDescriptions,
-                                  tags: _eventTags,
-                                )
-                              : null,
-                          schedule: _isScheduled
-                              ? DraftSchedule(editing: _editingScheduled)
-                              : null,
-                          readOnly: _locked,
-                          categoryLockedHint:
-                              _editingTx && !widget.transaction!.canEditCategory
-                              ? l.transactionFormCategoryAuthorOnlyHint
-                              : null,
-                          // Drafts don't go to events (submit is a plain
-                          // create) — the tile only exists when creating.
-                          extra:
-                              _editingDraft ||
-                                  _editingTx ||
-                                  _isEvent ||
-                                  _isScheduled
-                              ? null
-                              : _EventTile(
-                                  target: _event,
-                                  onTap: _pickEvent,
-                                  onClear: () => setState(() => _event = null),
-                                ),
                         ),
-                      ],
-                    ),
-                    // Compact summary — slides in once the amount scrolls off.
-                    Positioned(
-                      left: AppSpacing.lg,
-                      right: AppSpacing.lg,
-                      top: AppSpacing.xs,
-                      child: IgnorePointer(
-                        ignoring: !_collapsed,
-                        child: AnimatedSlide(
-                          offset: _collapsed
-                              ? Offset.zero
-                              : const Offset(0, -0.6),
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
-                          child: AnimatedOpacity(
-                            opacity: _collapsed ? 1 : 0,
-                            duration: const Duration(milliseconds: 180),
-                            child: _SummaryBar(
-                              type: _c.type,
-                              amount: _c.amountValue,
-                              category: _c.category,
-                              symbol: widget.project?.symbol ?? '฿',
-                              onTap: () => _scroll.animateTo(
-                                0,
-                                duration: const Duration(milliseconds: 280),
-                                curve: Curves.easeOutCubic,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.xs,
+                          AppSpacing.xs,
+                          0,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _isScheduled
+                                    ? (_editingScheduled
+                                          ? l.scheduledSheetTitleEdit
+                                          : l.scheduledSheetTitleNew)
+                                    : _isEvent
+                                    ? (_editingRow
+                                          ? l.projectTxEditTitle
+                                          : l.projectTxNewTitle)
+                                    : _editingDraft
+                                    ? l.pendingEditTitle
+                                    : l.transactionFormTitleNew,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Pinned above the keyboard: draft (→ รอยืนยัน) · save for real.
-              // Editing a saved row: just save. Locked row: nothing to save.
-              // Scheduled: one button too — drafts are for one-off rows.
-              // Pinned bars clear the gesture bar themselves — the sheet's
-              // useSafeArea only covers the top.
-              if (_editingTx || _isEvent || _isScheduled)
-                PinnedBar(
-                  child: AppButton(
-                    label: _isScheduled && !_editingScheduled
-                        ? l.scheduledFormSave
-                        : l.transactionFormSave,
-                    expand: true,
-                    loading: _saving,
-                    onPressed: _isScheduled
-                        ? _saveScheduled
-                        : _isEvent
-                        ? _saveEvent
-                        : _locked
-                        ? null
-                        : _saveEdit,
-                  ),
-                )
-              else
-                PinnedBar(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: AppButton(
-                          label: l.pendingSaveDraft,
-                          variant: AppButtonVariant.outlined,
-                          expand: true,
-                          // A draft can't go to an event.
-                          onPressed: _saving || _event != null
-                              ? null
-                              : _saveDraft,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        flex: 3,
-                        child: AppButton(
-                          label: _editingDraft
-                              ? l.pendingSubmitThis
-                              : l.quickSave,
-                          expand: true,
-                          loading: _saving,
-                          onPressed: _editingDraft ? _submitDraft : _save,
+                            if (_editingDraft)
+                              TextButton(
+                                onPressed: _saving ? null : _discardDraft,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: scheme.error,
+                                ),
+                                child: Text(l.commonDelete),
+                              ),
+                            IconButton(
+                              tooltip: l.commonClose,
+                              icon: const Icon(AppIcons.close),
+                              onPressed: () => Navigator.of(context).maybePop(),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-            ],
+                Expanded(
+                  child: Stack(
+                    children: [
+                      ListView(
+                        controller: _scroll,
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.xs,
+                          AppSpacing.lg,
+                          AppSpacing.xxl,
+                        ),
+                        children: [
+                          DraftForm(
+                            controller: _c,
+                            defaultAccount: _defaultAccount(accounts),
+                            // A saved project row keeps its type.
+                            typeLocked: _editingRow,
+                            event: _isEvent
+                                ? DraftEvent(
+                                    members: widget.project!.currentMembers,
+                                    symbol: widget.project!.symbol,
+                                    pastDescriptions: _pastDescriptions,
+                                    tags: _eventTags,
+                                  )
+                                : null,
+                            schedule: _isScheduled
+                                ? DraftSchedule(editing: _editingScheduled)
+                                : null,
+                            // Drafts don't go to events (submit is a plain
+                            // create) — the tile only exists when creating.
+                            extra: _editingDraft || _isEvent || _isScheduled
+                                ? null
+                                : _EventTile(
+                                    target: _event,
+                                    onTap: _pickEvent,
+                                    onClear: () =>
+                                        setState(() => _event = null),
+                                  ),
+                          ),
+                        ],
+                      ),
+                      // Compact summary — slides in once the amount scrolls off.
+                      Positioned(
+                        left: AppSpacing.lg,
+                        right: AppSpacing.lg,
+                        top: AppSpacing.xs,
+                        child: IgnorePointer(
+                          ignoring: !_collapsed,
+                          child: AnimatedSlide(
+                            offset: _collapsed
+                                ? Offset.zero
+                                : const Offset(0, -0.6),
+                            duration: const Duration(milliseconds: 220),
+                            curve: Curves.easeOutCubic,
+                            child: AnimatedOpacity(
+                              opacity: _collapsed ? 1 : 0,
+                              duration: const Duration(milliseconds: 180),
+                              child: _SummaryBar(
+                                type: _c.type,
+                                amount: _c.amountValue,
+                                category: _c.category,
+                                symbol: widget.project?.symbol ?? '฿',
+                                onTap: () => _scroll.animateTo(
+                                  0,
+                                  duration: const Duration(milliseconds: 280),
+                                  curve: Curves.easeOutCubic,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Pinned above the keyboard: draft (→ รอยืนยัน) · save for real.
+                // Event / scheduled: one button — drafts are for one-off rows.
+                // Pinned bars clear the gesture bar themselves — the sheet's
+                // useSafeArea only covers the top.
+                if (_isEvent || _isScheduled)
+                  PinnedBar(
+                    child: AppButton(
+                      label: _isScheduled && !_editingScheduled
+                          ? l.scheduledFormSave
+                          : l.transactionFormSave,
+                      expand: true,
+                      loading: _saving,
+                      onPressed: _isScheduled ? _saveScheduled : _saveEvent,
+                    ),
+                  )
+                else
+                  PinnedBar(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AppButton(
+                            label: l.pendingSaveDraft,
+                            variant: AppButtonVariant.outlined,
+                            expand: true,
+                            // A draft can't go to an event.
+                            onPressed:
+                                _saving || _activeEvent != null || _isEmpty
+                                ? null
+                                : _saveDraft,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          flex: 3,
+                          child: AppButton(
+                            label: _editingDraft
+                                ? l.pendingSubmitThis
+                                : l.quickSave,
+                            expand: true,
+                            loading: _saving,
+                            onPressed: _isEmpty
+                                ? null
+                                : (_editingDraft ? _submitDraft : _save),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -996,6 +998,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
 // ── Pieces ────────────────────────────────────────────────────────────
 
+/// "อีเวนต์  [ไม่ได้เลือก ▾]" — one picker row (owner 2026-10-10); picked
+/// → "🎉 name ✕" (✕ takes it off). Opens the event sheet.
 class _EventTile extends StatelessWidget {
   const _EventTile({
     required this.target,
@@ -1009,34 +1013,59 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final t = target;
-    if (t == null) {
-      return AddTile(
-        label: l.quickAddToEvent,
-        variant: AddTileVariant.row,
-        icon: AppIcons.project,
-        onTap: onTap,
-      );
-    }
     final name = switch (t) {
+      null => null,
       _NewEvent(:final name) => l.quickEventNewNamed(name),
       _ExistingEvent(:final project) => project.name,
     };
-    return DetailRow(
-      leading: const Icon(AppIcons.project),
+    return DraftFieldRow(
       label: l.quickEventLabel,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(child: Text(name, overflow: TextOverflow.ellipsis)),
-          IconButton(
-            tooltip: l.quickEventRemove,
-            icon: const Icon(AppIcons.clear, size: 18),
-            onPressed: onClear,
+      child: Material(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.md),
+            child: Row(
+              children: [
+                if (name != null) ...[
+                  const Icon(AppIcons.project, size: 18),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                Expanded(
+                  child: Text(
+                    name ?? l.quickEventNone,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: name == null ? scheme.onSurfaceVariant : null,
+                    ),
+                  ),
+                ),
+                if (name != null)
+                  IconButton(
+                    tooltip: l.quickEventRemove,
+                    icon: const Icon(AppIcons.clear, size: 18),
+                    onPressed: onClear,
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.all(AppSpacing.sm + 2),
+                    child: Icon(AppIcons.expand, size: 20),
+                  ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
-      onTap: onTap,
     );
   }
 }
@@ -1169,12 +1198,15 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
                 child: AppTextField(
                   controller: _name,
                   label: l.quickEventNameLabel,
-                  maxLength: 100,
+                  // Nothing is created here — the event is made with the
+                  // bill, on บันทึก (owner 2026-10-10).
+                  helper: l.quickEventCreatedOnSave,
+                  maxLength: TextLimits.name,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               AppButton(
-                label: l.quickEventCreate,
+                label: l.quickEventUseName,
                 onPressed: () {
                   final n = _name.text.trim();
                   if (n.isNotEmpty) Navigator.of(context).pop(_NewEvent(n));

@@ -19,6 +19,7 @@ export 'inputs/app_text_field.dart';
 export 'inputs/currency_tile.dart';
 export 'inputs/inline_field.dart';
 export 'inputs/month_picker.dart';
+export 'inputs/period_pill.dart';
 export 'inputs/pick_card.dart';
 export 'inputs/picker_tile.dart';
 export 'inputs/select_card_group.dart';
@@ -66,6 +67,7 @@ export 'menus/option_menu.dart';
 export 'sheets/action_sheet.dart';
 export 'sheets/app_sheet.dart';
 export 'sheets/option_sheet.dart';
+export 'sheets/side_sheet.dart';
 
 // Data display
 export 'data/money_list_tile.dart';

@@ -1,6 +1,7 @@
 import 'package:chubi_pocket/app/shell/fade_branch_container.dart';
 import 'package:chubi_pocket/app/shell/main_shell.dart';
 import 'package:chubi_pocket/app/shell/tab_nav.dart';
+import 'package:chubi_pocket/core/constants/app_icons.dart';
 import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -273,6 +274,78 @@ void main() {
     await t.pump(const Duration(milliseconds: 50));
     expect(x(t, 'b'), rest);
     await t.pumpAndSettle();
+  });
+
+  // ── Bottom bar swipe ───────────────────────────────────────────────
+
+  Future<void> dragSlowly(WidgetTester t, Offset from, double dx) async {
+    final g = await t.startGesture(from);
+    for (var i = 0; i < 10; i++) {
+      await g.moveBy(Offset(dx / 10, 0));
+      await t.pump(const Duration(milliseconds: 50));
+    }
+    await t.pump(const Duration(milliseconds: 300));
+    await g.up();
+    await t.pumpAndSettle();
+  }
+
+  testWidgets('bar: drag the highlight → lands on the nearest tab', (t) async {
+    await pump(t);
+    await dragSlowly(
+      t,
+      t.getCenter(find.byIcon(AppIcons.dashboardActive)),
+      180,
+    );
+    expect(find.text('tab b').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('bar: a fling moves one slot that way', (t) async {
+    await pump(t, at: '/c');
+    await t.fling(
+      find.byIcon(AppIcons.walletActive),
+      const Offset(-60, 0),
+      1000,
+    );
+    await t.pumpAndSettle();
+    expect(find.text('tab b').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('bar: wins even where the page owns content swipes', (t) async {
+    // Tab c's page takes content swipes right — on the bar, it's the tab's.
+    await pump(t, at: '/c');
+    _pageSwipes = 0;
+    await t.fling(
+      find.byIcon(AppIcons.walletActive),
+      const Offset(60, 0),
+      1000,
+    );
+    await t.pumpAndSettle();
+    expect(find.text('tab d').hitTestable(), findsOneWidget);
+    expect(_pageSwipes, 0);
+  });
+
+  testWidgets('bar: a drag starting on + scrubs; taps still switch', (t) async {
+    await pump(t);
+    await dragSlowly(t, t.getCenter(find.byIcon(AppIcons.add)), 300);
+    expect(find.text('tab c').hitTestable(), findsOneWidget);
+    await t.tap(find.byIcon(AppIcons.transactions));
+    await t.pumpAndSettle();
+    expect(find.text('tab b').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('bar: a slotless tab shrinks the highlight; back grows it', (
+    t,
+  ) async {
+    double scale() =>
+        t.widget<AnimatedScale>(find.byType(AnimatedScale).first).scale;
+    await pump(t);
+    expect(scale(), 1);
+    await t.tap(find.text('open project').hitTestable());
+    await t.pumpAndSettle();
+    expect(scale(), 0); // a เพิ่มเติม card tab has no slot
+    await t.binding.handlePopRoute(); // back → tab a
+    await t.pumpAndSettle();
+    expect(scale(), 1);
   });
 
   // ── System back ────────────────────────────────────────────────────

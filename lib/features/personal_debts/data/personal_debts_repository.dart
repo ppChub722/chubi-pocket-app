@@ -87,6 +87,23 @@ class PersonalDebtsRepository {
     }
   }
 
+  /// `POST /v1/personal-debts/split-changes/:notification_id/apply` —
+  /// "อัปเดตตาม" on a split_changed: my mirror debt follows the splitter's
+  /// change. One-shot. Returns `updated` / `deleted` / `cancelled`.
+  ///
+  /// Refusals: 409 NOTIFICATION_ACTIONED · 409 SPLIT_CHANGE_STALE · 404 (my
+  /// mirror is gone) · 400 NOT_SPLIT_CHANGE.
+  Future<String> applySplitChange(String notificationId) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/personal-debts/split-changes//apply',
+      );
+      return (res.data?['result'] as String?) ?? 'updated';
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   Future<PersonalDebt> create({
     required DebtDirection direction,
     required String counterpartyPersonName,
