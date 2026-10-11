@@ -1357,5 +1357,22 @@
   "identifierHintCard": "4 ตัวท้ายของบัตร",
   "identifierPromptPayLength": "พร้อมเพย์ต้องเป็นเบอร์ 10 หลัก หรือเลขบัตร 13 หลัก",
   "identifierCardLength": "ใส่ 4 ตัวท้ายของบัตร",
-  "txSplitAuto": "อัตโนมัติ"
+  "txSplitAuto": "อัตโนมัติ",
+  "contactPickerCreateNew": "สร้างผู้ติดต่อใหม่",
+  "contactPickerEmptyPlain": "ยังไม่มีผู้ติดต่อ",
+  "txSplitNameHint": "ชื่อ",
+  "accountIdentifiersHint": "ส่วนนี้ใช้จับคู่บัญชีตอนสแกนสลิปเท่านั้น",
+  "detailManageTitle": "การจัดการ",
+  "draftPickWalletFrom": "เลือกกระเป๋าต้นทาง",
+  "draftPickWalletTo": "เลือกกระเป๋าปลายทาง",
+  "draftPickCategory": "เลือกหมวด",
+  "draftExtrasTitle": "หารกับ / อีเวนต์",
+  "draftExtrasSplits": "หารกับ {count} คน",
+  "draftExtrasNone": "ไม่ได้ตั้ง",
+  "pendingErrInvalidSplit": "แถวหารยังไม่ครบ — ต้องมีชื่อและยอดมากกว่า 0",
+  "pendingErrSplitsExceed": "ยอดที่หารเกินยอดรายการ",
+  "pendingErrProjectGone": "อีเวนต์นี้ไม่มีแล้ว เลือกอีเวนต์ใหม่หรือเอาออก",
+  "pendingErrProjectClosed": "อีเวนต์นี้ปิดหรือถูกล็อกแล้ว เพิ่มรายการไม่ได้",
+  "pendingErrProjectMember": "คุณไม่ได้เป็นสมาชิกของอีเวนต์นี้",
+  "pendingErrProjectReadOnly": "คุณดูอีเวนต์นี้ได้อย่างเดียว เพิ่มรายการไม่ได้"
 }

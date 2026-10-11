@@ -3,6 +3,7 @@ import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/tx_hero_card.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:chubi_pocket/shared/widgets/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -76,7 +77,10 @@ void main() {
         dateLabel: 'วันนี้',
       ),
     );
-    expect(find.byType(TxTypeChip), findsNWidgets(2));
+    // Expense + income only (no transfer).
+    expect(find.widgetWithText(AppChip, 'รายจ่าย'), findsOneWidget);
+    expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
+    expect(find.text('โอนเงิน'), findsNothing);
     await t.tap(find.text('รายรับ'));
     expect(picked, TransactionType.income);
   });
@@ -91,7 +95,8 @@ void main() {
         dateLabel: 'วันนี้',
       ),
     );
-    expect(find.byType(TxTypeChip), findsOneWidget);
+    expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
+    expect(find.text('รายจ่าย'), findsNothing);
     await t.fling(find.byType(TxHeroCard), const Offset(-300, 0), 1500);
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
@@ -160,7 +165,8 @@ void main() {
     // An empty description shows nothing in view mode.
     expect(find.byType(TextField), findsOneWidget); // just the amount
     // Only its own type, and no 🔒 in view (owner 2026-10-10).
-    expect(find.byType(TxTypeChip), findsOneWidget);
+    expect(find.widgetWithText(AppChip, 'รายจ่าย'), findsOneWidget);
+    expect(find.text('รายรับ'), findsNothing);
     expect(find.byIcon(AppIcons.lock), findsNothing);
     expect(find.text('฿'), findsOneWidget); // no −/+ before it
     expect(find.text('182'), findsOneWidget);
@@ -205,7 +211,8 @@ void main() {
         inline: true,
       ),
     );
-    expect(find.byType(TxTypeChip), findsOneWidget);
+    expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
+    expect(find.text('รายจ่าย'), findsNothing);
     expect(find.byIcon(AppIcons.lock), findsOneWidget);
     expect(find.byType(Tooltip), findsWidgets);
   });

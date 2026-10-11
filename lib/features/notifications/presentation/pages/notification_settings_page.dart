@@ -219,9 +219,12 @@ class _Body extends StatelessWidget {
                 children: [
                   DetailRow(
                     label: l.notifGroupRequests,
-                    trailing: AppBadge(
+                    trailing: AppChip(
                       label: l.notifTypeAlwaysOn,
                       icon: AppIcons.lock,
+                      tone: AppChipTone.neutral,
+                      selected: true,
+                      size: PillSize.chip,
                     ),
                   ),
                 ],

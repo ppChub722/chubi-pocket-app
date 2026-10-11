@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../shared/widgets/ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../core/constants/app_radius.dart';
@@ -42,11 +43,11 @@ class ThemePreviewScreen extends StatelessWidget {
               spacing: AppSpacing.sm,
               children: ThemeRegistry.all.map((t) {
                 final selected = t.id == themeId;
-                return ChoiceChip(
-                  label: Text(t.id),
+                return AppChip(
+                  label: t.id,
                   selected: selected,
-                  avatar: _SwatchDot(color: t.previewSwatch.first),
-                  onSelected: (_) => context.read<ThemeIdCubit>().set(t.id),
+                  leading: _SwatchDot(color: t.previewSwatch.first),
+                  onTap: () => context.read<ThemeIdCubit>().set(t.id),
                 );
               }).toList(),
             ),
@@ -82,10 +83,10 @@ class ThemePreviewScreen extends StatelessWidget {
               spacing: AppSpacing.sm,
               children: supportedLocales.map((loc) {
                 final selected = loc.languageCode == locale.languageCode;
-                return ChoiceChip(
-                  label: Text(loc.languageCode.toUpperCase()),
+                return AppChip(
+                  label: loc.languageCode.toUpperCase(),
                   selected: selected,
-                  onSelected: (_) => context.read<LocaleCubit>().set(loc),
+                  onTap: () => context.read<LocaleCubit>().set(loc),
                 );
               }).toList(),
             ),
@@ -101,10 +102,10 @@ class ThemePreviewScreen extends StatelessWidget {
               runSpacing: AppSpacing.sm,
               children: availableFonts.map((f) {
                 final selected = f.id == fontId;
-                return ChoiceChip(
-                  label: Text(f.family),
+                return AppChip(
+                  label: f.family,
                   selected: selected,
-                  onSelected: (_) => context.read<FontIdCubit>().set(f.id),
+                  onTap: () => context.read<FontIdCubit>().set(f.id),
                 );
               }).toList(),
             ),

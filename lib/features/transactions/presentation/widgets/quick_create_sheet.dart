@@ -30,9 +30,11 @@ import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../save_failure.dart';
 import '../transaction_edit.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
+import 'tx_summary_title.dart';
 
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
 /// — never a new page:
@@ -47,7 +49,10 @@ import 'event_pick.dart';
 ///
 /// The fields are the shared [DraftForm] — the same one "เพิ่มร่าง" and
 /// "แก้ร่าง" use. Save sits pinned above the keyboard. The title never
-/// changes while scrolling (owner 2026-10-11).
+/// changes while scrolling (owner 2026-10-11) — except a NEW transaction's: once
+/// the hero's amount has scrolled out of view (typing with the keyboard
+/// up), the title row shows amount · category instead; tap it to scroll back
+/// (owner 2026-10-11, "like before").
 ///
 /// Defaults: the last wallet used (else the first) and today.
 /// "เพิ่มเข้าอีเวนต์" files the bill into a new event or an existing one
@@ -188,6 +193,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   double _drag = 0;
   bool _dragging = false;
 
+  /// A new transaction only: the hero's amount is scrolled out of view →
+  /// the title row shows the amount + category instead of the title.
+  bool _collapsed = false;
+  final _heroKey = GlobalKey();
+  final _listKey = GlobalKey();
+
   bool get _editingDraft => widget.draft != null;
 
   bool get _isEvent => widget.project != null;
@@ -223,7 +234,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       : _isEvent
       ? (_editingRow ? _c.eventSnapshot() != _eventBaseline : _hasKeyData)
       : _editingDraft
-      ? _c.toDraft() != _draftBaseline
+      ? _c.toDraft(keepIncomplete: true) != _draftBaseline
       : _hasKeyData;
 
   bool get _hasKeyData =>
@@ -331,7 +342,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(e.message);
+      showSaveFailure(context, e, retry: _saveEvent);
     }
   }
 
@@ -376,13 +387,17 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(e.message);
+      showSaveFailure(context, e, retry: _saveScheduled);
     }
   }
 
   @override
   void initState() {
     super.initState();
+    _scroll.addListener(() {
+      final c = _amountHidden();
+      if (c != _collapsed) setState(() => _collapsed = c);
+    });
     final type = widget.initialType;
     if (type != null) _c.setType(type);
     if (_isEvent) _initEvent();
@@ -394,7 +409,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         accounts: context.read<AccountsCubit>().state.accounts,
         categories: context.read<CategoriesCubit>().state.categories,
       );
-      _draftBaseline = _c.toDraft();
+      _draftBaseline = _c.toDraft(keepIncomplete: true);
     }
     // Typing / picking rebuilds the sheet (summary bar, close guard). A
     // switch to transfer keeps the event pick and splits, just unused, so
@@ -411,14 +426,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       Navigator.of(context).pop(false);
       return;
     }
-    if (!await _confirmIncompleteSplits()) return;
+    // A draft keeps half-filled splits for later — no question, no balance
+    // check (confirming needs them whole).
     if (!mounted) return;
     final pending = context.read<PendingCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      final d = _c.toDraft();
+      final d = _c.toDraft(keepIncomplete: true);
       final p = widget.draft;
       if (p == null) {
         await pending.add([d]);
@@ -431,7 +447,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(e.message);
+      showSaveFailure(context, e, retry: _saveDraft);
     }
   }
 
@@ -469,7 +485,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(e.message);
+      showSaveFailure(context, e, retry: _submitDraft);
     }
   }
 
@@ -485,11 +501,21 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       destructive: true,
     );
     if (!ok || !mounted) return;
+    await _discardNow(pending, navigator);
+  }
+
+  Future<void> _discardNow(
+    PendingCubit pending,
+    NavigatorState navigator,
+  ) async {
+    setState(() => _saving = true);
     try {
       await pending.discard(widget.draft!.id);
       navigator.pop(true);
     } on ApiException catch (e) {
-      _toast(e.message);
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSaveFailure(context, e, retry: () => _discardNow(pending, navigator));
     }
   }
 
@@ -723,8 +749,45 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      _toast(
-        event == null ? walletErrorMessage(l, e) : eventErrorMessage(l, e),
+      showSaveFailure(
+        context,
+        e,
+        retry: _save,
+        message: event == null
+            ? walletErrorMessage(l, e)
+            : eventErrorMessage(l, e),
+      );
+    }
+  }
+
+  // ── Title-row summary ─────────────────────────────────────────────
+
+  /// Only a new transaction swaps its title for the amount.
+  bool get _summaryTitle => !_editingDraft && !_isEvent && !_isScheduled;
+
+  /// The hero's amount has scrolled up past the list's top edge. The
+  /// amount ends the card's content (inline layout), so its bottom minus
+  /// the card's padding is the line to watch.
+  bool _amountHidden() {
+    if (!_summaryTitle) return false;
+    final hero = _heroKey.currentContext?.findRenderObject();
+    final list = _listKey.currentContext?.findRenderObject();
+    if (hero is! RenderBox || list is! RenderBox) return false;
+    if (!hero.attached || !list.attached) return false;
+    final amountBottom = hero
+        .localToGlobal(Offset(0, hero.size.height - AppSpacing.md))
+        .dy;
+    return amountBottom < list.localToGlobal(Offset.zero).dy;
+  }
+
+  void _scrollToTop() {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(0);
+    } else {
+      _scroll.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
       );
     }
   }
@@ -820,178 +883,216 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         curve: Curves.easeOutCubic,
         builder: (context, dy, sheet) =>
             Transform.translate(offset: Offset(0, dy), child: sheet),
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.94,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: insets),
-            child: Column(
-              children: [
-                // Handle + title row: drag down to close.
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onVerticalDragUpdate: _onDragUpdate,
-                  onVerticalDragEnd: _onDragEnd,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.sm),
-                        child: Container(
-                          width: 36,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: scheme.outlineVariant,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.xs,
-                          AppSpacing.xs,
-                          0,
-                        ),
-                        child: Row(
-                          children: [
-                            // The title never changes (owner 2026-10-11) —
-                            // no amount / category swap on scroll.
-                            Expanded(
-                              child: Text(
-                                _isScheduled
-                                    ? (_editingScheduled
-                                          ? l.scheduledSheetTitleEdit
-                                          : l.scheduledSheetTitleNew)
-                                    : _isEvent
-                                    ? (_editingRow
-                                          ? l.projectTxEditTitle
-                                          : l.projectTxNewTitle)
-                                    : _editingDraft
-                                    ? l.pendingEditTitle
-                                    : l.transactionFormTitleNew,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                            if (_editingDraft)
-                              TextButton(
-                                onPressed: _saving ? null : _discardDraft,
-                                style: TextButton.styleFrom(
-                                  foregroundColor: scheme.error,
-                                ),
-                                child: Text(l.commonDelete),
-                              ),
-                            IconButton(
-                              tooltip: l.commonClose,
-                              icon: const Icon(AppIcons.close),
-                              onPressed: () => Navigator.of(context).maybePop(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    controller: _scroll,
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      AppSpacing.xs,
-                      AppSpacing.lg,
-                      AppSpacing.xxl,
-                    ),
-                    children: [
-                      DraftForm(
-                        controller: _c,
-                        defaultAccount: _defaultAccount(accounts),
-                        // A saved project row keeps its type.
-                        typeLocked: _editingRow,
-                        event: _isEvent
-                            ? DraftEvent(
-                                members: widget.project!.currentMembers,
-                                symbol: widget.project!.symbol,
-                                pastDescriptions: _pastDescriptions,
-                                tags: _eventTags,
-                              )
-                            : null,
-                        schedule: _isScheduled
-                            ? DraftSchedule(editing: _editingScheduled)
-                            : null,
-                        // The detail page's layout below the hero (owner
-                        // 2026-10-10): โน้ต / หารกับ / อีเวนต์ sections.
-                        sectioned: true,
-                        eventPending: _activeEvent != null,
-                        // Drafts don't go to events (submit is a plain
-                        // create) — the row only exists when creating, for
-                        // a type that can join one ([typeCanJoinEvent]).
-                        trailingRows: [
-                          if (!_editingDraft &&
-                              !_isEvent &&
-                              !_isScheduled &&
-                              typeCanJoinEvent(_c.type))
-                            SectionCard(
-                              children: [
-                                EventRow(
-                                  name: eventTargetName(l, _event),
-                                  onTap: _pickEvent,
-                                  onClear: () => setState(() => _event = null),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Pinned above the keyboard: draft (→ รอยืนยัน) · save for real.
-                // Event / scheduled: one button — drafts are for one-off rows.
-                // Pinned bars clear the gesture bar themselves — the sheet's
-                // useSafeArea only covers the top.
-                if (_isEvent || _isScheduled)
-                  PinnedBar(
-                    child: AppButton(
-                      label: _isScheduled && !_editingScheduled
-                          ? l.scheduledFormSave
-                          : l.transactionFormSave,
-                      expand: true,
-                      loading: _saving,
-                      onPressed: _isScheduled ? _saveScheduled : _saveEvent,
-                    ),
-                  )
-                else
-                  PinnedBar(
-                    child: Row(
+        // A save / delete in flight dims the sheet and blocks input.
+        child: SavingOverlay(
+          saving: _saving,
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.94,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: insets),
+              child: Column(
+                children: [
+                  // Handle + title row: drag down to close.
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onVerticalDragUpdate: _onDragUpdate,
+                    onVerticalDragEnd: _onDragEnd,
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: AppButton(
-                            label: l.pendingSaveDraft,
-                            variant: AppButtonVariant.outlined,
-                            expand: true,
-                            // A draft can't go to an event.
-                            onPressed:
-                                _saving || _activeEvent != null || _isEmpty
-                                ? null
-                                : _saveDraft,
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.sm),
+                          child: Container(
+                            width: 36,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: scheme.outlineVariant,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          flex: 3,
-                          child: AppButton(
-                            label: _editingDraft
-                                ? l.pendingSubmitThis
-                                : l.quickSave,
-                            expand: true,
-                            loading: _saving,
-                            onPressed: _isEmpty
-                                ? null
-                                : (_editingDraft ? _submitDraft : _save),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.xs,
+                            AppSpacing.xs,
+                            0,
+                          ),
+                          child: Row(
+                            children: [
+                              // The title — or, for a new transaction once the
+                              // hero's amount has scrolled away, amount +
+                              // category (tap: back to the top). Cross-fades
+                              // in place. Scheduled / event / draft keep
+                              // their text titles.
+                              Expanded(
+                                child: AnimatedSwitcher(
+                                  duration:
+                                      MediaQuery.disableAnimationsOf(context)
+                                      ? Duration.zero
+                                      : const Duration(milliseconds: 200),
+                                  layoutBuilder: (current, previous) => Stack(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    children: [...previous, ?current],
+                                  ),
+                                  child: _collapsed && _summaryTitle
+                                      ? TxSummaryTitle(
+                                          key: const ValueKey('summary'),
+                                          type: _c.type,
+                                          amount: _c.amountValue,
+                                          category: _c.isTransfer
+                                              ? null
+                                              : _c.category,
+                                          onTap: _scrollToTop,
+                                        )
+                                      : Text(
+                                          key: const ValueKey('title'),
+                                          _isScheduled
+                                              ? (_editingScheduled
+                                                    ? l.scheduledSheetTitleEdit
+                                                    : l.scheduledSheetTitleNew)
+                                              : _isEvent
+                                              ? (_editingRow
+                                                    ? l.projectTxEditTitle
+                                                    : l.projectTxNewTitle)
+                                              : _editingDraft
+                                              ? l.pendingEditTitle
+                                              : l.transactionFormTitleNew,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
+                                ),
+                              ),
+                              if (_editingDraft)
+                                IconButton(
+                                  tooltip: l.commonDelete,
+                                  icon: const Icon(AppIcons.delete),
+                                  color: scheme.error,
+                                  onPressed: _saving ? null : _discardDraft,
+                                ),
+                              IconButton(
+                                tooltip: l.commonClose,
+                                icon: const Icon(AppIcons.close),
+                                onPressed: () =>
+                                    Navigator.of(context).maybePop(),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-              ],
+                  Expanded(
+                    child: ListView(
+                      key: _listKey,
+                      controller: _scroll,
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.xs,
+                        AppSpacing.lg,
+                        AppSpacing.xxl,
+                      ),
+                      children: [
+                        DraftForm(
+                          heroKey: _heroKey,
+                          // The pending drafts layout: chip rows, collapsible
+                          // หารกับ / อีเวนต์.
+                          chipLayout: _editingDraft,
+                          controller: _c,
+                          defaultAccount: _defaultAccount(accounts),
+                          // A saved project row keeps its type.
+                          typeLocked: _editingRow,
+                          event: _isEvent
+                              ? DraftEvent(
+                                  members: widget.project!.currentMembers,
+                                  symbol: widget.project!.symbol,
+                                  pastDescriptions: _pastDescriptions,
+                                  tags: _eventTags,
+                                )
+                              : null,
+                          schedule: _isScheduled
+                              ? DraftSchedule(editing: _editingScheduled)
+                              : null,
+                          // The detail page's layout below the hero (owner
+                          // 2026-10-10): โน้ต / หารกับ / อีเวนต์ sections.
+                          sectioned: true,
+                          eventPending: _activeEvent != null,
+                          // Drafts don't go to events (submit is a plain
+                          // create) — the row only exists when creating, for
+                          // a type that can join one ([typeCanJoinEvent]).
+                          trailingRows: [
+                            if (!_editingDraft &&
+                                !_isEvent &&
+                                !_isScheduled &&
+                                typeCanJoinEvent(_c.type))
+                              SectionCard(
+                                children: [
+                                  EventRow(
+                                    name: eventTargetName(l, _event),
+                                    onTap: _pickEvent,
+                                    onClear: () =>
+                                        setState(() => _event = null),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Pinned above the keyboard: draft (→ รอยืนยัน) · save for real.
+                  // Event / scheduled: one button — drafts are for one-off rows.
+                  // Pinned bars clear the gesture bar themselves — the sheet's
+                  // useSafeArea only covers the top.
+                  if (_isEvent || _isScheduled)
+                    PinnedBar(
+                      child: AppButton(
+                        label: _isScheduled && !_editingScheduled
+                            ? l.scheduledFormSave
+                            : l.transactionFormSave,
+                        expand: true,
+                        loading: _saving,
+                        onPressed: _isScheduled ? _saveScheduled : _saveEvent,
+                      ),
+                    )
+                  else
+                    PinnedBar(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: AppButton(
+                              label: l.pendingSaveDraft,
+                              variant: AppButtonVariant.outlined,
+                              expand: true,
+                              // A draft can't go to an event.
+                              onPressed:
+                                  _saving || _activeEvent != null || _isEmpty
+                                  ? null
+                                  : _saveDraft,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            flex: 3,
+                            child: AppButton(
+                              label: _editingDraft
+                                  ? l.pendingSubmitThis
+                                  : l.quickSave,
+                              expand: true,
+                              loading: _saving,
+                              onPressed: _isEmpty
+                                  ? null
+                                  : (_editingDraft ? _submitDraft : _save),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
@@ -199,8 +202,16 @@ class _TagPickerState extends State<_TagPicker> {
                   runSpacing: AppSpacing.xs,
                   children: [
                     for (final t in tags)
-                      TagChip(
-                        tag: t,
+                      AppChip(
+                        label: t.name,
+                        icon: IconRegistry.get(
+                          t.iconCode?.icon,
+                          fallback: AppIcons.tag,
+                        ),
+                        color: tagColor(
+                          t.iconCode,
+                          Theme.of(context).extension<AppColors>()!,
+                        ),
                         selected: _picked.contains(t.id),
                         onTap: () => setState(() {
                           if (!_picked.remove(t.id)) _picked.add(t.id);

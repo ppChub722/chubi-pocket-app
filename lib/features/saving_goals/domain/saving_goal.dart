@@ -32,6 +32,8 @@ class SavingGoal extends Equatable {
     this.isCompleted = false,
     this.remainingAmount = 0,
     this.daysRemaining,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -68,6 +70,12 @@ class SavingGoal extends Equatable {
   /// Computed: deadline - today, when [deadline] is set.
   final int? daysRemaining;
 
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  static DateTime? _date(Object? v) =>
+      v is String ? DateTime.tryParse(v)?.toLocal() : null;
+
   /// Suggested monthly contribution to hit [targetAmount] by [deadline].
   ///
   /// Per spec §2 / §4.6 this is **frontend-computed** — the BE doesn't
@@ -101,6 +109,8 @@ class SavingGoal extends Equatable {
     bool? isCompleted,
     double? remainingAmount,
     int? daysRemaining,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return SavingGoal(
       id: id ?? this.id,
@@ -120,6 +130,8 @@ class SavingGoal extends Equatable {
       isCompleted: isCompleted ?? this.isCompleted,
       remainingAmount: remainingAmount ?? this.remainingAmount,
       daysRemaining: daysRemaining ?? this.daysRemaining,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -149,6 +161,8 @@ class SavingGoal extends Equatable {
       isCompleted: json['is_completed'] as bool? ?? false,
       remainingAmount: (json['remaining_amount'] as num?)?.toDouble() ?? 0,
       daysRemaining: json['days_remaining'] as int?,
+      createdAt: _date(json['created_at']),
+      updatedAt: _date(json['updated_at']),
     );
   }
 
@@ -201,6 +215,8 @@ class SavingGoal extends Equatable {
     isCompleted,
     remainingAmount,
     daysRemaining,
+    createdAt,
+    updatedAt,
   ];
 }
 

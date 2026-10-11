@@ -322,7 +322,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
       ),
       subtitle: Align(
         alignment: Alignment.centerLeft,
-        child: debtStatusPill(context, debt.status),
+        child: debtStatusChip(context, debt.status),
       ),
       footer: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

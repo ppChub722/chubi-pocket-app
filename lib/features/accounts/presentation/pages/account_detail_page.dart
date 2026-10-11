@@ -831,13 +831,19 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
     return [
       ...sections,
-      // Archive lives at the bottom of the body in edit mode (the top bar
-      // carries no page actions).
+      // การจัดการ — edit mode only, the last section (archive only).
       if (editing && a != null)
-        DangerRow(
-          icon: AppIcons.archive,
-          label: l.accountDetailArchive,
-          onTap: isSaving ? null : _archive,
+        ManageSection(
+          archiveLabel: l.accountDetailArchive,
+          onArchive: isSaving ? null : _archive,
+        ),
+      if (a != null)
+        DetailMeta(
+          lines: detailMetaLines(
+            context,
+            createdAt: a.createdAt,
+            updatedAt: a.updatedAt,
+          ),
         ),
     ];
   }
@@ -1018,19 +1024,25 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return SectionCard(
       first: first,
       title: l.walletMembersTitle,
-      locked: isEditing,
       children: [
         if (solo)
-          DetailAddRow(
-            label: l.walletInviteFromContacts,
-            onTap: () =>
-                inviteWalletMember(context, accountId: a.id, members: members),
+          LockedInEdit(
+            locked: isEditing,
+            child: DetailAddRow(
+              label: l.walletInviteFromContacts,
+              onTap: () => inviteWalletMember(
+                context,
+                accountId: a.id,
+                members: members,
+              ),
+            ),
           )
         else
           DetailRow(
             label: l.accountSharedWith(members.length),
+            locked: isEditing,
             showChevron: true,
-            onTap: () => _goTab(AccountDetailTab.members),
+            onTap: isEditing ? null : () => _goTab(AccountDetailTab.members),
             trailing: MemberAvatarStack(
               members: members,
               size: 28,
@@ -1062,10 +1074,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final section = SectionCard(
       first: first,
       title: l.accountIdentifiersTitle,
+      hint: l.accountIdentifiersHint,
       trailing: editing
-          ? ActionPill(
+          ? AppChip(
               icon: AppIcons.add,
               label: l.accountIdentifiersAdd,
+              tone: AppChipTone.primary,
+              selected: true,
               onTap: _addIdentifier,
             )
           // 👁 — the same switch as the money privacy toggle.
@@ -1243,9 +1258,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     required _AccountDraft Function(String) apply,
   }) {
     final day = int.tryParse(value.trim());
-    return FilterDropdownChip(
+    return AppChip(
       label: dayOfMonthLabel(l, day),
-      active: day != null,
+      selected: day != null,
+      trailing: AppChipTrailing.dropdown,
       onTap: () async {
         final picked = await showDayOfMonthPicker(
           context,
@@ -1267,9 +1283,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return SectionCard(
       first: first,
       title: l.accountReportSectionTitle,
-      locked: isEditing,
       children: [
         DetailRow(
+          locked: isEditing,
           label: l.walletReportScopeTitle,
           helper: l.walletReportScopeHelper,
           trailing: OptionMenuAnchor<WalletReportScope>(
@@ -1284,10 +1300,11 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               ])
                 SheetOption(value: s, label: _scopeLabel(l, s)),
             ],
-            builder: (context, toggle) => FilterDropdownChip(
+            builder: (context, toggle) => AppChip(
               label: _scopeLabel(l, scope),
-              active: true,
-              onTap: _scopeBusy ? null : toggle,
+              selected: true,
+              trailing: AppChipTrailing.dropdown,
+              onTap: _scopeBusy || isEditing ? null : toggle,
             ),
           ),
         ),
@@ -1396,25 +1413,26 @@ class _HeroHeader extends StatelessWidget {
           // control height.
           HeroTopRow(
             leading: [
-              LabelPill(
+              AppChip(
                 label: accountTypeLabel(context, account.type),
                 icon: account.type.icon,
                 color: account.type.colorOf(context),
-                outlined: true,
               ),
               if (account.isShared)
-                LabelPill(
+                AppChip(
                   label: l.accountSharedWith(members),
                   icon: AppIcons.link,
                   color: accent,
+                  selected: true,
                 ),
             ],
             trailing: [
               if (onAdjust != null)
-                ActionPill(
+                AppChip(
                   icon: AppIcons.reset,
                   label: l.accountDetailAdjustBalance,
-                  style: ActionPillStyle.raised,
+                  tone: AppChipTone.primary,
+                  selected: true,
                   onTap: onAdjust,
                 ),
               if (onEdit != null)

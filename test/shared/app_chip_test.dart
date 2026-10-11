@@ -1,6 +1,7 @@
 import 'package:chubi_pocket/core/constants/app_icons.dart';
 import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:chubi_pocket/shared/widgets/dashed_rect_border.dart';
 import 'package:chubi_pocket/shared/widgets/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -159,5 +160,51 @@ void main() {
     );
     expect(find.text('7'), findsOneWidget);
     expect(find.byIcon(AppIcons.lock), findsOneWidget);
+  });
+
+  testWidgets('a short interactive chip answers taps in a 44 band', (t) async {
+    var taps = 0;
+    await pump(
+      t,
+      AppChip(label: 'ปรับยอด', size: PillSize.chip, onTap: () => taps++),
+    );
+    final box = t.getRect(find.byType(AppChip));
+    // 28 high: 6 above / below still count; 12 above does not.
+    await t.tapAt(box.topCenter - const Offset(0, 6));
+    expect(taps, 1);
+    await t.tapAt(box.topCenter - const Offset(0, 12));
+    expect(taps, 1);
+    // The layout is untouched.
+    expect(box.height, PillSize.chip.height);
+  });
+
+  testWidgets('a display chip has no extended target', (t) async {
+    await pump(t, const AppChip(label: 'ใช้งาน', size: PillSize.mini));
+    expect(find.byType(InkWell), findsOneWidget);
+    expect(t.widget<InkWell>(find.byType(InkWell)).onTap, isNull);
+  });
+
+  testWidgets('maxWidth caps the chip; the label ellipsises', (t) async {
+    await pump(
+      t,
+      const AppChip(
+        label: 'ชื่อกระเป๋าที่ยาวมากๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆๆ',
+        maxWidth: 120,
+      ),
+    );
+    expect(t.getSize(find.byType(AppChip)).width, lessThanOrEqualTo(120));
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('dashed draws a dashed outline, same height', (t) async {
+    await pump(t, const AppChip(label: 'เลือกกระเป๋า', dashed: true));
+    expect(t.getSize(find.byType(AppChip)).height, PillSize.control.height);
+    expect(find.byType(DashedRectBorder), findsOneWidget);
+  });
+
+  test('Tone maps onto AppChipTone', () {
+    expect(AppChipTone.fromTone(Tone.warning), AppChipTone.warning);
+    expect(AppChipTone.fromTone(Tone.neutral), AppChipTone.neutral);
+    expect(AppChipTone.fromTone(Tone.danger), AppChipTone.danger);
   });
 }

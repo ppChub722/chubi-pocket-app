@@ -18,31 +18,13 @@ String projectStatusLabel(AppLocalizations l, ProjectStatus s) => switch (s) {
   ProjectStatus.archived => l.projectStatusArchived,
 };
 
-Tone projectStatusTone(ProjectStatus s) => switch (s) {
-  ProjectStatus.active => Tone.primary,
-  ProjectStatus.completed => Tone.success,
-  ProjectStatus.cancelled => Tone.danger,
-  ProjectStatus.archived => Tone.neutral,
+/// A status's chip tone (use with `AppChip(selected: true, dot: true)`).
+AppChipTone projectStatusTone(ProjectStatus s) => switch (s) {
+  ProjectStatus.active => AppChipTone.primary,
+  ProjectStatus.completed => AppChipTone.success,
+  ProjectStatus.cancelled => AppChipTone.danger,
+  ProjectStatus.archived => AppChipTone.neutral,
 };
-
-class ProjectStatusPill extends StatelessWidget {
-  const ProjectStatusPill({required this.status, this.onTap, super.key});
-
-  final ProjectStatus status;
-
-  /// Owner only — opens the status picker.
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return StatusPill(
-      label: projectStatusLabel(l, status),
-      tone: projectStatusTone(status),
-      onTap: onTap,
-    );
-  }
-}
 
 /// The "locked" banner text for a status, or null when nothing is locked.
 String? projectLockMessage(AppLocalizations l, ProjectStatus s) => switch (s) {

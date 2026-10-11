@@ -20,6 +20,8 @@ class Contact extends Equatable {
     this.linkedUserDisplayName,
     this.linkedUserEmail,
     this.lastUsedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -57,6 +59,8 @@ class Contact extends Equatable {
 
   final ContactStatus status;
   final DateTime? lastUsedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   bool get isLinked => linkedUserId != null;
   bool get isArchived => status == ContactStatus.archived;
@@ -104,6 +108,8 @@ class Contact extends Equatable {
       lastUsedAt: json['last_used_at'] != null
           ? DateTime.parse(json['last_used_at'] as String)
           : null,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
+      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
   }
 
@@ -120,6 +126,8 @@ class Contact extends Equatable {
     String? linkedUserEmail,
     ContactStatus? status,
     DateTime? lastUsedAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
     bool clearLinkedUserId = false,
   }) {
     return Contact(
@@ -145,6 +153,8 @@ class Contact extends Equatable {
           : (linkedUserEmail ?? this.linkedUserEmail),
       status: status ?? this.status,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -164,6 +174,8 @@ class Contact extends Equatable {
     linkedUserEmail,
     status,
     lastUsedAt,
+    createdAt,
+    updatedAt,
   ];
 }
 

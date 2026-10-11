@@ -163,13 +163,16 @@ String? eventTargetName(AppLocalizations l, EventTarget? target) =>
 ///                         isn't offered again)
 ///
 /// No open events: straight to the create section. [selectedProjectId]
-/// highlights the event picked so far. Null when dismissed.
+/// highlights the event picked so far. [allowCreate] false (a draft can only
+/// name an event that exists) leaves the create section out. Null when
+/// dismissed.
 Future<EventTarget?> showEventTargetSheet(
   BuildContext context, {
   required String suggestedName,
   String? currentProjectId,
   String? selectedProjectId,
   bool useRootNavigator = true,
+  bool allowCreate = true,
 }) => showAppSheetCustom<EventTarget>(
   context,
   useRootNavigator: useRootNavigator,
@@ -177,6 +180,7 @@ Future<EventTarget?> showEventTargetSheet(
     suggestedName: suggestedName,
     currentProjectId: currentProjectId,
     selectedProjectId: selectedProjectId,
+    allowCreate: allowCreate,
   ),
 );
 
@@ -185,7 +189,9 @@ class _EventTargetSheet extends StatefulWidget {
     required this.suggestedName,
     required this.currentProjectId,
     required this.selectedProjectId,
+    required this.allowCreate,
   });
+  final bool allowCreate;
   final String suggestedName;
   final String? currentProjectId;
   final String? selectedProjectId;
@@ -242,8 +248,9 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
         .where((p) => p.isActive && p.id != widget.currentProjectId)
         .toList();
     final loading = state.status == ProjectsStatus.loading && active.isEmpty;
-    // Nothing to pick from → open on the create section.
-    final creating = _creating || (!loading && active.isEmpty);
+    // Nothing to pick from → open on the create section (when there is one).
+    final creating =
+        widget.allowCreate && (_creating || (!loading && active.isEmpty));
     final name = _name.text.trim();
     return PickerSheet(
       title: l.quickAddToEvent,
@@ -296,72 +303,75 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
                     ),
                 ],
               ),
-            SectionCard(
-              first: shown.isEmpty,
-              title: creating ? l.quickEventNew : null,
-              dividers: false,
-              children: [
-                if (!creating)
-                  PickerCreateRow(
-                    label: l.quickEventNewRow,
-                    onTap: () => setState(() => _creating = true),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      AppSpacing.xs,
-                      AppSpacing.lg,
-                      0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        AppTextField(
-                          controller: _name,
-                          hint: l.quickEventNameLabel,
-                          autofocus: _creating,
-                          textInputAction: TextInputAction.done,
-                          inputFormatters: [
-                            LengthLimitingTextInputFormatter(TextLimits.name),
-                          ],
-                        ),
-                        // The counter only near the limit.
-                        if (_name.text.length >= _counterFrom)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              '${_name.text.length}/${TextLimits.name}',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: scheme.onSurfaceVariant),
-                            ),
+            if (widget.allowCreate)
+              SectionCard(
+                first: shown.isEmpty,
+                title: creating ? l.quickEventNew : null,
+                dividers: false,
+                children: [
+                  if (!creating)
+                    PickerCreateRow(
+                      label: l.quickEventNewRow,
+                      onTap: () => setState(() => _creating = true),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.xs,
+                        AppSpacing.lg,
+                        0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppTextField(
+                            controller: _name,
+                            hint: l.quickEventNameLabel,
+                            autofocus: _creating,
+                            textInputAction: TextInputAction.done,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(TextLimits.name),
+                            ],
                           ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              AppIcons.info,
-                              size: 16,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Expanded(
+                          // The counter only near the limit.
+                          if (_name.text.length >= _counterFrom)
+                            Align(
+                              alignment: Alignment.centerRight,
                               child: Text(
-                                // Nothing is created here — the event is made
-                                // on บันทึก, with the split people in it.
-                                l.quickEventMembersInfo,
+                                '${_name.text.length}/${TextLimits.name}',
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(color: scheme.onSurfaceVariant),
                               ),
                             ),
-                          ],
-                        ),
-                      ],
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                AppIcons.info,
+                                size: 16,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Expanded(
+                                child: Text(
+                                  // Nothing is created here — the event is made
+                                  // on บันทึก, with the split people in it.
+                                  l.quickEventMembersInfo,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-              ],
-            ),
+                ],
+              ),
             if (widget.currentProjectId != null)
               DangerRow(
                 icon: AppIcons.clear,

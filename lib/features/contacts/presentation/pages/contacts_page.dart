@@ -193,10 +193,10 @@ class _ContactsPageState extends State<ContactsPage> {
                         for (final s in _ContactSort.values)
                           SheetOption(value: s, label: _sortLabel(l, s)),
                       ],
-                      builder: (context, toggle) => FilterDropdownChip(
+                      builder: (context, toggle) => AppChip(
                         label: _sortLabel(l, _sort),
                         icon: AppIcons.sort,
-                        active: false,
+                        trailing: AppChipTrailing.dropdown,
                         onTap: toggle,
                       ),
                     ),
@@ -209,10 +209,11 @@ class _ContactsPageState extends State<ContactsPage> {
                           for (final e in statusLabels.entries)
                             SheetOption(value: e.key, label: e.value),
                         ],
-                        builder: (context, toggle) => FilterDropdownChip(
-                          label: l.contactsStatusLabel,
-                          valueLabel: statusLabels[state.statusFilter],
-                          active: state.statusFilter != 'active',
+                        builder: (context, toggle) => AppChip(
+                          label:
+                              '${l.contactsStatusLabel}: ${statusLabels[state.statusFilter]}',
+                          selected: state.statusFilter != 'active',
+                          trailing: AppChipTrailing.dropdown,
                           onTap: toggle,
                         ),
                       ),
@@ -223,10 +224,11 @@ class _ContactsPageState extends State<ContactsPage> {
                           for (final f in _LinkFilter.values)
                             SheetOption(value: f, label: _linkLabel(l, f)),
                         ],
-                        builder: (context, toggle) => FilterDropdownChip(
-                          label: l.contactsLinkLabel,
-                          valueLabel: _linkLabel(l, _link),
-                          active: _link != _LinkFilter.all,
+                        builder: (context, toggle) => AppChip(
+                          label:
+                              '${l.contactsLinkLabel}: ${_linkLabel(l, _link)}',
+                          selected: _link != _LinkFilter.all,
+                          trailing: AppChipTrailing.dropdown,
                           onTap: toggle,
                         ),
                       ),

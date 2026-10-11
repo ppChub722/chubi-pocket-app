@@ -4,10 +4,12 @@
 #
 #   ./scripts/release-apk.sh                 # notes = last commit subject
 #   ./scripts/release-apk.sh -m "notes"
+#   ./scripts/release-apk.sh --allow-dirty   # test build with uncommitted work
 #
-# Run from Git Bash (any cwd). Builds what is in the working tree. The build
-# number is the commit count, so every release installs over the last one
-# without touching pubspec.yaml. Needs `npx firebase-tools login` once.
+# Run from Git Bash (any cwd). Builds what is in the working tree, so it
+# refuses uncommitted changes unless --allow-dirty: a release APK must equal
+# its commit. The build number is the commit count, so every release
+# installs over the last one. Needs `npx firebase-tools login` once.
 set -euo pipefail
 
 API="https://chubipocket-api.ppforge.dev/api/v1"
@@ -19,10 +21,12 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$APP_DIR"
 
 notes=""
+allow_dirty=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -m|--notes) notes="${2:-}"; shift ;;
-    -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
+    --allow-dirty) allow_dirty=true ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
@@ -36,7 +40,11 @@ build="$(git rev-list --count HEAD)"
 commit="$(git rev-parse --short HEAD)"
 [[ -n "$notes" ]] || notes="$(git log -1 --format=%s) ($commit)"
 if [[ -n "$(git status --porcelain)" ]]; then
-  echo "⚠ chubi-pocket-app has uncommitted changes — they are in this build."
+  if ! $allow_dirty; then
+    echo "✗ chubi-pocket-app has uncommitted changes — commit them, or pass --allow-dirty for a test build." >&2
+    exit 1
+  fi
+  echo "⚠ chubi-pocket-app has uncommitted changes — they are in this build (--allow-dirty)."
 fi
 
 echo "▶ building APK (build $build, commit $commit)"

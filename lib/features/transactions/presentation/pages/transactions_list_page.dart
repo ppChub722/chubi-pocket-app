@@ -321,10 +321,10 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                     ])
                       SheetOption(value: s, label: txSortLabel(l, s)),
                   ],
-                  builder: (context, toggle) => FilterDropdownChip(
+                  builder: (context, toggle) => AppChip(
                     label: txSortLabel(l, _f.sort),
                     icon: AppIcons.sort,
-                    active: false,
+                    trailing: AppChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                 ),
@@ -346,8 +346,10 @@ class _TransactionsListPageState extends State<TransactionsListPage>
                 runSpacing: AppSpacing.xs,
                 children: [
                   for (final c in chips)
-                    _ActiveFilterChip(
+                    AppChip(
                       label: c.label,
+                      selected: true,
+                      trailing: AppChipTrailing.remove,
                       tooltip: l.transactionsFilterRemove,
                       onRemove: () => _apply(c.without),
                     ),
@@ -597,48 +599,13 @@ class _FiltersButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Badge(
-      isLabelVisible: count > 0,
-      label: Text('$count'),
-      child: ChoicePill(
-        label: label,
-        icon: Icons.tune,
-        selected: count > 0,
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-/// An active filter under the search — its label and ✕ to drop it.
-class _ActiveFilterChip extends StatelessWidget {
-  const _ActiveFilterChip({
-    required this.label,
-    required this.onRemove,
-    required this.tooltip,
-  });
-
-  final String label;
-  final VoidCallback onRemove;
-  final String tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: PillShell(
-        size: PillSize.normal,
-        background: scheme.primary.withValues(alpha: 0.12),
-        border: scheme.primary.withValues(alpha: 0.5),
-        onTap: onRemove,
-        child: PillContent(
-          label: label,
-          color: scheme.primary,
-          size: PillSize.normal,
-          trailing: Icon(AppIcons.close, size: 16, color: scheme.primary),
-        ),
-      ),
+    return AppChip(
+      label: label,
+      icon: Icons.tune,
+      selected: count > 0,
+      trailing: AppChipTrailing.count,
+      count: count,
+      onTap: onTap,
     );
   }
 }

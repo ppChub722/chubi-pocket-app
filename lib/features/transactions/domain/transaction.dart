@@ -92,7 +92,7 @@ class EmbeddedTag extends Equatable {
     );
   }
 
-  /// As a [Tag], for the shared tag widgets (`TagChip`, `TagShortList`).
+  /// As a [Tag], for the shared tag widgets (`tagAppChip`, `tagColor`).
   Tag get asTag => Tag(id: id, name: name, iconCode: iconCode);
 
   @override

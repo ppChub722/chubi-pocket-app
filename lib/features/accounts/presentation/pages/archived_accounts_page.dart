@@ -104,9 +104,11 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                           ),
                           label: a.name,
                           helper: moneyString(context, a.balance),
-                          trailing: ActionPill(
+                          trailing: AppChip(
                             label: l.accountRestore,
                             icon: AppIcons.unarchive,
+                            tone: AppChipTone.primary,
+                            selected: true,
                             onTap: _busy.contains(a.id)
                                 ? null
                                 : () => _restore(a),

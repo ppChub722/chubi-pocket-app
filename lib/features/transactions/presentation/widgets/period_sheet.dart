@@ -147,20 +147,31 @@ class _PeriodPickerState extends State<PeriodPicker> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ChoicePillRow<TxPeriodKind>(
-          values: const [
-            TxPeriodKind.day,
-            TxPeriodKind.week,
-            TxPeriodKind.month,
-            TxPeriodKind.year,
-            TxPeriodKind.all,
-            TxPeriodKind.custom,
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [
+            for (final k in const [
+              TxPeriodKind.day,
+              TxPeriodKind.week,
+              TxPeriodKind.month,
+              TxPeriodKind.year,
+              TxPeriodKind.all,
+              TxPeriodKind.custom,
+            ])
+              AppChip(
+                label: txPeriodUnitLabel(l, k),
+                selected: k == _unit,
+                onTap: () {
+                  // Picking กำหนดเอง / ทั้งหมด again still acts.
+                  if (k != _unit ||
+                      k == TxPeriodKind.custom ||
+                      k == TxPeriodKind.all) {
+                    _onUnit(k);
+                  }
+                },
+              ),
           ],
-          selected: _unit,
-          label: (k) => txPeriodUnitLabel(l, k),
-          onSelected: _onUnit,
-          // Picking กำหนดเอง / ทั้งหมด again still acts.
-          reselect: (k) => k == TxPeriodKind.custom || k == TxPeriodKind.all,
         ),
         const SizedBox(height: AppSpacing.sm),
         picker,

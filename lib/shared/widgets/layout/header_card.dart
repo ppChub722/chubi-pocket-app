@@ -29,6 +29,10 @@ import 'hero_shell.dart';
 ///   (icon)  title
 ///           subtitle
 ///   footer
+///
+/// A [topRow] with no chips (and no [topActions]) collapses: no empty band —
+/// the icon + title block moves to the top and ✏️ sits at the right of the
+/// title row. With chips nothing changes.
 class HeaderCard extends StatelessWidget {
   const HeaderCard({
     required this.leading,
@@ -58,7 +62,7 @@ class HeaderCard extends StatelessWidget {
   final VoidCallback? onEdit;
 
   /// Non-null → the top row: these chips (type / status pills,
-  /// [PillSize.normal]) on the left; ✏️ moves into it.
+  /// [PillSize.control]) on the left; ✏️ moves into it.
   final List<Widget>? topRow;
 
   /// The top row's actions, left of ✏️ ("ปรับยอด"); needs [topRow].
@@ -68,7 +72,11 @@ class HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final border = accent ?? scheme.primary;
-    final top = topRow;
+    // No chips and no actions → the top row collapses (owner 2026-10-11): the
+    // icon + title block sits at the top and ✏️ goes level with the title.
+    final top = (topRow?.isNotEmpty ?? false) || topActions.isNotEmpty
+        ? (topRow ?? const <Widget>[])
+        : null;
     final edit = onEdit == null
         ? null
         : AppIconButton(

@@ -118,9 +118,10 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
                     for (final p in SummaryPeriod.values)
                       SheetOption(value: p, label: labels[p]!),
                   ],
-                  builder: (context, toggle) => FilterDropdownChip(
+                  builder: (context, toggle) => AppChip(
                     label: labels[_period]!,
-                    active: true,
+                    selected: true,
+                    trailing: AppChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                 ),

@@ -329,13 +329,19 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                         // Delete sits under the edit-mode info (the tabs below
                         // are locked while editing, so this is the page's last
                         // live row).
-                        if (isEditing)
-                          DangerRow(
-                            icon: AppIcons.delete,
-                            label: l.projectDeleteThis,
-                            padding: const EdgeInsets.only(top: AppSpacing.md),
-                            onTap: isSaving ? null : _delete,
+                        if (isEditing) ...[
+                          ManageSection(
+                            deleteLabel: l.projectDeleteThis,
+                            onDelete: isSaving ? null : _delete,
                           ),
+                          DetailMeta(
+                            lines: detailMetaLines(
+                              context,
+                              createdAt: p.createdAt,
+                              updatedAt: p.updatedAt,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -417,18 +423,25 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         validator: (t) =>
             (t?.trim().isEmpty ?? true) ? l.projectNameRequired : null,
       ),
-      subtitle: Wrap(
-        spacing: AppSpacing.sm,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          ProjectStatusPill(
-            status: project.status,
-            // Owner only; not while editing the info.
-            onTap: v.isOwner && !editing ? _changeStatus : null,
+      topRow: [
+        AppChip(
+          label: projectStatusLabel(l, project.status),
+          dot: true,
+          tone: projectStatusTone(project.status),
+          selected: true,
+          // Owner only; not while editing the info.
+          trailing: v.isOwner && !editing
+              ? AppChipTrailing.dropdown
+              : AppChipTrailing.none,
+          onTap: v.isOwner && !editing ? _changeStatus : null,
+        ),
+        if (project.type?.isNotEmpty ?? false)
+          AppChip(
+            label: project.type!,
+            tone: AppChipTone.neutral,
+            selected: true,
           ),
-          if (project.type?.isNotEmpty ?? false) Text(project.type!),
-        ],
-      ),
+      ],
       footer: editing
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -458,12 +471,18 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   }
 
   /// คำอธิบาย / โน้ต under the header — both while editing; in view mode
-  /// only the filled ones (null when neither is), so an empty project
-  /// doesn't push the tabs down.
+  /// the description only when filled; the note always (empty shows the
+  /// long-press hint).
   Widget? _texts(AppLocalizations l, ProjectView v) {
     final editing = isEditing;
-    Widget? row(_Field f, String label, String value, int max) {
-      if (!editing && value.trim().isEmpty) return null;
+    Widget? row(
+      _Field f,
+      String label,
+      String value,
+      int max, {
+      bool always = false,
+    }) {
+      if (!editing && !always && value.trim().isEmpty) return null;
       return DetailStacked(
         label: label,
         child: InlineField(
@@ -485,7 +504,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         working.description,
         TextLimits.description,
       ),
-      ?row(_Field.note, l.commonNote, working.note, TextLimits.note),
+      ?row(
+        _Field.note,
+        l.commonNote,
+        working.note,
+        TextLimits.note,
+        always: true,
+      ),
     ];
     if (rows.isEmpty) return null;
     return Padding(

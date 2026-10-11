@@ -290,11 +290,6 @@ class _ThemeModeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final mode = context.watch<ThemeModeCubit>().state;
-    final labels = {
-      ThemeMode.light: l.modeLight,
-      ThemeMode.dark: l.modeDark,
-      ThemeMode.system: l.modeSystem,
-    };
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -307,13 +302,12 @@ class _ThemeModeRow extends StatelessWidget {
         children: [
           Text(l.settingsAppearance, style: detailLabelStyle(context)),
           const SizedBox(height: AppSpacing.sm),
-          AppTabBar<ThemeMode>(
+          ThemeModeChips(
             selected: mode,
             onChanged: (m) => context.read<ThemeModeCubit>().set(m),
-            tabs: [
-              for (final e in labels.entries)
-                AppTab(value: e.key, label: e.value),
-            ],
+            lightLabel: l.modeLight,
+            darkLabel: l.modeDark,
+            systemLabel: l.modeSystem,
           ),
         ],
       ),

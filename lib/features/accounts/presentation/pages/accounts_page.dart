@@ -201,36 +201,39 @@ class _AccountsPageState extends State<AccountsPage> {
   }
 
   Widget _page(BuildContext context, AppLocalizations l) {
-    return TabRootScaffold(
-      title: l.navAccounts,
-      body: BlocBuilder<AccountsCubit, AccountsState>(
-        builder: (context, state) {
-          final accounts = state.accounts;
-          final cols = MediaQuery.sizeOf(context).shortestSide >= 600 ? 3 : 2;
-          return AsyncStateView(
-            loading:
-                state.status == AccountsStatus.initial ||
-                state.status == AccountsStatus.loading,
-            error: state.error,
-            isEmpty: accounts.isEmpty,
-            onRetry: context.read<AccountsCubit>().load,
-            skeleton: _AccountsSkeleton(cols: cols),
-            empty: EmptyView(
-              icon: AppIcons.wallet,
-              title: l.accountsEmptyTitle,
-              message: l.accountsEmptyMessage,
-              cta: AppButton(
-                label: l.accountsAddNew,
-                icon: AppIcons.add,
-                onPressed: () => context.push('/accounts/new'),
+    return SavingOverlay(
+      saving: _savingOrder,
+      child: TabRootScaffold(
+        title: l.navAccounts,
+        body: BlocBuilder<AccountsCubit, AccountsState>(
+          builder: (context, state) {
+            final accounts = state.accounts;
+            final cols = MediaQuery.sizeOf(context).shortestSide >= 600 ? 3 : 2;
+            return AsyncStateView(
+              loading:
+                  state.status == AccountsStatus.initial ||
+                  state.status == AccountsStatus.loading,
+              error: state.error,
+              isEmpty: accounts.isEmpty,
+              onRetry: context.read<AccountsCubit>().load,
+              skeleton: _AccountsSkeleton(cols: cols),
+              empty: EmptyView(
+                icon: AppIcons.wallet,
+                title: l.accountsEmptyTitle,
+                message: l.accountsEmptyMessage,
+                cta: AppButton(
+                  label: l.accountsAddNew,
+                  icon: AppIcons.add,
+                  onPressed: () => context.push('/accounts/new'),
+                ),
               ),
-            ),
-            builder: (context) {
-              if (_reordering) return _reorderView(context, accounts);
-              return _gridView(context, accounts, cols);
-            },
-          );
-        },
+              builder: (context) {
+                if (_reordering) return _reorderView(context, accounts);
+                return _gridView(context, accounts, cols);
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -263,10 +266,11 @@ class _AccountsPageState extends State<AccountsPage> {
               for (final s in _WalletSort.values)
                 SheetOption(value: s, label: _sortLabel(l, s)),
             ],
-            builder: (context, toggle) => FilterDropdownChip(
+            builder: (context, toggle) => AppChip(
               label: _sortLabel(l, _sort),
               icon: AppIcons.sort,
-              active: _sort != _WalletSort.custom,
+              selected: _sort != _WalletSort.custom,
+              trailing: AppChipTrailing.dropdown,
               onTap: toggle,
             ),
           ),

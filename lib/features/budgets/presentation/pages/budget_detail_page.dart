@@ -17,7 +17,6 @@ import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_tree.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../categories/presentation/widgets/category_pick_card.dart';
 import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../domain/budget.dart';
 import '../../domain/budget_period.dart';
@@ -381,10 +380,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                   if (budget != null && budget.childBreakdown.isNotEmpty)
                     SectionCard(
                       title: l.budgetDetailBreakdownTitle,
-                      locked: isEditing,
                       children: [
                         for (final row in budget.childBreakdown)
                           DetailRow(
+                            locked: isEditing,
                             label: row.name,
                             trailing: MoneyText(row.spent),
                           ),
@@ -392,19 +391,21 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                     ),
                   // Archive · delete — edit mode only, always last (the top
                   // bar carries no page actions).
-                  if (isEditing && budget != null) ...[
-                    DangerRow(
-                      icon: AppIcons.archive,
-                      label: l.budgetDetailArchive,
-                      onTap: isSaving ? null : () => _archive(budget),
+                  if (isEditing && budget != null)
+                    ManageSection(
+                      archiveLabel: l.budgetDetailArchive,
+                      onArchive: isSaving ? null : () => _archive(budget),
+                      deleteLabel: l.budgetDeleteThis,
+                      onDelete: isSaving ? null : () => _delete(budget),
                     ),
-                    DangerRow(
-                      icon: AppIcons.delete,
-                      label: l.budgetDeleteThis,
-                      onTap: isSaving ? null : () => _delete(budget),
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  if (budget != null)
+                    DetailMeta(
+                      lines: detailMetaLines(
+                        context,
+                        createdAt: budget.createdAt,
+                        updatedAt: budget.updatedAt,
+                      ),
                     ),
-                  ],
                 ],
               ),
             ),
@@ -461,24 +462,24 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     return HeaderCard(
       accent: accent,
       onEdit: isEditing ? null : enterEdit,
+      topRow: [
+        AppChip(
+          label: budgetPeriodLabel(l, working.period),
+          icon: AppIcons.date,
+          tone: AppChipTone.neutral,
+          selected: true,
+        ),
+      ],
       leading: IconDisplay(
         type: IconType.category,
         size: 52,
         iconCode: iconCode,
       ),
       title: title,
-      subtitle: Text(
-        [
-          // Skipped while the name already says it (the default).
-          if (name.isNotEmpty &&
-              categoryName.isNotEmpty &&
-              categoryName != name)
-            categoryName,
-          budgetPeriodLabel(l, working.period),
-        ].join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      subtitle:
+          name.isNotEmpty && categoryName.isNotEmpty && categoryName != name
+          ? Text(categoryName, maxLines: 1, overflow: TextOverflow.ellipsis)
+          : null,
       footer: budget == null
           ? _createFooter(l, accent, textTheme)
           : _footer(l, budget, accent, textTheme),
@@ -561,6 +562,61 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     );
   }
 
+  Widget _categoryRow(
+    AppLocalizations l,
+    List<Category> all,
+    Category? category,
+  ) {
+    final row = DetailRow.pick(
+      label: l.budgetFormCategoryLabel,
+      value: category?.name,
+      emptyText: l.quickEventNone,
+      leading: category == null
+          ? null
+          : IconDisplay(
+              type: IconType.category,
+              size: 24,
+              iconCode: CategoryTree.resolveIconCode(category, all),
+            ),
+      onTap: isSaving ? null : () => _pickCategory(all, category),
+    );
+    if (!_categoryMissing) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.sm,
+          ),
+          child: Text(
+            l.budgetFormCategoryRequired,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickPeriod(AppLocalizations l) async {
+    final p = await showOptionSheet<BudgetPeriod>(
+      context,
+      title: l.budgetFormPeriodLabel,
+      selected: working.period,
+      options: [
+        for (final p in BudgetPeriod.values)
+          SheetOption(value: p, label: budgetPeriodLabel(l, p)),
+      ],
+    );
+    if (!mounted || p == null) return;
+    applyChange(working.copyWith(period: p));
+  }
+
   /// Category · limit · period · description · note. Category and period
   /// stay live in view mode (using them enters edit mode); text fields
   /// enter it on long-press.
@@ -569,21 +625,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     return SectionCard(
       first: true,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            0,
-            AppSpacing.lg,
-            AppSpacing.sm,
-          ),
-          child: CategoryPickCard(
-            category: category,
-            label: l.budgetFormCategoryLabel,
-            placeholder: l.budgetFormCategoryPlaceholder,
-            errorText: _categoryMissing ? l.budgetFormCategoryRequired : null,
-            onTap: isSaving ? null : () => _pickCategory(all, category),
-          ),
-        ),
+        _categoryRow(l, all, category),
         if (editing)
           DetailStacked(
             label: l.budgetFormAmountLabel,
@@ -605,18 +647,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
               trailing: MoneyText(AmountField.parse(working.amount) ?? 0),
             ),
           ),
-        DetailStacked(
+        DetailRow.pick(
           label: l.budgetFormPeriodLabel,
-          child: SelectCardGroup<BudgetPeriod>(
-            selected: working.period,
-            onChanged: isSaving
-                ? null
-                : (p) => applyChange(working.copyWith(period: p)),
-            options: [
-              for (final p in BudgetPeriod.values)
-                SelectCardOption(value: p, label: budgetPeriodLabel(l, p)),
-            ],
-          ),
+          value: budgetPeriodLabel(l, working.period),
+          emptyText: l.quickEventNone,
+          onTap: isSaving ? null : () => _pickPeriod(l),
         ),
         DetailStacked(
           label: l.commonDescription,

@@ -11,7 +11,6 @@ import '../features/transactions/presentation/widgets/tx_compact_hero.dart';
 import '../shared/icon_maker/icon_code.dart';
 import '../shared/icon_maker/icon_display.dart';
 import '../shared/icon_maker/icon_type.dart';
-import '../shared/widgets/type_indicator.dart';
 import '../shared/widgets/ui.dart';
 
 /// The [CompactHeroBar] presets (owner 2026-10-11) for the gallery and the
@@ -104,7 +103,9 @@ class _CompactHeroDemoState extends State<CompactHeroDemo> {
     return switch (_preset) {
       _Preset.tx => HeaderCard(
         key: _heroKey,
-        topRow: const [TypeIndicator(isIncome: false)],
+        topRow: const [
+          AppChip(label: 'รายจ่าย', tone: AppChipTone.expense, selected: true),
+        ],
         leading: const IconDisplay(type: IconType.category, size: 52),
         title: const Text('ข้าวมันไก่'),
         subtitle: const Text('อาหาร'),
@@ -144,15 +145,21 @@ class _CompactHeroDemoState extends State<CompactHeroDemo> {
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.sm),
-        ChoicePillRow<_Preset>(
-          values: _Preset.values,
-          selected: _preset,
-          label: (p) => switch (p) {
-            _Preset.tx => 'รายการ',
-            _Preset.wallet => 'กระเป๋า',
-            _Preset.liability => 'บัตรเครดิต',
-          },
-          onSelected: (p) => setState(() => _preset = p),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            for (final p in _Preset.values)
+              AppChip(
+                label: switch (p) {
+                  _Preset.tx => 'รายการ',
+                  _Preset.wallet => 'กระเป๋า',
+                  _Preset.liability => 'บัตรเครดิต',
+                },
+                selected: p == _preset,
+                onTap: () => setState(() => _preset = p),
+              ),
+          ],
         ),
         const SizedBox(height: AppSpacing.sm),
         // A mini detail page: scroll it until the hero leaves the top.

@@ -17,8 +17,8 @@ import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
+import '../../../transactions/presentation/save_failure.dart';
 import '../cubit/contacts_cubit.dart';
-import '../widgets/contact_linked_mark.dart';
 
 /// `/contacts/new`, `/contacts/:id` (+ `/edit`) — one page, view ⇄ edit,
 /// category style (`ux-overhaul-plan.md` §6). Linked contacts lock name,
@@ -26,13 +26,22 @@ import '../widgets/contact_linked_mark.dart';
 ///
 /// The link-request accept flows keep `ContactFormPage`.
 class ContactDetailPage extends StatefulWidget {
-  const ContactDetailPage({this.id, this.startEditing = false, super.key});
+  const ContactDetailPage({
+    this.id,
+    this.startEditing = false,
+    this.popOnCreate = false,
+    super.key,
+  });
 
   /// Null = create.
   final String? id;
 
   /// `/contacts/:id/edit` opens straight in edit mode.
   final bool startEditing;
+
+  /// Create only, pushed over a picker: saving pops with the new [Contact]
+  /// (the picker picks it) instead of turning into its page.
+  final bool popOnCreate;
 
   bool get isCreate => id == null;
 
@@ -151,6 +160,12 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         );
         if (!mounted) return;
         HapticFeedback.mediumImpact();
+        if (widget.popOnCreate) {
+          // Pop without the discard prompt — the picker takes it from here.
+          commitSaved(_ContactDraft.from(created));
+          Navigator.of(context).pop(created);
+          return;
+        }
         // Become the saved contact right here — edit → view in place, like
         // any other save. (A route swap flashed view mode, slid a new page
         // in and showed a loading skeleton first.) `replace` only fixes the
@@ -180,7 +195,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showSaveFailure(context, e, retry: _save);
     }
   }
 
@@ -209,7 +224,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showSaveFailure(context, e, retry: _delete);
     }
   }
 
@@ -319,64 +334,67 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       );
     }
 
+    // A save / delete in flight dims the page and blocks input.
     return editScope(
-      Scaffold(
-        appBar: AppTopBar(
-          // Edit mode keeps the page's title (owner QA T1) — the action bar
-          // shows the mode.
-          title: _isCreate ? l.contactTitleNew : _contact!.effectiveName,
-          showBack: true,
-          editing: isEditing,
-          onBack: handleBack,
-        ),
-        extendBodyBehindAppBar: true,
-        body: Form(
-          key: _formKey,
-          // Builder: its context sees the floating bar's height.
-          child: Builder(
-            // Not while editing: a reload resets the draft.
-            builder: (context) => PullToRefresh(
-              enabled: !_isCreate && !isEditing,
-              onRefresh: _load,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                ),
-                children: [
-                  _header(l),
-                  const SizedBox(height: AppSpacing.lg),
-                  _fields(l),
-                  if (!_isCreate) _actions(l),
-                  // Archive (amber) · delete (red) live at the bottom in edit
-                  // mode (no top-bar actions); archive flips to restore.
-                  if (isEditing && !_isCreate) ...[
-                    DangerRow(
-                      icon: _contact!.isArchived
-                          ? AppIcons.unarchive
-                          : AppIcons.archive,
-                      label: _contact!.isArchived
-                          ? l.contactRestore
-                          : l.contactArchive,
-                      caution: true,
-                      onTap: isSaving ? null : _toggleArchive,
-                    ),
-                    DangerRow(
-                      icon: AppIcons.delete,
-                      label: l.contactDeleteThis,
-                      onTap: isSaving ? null : _delete,
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
-                    ),
+      SavingOverlay(
+        saving: isSaving,
+        child: Scaffold(
+          appBar: AppTopBar(
+            // Edit mode keeps the page's title (owner QA T1) — the action bar
+            // shows the mode.
+            title: _isCreate ? l.contactTitleNew : _contact!.effectiveName,
+            showBack: true,
+            editing: isEditing,
+            onBack: handleBack,
+          ),
+          extendBodyBehindAppBar: true,
+          body: Form(
+            key: _formKey,
+            // Builder: its context sees the floating bar's height.
+            child: Builder(
+              // Not while editing: a reload resets the draft.
+              builder: (context) => PullToRefresh(
+                enabled: !_isCreate && !isEditing,
+                onRefresh: _load,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                  ),
+                  children: [
+                    _header(l),
+                    const SizedBox(height: AppSpacing.lg),
+                    _fields(l),
+                    if (!_isCreate) _actions(l),
+                    // Archive (amber) · delete (red) live at the bottom in edit
+                    // mode (no top-bar actions); archive flips to restore.
+                    if (isEditing && !_isCreate)
+                      ManageSection(
+                        archiveLabel: _contact!.isArchived
+                            ? l.contactRestore
+                            : l.contactArchive,
+                        onArchive: isSaving ? null : _toggleArchive,
+                        deleteLabel: l.contactDeleteThis,
+                        onDelete: isSaving ? null : _delete,
+                      ),
+                    if (!_isCreate)
+                      DetailMeta(
+                        lines: detailMetaLines(
+                          context,
+                          createdAt: _contact!.createdAt,
+                          updatedAt: _contact!.updatedAt,
+                        ),
+                      ),
                   ],
-                ],
+                ),
               ),
             ),
           ),
+          bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
         ),
-        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
     );
   }
@@ -387,6 +405,23 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final iconEditable = editing && !_linked;
     return HeaderCard(
       onEdit: editing ? null : enterEdit,
+      // Status chips in the top row (rule 2); ✏️ sits at its right.
+      topRow: [
+        if (c != null && c.isLinked)
+          AppChip(
+            label: l.contactLinked,
+            icon: AppIcons.link,
+            tone: AppChipTone.success,
+            selected: true,
+          ),
+        if (c != null && c.isArchived)
+          AppChip(
+            label: l.contactArchivedBadge,
+            icon: AppIcons.archive,
+            tone: AppChipTone.warning,
+            selected: true,
+          ),
+      ],
       // avatar → 🔗 → name (owner 2026-10-11): the badge sits outside the
       // circle, so the editable avatar keeps its shape.
       leading: Row(
@@ -436,21 +471,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           return null;
         },
       ),
-      subtitle: c == null || (!c.isLinked && !c.isArchived)
-          ? null
-          // Kit pills (owner 2026-10-10), 8 apart (HeroSpacing.itemGap).
-          : Wrap(
-              spacing: HeroSpacing.itemGap,
-              runSpacing: AppSpacing.xs,
-              children: [
-                if (c.isLinked) const ContactLinkedPill(),
-                if (c.isArchived)
-                  LabelPill(
-                    label: l.contactArchivedBadge,
-                    icon: AppIcons.archive,
-                  ),
-              ],
-            ),
+      subtitle: Text(l.moreContacts),
     );
   }
 
@@ -512,28 +533,18 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           maxLines: 3,
           maxLength: TextLimits.description,
         ),
-        // The "locked: it's the linked account's" hint belongs to the email
-        // row — one row, so the divider goes below the hint.
-        if (_linked && editing)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              email,
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  0,
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                ),
-                child: Text(
-                  l.contactLinkedLockedHint,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
+        // Linked: the email follows the linked account — a 🔒 row (rule
+        // 10), with the "why" under it while editing.
+        if (_linked)
+          DetailRow(
+            label: l.contactEmailLabel,
+            locked: true,
+            helper: editing ? l.contactLinkedLockedHint : null,
+            trailing: Text(
+              _ctrl[_Field.email]!.text.isEmpty
+                  ? '—'
+                  : _ctrl[_Field.email]!.text,
+            ),
           )
         else
           email,

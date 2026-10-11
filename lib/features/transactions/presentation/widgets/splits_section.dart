@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/text_limits.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
@@ -13,11 +14,12 @@ import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 
 /// One person of the transaction form's "หารกับ" — who (a contact, or just
-/// a name) and what they owe. The person always comes from the contact
-/// picker ([showContactPickerSheet]), never a free text field, so a link
-/// can't be broken by typing (owner 2026-10-10):
-///   - a contact picked ⇒ [contactId] set, [personName] its name;
-///   - a name typed in the picker ⇒ [personName] only.
+/// a name) and what they owe. A contact comes from the picker
+/// ([showContactPickerSheet], tap the avatar); a name that isn't a contact
+/// is typed in the row itself (owner 2026-10-11):
+///   - a contact picked ⇒ [contactId] set, [personName] its name (read-only
+///     in the row — a link can't be broken by typing);
+///   - a name typed in the row ⇒ [personName] only.
 ///
 /// A saved split ([debtId]) remembers who it was saved with. Only a contact
 /// linked to an app user ([PersonLevel.linked], [savedContactLinked]) locks
@@ -144,19 +146,21 @@ double splitLeft(double total, double? me, Iterable<SplitDraft> drafts) {
 /// 2026-10-10 / 11):
 ///
 ///   หารกับ                      [+ เพิ่มคน] [หารเท่ากัน]
-///   [(me) ฉัน] [⟳ อัตโนมัติ]                  ฿400.00
-///   [👤 ลี]                                 ฿300.00  ✕
-///   [(🙂) บี]                                ฿300.00  ✕
+///   (me) ฉัน                              ฿400.00  ⟳
+///   (👤) [ลี____]                         ฿300.00  ✕
+///   (🙂) บี                                ฿300.00  ✕
 ///                                  ✓ แบ่งครบแล้ว
 ///
 /// [onMeChanged] set → once there's anyone to split with, "ฉัน" heads the
 /// list (my share) and a "ยังไม่ได้แบ่ง ฿x" line closes it: [totalAmount] −
-/// (ฉัน + everyone). It must reach 0 to save ([splitLeft]). The
-/// "อัตโนมัติ" chip on ฉัน ([meAuto]) keeps ฉัน at what's left; typing ฉัน
-/// turns it off, tapping it turns it back on. [+ เพิ่มคน] opens the contact picker first — cancel
-/// it and no row is added. A person is a chip in one of three looks
-/// ([PersonLevel]); tapping it re-opens the picker (an app-linked saved row
-/// is locked). Returns the drafts via [onChanged].
+/// (ฉัน + everyone). It must reach 0 to save ([splitLeft]). The ⟳ icon in
+/// ฉัน's ✕ slot ([meAuto], "อัตโนมัติ") keeps ฉัน at what's left; typing ฉัน
+/// turns it off, tapping it turns it back on. [+ เพิ่มคน] adds an empty row
+/// with its name input focused. A person's avatar is one of three looks
+/// ([PersonLevel]); tapping it opens the contact picker (search, or
+/// "สร้างผู้ติดต่อใหม่"); an app-linked saved row is locked. The name is a text
+/// input for a typed name, plain text (same size) for a contact. Returns
+/// the drafts via [onChanged].
 class SplitsSection extends StatefulWidget {
   const SplitsSection({
     required this.label,
@@ -229,11 +233,12 @@ class _SplitsSectionState extends State<SplitsSection> {
     return total;
   }
 
-  Future<void> _addPerson() async {
-    final r = await showContactPickerSheet(context);
-    if (r == null || !mounted) return;
+  /// The row just added by "+ เพิ่มคน": its name input takes the focus.
+  SplitDraft? _justAdded;
+
+  void _addPerson() {
     final d = SplitDraft();
-    _apply(d, r);
+    _justAdded = d;
     widget.onChanged([...widget.drafts, d]);
   }
 
@@ -252,6 +257,9 @@ class _SplitsSectionState extends State<SplitsSection> {
     final r = await showContactPickerSheet(
       context,
       selectedContactId: d.contactId,
+      // A typed name lives in the row; a new contact is made over the picker.
+      allowFreeText: false,
+      allowCreate: true,
     );
     if (r == null || !mounted) return;
     _apply(d, r);
@@ -296,18 +304,21 @@ class _SplitsSectionState extends State<SplitsSection> {
     final pills = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ActionPill(
+        AppChip(
           icon: AppIcons.add,
           label: l.txSplitAddPerson,
+          tone: AppChipTone.primary,
+          selected: true,
           onTap: _addPerson,
         ),
         const SizedBox(width: AppSpacing.xs),
-        ActionPill(
+        AppChip(
           icon: AppIcons.split,
           label: l.txSplitEqually,
-          onTap: widget.drafts.isEmpty || widget.totalAmount <= 0
-              ? null
-              : _splitEqually,
+          tone: AppChipTone.primary,
+          selected: true,
+          enabled: widget.drafts.isNotEmpty && widget.totalAmount > 0,
+          onTap: _splitEqually,
         ),
       ],
     );
@@ -338,6 +349,7 @@ class _SplitsSectionState extends State<SplitsSection> {
             // drop THAT row's controller, not shift amounts onto siblings.
             key: ObjectKey(widget.drafts[i]),
             draft: widget.drafts[i],
+            autofocusName: identical(widget.drafts[i], _justAdded),
             contact: contacts[widget.drafts[i].contactId],
             onChange: () => widget.onChanged(List.of(widget.drafts)),
             onChangePerson: () => _changePerson(widget.drafts[i]),
@@ -461,8 +473,90 @@ class _LeftLine extends StatelessWidget {
   }
 }
 
-/// The amount field of a split row — thousands formatting, an underline,
-/// synced from outside ("หารเท่ากัน") without clobbering what's typed.
+/// A split row's height — a comfortable tap target for the name and the
+/// number (owner 2026-10-11).
+const double _rowHeight = 44;
+
+/// The avatar's size in a split row (was 20).
+const double _markSize = 36;
+
+/// The ✕ slot — the ฉัน row keeps the room (its ⟳ sits there) so the
+/// amounts line up.
+const double _removeSlot = 32;
+
+TextStyle? _fieldStyle(BuildContext context) =>
+    Theme.of(context).textTheme.bodyLarge?.copyWith(
+      fontWeight: FontWeight.w600,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+
+/// A [_rowHeight]-high box with an underline (primary while [focus] has it):
+/// the whole box takes the tap and focuses [focus], not just the text.
+class _UnderlineBox extends StatefulWidget {
+  const _UnderlineBox({
+    required this.focus,
+    required this.child,
+    this.alignment = AlignmentDirectional.centerStart,
+  });
+  final FocusNode focus;
+  final AlignmentGeometry alignment;
+  final Widget child;
+
+  @override
+  State<_UnderlineBox> createState() => _UnderlineBoxState();
+}
+
+class _UnderlineBoxState extends State<_UnderlineBox> {
+  @override
+  void initState() {
+    super.initState();
+    widget.focus.addListener(_onFocus);
+  }
+
+  @override
+  void didUpdateWidget(covariant _UnderlineBox old) {
+    super.didUpdateWidget(old);
+    if (old.focus != widget.focus) {
+      old.focus.removeListener(_onFocus);
+      widget.focus.addListener(_onFocus);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.focus.removeListener(_onFocus);
+    super.dispose();
+  }
+
+  void _onFocus() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final focused = widget.focus.hasFocus;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.focus.requestFocus,
+      child: Container(
+        height: _rowHeight,
+        alignment: widget.alignment,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: focused ? scheme.primary : scheme.outlineVariant,
+              width: focused ? 2 : 1,
+            ),
+          ),
+        ),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// The amount field of a split row — thousands formatting, the ฿ stuck to
+/// the digits like the hero's amount, the whole box a tap target; synced
+/// from outside ("หารเท่ากัน") without clobbering what's typed.
 class _AmountBox extends StatefulWidget {
   const _AmountBox({required this.value, required this.onChanged});
   final double? value;
@@ -476,6 +570,7 @@ class _AmountBoxState extends State<_AmountBox> {
   late final TextEditingController _amount = TextEditingController(
     text: _formatted(widget.value),
   );
+  final _focus = FocusNode();
 
   static String _formatted(double? v) => v == null ? '' : AmountField.format(v);
 
@@ -491,53 +586,66 @@ class _AmountBoxState extends State<_AmountBox> {
   @override
   void dispose() {
     _amount.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final style = _fieldStyle(context);
     return SizedBox(
       // Room for "฿96,248.33".
-      width: 120,
-      child: TextField(
-        controller: _amount,
-        textAlign: TextAlign.end,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [ThousandsInputFormatter()],
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          fontFeatures: const [FontFeature.tabularFigures()],
+      width: 104,
+      child: _UnderlineBox(
+        focus: _focus,
+        alignment: AlignmentDirectional.centerEnd,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text('฿', style: style),
+            Flexible(
+              // As wide as what's typed, so ฿ hugs the digits.
+              child: IntrinsicWidth(
+                child: TextField(
+                  controller: _amount,
+                  focusNode: _focus,
+                  textAlign: TextAlign.end,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [ThousandsInputFormatter()],
+                  style: style,
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    hintStyle: style?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                    ),
+                    isDense: true,
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    constraints: const BoxConstraints(minWidth: 12),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (v) => widget.onChanged(AmountField.parse(v)),
+                ),
+              ),
+            ),
+          ],
         ),
-        // One line, an underline to show it's editable.
-        decoration: InputDecoration(
-          hintText: '0',
-          prefixText: '฿',
-          isDense: true,
-          filled: false,
-          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          border: UnderlineInputBorder(
-            borderSide: BorderSide(color: scheme.outlineVariant),
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: scheme.outlineVariant),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: scheme.primary),
-          ),
-        ),
-        onChanged: (v) => widget.onChanged(AmountField.parse(v)),
       ),
     );
   }
 }
 
-/// The ✕ slot — the ฉัน row keeps the room so the amounts line up.
-const double _removeSlot = 36;
-
-/// `[(me) ฉัน] [⟳ อัตโนมัติ]  ฿amount` — my own share, the same layout as
-/// a person row, with my own icon and no ✕. The chip is highlighted while
-/// ฉัน follows what's left ([auto]).
+/// `(me) ฉัน  ฿amount  ⟳` — my own share, the same layout as a person row,
+/// with my own avatar. The ⟳ ("อัตโนมัติ") sits in the ✕ slot, icon only,
+/// highlighted while ฉัน follows what's left ([auto]).
 class _MeRow extends StatelessWidget {
   const _MeRow({
     required this.amount,
@@ -553,6 +661,7 @@ class _MeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final me = context.select<AuthCubit, (String, IconCode?)?>((c) {
       final s = c.state;
       return s is AuthAuthenticated
@@ -561,53 +670,64 @@ class _MeRow extends StatelessWidget {
     });
     return Row(
       children: [
+        UserAvatar(
+          displayName: me?.$1 ?? l.txSplitMe,
+          iconCode: me?.$2,
+          size: _markSize,
+        ),
+        // Keeps names lined up with the people's (the 🔗's slot).
+        SizedBox(width: PersonMark.linkSlotWidth(_markSize) + AppSpacing.sm),
         Expanded(
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: RowChip(
-                    label: l.txSplitMe,
-                    leading: UserAvatar(
-                      displayName: me?.$1 ?? l.txSplitMe,
-                      iconCode: me?.$2,
-                      size: 20,
-                    ),
-                  ),
-                ),
-                if (onAutoChanged != null) ...[
-                  const SizedBox(width: AppSpacing.xs),
-                  RowChip(
-                    label: l.txSplitAuto,
-                    icon: AppIcons.auto,
-                    selected: auto,
-                    onTap: () => onAutoChanged!(!auto),
-                  ),
-                ],
-              ],
-            ),
+          child: Text(
+            l.txSplitMe,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _fieldStyle(context),
           ),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: AppSpacing.xs),
         _AmountBox(value: amount, onChanged: onChanged),
-        const SizedBox(width: _removeSlot),
+        SizedBox(
+          width: _removeSlot,
+          child: onAutoChanged == null
+              ? null
+              : IconButton(
+                  tooltip: l.txSplitAuto,
+                  isSelected: auto,
+                  icon: const Icon(AppIcons.auto, size: 18),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: _removeSlot,
+                    minHeight: _removeSlot,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: auto ? scheme.primaryContainer : null,
+                    foregroundColor: auto
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant,
+                  ),
+                  onPressed: () => onAutoChanged!(!auto),
+                ),
+        ),
       ],
     );
   }
 }
 
-/// One person: `[mark name]  ฿amount  ✕`. The chip opens the picker
-/// ([onChangePerson]) — locked (🔒, a hint on tap) for a saved row whose
-/// contact is linked to an app user.
-class _DraftRow extends StatelessWidget {
+/// One person: `(avatar) name  ฿amount  ✕`. The avatar opens the contact
+/// picker ([onChangePerson]). The name is a text input for a typed name
+/// (no contact); a contact's is plain text, same size — tap → the picker.
+/// Locked (🔒, a hint on tap) for a saved row whose contact is linked to an
+/// app user.
+class _DraftRow extends StatefulWidget {
   const _DraftRow({
     required this.draft,
     required this.contact,
     required this.onChange,
     required this.onChangePerson,
     required this.onRemove,
+    this.autofocusName = false,
     super.key,
   });
 
@@ -619,48 +739,146 @@ class _DraftRow extends StatelessWidget {
   final VoidCallback onChangePerson;
   final VoidCallback onRemove;
 
+  /// A row just added: focus its name input.
+  final bool autofocusName;
+
+  @override
+  State<_DraftRow> createState() => _DraftRowState();
+}
+
+class _DraftRowState extends State<_DraftRow> {
+  late final TextEditingController _name = TextEditingController(
+    text: widget.draft.personName,
+  );
+  final _nameFocus = FocusNode();
+
+  @override
+  void didUpdateWidget(covariant _DraftRow old) {
+    super.didUpdateWidget(old);
+    // A contact picked / re-picked changes the name from outside.
+    if (_name.text != widget.draft.personName) {
+      _name.text = widget.draft.personName;
+    }
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _nameFocus.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    final draft = widget.draft;
     final locked = draft.identityLocked;
-    final c = contact;
+    final c = widget.contact;
     final level = draft.contactId == null
         ? PersonLevel.name
         : (c?.isLinked ?? false)
         ? PersonLevel.linked
         : PersonLevel.contact;
-    final chip = RowChip(
-      label: draft.personName,
-      leading: PersonMark(
-        name: draft.personName,
-        level: level,
-        iconCode: c?.effectiveIconCode,
-      ),
-      trailingIcon: locked ? AppIcons.lock : null,
-      onTap: locked ? null : onChangePerson,
+    final style = _fieldStyle(context);
+    final typed = draft.contactId == null && !locked;
+
+    final mark = PersonMark(
+      name: draft.personName,
+      level: level,
+      iconCode: c?.effectiveIconCode,
+      size: _markSize,
+      reserveLinkSlot: true,
     );
+    final Widget name;
+    if (typed) {
+      // Typed name: edit it right here.
+      name = _UnderlineBox(
+        focus: _nameFocus,
+        child: TextField(
+          controller: _name,
+          focusNode: _nameFocus,
+          autofocus: widget.autofocusName,
+          maxLength: TextLimits.name,
+          textInputAction: TextInputAction.done,
+          style: style,
+          decoration: InputDecoration(
+            hintText: l.txSplitNameHint,
+            hintStyle: style?.copyWith(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
+            ),
+            counterText: '',
+            isDense: true,
+            filled: false,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+          ),
+          onChanged: (v) {
+            draft.personName = v;
+            widget.onChange();
+          },
+        ),
+      );
+    } else {
+      // A contact's name: read-only, the same size; tap → the picker.
+      name = SizedBox(
+        height: _rowHeight,
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  draft.personName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: style,
+                ),
+              ),
+              if (locked) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Icon(AppIcons.lock, size: 14, color: scheme.onSurfaceVariant),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+    // Tap the avatar (or a contact's name) → the picker; locked → why,
+    // instead of silently nothing.
+    Widget pick(Widget child) {
+      if (locked) {
+        return Tooltip(
+          message: l.txSplitPersonLockedLinked,
+          triggerMode: TooltipTriggerMode.tap,
+          child: child,
+        );
+      }
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onChangePerson,
+        child: child,
+      );
+    }
+
     final row = Row(
       children: [
-        Expanded(
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: locked
-                // Tap → why, instead of silently nothing.
-                ? Tooltip(
-                    message: l.txSplitPersonLockedLinked,
-                    triggerMode: TooltipTriggerMode.tap,
-                    child: chip,
-                  )
-                : chip,
+        pick(
+          SizedBox(
+            height: _rowHeight,
+            child: Align(alignment: Alignment.centerLeft, child: mark),
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
+        Expanded(child: typed ? name : pick(name)),
+        const SizedBox(width: AppSpacing.xs),
         _AmountBox(
           value: draft.owedAmount,
           onChanged: (v) {
             draft.owedAmount = v;
-            onChange();
+            widget.onChange();
           },
         ),
         // Repayments don't limit edits (owner 2026-10-10): anyone can be
@@ -675,7 +893,7 @@ class _DraftRow extends StatelessWidget {
             minHeight: _removeSlot,
           ),
           color: scheme.onSurfaceVariant,
-          onPressed: onRemove,
+          onPressed: widget.onRemove,
         ),
       ],
     );

@@ -122,29 +122,41 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
                   for (final e in typeLabels.entries)
                     SheetOption(value: e.key, label: e.value),
                 ],
-                builder: (context, toggle) => FilterDropdownChip(
-                  label: l.projectTxTypeLabel,
-                  valueLabel: _type == null ? null : typeLabels[_type],
+                builder: (context, toggle) => AppChip(
+                  label: _type == null
+                      ? l.projectTxTypeLabel
+                      : '${l.projectTxTypeLabel}: ${typeLabels[_type]}',
+                  selected: _type != null,
+                  trailing: AppChipTrailing.dropdown,
                   onTap: toggle,
                 ),
               ),
-              FilterChip(
-                label: Text(l.projectTxOnlyMine),
+              AppChip(
+                label: l.projectTxOnlyMine,
                 selected: _mine,
-                onSelected: (v) => setState(() => _mine = v),
-                showCheckmark: false,
-                shape: const StadiumBorder(),
+                onTap: () => setState(() => _mine = !_mine),
               ),
             ],
-            trailing: SortChip<_Sort>(
+            trailing: OptionMenuAnchor<_Sort>(
               selected: _sort,
               onSelected: (s) => setState(() => _sort = s),
               options: [
-                SortOption(_Sort.time, l.projectTxSortTime),
-                SortOption(_Sort.amount, l.projectTxSortAmount),
-                SortOption(_Sort.member, l.projectTxSortMember),
-                SortOption(_Sort.tag, l.projectTxSortTag),
+                SheetOption(value: _Sort.time, label: l.projectTxSortTime),
+                SheetOption(value: _Sort.amount, label: l.projectTxSortAmount),
+                SheetOption(value: _Sort.member, label: l.projectTxSortMember),
+                SheetOption(value: _Sort.tag, label: l.projectTxSortTag),
               ],
+              builder: (context, toggle) => AppChip(
+                label: switch (_sort) {
+                  _Sort.time => l.projectTxSortTime,
+                  _Sort.amount => l.projectTxSortAmount,
+                  _Sort.member => l.projectTxSortMember,
+                  _Sort.tag => l.projectTxSortTag,
+                },
+                icon: AppIcons.sort,
+                trailing: AppChipTrailing.dropdown,
+                onTap: toggle,
+              ),
             ),
           ),
           if (widget.view.trees.isEmpty)

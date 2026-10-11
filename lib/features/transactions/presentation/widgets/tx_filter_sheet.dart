@@ -18,7 +18,7 @@ import 'tx_hero_card.dart';
 
 /// The transactions list's filters, in a side sheet from the right (owner
 /// 2026-10-10), built from the form's own pieces:
-/// - ประเภท: [RowChip]s tinted in each type's colour, ทั้งหมด in primary;
+/// - ประเภท: [AppChip]s tinted in each type's colour, ทั้งหมด in primary;
 /// - กระเป๋า · หมวด · แท็ก: the form's chip rows ([WalletChipRow],
 ///   [CategoryChipRow], [TagChipRow]), each led by "ทั้งหมด" (= no filter);
 ///   wallet / category pick one (tap again → ทั้งหมด), tags several;
@@ -229,8 +229,8 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
     final l = AppLocalizations.of(context)!;
     final wallet = _f.wallet;
     // "ทั้งหมด" leads each pick row — selected = no filter there.
-    RowChip all({required bool selected, required VoidCallback onTap}) =>
-        RowChip(
+    AppChip all({required bool selected, required VoidCallback onTap}) =>
+        AppChip(
           label: l.transactionsListFilterAll,
           selected: selected,
           onTap: onTap,
@@ -242,7 +242,7 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
         children: [
           // Every row the same (owner 2026-10-10): the icon goes in front
           // of the section title, the chips start flush left, one chip
-          // geometry ([RowChip]). Types: selected = a tint of their own
+          // geometry ([AppChip]). Types: selected = a tint of their own
           // colour — ทั้งหมด primary, รายจ่าย red, รายรับ green, โอน grey.
           SideSheetSection(
             title: l.transactionsFilterType,
@@ -256,7 +256,7 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
                   TransactionType.income,
                   TransactionType.transfer,
                 ])
-                  RowChip(
+                  AppChip(
                     label: txTypeLabel(l, t),
                     icon: switch (t) {
                       null => null,
@@ -302,7 +302,7 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
                 ],
                 trailing: [
                   if (wallet is TxNoWallet)
-                    RowChip(
+                    AppChip(
                       label: l.transactionFormAccountNone,
                       icon: AppIcons.noWallet,
                       selected: true,
@@ -343,7 +343,7 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
               ],
               trailing: [
                 if (_f.uncategorized)
-                  RowChip(
+                  AppChip(
                     label: l.homeUncategorized,
                     icon: AppIcons.noCategory,
                     selected: true,

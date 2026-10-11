@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_registry.dart';
-import '../../../../shared/widgets/type_indicator.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/transaction_type.dart';
 import 'tx_hero_card.dart';
@@ -15,11 +14,13 @@ import 'tx_hero_card.dart';
 /// pins it under the top bar once the hero has scrolled away, view and
 /// edit alike:
 ///
-///   [− รายจ่าย]  ข้าวมันไก่              [🍜 อาหาร]  ฿1,250
+///   ข้าวมันไก่ · [🍜 อาหาร]                          ฿1,250
 ///
-/// A small type chip · the description (else the type) · a small category
-/// chip in its icon and colour (none for a transfer or no category) · the
-/// amount in the type's colour. [onTap] = back to the hero.
+/// The title is the description, else the category's name, else the type
+/// (title = description ?? category). A small category chip in its icon and
+/// colour follows the description after a "·" — never beside a title that
+/// already is the category, and none for a transfer. The amount stays in
+/// the type's colour. [onTap] = back to the hero.
 CompactHeroBar txCompactHeroBar(
   BuildContext context, {
   required TransactionType type,
@@ -31,7 +32,8 @@ CompactHeroBar txCompactHeroBar(
   VoidCallback? onTap,
 }) {
   final l = AppLocalizations.of(context)!;
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final theme = Theme.of(context);
+  final palette = theme.extension<AppColors>()!;
   final typeColor = txTypeColor(context, type);
   final typeLabel = switch (type) {
     TransactionType.expense => l.transactionTypeExpense,
@@ -39,40 +41,51 @@ CompactHeroBar txCompactHeroBar(
     TransactionType.transfer => l.transactionTypeTransfer,
   };
   final text = description.trim();
+  final category = type == TransactionType.transfer ? null : categoryName;
+  // The category is the title only when there's no description; then the
+  // chip would just repeat it.
+  final title = text.isNotEmpty ? text : (category ?? typeLabel);
+  final showChip = text.isNotEmpty && category != null;
   return CompactHeroBar(
     onTap: onTap,
-    leading: type == TransactionType.transfer
-        ? LabelPill(label: typeLabel, icon: AppIcons.transfer, color: typeColor)
-        : TypeIndicator(isIncome: type == TransactionType.income),
-    title: Text(text.isEmpty ? typeLabel : text),
-    trailing: Row(
-      mainAxisSize: MainAxisSize.min,
+    title: Row(
       children: [
-        if (categoryName != null && type != TransactionType.transfer) ...[
-          ConstrainedBox(
-            // The description gives way first, then this.
-            constraints: const BoxConstraints(maxWidth: 120),
-            child: LabelPill(
-              label: categoryName,
+        // The description gives way first, then the chip.
+        Flexible(
+          child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+        if (showChip) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            child: Text(
+              '·',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+          Flexible(
+            child: AppChip(
+              label: category,
               icon: IconRegistry.get(
                 categoryIcon?.icon,
                 fallback: AppIcons.category,
               ),
               color: categoryIcon?.accentColorFor(palette) ?? palette.primary,
+              selected: true,
+              size: PillSize.chip,
+              maxWidth: 120,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
         ],
-        MoneyText(
-          amount,
-          symbol: symbol,
-          hideable: false,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: typeColor,
-          ),
-        ),
       ],
+    ),
+    trailing: MoneyText(
+      amount,
+      symbol: symbol,
+      hideable: false,
+      style: theme.textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: typeColor,
+      ),
     ),
   );
 }

@@ -56,16 +56,24 @@ class DebtAvatar extends StatelessWidget {
 }
 
 /// "ค้างอยู่ / คืนครบแล้ว / ยกเลิก".
-StatusPill debtStatusPill(BuildContext context, DebtStatus s) {
+AppChip debtStatusChip(
+  BuildContext context,
+  DebtStatus s, {
+  PillSize size = PillSize.control,
+}) {
   final l = AppLocalizations.of(context)!;
-  return switch (s) {
-    DebtStatus.open => StatusPill(label: l.debtsStatusOpen, tone: Tone.warning),
-    DebtStatus.settled => StatusPill(
-      label: l.debtStatusSettled,
-      tone: Tone.success,
-    ),
-    DebtStatus.cancelled => StatusPill(label: l.debtStatusCancelled),
+  final (String label, AppChipTone tone) = switch (s) {
+    DebtStatus.open => (l.debtsStatusOpen, AppChipTone.warning),
+    DebtStatus.settled => (l.debtStatusSettled, AppChipTone.success),
+    DebtStatus.cancelled => (l.debtStatusCancelled, AppChipTone.neutral),
   };
+  return AppChip(
+    label: label,
+    dot: true,
+    tone: tone,
+    selected: true,
+    size: size,
+  );
 }
 
 /// One debt as a row on the person's page (the name is the page) — the
@@ -137,12 +145,18 @@ class DebtTile extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 if (!debt.isOpen) ...[
-                  debtStatusPill(context, debt.status),
+                  debtStatusChip(context, debt.status, size: PillSize.chip),
                   const SizedBox(width: AppSpacing.sm),
                 ],
                 // Overpaid: the difference, owed the other way, flagged.
                 if (debt.isOpen && debt.isOverpaid) ...[
-                  StatusPill(label: l.debtOverpaid, tone: Tone.warning),
+                  AppChip(
+                    label: l.debtOverpaid,
+                    dot: true,
+                    tone: AppChipTone.warning,
+                    selected: true,
+                    size: PillSize.chip,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                 ],
                 MoneyText(
@@ -386,13 +400,10 @@ class _SettleSheetState extends State<_SettleSheet> {
           Wrap(
             spacing: AppSpacing.xs,
             children: [
-              ActionChip(
-                label: Text(l.debtSettleAll),
-                onPressed: () => _fill(out),
-              ),
-              ActionChip(
-                label: Text(l.debtSettleHalf),
-                onPressed: () => _fill((out / 2 * 100).roundToDouble() / 100),
+              AppChip(label: l.debtSettleAll, onTap: () => _fill(out)),
+              AppChip(
+                label: l.debtSettleHalf,
+                onTap: () => _fill((out / 2 * 100).roundToDouble() / 100),
               ),
             ],
           ),

@@ -10,6 +10,7 @@ library;
 // Buttons
 export 'buttons/app_button.dart';
 export 'buttons/app_icon_button.dart';
+export 'buttons/bulk_delete_button.dart';
 
 // Inputs
 export 'inputs/amount_field.dart';
@@ -24,6 +25,7 @@ export 'inputs/pick_card.dart';
 export 'inputs/picker_tile.dart';
 export 'inputs/select_card_group.dart';
 export 'inputs/select_check.dart';
+export 'inputs/theme_mode_chips.dart';
 
 // Charts
 export 'charts/chart_palette.dart';
@@ -33,9 +35,9 @@ export 'charts/paired_bar_chart.dart';
 // Chips & pills
 export 'chips/app_chip.dart';
 export 'chips/chip_row.dart';
-export 'chips/filter_chips.dart';
-export 'chips/pill.dart';
-export 'chips/status_pill.dart';
+export 'chips/filter_bar.dart';
+export 'chips/pill_size.dart';
+export 'chips/app_badge.dart';
 export 'chips/tone.dart';
 
 // Layout
@@ -49,6 +51,7 @@ export 'layout/header_card.dart';
 export 'layout/list_row.dart';
 export 'layout/hero_shell.dart';
 export 'layout/locked_in_edit.dart';
+export 'layout/manage_section.dart';
 export 'layout/pinned_bar.dart';
 export 'layout/section_header.dart';
 export 'layout/selectable_frame.dart';
@@ -63,8 +66,10 @@ export 'error_view.dart';
 export 'feedback/app_snackbar.dart';
 export 'feedback/choice_dialog.dart';
 export 'feedback/confirm_dialog.dart';
+export 'feedback/error_snackbar.dart';
 export 'feedback/message_banner.dart';
 export 'feedback/progress_row.dart';
+export 'feedback/saving_overlay.dart';
 export 'loading_view.dart';
 export 'pull_to_refresh.dart';
 export 'skeletons.dart';
@@ -84,6 +89,7 @@ export 'data/money_text.dart';
 export 'data/people.dart';
 export 'data/person_mark.dart';
 export 'data/summary_stats.dart';
+export 'data/tx_row.dart';
 export 'brand_logo.dart';
 export 'editable_circle.dart';
 export 'secret_tap.dart';

@@ -125,7 +125,12 @@ class GoogleSignInButton extends StatelessWidget {
             Flexible(child: Text(l.authContinueWithGoogle)),
             if (onPressed == null) ...[
               const SizedBox(width: AppSpacing.sm),
-              AppBadge(label: l.authComingSoon, tone: Tone.info),
+              AppChip(
+                label: l.authComingSoon,
+                tone: AppChipTone.info,
+                selected: true,
+                size: PillSize.mini,
+              ),
             ],
             if (loading) ...[
               const SizedBox(width: AppSpacing.sm),
@@ -166,11 +171,10 @@ class AuthPrefsBar extends StatelessWidget {
             for (final e in _languages.entries)
               SheetOption(value: e.key, label: e.value),
           ],
-          builder: (context, toggle) => FilterDropdownChip(
-            label: l.authLanguage,
+          builder: (context, toggle) => AppChip(
+            label: _languages[code] ?? l.authLanguage,
             icon: AppIcons.language,
-            valueLabel: _languages[code],
-            active: false,
+            trailing: AppChipTrailing.dropdown,
             onTap: toggle,
           ),
         ),

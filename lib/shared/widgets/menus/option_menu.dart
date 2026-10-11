@@ -15,7 +15,7 @@ import '../sheets/option_sheet.dart';
 /// accounts) → `showOptionSheet` bottom sheet.
 ///
 /// Every anchor takes a `builder(context, toggle)`: render your trigger
-/// (a `FilterDropdownChip`, `StatusPill`, button…) and call `toggle` on tap.
+/// (an [AppChip] with ▾, a button…) and call `toggle` on tap.
 
 typedef PopoverTriggerBuilder =
     Widget Function(BuildContext context, VoidCallback toggle);

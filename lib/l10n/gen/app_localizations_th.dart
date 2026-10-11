@@ -4143,4 +4143,62 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get txSplitAuto => 'อัตโนมัติ';
+
+  @override
+  String get contactPickerCreateNew => 'สร้างผู้ติดต่อใหม่';
+
+  @override
+  String get contactPickerEmptyPlain => 'ยังไม่มีผู้ติดต่อ';
+
+  @override
+  String get txSplitNameHint => 'ชื่อ';
+
+  @override
+  String get accountIdentifiersHint =>
+      'ส่วนนี้ใช้จับคู่บัญชีตอนสแกนสลิปเท่านั้น';
+
+  @override
+  String get detailManageTitle => 'การจัดการ';
+
+  @override
+  String get draftPickWalletFrom => 'เลือกกระเป๋าต้นทาง';
+
+  @override
+  String get draftPickWalletTo => 'เลือกกระเป๋าปลายทาง';
+
+  @override
+  String get draftPickCategory => 'เลือกหมวด';
+
+  @override
+  String get draftExtrasTitle => 'หารกับ / อีเวนต์';
+
+  @override
+  String draftExtrasSplits(int count) {
+    return 'หารกับ $count คน';
+  }
+
+  @override
+  String get draftExtrasNone => 'ไม่ได้ตั้ง';
+
+  @override
+  String get pendingErrInvalidSplit =>
+      'แถวหารยังไม่ครบ — ต้องมีชื่อและยอดมากกว่า 0';
+
+  @override
+  String get pendingErrSplitsExceed => 'ยอดที่หารเกินยอดรายการ';
+
+  @override
+  String get pendingErrProjectGone =>
+      'อีเวนต์นี้ไม่มีแล้ว เลือกอีเวนต์ใหม่หรือเอาออก';
+
+  @override
+  String get pendingErrProjectClosed =>
+      'อีเวนต์นี้ปิดหรือถูกล็อกแล้ว เพิ่มรายการไม่ได้';
+
+  @override
+  String get pendingErrProjectMember => 'คุณไม่ได้เป็นสมาชิกของอีเวนต์นี้';
+
+  @override
+  String get pendingErrProjectReadOnly =>
+      'คุณดูอีเวนต์นี้ได้อย่างเดียว เพิ่มรายการไม่ได้';
 }

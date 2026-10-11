@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
-import 'pill.dart';
+import 'app_chip.dart';
 
 /// A chip row's order, fixed once the lists it ranks have loaded (option B,
 /// owner 2026-10-10): tapping a chip highlights it in place — nothing jumps
@@ -51,9 +51,11 @@ class ChipRow extends StatelessWidget {
     this.icon,
     this.onMore,
     this.moreLabel,
+    this.moreFirst = false,
     this.maxLines,
     super.key,
-  }) : assert(maxLines == null || maxLines > 0);
+  }) : assert(maxLines == null || maxLines > 0),
+       assert(!moreFirst || maxLines == null, 'moreFirst scrolls, never wraps');
 
   /// Null = no leading icon (a titled section shows it instead).
   final IconData? icon;
@@ -65,6 +67,11 @@ class ChipRow extends StatelessWidget {
   /// The "เพิ่มเติม" text — required with [onMore].
   final String? moreLabel;
 
+  /// The pick chip leads the row instead of ending it, and shows dashed — "no
+  /// choice made, tap to choose" (the pending form's เลือกกระเป๋า / เลือกหมวด,
+  /// [moreLabel] is its text). One scrolling line only.
+  final bool moreFirst;
+
   /// Null = one scrolling line; else wrap, cut past this many lines.
   final int? maxLines;
 
@@ -73,7 +80,14 @@ class ChipRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final more = onMore == null
         ? null
-        : RowChip(label: moreLabel ?? '', icon: AppIcons.more, onTap: onMore);
+        : moreFirst
+        ? AppChip(
+            label: moreLabel ?? '',
+            icon: AppIcons.add,
+            dashed: true,
+            onTap: onMore,
+          )
+        : AppChip(label: moreLabel ?? '', icon: AppIcons.more, onTap: onMore);
     final lines = maxLines;
     return Row(
       crossAxisAlignment: lines == null
@@ -95,109 +109,20 @@ class ChipRow extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
+                      if (moreFirst && more != null) ...[
+                        more,
+                        const SizedBox(width: AppSpacing.xs),
+                      ],
                       for (final c in chips) ...[
                         c,
                         const SizedBox(width: AppSpacing.xs),
                       ],
-                      ?more,
+                      if (!moreFirst) ?more,
                     ],
                   ),
                 ),
         ),
       ],
-    );
-  }
-}
-
-/// A chip of a [ChipRow] — `[icon] label`, the same size and look as the
-/// category / tag chips beside it: [selected] = tinted in [color] with a
-/// [color] border, otherwise a neutral outline (the icon keeps [color]).
-/// [color] null = the theme's primary; the "ทั้งหมด" / "เพิ่มเติม" chips
-/// leave it. [trailingIcon] goes after the label (a 🔒). [leading] replaces
-/// [icon] with a widget (a person's [PersonMark]). [PillSize.normal]: 32
-/// high, the one chip size (owner 2026-10-11).
-class RowChip extends StatelessWidget {
-  const RowChip({
-    required this.label,
-    this.icon,
-    this.leading,
-    this.color,
-    this.selected = false,
-    this.onTap,
-    this.trailingIcon,
-    super.key,
-  });
-
-  final String label;
-  final IconData? icon;
-  final Widget? leading;
-  final Color? color;
-  final bool selected;
-  final VoidCallback? onTap;
-  final IconData? trailingIcon;
-
-  static const _size = PillSize.normal;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final tint = color ?? scheme.primary;
-    final fg = selected ? tint : scheme.onSurfaceVariant;
-    return Semantics(
-      selected: selected,
-      button: onTap != null,
-      child: Material(
-        color: selected ? tint.withValues(alpha: 0.12) : Colors.transparent,
-        shape: StadiumBorder(
-          side: BorderSide(
-            color: selected ? tint : scheme.outlineVariant,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: _size.height),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: _size.padding),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (leading != null) ...[
-                    leading!,
-                    SizedBox(width: _size.gap),
-                  ] else if (icon != null) ...[
-                    Icon(
-                      icon,
-                      size: _size.icon,
-                      color: color == null ? fg : tint,
-                    ),
-                    SizedBox(width: _size.gap),
-                  ],
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: _size
-                          .textStyle(context)
-                          ?.copyWith(
-                            color: fg,
-                            fontWeight: PillSize.chipWeight,
-                          ),
-                    ),
-                  ),
-                  if (trailingIcon != null) ...[
-                    const SizedBox(width: 3),
-                    Icon(trailingIcon, size: _size.icon - 2, color: fg),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

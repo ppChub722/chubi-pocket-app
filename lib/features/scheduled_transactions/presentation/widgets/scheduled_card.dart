@@ -62,7 +62,16 @@ class ScheduledCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        _VariantPill(entry: entry),
+                        AppChip(
+                          label: entry.isLoan
+                              ? l.scheduledVariantLoan
+                              : entry.isInstallment
+                              ? l.scheduledVariantInstallment
+                              : l.scheduledVariantRecurring,
+                          tone: AppChipTone.neutral,
+                          selected: true,
+                          size: PillSize.chip,
+                        ),
                       ],
                     ),
                     if (desc != null && desc.isNotEmpty) ...[
@@ -118,39 +127,6 @@ class ScheduledCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VariantPill extends StatelessWidget {
-  const _VariantPill({required this.entry});
-  final ScheduledTransaction entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final label = entry.isLoan
-        ? l.scheduledVariantLoan
-        : entry.isInstallment
-        ? l.scheduledVariantInstallment
-        : l.scheduledVariantRecurring;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: scheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

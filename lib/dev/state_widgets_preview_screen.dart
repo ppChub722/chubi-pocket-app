@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import '../shared/widgets/ui.dart';
 
 import '../core/constants/app_spacing.dart';
 import '../core/network/api_exception.dart';
-import '../shared/widgets/empty_view.dart';
-import '../shared/widgets/error_view.dart';
-import '../shared/widgets/loading_view.dart';
 import '../shared/widgets/skeleton_box.dart';
 
 /// Renders each Phase 0 state-pattern widget so we can eyeball them in one
@@ -59,10 +57,10 @@ class _StateWidgetsPreviewScreenState extends State<StateWidgetsPreviewScreen> {
                     spacing: AppSpacing.sm,
                     children: _ErrorKind.values
                         .map(
-                          (k) => ChoiceChip(
-                            label: Text(k.name),
+                          (k) => AppChip(
+                            label: k.name,
                             selected: _errorKind == k,
-                            onSelected: (_) => setState(() => _errorKind = k),
+                            onTap: () => setState(() => _errorKind = k),
                           ),
                         )
                         .toList(),

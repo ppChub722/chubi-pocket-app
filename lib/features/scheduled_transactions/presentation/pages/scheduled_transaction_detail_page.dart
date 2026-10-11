@@ -190,6 +190,12 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
     );
   }
 
+  void _edit() => showQuickCreateSheet(
+    context,
+    scheduled: true,
+    scheduledEntry: widget.entry,
+  );
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -214,21 +220,23 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
               _Hero(
                 entry: entry,
                 onStatusTap: canChange ? _changeStatus : null,
-                onEdit: () => showQuickCreateSheet(
-                  context,
-                  scheduled: true,
-                  scheduledEntry: entry,
-                ),
+                onEdit: _edit,
               ),
               const SizedBox(height: AppSpacing.lg),
-              _StatsCard(entry: entry),
+              _StatsCard(entry: entry, onEdit: _edit),
               if (entry.canGenerateNow)
                 _GenerateNowCard(entry: entry, onGenerated: _refreshHistory),
               _HistorySection(future: _historyFuture),
-              DangerRow(
-                icon: AppIcons.delete,
-                label: l.scheduledDeleteThis,
-                onTap: _delete,
+              ManageSection(
+                deleteLabel: l.scheduledDeleteThis,
+                onDelete: _delete,
+              ),
+              DetailMeta(
+                lines: detailMetaLines(
+                  context,
+                  createdAt: entry.createdAt,
+                  updatedAt: entry.updatedAt,
+                ),
               ),
             ],
           ),
@@ -255,11 +263,22 @@ class _Hero extends StatelessWidget {
     final accent = entry.iconCode?.accentColorFor(palette) ?? palette.primary;
     final isIncome = entry.type == ScheduledTransactionType.income;
     final (tone, label) = switch (entry.status) {
-      ScheduledStatus.active => (Tone.success, l.scheduledStatusActive),
-      ScheduledStatus.paused => (Tone.warning, l.scheduledStatusPaused),
-      ScheduledStatus.completed => (Tone.neutral, l.scheduledStatusCompleted),
-      ScheduledStatus.cancelled => (Tone.danger, l.scheduledStatusCancelled),
+      ScheduledStatus.active => (AppChipTone.success, l.scheduledStatusActive),
+      ScheduledStatus.paused => (AppChipTone.warning, l.scheduledStatusPaused),
+      ScheduledStatus.completed => (
+        AppChipTone.neutral,
+        l.scheduledStatusCompleted,
+      ),
+      ScheduledStatus.cancelled => (
+        AppChipTone.danger,
+        l.scheduledStatusCancelled,
+      ),
     };
+    final variant = entry.isLoan
+        ? l.scheduledVariantLoan
+        : entry.isInstallment
+        ? l.scheduledVariantInstallment
+        : l.scheduledVariantRecurring;
     return HeaderCard(
       accent: accent,
       onEdit: onEdit,
@@ -269,15 +288,19 @@ class _Hero extends StatelessWidget {
         iconCode: entry.iconCode,
       ),
       title: Text(entry.name),
-      subtitle: Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.xs,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          StatusPill(label: label, tone: tone, onTap: onStatusTap),
-          _VariantPill(entry: entry),
-        ],
-      ),
+      topRow: [
+        AppChip(
+          label: label,
+          dot: true,
+          tone: tone,
+          selected: true,
+          trailing: onStatusTap != null
+              ? AppChipTrailing.dropdown
+              : AppChipTrailing.none,
+          onTap: onStatusTap,
+        ),
+        AppChip(label: variant, tone: AppChipTone.neutral, selected: true),
+      ],
       footer: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -298,39 +321,6 @@ class _Hero extends StatelessWidget {
   }
 }
 
-class _VariantPill extends StatelessWidget {
-  const _VariantPill({required this.entry});
-  final ScheduledTransaction entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final label = entry.isLoan
-        ? l.scheduledVariantLoan
-        : entry.isInstallment
-        ? l.scheduledVariantInstallment
-        : l.scheduledVariantRecurring;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: scheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
 /// A status-change option's icon (⏸ / ▶ / ⏹), tinted with the tone of the
 /// status it leads to.
 class _ToneIcon extends StatelessWidget {
@@ -344,8 +334,9 @@ class _ToneIcon extends StatelessWidget {
 }
 
 class _StatsCard extends StatelessWidget {
-  const _StatsCard({required this.entry});
+  const _StatsCard({required this.entry, required this.onEdit});
   final ScheduledTransaction entry;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -356,12 +347,12 @@ class _StatsCard extends StatelessWidget {
         label: l.scheduledDetailAccount,
         value: entry.account?.name ?? '—',
       ),
-      if (entry.category != null)
-        _StatRow(
-          icon: AppIcons.category,
-          label: l.scheduledDetailCategory,
-          value: entry.category!.name,
-        ),
+      DetailRow.pick(
+        leading: const Icon(AppIcons.category),
+        label: l.scheduledDetailCategory,
+        value: entry.category?.name,
+        emptyText: l.quickEventNone,
+      ),
       _StatRow(
         icon: AppIcons.scheduled,
         label: l.scheduledDetailCycle,
@@ -398,8 +389,8 @@ class _StatsCard extends StatelessWidget {
       ],
       // Long text: label on top, value full-width below.
       if (_has(entry.description))
-        _TextRow(label: l.commonDescription, value: entry.description!),
-      if (_has(entry.note)) _TextRow(label: l.commonNote, value: entry.note!),
+        _TextRow(label: l.commonDescription, value: entry.description),
+      _TextRow(label: l.commonNote, value: entry.note, onLongPress: onEdit),
     ];
     // Detail-page rows (SectionCard / DetailRow), hairlines between.
     return SectionCard(first: true, children: rows);
@@ -440,16 +431,33 @@ class _StatRow extends StatelessWidget {
 
 /// Description / note — a [DetailStacked], so long text wraps full-width.
 class _TextRow extends StatelessWidget {
-  const _TextRow({required this.label, required this.value});
+  const _TextRow({required this.label, required this.value, this.onLongPress});
 
   final String label;
-  final String value;
+  final String? value;
+  final VoidCallback? onLongPress;
 
   @override
-  Widget build(BuildContext context) => DetailStacked(
-    label: label,
-    child: Text(value, style: Theme.of(context).textTheme.bodyLarge),
-  );
+  Widget build(BuildContext context) {
+    final empty = value == null || value!.trim().isEmpty;
+    final l = AppLocalizations.of(context)!;
+    final style = Theme.of(context).textTheme.bodyLarge;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onLongPress,
+      child: DetailStacked(
+        label: label,
+        child: empty
+            ? Text(
+                l.commonLongPressToEdit,
+                style: style?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              )
+            : Text(value!, style: style),
+      ),
+    );
+  }
 }
 
 class _GenerateNowCard extends StatefulWidget {

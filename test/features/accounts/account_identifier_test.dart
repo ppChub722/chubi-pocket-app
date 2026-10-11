@@ -20,12 +20,12 @@ void main() {
       expect(AccountIdentifier.digitCount('xxxxx2780x'), 4);
     });
 
-    test('formatted groups by kind and length; masked shows the last 4', () {
+    test('formatted is the plain digits; masked shows the last 4', () {
       const bank = AccountIdentifier(
         kind: IdentifierKind.bankAccount,
         value: '1234527806',
       );
-      expect(bank.formatted, '123-4-52780-6');
+      expect(bank.formatted, '1234527806');
       expect(bank.masked, '•••• 7806');
       const slip = AccountIdentifier(
         kind: IdentifierKind.other,
@@ -37,12 +37,12 @@ void main() {
         kind: IdentifierKind.promptPay,
         value: '0812344464',
       );
-      expect(phone.formatted, '081-234-4464');
+      expect(phone.formatted, '0812344464');
       const card = AccountIdentifier(
         kind: IdentifierKind.card,
         value: '4000123412341234',
       );
-      expect(card.formatted, '4000 1234 1234 1234');
+      expect(card.formatted, '4000123412341234');
     });
 
     test('json round trip; unknown kind reads as other', () {

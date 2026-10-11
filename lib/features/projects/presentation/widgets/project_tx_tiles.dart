@@ -584,19 +584,27 @@ class _ResolveSheetState extends State<_ResolveSheet> {
             ),
           const SizedBox(height: AppSpacing.sm),
           if (_mode == _Mode.asTransaction) ...[
-            PickerTile(
+            DetailRow.pick(
               label: l.debtSettleAccount,
               value: _account?.name,
-              placeholder: l.debtSettleAccountRequired,
+              emptyText: l.quickEventNone,
               leading: const Icon(AppIcons.bank),
-              errorText: _accountError,
               onTap: _pickAccount,
             ),
-            const SizedBox(height: AppSpacing.sm),
-            PickerTile(
+            if (_accountError != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Text(
+                  _accountError!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+            DetailRow.pick(
               label: l.projectResolveCategory,
               value: _category?.name,
-              placeholder: l.projectResolveCategoryNone,
+              emptyText: l.projectResolveCategoryNone,
               leading: const Icon(AppIcons.category),
               onTap: _pickCategory,
             ),

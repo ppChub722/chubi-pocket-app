@@ -15,6 +15,8 @@ class Category extends Equatable {
     this.includeInReport = true,
     this.isSystem = false,
     this.sortOrder = 0,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -27,6 +29,8 @@ class Category extends Equatable {
   final bool includeInReport;
   final bool isSystem;
   final int sortOrder;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
@@ -42,6 +46,8 @@ class Category extends Equatable {
       includeInReport: (json['include_in_report'] as bool?) ?? true,
       isSystem: (json['is_system'] as bool?) ?? false,
       sortOrder: (json['sort_order'] as int?) ?? 0,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
+      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
   }
 
@@ -82,6 +88,8 @@ class Category extends Equatable {
     bool? includeInReport,
     bool? isSystem,
     int? sortOrder,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Category(
       id: id ?? this.id,
@@ -94,6 +102,8 @@ class Category extends Equatable {
       includeInReport: includeInReport ?? this.includeInReport,
       isSystem: isSystem ?? this.isSystem,
       sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -109,5 +119,7 @@ class Category extends Equatable {
     includeInReport,
     isSystem,
     sortOrder,
+    createdAt,
+    updatedAt,
   ];
 }

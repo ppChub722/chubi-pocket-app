@@ -9,13 +9,7 @@ import '../features/accounts/domain/account_identifier.dart';
 import '../features/accounts/domain/account_type.dart';
 import '../features/accounts/presentation/widgets/account_card.dart';
 import '../features/accounts/presentation/widgets/identifier_widgets.dart';
-import '../features/contacts/presentation/widgets/contact_linked_mark.dart';
-import '../features/personal_debts/domain/personal_debt.dart';
-import '../features/personal_debts/presentation/widgets/debt_widgets.dart';
-import '../features/projects/domain/project.dart';
-import '../features/projects/presentation/widgets/project_common.dart';
 import '../features/tags/domain/tag.dart';
-import '../features/tags/presentation/widgets/tag_chip.dart';
 import '../features/transactions/domain/transaction_type.dart';
 import '../features/transactions/presentation/widgets/draft_form.dart'
     show TxTagStrip;
@@ -24,7 +18,6 @@ import '../features/transactions/presentation/widgets/splits_section.dart';
 import '../features/transactions/presentation/widgets/tx_hero_card.dart';
 import '../shared/icon_maker/icon_display.dart';
 import '../shared/icon_maker/icon_type.dart';
-import '../shared/widgets/type_indicator.dart';
 import '../shared/widgets/ui.dart';
 import 'compact_hero_demo.dart';
 import 'app_chip_tab.dart';
@@ -54,19 +47,29 @@ class _DetailPatternsTabState extends State<DetailPatternsTab> {
       ),
       children: [
         const _Intro(),
+        const _Rules(),
         _Part(
           title: '1 · หน้าตัวอย่าง (kit ล้วน)',
-          trailing: ChoicePillRow<bool>(
-            values: const [false, true],
-            selected: _editing,
-            label: (v) => v ? 'แก้ไข' : 'ดู',
-            onSelected: (v) => setState(() => _editing = v),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final v in const [false, true]) ...[
+                if (v) const SizedBox(width: AppSpacing.xs),
+                AppChip(
+                  label: v ? 'แก้ไข' : 'ดู',
+                  selected: _editing == v,
+                  onTap: () => setState(() => _editing = v),
+                ),
+              ],
+            ],
           ),
         ),
         _SampleDetail(
           editing: _editing,
           onEnterEdit: () => setState(() => _editing = true),
         ),
+        const _Part(title: '1b · Hero มาตรฐาน (ผู้ติดต่อ · หมวดหมู่ · …)'),
+        const _StandardHeroes(),
         const _Part(title: '2 · แคตตาล็อก — ของที่มีในแอปวันนี้'),
         const _HeroCatalogue(),
         const _CompactHeroCatalogue(),
@@ -170,6 +173,80 @@ class _Group extends StatelessWidget {
   }
 }
 
+/// The owner's detail-page standard (2026-10-11) applied to every Part 2
+/// variant: "= standard" (the sample already does it) or "→ migrates to X".
+/// Looked up by the start of the variant's name; the migration split per
+/// page is in the FE-B report (ai/inbox/fe-b.md).
+const _verdicts = <String, String>{
+  // Hero
+  'tx — TxHeroCard': '= standard (the reference hero)',
+  'wallet — AccountCardSurface':
+      '= standard (the wallet colour is its surface); → amount into the '
+      'footer slot like the others',
+  'category — HeaderCard': '→ migrates to the rebuilt category hero (Part 1)',
+  'contact — HeaderCard':
+      '→ migrates to the rebuilt contact hero: ✏️ + status chips in the top row',
+  'debt — HeaderCard':
+      '→ migrates to: status chip + ✏️ in the top row (not the subtitle)',
+  'event — HeaderCard':
+      '→ migrates to: status + type chips + ✏️ in the top row',
+  'budget — HeaderCard':
+      '→ migrates to: period chip + ✏️ in the top row, subtitle = category',
+  'goal — HeaderCard':
+      '→ migrates to: status AppChip (ครบเป้าแล้ว) + ✏️ in the top row',
+  'scheduled — HeaderCard':
+      '→ migrates to: status + variant AppChips + ✏️ in the top row',
+  // Rows
+  'text — DetailRow': '= standard',
+  'picker › — DetailRow': '= standard (DetailRow.pick: empty → "ไม่ได้เลือก")',
+  'picker card — PickCard': '→ migrates to DetailRow.pick › on detail pages',
+  'picker tile — PickerTile':
+      '→ migrates to DetailRow ›; PickerTile retires (event resolve sheet · '
+      'event member splits, the events round)',
+  'switch — DetailRow': '= standard',
+  'chip — TxTagStrip': '= standard',
+  'identifier — IdentifierRow': '= standard',
+  'empty — EventRow': '= standard (every picker keeps its row)',
+  'locked — 🔒':
+      '→ migrates to a 🔒 leading icon (DetailRow.locked), no dimming',
+  // Lists
+  'split people': '= standard',
+  'a person, three looks': '= standard',
+  'a person as an avatar': '= standard',
+  'identifiers — SectionCard': '= standard',
+  // Text
+  'DetailStacked + InlineField — view': '= standard (note always shown)',
+  'DetailStacked + InlineField — edit': '= standard',
+  'grey label + field': '→ migrates to DetailStacked + InlineField',
+  // การจัดการ
+  'archive amber + delete red': '= standard',
+  'archive + delete, both red': '→ migrates to archive amber, delete red',
+  'archive only, red': '→ migrates to archive amber (in การจัดการ)',
+  'delete only, red': '= standard (entities with no archive)',
+  // Meta
+  'DetailMeta — muted': '= standard (every page)',
+  'a DetailRow inside': '→ migrates to DetailMeta (not a row)',
+  'none': '→ migrates to DetailMeta on every page',
+  // States
+  'loading — LoadingView': '= standard',
+  'error — ErrorView': '= standard (every detail page)',
+  'not found — EmptyView': '= standard',
+  'long-press hint': '= standard',
+  'empty value': '→ migrates to "ไม่ได้เลือก" on every empty picker row',
+  // AppChip / compact
+  'hero top row — type': '= standard (AppChip, normal 32)',
+  'labels in a header': '= standard (AppChip, normal 32)',
+  'playground': '= standard',
+  'CompactHeroBar': '= standard (planned)',
+};
+
+String? _verdictFor(String name) {
+  for (final e in _verdicts.entries) {
+    if (name.startsWith(e.key)) return e.value;
+  }
+  return null;
+}
+
 /// One variant: what it is, which page(s) use it, what differs — then the
 /// widget itself.
 class _Variant extends StatelessWidget {
@@ -217,6 +294,16 @@ class _Variant extends StatelessWidget {
                 Text(
                   '≠ $note',
                   style: textTheme.labelSmall?.copyWith(color: warn),
+                ),
+              if (_verdictFor(name) case final v?)
+                Text(
+                  v,
+                  style: textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: v.startsWith('=')
+                        ? Theme.of(context).extension<AppColors>()!.success
+                        : Theme.of(context).extension<AppColors>()!.info,
+                  ),
                 ),
               const SizedBox(height: AppSpacing.sm),
             ],
@@ -279,20 +366,25 @@ class _SampleDetailState extends State<_SampleDetail> {
           HeaderCard(
             accent: palette.primary,
             topRow: [
-              LabelPill(
+              AppChip(
                 label: 'ธนาคาร',
                 icon: AppIcons.bank,
                 color: AccountType.bank.colorOf(context),
-                outlined: true,
               ),
-              const StatusPill(label: 'ใช้งาน', tone: Tone.success),
+              const AppChip(
+                label: 'ใช้งาน',
+                dot: true,
+                tone: AppChipTone.success,
+                selected: true,
+              ),
             ],
             topActions: [
               if (!editing)
-                ActionPill(
+                AppChip(
                   icon: AppIcons.reset,
                   label: 'ปรับยอด',
-                  style: ActionPillStyle.raised,
+                  tone: AppChipTone.primary,
+                  selected: true,
                   onTap: () {},
                 ),
             ],
@@ -320,14 +412,12 @@ class _SampleDetailState extends State<_SampleDetail> {
           // Chip strip under the hero (16 below it).
           const SizedBox(height: HeroSpacing.after),
           editing
-              ? ChipRow(
-                  icon: AppIcons.tag,
-                  moreLabel: 'เพิ่มเติม',
-                  onMore: () {},
-                  chips: [
+              ? _TagStrip(
+                  tags: [
                     for (final t in tagNames)
-                      TagChip(
-                        tag: Tag(id: t, name: t),
+                      AppChip(
+                        label: '#$t',
+                        icon: AppIcons.tag,
                         selected: _tags.contains(t),
                         onTap: () => setState(
                           () => _tags.contains(t)
@@ -339,12 +429,14 @@ class _SampleDetailState extends State<_SampleDetail> {
                 )
               : GestureDetector(
                   onLongPress: enter,
-                  child: ChipRow(
-                    icon: AppIcons.tag,
-                    chips: [
+                  child: _TagStrip(
+                    tags: [
                       for (final t in _tags)
-                        TagChip(
-                          tag: Tag(id: t, name: t),
+                        AppChip(
+                          label: '#$t',
+                          icon: AppIcons.tag,
+                          size: PillSize.chip,
+                          selected: true,
                         ),
                     ],
                   ),
@@ -359,12 +451,26 @@ class _SampleDetailState extends State<_SampleDetail> {
                 trailing: const Text('THB'),
                 onLongPress: enter,
               ),
-              DetailRow(
+              // Pickers: DetailRow › only; empty keeps its row (muted).
+              DetailRow.pick(
                 label: 'หมวดแม่',
-                trailing: const Text('ท่องเที่ยว'),
-                showChevron: editing,
+                value: 'ท่องเที่ยว',
+                emptyText: 'ไม่ได้เลือก',
                 onTap: editing ? () {} : null,
                 onLongPress: enter,
+              ),
+              DetailRow.pick(
+                label: 'อีเวนต์',
+                value: null,
+                emptyText: 'ไม่ได้เลือก',
+                onTap: editing ? () {} : null,
+                onLongPress: enter,
+              ),
+              // Locked: a 🔒 leading icon, the row not dimmed.
+              const DetailRow(
+                label: 'ประเภท',
+                trailing: Text('ธนาคาร'),
+                locked: true,
               ),
               DetailRow(
                 label: 'นับในรายงาน',
@@ -383,15 +489,19 @@ class _SampleDetailState extends State<_SampleDetail> {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ActionPill(
+                      AppChip(
                         icon: AppIcons.add,
                         label: 'เพิ่มคน',
+                        tone: AppChipTone.primary,
+                        selected: true,
                         onTap: () => setState(() => _items.add(('ใหม่', 0))),
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      ActionPill(
+                      AppChip(
                         icon: AppIcons.split,
                         label: 'หารเท่ากัน',
+                        tone: AppChipTone.primary,
+                        selected: true,
                         onTap: () {},
                       ),
                     ],
@@ -445,36 +555,11 @@ class _SampleDetailState extends State<_SampleDetail> {
           // การจัดการ — edit mode only, last: archive amber, delete red,
           // same shape.
           if (editing)
-            SectionCard(
-              title: 'การจัดการ',
-              dividers: false,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.xs,
-                    AppSpacing.lg,
-                    AppSpacing.md,
-                  ),
-                  child: Column(
-                    children: [
-                      DangerRow(
-                        icon: AppIcons.archive,
-                        label: 'เก็บถาวร',
-                        caution: true,
-                        padding: EdgeInsets.zero,
-                        onTap: () {},
-                      ),
-                      DangerRow(
-                        icon: AppIcons.delete,
-                        label: 'ลบ',
-                        padding: const EdgeInsets.only(top: AppSpacing.sm),
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            ManageSection(
+              archiveLabel: 'เก็บถาวร',
+              onArchive: () {},
+              deleteLabel: 'ลบ',
+              onDelete: () {},
             ),
           const DetailMeta(
             lines: [
@@ -558,18 +643,18 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
               rows: [
                 HeroTopRow(
                   leading: [
-                    LabelPill(
+                    AppChip(
                       label: 'ธนาคาร',
                       icon: AppIcons.bank,
                       color: AccountType.bank.colorOf(context),
-                      outlined: true,
                     ),
                   ],
                   trailing: [
-                    ActionPill(
+                    AppChip(
                       icon: AppIcons.reset,
                       label: 'ปรับยอด',
-                      style: ActionPillStyle.raised,
+                      tone: AppChipTone.primary,
+                      selected: true,
                       onTap: noop,
                     ),
                     AppIconButton(
@@ -595,7 +680,14 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
           name: 'category — HeaderCard(topRow)',
           usedIn: 'category_detail_page.dart _Header',
           child: HeaderCard(
-            topRow: const [TypeIndicator(isIncome: false)],
+            topRow: const [
+              AppChip(
+                label: 'รายจ่าย',
+                icon: AppIcons.expense,
+                tone: AppChipTone.expense,
+                selected: true,
+              ),
+            ],
             onEdit: noop,
             leading: const IconDisplay(type: IconType.category, size: 44),
             title: InlineTitleField(editing: false, controller: _name),
@@ -612,21 +704,33 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
             title: const Text('บี'),
             subtitle: const Wrap(
               spacing: HeroSpacing.itemGap,
-              children: [ContactLinkedPill()],
+              children: [
+                AppChip(
+                  label: 'ผูกบัญชีแอป',
+                  icon: AppIcons.link,
+                  tone: AppChipTone.success,
+                  selected: true,
+                ),
+              ],
             ),
           ),
         ),
         _Variant(
           name: 'debt — HeaderCard + footer (outstanding · progress)',
           usedIn: 'personal_debt_detail_page.dart _header',
-          note: 'status as the subtitle (StatusPill); ✏️ in the title row',
+          note: 'status as the subtitle (a chip); ✏️ in the title row',
           child: HeaderCard(
             onEdit: noop,
             leading: const UserAvatar(displayName: 'ต้น', size: 52),
             title: const Text('ต้น ติดคุณ'),
             subtitle: Align(
               alignment: Alignment.centerLeft,
-              child: debtStatusPill(context, DebtStatus.open),
+              child: const AppChip(
+                label: 'ค้างอยู่',
+                dot: true,
+                tone: AppChipTone.warning,
+                selected: true,
+              ),
             ),
             footer: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,7 +747,7 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
           name: 'event — HeaderCard, status + type text',
           usedIn: 'project_detail_page.dart _header',
           note:
-              'status (ProjectStatusPill) + plain type text in the subtitle; '
+              'status chip + plain type text in the subtitle; '
               'planned amount only in edit (footer field)',
           child: HeaderCard(
             onEdit: noop,
@@ -653,7 +757,12 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
               spacing: AppSpacing.sm,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                ProjectStatusPill(status: ProjectStatus.active),
+                AppChip(
+                  label: 'ใช้งาน',
+                  dot: true,
+                  tone: AppChipTone.success,
+                  selected: true,
+                ),
                 Text('เที่ยว'),
               ],
             ),
@@ -686,7 +795,7 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
         _Variant(
           name: 'goal — HeaderCard + footer (saved · progress · badge)',
           usedIn: 'saving_goal_detail_page.dart _header',
-          note: '"completed" is an AppBadge (other heroes use pills)',
+          note: '"completed" is a badge in the footer (other heroes use chips)',
           child: HeaderCard(
             accent: palette.success,
             onEdit: noop,
@@ -702,10 +811,12 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
                 const SizedBox(height: AppSpacing.sm),
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: AppBadge(
+                  child: AppChip(
                     label: 'ครบเป้าแล้ว',
                     icon: AppIcons.success,
-                    tone: Tone.success,
+                    tone: AppChipTone.success,
+                    selected: true,
+                    size: PillSize.chip,
                   ),
                 ),
               ],
@@ -724,8 +835,13 @@ class _HeroCatalogueState extends State<_HeroCatalogue> {
               spacing: AppSpacing.sm,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                const StatusPill(label: 'ทำงานอยู่', tone: Tone.success),
-                LabelPill(label: 'ประจำ', onTap: null),
+                const AppChip(
+                  label: 'ทำงานอยู่',
+                  dot: true,
+                  tone: AppChipTone.success,
+                  selected: true,
+                ),
+                const AppChip(label: 'ประจำ', tone: AppChipTone.neutral),
               ],
             ),
             footer: Column(
@@ -826,9 +942,9 @@ class _RowCatalogueState extends State<_RowCatalogue> {
           ),
         ),
         _Variant(
-          name: 'chip — TxTagStrip (view) / ChipRow (edit)',
+          name: 'chip — TxTagStrip (view) / chip row (edit)',
           usedIn:
-              'tx view (🏷 strip right under the hero) · tx edit (🏷 ChipRow '
+              'tx view (🏷 strip right under the hero) · tx edit (🏷 chip row '
               'under หมวด)',
           note:
               'no "แท็ก" labelled row: both modes are icon-led chips '
@@ -846,21 +962,12 @@ class _RowCatalogueState extends State<_RowCatalogue> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: ChipRow(
-                  icon: AppIcons.tag,
-                  moreLabel: 'เพิ่มเติม',
-                  onMore: noop,
-                  chips: const [
-                    TagChip(
-                      tag: Tag(id: 't', name: 'เที่ยว'),
-                      selected: true,
-                    ),
-                    TagChip(
-                      tag: Tag(id: 'u', name: 'งาน'),
-                      selected: false,
-                    ),
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: _TagStrip(
+                  tags: [
+                    AppChip(label: '#เที่ยว', selected: true),
+                    AppChip(label: '#งาน'),
                   ],
                 ),
               ),
@@ -990,7 +1097,7 @@ class _ListCatalogueState extends State<_ListCatalogue> {
           ),
         ),
         _Variant(
-          name: 'a person, three looks — PersonMark in a RowChip',
+          name: 'a person, three looks — PersonMark in an AppChip',
           usedIn:
               'splits (now) · debts · contact picker rows (same look asked '
               'for there)',
@@ -1001,12 +1108,12 @@ class _ListCatalogueState extends State<_ListCatalogue> {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              RowChip(
+              AppChip(
                 label: 'ลี (พิมพ์ชื่อ)',
                 leading: const PersonMark(name: 'ลี', level: PersonLevel.name),
                 onTap: () {},
               ),
-              RowChip(
+              AppChip(
                 label: 'บี (ผู้ติดต่อ)',
                 leading: const PersonMark(
                   name: 'บี',
@@ -1014,10 +1121,10 @@ class _ListCatalogueState extends State<_ListCatalogue> {
                 ),
                 onTap: () {},
               ),
-              const RowChip(
+              const AppChip(
                 label: 'ต้น (ลิงก์บัญชีแอป)',
                 leading: PersonMark(name: 'ต้น', level: PersonLevel.linked),
-                trailingIcon: AppIcons.lock,
+                trailing: AppChipTrailing.lock,
               ),
             ],
           ),
@@ -1410,7 +1517,7 @@ class _ChipCatalogue extends StatelessWidget {
       title: 'AppChip (ทดลอง)',
       children: [
         _Variant(
-          name: 'hero top row — type · status · date (PillSize.normal)',
+          name: 'hero top row — type · status · date (PillSize.control)',
           usedIn: 'tx · wallet · event heroes, once migrated',
           child: Wrap(
             spacing: HeroSpacing.itemGap,
@@ -1436,7 +1543,7 @@ class _ChipCatalogue extends StatelessWidget {
           ),
         ),
         _Variant(
-          name: 'labels in a header — PillSize.normal',
+          name: 'labels in a header — PillSize.control',
           usedIn: 'contact · scheduled · wallet headers, once migrated',
           child: Wrap(
             spacing: HeroSpacing.itemGap,
@@ -1489,6 +1596,320 @@ class _CompactHeroCatalogue extends StatelessWidget {
           usedIn: '— proposed (tx detail · wallet detail, not wired yet)',
           note: 'detail pages only, never quick create',
           child: CompactHeroDemo(),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── The standard: rules + heroes ─────────────────────────────────────
+
+/// The owner's 10 detail-page rules (2026-10-11), above the sample.
+class _Rules extends StatelessWidget {
+  const _Rules();
+
+  static const rules = [
+    '✏️ อยู่ใน top row ของ hero เสมอ ด้านขวา — ถ้า top row ไม่มี chip เลย '
+        'แถวนั้นยุบ: ไอคอน + ชื่ออยู่บนสุด ✏️ อยู่ขวาสุดระดับเดียวกับชื่อ',
+    'สถานะ = chip ใน top row ไม่ใช่ subtitle',
+    'Hero ตาม hero ของ tx: top row + ไอคอน/avatar + ชื่อ/subtitle '
+        '(+ ยอด/footer ถ้ามี) ที่เหลือเป็นแถวข้างล่าง ขอบสีของ entity',
+    'ห้ามทำ chip เอง — ใช้ AppChip',
+    'การจัดการ (โหมดแก้ไข ท้ายสุด): เก็บถาวร = เหลือง, ลบ = แดง รูปทรงเดียวกัน; '
+        'เก็บถาวรเฉพาะที่มี archive',
+    'ข้อมูลการบันทึก = DetailMeta ข้อความจางท้ายสุดทุกหน้า (ไม่ใช่แถว)',
+    'โน้ตแสดงเสมอ แม้ว่าง',
+    'ตัวเลือกในหน้ารายละเอียด = DetailRow › เท่านั้น (ไม่ใช้ PickerTile / PickCard)',
+    'ค่าที่ยังไม่เลือก: คงแถวไว้ แสดง "ไม่ได้เลือก" สีจาง ไม่ซ่อน',
+    'ล็อก = ไอคอน 🔒 นำหน้า (ไม่ทำแถวจาง)',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'มาตรฐานหน้ารายละเอียด — 10 ข้อ',
+                style: textTheme.titleSmall,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              for (final (i, r) in rules.indexed)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text('${i + 1}. $r', style: textTheme.bodySmall),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Part 1b — the hero as the standard has it, for the entities the owner
+/// asked to see rebuilt (contact, category) next to tx and wallet, plus the
+/// two that had hand-made chips (scheduled, goal) now with [AppChip].
+/// ✏️ + status chips in the top row, icon / avatar + title / subtitle,
+/// amount / footer where the entity has one, border in the entity's colour.
+class _StandardHeroes extends StatefulWidget {
+  const _StandardHeroes();
+
+  @override
+  State<_StandardHeroes> createState() => _StandardHeroesState();
+}
+
+class _StandardHeroesState extends State<_StandardHeroes> {
+  final _amount = TextEditingController(text: '1,250');
+  final _title = TextEditingController(text: 'ข้าวมันไก่');
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    _title.dispose();
+    super.dispose();
+  }
+
+  static const _wallet = Account(
+    id: 'w',
+    name: 'กสิกร',
+    type: AccountType.bank,
+    balance: 48200,
+    currency: 'THB',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final big = textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800);
+    void noop() {}
+    return _Group(
+      title: 'Hero มาตรฐาน',
+      children: [
+        _Variant(
+          name: 'tx — TxHeroCard (the reference)',
+          usedIn: 'transaction_detail_page',
+          child: TxHeroCard(
+            type: TransactionType.expense,
+            amount: _amount,
+            title: _title,
+            dateLabel: 'วันนี้',
+            editing: false,
+            inline: true,
+            onEdit: noop,
+          ),
+        ),
+        _Variant(
+          name: 'wallet — wallet card surface + top row',
+          usedIn: 'account_detail_page',
+          child: AccountCardSurface(
+            account: _wallet,
+            margin: EdgeInsets.zero,
+            glyphSize: 132,
+            child: HeroContent(
+              rows: [
+                HeroTopRow(
+                  leading: [
+                    AppChip(
+                      label: 'ธนาคาร',
+                      icon: AppIcons.bank,
+                      color: AccountType.bank.colorOf(context),
+                    ),
+                    const AppChip(
+                      label: 'ใช้งาน',
+                      dot: true,
+                      tone: AppChipTone.success,
+                      selected: true,
+                    ),
+                  ],
+                  trailing: [
+                    AppChip(
+                      icon: AppIcons.reset,
+                      label: 'ปรับยอด',
+                      tone: AppChipTone.primary,
+                      selected: true,
+                      onTap: noop,
+                    ),
+                    AppIconButton(
+                      icon: AppIcons.edit,
+                      size: HeroSpacing.controlHeight,
+                      onPressed: noop,
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    const AccountIconCircle(account: _wallet, size: 52),
+                    const SizedBox(width: AppSpacing.md),
+                    Text('กสิกร', style: textTheme.titleMedium),
+                  ],
+                ),
+                MoneyText(48200, style: big),
+              ],
+            ),
+          ),
+        ),
+        _Variant(
+          name: 'contact — rebuilt (✏️ + status chips in the top row)',
+          usedIn: 'contact_detail_page (migrates)',
+          note: 'was: no top row, ✏️ in the title row, status pill as subtitle',
+          child: HeaderCard(
+            accent: palette.primary,
+            topRow: const [
+              AppChip(
+                label: 'ผูกบัญชีแอป',
+                icon: AppIcons.link,
+                tone: AppChipTone.success,
+                selected: true,
+              ),
+            ],
+            onEdit: noop,
+            leading: const UserAvatar(displayName: 'บี', size: 52),
+            title: const Text('บี'),
+            subtitle: const Text('ผู้ติดต่อ'),
+          ),
+        ),
+        _Variant(
+          name: 'no chips — the top row collapses (contact, unlinked)',
+          usedIn: 'contact_detail_page (unlinked) · any hero with no status',
+          note:
+              'icon + title at the top, ✏️ level with the title; with chips '
+              'the top row stays as in the heroes above',
+          child: HeaderCard(
+            accent: palette.primary,
+            topRow: const [],
+            onEdit: noop,
+            leading: const UserAvatar(displayName: 'ลี', size: 52),
+            title: const Text('ลี'),
+            subtitle: const Text('ผู้ติดต่อ'),
+          ),
+        ),
+        _Variant(
+          name: 'category — rebuilt (type chip + ✏️ in the top row)',
+          usedIn: 'category_detail_page (migrates)',
+          note:
+              "border = the category type's colour (expense here); the "
+              'parent path is the subtitle',
+          child: HeaderCard(
+            accent: palette.expense,
+            topRow: const [
+              AppChip(
+                label: 'รายจ่าย',
+                icon: AppIcons.expense,
+                tone: AppChipTone.expense,
+                selected: true,
+              ),
+            ],
+            onEdit: noop,
+            leading: const IconDisplay(type: IconType.category, size: 52),
+            title: const Text('อาหาร'),
+            subtitle: const Text('อาหาร › มื้อหลัก'),
+          ),
+        ),
+        _Variant(
+          name: 'scheduled — status + variant as AppChip',
+          usedIn: 'scheduled_transaction_detail_page (migrates)',
+          note: 'was: a hand-made _VariantPill and the status as the subtitle',
+          child: HeaderCard(
+            accent: palette.primary,
+            topRow: const [
+              AppChip(
+                label: 'ทำงานอยู่',
+                dot: true,
+                tone: AppChipTone.success,
+                selected: true,
+              ),
+              AppChip(
+                label: 'ประจำ',
+                tone: AppChipTone.neutral,
+                selected: true,
+              ),
+            ],
+            onEdit: noop,
+            leading: const IconDisplay(type: IconType.category, size: 52),
+            title: const Text('ค่าเน็ตบ้าน'),
+            footer: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                MoneyText(599, style: big),
+                Text('ครั้งถัดไป 1 พ.ย.', style: textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ),
+        _Variant(
+          name: 'goal — "ครบเป้าแล้ว" as an AppChip in the top row',
+          usedIn: 'saving_goal_detail_page (migrates)',
+          note: 'was: a badge inside the footer',
+          child: HeaderCard(
+            accent: palette.success,
+            topRow: const [
+              AppChip(
+                label: 'ครบเป้าแล้ว',
+                icon: AppIcons.success,
+                tone: AppChipTone.success,
+                selected: true,
+              ),
+            ],
+            onEdit: noop,
+            leading: const IconDisplay(type: IconType.account, size: 52),
+            title: const Text('เที่ยวญี่ปุ่น'),
+            footer: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                MoneyText(30000, style: big?.copyWith(color: palette.success)),
+                Text('จากเป้า ฿30,000', style: textTheme.bodySmall),
+                const SizedBox(height: AppSpacing.sm),
+                ProgressRow(value: 1, color: palette.success, trailing: '100%'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 🏷 + a wrapping row of tag [AppChip]s (the gallery's stand-in for the tag
+/// strip / chip row, built from AppChip directly).
+class _TagStrip extends StatelessWidget {
+  const _TagStrip({required this.tags});
+
+  final List<Widget> tags;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Icon(
+            AppIcons.tag,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: tags,
+          ),
         ),
       ],
     );

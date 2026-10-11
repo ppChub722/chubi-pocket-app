@@ -1,9 +1,14 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/theme/app_colors.dart';
-import 'pill.dart';
+import '../dashed_rect_border.dart';
+import 'pill_size.dart';
+import 'tone.dart';
 
 /// [AppChip]'s colour, by meaning. [color] on the chip overrides it with
 /// any colour (a category's, a tag's, a wallet's accent).
@@ -23,6 +28,18 @@ enum AppChipTone {
   success,
   danger,
   info;
+
+  /// The status [Tone]s (a project's, a debt's, a member's) as chip tones.
+  static AppChipTone fromTone(Tone tone) => switch (tone) {
+    Tone.neutral => AppChipTone.neutral,
+    Tone.primary => AppChipTone.primary,
+    Tone.success => AppChipTone.success,
+    Tone.warning => AppChipTone.warning,
+    Tone.danger => AppChipTone.danger,
+    Tone.info => AppChipTone.info,
+    Tone.income => AppChipTone.income,
+    Tone.expense => AppChipTone.expense,
+  };
 
   Color resolve(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
@@ -59,21 +76,22 @@ enum AppChipTrailing {
   count,
 }
 
-/// The one chip (owner 2026-10-11, step 1 — for review; nothing uses it
-/// yet). The filter sheet's look ([RowChip]): a stadium; unselected = a
-/// grey outline with grey text (a custom [tone] / [color] still tints the
-/// icon), selected = a border and a faint fill in its colour.
+/// The one chip of the app (owner 2026-10-11) — every label, status, tag,
+/// filter, choice and action. A stadium; unselected = a grey outline with
+/// grey text (a custom [tone] / [color] still tints the icon), selected = a
+/// border and a faint fill in its colour.
 ///
 ///   [● | icon | avatar]  label  [▾ | ✕ | 🔒 | n]
 ///
 /// - **Interactive:** [onTap] + [selected]. A display chip (a status, a
 ///   type, a tag on a detail page) has no [onTap] and usually
-///   `selected: true`, so it wears its colour.
-/// - **Size:** two only (owner 2026-10-11) — [PillSize.normal] (32), the
-///   default, for every chip; [PillSize.mini] (20) only for the tags on a
-///   transaction list row. Same side padding and text for every normal
-///   chip, so they differ only by their label. The height is the size's,
-///   whatever the content.
+///   `selected: true`, so it wears its colour. A not-yet-chosen pick is
+///   [dashed].
+/// - **Size** ([PillSize]): [PillSize.control] 32 (the default — what the user
+///   operates, and a hero's top row), [PillSize.chip] 28 (display chips in
+///   cards and rows), [PillSize.mini] 20 (dense list rows) — everything (icon,
+///   text, padding, gap, avatar, count badge) scales with it. The height is
+///   the size's, whatever the content.
 /// - **Disabled:** [enabled] false fades it and ignores taps.
 ///
 /// Not chips: [AppBadge] (a counter label) and the period steppers.
@@ -90,9 +108,11 @@ class AppChip extends StatelessWidget {
     this.trailing = AppChipTrailing.none,
     this.onRemove,
     this.count = 0,
-    this.size = PillSize.normal,
+    this.size = PillSize.control,
     this.enabled = true,
     this.tooltip,
+    this.dashed = false,
+    this.maxWidth,
     super.key,
   }) : assert(
          trailing != AppChipTrailing.remove || onRemove != null,
@@ -129,12 +149,25 @@ class AppChip extends StatelessWidget {
   /// For [AppChipTrailing.count].
   final int count;
 
-  /// [PillSize.normal], or [PillSize.mini] on a transaction list row.
+  /// [PillSize.control] (default), [PillSize.chip] or [PillSize.mini].
   final PillSize size;
   final bool enabled;
 
   /// A tap-to-read hint (why it's locked, what ✕ drops).
   final String? tooltip;
+
+  /// A dashed outline instead of a solid one — "nothing picked yet, tap to
+  /// pick" (the pending form's `เลือกกระเป๋า` / `เลือกหมวด`).
+  final bool dashed;
+
+  /// The chip never grows wider than this; the label ellipsises first.
+  final double? maxWidth;
+
+  /// An interactive chip answers a tap this far above and below itself when
+  /// it is shorter than this (an invisible target — the layout is
+  /// untouched). Needs room around the chip: a parent that clips taps to its
+  /// own box (a chip row with no padding) still caps it.
+  static const double minTapHeight = 44;
 
   @override
   Widget build(BuildContext context) {
@@ -153,8 +186,8 @@ class AppChip extends StatelessWidget {
     final Widget? lead = leading != null
         ? ConstrainedBox(
             constraints: BoxConstraints.tightFor(
-              width: size.height - 10,
-              height: size.height - 10,
+              width: size.leading,
+              height: size.leading,
             ),
             child: FittedBox(child: leading),
           )
@@ -191,11 +224,8 @@ class AppChip extends StatelessWidget {
                 radius: size.height / 2,
                 child: Icon(AppIcons.close, size: iconSize, color: fg),
               ),
-      AppChipTrailing.count => _Count(
-        count: count,
-        color: fg,
-        height: iconSize + 2,
-      ),
+      AppChipTrailing.count =>
+        count <= 0 ? null : _Count(count: count, color: fg, size: size),
     };
 
     final text = Text(
@@ -208,13 +238,13 @@ class AppChip extends StatelessWidget {
     );
 
     final sidePad = size.padding;
-    final chip = Material(
+    final borderColor = selected ? tint : scheme.outlineVariant;
+    Widget chip = Material(
       color: selected ? tint.withValues(alpha: 0.12) : Colors.transparent,
       shape: StadiumBorder(
-        side: BorderSide(
-          color: selected ? tint : scheme.outlineVariant,
-          width: selected ? 1.5 : 1,
-        ),
+        side: dashed
+            ? BorderSide.none
+            : BorderSide(color: borderColor, width: selected ? 1.5 : 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -224,8 +254,13 @@ class AppChip extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.only(
               left: sidePad,
-              // ▾ / ✕ carry their own air.
-              right: tail == null ? sidePad : sidePad - AppSpacing.xs,
+              // ▾ / ✕ / 🔒 carry their own air; the filled count badge sits
+              // concentric with the chip's round end instead.
+              right: tail == null
+                  ? sidePad
+                  : trailing == AppChipTrailing.count
+                  ? (size.height - (size.icon + 2)) / 2
+                  : sidePad - AppSpacing.xs,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -233,13 +268,30 @@ class AppChip extends StatelessWidget {
                 if (lead != null) ...[lead, SizedBox(width: gap)],
                 if (dotMark != null) ...[dotMark, SizedBox(width: gap)],
                 Flexible(child: text),
-                if (tail != null) ...[const SizedBox(width: 3), tail],
+                if (tail != null) ...[SizedBox(width: size.gap), tail],
               ],
             ),
           ),
         ),
       ),
     );
+
+    if (dashed) {
+      chip = DashedRectBorder(
+        color: borderColor,
+        strokeWidth: selected ? 1.5 : 1,
+        dashLength: 4,
+        gapLength: 3,
+        borderRadius: Radius.circular(size.height / 2),
+        child: chip,
+      );
+    }
+    if (maxWidth != null) {
+      chip = ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth!),
+        child: chip,
+      );
+    }
 
     Widget out = Semantics(
       button: tap != null,
@@ -254,39 +306,81 @@ class AppChip extends StatelessWidget {
         child: out,
       );
     }
+    // Outermost: the wrappers above gate hit tests to their own boxes.
+    if (tap != null && size.height < minTapHeight) {
+      out = _ExpandedHit(minHeight: minTapHeight, child: out);
+    }
     return out;
   }
 }
 
 /// [AppChipTrailing.count]: the number on a faint stadium of [color].
 class _Count extends StatelessWidget {
-  const _Count({
-    required this.count,
-    required this.color,
-    required this.height,
-  });
+  const _Count({required this.count, required this.color, required this.size});
   final int count;
   final Color color;
-  final double height;
+  final PillSize size;
 
   @override
   Widget build(BuildContext context) {
+    final h = size.icon + 2;
     return Container(
-      constraints: BoxConstraints(minWidth: height, minHeight: height),
-      padding: const EdgeInsets.symmetric(horizontal: 5),
+      constraints: BoxConstraints(minWidth: h, minHeight: h),
+      padding: EdgeInsets.symmetric(horizontal: size.badgePad),
       alignment: Alignment.center,
       decoration: ShapeDecoration(
         color: color.withValues(alpha: 0.16),
         shape: const StadiumBorder(),
       ),
       child: Text(
-        '$count',
+        count > 99 ? '99+' : '$count',
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontSize: size.badgeText,
           color: color,
           fontWeight: FontWeight.w700,
           height: 1,
         ),
       ),
     );
+  }
+}
+
+/// Lets a short interactive child answer taps up to [minHeight] tall without
+/// changing its layout: the hit test accepts a band above and below the
+/// child (the child gets the position clamped into itself).
+class _ExpandedHit extends SingleChildRenderObjectWidget {
+  const _ExpandedHit({required this.minHeight, required super.child});
+
+  final double minHeight;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderExpandedHit(minHeight);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderExpandedHit r) =>
+      r.minHeight = minHeight;
+}
+
+class _RenderExpandedHit extends RenderProxyBox {
+  _RenderExpandedHit(this.minHeight);
+
+  double minHeight;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final extra = math.max(0.0, (minHeight - size.height) / 2);
+    if (position.dx < 0 ||
+        position.dx > size.width ||
+        position.dy < -extra ||
+        position.dy > size.height + extra) {
+      return false;
+    }
+    final inside = Offset(position.dx, position.dy.clamp(0.0, size.height));
+    if (child?.hitTest(result, position: inside) ?? false) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
   }
 }

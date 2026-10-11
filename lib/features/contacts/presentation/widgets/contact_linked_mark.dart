@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../domain/contact.dart';
 
 /// The one "linked to an app account" mark (owner 2026-10-11) — the kit's
 /// [PersonLinkBadge]. On avatars it comes with [ContactAvatar]; headers
-/// also show [ContactLinkedPill].
+/// show it as a link chip in their status row.
 class ContactLinkedIcon extends StatelessWidget {
   const ContactLinkedIcon({super.key});
 
@@ -38,21 +36,5 @@ class ContactAvatar extends StatelessWidget {
     iconCode: contact.effectiveIconCode,
     size: size,
     reserveLinkSlot: reserveLinkSlot,
-  );
-}
-
-/// "🔗 ผูกแล้ว" — [ContactLinkedIcon] as a primary label pill, for a
-/// contact's header.
-class ContactLinkedPill extends StatelessWidget {
-  const ContactLinkedPill({this.size = PillSize.normal, super.key});
-
-  final PillSize size;
-
-  @override
-  Widget build(BuildContext context) => LabelPill(
-    label: AppLocalizations.of(context)!.contactLinked,
-    icon: AppIcons.link,
-    tone: Tone.primary,
-    size: size,
   );
 }

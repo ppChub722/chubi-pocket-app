@@ -125,10 +125,12 @@ class NotificationTile extends StatelessWidget {
                     ),
                     if (accepted) ...[
                       const SizedBox(height: AppSpacing.xs),
-                      AppBadge(
+                      AppChip(
                         label: _isRequest ? l.notifAccepted : l.notifActionDone,
                         icon: AppIcons.success,
-                        tone: Tone.success,
+                        tone: AppChipTone.success,
+                        selected: true,
+                        size: PillSize.mini,
                       ),
                     ],
                     if (pending) ...[

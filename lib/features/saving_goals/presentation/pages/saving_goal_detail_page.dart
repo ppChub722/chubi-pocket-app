@@ -19,7 +19,6 @@ import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../domain/saving_goal.dart';
 import '../../domain/saving_goal_status.dart';
@@ -434,25 +433,25 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 children: [
                   _header(l, goal),
                   const SizedBox(height: AppSpacing.lg),
-                  _wallet(l, goal),
-                  const SizedBox(height: AppSpacing.md),
                   _fields(l, goal),
                   if (goal != null) _stats(l, goal),
                   // Archive · delete — edit only, always last (the top bar
                   // carries no page actions).
-                  if (editing && goal != null) ...[
-                    DangerRow(
-                      icon: AppIcons.archive,
-                      label: l.savingGoalDetailArchive,
-                      onTap: isSaving ? null : () => _archive(goal),
+                  if (editing && goal != null)
+                    ManageSection(
+                      archiveLabel: l.savingGoalDetailArchive,
+                      onArchive: isSaving ? null : () => _archive(goal),
+                      deleteLabel: l.savingGoalDeleteThis,
+                      onDelete: isSaving ? null : () => _delete(goal),
                     ),
-                    DangerRow(
-                      icon: AppIcons.delete,
-                      label: l.savingGoalDeleteThis,
-                      onTap: isSaving ? null : () => _delete(goal),
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  if (goal != null)
+                    DetailMeta(
+                      lines: detailMetaLines(
+                        context,
+                        createdAt: goal.createdAt,
+                        updatedAt: goal.updatedAt,
+                      ),
                     ),
-                  ],
                 ],
               ),
             ),
@@ -482,6 +481,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return HeaderCard(
       accent: accent,
       onEdit: editing ? null : enterEdit,
+      topRow: [
+        if (goal != null && goal.isCompleted)
+          AppChip(
+            label: l.savingGoalCompletedLabel,
+            icon: AppIcons.success,
+            tone: AppChipTone.success,
+            selected: true,
+          ),
+      ],
       // EditableCircle keeps its footprint with or without onTap, so the
       // name never shifts between modes.
       leading: GestureDetector(
@@ -533,56 +541,58 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                   color: accent,
                   trailing: '${goal.progressPct.toStringAsFixed(0)}%',
                 ),
-                if (goal.isCompleted) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: AppBadge(
-                      label: l.savingGoalCompletedLabel,
-                      icon: AppIcons.success,
-                      tone: Tone.success,
-                    ),
-                  ),
-                ],
               ],
             ),
     );
   }
 
-  /// The linked wallet. Picked on create only (spec §3.4) — read-only after,
-  /// and dimmed while editing since it isn't part of the edit.
-  Widget _wallet(AppLocalizations l, SavingGoal? goal) {
+  /// The linked wallet row. Picked on create only (spec §3.4) — locked
+  /// (🔒) while editing an existing goal.
+  Widget _walletRow(AppLocalizations l, SavingGoal? goal) {
     return BlocBuilder<AccountsCubit, AccountsState>(
       builder: (context, state) {
         final id = goal?.linkedAccountId ?? working.accountId;
         final account = id == null
             ? null
             : context.read<AccountsCubit>().byId(id);
-        if (goal == null) {
-          return WalletPickCard(
-            account: account,
-            label: l.savingGoalFormLinkedAccountLabel,
-            placeholder: l.quickPickWallet,
-            errorText: _walletMissing ? l.savingGoalFormAccountRequired : null,
-            onTap: () => _pickWallet(state.accounts),
-          );
-        }
         // Not among the active wallets (archived / still loading) — the
         // goal's embedded ref still names it.
-        final Widget card = account != null
-            ? WalletPickCard(
-                account: account,
-                label: l.savingGoalFormLinkedAccountLabel,
-                placeholder: l.quickPickWallet,
-                onTap: null,
-              )
-            // A plain row, like the card it stands in for — the page's
-            // first section is the fields below.
-            : DetailRow(
-                label: l.savingGoalFormLinkedAccountLabel,
-                trailing: Text(goal.linkedAccount?.name ?? '—'),
-              );
-        return LockedInEdit(locked: isEditing, child: card);
+        final name = account?.name ?? goal?.linkedAccount?.name;
+        final row = DetailRow.pick(
+          label: l.savingGoalFormLinkedAccountLabel,
+          value: name,
+          emptyText: l.quickEventNone,
+          leading: account == null
+              ? null
+              : IconDisplay(
+                  type: IconType.account,
+                  size: 24,
+                  iconCode: account.iconCode,
+                ),
+          locked: goal != null && isEditing,
+          onTap: goal == null ? () => _pickWallet(state.accounts) : null,
+        );
+        if (!_walletMissing || goal != null) return row;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            row,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
+              child: Text(
+                l.savingGoalFormAccountRequired,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
@@ -595,6 +605,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return SectionCard(
       first: true,
       children: [
+        _walletRow(l, goal),
         if (editing)
           DetailStacked(
             label: l.savingGoalFormTargetLabel,
@@ -708,23 +719,25 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// Server-computed numbers — read-only, so dimmed while editing.
+  /// Server-computed numbers — read-only, 🔒 while editing.
   Widget _stats(AppLocalizations l, SavingGoal g) {
     final symbol = Currencies.symbolOf(g.currency);
     return SectionCard(
-      locked: isEditing,
       children: [
         DetailRow(
+          locked: isEditing,
           label: l.savingGoalDetailRemaining,
           trailing: MoneyText(g.remainingAmount, symbol: symbol),
         ),
         if (g.daysRemaining != null)
           DetailRow(
+            locked: isEditing,
             label: l.savingGoalDetailDaysRemaining,
             trailing: Text(l.savingGoalDetailDaysValue(g.daysRemaining!)),
           ),
         if (g.requiredMonthly != null)
           DetailRow(
+            locked: isEditing,
             label: l.savingGoalDetailRequiredMonthly,
             trailing: MoneyText(g.requiredMonthly!, symbol: symbol),
           ),

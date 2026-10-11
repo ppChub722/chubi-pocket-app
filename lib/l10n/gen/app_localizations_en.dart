@@ -4244,4 +4244,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txSplitAuto => 'Auto';
+
+  @override
+  String get contactPickerCreateNew => 'New contact';
+
+  @override
+  String get contactPickerEmptyPlain => 'No contacts yet';
+
+  @override
+  String get txSplitNameHint => 'Name';
+
+  @override
+  String get accountIdentifiersHint =>
+      'Only used to match accounts when scanning slips';
+
+  @override
+  String get detailManageTitle => 'Manage';
+
+  @override
+  String get draftPickWalletFrom => 'Pick the source wallet';
+
+  @override
+  String get draftPickWalletTo => 'Pick the destination wallet';
+
+  @override
+  String get draftPickCategory => 'Pick a category';
+
+  @override
+  String get draftExtrasTitle => 'Split with / Event';
+
+  @override
+  String draftExtrasSplits(int count) {
+    return 'Split with $count';
+  }
+
+  @override
+  String get draftExtrasNone => 'Not set';
+
+  @override
+  String get pendingErrInvalidSplit =>
+      'A split row is incomplete — it needs a name and an amount above 0';
+
+  @override
+  String get pendingErrSplitsExceed =>
+      'The split adds up to more than the amount';
+
+  @override
+  String get pendingErrProjectGone =>
+      'That event no longer exists — pick another or remove it';
+
+  @override
+  String get pendingErrProjectClosed =>
+      'That event is closed or locked — nothing can be added';
+
+  @override
+  String get pendingErrProjectMember => 'You\'re not a member of that event';
+
+  @override
+  String get pendingErrProjectReadOnly =>
+      'You can only view that event — nothing can be added';
 }

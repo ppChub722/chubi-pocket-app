@@ -3,13 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
+import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category_tree.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
@@ -82,56 +82,42 @@ class TransactionTile extends StatelessWidget {
         ? description
         : (categoryName.isNotEmpty ? categoryName : '—');
 
-    final parts = <String>[
-      if (description.isNotEmpty && categoryName.isNotEmpty) categoryName,
-      if (showAccount && tx.account != null) tx.account!.name,
-      if (showDate) _date(context, l, tx.date),
-    ];
+    // The wallet's own icon inside its mini chip; unknown wallet → no icon.
+    final wallet = tx.account != null
+        ? context.watch<AccountsCubit>().byId(tx.account!.id)
+        : null;
 
-    // Two lines (owner 2026-10-10): title, then `category · wallet · #tags`
-    // in one ellipsised line — tags in their own colour — and ⑂ for splits.
-    final line = Text.rich(
-      TextSpan(
-        children: [
-          if (parts.isNotEmpty) TextSpan(text: parts.join(' · ')),
-          for (final (i, t) in tx.tags.indexed)
-            TextSpan(
-              text:
-                  '${i == 0 && parts.isEmpty
-                      ? ''
-                      : i == 0
-                      ? ' · '
-                      : ' '}'
-                  '#${t.name}',
-              style: TextStyle(
-                color: tagColor(t.asTag.iconCode, palette),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-        ],
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-    final hasLine = parts.isNotEmpty || tx.tags.isNotEmpty;
-
-    return MoneyListTile(
+    // The shared row (owner 2026-10-11): title + wallet chip, then
+    // `category · #tags`; the date lives in the list's day headers.
+    return TxRow(
       leading: leading,
       title: title,
       amount: tx.signedAmount,
-      subtitle: Row(
-        children: [
-          if (showAccount && tx.account == null) ...[
-            AppBadge(label: l.transactionFormAccountNone),
-            if (hasLine) const SizedBox(width: AppSpacing.xs),
-          ],
-          if (hasLine) Flexible(child: line),
-          if (tx.hasSplits) ...[
-            const SizedBox(width: AppSpacing.sm),
-            const Icon(AppIcons.split),
-          ],
-        ],
-      ),
+      walletLabel: showAccount
+          ? (tx.account?.name ?? l.transactionFormAccountNone)
+          : null,
+      walletIcon: wallet == null
+          ? null
+          : IconDisplay(
+              type: IconType.account,
+              size: 14,
+              iconCode: wallet.iconCode,
+            ),
+      category: description.isNotEmpty && categoryName.isNotEmpty
+          ? categoryName
+          : null,
+      extra: showDate ? _date(context, l, tx.date) : null,
+      tags: [
+        for (final t in tx.tags)
+          TextSpan(
+            text: '#${t.name}',
+            style: TextStyle(
+              color: tagColor(t.asTag.iconCode, palette),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
+      hasSplits: tx.hasSplits,
       onTap: onTap ?? () => openPage(context, '/transactions/${tx.id}'),
     );
   }

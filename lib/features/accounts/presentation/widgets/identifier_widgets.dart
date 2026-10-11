@@ -125,7 +125,7 @@ class IdentifierRow extends StatelessWidget {
 
 /// One wallet number in edit mode: `[kind · bank ▾] [number] ✕`. The chip
 /// opens [showIdentifierKindSheet]; the number is typed in place,
-/// formatted for its kind as it's typed ([IdentifierInputFormatter]).
+/// as plain digits ([IdentifierInputFormatter]).
 /// Its validator runs with the page's form (an empty row is dropped on
 /// save, not an error).
 class IdentifierEditRow extends StatefulWidget {
@@ -222,10 +222,10 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: RowChip(
+            child: AppChip(
               label: _kindLine(context, id, widget.providers),
               leading: _mark(context, id, widget.providers, size: 18),
-              trailingIcon: AppIcons.dropdown,
+              trailing: AppChipTrailing.dropdown,
               onTap: _pickKind,
             ),
           ),
@@ -288,12 +288,12 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
   };
 }
 
-/// Formats a wallet number for its kind as it's typed: digits (and `x`
-/// for digits a slip hid) only —
-/// - เลขบัญชี: 123-4-56789-0 (10 digits; longer ones as typed, max 15)
-/// - พร้อมเพย์: phone 081-234-5678, or ID 1-2345-67890-12-3 (max 13)
+/// Keeps a wallet number to plain digits (and `x` for digits a slip hid) as
+/// it's typed — no grouping, no dashes:
+/// - เลขบัญชี: max 15
+/// - พร้อมเพย์: max 13
 /// - บัตร: the last 4 digits only
-/// - อื่น ๆ: as typed, max 32
+/// - อื่น ๆ: max 32
 class IdentifierInputFormatter extends TextInputFormatter {
   IdentifierInputFormatter(this.kind);
 
@@ -316,25 +316,8 @@ class IdentifierInputFormatter extends TextInputFormatter {
         : value.substring(0, max);
   }
 
-  /// The grouped text for a normalized [value].
-  static String format(IdentifierKind kind, String value) {
-    final List<int>? groups = switch (kind) {
-      IdentifierKind.bankAccount when value.length <= 10 => [3, 1, 5, 1],
-      IdentifierKind.promptPay when value.length <= 10 => [3, 3, 4],
-      IdentifierKind.promptPay => [1, 4, 5, 2, 1],
-      _ => null,
-    };
-    if (groups == null) return value;
-    final parts = <String>[];
-    var i = 0;
-    for (final g in groups) {
-      if (i >= value.length) break;
-      final end = (i + g).clamp(0, value.length);
-      parts.add(value.substring(i, end));
-      i = end;
-    }
-    return parts.join('-');
-  }
+  /// The text for a normalized [value] — as typed, never grouped.
+  static String format(IdentifierKind kind, String value) => value;
 
   @override
   TextEditingValue formatEditUpdate(

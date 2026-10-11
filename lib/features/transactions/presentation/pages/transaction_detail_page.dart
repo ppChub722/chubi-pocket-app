@@ -34,6 +34,7 @@ import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../transaction_edit.dart';
 import '../tx_rules.dart';
+import '../save_failure.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/event_pick.dart';
 import '../widgets/tx_compact_hero.dart';
@@ -440,10 +441,11 @@ class _LoadedState extends State<_Loaded>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(
+      showSaveFailure(
         context,
-        splitErrorMessage(l, e) ?? walletErrorMessage(l, e),
-        tone: Tone.danger,
+        e,
+        retry: _save,
+        message: splitErrorMessage(l, e) ?? walletErrorMessage(l, e),
       );
     }
   }
@@ -586,113 +588,119 @@ class _LoadedState extends State<_Loaded>
       if (edited) '${l.txDetailUpdatedAt} ${stamp(updated)}',
     ];
 
+    // A save / delete in flight dims the page and blocks input.
     return editScope(
-      Scaffold(
-        appBar: AppTopBar(
-          // Never changes (owner 2026-10-11): edit mode shows in the fields
-          // and the action bar, not the title.
-          title: _titleForType(l, tx.type),
-          showBack: true,
-          editing: editing,
-          onBack: handleBack,
-        ),
-        extendBodyBehindAppBar: true,
-        // Builder: the body's context sees the bar height in padding.top.
-        body: Builder(
-          builder: (context) {
-            // The hero in one row, pinned under the top bar once it has
-            // scrolled away (kit CompactHeroScope).
-            return CompactHeroScope(
-              heroKey: _heroKey,
-              bar: _compactBar(context),
-              child: PullToRefresh(
-                enabled: !editing,
-                onRefresh: () async {
-                  try {
-                    await context.read<TransactionsCubit>().refreshOne(tx.id);
-                  } on ApiException catch (e) {
-                    if (context.mounted) {
-                      showAppSnackBar(context, e.message, tone: Tone.danger);
+      SavingOverlay(
+        saving: isSaving,
+        child: Scaffold(
+          appBar: AppTopBar(
+            // Never changes (owner 2026-10-11): edit mode shows in the fields
+            // and the action bar, not the title.
+            title: _titleForType(l, tx.type),
+            showBack: true,
+            editing: editing,
+            onBack: handleBack,
+          ),
+          extendBodyBehindAppBar: true,
+          // Builder: the body's context sees the bar height in padding.top.
+          body: Builder(
+            builder: (context) {
+              // The hero in one row, pinned under the top bar once it has
+              // scrolled away (kit CompactHeroScope).
+              return CompactHeroScope(
+                heroKey: _heroKey,
+                bar: _compactBar(context),
+                child: PullToRefresh(
+                  enabled: !editing,
+                  onRefresh: () async {
+                    try {
+                      await context.read<TransactionsCubit>().refreshOne(tx.id);
+                    } on ApiException catch (e) {
+                      if (context.mounted) {
+                        showAppSnackBar(context, e.message, tone: Tone.danger);
+                      }
                     }
-                  }
-                },
-                child: ListView(
-                  controller: _scroll,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    MediaQuery.paddingOf(context).top + AppSpacing.md,
-                    AppSpacing.lg,
-                    96 + MediaQuery.paddingOf(context).bottom,
-                  ),
-                  children: [
-                    if (isSystemRow) ...[
-                      _LockNote(
-                        text: isRepayment
-                            ? l.txDetailRepaymentBanner
-                            : l.transactionDetailSystemRowBanner,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ] else if (tx.isLocked) ...[
-                      MessageBanner(
-                        message: l.transactionFormLockedBanner,
-                        tone: Tone.warning,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                    DraftForm(
-                      controller: _c,
-                      heroKey: _heroKey,
-                      autofocus: false,
-                      // The type can't change after saving; splits can, by the
-                      // author (PUT /transactions/:id/splits).
-                      typeLocked: true,
-                      allowSplits: canEditSplits,
-                      editing: editing,
-                      categoryLockedHint: _edited.canEditCategory
-                          ? null
-                          : l.transactionFormCategoryAuthorOnlyHint,
-                      onEdit: canEdit ? _enterEdit : null,
-                      onEnterEdit: canEdit ? (f) => _enterEdit(focus: f) : null,
-                      trailingRows: trailingRows,
-                      sectioned: true,
-                      // Moving into an event: the splits go with it (titled so).
-                      eventPending:
-                          _eventChange is NewEventTarget ||
-                          _eventChange is ExistingEventTarget,
+                  },
+                  child: ListView(
+                    controller: _scroll,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      MediaQuery.paddingOf(context).top + AppSpacing.md,
+                      AppSpacing.lg,
+                      96 + MediaQuery.paddingOf(context).bottom,
                     ),
-                    if ((editing && canEdit) || isRepayment)
-                      DangerRow(
-                        icon: AppIcons.delete,
-                        label: l.transactionDeleteThis,
-                        onTap: isSaving
-                            ? null
-                            : () => _confirmDelete(
-                                context,
-                                l,
-                                repayment: isRepayment,
-                              ),
-                      ),
-                    if (metaLines.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.xl),
-                        child: Text(
-                          metaLines.join('\n'),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
+                    children: [
+                      if (isSystemRow) ...[
+                        _LockNote(
+                          text: isRepayment
+                              ? l.txDetailRepaymentBanner
+                              : l.transactionDetailSystemRowBanner,
                         ),
+                        const SizedBox(height: AppSpacing.md),
+                      ] else if (tx.isLocked) ...[
+                        MessageBanner(
+                          message: l.transactionFormLockedBanner,
+                          tone: Tone.warning,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
+                      DraftForm(
+                        controller: _c,
+                        heroKey: _heroKey,
+                        autofocus: false,
+                        // The type can't change after saving; splits can, by the
+                        // author (PUT /transactions/:id/splits).
+                        typeLocked: true,
+                        allowSplits: canEditSplits,
+                        editing: editing,
+                        categoryLockedHint: _edited.canEditCategory
+                            ? null
+                            : l.transactionFormCategoryAuthorOnlyHint,
+                        onEdit: canEdit ? _enterEdit : null,
+                        onEnterEdit: canEdit
+                            ? (f) => _enterEdit(focus: f)
+                            : null,
+                        trailingRows: trailingRows,
+                        sectioned: true,
+                        // Moving into an event: the splits go with it (titled so).
+                        eventPending:
+                            _eventChange is NewEventTarget ||
+                            _eventChange is ExistingEventTarget,
                       ),
-                  ],
+                      if ((editing && canEdit) || isRepayment)
+                        DangerRow(
+                          icon: AppIcons.delete,
+                          label: l.transactionDeleteThis,
+                          onTap: isSaving
+                              ? null
+                              : () => _confirmDelete(
+                                  context,
+                                  l,
+                                  repayment: isRepayment,
+                                ),
+                        ),
+                      if (metaLines.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.xl),
+                          child: Text(
+                            metaLines.join('\n'),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
+          bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
         ),
-        bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
       ),
     );
   }
@@ -753,12 +761,22 @@ class _LoadedState extends State<_Loaded>
       destructive: true,
     );
     if (!ok || !context.mounted) return;
+    await _deleteNow(context, l, repayment: repayment);
+  }
+
+  Future<void> _deleteNow(
+    BuildContext context,
+    AppLocalizations l, {
+    bool repayment = false,
+  }) async {
+    final tx = widget.tx;
     final router = GoRouter.of(context);
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
     final debtsCubit = context.read<PersonalDebtsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final back = ShellBackScope.maybeOf(context);
+    setSaving(true);
     try {
       await txCubit.remove(tx.id);
       // A transfer moves two balances — a full reload keeps it simple.
@@ -774,9 +792,13 @@ class _LoadedState extends State<_Loaded>
         back?.call();
       }
     } on ApiException catch (e) {
-      if (context.mounted) {
-        showAppSnackBar(context, e.message, tone: Tone.danger);
-      }
+      if (!mounted || !context.mounted) return;
+      setSaving(false);
+      showSaveFailure(
+        context,
+        e,
+        retry: () => _deleteNow(context, l, repayment: repayment),
+      );
     }
   }
 }

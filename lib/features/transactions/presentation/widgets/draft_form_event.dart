@@ -188,21 +188,21 @@ class _EventTags extends StatelessWidget {
           runSpacing: AppSpacing.xs,
           children: [
             for (final t in all)
-              TagChip(
+              tagAppChip(
+                context,
                 // Project tags are plain names — borrow the look of the
                 // user's own tag of the same name, if any.
-                tag:
-                    mine
+                mine
                         .where((m) => m.name.toLowerCase() == t.toLowerCase())
                         .firstOrNull ??
                     Tag(id: t, name: t),
                 selected: isOn(t),
                 onTap: () => controller.toggleTagName(t),
               ),
-            ActionChip(
-              avatar: const Icon(AppIcons.add, size: 16),
-              label: Text(l.projectTxAddTag),
-              onPressed: () => _addNew(context),
+            AppChip(
+              icon: AppIcons.add,
+              label: l.projectTxAddTag,
+              onTap: () => _addNew(context),
             ),
           ],
         ),

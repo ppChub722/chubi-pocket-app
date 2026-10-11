@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/utils/date_formatter.dart';
+import '../../../l10n/gen/app_localizations.dart';
 
 /// The very bottom of a detail page: small muted record info, one item
 /// per line (owner 2026-10-10, the transaction detail) —
@@ -28,4 +30,28 @@ class DetailMeta extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The record-info lines for a detail page — `บันทึกเมื่อ …` and, when it was
+/// edited after it was made, `แก้ไขล่าสุด …` (the same wording as the
+/// transaction detail). Pass them to [DetailMeta]; null dates leave a line
+/// out.
+List<String> detailMetaLines(
+  BuildContext context, {
+  DateTime? createdAt,
+  DateTime? updatedAt,
+}) {
+  final l = AppLocalizations.of(context)!;
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  String stamp(DateTime d) =>
+      '${DateFormatter.medium(d, locale: locale)} '
+      '${DateFormatter.time(d, locale: locale)}';
+  final edited =
+      createdAt != null &&
+      updatedAt != null &&
+      updatedAt.difference(createdAt).inSeconds.abs() >= 60;
+  return [
+    if (createdAt != null) '${l.txDetailCreatedAt} ${stamp(createdAt)}',
+    if (edited) '${l.txDetailUpdatedAt} ${stamp(updatedAt)}',
+  ];
 }

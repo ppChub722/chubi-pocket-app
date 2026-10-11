@@ -268,106 +268,109 @@ class _CategoriesPageState extends State<CategoriesPage> {
         final users = all.where((c) => !c.isSystem).toList();
         final typeUsers = users.where((c) => c.type == _listType).toList();
         final reorder = _reorder;
-        return PopScope(
-          canPop: !_reordering,
-          onPopInvokedWithResult: (didPop, _) {
-            if (!didPop && _reordering) _backInReorder();
-          },
-          child: Scaffold(
-            // The bar floats over the body; the pinned column below starts
-            // with a spacer of its height.
-            extendBodyBehindAppBar: true,
-            appBar: AppTopBar(
-              // The title never changes with the mode (owner, QA T1) — the
-              // action bar and the hint say it's reorder mode.
-              title: l.categoriesTitle,
-              showBack: true,
-              editing: _reordering,
-              onBack: _reordering ? _backInReorder : null,
-            ),
-            body: TabSwitchBody(
-              child: AsyncStateView(
-                loading:
-                    state.status == CategoriesStatus.initial ||
-                    state.status == CategoriesStatus.loading,
-                error: state.error,
-                isEmpty: all.isEmpty,
-                onRetry: context.read<CategoriesCubit>().load,
-                skeleton: Builder(
-                  builder: (context) => Padding(
-                    padding: EdgeInsets.only(
-                      top: MediaQuery.paddingOf(context).top,
-                    ),
-                    child: const LoadingView(
-                      skeleton: CategoriesListSkeleton(),
-                    ),
-                  ),
-                ),
-                // Per-type empty lives under the tabs ([_listOrEmpty]).
-                builder: (context) => Column(
-                  children: [
-                    // Clear the transparent top bar.
-                    SizedBox(height: MediaQuery.paddingOf(context).top),
-                    AppTabBar<CategoryType>(
-                      selected: _listType,
-                      onChanged: _setListType,
-                      pager: _pages,
-                      tabs: [
-                        AppTab(
-                          value: CategoryType.expense,
-                          label: l.categoryTypeExpense,
-                        ),
-                        AppTab(
-                          value: CategoryType.income,
-                          label: l.categoryTypeIncome,
-                        ),
-                      ],
-                    ),
-                    // An empty tab has nothing to search or filter.
-                    if (typeUsers.isNotEmpty) _header(l, typeUsers, all),
-                    Expanded(
-                      // Swipe sideways = the other tab, following the finger
-                      // (off while reordering — a sideways drag there picks
-                      // a level).
-                      child: AppTabPager<CategoryType>(
-                        controller: _pages,
-                        values: _types,
-                        selected: _listType,
-                        onChanged: _setListType,
-                        enabled: !_reordering,
-                        builder: (context, t) {
-                          final rows = t == _listType
-                              ? typeUsers
-                              : users.where((c) => c.type == t).toList();
-                          return _listOrEmpty(l, rows, all, t);
-                        },
+        return SavingOverlay(
+          saving: _savingReorder,
+          child: PopScope(
+            canPop: !_reordering,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop && _reordering) _backInReorder();
+            },
+            child: Scaffold(
+              // The bar floats over the body; the pinned column below starts
+              // with a spacer of its height.
+              extendBodyBehindAppBar: true,
+              appBar: AppTopBar(
+                // The title never changes with the mode (owner, QA T1) — the
+                // action bar and the hint say it's reorder mode.
+                title: l.categoriesTitle,
+                showBack: true,
+                editing: _reordering,
+                onBack: _reordering ? _backInReorder : null,
+              ),
+              body: TabSwitchBody(
+                child: AsyncStateView(
+                  loading:
+                      state.status == CategoriesStatus.initial ||
+                      state.status == CategoriesStatus.loading,
+                  error: state.error,
+                  isEmpty: all.isEmpty,
+                  onRetry: context.read<CategoriesCubit>().load,
+                  skeleton: Builder(
+                    builder: (context) => Padding(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.paddingOf(context).top,
+                      ),
+                      child: const LoadingView(
+                        skeleton: CategoriesListSkeleton(),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            // Browse: the shell's nav shows through. Reorder: the move bar
-            // (while a row is selected) over this bar replaces it.
-            bottomNavigationBar: reorder == null
-                ? null
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
+                  ),
+                  // Per-type empty lives under the tabs ([_listOrEmpty]).
+                  builder: (context) => Column(
                     children: [
-                      ReorderMoveBar(controller: reorder),
-                      ModeActionBar(
-                        canUndo: reorder.canUndo && !_savingReorder,
-                        canSave: reorder.dirty && !_savingReorder,
-                        saving: _savingReorder,
-                        cancelLabel: l.categoriesReorderCancel,
-                        saveLabel: l.categoriesReorderSave,
-                        undoTooltip: l.categoriesUndo,
-                        onCancel: _backInReorder,
-                        onUndo: reorder.undo,
-                        onSave: () => _saveReorder(all),
+                      // Clear the transparent top bar.
+                      SizedBox(height: MediaQuery.paddingOf(context).top),
+                      AppTabBar<CategoryType>(
+                        selected: _listType,
+                        onChanged: _setListType,
+                        pager: _pages,
+                        tabs: [
+                          AppTab(
+                            value: CategoryType.expense,
+                            label: l.categoryTypeExpense,
+                          ),
+                          AppTab(
+                            value: CategoryType.income,
+                            label: l.categoryTypeIncome,
+                          ),
+                        ],
+                      ),
+                      // An empty tab has nothing to search or filter.
+                      if (typeUsers.isNotEmpty) _header(l, typeUsers, all),
+                      Expanded(
+                        // Swipe sideways = the other tab, following the finger
+                        // (off while reordering — a sideways drag there picks
+                        // a level).
+                        child: AppTabPager<CategoryType>(
+                          controller: _pages,
+                          values: _types,
+                          selected: _listType,
+                          onChanged: _setListType,
+                          enabled: !_reordering,
+                          builder: (context, t) {
+                            final rows = t == _listType
+                                ? typeUsers
+                                : users.where((c) => c.type == t).toList();
+                            return _listOrEmpty(l, rows, all, t);
+                          },
+                        ),
                       ),
                     ],
                   ),
+                ),
+              ),
+              // Browse: the shell's nav shows through. Reorder: the move bar
+              // (while a row is selected) over this bar replaces it.
+              bottomNavigationBar: reorder == null
+                  ? null
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ReorderMoveBar(controller: reorder),
+                        ModeActionBar(
+                          canUndo: reorder.canUndo && !_savingReorder,
+                          canSave: reorder.dirty && !_savingReorder,
+                          saving: _savingReorder,
+                          cancelLabel: l.categoriesReorderCancel,
+                          saveLabel: l.categoriesReorderSave,
+                          undoTooltip: l.categoriesUndo,
+                          onCancel: _backInReorder,
+                          onUndo: reorder.undo,
+                          onSave: () => _saveReorder(all),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         );
       },
@@ -438,10 +441,14 @@ class _CategoriesPageState extends State<CategoriesPage> {
     return FilterBar(
       chips: [
         PopoverAnchor(
-          builder: (context, toggle) => FilterDropdownChip(
+          builder: (context, toggle) => AppChip(
             label: l.iconMakerTabColor,
             icon: AppIcons.colorPicker,
+            selected: _filterColors.isNotEmpty,
             count: _filterColors.length,
+            trailing: _filterColors.isEmpty
+                ? AppChipTrailing.dropdown
+                : AppChipTrailing.count,
             onTap: colors.isEmpty ? null : toggle,
           ),
           contentBuilder: (context, close) => StatefulBuilder(
@@ -468,10 +475,14 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
         PopoverAnchor(
-          builder: (context, toggle) => FilterDropdownChip(
+          builder: (context, toggle) => AppChip(
             label: l.iconMakerRoleIcon,
             icon: AppIcons.iconPicker,
+            selected: _filterIcons.isNotEmpty,
             count: _filterIcons.length,
+            trailing: _filterIcons.isEmpty
+                ? AppChipTrailing.dropdown
+                : AppChipTrailing.count,
             onTap: icons.isEmpty ? null : toggle,
           ),
           contentBuilder: (context, close) => StatefulBuilder(
@@ -773,9 +784,11 @@ class _RowContent extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (hidden)
-                  LabelPill(
+                  AppChip(
                     label: l.categoryHiddenFromReport,
                     icon: AppIcons.hidden,
+                    tone: AppChipTone.neutral,
+                    size: PillSize.chip,
                   ),
                 if (hasChildren)
                   IconButton(

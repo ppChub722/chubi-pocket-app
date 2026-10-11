@@ -247,13 +247,17 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                               ? l.projectMemberLinked
                               : l.projectMemberAdHoc,
                         ),
-                        trailing: StatusPill(
+                        trailing: AppChip(
                           label: m.isOwner
                               ? l.projectRoleOwner
                               : m.role == MemberRole.viewer
                               ? l.projectRoleViewer
                               : l.projectRoleMember,
-                          tone: m.isOwner ? Tone.primary : Tone.neutral,
+                          tone: m.isOwner
+                              ? AppChipTone.primary
+                              : AppChipTone.neutral,
+                          selected: true,
+                          size: PillSize.chip,
                         ),
                         // Owner manages everyone but themself.
                         onTap: _isOwner && !readOnly && !m.isOwner

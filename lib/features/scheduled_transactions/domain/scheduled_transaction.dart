@@ -37,6 +37,8 @@ class ScheduledTransaction extends Equatable {
     this.remainingInstallments,
     this.interestRate,
     this.dayOfMonth,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -66,6 +68,12 @@ class ScheduledTransaction extends Equatable {
 
   // Day-clamping helper (spec §2.3, §4.4)
   final int? dayOfMonth;
+
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  static DateTime? _date(Object? v) =>
+      v is String ? DateTime.tryParse(v)?.toLocal() : null;
 
   /// Spec §4.2: an installment with positive interest is shown as "Loan".
   bool get isLoan =>
@@ -102,6 +110,8 @@ class ScheduledTransaction extends Equatable {
     int? remainingInstallments,
     double? interestRate,
     int? dayOfMonth,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return ScheduledTransaction(
       id: id ?? this.id,
@@ -126,6 +136,8 @@ class ScheduledTransaction extends Equatable {
           remainingInstallments ?? this.remainingInstallments,
       interestRate: interestRate ?? this.interestRate,
       dayOfMonth: dayOfMonth ?? this.dayOfMonth,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -160,6 +172,8 @@ class ScheduledTransaction extends Equatable {
       remainingInstallments: json['remaining_installments'] as int?,
       interestRate: (json['interest_rate'] as num?)?.toDouble(),
       dayOfMonth: json['day_of_month'] as int?,
+      createdAt: _date(json['created_at']),
+      updatedAt: _date(json['updated_at']),
     );
   }
 
@@ -232,6 +246,8 @@ class ScheduledTransaction extends Equatable {
     remainingInstallments,
     interestRate,
     dayOfMonth,
+    createdAt,
+    updatedAt,
   ];
 }
 

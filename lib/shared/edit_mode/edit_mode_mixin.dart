@@ -8,6 +8,7 @@ import '../../app/shell/shell_chrome.dart';
 import '../../app/shell/tab_nav.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../widgets/feedback/confirm_dialog.dart';
+import '../widgets/feedback/saving_overlay.dart';
 import '../widgets/mode_action_bar.dart';
 
 /// The app's in-place edit-mode lifecycle, shared by every detail page
@@ -302,7 +303,9 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) handleBack();
       },
-      child: child,
+      // A save / delete in flight dims the page and blocks input
+      // ([SavingOverlay]) — the user never edits under a running call.
+      child: SavingOverlay(saving: _saving, child: child),
     );
   }
 

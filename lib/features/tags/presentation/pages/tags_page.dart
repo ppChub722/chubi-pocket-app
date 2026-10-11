@@ -11,6 +11,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/edit_mode/edit_mode_mixin.dart';
 import '../../../../shared/icon_maker/color_token.dart';
@@ -270,8 +271,11 @@ class _TagsPageState extends State<TagsPage>
       showBackground: false,
       showBorder: false,
       previewBuilder: (iconCode) => Center(
-        child: TagChip(
-          tag: Tag(id: 'preview', name: draft.name, iconCode: iconCode),
+        child: AppChip(
+          label: draft.name,
+          icon: IconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
+          color: tagColor(iconCode, Theme.of(context).extension<AppColors>()!),
+          selected: true,
         ),
       ),
     );
@@ -295,8 +299,11 @@ class _TagsPageState extends State<TagsPage>
       showBorder: false,
       showIconPicker: false,
       previewBuilder: (iconCode) => Center(
-        child: TagChip(
-          tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode),
+        child: AppChip(
+          label: 'Aa',
+          icon: IconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
+          color: tagColor(iconCode, Theme.of(context).extension<AppColors>()!),
+          selected: true,
         ),
       ),
     );
@@ -325,8 +332,11 @@ class _TagsPageState extends State<TagsPage>
       showBorder: false,
       showColorPicker: false,
       previewBuilder: (iconCode) => Center(
-        child: TagChip(
-          tag: Tag(id: 'preview', name: 'Aa', iconCode: iconCode),
+        child: AppChip(
+          label: 'Aa',
+          icon: IconRegistry.get(iconCode.icon, fallback: AppIcons.tag),
+          color: tagColor(iconCode, Theme.of(context).extension<AppColors>()!),
+          selected: true,
         ),
       ),
     );
@@ -596,10 +606,10 @@ class _TagsPageState extends State<TagsPage>
               for (final s in _SortBy.values)
                 SheetOption(value: s, label: _sortLabel(l, s)),
             ],
-            builder: (context, toggle) => FilterDropdownChip(
+            builder: (context, toggle) => AppChip(
               label: _sortLabel(l, _sort),
               icon: AppIcons.sort,
-              active: false,
+              trailing: AppChipTrailing.dropdown,
               onTap: toggle,
             ),
           ),
@@ -628,34 +638,43 @@ class _TagsPageState extends State<TagsPage>
           tooltip: l.tagsSelectAll,
           onTap: () => _toggleSelectAll(visible),
         ),
-        ActionPill(
+        AppChip(
           icon: AppIcons.colorPicker,
           label: l.tagsBulkColor,
-          onTap: _canBulk ? _bulkColor : null,
+          tone: AppChipTone.primary,
+          selected: true,
+          enabled: _canBulk,
+          onTap: _bulkColor,
         ),
-        ActionPill(
+        AppChip(
           icon: AppIcons.iconPicker,
           label: l.tagsBulkIcon,
-          onTap: _canBulk ? _bulkIcon : null,
-        ),
-        ActionPill(
-          icon: AppIcons.delete,
-          label: l.commonDelete,
-          destructive: true,
-          onTap: _canBulk ? _bulkDelete : null,
+          tone: AppChipTone.primary,
+          selected: true,
+          enabled: _canBulk,
+          onTap: _bulkIcon,
         ),
       ],
+      trailing: BulkDeleteButton(
+        tooltip: l.commonDelete,
+        onPressed: _canBulk ? _bulkDelete : null,
+      ),
     );
   }
 
   Widget _colorFilter(AppLocalizations l, List<String> tokens) {
     final palette = Theme.of(context).extension<AppColors>()!;
     return PopoverAnchor(
-      builder: (context, toggle) => FilterDropdownChip(
+      builder: (context, toggle) => AppChip(
         label: l.tagFormColorLabel,
         icon: AppIcons.colorPicker,
+        selected: _filterColors.isNotEmpty,
+        trailing: _filterColors.isEmpty
+            ? AppChipTrailing.dropdown
+            : AppChipTrailing.count,
         count: _filterColors.length,
-        onTap: tokens.isEmpty ? null : toggle,
+        enabled: tokens.isNotEmpty,
+        onTap: toggle,
       ),
       contentBuilder: (context, close) => StatefulBuilder(
         builder: (context, setPopover) => ColorSwatchGrid(
@@ -684,11 +703,16 @@ class _TagsPageState extends State<TagsPage>
 
   Widget _iconFilter(AppLocalizations l, List<String> glyphs) {
     return PopoverAnchor(
-      builder: (context, toggle) => FilterDropdownChip(
+      builder: (context, toggle) => AppChip(
         label: l.tagFormIconLabel,
         icon: AppIcons.iconPicker,
+        selected: _filterIcons.isNotEmpty,
+        trailing: _filterIcons.isEmpty
+            ? AppChipTrailing.dropdown
+            : AppChipTrailing.count,
         count: _filterIcons.length,
-        onTap: glyphs.isEmpty ? null : toggle,
+        enabled: glyphs.isNotEmpty,
+        onTap: toggle,
       ),
       contentBuilder: (context, close) => StatefulBuilder(
         builder: (context, setPopover) => IconSwatchGrid(

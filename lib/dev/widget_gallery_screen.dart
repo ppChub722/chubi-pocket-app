@@ -20,19 +20,15 @@ import '../features/accounts/presentation/widgets/wallet_summary_title.dart';
 import '../features/categories/domain/category.dart';
 import '../features/categories/domain/category_type.dart';
 import '../features/categories/presentation/cubit/categories_cubit.dart';
-import '../features/categories/presentation/widgets/category_chip.dart';
 import '../features/categories/presentation/widgets/category_picker_sheet.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../features/contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../features/transactions/presentation/widgets/account_picker_sheet.dart';
-import '../features/tags/domain/tag.dart';
-import '../features/tags/presentation/widgets/tag_chip.dart';
 import '../features/tags/presentation/widgets/tag_picker_sheet.dart';
 import '../features/transactions/domain/transaction.dart';
 import '../features/transactions/domain/transaction_type.dart';
 import '../features/transactions/presentation/widgets/event_pick.dart';
 import '../features/transactions/presentation/widgets/period_summary_card.dart';
-import '../features/transactions/presentation/widgets/pick_chip_rows.dart';
 import '../features/transactions/presentation/widgets/transaction_tile.dart';
 import '../features/transactions/presentation/widgets/tx_hero_card.dart';
 import '../features/transactions/presentation/widgets/tx_summary_title.dart';
@@ -45,7 +41,6 @@ import '../shared/icon_maker/icon_maker_sheet.dart';
 import '../shared/icon_maker/icon_shape.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../shared/icon_maker/icon_type.dart';
-import '../shared/widgets/type_indicator.dart';
 import '../shared/widgets/ui.dart';
 import 'app_chip_tab.dart';
 import 'compact_hero_demo.dart';
@@ -275,6 +270,18 @@ class _ButtonsDemoState extends State<_ButtonsDemo> {
           onChanged: (v) => setState(() => _disabled = v),
         ),
         _Demo(
+          title: 'ลบหลายรายการ — ไอคอนถังขยะแดง ไม่มีข้อความ ชิดขวา',
+          name: 'BulkDeleteButton(onPressed)',
+          child: Row(
+            children: [
+              const Spacer(),
+              BulkDeleteButton(tooltip: 'ลบ', onPressed: () {}),
+              const SizedBox(width: AppSpacing.sm),
+              const BulkDeleteButton(tooltip: 'ลบ', onPressed: null),
+            ],
+          ),
+        ),
+        _Demo(
           title: 'ปุ่มทุกแบบ',
           name: 'AppButton(variant: …)',
           child: Wrap(
@@ -490,6 +497,7 @@ class _InputsDemo extends StatefulWidget {
 enum _Dir { iOwe, owedToMe }
 
 class _InputsDemoState extends State<_InputsDemo> {
+  ThemeMode _themeModeDemo = ThemeMode.system;
   final _amount = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String _query = '';
@@ -591,6 +599,17 @@ class _InputsDemoState extends State<_InputsDemo> {
       child: ListView(
         padding: const EdgeInsets.only(bottom: AppSpacing.huge),
         children: [
+          _Demo(
+            title: 'โหมดการแสดงผล — สว่าง · มืด · ระบบ',
+            name: 'ThemeModeChips(selected, onChanged)',
+            child: ThemeModeChips(
+              selected: _themeModeDemo,
+              onChanged: (m) => setState(() => _themeModeDemo = m),
+              lightLabel: 'สว่าง',
+              darkLabel: 'มืด',
+              systemLabel: 'ระบบ',
+            ),
+          ),
           _Demo(
             title: 'ช่องค้นหา',
             name: 'AppSearchBar',
@@ -879,9 +898,8 @@ class _InputsDemoState extends State<_InputsDemo> {
 
 // ── Chips ──────────────────────────────────────────────────────────────
 
-/// The pick rows the transaction form and the filter sheet share: the kit
-/// ([ChoicePillRow], [ChipRow] + [RowChip], [ChipOrder]) and the feature
-/// rows on top of it (หมวด / แท็ก / กระเป๋า, ranked from the real caches).
+/// The period pill and the type chips the transaction form and the filter
+/// sheet share.
 class _PickRowsDemo extends StatefulWidget {
   const _PickRowsDemo();
 
@@ -1025,9 +1043,21 @@ class _PickerShellDemoState extends State<_PickerShellDemo> {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              ActionPill(label: 'เปิด ($_picked)', onTap: () => _open()),
-              ActionPill(label: 'กำลังโหลด', onTap: () => _open(loading: true)),
-              ActionPill(label: 'error', onTap: () => _open(error: true)),
+              AppChip(
+                label: 'เปิด ($_picked)',
+                selected: true,
+                onTap: () => _open(),
+              ),
+              AppChip(
+                label: 'กำลังโหลด',
+                selected: true,
+                onTap: () => _open(loading: true),
+              ),
+              AppChip(
+                label: 'error',
+                selected: true,
+                onTap: () => _open(error: true),
+              ),
             ],
           ),
         ),
@@ -1038,8 +1068,9 @@ class _PickerShellDemoState extends State<_PickerShellDemo> {
               'enabled: false → แถวจาง)',
           child: Align(
             alignment: Alignment.centerLeft,
-            child: ActionPill(
+            child: AppChip(
               label: 'เปิด ($_option)',
+              selected: true,
               onTap: () async {
                 final v = await showOptionSheet<String>(
                   context,
@@ -1079,8 +1110,9 @@ class _PickerShellDemoState extends State<_PickerShellDemo> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               for (final b in _demoBanks.take(5)) BankMark(provider: b),
-              ActionPill(
+              AppChip(
                 label: 'เปิด (${_bank ?? 'ไม่ระบุ'})',
+                selected: true,
                 onTap: () async {
                   final r = await showBankPicker(
                     context,
@@ -1101,9 +1133,10 @@ class _PickerShellDemoState extends State<_PickerShellDemo> {
           name: 'showDayOfMonthPicker · DayOfMonthGrid · dayOfMonthLabel',
           child: Align(
             alignment: Alignment.centerLeft,
-            child: FilterDropdownChip(
+            child: AppChip(
               label: dayOfMonthLabel(AppLocalizations.of(context)!, _day),
-              active: _day != null,
+              trailing: AppChipTrailing.dropdown,
+              selected: _day != null,
               onTap: () async {
                 final r = await showDayOfMonthPicker(
                   context,
@@ -1149,14 +1182,6 @@ class _PickerShellDemoState extends State<_PickerShellDemo> {
 
 class _PickRowsDemoState extends State<_PickRowsDemo> {
   TransactionType? _type;
-  String _unit = 'เดือน';
-  bool _all = true;
-  Category? _category;
-  final Set<String> _tags = {};
-  String? _wallet;
-  final _categoryOrder = ChipOrder();
-  final _tagOrder = ChipOrder();
-  final _walletOrder = ChipOrder();
   TxPeriod _period = TxPeriod.month(DateTime.now());
 
   @override
@@ -1176,7 +1201,7 @@ class _PickRowsDemoState extends State<_PickRowsDemo> {
         ),
         _Demo(
           title: 'ประเภท (ฟอร์ม + ตัวกรอง) — null = ทั้งหมด สีกลาง',
-          name: 'TxTypeChip(type: null | expense | income | transfer)',
+          name: 'txTypeChip(type: null | expense | income | transfer)',
           child: Wrap(
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
@@ -1187,7 +1212,8 @@ class _PickRowsDemoState extends State<_PickRowsDemo> {
                 TransactionType.income,
                 TransactionType.transfer,
               ])
-                TxTypeChip(
+                txTypeChip(
+                  context,
                   type: t,
                   selected: t == _type,
                   onTap: () => setState(() => _type = t),
@@ -1196,108 +1222,28 @@ class _PickRowsDemoState extends State<_PickRowsDemo> {
           ),
         ),
         _Demo(
-          title: 'เลือกหนึ่งอย่าง (ช่วงเวลา · เรียงตาม ในตัวกรอง)',
-          name: 'ChoicePillRow · ChoicePill (pill kit, ไม่ใช่ ChoiceChip)',
-          child: ChoicePillRow<String>(
-            values: const ['เดือน', 'สัปดาห์', 'ปี', 'ทั้งหมด', 'กำหนดเอง'],
-            selected: _unit,
-            label: (v) => v,
-            onSelected: (v) => setState(() => _unit = v),
-          ),
-        ),
-        _Demo(
-          title: 'แถวเลือก: [ไอคอน] ชิป … [เพิ่มเติม]',
-          name: 'ChipRow · RowChip (ขนาดเท่าชิปหมวด / แท็ก)',
-          child: ChipRow(
-            icon: AppIcons.wallet,
-            moreLabel: 'เพิ่มเติม',
-            onMore: () {},
-            chips: [
-              RowChip(
-                label: 'ทั้งหมด',
-                selected: _all,
-                onTap: () => setState(() => _all = true),
-              ),
-              RowChip(
-                label: 'กสิกร',
-                icon: AppIcons.bank,
-                color: Colors.green,
-                selected: !_all,
-                onTap: () => setState(() => _all = false),
-              ),
-            ],
-          ),
-        ),
-        _Demo(
-          title:
-              'แถวเลือกในตัวกรอง: ขึ้นบรรทัดใหม่ได้ไม่เกิน 4 บรรทัด '
-              'เกินนั้นตัด แล้วจบด้วย [เพิ่มเติม] (ฟอร์มยังเป็นบรรทัดเดียว)',
-          name: 'ChipRow(maxLines: 4) · RowChip(trailingIcon)',
+          title: 'ประเภท — เลือก · ล็อก (บันทึกแล้วเปลี่ยนไม่ได้)',
+          name: 'txTypeChip(selected, locked)',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ChipRow(
-                maxLines: 4,
-                moreLabel: 'เพิ่มเติม',
-                onMore: () {},
-                chips: [
-                  for (var i = 1; i <= 30; i++)
-                    RowChip(
-                      label: 'หมวด $i',
-                      icon: AppIcons.category,
-                      selected: i == 2,
-                      onTap: () {},
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: AppSpacing.xs,
                 children: [
                   for (final t in TransactionType.values)
-                    TxTypeChip(
+                    txTypeChip(
+                      context,
                       type: t,
                       selected: t == TransactionType.expense,
                       onTap: () {},
                     ),
-                  const TxTypeChip(
+                  txTypeChip(
+                    context,
                     type: TransactionType.income,
                     selected: true,
                     locked: true,
                   ),
                 ],
-              ),
-            ],
-          ),
-        ),
-        _Demo(
-          title: 'หมวด · แท็ก · กระเป๋า (ฟอร์ม + ตัวกรอง) — ลำดับคงที่',
-          name: 'CategoryChipRow · TagChipRow · WalletChipRow (ChipOrder)',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CategoryChipRow(
-                type: TransactionType.expense,
-                selected: _category,
-                order: _categoryOrder,
-                onPick: (c) => setState(() => _category = c),
-                onMore: () {},
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TagChipRow(
-                selected: _tags,
-                order: _tagOrder,
-                onToggle: (id) => setState(() {
-                  if (!_tags.remove(id)) _tags.add(id);
-                }),
-                onMore: () {},
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              WalletChipRow(
-                selectedId: _wallet,
-                order: _walletOrder,
-                onPick: (a) => setState(() => _wallet = a.id),
-                onMore: () {},
               ),
             ],
           ),
@@ -1361,15 +1307,19 @@ class _ChipsDemoState extends State<_ChipsDemo> {
         _Demo(
           title: 'แถวตัวกรอง + เรียงลำดับ (popover)',
           name:
-              'FilterBar · FilterDropdownChip · PopoverAnchor · '
-              'MultiOptionMenuAnchor · OptionMenuAnchor · SortChip',
+              'FilterBar · AppChip(dropdown) · PopoverAnchor · '
+              'MultiOptionMenuAnchor · OptionMenuAnchor (sort = AppChip ▾)',
           child: FilterBar(
             chips: [
               // Colour — custom popover content (swatch grid, multi).
               PopoverAnchor(
-                builder: (context, toggle) => FilterDropdownChip(
+                builder: (context, toggle) => AppChip(
                   label: 'สี',
                   icon: Icons.palette_outlined,
+                  selected: _colors.isNotEmpty,
+                  trailing: _colors.isEmpty
+                      ? AppChipTrailing.dropdown
+                      : AppChipTrailing.count,
                   count: _colors.length,
                   onTap: toggle,
                 ),
@@ -1405,9 +1355,13 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                     leading: Icon(Icons.swap_horiz, size: 18),
                   ),
                 ],
-                builder: (context, toggle) => FilterDropdownChip(
+                builder: (context, toggle) => AppChip(
                   label: 'ไอคอน',
                   icon: AppIcons.iconPicker,
+                  selected: _icons.isNotEmpty,
+                  trailing: _icons.isEmpty
+                      ? AppChipTrailing.dropdown
+                      : AppChipTrailing.count,
                   count: _icons.length,
                   onTap: toggle,
                 ),
@@ -1422,22 +1376,37 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                   SheetOption(value: 'คืนครบ', label: 'คืนครบ'),
                   SheetOption(value: 'ยกเลิก', label: 'ยกเลิก'),
                 ],
-                builder: (context, toggle) => FilterDropdownChip(
-                  label: 'สถานะ',
-                  valueLabel: _status,
+                builder: (context, toggle) => AppChip(
+                  label: _status == null ? 'สถานะ' : 'สถานะ: $_status',
+                  selected: _status != null,
+                  trailing: AppChipTrailing.dropdown,
                   onTap: toggle,
                 ),
               ),
-              const FilterDropdownChip(label: 'ปิดอยู่', onTap: null),
+              const AppChip(
+                label: 'ปิดอยู่',
+                trailing: AppChipTrailing.dropdown,
+                enabled: false,
+              ),
             ],
-            trailing: SortChip<_Sort>(
+            trailing: OptionMenuAnchor<_Sort>(
               selected: _sort,
               onSelected: (s) => setState(() => _sort = s),
               options: const [
-                SortOption(_Sort.name, 'ชื่อ'),
-                SortOption(_Sort.usage, 'ใช้บ่อย'),
-                SortOption(_Sort.color, 'สี'),
+                SheetOption(value: _Sort.name, label: 'ชื่อ'),
+                SheetOption(value: _Sort.usage, label: 'ใช้บ่อย'),
+                SheetOption(value: _Sort.color, label: 'สี'),
               ],
+              builder: (context, toggle) => AppChip(
+                label: switch (_sort) {
+                  _Sort.name => 'ชื่อ',
+                  _Sort.usage => 'ใช้บ่อย',
+                  _Sort.color => 'สี',
+                },
+                icon: AppIcons.sort,
+                trailing: AppChipTrailing.dropdown,
+                onTap: toggle,
+              ),
             ),
           ),
         ),
@@ -1448,9 +1417,13 @@ class _ChipsDemoState extends State<_ChipsDemo> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: PopoverAnchor(
-              builder: (context, toggle) => FilterDropdownChip(
+              builder: (context, toggle) => AppChip(
                 label: 'ไอคอน',
                 icon: AppIcons.iconPicker,
+                selected: _glyphs.isNotEmpty,
+                trailing: _glyphs.isEmpty
+                    ? AppChipTrailing.dropdown
+                    : AppChipTrailing.count,
                 count: _glyphs.length,
                 onTap: toggle,
               ),
@@ -1513,7 +1486,7 @@ class _ChipsDemoState extends State<_ChipsDemo> {
         const _Gap(),
         _Demo(
           title: 'Pill สถานะ (กดเพื่อเปลี่ยน — popover)',
-          name: 'OptionMenuAnchor + StatusPill(onTap)',
+          name: 'OptionMenuAnchor + AppChip(status, onTap)',
           child: Align(
             alignment: Alignment.centerLeft,
             child: OptionMenuAnchor<String>(
@@ -1527,9 +1500,11 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                     leading: _Dot(color: e.value.$2.color(context)),
                   ),
               ],
-              builder: (context, toggle) => StatusPill(
+              builder: (context, toggle) => AppChip(
                 label: current.$1,
-                tone: current.$2,
+                tone: AppChipTone.fromTone(current.$2),
+                selected: true,
+                trailing: AppChipTrailing.dropdown,
                 onTap: toggle,
               ),
             ),
@@ -1540,9 +1515,10 @@ class _ChipsDemoState extends State<_ChipsDemo> {
           name: 'showOptionSheet(searchable: true)',
           child: Align(
             alignment: Alignment.centerLeft,
-            child: FilterDropdownChip(
+            child: AppChip(
               label: 'สกุลเงิน',
               icon: Icons.currency_exchange,
+              trailing: AppChipTrailing.dropdown,
               onTap: () => showOptionSheet<String>(
                 context,
                 title: 'สกุลเงิน',
@@ -1562,53 +1538,33 @@ class _ChipsDemoState extends State<_ChipsDemo> {
         ),
         _Demo(
           title: 'แถบการเลือก (แทนตัวกรองเมื่อเลือก ≥1)',
-          name: 'SelectCheck + ActionPill',
+          name: 'SelectCheck + AppChip',
           child: Row(
             children: [
               const SelectCheck(value: true, onTap: null),
               Text('3', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(width: AppSpacing.sm),
-              ActionPill(
+              AppChip(
                 icon: AppIcons.colorPicker,
                 label: 'สี',
+                selected: true,
                 onTap: () => showAppSnackBar(context, 'เปลี่ยนสี'),
               ),
               const SizedBox(width: AppSpacing.sm),
-              ActionPill(
+              AppChip(
                 icon: AppIcons.iconPicker,
                 label: 'ไอคอน',
+                selected: true,
                 onTap: () => showAppSnackBar(context, 'เปลี่ยนไอคอน'),
               ),
               const SizedBox(width: AppSpacing.sm),
-              ActionPill(
+              AppChip(
                 icon: AppIcons.delete,
                 label: 'ลบ',
-                destructive: true,
+                tone: AppChipTone.danger,
+                selected: true,
                 onTap: () => showAppSnackBar(context, 'ลบ'),
               ),
-            ],
-          ),
-        ),
-        const _Demo(
-          title: 'Pill ทุก tone',
-          name: 'StatusPill(tone: …)',
-          child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              StatusPill(label: 'neutral'),
-              StatusPill(label: 'primary', tone: Tone.primary),
-              StatusPill(label: 'success', tone: Tone.success),
-              StatusPill(label: 'warning', tone: Tone.warning),
-              StatusPill(label: 'danger', tone: Tone.danger),
-              StatusPill(label: 'info', tone: Tone.info),
-              StatusPill(label: 'รายรับ', tone: Tone.income, icon: Icons.add),
-              StatusPill(
-                label: 'รายจ่าย',
-                tone: Tone.expense,
-                icon: Icons.remove,
-              ),
-              StatusPill(label: 'ใช้งาน', tone: Tone.primary),
             ],
           ),
         ),
@@ -1670,11 +1626,7 @@ class _ChipsDemoState extends State<_ChipsDemo> {
                         spacing: AppSpacing.sm,
                         children: [
                           for (final t in ['ทั้งหมด', 'รายจ่าย', 'รายรับ'])
-                            ChoiceChip(
-                              label: Text(t),
-                              selected: t == 'ทั้งหมด',
-                              showCheckmark: false,
-                            ),
+                            AppChip(label: t, selected: t == 'ทั้งหมด'),
                         ],
                       ),
                     ),
@@ -1737,191 +1689,6 @@ class _ChipsDemoState extends State<_ChipsDemo> {
               currentBuild: 43,
               exitOnBack: false,
             ),
-          ),
-        ),
-        // ── The pill family (owner 2026-10-10) ─────────────────────────
-        _Demo(
-          title:
-              'ขนาดชิป — มีแค่ 2 (owner 2026-10-11): ปกติ 32 ทุกที่ · '
-              'mini 20 เฉพาะแท็กในแถวรายการ',
-          name: 'PillSize.normal · PillSize.mini',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'normal · ${PillSize.normal.height.toInt()}',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  const StatusPill(label: 'ค้างอยู่', tone: Tone.warning),
-                  const LabelPill(label: 'ผ่อน'),
-                  ActionPill(
-                    label: 'ปรับยอด',
-                    icon: AppIcons.reset,
-                    onTap: () => showAppSnackBar(context, 'ปรับยอด'),
-                  ),
-                  ChoicePill(label: 'เดือน', selected: true, onTap: () {}),
-                  FilterDropdownChip(label: 'สี', onTap: () {}),
-                  RowChip(
-                    label: 'อาหาร',
-                    icon: AppIcons.category,
-                    onTap: () {},
-                  ),
-                  const TxTypeChip(
-                    type: TransactionType.expense,
-                    selected: true,
-                  ),
-                  const TagPill(
-                    name: 'เที่ยว',
-                    color: Color(0xFF26A69A),
-                    size: PillSize.normal,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'mini · ${PillSize.mini.height.toInt()} — แท็กในแถวรายการเท่านั้น',
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              const Wrap(
-                spacing: AppSpacing.sm,
-                children: [
-                  TagPill(name: 'เที่ยว', color: Color(0xFF26A69A)),
-                  TagPill(name: 'งาน', color: Color(0xFF5C6BC0)),
-                  LabelPill(label: '+2', size: PillSize.mini),
-                ],
-              ),
-            ],
-          ),
-        ),
-        _Demo(
-          title: 'Label pill — บอกว่าเป็นอะไร (ไม่มีจุด)',
-          name: 'LabelPill(tone | color, outlined, icon) · TypeIndicator',
-          child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              const LabelPill(label: 'ผ่อน'),
-              const LabelPill(label: 'กู้ยืม'),
-              const LabelPill(label: 'ประจำ', tone: Tone.info),
-              // Wallet type — the wallet's own accent, outlined.
-              const LabelPill(
-                label: 'ธนาคาร',
-                icon: AppIcons.bank,
-                color: Color(0xFF5C6BC0),
-                outlined: true,
-              ),
-              const TypeIndicator(isIncome: false),
-              const TypeIndicator(isIncome: true),
-              // Category create: the one not picked dims.
-              Opacity(
-                opacity: 0.4,
-                child: TypeIndicator(
-                  isIncome: true,
-                  label: AppLocalizations.of(context)!.categoryTypeIncome,
-                ),
-              ),
-            ],
-          ),
-        ),
-        _Demo(
-          title: 'Action pill — ปุ่มเล็ก',
-          name: 'ActionPill(style: tinted | raised, destructive, size)',
-          child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              ActionPill(
-                label: 'สี',
-                icon: Icons.palette_outlined,
-                onTap: () => showAppSnackBar(context, 'สี'),
-              ),
-              ActionPill(
-                label: 'ลบ',
-                icon: AppIcons.delete,
-                destructive: true,
-                onTap: () => showAppSnackBar(context, 'ลบ'),
-              ),
-              ActionPill(
-                label: 'ปรับยอด',
-                icon: AppIcons.reset,
-                style: ActionPillStyle.raised,
-                onTap: () => showAppSnackBar(context, 'ปรับยอด'),
-              ),
-              const ActionPill(label: 'ปิดอยู่', onTap: null),
-            ],
-          ),
-        ),
-        _Demo(
-          title: 'Tag pill — สีของแท็ก · ไอคอน (ถ้ามี) · #ชื่อ',
-          name: 'TagPill · PillOverflowRow(maxVisible)',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  for (final (name, color, glyph) in _demoTags)
-                    TagPill(
-                      name: name,
-                      color: color,
-                      glyph: glyph,
-                      size: PillSize.normal,
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              SizedBox(
-                width: 240,
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: PillOverflowRow(
-                        pills: [
-                          for (final (name, color, _) in _demoTags)
-                            TagPill(name: name, color: color),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        _Demo(
-          title: 'แท็กบนแถวรายการ — เลือกแบบไหน?',
-          name: 'today: #tag text line · try: mini TagPill + "+n"',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (label, tags) in [
-                ('1 แท็ก', _demoTags.take(1).toList()),
-                ('2 แท็ก', _demoTags.take(2).toList()),
-                ('5 แท็ก', _demoTags),
-              ]) ...[
-                Text(label, style: Theme.of(context).textTheme.labelSmall),
-                _MockTxRow(caption: 'ตอนนี้ · ข้อความ #แท็ก', tags: tags),
-                _MockTxRow(
-                  caption: 'ลอง · pill เล็ก สูงสุด 2',
-                  tags: tags,
-                  pills: 2,
-                ),
-                _MockTxRow(
-                  caption: 'ลอง · pill เล็ก สูงสุด 3',
-                  tags: tags,
-                  pills: 3,
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-            ],
           ),
         ),
       ],
@@ -1998,6 +1765,18 @@ class _LayoutDemo extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
+        _Demo(
+          title: 'หัวข้อส่วน + คำอธิบายสั้น (hint)',
+          name: 'SectionCard(title, hint)',
+          child: SectionCard(
+            first: true,
+            title: 'เลขบัญชี · พร้อมเพย์ · บัตร',
+            hint: 'ส่วนนี้ใช้จับคู่บัญชีตอนสแกนสลิปเท่านั้น',
+            children: const [
+              DetailRow(label: 'เลขบัญชี', trailing: Text('3268640000')),
+            ],
+          ),
+        ),
         const _Demo(
           title: 'Top bar breadcrumb (หน้าแม่ › หน้านี้)',
           name: 'AppTopBar(parent: TopBarCrumb(…)) · ค่าเริ่มต้นหาจาก route',
@@ -2096,7 +1875,12 @@ class _LayoutDemo extends StatelessWidget {
             leading: const UserAvatar(displayName: 'Aom Chan', size: 44),
             title: const Text('Aom ติดคุณ'),
             subtitle: const Text('2 รายการค้างอยู่'),
-            trailing: const StatusPill(label: 'ค้างอยู่', tone: Tone.warning),
+            trailing: const AppChip(
+              label: 'ค้างอยู่',
+              tone: AppChipTone.warning,
+              selected: true,
+              size: PillSize.chip,
+            ),
             footer: const ProgressRow(
               value: 0.6,
               label: 'คืนแล้ว ฿300 จาก ฿500',
@@ -2321,9 +2105,10 @@ class _ListRowDemoState extends State<_ListRowDemo> {
             iconCode: food,
           ),
           title: 'กาแฟ',
-          trailing: const LabelPill(
+          trailing: const AppChip(
             label: 'ซ่อนจากรายงาน',
             icon: AppIcons.hidden,
+            size: PillSize.chip,
           ),
           onTap: () {},
         ),
@@ -2429,6 +2214,37 @@ class _CoinLoopDemoState extends State<_CoinLoopDemo>
   );
 }
 
+class _SavingOverlayDemo extends StatefulWidget {
+  const _SavingOverlayDemo();
+  @override
+  State<_SavingOverlayDemo> createState() => _SavingOverlayDemoState();
+}
+
+class _SavingOverlayDemoState extends State<_SavingOverlayDemo> {
+  bool _saving = false;
+
+  Future<void> _run() async {
+    setState(() => _saving = true);
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (mounted) setState(() => _saving = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 140,
+      child: ClipRect(
+        child: SavingOverlay(
+          saving: _saving,
+          child: Center(
+            child: AppButton(label: 'บันทึก (2 วิ)', onPressed: _run),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _FeedbackDemo extends StatefulWidget {
   const _FeedbackDemo();
   @override
@@ -2484,6 +2300,51 @@ class _FeedbackDemoState extends State<_FeedbackDemo> {
                       ],
                     ),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const _Demo(
+          title: 'กำลังบันทึก — มืดทั้งหน้า + หมุน + กันการแตะ',
+          name: 'SavingOverlay(saving, child)',
+          child: _SavingOverlayDemo(),
+        ),
+        _Demo(
+          title:
+              'ผิดพลาดตอนมีข้อมูล / บันทึกไม่สำเร็จ — snackbar + ลองอีกครั้ง',
+          name: 'showErrorSnackBar(context, error, onRetry)',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              AppButton(
+                label: 'ออฟไลน์',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showErrorSnackBar(
+                  context,
+                  const ApiException(code: 'NETWORK_ERROR', message: ''),
+                  onRetry: () => showAppSnackBar(context, 'ลองอีกครั้ง'),
+                ),
+              ),
+              AppButton(
+                label: 'เซิร์ฟเวอร์',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showErrorSnackBar(
+                  context,
+                  const ApiException(
+                    code: 'INTERNAL',
+                    message: '',
+                    statusCode: 500,
+                  ),
+                  onRetry: () => showAppSnackBar(context, 'ลองอีกครั้ง'),
+                ),
+              ),
+              AppButton(
+                label: 'ไม่มี retry',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showErrorSnackBar(
+                  context,
+                  const ApiException(code: 'X', message: ''),
                 ),
               ),
             ],
@@ -2773,10 +2634,10 @@ class _AsyncStateDemoState extends State<_AsyncStateDemo> {
           runSpacing: AppSpacing.xs,
           children: [
             for (final c in _AsyncCase.values)
-              ChoiceChip(
-                label: Text(c.name),
+              AppChip(
+                label: c.name,
                 selected: _case == c,
-                onSelected: (_) => setState(() {
+                onTap: () => setState(() {
                   _case = c;
                   _refreshError = null;
                 }),
@@ -2851,6 +2712,51 @@ class _DataDemo extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: AppSpacing.huge),
       children: [
+        _Demo(
+          title: 'แถวรายการเดียวกันของหน้ารายการ + รอยืนยัน',
+          name: 'TxRow(title, wallet chip, source chip, category, tags)',
+          child: Card(
+            child: Column(
+              children: [
+                TxRow(
+                  leading: const IconBubble(
+                    icon: AppIcons.expense,
+                    color: Colors.red,
+                  ),
+                  title: 'ข้าวมันไก่',
+                  amount: -65,
+                  walletLabel: 'กสิกร',
+                  walletIcon: const Icon(AppIcons.bank),
+                  category: 'อาหาร',
+                  tags: const [TextSpan(text: '#ทริป')],
+                ),
+                const Divider(height: 1),
+                TxRow(
+                  leading: const IconBubble(
+                    icon: AppIcons.expense,
+                    color: Colors.red,
+                  ),
+                  title: 'ค่าไฟ',
+                  amount: -1200,
+                  walletLabel: 'เงินสด',
+                  walletIcon: const Icon(AppIcons.cash),
+                  select: SelectCheck(
+                    value: true,
+                    tooltip: 'เลือก',
+                    onTap: () {},
+                  ),
+                  source: const AppChip(
+                    label: 'ใส่เอง',
+                    tone: AppChipTone.info,
+                    selected: true,
+                    size: PillSize.mini,
+                  ),
+                  warning: 'ยังไม่ได้เลือกหมวด',
+                ),
+              ],
+            ),
+          ),
+        ),
         _Demo(
           title: 'ยอดเงิน + ปุ่มซ่อนยอด 👁 (ปิดอยู่ — kMoneyPrivacyEnabled)',
           name: 'MoneyText · MoneyVisibilityToggle',
@@ -3464,7 +3370,6 @@ class _DomainDemoState extends State<_DomainDemo> {
   String _picked = '—';
   String? _pickedId;
   TransactionType _heroType = TransactionType.expense;
-  String? _chipCategoryId;
   Set<String> _pickedTags = {};
   final _heroAmount = TextEditingController();
   final _heroNote = TextEditingController();
@@ -3615,28 +3520,6 @@ class _DomainDemoState extends State<_DomainDemo> {
           ),
         ),
         _Demo(
-          title: 'ชิปหมวด (หมวดล่าสุดใน quick create — แตะเพื่อเลือก)',
-          name: 'CategoryChip',
-          child: Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
-              for (final c
-                  in context
-                      .watch<CategoriesCubit>()
-                      .state
-                      .categories
-                      .where((c) => !c.isSystem && c.parentId == null)
-                      .take(5))
-                CategoryChip(
-                  category: c,
-                  selected: c.id == _chipCategoryId,
-                  onTap: () => setState(() => _chipCategoryId = c.id),
-                ),
-            ],
-          ),
-        ),
-        _Demo(
           title: 'เลือกแท็ก (ค้นหา · เลือกหลายอัน · + แท็กใหม่)',
           name: 'showTagPickerSheet',
           child: Align(
@@ -3668,39 +3551,6 @@ class _DomainDemoState extends State<_DomainDemo> {
                   ),
               ],
             ),
-          ),
-        ),
-        _Demo(
-          title: 'แท็ก — แบบเต็ม · ตัวเลือก (เลือก/ไม่เลือก) · แบบย่อ',
-          name: 'TagChip · TagShortList',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: AppSpacing.xs,
-                runSpacing: AppSpacing.xs,
-                children: [
-                  for (final t in _txs.first.tags) TagChip(tag: t.asTag),
-                  const TagChip(
-                    tag: Tag(id: 't0', name: 'ไม่มีไอคอน'),
-                  ),
-                ],
-              ),
-              const _Gap(),
-              Wrap(
-                spacing: AppSpacing.xs,
-                runSpacing: AppSpacing.xs,
-                children: [
-                  for (final (i, t) in _txs.first.tags.indexed)
-                    TagChip(tag: t.asTag, selected: i == 0, onTap: () {}),
-                ],
-              ),
-              const _Gap(),
-              TagShortList(
-                tags: [for (final t in _txs.first.tags) t.asTag],
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
           ),
         ),
         const _Demo(
@@ -3797,89 +3647,6 @@ class _ChartsDemoState extends State<_ChartsDemo> {
   }
 }
 
-// ── Pill family demos ──────────────────────────────────────────────────
-
-/// Sample tags for the pill demos: (name, colour, glyph).
-const _demoTags = <(String, Color, IconData?)>[
-  ('เที่ยว', Color(0xFF26A69A), Icons.flight_takeoff),
-  ('ครอบครัว', Color(0xFFEF6C00), null),
-  ('งานบริษัท', Color(0xFF5C6BC0), Icons.work_outline),
-  ('ของขวัญ', Color(0xFFD81B60), null),
-  ('สุขภาพ', Color(0xFF43A047), null),
-];
-
-/// A transaction row mock-up for picking the tag look (owner 2026-10-10):
-/// [pills] null = today's coloured `#tag` text line (TagShortList's look),
-/// otherwise mini [TagPill]s, at most [pills], then `+n`.
-class _MockTxRow extends StatelessWidget {
-  const _MockTxRow({required this.caption, required this.tags, this.pills});
-
-  final String caption;
-  final List<(String, Color, IconData?)> tags;
-  final int? pills;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final max = pills;
-    final Widget tagLine = max == null
-        ? Text.rich(
-            TextSpan(
-              children: [
-                for (final (i, (name, color, _)) in tags.indexed)
-                  TextSpan(
-                    text: '${i > 0 ? '  ' : ''}#$name',
-                    style: TextStyle(color: color, fontWeight: FontWeight.w600),
-                  ),
-              ],
-            ),
-            style: textTheme.bodySmall,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          )
-        : PillOverflowRow(
-            maxVisible: max,
-            pills: [
-              for (final (name, color, glyph) in tags)
-                TagPill(name: name, color: color, glyph: glyph),
-            ],
-          );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
-        children: [
-          const TintedIconBadge(
-            icon: Icons.restaurant,
-            tint: Color(0xFFEF6C00),
-            size: 40,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ข้าวมันไก่', style: textTheme.titleSmall),
-                const SizedBox(height: 2),
-                Text(
-                  caption,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(children: [Flexible(child: tagLine)]),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          const MoneyText(-60, tone: MoneyTone.expense),
-        ],
-      ),
-    );
-  }
-}
-
 /// The hero spacing rules made visible (owner 2026-10-10): 16 inside,
 /// 12 between rows, 8 between controls, controls 32 high, nested cards
 /// 12 inside with 8 between, 16 to the next block.
@@ -3903,7 +3670,7 @@ class _HeroSpacingDemo extends StatelessWidget {
       title:
           'ระยะของ hero (ทุกการ์ดหัวหน้า): ใน 16 · ระหว่างแถว 12 · '
           'ระหว่างปุ่ม 8 · ปุ่มสูง 32 · การ์ดซ้อน ใน 12 ห่าง 8 · ถึงบล็อกถัดไป 16',
-      name: 'HeroSpacing · HeroContent · HeroTopRow · PillSize.normal',
+      name: 'HeroSpacing · HeroContent · HeroTopRow · PillSize.control',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -3917,16 +3684,16 @@ class _HeroSpacingDemo extends StatelessWidget {
               rows: [
                 HeroTopRow(
                   leading: [
-                    LabelPill(
+                    AppChip(
                       label: 'ธนาคาร',
                       icon: AppIcons.bank,
                       color: scheme.primary,
-                      outlined: true,
                     ),
-                    LabelPill(
+                    AppChip(
                       label: 'แชร์ 3 คน',
                       icon: AppIcons.link,
                       color: scheme.primary,
+                      selected: true,
                     ),
                   ],
                   trailing: [

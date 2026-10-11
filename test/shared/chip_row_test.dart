@@ -1,3 +1,4 @@
+import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/shared/widgets/chips/chip_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +14,7 @@ Future<void> _pump(
   bool more = true,
 }) => tester.pumpWidget(
   MaterialApp(
+    theme: ThemeData(extensions: [sweetTheme.lightColors]),
     home: Scaffold(
       body: Align(
         alignment: Alignment.topLeft,

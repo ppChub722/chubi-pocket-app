@@ -46,8 +46,13 @@ class CategoryChipRow extends StatelessWidget {
     this.max = 6,
     this.leadingIcon = true,
     this.maxLines,
+    this.pickLabel,
     super.key,
   });
+
+  /// Non-null: the full-picker chip leads the row, dashed, with this text
+  /// ("เลือกหมวด") instead of "เพิ่มเติม" at the end — the pending form.
+  final String? pickLabel;
 
   final TransactionType? type;
   final Category? selected;
@@ -122,15 +127,18 @@ class CategoryChipRow extends StatelessWidget {
       load: (c) => c.read<CategoriesCubit>().loadIfNeeded(),
       child: ChipRow(
         icon: leadingIcon ? AppIcons.category : null,
-        moreLabel: l.commonMore,
+        moreLabel: pickLabel ?? l.commonMore,
+        moreFirst: pickLabel != null,
         onMore: onMore,
         maxLines: maxLines,
         chips: [
           ...leading,
           if (loading) ..._skeletonChips(),
           for (final c in [for (final id in ids) ?usable[id]])
-            CategoryChip(
-              category: c,
+            categoryAppChip(
+              context,
+              c,
+              all: all,
               selected: c.id == sel?.id,
               onTap: () => onPick(c),
             ),
@@ -228,8 +236,9 @@ class TagChipRow extends StatelessWidget {
           ...leading,
           if (loading) ..._skeletonChips(),
           for (final t in [for (final id in ids) ?(byId[id] ?? known[id])])
-            TagChip(
-              tag: t,
+            tagAppChip(
+              context,
+              t,
               selected: editing ? selected.contains(t.id) : null,
               onTap: editing ? () => onToggle(t.id) : null,
             ),
@@ -254,8 +263,16 @@ class WalletChipRow extends StatelessWidget {
     this.max = 4,
     this.leadingIcon = true,
     this.maxLines,
+    this.pickLabel,
+    this.excludeId,
     super.key,
   });
+
+  /// Like [CategoryChipRow.pickLabel] ("เลือกกระเป๋า").
+  final String? pickLabel;
+
+  /// A wallet left out of the row (a transfer's other side).
+  final String? excludeId;
 
   final String? selectedId;
   final ValueChanged<Account> onPick;
@@ -279,7 +296,10 @@ class WalletChipRow extends StatelessWidget {
     final accState = context.watch<AccountsCubit>().state;
     final accounts = accState.accounts;
     final txs = context.watch<TransactionsCubit>().state.transactions;
-    final byId = {for (final a in accounts) a.id: a};
+    final byId = {
+      for (final a in accounts)
+        if (a.id != excludeId) a.id: a,
+    };
     List<String> rank() {
       final counts = <String, int>{};
       var seen = 0;
@@ -309,14 +329,15 @@ class WalletChipRow extends StatelessWidget {
       load: (c) => c.read<AccountsCubit>().loadIfNeeded(),
       child: ChipRow(
         icon: leadingIcon ? AppIcons.wallet : null,
-        moreLabel: l.commonMore,
+        moreLabel: pickLabel ?? l.commonMore,
+        moreFirst: pickLabel != null,
         onMore: onMore,
         maxLines: maxLines,
         chips: [
           ...leading,
           if (loading) ..._skeletonChips(),
           for (final a in [for (final id in ids) ?byId[id]])
-            RowChip(
+            AppChip(
               label: a.name,
               icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
               color: a.iconCode?.accentColorFor(palette) ?? palette.primary,
@@ -356,10 +377,11 @@ class _EnsureLoadedState extends State<_EnsureLoaded> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Chip-sized shimmer placeholders while a row's list loads.
-List<Widget> _skeletonChips() => [
+/// Chip-sized shimmer placeholders while a row's list loads — [size] high,
+/// like the chips that replace them.
+List<Widget> _skeletonChips({PillSize size = PillSize.control}) => [
   for (final w in const [72.0, 56.0, 64.0])
-    SkeletonBox(width: w, height: PillSize.normal.height, borderRadius: 999),
+    SkeletonBox(width: w, height: size.height, borderRadius: 999),
 ];
 
 /// [first], then [rest] not already in it, up to [max] — distinct.

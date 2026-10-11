@@ -6,9 +6,13 @@ import '../../features/accounts/domain/account.dart';
 /// a page that set it (owner 2026-10-11): on a wallet's detail page (any
 /// of its tabs), that wallet.
 class QuickCreatePreset {
-  const QuickCreatePreset({this.account});
+  const QuickCreatePreset({this.account, this.onAdd});
 
   final Account? account;
+
+  /// Replaces the quick create entirely: the + runs this instead (the
+  /// pending page pushes "เพิ่มร่าง").
+  final VoidCallback? onAdd;
 }
 
 /// The shell's list of pages that offer a [QuickCreatePreset] — one per

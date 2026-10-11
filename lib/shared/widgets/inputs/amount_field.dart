@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_radius.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../chips/app_chip.dart';
 
 /// Keeps a money field as `#,##0.##` while the user types: digits + one
 /// dot, max 2 decimals, commas re-inserted on every edit, caret kept after
@@ -236,9 +237,10 @@ class AmountField extends StatelessWidget {
             spacing: AppSpacing.sm,
             children: [
               for (final q in quickFills)
-                ActionChip(
-                  label: Text(q.label),
-                  onPressed: enabled
+                AppChip(
+                  label: q.label,
+                  enabled: enabled,
+                  onTap: enabled
                       ? () {
                           final text = format(q.amount);
                           controller.value = TextEditingValue(

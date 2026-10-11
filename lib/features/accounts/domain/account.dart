@@ -26,6 +26,8 @@ class Account extends Equatable {
     this.myReportScope,
     this.isShared = false,
     this.identifiers = const [],
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -52,6 +54,9 @@ class Account extends Equatable {
   /// Numbers this wallet is known by on bank slips (spec 15 §5) — the
   /// owner edits them; slip import matches against them.
   final List<AccountIdentifier> identifiers;
+
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   /// Active members other than [selfUserId] — for the "other members"
   /// avatar stack on cards / detail (spec B2: exclude self).
@@ -102,6 +107,8 @@ class Account extends Equatable {
     WalletReportScope? myReportScope,
     bool? isShared,
     List<AccountIdentifier>? identifiers,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Account(
       id: id ?? this.id,
@@ -120,6 +127,8 @@ class Account extends Equatable {
       myReportScope: myReportScope ?? this.myReportScope,
       isShared: isShared ?? this.isShared,
       identifiers: identifiers ?? this.identifiers,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -155,6 +164,8 @@ class Account extends Equatable {
                 .map(AccountIdentifier.fromJson)
                 .toList()
           : const [],
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
+      updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );
   }
 
@@ -215,5 +226,7 @@ class Account extends Equatable {
     identifiers,
     myReportScope,
     isShared,
+    createdAt,
+    updatedAt,
   ];
 }

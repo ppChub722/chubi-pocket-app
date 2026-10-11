@@ -347,12 +347,19 @@ class _MemberRow extends StatelessWidget {
       if (member.leftAt != null) l.walletMemberLeft(_dateOnly(member.leftAt!)),
     ];
     final Widget pill = member.pending
-        ? StatusPill(label: l.walletMemberPending, tone: Tone.warning)
-        : LabelPill(
+        ? AppChip(
+            label: l.walletMemberPending,
+            tone: AppChipTone.warning,
+            selected: true,
+            size: PillSize.chip,
+          )
+        : AppChip(
             label: member.isOwner
                 ? l.walletMemberRoleOwner
                 : l.walletMemberRoleMember,
-            tone: member.isOwner ? Tone.primary : Tone.neutral,
+            tone: member.isOwner ? AppChipTone.primary : AppChipTone.neutral,
+            selected: true,
+            size: PillSize.chip,
           );
     final destructive = TextStyle(color: scheme.error);
     return DetailRow(

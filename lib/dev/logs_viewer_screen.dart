@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../shared/widgets/ui.dart';
 import 'package:flutter/services.dart';
 
 import '../core/constants/app_spacing.dart';
@@ -185,17 +186,17 @@ class _LevelFilterRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          ChoiceChip(
-            label: const Text('All'),
+          AppChip(
+            label: 'All',
             selected: current == null,
-            onSelected: (_) => onChanged(null),
+            onTap: () => onChanged(null),
           ),
           const SizedBox(width: 4),
           for (final lvl in LogLevel.values) ...[
-            ChoiceChip(
-              label: Text('${lvl.tag} ${lvl.wire.toLowerCase()}'),
+            AppChip(
+              label: '${lvl.tag} ${lvl.wire.toLowerCase()}',
               selected: current == lvl,
-              onSelected: (_) => onChanged(lvl),
+              onTap: () => onChanged(lvl),
             ),
             const SizedBox(width: 4),
           ],

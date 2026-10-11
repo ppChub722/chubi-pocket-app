@@ -135,11 +135,10 @@ void main() {
     expect(drafts[0].identityLocked, isFalse); // typed name
     expect(drafts[1].identityLocked, isFalse); // plain contact
     expect(drafts[2].identityLocked, isTrue); // linked to an app user
-    // One 🔒, on ต้น's chip.
-    final locks = find.byIcon(AppIcons.lock);
-    expect(locks, findsOneWidget);
+    // One 🔒, on ต้น's row (a tap-to-read hint around it).
+    expect(find.byIcon(AppIcons.lock), findsOneWidget);
     expect(
-      find.ancestor(of: locks, matching: find.widgetWithText(RowChip, 'ต้น')),
+      find.ancestor(of: find.text('ต้น'), matching: find.byType(Tooltip)),
       findsOneWidget,
     );
   });
@@ -154,10 +153,12 @@ void main() {
     ]);
   });
 
-  testWidgets('the อัตโนมัติ chip: tap → on; typing ฉัน → off', (t) async {
+  testWidgets('the ⟳ อัตโนมัติ icon: tap → on; typing ฉัน → off', (t) async {
     await pump(t);
-    expect(find.text('อัตโนมัติ'), findsOneWidget);
-    await t.tap(find.text('อัตโนมัติ'));
+    // Icon only, in the ✕ slot of the ฉัน row.
+    expect(find.text('อัตโนมัติ'), findsNothing);
+    expect(find.byTooltip('อัตโนมัติ'), findsOneWidget);
+    await t.tap(find.byTooltip('อัตโนมัติ'));
     await t.pump();
     expect(auto, isTrue);
 
@@ -172,12 +173,40 @@ void main() {
     t,
   ) async {
     await pump(t);
-    await t.tap(find.text('อัตโนมัติ'));
+    await t.tap(find.byTooltip('อัตโนมัติ'));
     await t.pump();
     await t.tap(find.text('หารเท่ากัน'));
     await t.pump();
     expect(drafts.map((d) => d.owedAmount), everyElement(25));
     expect(meTyped, 0);
     expect(auto, isTrue);
+  });
+
+  testWidgets('a typed name is an input; a contact name is read-only text', (
+    t,
+  ) async {
+    await pump(t);
+    // ฉัน amount + ลี name + 3 amounts: บี and ต้น are plain text.
+    expect(find.byType(TextField), findsNWidgets(5));
+    expect(find.widgetWithText(TextField, 'ลี'), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'บี'), findsNothing);
+    expect(find.text('บี'), findsWidgets); // the name (+ the avatar's initials)
+
+    await t.enterText(find.widgetWithText(TextField, 'ลี'), 'ลีลา');
+    await t.pump();
+    expect(drafts[0].personName, 'ลีลา');
+    expect(drafts[0].contactId, isNull);
+  });
+
+  testWidgets('+ เพิ่มคน adds an empty typed row, its name focused', (t) async {
+    await pump(t);
+    await t.tap(find.text('เพิ่มคน'));
+    await t.pump();
+    expect(drafts, hasLength(4));
+    expect(drafts.last.personName, isEmpty);
+    expect(drafts.last.contactId, isNull);
+    // ฉัน amount, then per person name + amount: the new name is at 5.
+    final name = t.widget<TextField>(find.byType(TextField).at(5));
+    expect(name.focusNode!.hasFocus, isTrue);
   });
 }

@@ -131,12 +131,11 @@ class _PersonalDebtsPageState extends State<PersonalDebtsPage> {
                               label: l.debtsStatusAll,
                             ),
                           ],
-                          builder: (context, toggle) => FilterDropdownChip(
-                            label: l.debtsStatusLabel,
-                            valueLabel: _status == _Status.open
-                                ? l.debtsStatusOpen
-                                : l.debtsStatusAll,
-                            active: _status != _Status.open,
+                          builder: (context, toggle) => AppChip(
+                            label:
+                                '${l.debtsStatusLabel}: ${_status == _Status.open ? l.debtsStatusOpen : l.debtsStatusAll}',
+                            selected: _status != _Status.open,
+                            trailing: AppChipTrailing.dropdown,
                             onTap: toggle,
                           ),
                         ),

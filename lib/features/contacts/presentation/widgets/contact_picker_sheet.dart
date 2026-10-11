@@ -6,6 +6,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../../core/network/api_exception.dart';
 import '../cubit/contacts_cubit.dart';
+import '../pages/contact_detail_page.dart';
 import '../../domain/contact.dart';
 import 'contact_linked_mark.dart';
 
@@ -30,12 +31,15 @@ class ContactNameTyped extends ContactPickResult {
 /// or (when [allowFreeText]) a typed name for someone not in the book —
 /// "ใช้ชื่อนี้" as it is, or "＋ บันทึกเป็นผู้ติดต่อ" (made, then picked).
 /// The current one is highlighted (no ✓). Used by debts, bill splits and
-/// project members. Contacts come from [ContactsCubit], so a failed load
+/// project members. [allowCreate] adds "สร้างผู้ติดต่อใหม่": the create page
+/// is pushed over the sheet (like a category over its picker); saving there
+/// picks the new contact, back returns here. Contacts come from [ContactsCubit], so a failed load
 /// shows an error with retry, not "no contacts".
 Future<ContactPickResult?> showContactPickerSheet(
   BuildContext context, {
   String? selectedContactId,
   bool allowFreeText = true,
+  bool allowCreate = false,
   String? title,
 }) {
   context.read<ContactsCubit>().loadIfNeeded();
@@ -45,6 +49,7 @@ Future<ContactPickResult?> showContactPickerSheet(
       title: title ?? AppLocalizations.of(context)!.contactPickerTitle,
       selectedContactId: selectedContactId,
       allowFreeText: allowFreeText,
+      allowCreate: allowCreate,
     ),
   );
 }
@@ -54,11 +59,13 @@ class _ContactPicker extends StatefulWidget {
     required this.title,
     required this.selectedContactId,
     required this.allowFreeText,
+    required this.allowCreate,
   });
 
   final String title;
   final String? selectedContactId;
   final bool allowFreeText;
+  final bool allowCreate;
 
   @override
   State<_ContactPicker> createState() => _ContactPickerState();
@@ -102,6 +109,18 @@ class _ContactPickerState extends State<_ContactPicker> {
     }
   }
 
+  /// The create page, pushed over the sheet. Saving there pops with the new
+  /// contact → pick it; back (nothing saved) returns to the picker.
+  Future<void> _create() async {
+    final created = await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<Contact>(
+        builder: (_) => const ContactDetailPage(popOnCreate: true),
+      ),
+    );
+    if (!mounted || created == null) return;
+    Navigator.of(context).pop(ContactPicked(created));
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -123,6 +142,9 @@ class _ContactPickerState extends State<_ContactPicker> {
           ? state.error
           : null,
       onRetry: context.read<ContactsCubit>().load,
+      footer: widget.allowCreate
+          ? PickerCreateRow(label: l.contactPickerCreateNew, onTap: _create)
+          : null,
       builder: (context, lower) {
         final scheme = Theme.of(context).colorScheme;
         final typed = _search.text.trim();
@@ -181,7 +203,9 @@ class _ContactPickerState extends State<_ContactPicker> {
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Text(
-                  l.contactPickerEmpty,
+                  widget.allowFreeText
+                      ? l.contactPickerEmpty
+                      : l.contactPickerEmptyPlain,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,

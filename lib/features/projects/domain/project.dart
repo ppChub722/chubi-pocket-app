@@ -99,6 +99,8 @@ class Project extends Equatable {
     this.membersCount = 0,
     this.iconCode,
     this.plannedAmount,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -117,6 +119,12 @@ class Project extends Equatable {
   /// NULL = the plan UI is hidden entirely. Display-only, never a
   /// constraint.
   final double? plannedAmount;
+
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  static DateTime? _date(Object? v) =>
+      v is String ? DateTime.tryParse(v)?.toLocal() : null;
 
   bool get isActive => status == ProjectStatus.active;
   bool get isLocked =>
@@ -140,6 +148,8 @@ class Project extends Equatable {
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
       plannedAmount: (json['planned_amount'] as num?)?.toDouble(),
+      createdAt: _date(json['created_at']),
+      updatedAt: _date(json['updated_at']),
     );
   }
 
@@ -157,6 +167,8 @@ class Project extends Equatable {
     membersCount,
     iconCode,
     plannedAmount,
+    createdAt,
+    updatedAt,
   ];
 }
 

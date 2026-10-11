@@ -77,6 +77,7 @@ abstract final class AppIcons {
   static const font = Icons.text_fields_outlined;
   static const lightMode = Icons.light_mode_outlined;
   static const darkMode = Icons.dark_mode_outlined;
+  static const systemMode = Icons.smartphone_outlined;
   static const email = Icons.mail_outline;
 
   // ── Actions ──────────────────────────────────────────────────────────
@@ -193,6 +194,7 @@ abstract final class AppIcons {
       'font': font,
       'lightMode': lightMode,
       'darkMode': darkMode,
+      'systemMode': systemMode,
       'email': email,
     },
     'Actions': {

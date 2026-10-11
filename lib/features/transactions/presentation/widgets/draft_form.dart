@@ -34,7 +34,9 @@ import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../scheduled_transactions/domain/scheduled_enums.dart';
 import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
+import '../../../projects/presentation/cubit/projects_cubit.dart';
 import 'account_picker_sheet.dart';
+import 'event_pick.dart';
 import 'pick_chip_rows.dart';
 import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
@@ -187,12 +189,24 @@ class DraftFormController extends ChangeNotifier {
   /// A saved row's tags, for ones missing from this user's list.
   final Map<String, Tag> knownTags = {};
 
+  /// A draft's event (`project_id`): an existing event the draft joins when
+  /// it's confirmed. [projectName] is what to show until the events load.
+  String? projectId;
+  String? projectName;
+
+  void setProject(String? id, {String? name}) {
+    projectId = id;
+    projectName = id == null ? null : name;
+    notifyListeners();
+  }
+
   bool get isTransfer => type == TransactionType.transfer;
   double get amountValue => AmountField.parse(amount.text) ?? 0;
 
   /// Anything beyond the basics: tags, splits, project tags / splits.
   bool get hasExtras =>
       tagIds.isNotEmpty ||
+      projectId != null ||
       splits.any((s) => s.isComplete) ||
       tagNames.isNotEmpty ||
       memberSplits.isNotEmpty;
@@ -338,6 +352,7 @@ class DraftFormController extends ChangeNotifier {
         .firstOrNull;
     category = categories.where((c) => c.id == d.categoryId).firstOrNull;
     tagIds.addAll(d.tagIds);
+    projectId = d.projectId;
     splits = [
       for (final s in d.splits)
         SplitDraft(
@@ -490,7 +505,10 @@ class DraftFormController extends ChangeNotifier {
   }
 
   /// The fields as a draft — no validation, anything may be empty.
-  PendingDraft toDraft() {
+  /// [keepIncomplete] (a draft saved for later): half-filled split rows —
+  /// a name without an amount or the other way round — stay in it for
+  /// finishing later; otherwise only complete rows go.
+  PendingDraft toDraft({bool keepIncomplete = false}) {
     final d = description.text.trim();
     final n = note.text.trim();
     return PendingDraft(
@@ -505,7 +523,17 @@ class DraftFormController extends ChangeNotifier {
       tagIds: tagIds.toList(),
       splits: isTransfer
           ? const []
-          : [for (final s in splits.where((s) => s.isComplete)) s.toJson()],
+          : [
+              for (final s in splits.where(
+                (s) =>
+                    s.isComplete ||
+                    (keepIncomplete &&
+                        (s.personName.trim().isNotEmpty ||
+                            (s.owedAmount ?? 0) > 0)),
+              ))
+                s.toJson(),
+            ],
+      projectId: isTransfer ? null : projectId,
     );
   }
 
@@ -583,8 +611,16 @@ class DraftForm extends StatefulWidget {
     this.event,
     this.schedule,
     this.heroKey,
+    this.chipLayout = false,
     super.key,
   });
+
+  /// The pending drafts' layout (owner 2026-10-11, "เพิ่มร่าง" rows and
+  /// "แก้ร่าง"): no category / wallet cards — a wallet chip row above a
+  /// category chip row, each led by a dashed "เลือก…" chip for the full
+  /// picker — then tags, the inline note, and a collapsible "หารกับ /
+  /// อีเวนต์" section (an event is an existing one, `project_id`).
+  final bool chipLayout;
 
   /// Put on the [TxHeroCard] — the quick create watches where it scrolled
   /// to (its title row shows the amount once the card is out of view).
@@ -657,6 +693,8 @@ class _DraftFormState extends State<DraftForm> {
   /// categories) — see [ChipOrder].
   final _categoryOrders = <TransactionType, ChipOrder>{};
   final _tagOrder = ChipOrder();
+  final _walletOrder = ChipOrder();
+  final _toWalletOrder = ChipOrder();
 
   DraftFormController get _c => widget.controller;
 
@@ -833,89 +871,181 @@ class _DraftFormState extends State<DraftForm> {
               onEdit: widget.onEdit,
               onLongPressField: enterEdit,
               inline: true,
-              // View mode: the same category · wallet cards as editing, inside
-              // the card (owner 2026-10-10); they open their pages.
-              footer: editing
-                  ? null
-                  : longPressable(_cardsRow(l, isTransfer: isTransfer)),
               // "ส่วนของคุณ" under the total — while editing only where
               // splits can be edited; in view whenever the people loaded.
               amountNote: !isTransfer && (!editing || widget.allowSplits)
                   ? _ShareLine.of(_c)
                   : null,
             ),
-            if (editing) ...[
-              // 16 from the hero to the next block (HeroSpacing.after).
+            if (widget.chipLayout)
+              ..._chipBody(l, isTransfer: isTransfer)
+            else ...[
+              // Category · wallet cards under the hero, view and edit alike
+              // (owner 2026-10-11: out of the hero card, so the detail matches
+              // the edit page). 16 from the hero (HeroSpacing.after). View
+              // mode: nothing opens, a long-press enters edit.
               const SizedBox(height: HeroSpacing.after),
-              _cardsRow(l, isTransfer: isTransfer),
-              if (editing && !isTransfer && categoryHint != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.xs,
-                    AppSpacing.md,
-                    0,
-                  ),
-                  child: Text(
-                    categoryHint,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+              longPressable(_cardsRow(l, isTransfer: isTransfer)),
+              if (editing) ...[
+                if (editing && !isTransfer && categoryHint != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.xs,
+                      AppSpacing.md,
+                      0,
+                    ),
+                    child: Text(
+                      categoryHint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                ),
-              // One tap on a recent category picks it (owner 2026-10-10).
-              if (editing && !isTransfer && categoryHint == null) ...[
+                // One tap on a recent category picks it (owner 2026-10-10).
+                if (editing && !isTransfer && categoryHint == null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  CategoryChipRow(
+                    type: _c.type,
+                    selected: _c.category,
+                    onPick: _c.setCategory,
+                    onMore: _pickCategory,
+                    order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
+                  ),
+                ],
+                // Editing, sectioned or not: [🏷 chips…] right under the
+                // category chips (owner 2026-10-11 — not a "แท็ก" row in the
+                // sections). View mode keeps the section row.
                 const SizedBox(height: AppSpacing.sm),
-                CategoryChipRow(
-                  type: _c.type,
-                  selected: _c.category,
-                  onPick: _c.setCategory,
-                  onMore: _pickCategory,
-                  order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
+                TagChipRow(
+                  selected: _c.tagIds,
+                  onToggle: _c.toggleTag,
+                  onMore: _moreTags,
+                  known: _c.knownTags,
+                  order: _tagOrder,
+                ),
+              ] else if (_c.tagIds.isNotEmpty) ...[
+                // View, sectioned or not: under the cards, as chips led by the
+                // tag icon like the edit row — no "แท็ก" row (owner 2026-10-11).
+                SizedBox(
+                  height: widget.sectioned ? HeroSpacing.after : AppSpacing.md,
+                ),
+                longPressable(
+                  TxTagStrip(
+                    tags: [
+                      for (final id in _c.tagIds)
+                        ?(context
+                                .read<TagsCubit>()
+                                .state
+                                .tags
+                                .where((t) => t.id == id)
+                                .firstOrNull ??
+                            _c.knownTags[id]),
+                    ],
+                  ),
                 ),
               ],
-              // Editing, sectioned or not: [🏷 chips…] right under the
-              // category chips (owner 2026-10-11 — not a "แท็ก" row in the
-              // sections). View mode keeps the section row.
-              const SizedBox(height: AppSpacing.sm),
-              TagChipRow(
-                selected: _c.tagIds,
-                onToggle: _c.toggleTag,
-                onMore: _moreTags,
-                known: _c.knownTags,
-                order: _tagOrder,
-              ),
-            ] else if (_c.tagIds.isNotEmpty) ...[
-              // View, sectioned or not: right under the card, as chips led
-              // by the tag icon like the edit row — no "แท็ก" row (owner
-              // 2026-10-11).
-              SizedBox(
-                height: widget.sectioned ? HeroSpacing.after : AppSpacing.md,
-              ),
-              longPressable(
-                TxTagStrip(
-                  tags: [
-                    for (final id in _c.tagIds)
-                      ?(context
-                              .read<TagsCubit>()
-                              .state
-                              .tags
-                              .where((t) => t.id == id)
-                              .firstOrNull ??
-                          _c.knownTags[id]),
-                  ],
-                ),
-              ),
+              ...widget.sectioned
+                  ? _sections(l, editing: editing, isTransfer: isTransfer)
+                  : _detailRows(l, editing: editing, isTransfer: isTransfer),
             ],
-            ...widget.sectioned
-                ? _sections(l, editing: editing, isTransfer: isTransfer)
-                : _detailRows(l, editing: editing, isTransfer: isTransfer),
           ],
         );
         if (!widget.readOnly) return form;
         return IgnorePointer(child: Opacity(opacity: 0.6, child: form));
       },
     );
+  }
+
+  /// [DraftForm.chipLayout] below the hero:
+  ///
+  ///   [💳] [＋ เลือกกระเป๋า] [กสิกร] [เงินสด]      (a transfer: จาก / ไป rows)
+  ///   [🏷] [＋ เลือกหมวด] [อาหาร] [เดินทาง]         (not for a transfer)
+  ///   [🏷] [#a] [#b] [⋯]
+  ///   โน้ต  [ … ]
+  ///   หารกับ / อีเวนต์  (summary)                ⌄   (collapsed, not a transfer)
+  List<Widget> _chipBody(AppLocalizations l, {required bool isTransfer}) {
+    const gap = SizedBox(height: AppSpacing.sm);
+    Widget walletRow({
+      required Account? selected,
+      required ValueChanged<Account> onPick,
+      required VoidCallback onMore,
+      required ChipOrder order,
+      required String label,
+      String? excludeId,
+    }) => WalletChipRow(
+      selectedId: selected?.id,
+      onPick: onPick,
+      onMore: onMore,
+      order: order,
+      pickLabel: label,
+      excludeId: excludeId,
+    );
+    return [
+      const SizedBox(height: HeroSpacing.after),
+      if (isTransfer) ...[
+        walletRow(
+          selected: _c.account,
+          onPick: _c.setAccount,
+          onMore: _pickAccount,
+          order: _walletOrder,
+          label: l.draftPickWalletFrom,
+          excludeId: _c.toAccount?.id,
+        ),
+        gap,
+        walletRow(
+          selected: _c.toAccount,
+          onPick: _c.setToAccount,
+          onMore: () => _pickAccount(to: true),
+          order: _toWalletOrder,
+          label: l.draftPickWalletTo,
+          excludeId: _c.account?.id,
+        ),
+      ] else ...[
+        walletRow(
+          selected: _c.account,
+          // Tapping the picked wallet again leaves it out (a wallet is
+          // optional here).
+          onPick: (a) => _c.setAccount(_c.account?.id == a.id ? null : a),
+          onMore: _pickAccount,
+          order: _walletOrder,
+          label: l.quickPickWallet,
+        ),
+        gap,
+        CategoryChipRow(
+          type: _c.type,
+          selected: _c.category,
+          onPick: _c.setCategory,
+          onMore: _pickCategory,
+          order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
+          pickLabel: l.draftPickCategory,
+        ),
+      ],
+      gap,
+      TagChipRow(
+        selected: _c.tagIds,
+        onToggle: _c.toggleTag,
+        onMore: _moreTags,
+        known: _c.knownTags,
+        order: _tagOrder,
+      ),
+      gap,
+      DraftFieldRow(
+        label: l.commonNote,
+        child: InlineField(
+          editing: true,
+          controller: _c.note,
+          focusNode: _noteFocus,
+          maxLines: 5,
+          maxLength: TextLimits.note,
+          hint: l.txNoteAddHint,
+        ),
+      ),
+      if (!isTransfer) ...[
+        gap,
+        _DraftExtras(controller: _c, eventPending: widget.eventPending),
+      ],
+    ];
   }
 
   /// Category + wallet cards, one row — a transfer [จาก] → [ไป]. Editing:
@@ -984,7 +1114,7 @@ class _DraftFormState extends State<DraftForm> {
   /// [DraftForm.sectioned] — the detail page below the hero (and, in view
   /// mode, the [TxTagStrip] under it):
   ///
-  ///   โน้ต                               (label on top, full width)
+  ///   โน้ต   [ the input, wrapping in its column ]  (label left)
   ///   ▬▬▬▬
   ///   หารกับ        [+ เพิ่มคน] [หารเท่ากัน]   (edit: the split editor)
   ///   …[DraftForm.trailingRows]: the page's sections (view splits, event)
@@ -999,16 +1129,24 @@ class _DraftFormState extends State<DraftForm> {
     final enter = widget.onEnterEdit;
     final first = <Widget>[
       if (editing || enter != null || _c.note.text.trim().isNotEmpty)
-        DetailStacked(
-          label: l.commonNote,
-          child: InlineField(
-            editing: editing,
-            controller: _c.note,
-            focusNode: _noteFocus,
-            maxLines: 5,
-            maxLength: TextLimits.note,
-            hint: l.txNoteAddHint,
-            onEnterEdit: enter == null ? null : () => enter(_noteFocus),
+        // "โน้ต" left, the input right (owner 2026-10-11, like the pending
+        // add page); a long note wraps inside the right column.
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          child: DraftFieldRow(
+            label: l.commonNote,
+            child: InlineField(
+              editing: editing,
+              controller: _c.note,
+              focusNode: _noteFocus,
+              maxLines: 5,
+              maxLength: TextLimits.note,
+              hint: l.txNoteAddHint,
+              onEnterEdit: enter == null ? null : () => enter(_noteFocus),
+            ),
           ),
         ),
     ];
@@ -1138,7 +1276,9 @@ class TxTagStrip extends StatelessWidget {
           child: Wrap(
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
-            children: [for (final t in tags) TagChip(tag: t)],
+            children: [
+              for (final t in tags) tagAppChip(context, t, size: PillSize.chip),
+            ],
           ),
         ),
       ],
@@ -1292,6 +1432,143 @@ class _ShareLine extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// The drafts' collapsible "หารกับ / อีเวนต์" (owner 2026-10-11): closed it
+/// is one line — the title and a summary of what's set ("หารกับ 2 คน ·
+/// ทริปเชียงใหม่"); open it holds the split editor and the event row, the
+/// same pieces as the quick create. A draft may keep half-filled splits;
+/// confirming needs them balanced.
+class _DraftExtras extends StatefulWidget {
+  const _DraftExtras({required this.controller, required this.eventPending});
+
+  final DraftFormController controller;
+  final bool eventPending;
+
+  @override
+  State<_DraftExtras> createState() => _DraftExtrasState();
+}
+
+class _DraftExtrasState extends State<_DraftExtras> {
+  bool _open = false;
+
+  DraftFormController get _c => widget.controller;
+
+  Future<void> _pickEvent() async {
+    final r = await showEventTargetSheet(
+      context,
+      suggestedName: '',
+      selectedProjectId: _c.projectId,
+      // A draft can only name an event that exists.
+      allowCreate: false,
+    );
+    if (!mounted) return;
+    if (r is ExistingEventTarget) {
+      _c.setProject(r.project.id, name: r.project.name);
+    }
+  }
+
+  /// The event's name: from the loaded events, else the picked one.
+  String? _eventName(BuildContext context) {
+    final id = _c.projectId;
+    if (id == null) return null;
+    final known = context
+        .watch<ProjectsCubit>()
+        .state
+        .projects
+        .where((p) => p.id == id)
+        .firstOrNull;
+    return known?.name ??
+        _c.projectName ??
+        AppLocalizations.of(context)!.quickEventLabel;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final eventName = _eventName(context);
+    final people = _c.splits
+        .where((s) => s.personName.trim().isNotEmpty || (s.owedAmount ?? 0) > 0)
+        .length;
+    final summary = [
+      if (people > 0) l.draftExtrasSplits(people),
+      ?eventName,
+    ].join(' · ');
+    final pending = widget.eventPending || _c.projectId != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _open = !_open),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            child: Row(
+              children: [
+                Icon(AppIcons.split, size: 18, color: scheme.onSurfaceVariant),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  l.draftExtrasTitle,
+                  style: textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _open
+                      ? const SizedBox.shrink()
+                      : Text(
+                          summary.isEmpty ? l.draftExtrasNone : summary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: summary.isEmpty
+                                ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
+                                : null,
+                            fontWeight: summary.isEmpty
+                                ? null
+                                : FontWeight.w600,
+                          ),
+                        ),
+                ),
+                Icon(
+                  _open ? AppIcons.collapse : AppIcons.expand,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_open) ...[
+          SplitsSection(
+            label: pending
+                ? l.txSplitInEvent
+                : _c.type == TransactionType.income
+                ? l.txSplitShareShort
+                : l.txSplitWith,
+            helper: pending ? l.txSplitInEventHelper : null,
+            totalAmount: _c.splitCap,
+            overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
+            drafts: _c.splits,
+            onChanged: _c.setSplits,
+            me: _c.meAmount,
+            onMeChanged: _c.setMeAmount,
+            meAuto: _c.meAuto,
+            onMeAutoChanged: _c.setMeAuto,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          EventRow(
+            name: eventName,
+            onTap: _pickEvent,
+            onClear: eventName == null ? null : () => _c.setProject(null),
+          ),
+        ],
       ],
     );
   }

@@ -5,16 +5,20 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/shell_chrome.dart';
+import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../shared/icon_maker/icon_display.dart';
+import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../categories/domain/category_tree.dart';
+import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
@@ -169,147 +173,186 @@ class _PendingPageState extends State<PendingPage> {
             ),
       // Pinned rows clear the floating bar; the list below them must not
       // add the bar height again.
-      body: TabSwitchBody(
-        child: Builder(
-          builder: (context) => MediaQuery.removePadding(
-            context: context,
-            removeTop: true,
-            child: Column(
-              children: [
-                SizedBox(height: MediaQuery.paddingOf(context).top),
-                if (visible.isNotEmpty)
-                  _ToolRow(
-                    picked: pickedVisible,
-                    total: visible.length,
-                    selectAllTooltip: l.pendingSelectAll,
-                    onDiscard: pickedVisible == 0
-                        ? null
-                        : () => _discardSelected(visible),
-                    onImportSlip: canImportSlip ? importSlip : null,
-                    onSelectAll: () => setState(
-                      () => pickedVisible == visible.length
-                          ? _selected.removeAll(visible.map((p) => p.id))
-                          : _selected.addAll(visible.map((p) => p.id)),
+      body: QuickCreatePresetScope(
+        preset: QuickCreatePreset(onAdd: () => context.push('/pending/new')),
+        child: TabSwitchBody(
+          child: Builder(
+            builder: (context) => MediaQuery.removePadding(
+              context: context,
+              removeTop: true,
+              child: Column(
+                children: [
+                  SizedBox(height: MediaQuery.paddingOf(context).top),
+                  if (visible.isNotEmpty)
+                    _ToolRow(
+                      picked: pickedVisible,
+                      total: visible.length,
+                      selectAllTooltip: l.pendingSelectAll,
+                      onDiscard: pickedVisible == 0
+                          ? null
+                          : () => _discardSelected(visible),
+                      onImportSlip: canImportSlip ? importSlip : null,
+                      onSelectAll: () => setState(
+                        () => pickedVisible == visible.length
+                            ? _selected.removeAll(visible.map((p) => p.id))
+                            : _selected.addAll(visible.map((p) => p.id)),
+                      ),
                     ),
-                  ),
-                if (others > 0)
-                  FilterBar(
-                    chips: [
-                      for (final f in _Filter.values)
-                        FilterDropdownChip(
-                          label: switch (f) {
-                            _Filter.all => l.pendingFilterAll(all.length),
-                            _Filter.manual => l.pendingFilterManual(manual),
-                            _Filter.others => l.pendingFilterOthers(others),
-                          },
-                          active: _filter == f,
-                          // Ticks the new filter hides are dropped, so
-                          // "ยืนยันที่เลือก (n)" counts and sends only
-                          // what's on screen (owner 2026-10-10).
-                          onTap: () => setState(() {
-                            _filter = f;
-                            final shown = _visible(all).map((p) => p.id);
-                            _selected.retainAll(shown);
-                          }),
-                        ),
-                    ],
-                  ),
-                if (result != null && result.failed > 0)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      0,
-                      AppSpacing.lg,
-                      AppSpacing.sm,
-                    ),
-                    child: MessageBanner(
-                      message: l.pendingResult(result.done, result.failed),
-                      tone: Tone.warning,
-                      onClose: () => setState(() => _lastResult = null),
-                    ),
-                  ),
-                Expanded(
-                  child: AsyncStateView(
-                    loading:
-                        state.status == PendingStatus.initial ||
-                        state.status == PendingStatus.loading,
-                    error: state.error,
-                    isEmpty: visible.isEmpty,
-                    onRetry: context.read<PendingCubit>().load,
-                    skeleton: ListView(
-                      children: [
-                        for (var i = 0; i < 4; i++) const SkeletonListTile(),
+                  if (others > 0)
+                    FilterBar(
+                      chips: [
+                        for (final f in _Filter.values)
+                          AppChip(
+                            trailing: AppChipTrailing.dropdown,
+                            label: switch (f) {
+                              _Filter.all => l.pendingFilterAll(all.length),
+                              _Filter.manual => l.pendingFilterManual(manual),
+                              _Filter.others => l.pendingFilterOthers(others),
+                            },
+                            selected: _filter == f,
+                            // Ticks the new filter hides are dropped, so
+                            // "ยืนยันที่เลือก (n)" counts and sends only
+                            // what's on screen (owner 2026-10-10).
+                            onTap: () => setState(() {
+                              _filter = f;
+                              final shown = _visible(all).map((p) => p.id);
+                              _selected.retainAll(shown);
+                            }),
+                          ),
                       ],
                     ),
-                    empty: EmptyView(
-                      icon: AppIcons.empty,
-                      title: l.pendingEmptyTitle,
-                      message: l.pendingEmptyMessage,
-                      cta: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (canImportSlip) ...[
-                            AddTile(
-                              label: l.pendingImportSlip,
-                              icon: AppIcons.importSlip,
-                              variant: AddTileVariant.row,
-                              onTap: importSlip,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                          ],
-                          AddTile(
-                            label: l.pendingAdd,
-                            onTap: () => context.push('/pending/new'),
-                          ),
-                        ],
+                  if (result != null && result.failed > 0)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        0,
+                        AppSpacing.lg,
+                        AppSpacing.sm,
+                      ),
+                      child: MessageBanner(
+                        message: l.pendingResult(result.done, result.failed),
+                        tone: Tone.warning,
+                        onClose: () => setState(() => _lastResult = null),
                       ),
                     ),
-                    builder: (context) => PullToRefresh(
-                      onRefresh: context.read<PendingCubit>().load,
-                      child: ListView.separated(
-                        // Room under the last row for the floating chat button.
-                        padding: EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          0,
-                          AppSpacing.lg,
-                          96 + MediaQuery.paddingOf(context).bottom,
-                        ),
-                        itemCount: visible.length + 1,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: AppSpacing.sm),
-                        itemBuilder: (context, i) {
-                          // "เพิ่มร่าง" closes the list.
-                          if (i == visible.length) {
-                            return AddTile(
+                  Expanded(
+                    child: AsyncStateView(
+                      loading:
+                          state.status == PendingStatus.initial ||
+                          state.status == PendingStatus.loading,
+                      error: state.error,
+                      isEmpty: visible.isEmpty,
+                      onRetry: context.read<PendingCubit>().load,
+                      skeleton: ListView(
+                        children: [
+                          for (var i = 0; i < 4; i++) const SkeletonListTile(),
+                        ],
+                      ),
+                      empty: EmptyView(
+                        icon: AppIcons.empty,
+                        title: l.pendingEmptyTitle,
+                        message: l.pendingEmptyMessage,
+                        cta: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (canImportSlip) ...[
+                              AddTile(
+                                label: l.pendingImportSlip,
+                                icon: AppIcons.importSlip,
+                                variant: AddTileVariant.row,
+                                onTap: importSlip,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                            ],
+                            AddTile(
                               label: l.pendingAdd,
-                              variant: AddTileVariant.row,
                               onTap: () => context.push('/pending/new'),
-                            );
-                          }
-                          final p = visible[i];
-                          return _PendingCard(
-                            item: p,
-                            selected: _selected.contains(p.id),
-                            onToggle: () => setState(
-                              () => _selected.contains(p.id)
-                                  ? _selected.remove(p.id)
-                                  : _selected.add(p.id),
                             ),
-                            onOpen: () =>
-                                showQuickCreateSheet(context, draft: p),
-                          );
-                        },
+                          ],
+                        ),
+                      ),
+                      builder: (context) => PullToRefresh(
+                        onRefresh: context.read<PendingCubit>().load,
+                        child: ListView(
+                          // Room under the last row for the floating chat button.
+                          padding: EdgeInsets.only(
+                            bottom: 96 + MediaQuery.paddingOf(context).bottom,
+                          ),
+                          children: [
+                            ..._rows(context, visible),
+                            // "เพิ่มร่าง" closes the list.
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.lg,
+                                AppSpacing.md,
+                                AppSpacing.lg,
+                                0,
+                              ),
+                              child: AddTile(
+                                label: l.pendingAdd,
+                                variant: AddTileVariant.row,
+                                onTap: () => context.push('/pending/new'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Rows under day headers (the draft's date; undated first) — the same
+  /// grouping as the transaction list, newest day first.
+  List<Widget> _rows(BuildContext context, List<PendingTransaction> visible) {
+    final l = AppLocalizations.of(context)!;
+    final days = <String, List<PendingTransaction>>{};
+    for (final p in visible) {
+      days.putIfAbsent(p.draft.date ?? '', () => []).add(p);
+    }
+    final keys = days.keys.toList()..sort((a, b) => b.compareTo(a));
+    // '' (no date) sorts last descending; show it first.
+    if (keys.remove('')) keys.insert(0, '');
+    final out = <Widget>[];
+    for (final k in keys) {
+      final d = DateFormatter.parseDay(k);
+      if (k.isNotEmpty) {
+        out.add(
+          DateGroupHeader(
+            label: d == null
+                ? k
+                : DateFormatter.friendly(
+                    d,
+                    today: l.commonToday,
+                    yesterday: l.commonYesterday,
+                    locale: Localizations.localeOf(context).languageCode,
+                  ),
+          ),
+        );
+      }
+      for (final p in days[k]!) {
+        out.add(
+          _PendingCard(
+            item: p,
+            selected: _selected.contains(p.id),
+            onToggle: () => setState(
+              () => _selected.contains(p.id)
+                  ? _selected.remove(p.id)
+                  : _selected.add(p.id),
+            ),
+            onOpen: () => showQuickCreateSheet(context, draft: p),
+          ),
+        );
+      }
+    }
+    return out;
   }
 }
 
@@ -355,28 +398,27 @@ class _ToolRow extends StatelessWidget {
             onTap: onSelectAll,
           ),
           const Spacer(),
-          ActionPill(
-            icon: AppIcons.delete,
-            label: l.commonDelete,
-            destructive: true,
-            onTap: onDiscard,
-          ),
           if (onImportSlip != null) ...[
-            const SizedBox(width: AppSpacing.xs),
-            ActionPill(
+            AppChip(
               icon: AppIcons.importSlip,
               label: l.pendingImportSlip,
+              tone: AppChipTone.primary,
+              selected: true,
               onTap: onImportSlip,
             ),
+            const SizedBox(width: AppSpacing.sm),
           ],
+          BulkDeleteButton(tooltip: l.commonDelete, onPressed: onDiscard),
         ],
       ),
     );
   }
 }
 
-/// One draft: source · date, title + amount, details, and why it can't go
-/// yet (last submit error, or a field it still needs).
+/// One draft, as the shared [TxRow] (same as the transaction list): the
+/// source as a mini chip on line 2, a checkbox first, and why it can't go
+/// yet (last submit error, or a field it still needs) under it. The date is
+/// in the day-group header, not here.
 class _PendingCard extends StatelessWidget {
   const _PendingCard({
     required this.item,
@@ -395,34 +437,29 @@ class _PendingCard extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
     final d = item.draft;
     final accounts = context.watch<AccountsCubit>().state.accounts;
-    final categories = context.watch<CategoriesCubit>().state.categories;
+    final catCubit = context.watch<CategoriesCubit>();
     final tags = context.watch<TagsCubit>().state.tags;
 
-    final category = categories.where((c) => c.id == d.categoryId).firstOrNull;
+    final category = catCubit.state.categories
+        .where((c) => c.id == d.categoryId)
+        .firstOrNull;
     final wallet = accounts.where((a) => a.id == d.accountId).firstOrNull;
     final toWallet = accounts
         .where((a) => a.id == d.transferToAccountId)
         .firstOrNull;
     // The draft's own title ("what for") first, else its category.
     final description = d.description?.trim() ?? '';
+    final categoryName = category == null
+        ? null
+        : categoryDisplayName(l, category);
     final title = description.isNotEmpty
         ? description
-        : category?.name ?? l.pendingUntitled;
-    final meta = <String>[
-      if (d.type == TransactionType.transfer)
-        '${wallet?.name ?? '?'} → ${toWallet?.name ?? '?'}'
-      else ...[
-        if (description.isNotEmpty) ?category?.name,
-        wallet?.name ?? l.transactionFormAccountNone,
-      ],
-    ].join(' · ');
+        : categoryName ?? l.pendingUntitled;
     final rowTags = [
       for (final id in d.tagIds) ?tags.where((t) => t.id == id).firstOrNull,
     ];
-    final date = DateTime.tryParse(d.date ?? '');
     final warn = item.lastError != null
         ? pendingErrorText(l, item.lastError!)
         : d.type == null
@@ -435,135 +472,70 @@ class _PendingCard extends StatelessWidget {
       TransactionType.income => MoneyTone.income,
       _ => MoneyTone.plain,
     };
+    final Widget leading = category != null
+        ? IconDisplay(
+            type: IconType.category,
+            size: 36,
+            iconCode: CategoryTree.resolveIconCode(
+              category,
+              catCubit.state.categories,
+            ),
+          )
+        : IconBubble(
+            icon: switch (d.type) {
+              TransactionType.income => AppIcons.income,
+              TransactionType.transfer => AppIcons.transfer,
+              _ => AppIcons.expense,
+            },
+            color: switch (d.type) {
+              TransactionType.expense => palette.expense,
+              TransactionType.income => palette.income,
+              _ => scheme.onSurfaceVariant,
+            },
+            size: 36,
+          );
 
-    return Material(
-      color: scheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(
-          color: item.lastError != null
-              ? palette.warning
-              : scheme.outlineVariant,
-          width: item.lastError != null ? 1.5 : 1,
-        ),
+    return TxRow(
+      leading: leading,
+      title: title,
+      amount: d.amount ?? 0,
+      tone: tone,
+      select: SelectCheck(
+        value: selected,
+        tooltip: l.pendingSelectOne,
+        onTap: onToggle,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xs,
-                  0,
-                  AppSpacing.sm,
-                  0,
-                ),
-                child: SelectCheck(
-                  value: selected,
-                  tooltip: l.pendingSelectOne,
-                  onTap: onToggle,
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        StatusPill(
-                          label: _sourceLabel(l, item.source),
-                          tone: item.source.isManual ? Tone.info : Tone.primary,
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        if (date != null)
-                          Text(
-                            DateFormatter.friendly(
-                              date,
-                              today: l.commonToday,
-                              yesterday: l.commonYesterday,
-                              locale: Localizations.localeOf(
-                                context,
-                              ).languageCode,
-                            ),
-                            style: textTheme.labelSmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        MoneyText(
-                          d.amount ?? 0,
-                          tone: tone,
-                          style: textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (meta.isNotEmpty)
-                      Text(
-                        meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    if (rowTags.isNotEmpty)
-                      TagShortList(tags: rowTags, style: textTheme.bodySmall),
-                    if (warn != null) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      Row(
-                        children: [
-                          Icon(
-                            AppIcons.warning,
-                            size: 14,
-                            color: palette.warning,
-                          ),
-                          const SizedBox(width: AppSpacing.xs),
-                          Expanded(
-                            child: Text(
-                              warn,
-                              style: textTheme.labelSmall?.copyWith(
-                                color: palette.warning,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+      walletLabel: wallet?.name ?? l.transactionFormAccountNone,
+      walletIcon: wallet == null
+          ? null
+          : IconDisplay(
+              type: IconType.account,
+              size: 14,
+              iconCode: wallet.iconCode,
+            ),
+      source: AppChip(
+        label: _sourceLabel(l, item.source),
+        tone: item.source.isManual ? AppChipTone.info : AppChipTone.primary,
+        selected: true,
+        size: PillSize.mini,
       ),
+      category: description.isNotEmpty ? categoryName : null,
+      extra: d.type == TransactionType.transfer
+          ? '→ ${toWallet?.name ?? '?'}'
+          : null,
+      tags: [
+        for (final t in rowTags)
+          TextSpan(
+            text: '#${t.name}',
+            style: TextStyle(
+              color: tagColor(t.iconCode, palette),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
+      warning: warn,
+      warningColor: palette.warning,
+      onTap: onOpen,
     );
   }
 

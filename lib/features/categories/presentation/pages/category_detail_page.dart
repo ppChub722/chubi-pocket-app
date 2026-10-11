@@ -15,7 +15,6 @@ import '../../../../shared/icon_maker/icon_code.dart';
 import '../../../../shared/icon_maker/icon_display.dart';
 import '../../../../shared/icon_maker/icon_maker_sheet.dart';
 import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/type_indicator.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
@@ -492,22 +491,29 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           : Scaffold(
               extendBodyBehindAppBar: true,
               appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
-              body: _notFound
-                  ? EmptyView(
-                      icon: AppIcons.empty,
-                      title: l.categoryDetailNotFound,
-                      message: l.categoryDetailNotFoundMessage,
-                    )
-                  // Clear the transparent top bar (the Builder's context
-                  // sees its height in the top padding).
-                  : Builder(
-                      builder: (context) => Padding(
-                        padding: EdgeInsets.only(
-                          top: MediaQuery.paddingOf(context).top,
-                        ),
-                        child: const LoadingView(),
+              // Skeleton → error + retry → not found (AsyncStateView).
+              // Clear the transparent top bar (the Builder's context sees its
+              // height in the top padding).
+              body: BlocBuilder<CategoriesCubit, CategoriesState>(
+                builder: (context, state) => Builder(
+                  builder: (context) => Padding(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.paddingOf(context).top,
+                    ),
+                    child: AsyncStateView.fallback(
+                      loading: !_notFound && state.error == null,
+                      error: _notFound ? null : state.error,
+                      onRetry: context.read<CategoriesCubit>().load,
+                      skeleton: const LoadingView(),
+                      notFound: EmptyView(
+                        icon: AppIcons.empty,
+                        title: l.categoryDetailNotFound,
+                        message: l.categoryDetailNotFoundMessage,
                       ),
                     ),
+                  ),
+                ),
+              ),
             ),
     );
   }
@@ -610,11 +616,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
                 trailing: _typeChoice(l),
               ),
             // The parent picker — the row opens the category picker.
-            DetailRow(
+            DetailRow.pick(
               label: l.categoryFormParentLabel,
-              showChevron: true,
+              value: breadcrumb,
+              emptyText: l.categoryFormParentNone,
               onTap: () => _openParentPicker(all),
-              trailing: _parentValue(l, breadcrumb),
             ),
           ],
         ),
@@ -674,13 +680,20 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               ),
           ],
         ),
-        // Delete lives at the bottom of the body in edit mode (the top bar
-        // carries no page actions).
+        // การจัดการ — edit mode only, last section (system rows can't be
+        // deleted).
         if (editing && canDelete)
-          DangerRow(
-            icon: AppIcons.delete,
-            label: l.categoryDelete,
-            onTap: isSaving ? null : _delete,
+          ManageSection(
+            deleteLabel: l.categoryDelete,
+            onDelete: isSaving ? null : _delete,
+          ),
+        if (!_isCreate)
+          DetailMeta(
+            lines: detailMetaLines(
+              context,
+              createdAt: _persisted?.createdAt,
+              updatedAt: _persisted?.updatedAt,
+            ),
           ),
       ],
     );
@@ -703,11 +716,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     return null;
   }
 
-  /// Create only: the expense / income [ChoicePill] pair (changing it
+  /// Create only: the expense / income [AppChip] pair (changing it
   /// clears the parent). Once saved the type is the hero's chip.
   Widget _typeChoice(AppLocalizations l) {
-    Widget pill(CategoryType t, String label) => ChoicePill(
+    Widget pill(CategoryType t, String label) => AppChip(
       label: label,
+      tone: t == CategoryType.income ? AppChipTone.income : AppChipTone.expense,
       selected: working.type == t,
       onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
     );
@@ -717,29 +731,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         pill(CategoryType.expense, l.categoryTypeExpense),
         const SizedBox(width: AppSpacing.sm),
         pill(CategoryType.income, l.categoryTypeIncome),
-      ],
-    );
-  }
-
-  /// The parent row's value: its icon + breadcrumb, or "none".
-  Widget _parentValue(AppLocalizations l, String? breadcrumb) {
-    final iconCode = working.parentId == null
-        ? null
-        : context.read<CategoriesCubit>().byId(working.parentId!)?.iconCode;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (breadcrumb != null && iconCode != null) ...[
-          IconDisplay(type: IconType.category, size: 20, iconCode: iconCode),
-          const SizedBox(width: AppSpacing.sm),
-        ],
-        Flexible(
-          child: Text(
-            breadcrumb ?? l.categoryFormParentNone,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
       ],
     );
   }
@@ -787,11 +778,25 @@ class _Header extends StatelessWidget {
     final hasPath = parentPath != null && parentPath!.isNotEmpty;
     final hidden = !category.includeInReport;
     return HeaderCard(
-      accent: category.iconCode?.accentColorFor(palette) ?? palette.primary,
+      accent: isIncome ? palette.income : palette.expense,
       onEdit: onEdit,
       // The row keeps its height without ✏️ (edit mode), so nothing below
       // moves.
-      topRow: [TypeIndicator(isIncome: isIncome)],
+      topRow: [
+        AppChip(
+          label: isIncome ? l.categoryTypeIncome : l.categoryTypeExpense,
+          icon: isIncome ? AppIcons.income : AppIcons.expense,
+          tone: isIncome ? AppChipTone.income : AppChipTone.expense,
+          selected: true,
+        ),
+        if (hidden)
+          AppChip(
+            label: l.categoryHiddenFromReport,
+            icon: AppIcons.hidden,
+            tone: AppChipTone.neutral,
+            selected: true,
+          ),
+      ],
       // EditableCircle keeps a constant footprint with or without onTap,
       // so the name column never shifts between modes.
       leading: GestureDetector(
@@ -807,27 +812,8 @@ class _Header extends StatelessWidget {
         ),
       ),
       title: nameField,
-      subtitle: hasPath || hidden
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (hasPath)
-                  Text(
-                    parentPath!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                if (hidden)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xs),
-                    child: LabelPill(
-                      label: l.categoryHiddenFromReport,
-                      icon: AppIcons.hidden,
-                    ),
-                  ),
-              ],
-            )
+      subtitle: hasPath
+          ? Text(parentPath!, maxLines: 1, overflow: TextOverflow.ellipsis)
           : null,
     );
   }

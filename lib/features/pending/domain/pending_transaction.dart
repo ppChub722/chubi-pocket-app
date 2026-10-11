@@ -50,6 +50,7 @@ class PendingDraft extends Equatable {
     this.transferToAccountId,
     this.tagIds = const [],
     this.splits = const [],
+    this.projectId,
   });
 
   final TransactionType? type;
@@ -67,6 +68,9 @@ class PendingDraft extends Equatable {
   /// `{person_name, contact_id?, owed_amount}` rows, as POST /transactions.
   final List<Map<String, dynamic>> splits;
 
+  /// The event this draft will join on confirm (`project_id`, nullable).
+  final String? projectId;
+
   factory PendingDraft.fromJson(Map<String, dynamic> json) {
     final t = json['type'] as String?;
     return PendingDraft(
@@ -81,6 +85,7 @@ class PendingDraft extends Equatable {
       tagIds: ((json['tag_ids'] as List?) ?? const []).cast<String>(),
       splits: ((json['splits'] as List?) ?? const [])
           .cast<Map<String, dynamic>>(),
+      projectId: json['project_id'] as String?,
     );
   }
 
@@ -95,6 +100,7 @@ class PendingDraft extends Equatable {
     'transfer_to_account_id': ?transferToAccountId,
     if (tagIds.isNotEmpty) 'tag_ids': tagIds,
     if (splits.isNotEmpty) 'splits': splits,
+    'project_id': ?projectId,
   };
 
   @override
@@ -109,6 +115,7 @@ class PendingDraft extends Equatable {
     transferToAccountId,
     tagIds,
     splits,
+    projectId,
   ];
 }
 

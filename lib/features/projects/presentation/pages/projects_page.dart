@@ -95,21 +95,34 @@ class _ProjectsPageState extends State<ProjectsPage> {
                         for (final e in statusLabels.entries)
                           SheetOption(value: e.key, label: e.value),
                       ],
-                      builder: (context, toggle) => FilterDropdownChip(
-                        label: l.projectsStatusLabel,
-                        valueLabel: statusLabels[state.statusFilter],
-                        active: state.statusFilter != 'active',
+                      builder: (context, toggle) => AppChip(
+                        label:
+                            '${l.projectsStatusLabel}: '
+                            '${statusLabels[state.statusFilter]}',
+                        selected: state.statusFilter != 'active',
+                        trailing: AppChipTrailing.dropdown,
                         onTap: toggle,
                       ),
                     ),
                   ],
-                  trailing: SortChip<_Sort>(
+                  trailing: OptionMenuAnchor<_Sort>(
                     selected: _sort,
                     onSelected: (s) => setState(() => _sort = s),
                     options: [
-                      SortOption(_Sort.recent, l.projectsSortRecent),
-                      SortOption(_Sort.name, l.projectsSortName),
+                      SheetOption(
+                        value: _Sort.recent,
+                        label: l.projectsSortRecent,
+                      ),
+                      SheetOption(value: _Sort.name, label: l.projectsSortName),
                     ],
+                    builder: (context, toggle) => AppChip(
+                      label: _sort == _Sort.recent
+                          ? l.projectsSortRecent
+                          : l.projectsSortName,
+                      icon: AppIcons.sort,
+                      trailing: AppChipTrailing.dropdown,
+                      onTap: toggle,
+                    ),
                   ),
                 ),
                 Expanded(
@@ -244,7 +257,13 @@ class _ProjectCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              ProjectStatusPill(status: p.status),
+              AppChip(
+                label: projectStatusLabel(l, p.status),
+                dot: true,
+                tone: projectStatusTone(p.status),
+                selected: true,
+                size: PillSize.chip,
+              ),
             ],
           ),
         ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../chips/pill.dart';
+import '../chips/app_chip.dart';
 import 'app_sheet.dart';
 import 'picker_sheet.dart';
 
@@ -98,13 +98,13 @@ class DayOfMonthGrid extends StatelessWidget {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              ChoicePill(
+              AppChip(
                 label: l.dayPickerLastDay,
                 selected: selected == kLastDayOfMonth,
                 onTap: () => onPicked(kLastDayOfMonth),
               ),
               if (allowNone)
-                ChoicePill(
+                AppChip(
                   label: l.dayPickerNone,
                   selected: selected == null,
                   onTap: () => onPicked(null),

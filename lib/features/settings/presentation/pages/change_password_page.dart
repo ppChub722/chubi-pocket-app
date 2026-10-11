@@ -76,89 +76,92 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      // A form = edit mode (§1.4): ✕ + ยกเลิก · บันทึก, no nav.
-      appBar: AppTopBar(
-        title: l.changePasswordTitle,
-        showBack: true,
-        editing: true,
-        // ✕ = ยกเลิก (owner 2026-10-10).
-        onBack: _cancel,
-      ),
-      // No undo on a password form — the bar hides it (onUndo null).
-      bottomNavigationBar: ModeActionBar(
-        canSave: !_submitting,
-        saving: _submitting,
-        cancelLabel: l.commonCancel,
-        saveLabel: l.changePasswordSubmit,
-        onCancel: _cancel,
-        onSave: _submit,
-      ),
-      extendBodyBehindAppBar: true,
-      body: SafeArea(
-        top: false,
-        // Builder: the floating bar's height is only visible inside the body.
-        child: Builder(
-          builder: (context) => SingleChildScrollView(
-            padding: const EdgeInsets.all(
-              AppSpacing.lg,
-            ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
-            child: Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_error != null) ...[
-                    MessageBanner(message: _bannerMessageFor(l, _error!)),
+    return SavingOverlay(
+      saving: _submitting,
+      child: Scaffold(
+        // A form = edit mode (§1.4): ✕ + ยกเลิก · บันทึก, no nav.
+        appBar: AppTopBar(
+          title: l.changePasswordTitle,
+          showBack: true,
+          editing: true,
+          // ✕ = ยกเลิก (owner 2026-10-10).
+          onBack: _cancel,
+        ),
+        // No undo on a password form — the bar hides it (onUndo null).
+        bottomNavigationBar: ModeActionBar(
+          canSave: !_submitting,
+          saving: _submitting,
+          cancelLabel: l.commonCancel,
+          saveLabel: l.changePasswordSubmit,
+          onCancel: _cancel,
+          onSave: _submit,
+        ),
+        extendBodyBehindAppBar: true,
+        body: SafeArea(
+          top: false,
+          // Builder: the floating bar's height is only visible inside the body.
+          child: Builder(
+            builder: (context) => SingleChildScrollView(
+              padding: const EdgeInsets.all(
+                AppSpacing.lg,
+              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_error != null) ...[
+                      MessageBanner(message: _bannerMessageFor(l, _error!)),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                    AppTextField(
+                      controller: _currentCtrl,
+                      enabled: !_submitting,
+                      obscurable: true,
+                      autofillHints: const [AutofillHints.password],
+                      label: l.changePasswordCurrentLabel,
+                      errorText: _currentFieldError,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? l.commonRequired : null,
+                    ),
                     const SizedBox(height: AppSpacing.md),
+                    AppTextField(
+                      controller: _newCtrl,
+                      enabled: !_submitting,
+                      obscurable: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      label: l.changePasswordNewLabel,
+                      helper: l.changePasswordNewHelper,
+                      validator: (v) {
+                        if (v == null || v.length < 8) {
+                          return l.authRegisterPasswordTooShort;
+                        }
+                        if (v.length > 128) {
+                          return l.authRegisterPasswordTooLong;
+                        }
+                        if (v == _currentCtrl.text) {
+                          return l.changePasswordNewMustDiffer;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppTextField(
+                      controller: _confirmCtrl,
+                      enabled: !_submitting,
+                      obscurable: true,
+                      onSubmitted: (_) => _submit(),
+                      label: l.changePasswordConfirmLabel,
+                      validator: (v) {
+                        if (v != _newCtrl.text) {
+                          return l.changePasswordConfirmMismatch;
+                        }
+                        return null;
+                      },
+                    ),
                   ],
-                  AppTextField(
-                    controller: _currentCtrl,
-                    enabled: !_submitting,
-                    obscurable: true,
-                    autofillHints: const [AutofillHints.password],
-                    label: l.changePasswordCurrentLabel,
-                    errorText: _currentFieldError,
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? l.commonRequired : null,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: _newCtrl,
-                    enabled: !_submitting,
-                    obscurable: true,
-                    autofillHints: const [AutofillHints.newPassword],
-                    label: l.changePasswordNewLabel,
-                    helper: l.changePasswordNewHelper,
-                    validator: (v) {
-                      if (v == null || v.length < 8) {
-                        return l.authRegisterPasswordTooShort;
-                      }
-                      if (v.length > 128) {
-                        return l.authRegisterPasswordTooLong;
-                      }
-                      if (v == _currentCtrl.text) {
-                        return l.changePasswordNewMustDiffer;
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  AppTextField(
-                    controller: _confirmCtrl,
-                    enabled: !_submitting,
-                    obscurable: true,
-                    onSubmitted: (_) => _submit(),
-                    label: l.changePasswordConfirmLabel,
-                    validator: (v) {
-                      if (v != _newCtrl.text) {
-                        return l.changePasswordConfirmMismatch;
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),

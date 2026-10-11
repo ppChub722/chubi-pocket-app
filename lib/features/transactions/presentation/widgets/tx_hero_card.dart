@@ -20,11 +20,11 @@ import '../../domain/transaction_type.dart';
 ///   ค่าอะไร?                               ฿1,250
 ///
 /// [inline], view mode (the detail page) — the same rows, only the type's
-/// own chip (no 🔒), plus ✏️ and the footer:
+/// own chip (no 🔒), plus ✏️ (the category · wallet cards sit under the
+/// card, as when editing — owner 2026-10-11):
 ///
 ///   [−รายจ่าย]                      [📅 วันนี้] ✏️
 ///   ข้าวมันไก่ (blank if none)            ฿1,250
-///   [footer: category · wallet cards]
 ///
 /// [amountNote] goes under the amount in both ("ส่วนของคุณ ฿x · …").
 ///
@@ -128,8 +128,8 @@ class TxHeroCard extends StatelessWidget {
   /// amount, title and date stacked.
   final bool inline;
 
-  /// Inline view mode: a row under the description · amount (the detail
-  /// page's category · wallet · date chips).
+  /// Inline view mode: an optional row under the description · amount (no
+  /// page uses it now — the detail page puts its cards below the card).
   final Widget? footer;
 
   /// Inline edit mode: a line under the amount, right-aligned (the
@@ -192,7 +192,8 @@ class TxHeroCard extends StatelessWidget {
                 if (canSwitch || t == type) t,
             ].indexed) ...[
               if (i > 0) const SizedBox(width: AppSpacing.xs),
-              TxTypeChip(
+              txTypeChip(
+                context,
                 type: t,
                 selected: t == type,
                 onTap: canSwitch && t != type ? () => onTypeChanged!(t) : null,
@@ -203,8 +204,10 @@ class TxHeroCard extends StatelessWidget {
         ),
       ),
     ];
-    final datePill = _DatePill(
+    // The date: a control-height chip, read-only (no ink) in view mode.
+    final datePill = AppChip(
       label: dateLabel,
+      icon: AppIcons.date,
       onTap: editing ? onPickDate : null,
     );
     final editChip = !editing && onEdit != null
@@ -455,59 +458,35 @@ Color txTypeColor(BuildContext context, TransactionType t) {
   };
 }
 
-/// One type chip — `[− รายจ่าย]`, the filter sheet's look ([RowChip],
-/// owner 2026-10-11): an outlined grey chip; [selected] = a tinted border
-/// and a faint fill in the type's colour. [PillSize.normal] like every
-/// chip; the hero keeps รายจ่าย / รายรับ / โอนเงิน + the date on one row. [type] null = "ทั้งหมด" (the filter's any-type chip), in the
-/// primary colour — no icon.
-class TxTypeChip extends StatelessWidget {
-  const TxTypeChip({
-    required this.type,
-    required this.selected,
-    this.onTap,
-    this.locked = false,
-    super.key,
-  });
-
-  final TransactionType? type;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  /// A saved row's type: a 🔒 on the chip and a tap-to-read tooltip ("can't
-  /// change after saving") instead of silently doing nothing.
-  final bool locked;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final t = type;
-    final (IconData? icon, label) = switch (t) {
-      null => (null, l.transactionsListFilterAll),
-      TransactionType.expense => (AppIcons.expense, l.transactionTypeExpense),
-      TransactionType.income => (AppIcons.income, l.transactionTypeIncome),
-      TransactionType.transfer => (
-        AppIcons.transfer,
-        l.transactionTypeTransfer,
-      ),
-    };
-    final chip = SizedBox(
-      height: HeroSpacing.controlHeight,
-      child: RowChip(
-        label: label,
-        icon: icon,
-        color: t == null ? null : txTypeColor(context, t),
-        selected: selected,
-        onTap: onTap,
-        trailingIcon: locked ? AppIcons.lock : null,
-      ),
-    );
-    if (!locked) return chip;
-    return Tooltip(
-      message: l.txTypeLockedHint,
-      triggerMode: TooltipTriggerMode.tap,
-      child: chip,
-    );
-  }
+/// One type chip — `[− รายจ่าย]` — as an [AppChip] at control height (owner
+/// 2026-10-11): [selected] = a tinted border and faint fill in the type's
+/// colour, otherwise the grey outline. [type] null = "ทั้งหมด" (the filter's
+/// any-type chip) in the primary colour, no icon. [locked] (a saved row's
+/// type): a 🔒 and a tap-to-read hint ("can't change after saving") instead
+/// of silently doing nothing.
+AppChip txTypeChip(
+  BuildContext context, {
+  required TransactionType? type,
+  required bool selected,
+  VoidCallback? onTap,
+  bool locked = false,
+}) {
+  final l = AppLocalizations.of(context)!;
+  final (IconData? icon, label) = switch (type) {
+    null => (null, l.transactionsListFilterAll),
+    TransactionType.expense => (AppIcons.expense, l.transactionTypeExpense),
+    TransactionType.income => (AppIcons.income, l.transactionTypeIncome),
+    TransactionType.transfer => (AppIcons.transfer, l.transactionTypeTransfer),
+  };
+  return AppChip(
+    label: label,
+    icon: icon,
+    color: type == null ? null : txTypeColor(context, type),
+    selected: selected,
+    onTap: onTap,
+    trailing: locked ? AppChipTrailing.lock : AppChipTrailing.none,
+    tooltip: locked ? l.txTypeLockedHint : null,
+  );
 }
 
 /// The amount — numeric keyboard, coloured by type, sign + symbol prefix.
@@ -627,48 +606,6 @@ class _AmountInputState extends State<_AmountInput> {
             ),
             Flexible(child: field),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// `[📅 วันนี้]` — [PillSize.normal], like every chip (owner 2026-10-11);
-/// null [onTap] = read-only.
-class _DatePill extends StatelessWidget {
-  const _DatePill({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surface,
-      shape: StadiumBorder(side: BorderSide(color: scheme.outlineVariant)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          constraints: BoxConstraints(minHeight: PillSize.normal.height),
-          padding: EdgeInsets.symmetric(horizontal: PillSize.normal.padding),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(AppIcons.date, size: 16, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.xs),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: PillSize.normal
-                      .textStyle(context)
-                      ?.copyWith(fontWeight: PillSize.chipWeight),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

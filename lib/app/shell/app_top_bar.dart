@@ -10,6 +10,7 @@ import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../../features/pending/presentation/cubit/pending_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../shared/icon_maker/icon_code.dart';
 import '../../shared/widgets/buttons/app_icon_button.dart';
 import '../../shared/icon_maker/icon_shape.dart';
 import '../../shared/widgets/user_avatar.dart';
@@ -438,17 +439,27 @@ class _UniversalChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    // Subscribes to the tab being shown or left behind (TickerMode flips),
+    // so the lit chip follows the page on screen.
+    TickerMode.valuesOf(context);
+    final shell = StatefulNavigationShell.maybeOf(context);
     // In the top row's order, modules switched off left out (ShellRow /
     // AppModules) — the same order swipe walks between their pages.
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final tab in ShellRow.top.tabs) _chipFor(context, l, tab),
+        for (final tab in ShellRow.top.tabs)
+          _chipFor(context, l, tab, shell?.currentIndex == tab.index),
       ],
     );
   }
 
-  Widget _chipFor(BuildContext context, AppLocalizations l, ShellTab tab) {
+  Widget _chipFor(
+    BuildContext context,
+    AppLocalizations l,
+    ShellTab tab,
+    bool active,
+  ) {
     return switch (tab) {
       // Pending drafts (รอยืนยัน).
       ShellTab.pending => BlocBuilder<PendingCubit, PendingState>(
@@ -456,6 +467,7 @@ class _UniversalChips extends StatelessWidget {
         builder: (context, pending) => _chip(
           icon: AppIcons.pending,
           tooltip: l.pendingTooltip,
+          active: active,
           badgeCount: pending.count,
           onPressed: () => _open(context, ShellTab.pending, '/pending'),
         ),
@@ -465,6 +477,7 @@ class _UniversalChips extends StatelessWidget {
         builder: (context, unread) => _chip(
           icon: AppIcons.notifications,
           tooltip: l.navNotificationsTooltip,
+          active: active,
           badgeCount: unread,
           onPressed: () =>
               _open(context, ShellTab.notifications, '/notifications'),
@@ -489,23 +502,22 @@ class _UniversalChips extends StatelessWidget {
               child: InkWell(
                 customBorder: RoundedRectangleBorder(borderRadius: outline),
                 onTap: () => _open(context, ShellTab.settings, '/settings'),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: outline,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.shadow.withValues(alpha: 0.2),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
+                child: _ProfileFrame(
+                  outline: outline,
+                  active: active,
                   child: UserAvatar(
                     displayName: user.displayName,
-                    iconCode: user.iconCode,
-                    size: 40,
+                    // No always-on border: the frame says active / not.
+                    iconCode: user.iconCode == null
+                        ? null
+                        : IconCode(
+                            icon: user.iconCode!.icon,
+                            iconColors: user.iconCode!.iconColors,
+                            background: user.iconCode!.background,
+                            bgColors: user.iconCode!.bgColors,
+                            shape: user.iconCode!.shape,
+                          ),
+                    size: 32,
                   ),
                 ),
               ),
@@ -522,6 +534,7 @@ class _UniversalChips extends StatelessWidget {
     required IconData icon,
     required String tooltip,
     required int badgeCount,
+    required bool active,
     required VoidCallback onPressed,
   }) {
     return Padding(
@@ -530,8 +543,50 @@ class _UniversalChips extends StatelessWidget {
         icon: icon,
         tooltip: tooltip,
         badgeCount: badgeCount,
+        selected: active,
         onPressed: onPressed,
       ),
+    );
+  }
+}
+
+/// The profile chip: the avatar in the same frame as the other top-bar chips
+/// — a neutral surface ring, or the bottom nav's active look (primary
+/// container + primary ring) while the profile page is on screen.
+class _ProfileFrame extends StatelessWidget {
+  const _ProfileFrame({
+    required this.outline,
+    required this.active,
+    required this.child,
+  });
+
+  final BorderRadius outline;
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: active ? scheme.primaryContainer : scheme.surfaceContainerHigh,
+        borderRadius: outline,
+        border: Border.all(
+          color: active ? scheme.primary : scheme.outlineVariant,
+          width: active ? 1.5 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.shadow.withValues(alpha: 0.2),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }

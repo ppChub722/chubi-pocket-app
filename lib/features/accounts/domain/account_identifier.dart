@@ -81,37 +81,9 @@ class AccountIdentifier extends Equatable {
   /// Hidden view: "•••• 2780".
   String get masked => '•••• $lastDigits';
 
-  /// Shown view, grouped by kind / length: 10-digit bank account
-  /// "123-4-52780-6", phone "081-234-4464", 13-digit id "1-2345-67890-12-3",
-  /// card "4000 1234 1234 1234"; anything else as stored.
-  String get formatted {
-    final v = value;
-    // A card is known by its last four.
-    if (kind == IdentifierKind.card && v.length <= 4) return '•••• $v';
-    List<int>? groups;
-    var sep = '-';
-    switch (kind) {
-      case IdentifierKind.bankAccount when v.length == 10:
-        groups = [3, 1, 5, 1];
-      case IdentifierKind.promptPay when v.length == 10:
-        groups = [3, 3, 4];
-      case IdentifierKind.promptPay when v.length == 13:
-        groups = [1, 4, 5, 2, 1];
-      case IdentifierKind.card when v.length == 16:
-        groups = [4, 4, 4, 4];
-        sep = ' ';
-      default:
-        groups = null;
-    }
-    if (groups == null) return v;
-    final parts = <String>[];
-    var i = 0;
-    for (final g in groups) {
-      parts.add(v.substring(i, i + g));
-      i += g;
-    }
-    return parts.join(sep);
-  }
+  /// Shown view: the digits exactly as typed (owner 2026-10-11: no grouping
+  /// — the numbers only exist to match accounts when scanning slips).
+  String get formatted => value;
 
   @override
   List<Object?> get props => [kind, value, bankCode];

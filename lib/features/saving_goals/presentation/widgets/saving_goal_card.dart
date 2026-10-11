@@ -100,10 +100,12 @@ class SavingGoalCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: AppBadge(
+                  child: AppChip(
                     label: l.savingGoalCompletedLabel,
                     icon: AppIcons.success,
-                    tone: Tone.success,
+                    tone: AppChipTone.success,
+                    selected: true,
+                    size: PillSize.chip,
                   ),
                 ),
               ],

@@ -36,6 +36,8 @@ class Budget extends Equatable {
     this.category,
     this.currentPeriod,
     this.childBreakdown = const [],
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -60,6 +62,12 @@ class Budget extends Equatable {
   final BudgetCategoryRef? category;
   final BudgetCurrentPeriod? currentPeriod;
   final List<BudgetChildBreakdown> childBreakdown;
+
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  static DateTime? _date(Object? v) =>
+      v is String ? DateTime.tryParse(v)?.toLocal() : null;
 
   /// Convenience: spent / amount as a 0..1 progress fraction. Null when
   /// the API hasn't populated current-period info yet (e.g. local draft).
@@ -88,6 +96,8 @@ class Budget extends Equatable {
     BudgetCategoryRef? category,
     BudgetCurrentPeriod? currentPeriod,
     List<BudgetChildBreakdown>? childBreakdown,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return Budget(
       id: id ?? this.id,
@@ -104,6 +114,8 @@ class Budget extends Equatable {
       category: category ?? this.category,
       currentPeriod: currentPeriod ?? this.currentPeriod,
       childBreakdown: childBreakdown ?? this.childBreakdown,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -135,6 +147,8 @@ class Budget extends Equatable {
           ? BudgetCurrentPeriod.fromJson(currentPeriod)
           : null,
       childBreakdown: breakdown,
+      createdAt: _date(json['created_at']),
+      updatedAt: _date(json['updated_at']),
     );
   }
 
@@ -185,6 +199,8 @@ class Budget extends Equatable {
     category,
     currentPeriod,
     childBreakdown,
+    createdAt,
+    updatedAt,
   ];
 }
 

@@ -303,10 +303,11 @@ class _MainShellState extends State<MainShell>
               // Quick create event-from-bills lives INSIDE the + sheet
               // (spec §10/4.24).
               // Preset by the page on screen, if it offers one.
-              onAddPressed: () => showQuickCreateSheet(
-                context,
-                account: _quickCreate.active()?.account,
-              ),
+              onAddPressed: () {
+                final preset = _quickCreate.active();
+                if (preset?.onAdd != null) return preset!.onAdd!();
+                showQuickCreateSheet(context, account: preset?.account);
+              },
               onMorePressed: () => _goBranch(_moreBranch),
             ),
     );

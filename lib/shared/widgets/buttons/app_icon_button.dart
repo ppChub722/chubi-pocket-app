@@ -30,6 +30,7 @@ class AppIconButton extends StatelessWidget {
     this.tooltip,
     this.badgeCount = 0,
     this.destructive = false,
+    this.selected = false,
     this.size = 40,
     this.activity = IconChipActivity.none,
     this.progress,
@@ -41,6 +42,10 @@ class AppIconButton extends StatelessWidget {
   final String? tooltip;
   final int badgeCount;
   final bool destructive;
+
+  /// The page this chip stands for is on screen: the bottom nav's active
+  /// look (primary-container fill, on-primary-container icon).
+  final bool selected;
   final double size;
   final IconChipActivity activity;
   final double? progress;
@@ -49,7 +54,11 @@ class AppIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final enabled = onPressed != null;
-    final iconColor = destructive ? scheme.error : scheme.onSurface;
+    final iconColor = destructive
+        ? scheme.error
+        : selected
+        ? scheme.onPrimaryContainer
+        : scheme.onSurface;
     final iconWidget = Icon(icon, size: size * 0.55, color: iconColor);
     final working = activity == IconChipActivity.progress;
     final visual = badgeCount > 0 && !working
@@ -62,10 +71,14 @@ class AppIconButton extends StatelessWidget {
     Widget chip = Opacity(
       opacity: enabled ? 1 : 0.38,
       child: Material(
-        color: scheme.surfaceContainerHigh,
+        color: selected ? scheme.primaryContainer : scheme.surfaceContainerHigh,
         elevation: enabled ? 1.5 : 0,
         shadowColor: scheme.shadow.withValues(alpha: 0.2),
-        shape: CircleBorder(side: BorderSide(color: scheme.outlineVariant)),
+        shape: CircleBorder(
+          side: BorderSide(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+          ),
+        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onPressed,

@@ -98,7 +98,7 @@ class _ReorderModeDemoState extends State<ReorderModeDemo> {
           ),
           child: Row(
             children: [
-              ChoicePill(
+              AppChip(
                 label: 'ต้นไม้ 3 ระดับ',
                 selected: !_flatMode,
                 onTap: () {
@@ -107,7 +107,7 @@ class _ReorderModeDemoState extends State<ReorderModeDemo> {
                 },
               ),
               const SizedBox(width: AppSpacing.sm),
-              ChoicePill(
+              AppChip(
                 label: 'รายการเดียว 2 กลุ่ม',
                 selected: _flatMode,
                 onTap: () {

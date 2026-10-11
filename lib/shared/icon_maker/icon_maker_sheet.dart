@@ -888,16 +888,16 @@ class _SheetState extends State<_Sheet> {
           child: Wrap(
             spacing: AppSpacing.sm,
             children: [
-              ChoiceChip(
-                label: Text(l.transactionsRangeAll),
+              AppChip(
+                label: l.transactionsRangeAll,
                 selected: _packFilter == null,
-                onSelected: (_) => setState(() => _packFilter = null),
+                onTap: () => setState(() => _packFilter = null),
               ),
               for (final p in widget.packs)
-                ChoiceChip(
-                  label: Text(p.id),
+                AppChip(
+                  label: p.id,
                   selected: _packFilter == p.id,
-                  onSelected: (_) => setState(() => _packFilter = p.id),
+                  onTap: () => setState(() => _packFilter = p.id),
                 ),
             ],
           ),

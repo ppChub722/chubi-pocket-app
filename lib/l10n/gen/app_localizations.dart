@@ -7422,6 +7422,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto'**
   String get txSplitAuto;
+
+  /// No description provided for @contactPickerCreateNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New contact'**
+  String get contactPickerCreateNew;
+
+  /// No description provided for @contactPickerEmptyPlain.
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet'**
+  String get contactPickerEmptyPlain;
+
+  /// No description provided for @txSplitNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get txSplitNameHint;
+
+  /// No description provided for @accountIdentifiersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only used to match accounts when scanning slips'**
+  String get accountIdentifiersHint;
+
+  /// No description provided for @detailManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get detailManageTitle;
+
+  /// No description provided for @draftPickWalletFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the source wallet'**
+  String get draftPickWalletFrom;
+
+  /// No description provided for @draftPickWalletTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the destination wallet'**
+  String get draftPickWalletTo;
+
+  /// No description provided for @draftPickCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a category'**
+  String get draftPickCategory;
+
+  /// No description provided for @draftExtrasTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with / Event'**
+  String get draftExtrasTitle;
+
+  /// No description provided for @draftExtrasSplits.
+  ///
+  /// In en, this message translates to:
+  /// **'Split with {count}'**
+  String draftExtrasSplits(int count);
+
+  /// No description provided for @draftExtrasNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get draftExtrasNone;
+
+  /// No description provided for @pendingErrInvalidSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'A split row is incomplete — it needs a name and an amount above 0'**
+  String get pendingErrInvalidSplit;
+
+  /// No description provided for @pendingErrSplitsExceed.
+  ///
+  /// In en, this message translates to:
+  /// **'The split adds up to more than the amount'**
+  String get pendingErrSplitsExceed;
+
+  /// No description provided for @pendingErrProjectGone.
+  ///
+  /// In en, this message translates to:
+  /// **'That event no longer exists — pick another or remove it'**
+  String get pendingErrProjectGone;
+
+  /// No description provided for @pendingErrProjectClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'That event is closed or locked — nothing can be added'**
+  String get pendingErrProjectClosed;
+
+  /// No description provided for @pendingErrProjectMember.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not a member of that event'**
+  String get pendingErrProjectMember;
+
+  /// No description provided for @pendingErrProjectReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'You can only view that event — nothing can be added'**
+  String get pendingErrProjectReadOnly;
 }
 
 class _AppLocalizationsDelegate

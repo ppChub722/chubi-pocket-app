@@ -6,6 +6,7 @@ import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_radius.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../transactions/presentation/save_failure.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../shared/widgets/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -16,10 +17,12 @@ import '../../../transactions/presentation/widgets/draft_form.dart';
 import '../cubit/pending_cubit.dart';
 
 /// `/pending/new` — jot several drafts at once (owner design 2026-10-08).
-/// Every row is the same [DraftForm] the `+` quick create uses (the hero —
-/// type, amount, description, date — then note, category + wallet cards,
-/// tags and splits, all shown); a row only needs an amount.
-/// "เก็บเป็นร่าง" parks them in รอยืนยัน; "ยืนยันเลยทั้งหมด" also submits.
+/// Every row is the [DraftForm] in its chip layout — the same as "แก้ร่าง"
+/// (the hero — type, amount, description, date — then a wallet chip row
+/// above a category chip row, tags, the note, and a collapsible
+/// "หารกับ / อีเวนต์"); a row only needs an amount.
+/// "เก็บเป็นร่าง" parks them in รอยืนยัน (half-filled splits stay for later);
+/// "ยืนยันเลยทั้งหมด" also submits, and then every split must balance.
 class PendingBatchAddPage extends StatefulWidget {
   const PendingBatchAddPage({super.key});
 
@@ -78,13 +81,20 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
       showAppSnackBar(context, l.quickAmountRequired, tone: Tone.warning);
       return;
     }
+    // Confirming needs the splits whole and balanced (a draft doesn't).
+    if (submit && rows.any((r) => !r.splitsBalanced)) {
+      showAppSnackBar(context, l.txSplitUnbalanced, tone: Tone.danger);
+      return;
+    }
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      final created = await pending.add([for (final r in rows) r.toDraft()]);
+      final created = await pending.add([
+        for (final r in rows) r.toDraft(keepIncomplete: !submit),
+      ]);
       var msg = l.pendingSavedCount(created.length);
       var tone = Tone.success;
       if (submit) {
@@ -100,7 +110,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showSaveFailure(context, e, retry: () => _save(submit: submit));
     }
   }
 
@@ -109,89 +119,94 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final n = _filled.length;
-    return Scaffold(
-      appBar: AppTopBar(
-        title: l.pendingAdd,
-        showBack: true,
-        showUniversal: false,
-      ),
-      extendBodyBehindAppBar: true,
-      body: Column(
-        children: [
-          // Clear the floating top bar (read inside the body to see it).
-          Builder(
-            builder: (context) =>
-                SizedBox(height: MediaQuery.paddingOf(context).top),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0,
-              AppSpacing.lg,
-              AppSpacing.sm,
+    // A save in flight dims the page and blocks input.
+    return SavingOverlay(
+      saving: _saving,
+      child: Scaffold(
+        appBar: AppTopBar(
+          title: l.pendingAdd,
+          showBack: true,
+          showUniversal: false,
+        ),
+        extendBodyBehindAppBar: true,
+        body: Column(
+          children: [
+            // Clear the floating top bar (read inside the body to see it).
+            Builder(
+              builder: (context) =>
+                  SizedBox(height: MediaQuery.paddingOf(context).top),
             ),
-            child: Text(
-              l.pendingBatchHint,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ),
-          Expanded(
-            child: ListView(
+            Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
                 0,
                 AppSpacing.lg,
-                AppSpacing.xxl,
+                AppSpacing.sm,
               ),
-              children: [
-                for (var i = 0; i < _rows.length; i++) ...[
-                  _RowCard(
-                    key: ObjectKey(_rows[i]),
-                    controller: _rows[i],
-                    autofocus: i == _rows.length - 1,
-                    onRemove: _rows.length == 1 ? null : () => _removeRow(i),
+              child: Text(
+                l.pendingBatchHint,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  AppSpacing.xxl,
+                ),
+                children: [
+                  for (var i = 0; i < _rows.length; i++) ...[
+                    _RowCard(
+                      key: ObjectKey(_rows[i]),
+                      controller: _rows[i],
+                      autofocus: i == _rows.length - 1,
+                      onRemove: _rows.length == 1 ? null : () => _removeRow(i),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                  AddTile(
+                    label: l.pendingAddRow,
+                    variant: AddTileVariant.row,
+                    onTap: _addRow,
                   ),
-                  const SizedBox(height: AppSpacing.sm),
                 ],
-                AddTile(
-                  label: l.pendingAddRow,
-                  variant: AddTileVariant.row,
-                  onTap: _addRow,
-                ),
-              ],
+              ),
             ),
-          ),
-          // The text button below brings its own bottom space.
-          PinnedBar(
-            bottomGap: AppSpacing.sm,
-            keyboardGap: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppButton(
-                  label: l.pendingSaveAsDrafts(n),
-                  expand: true,
-                  loading: _saving,
-                  onPressed: n == 0 ? null : () => _save(submit: false),
-                ),
-                TextButton(
-                  onPressed: _saving || n == 0
-                      ? null
-                      : () => _save(submit: true),
-                  child: Text(l.pendingSubmitAllNow(n)),
-                ),
-              ],
+            // The text button below brings its own bottom space.
+            PinnedBar(
+              bottomGap: AppSpacing.sm,
+              keyboardGap: 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppButton(
+                    label: l.pendingSaveAsDrafts(n),
+                    expand: true,
+                    loading: _saving,
+                    onPressed: n == 0 ? null : () => _save(submit: false),
+                  ),
+                  TextButton(
+                    onPressed: _saving || n == 0
+                        ? null
+                        : () => _save(submit: true),
+                    child: Text(l.pendingSubmitAllNow(n)),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// One draft in the list: the shared form in a card, ✕ to drop the row.
+/// One draft in the list: the chip-layout form in a card, a big ✕ to drop
+/// the row (only when there are several).
 class _RowCard extends StatelessWidget {
   const _RowCard({
     required this.controller,
@@ -223,8 +238,9 @@ class _RowCard extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: IconButton(
                 tooltip: l.pendingRemoveRow,
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(AppIcons.close, size: 18),
+                icon: const Icon(AppIcons.close, size: 24),
+                color: scheme.onSurfaceVariant,
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                 onPressed: onRemove,
               ),
             ),
@@ -232,6 +248,7 @@ class _RowCard extends StatelessWidget {
             controller: controller,
             compact: true,
             autofocus: autofocus,
+            chipLayout: true,
           ),
         ],
       ),

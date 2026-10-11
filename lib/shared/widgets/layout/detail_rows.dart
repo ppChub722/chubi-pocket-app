@@ -29,6 +29,7 @@ class SectionCard extends StatelessWidget {
     required this.children,
     this.title,
     this.trailing,
+    this.hint,
     this.first = false,
     this.locked = false,
     this.dividers = true,
@@ -37,6 +38,9 @@ class SectionCard extends StatelessWidget {
 
   final List<Widget> children;
   final String? title;
+
+  /// A short explanation under the title row (what the section is for).
+  final String? hint;
 
   /// A small action at the end of the title row (👁, share, …).
   final Widget? trailing;
@@ -79,6 +83,21 @@ class SectionCard extends StatelessWidget {
                 ),
                 ?trailing,
               ],
+            ),
+          ),
+        if (hint != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: Text(
+              hint!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
         for (final (i, row) in children.indexed) ...[
@@ -174,8 +193,32 @@ class DetailRow extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.showChevron = false,
+    this.locked = false,
     super.key,
   });
+
+  /// A picker row (owner 2026-10-11): `label  value ›`. An empty [value]
+  /// keeps the row, with the muted [emptyText] ("ไม่ได้เลือก") — never
+  /// hidden. The `›` shows while it can be tapped ([onTap] set).
+  factory DetailRow.pick({
+    required String label,
+    required String? value,
+    required String emptyText,
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+    Widget? leading,
+    bool locked = false,
+    Key? key,
+  }) => DetailRow(
+    key: key,
+    label: label,
+    leading: leading,
+    locked: locked,
+    onTap: onTap,
+    onLongPress: onLongPress,
+    showChevron: onTap != null,
+    trailing: _PickValue(value: value, emptyText: emptyText),
+  );
 
   /// View mode: enter edit on this row (long-press).
   final VoidCallback? onLongPress;
@@ -189,6 +232,10 @@ class DetailRow extends StatelessWidget {
   /// Shows a `›` after [trailing] — use for rows that navigate / open a sheet.
   final bool showChevron;
 
+  /// Can't be changed (owner 2026-10-11): a 🔒 leading icon — the row
+  /// itself is NOT dimmed. With a [leading] the 🔒 goes before it.
+  final bool locked;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -200,10 +247,21 @@ class DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (leading != null) ...[
+          if (locked || leading != null) ...[
             IconTheme.merge(
               data: IconThemeData(color: scheme.onSurfaceVariant, size: 22),
-              child: leading!,
+              child: locked
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(AppIcons.lock, size: 18),
+                        if (leading != null) ...[
+                          const SizedBox(width: AppSpacing.xs),
+                          leading!,
+                        ],
+                      ],
+                    )
+                  : leading!,
             ),
             const SizedBox(width: AppSpacing.md),
           ],
@@ -247,6 +305,27 @@ class DetailRow extends StatelessWidget {
     );
     if (onTap == null && onLongPress == null) return row;
     return InkWell(onTap: onTap, onLongPress: onLongPress, child: row);
+  }
+}
+
+/// [DetailRow.pick]'s value: the text, or the muted [emptyText].
+class _PickValue extends StatelessWidget {
+  const _PickValue({required this.value, required this.emptyText});
+
+  final String? value;
+  final String emptyText;
+
+  @override
+  Widget build(BuildContext context) {
+    final empty = value == null || value!.isEmpty;
+    return Text(
+      empty ? emptyText : value!,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: empty
+          ? TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)
+          : null,
+    );
   }
 }
 
