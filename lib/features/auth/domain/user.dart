@@ -11,6 +11,8 @@ class User extends Equatable {
     this.email,
     this.iconCode,
     this.feeCategoryId,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -26,6 +28,8 @@ class User extends Equatable {
   /// fee drafts from bank slips get. Only on `GET`/`PUT /users/me` —
   /// login answers without preferences, so it may be stale until then.
   final String? feeCategoryId;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -37,6 +41,8 @@ class User extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      createdAt: DateTime.tryParse((json['created_at'] as String?) ?? ''),
+      updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? ''),
       feeCategoryId: switch (json['preferences']) {
         {'fee_category_id': final String id} => id,
         _ => null,
@@ -60,6 +66,8 @@ class User extends Equatable {
       currency: currency,
       email: clearEmail ? null : (email ?? this.email),
       iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
       feeCategoryId: clearFeeCategory
           ? null
           : (feeCategoryId ?? this.feeCategoryId),
@@ -75,5 +83,7 @@ class User extends Equatable {
     email,
     iconCode,
     feeCategoryId,
+    createdAt,
+    updatedAt,
   ];
 }

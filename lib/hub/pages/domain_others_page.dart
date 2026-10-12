@@ -651,6 +651,33 @@ Widget buildOthersPage(BuildContext context) {
         ),
       ),
       HubPlayground(
+        title: 'Profile card (settings) — tint = avatar colour',
+        note:
+            'The settings profile card is a HeaderCard tinted with the '
+            'avatar\'s own colour: the icon colour, else the initials colour '
+            '(IconCode.tintFor with avatarName). Three users, three tints.',
+        controls: const [],
+        builder: (context, v) {
+          final palette = Theme.of(context).extension<AppColors>()!;
+          Widget card(String name) => HeaderCard(
+            accent: null.tintFor(palette, avatarName: name),
+            leading: UserAvatar(displayName: name, size: 52),
+            title: Text(name),
+            subtitle: Text('@${name.toLowerCase().replaceAll(' ', '')}'),
+            trailing: const AppIcon(AppIcons.chevronRight),
+          );
+          return Column(
+            children: [
+              for (final n in const ['QA Lead', 'Aom Chan', 'Bee'])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: card(n),
+                ),
+            ],
+          );
+        },
+      ),
+      HubPlayground(
         title: 'BrandLogo · AuthBrandHeader · GoogleSignInButton',
         note:
             'BrandLogo: size. AuthBrandHeader: compact. GoogleSignInButton: '

@@ -125,7 +125,8 @@ class _AddMemberSheetState extends State<AddMemberSheet> {
               onPressed: _saving ? null : _fromContacts,
             ),
             SectionCard(
-              // Stacked form fields, not rows — no hairlines.
+              // Framed fields: one per cell, no hairlines.
+              fields: true,
               dividers: false,
               children: [
                 AppInput(
@@ -136,7 +137,6 @@ class _AddMemberSheetState extends State<AddMemberSheet> {
                   validator: (v) =>
                       (v?.trim().isEmpty ?? true) ? l.nameRequired : null,
                 ),
-                const SizedBox(height: AppSpacing.md),
                 AppInput(
                   controller: _email,
                   label: l.email,

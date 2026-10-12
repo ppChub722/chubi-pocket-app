@@ -1606,5 +1606,7 @@
   "contactShowNicknameHelper": "On = use the nickname instead of the name everywhere",
   "accountsSummarySharedPot": "Shared wallets",
   "accountsSummaryOtherCurrency": "{count, plural, one{1 wallet in another currency is not counted} other{{count} wallets in another currency are not counted}}",
-  "notOwnerError": "Only the wallet owner can do this"
+  "notOwnerError": "Only the wallet owner can do this",
+  "profileTitle": "Profile",
+  "profileEmailCannotClear": "Once set, the email can't be removed"
 }

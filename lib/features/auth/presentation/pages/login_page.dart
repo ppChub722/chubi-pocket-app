@@ -10,6 +10,9 @@ import '../widgets/auth_widgets.dart';
 /// Login form. Generic 401 message on bad credentials (no field-level reveal —
 /// security pattern). On success, [AuthCubit] flips to [AuthAuthenticated] and
 /// the router redirects to `/`.
+///
+/// Built from the kit only: the page is `AuthPageBody` + framed `AppInput`s +
+/// buttons; this file holds state, validation, the API call and navigation.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -45,81 +48,64 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, state) {
           final isSubmitting = state is AuthLoading;
           final failure = state is AuthFailure ? state : null;
-          return CenteredFormBody(
-            child: AutofillGroup(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const AuthBrandHeader(),
-                    const SizedBox(height: AppSpacing.xl),
-                    if (failure != null) ...[
-                      AppMessage(
-                        tone: Tone.danger,
-                        message: _messageFor(l, failure),
-                        onClose: () =>
-                            context.read<AuthCubit>().acknowledgeFailure(),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                    AppInput(
-                      controller: _identifierCtrl,
-                      enabled: !isSubmitting,
-                      label: l.authLoginIdentifierLabel,
-                      prefixIcon: AppIcons.profile,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [
-                        AutofillHints.username,
-                        AutofillHints.email,
-                      ],
-                      textInputAction: TextInputAction.next,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? l.commonRequired
-                          : null,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    AppInput(
-                      controller: _passwordCtrl,
-                      enabled: !isSubmitting,
-                      label: l.authLoginPasswordLabel,
-                      prefixIcon: AppIcons.lock,
-                      obscurable: true,
-                      autofillHints: const [AutofillHints.password],
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _submit(),
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? l.commonRequired : null,
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    AppButton(
-                      label: l.authLoginSubmit,
-                      onPressed: isSubmitting ? null : _submit,
-                      loading: isSubmitting,
-                      size: AppButtonSize.large,
-                      expand: true,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    const AuthOrDivider(),
-                    const SizedBox(height: AppSpacing.lg),
-                    // TODO(google-sign-in): wire once POST /auth/google
-                    // exists (contract §12).
-                    const GoogleSignInButton(),
-                    const SizedBox(height: AppSpacing.lg),
-                    AppButton(
-                      label: l.authLoginGoToRegister,
-                      variant: AppButtonVariant.text,
-                      expand: true,
-                      onPressed: isSubmitting
-                          ? null
-                          : () => context.push('/auth/register'),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    const AuthPrefsBar(),
-                  ],
-                ),
+          return AuthPageBody(
+            formKey: _formKey,
+            brand: const AuthBrandHeader(),
+            banner: failure == null
+                ? null
+                : AppMessage(
+                    tone: Tone.danger,
+                    message: _messageFor(l, failure),
+                    onClose: () =>
+                        context.read<AuthCubit>().acknowledgeFailure(),
+                  ),
+            groups: [
+              AppInput(
+                controller: _identifierCtrl,
+                enabled: !isSubmitting,
+                label: l.authLoginIdentifierLabel,
+                prefixIcon: AppIcons.profile,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [
+                  AutofillHints.username,
+                  AutofillHints.email,
+                ],
+                textInputAction: TextInputAction.next,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? l.commonRequired : null,
               ),
+              AppInput(
+                controller: _passwordCtrl,
+                enabled: !isSubmitting,
+                label: l.authLoginPasswordLabel,
+                prefixIcon: AppIcons.lock,
+                obscurable: true,
+                autofillHints: const [AutofillHints.password],
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? l.commonRequired : null,
+              ),
+            ],
+            submit: AppButton(
+              label: l.authLoginSubmit,
+              onPressed: isSubmitting ? null : _submit,
+              loading: isSubmitting,
+              size: AppButtonSize.large,
+              expand: true,
             ),
+            // TODO(google-sign-in): wire once POST /auth/google exists
+            // (contract §12).
+            alternatives: const [AuthOrDivider(), GoogleSignInButton()],
+            switchLink: AppButton(
+              label: l.authLoginGoToRegister,
+              variant: AppButtonVariant.text,
+              expand: true,
+              onPressed: isSubmitting
+                  ? null
+                  : () => context.push('/auth/register'),
+            ),
+            footer: const AuthPrefsBar(),
           );
         },
       ),

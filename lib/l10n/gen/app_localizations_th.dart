@@ -4299,4 +4299,10 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get notOwnerError => 'เฉพาะเจ้าของกระเป๋าเท่านั้น';
+
+  @override
+  String get profileTitle => 'โปรไฟล์';
+
+  @override
+  String get profileEmailCannotClear => 'อีเมลที่ตั้งแล้วลบออกไม่ได้';
 }

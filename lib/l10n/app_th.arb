@@ -1402,5 +1402,7 @@
   "contactShowNicknameHelper": "เปิด = ใช้ชื่อเล่นแทนชื่อจริงทุกที่",
   "accountsSummarySharedPot": "กระเป๋าร่วม",
   "accountsSummaryOtherCurrency": "{count, plural, other{อีก {count} กระเป๋าเป็นสกุลอื่น ไม่นับรวม}}",
-  "notOwnerError": "เฉพาะเจ้าของกระเป๋าเท่านั้น"
+  "notOwnerError": "เฉพาะเจ้าของกระเป๋าเท่านั้น",
+  "profileTitle": "โปรไฟล์",
+  "profileEmailCannotClear": "อีเมลที่ตั้งแล้วลบออกไม่ได้"
 }

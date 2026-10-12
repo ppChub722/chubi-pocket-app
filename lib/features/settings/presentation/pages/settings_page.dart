@@ -17,8 +17,8 @@ import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_id_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
 
-/// `/settings` (its own tab, opened by the 👤 chip): profile card → บัญชี
-/// (password, locked currency) → การแจ้งเตือน →
+/// `/settings` (its own tab, opened by the 👤 chip): profile card (→ the profile
+/// page: password, locked currency) → การแจ้งเตือน →
 /// การตั้งค่าส่วนตัว (theme cards, mode, language & font sheets) →
 /// เกี่ยวกับ → ออกจากระบบ.
 class SettingsPage extends StatelessWidget {
@@ -42,6 +42,11 @@ class SettingsPage extends StatelessWidget {
               topInset: inset.top + AppSpacing.sm,
               bottomInset: AppSpacing.huge + inset.bottom,
               hero: HeaderCard(
+                // The avatar's own colour (icon colour, else the initials colour).
+                accent: user.iconCode.tintFor(
+                  Theme.of(context).extension<AppColors>()!,
+                  avatarName: user.displayName,
+                ),
                 leading: UserAvatar(
                   displayName: user.displayName,
                   iconCode: user.iconCode,
@@ -58,26 +63,6 @@ class SettingsPage extends StatelessWidget {
                 onTap: () => context.push('/settings/profile'),
               ),
               sections: [
-                (first) => SectionCard(
-                  first: first,
-                  title: l.settingsSectionAccount,
-                  children: [
-                    DetailRow(
-                      leading: const AppIcon(AppIcons.lock),
-                      label: l.settingsChangePassword,
-                      showChevron: true,
-                      onTap: () => context.push('/settings/password'),
-                    ),
-                    DetailRow(
-                      leading: const AppIcon(AppIcons.currency),
-                      label: l.profileCurrencyLabel,
-                      locked: true,
-                      trailing: Text(
-                        '${Currencies.symbolOf(user.currency)}  ${user.currency}',
-                      ),
-                    ),
-                  ],
-                ),
                 (first) => SectionCard(
                   first: first,
                   title: l.settingsNotifications,

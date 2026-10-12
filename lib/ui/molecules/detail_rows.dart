@@ -41,6 +41,7 @@ class SectionCard extends StatelessWidget {
     this.first = false,
     this.locked = false,
     this.dividers = true,
+    this.fields = false,
     super.key,
   });
 
@@ -70,6 +71,11 @@ class SectionCard extends StatelessWidget {
   /// false = the children touch (one block that isn't a list of rows).
   final bool dividers;
 
+  /// The children are form FIELDS (framed `AppInput`s, a picker card) rather than
+  /// rows: the section pads each one — a side inset, a small gap between them —
+  /// so a page never adds its own spacing. Implies no row gaps.
+  final bool fields;
+
   Widget _tappable(Widget header) => onHeaderTap == null
       ? header
       : InkWell(
@@ -87,13 +93,34 @@ class SectionCard extends StatelessWidget {
       (c) => c is DetailRow && (c.leading != null || c.icon != null),
     );
     const outer = Radius.circular(AppRadius.lg);
-    Widget cell(int i, Widget row) => ClipRRect(
-      borderRadius: BorderRadius.vertical(
+    // A rounded Material, NOT a ClipRRect: a framed field's notched label
+    // overhangs its box by half a line, and a clip would cut it in half.
+    Widget cell(int i, Widget row) {
+      final radius = BorderRadius.vertical(
         top: i == 0 ? outer : Radius.zero,
         bottom: i == children.length - 1 ? outer : Radius.zero,
-      ),
-      child: Material(color: scheme.surface, child: row),
-    );
+      );
+      return ClipRRect(
+        borderRadius: radius,
+        clipBehavior: Clip.none,
+        child: Material(
+          color: scheme.surface,
+          borderRadius: radius,
+          child: fields
+              ? Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    i == 0 ? AppSpacing.md : AppSpacing.xs,
+                    AppSpacing.lg,
+                    i == children.length - 1 ? AppSpacing.md : AppSpacing.xs,
+                  ),
+                  child: row,
+                )
+              : row,
+        ),
+      );
+    }
+
     final group = DetailGroupScope(
       reserveIcon: reserve,
       child: Column(

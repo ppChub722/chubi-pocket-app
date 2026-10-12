@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
@@ -11,9 +12,11 @@ import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
 
-/// `/settings/profile` (§7) — opens straight in edit mode: header card
-/// (avatar → icon maker, name inline), username (locked), email. The
-/// currency is locked (shown on settings only).
+/// `/settings/profile` — the profile detail page, on the same template as the
+/// contact page: hero (avatar · name · @username, tinted with the avatar's
+/// colour), ONE headless box (display name · username 🔒 · email · currency 🔒),
+/// an Account section (change password) and the meta. Opens in view mode; ✏️ /
+/// long-press edits.
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
@@ -28,7 +31,7 @@ class _EditProfilePageState extends State<EditProfilePage>
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  late final User _user;
+  late User _user;
   String? _emailError;
 
   @override
@@ -39,7 +42,7 @@ class _EditProfilePageState extends State<EditProfilePage>
     _user = s is AuthAuthenticated
         ? s.user
         : ((s as AuthLoading).previous as AuthAuthenticated).user;
-    initDraft(_ProfileDraft.from(_user), editing: true);
+    initDraft(_ProfileDraft.from(_user), editing: false);
     onDraftRestored();
   }
 
@@ -49,9 +52,6 @@ class _EditProfilePageState extends State<EditProfilePage>
     _emailCtrl.dispose();
     super.dispose();
   }
-
-  @override
-  bool get leaveOnCancel => true;
 
   @override
   void onDraftRestored() {
@@ -105,128 +105,180 @@ class _EditProfilePageState extends State<EditProfilePage>
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       showAppSnackBar(context, l.editProfileSnackSuccess, tone: Tone.success);
-      commitSaved(w);
-      leavePage();
+      _user = updated;
+      commitSaved(_ProfileDraft.from(updated));
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
       if (e.code == 'EMAIL_EXISTS') {
         setState(() => _emailError = l.editProfileEmailTaken);
+        _formKey.currentState?.validate();
       } else {
         showAppSnackBar(context, e.message, tone: Tone.danger);
       }
     }
   }
 
+  /// The name shown by the avatar: the draft's, else the saved one.
+  String get _shownName =>
+      working.name.trim().isEmpty ? _user.displayName : working.name;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final w = working;
-    return editScope(
-      Scaffold(
-        appBar: AppTopBar(
-          title: l.editProfileTitle,
-          showBack: true,
-          editing: true,
-          onBack: handleBack,
-        ),
-        extendBodyBehindAppBar: true,
-        body: Form(
-          key: _formKey,
-          // Builder: the floating bar's height is only visible inside the body.
-          child: Builder(
-            builder: (context) => DetailPageBody(
-              onRefresh: () => refreshMe(context),
-              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-              bottomInset:
-                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-              hero: HeaderCard(
-                leading: EditableCircle(
-                  size: 64,
-                  onTap: _pickAvatar,
-                  child: UserAvatar(
-                    displayName: w.name.trim().isEmpty
-                        ? _user.displayName
-                        : w.name,
-                    iconCode: w.iconCode,
-                    size: 64,
+    final editing = isEditing;
+    // A refresh (pull) while viewing re-reads the profile into the page.
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated && !isEditing) {
+          _user = state.user;
+          resetDraft(_ProfileDraft.from(state.user));
+        }
+      },
+      child: editScope(
+        Scaffold(
+          appBar: AppTopBar(
+            // Edit mode keeps the page's title; the action bar shows the mode.
+            title: l.profileTitle,
+            showBack: true,
+            editing: editing,
+            onBack: handleBack,
+          ),
+          extendBodyBehindAppBar: true,
+          body: Form(
+            key: _formKey,
+            // Builder: the floating bar's height is only visible inside the body.
+            child: Builder(
+              builder: (context) => DetailPageBody(
+                onRefresh: () => refreshMe(context),
+                topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                bottomInset:
+                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                hero: HeaderCard(
+                  accent: w.iconCode.tintFor(
+                    Theme.of(context).extension<AppColors>()!,
+                    avatarName: _shownName,
                   ),
-                ),
-                title: HeroNameInput(
-                  editing: true,
-                  controller: _nameCtrl,
-                  hint: l.editProfileDisplayNameLabel,
-                  onChanged: (v) =>
-                      applyTextChange(_Field.name, working.copyWith(name: v)),
-                  validator: (v) {
-                    final s = v?.trim() ?? '';
-                    if (s.isEmpty) return l.commonRequired;
-                    if (s.length > 100) {
-                      return l.authRegisterDisplayNameTooLong;
-                    }
-                    return null;
-                  },
-                ),
-                subtitle: Text('@${_user.username}'),
-              ),
-              sections: [
-                (first) => SectionCard(
-                  first: first,
-                  children: [
-                    DetailRow(
-                      leading: const AppIcon(AppIcons.lock),
-                      label: l.editProfileUsernameLabel,
-                      helper: l.profileUsernameLocked,
-                      trailing: Text('@${_user.username}'),
+                  onEdit: editing ? null : enterEdit,
+                  leading: EditableCircle(
+                    size: 64,
+                    onTap: editing ? _pickAvatar : null,
+                    child: UserAvatar(
+                      displayName: _shownName,
+                      iconCode: w.iconCode,
+                      size: 64,
                     ),
-                    DetailStacked(
-                      label: l.editProfileEmailLabel,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AppInput.inline(
-                            editing: true,
-                            controller: _emailCtrl,
-                            maxLength: 255,
-                            keyboardType: TextInputType.emailAddress,
-                            onChanged: (v) {
-                              if (_emailError != null) {
-                                setState(() => _emailError = null);
-                              }
-                              applyTextChange(
-                                _Field.email,
-                                working.copyWith(email: v),
-                              );
-                            },
-                            validator: (v) {
-                              if (_emailError != null) return _emailError;
-                              final s = v?.trim() ?? '';
-                              if (s.isEmpty) return null;
-                              if (s.length > 255) {
-                                return l.editProfileEmailTooLong;
-                              }
-                              return RegExp(
-                                    r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                                  ).hasMatch(s)
-                                  ? null
-                                  : l.editProfileEmailInvalid;
-                            },
+                  ),
+                  title: Text(_shownName),
+                  subtitle: Text('@${_user.username}'),
+                ),
+                sections: [
+                  // ONE headless box, like the contact page.
+                  (first) => SectionCard(
+                    first: first,
+                    children: [
+                      DetailStacked(
+                        label: l.editProfileDisplayNameLabel,
+                        child: AppInput.inline(
+                          editing: editing,
+                          controller: _nameCtrl,
+                          maxLength: TextLimits.name,
+                          onEnterEdit: () => enterEdit(),
+                          onChanged: (v) => applyTextChange(
+                            _Field.name,
+                            working.copyWith(name: v),
                           ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            l.editProfileEmailHelper,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
+                          validator: (v) {
+                            final s = v?.trim() ?? '';
+                            if (s.isEmpty) return l.commonRequired;
+                            if (s.length > 100) {
+                              return l.authRegisterDisplayNameTooLong;
+                            }
+                            return null;
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                      DetailRow(
+                        leading: const AppIcon(AppIcons.lock),
+                        label: l.editProfileUsernameLabel,
+                        locked: true,
+                        trailing: Text('@${_user.username}'),
+                      ),
+                      DetailStacked(
+                        label: l.editProfileEmailLabel,
+                        child: AppInput.inline(
+                          editing: editing,
+                          controller: _emailCtrl,
+                          maxLength: 255,
+                          keyboardType: TextInputType.emailAddress,
+                          viewHint: l.draftExtrasNone,
+                          onEnterEdit: () => enterEdit(),
+                          onChanged: (v) {
+                            if (_emailError != null) {
+                              setState(() => _emailError = null);
+                            }
+                            applyTextChange(
+                              _Field.email,
+                              working.copyWith(email: v),
+                            );
+                          },
+                          validator: (v) {
+                            if (_emailError != null) return _emailError;
+                            final s = v?.trim() ?? '';
+                            // Once set, the email can't go back to empty.
+                            if (s.isEmpty) {
+                              return original.email.isEmpty
+                                  ? null
+                                  : l.profileEmailCannotClear;
+                            }
+                            if (s.length > 255) {
+                              return l.editProfileEmailTooLong;
+                            }
+                            return RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                                ).hasMatch(s)
+                                ? null
+                                : l.editProfileEmailInvalid;
+                          },
+                        ),
+                      ),
+                      DetailRow(
+                        leading: const AppIcon(AppIcons.currency),
+                        label: l.profileCurrencyLabel,
+                        locked: true,
+                        trailing: Text(
+                          '${Currencies.symbolOf(_user.currency)}  '
+                          '${_user.currency}',
+                        ),
+                      ),
+                    ],
+                  ),
+                  (first) => SectionCard(
+                    first: first,
+                    title: l.settingsSectionAccount,
+                    // Navigating away mid-edit would drop the edits.
+                    locked: editing,
+                    children: [
+                      DetailRow(
+                        leading: const AppIcon(AppIcons.lock),
+                        label: l.settingsChangePassword,
+                        showChevron: true,
+                        onTap: () => context.push('/settings/password'),
+                      ),
+                    ],
+                  ),
+                ],
+                metaLines: detailMetaLines(
+                  context,
+                  createdAt: _user.createdAt,
+                  updatedAt: _user.updatedAt,
                 ),
-              ],
+              ),
             ),
           ),
+          bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
         ),
-        bottomNavigationBar: editActionBar(onSave: _save),
       ),
     );
   }

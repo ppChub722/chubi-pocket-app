@@ -4406,4 +4406,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notOwnerError => 'Only the wallet owner can do this';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get profileEmailCannotClear => 'Once set, the email can\'t be removed';
 }

@@ -96,82 +96,73 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           onSave: _submit,
         ),
         extendBodyBehindAppBar: true,
-        body: SafeArea(
-          top: false,
+        body: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           // Builder: the floating bar's height is only visible inside the body.
           child: Builder(
-            builder: (context) => SingleChildScrollView(
-              padding: const EdgeInsets.all(
-                AppSpacing.lg,
-              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+            builder: (context) => DetailPageBody(
+              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+              bottomInset:
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+              hero: _error == null
+                  ? null
+                  : AppMessage(
+                      tone: Tone.danger,
+                      message: _bannerMessageFor(l, _error!),
+                    ),
+              sections: [
+                (first) => SectionCard(
+                  first: first,
+                  fields: true,
+                  dividers: false,
                   children: [
-                    if (_error != null) ...[
-                      AppMessage(
-                        tone: Tone.danger,
-                        message: _bannerMessageFor(l, _error!),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                    SectionCard(
-                      first: true,
-                      dividers: false,
-                      children: [
-                        AppInput(
-                          controller: _currentCtrl,
-                          enabled: !_submitting,
-                          obscurable: true,
-                          autofillHints: const [AutofillHints.password],
-                          label: l.changePasswordCurrentLabel,
-                          errorText: _currentFieldError,
-                          validator: (v) => (v == null || v.isEmpty)
-                              ? l.commonRequired
-                              : null,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        AppInput(
-                          controller: _newCtrl,
-                          enabled: !_submitting,
-                          obscurable: true,
-                          autofillHints: const [AutofillHints.newPassword],
-                          label: l.changePasswordNewLabel,
-                          helper: l.changePasswordNewHelper,
-                          validator: (v) {
-                            if (v == null || v.length < 8) {
-                              return l.authRegisterPasswordTooShort;
-                            }
-                            if (v.length > 128) {
-                              return l.authRegisterPasswordTooLong;
-                            }
-                            if (v == _currentCtrl.text) {
-                              return l.changePasswordNewMustDiffer;
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        AppInput(
-                          controller: _confirmCtrl,
-                          enabled: !_submitting,
-                          obscurable: true,
-                          onSubmitted: (_) => _submit(),
-                          label: l.changePasswordConfirmLabel,
-                          validator: (v) {
-                            if (v != _newCtrl.text) {
-                              return l.changePasswordConfirmMismatch;
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
+                    AppInput(
+                      controller: _currentCtrl,
+                      enabled: !_submitting,
+                      obscurable: true,
+                      autofillHints: const [AutofillHints.password],
+                      label: l.changePasswordCurrentLabel,
+                      errorText: _currentFieldError,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? l.commonRequired : null,
+                    ),
+                    AppInput(
+                      controller: _newCtrl,
+                      enabled: !_submitting,
+                      obscurable: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      label: l.changePasswordNewLabel,
+                      helper: l.changePasswordNewHelper,
+                      validator: (v) {
+                        if (v == null || v.length < 8) {
+                          return l.authRegisterPasswordTooShort;
+                        }
+                        if (v.length > 128) {
+                          return l.authRegisterPasswordTooLong;
+                        }
+                        if (v == _currentCtrl.text) {
+                          return l.changePasswordNewMustDiffer;
+                        }
+                        return null;
+                      },
+                    ),
+                    AppInput(
+                      controller: _confirmCtrl,
+                      enabled: !_submitting,
+                      obscurable: true,
+                      onSubmitted: (_) => _submit(),
+                      label: l.changePasswordConfirmLabel,
+                      validator: (v) {
+                        if (v != _newCtrl.text) {
+                          return l.changePasswordConfirmMismatch;
+                        }
+                        return null;
+                      },
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
         ),

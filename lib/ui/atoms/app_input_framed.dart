@@ -165,6 +165,18 @@ class FramedInput extends StatefulWidget {
 }
 
 class _FramedInputState extends State<FramedInput> {
+  /// A text affix (prefix / suffix text) is one line, ellipsised past a cap, so
+  /// a long one can never push the field out of its frame.
+  static Widget _capped(Text t) => ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 120),
+    child: Text(
+      t.data ?? "",
+      style: t.style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    ),
+  );
+
   TextEditingController? _ownController;
   FocusNode? _ownFocus;
   bool _obscured = false;
@@ -351,20 +363,32 @@ class _FramedInputState extends State<FramedInput> {
                       fontSize: (style?.fontSize ?? 16) * w.symbolScale,
                     ),
             ),
-          if (w.prefixText != null) Text(w.prefixText!, style: affixStyle),
+          if (w.prefixText != null)
+            _capped(Text(w.prefixText!, style: affixStyle)),
         ];
         final trail = <Widget>[
           if (suffixText != null)
             Padding(
               padding: const EdgeInsets.only(left: 4),
-              child: Text(suffixText, style: affixStyle),
+              child: _capped(Text(suffixText, style: affixStyle)),
             ),
           ?w.suffix,
           if (w.obscurable)
-            AppIconButton.flat(
-              icon: _obscured ? AppIcons.visible : AppIcons.hidden,
-              dense: true,
-              onPressed: () => setState(() => _obscured = !_obscured),
+            // Does not make the field taller than its siblings: the button
+            // overflows the one text line instead (same height for every
+            // AppInput, with or without the eye).
+            SizedBox(
+              width: 40,
+              height: 24,
+              child: OverflowBox(
+                maxWidth: 40,
+                maxHeight: 40,
+                child: AppIconButton.flat(
+                  icon: _obscured ? AppIcons.visible : AppIcons.hidden,
+                  dense: true,
+                  onPressed: () => setState(() => _obscured = !_obscured),
+                ),
+              ),
             ),
         ];
         final Widget content;
@@ -395,12 +419,14 @@ class _FramedInputState extends State<FramedInput> {
             ),
           );
         } else {
-          // Affixes may shrink (and ellipsise) before the text field does.
+          // The text field takes ALL the space the affixes leave (a Flexible
+          // affix would split it with the field and park the eye / suffix in
+          // the middle); text affixes are width-capped below instead.
           content = Row(
             children: [
-              for (final e in lead) Flexible(child: e),
+              ...lead,
               Expanded(child: inner),
-              for (final e in trail) Flexible(child: e),
+              ...trail,
             ],
           );
         }

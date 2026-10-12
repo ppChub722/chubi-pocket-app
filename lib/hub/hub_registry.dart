@@ -33,6 +33,7 @@ import 'pages/organisms_section_hero_page.dart';
 import 'pages/templates_detail_page.dart';
 import 'pages/domain_others_page.dart';
 import 'pages/domain_people_accounts_page.dart';
+import 'pages/templates_auth_page.dart';
 import 'pages/templates_dashboard_page.dart';
 import 'pages/templates_list_page.dart';
 import 'pages/sheets_projects_page.dart';
@@ -576,6 +577,21 @@ final List<HubPage> hubPages = [
   ),
   const HubPage(
     level: HubLevel.templates,
+    slug: 'auth-page',
+    title: 'Auth page',
+    summary:
+        'Sign in + register: brand, banner, framed inputs, primary, social, link, language / theme.',
+    usedBy: '2 pages (Login, Register)',
+    covers: [
+      'AuthPageBody',
+      'OrDivider',
+      'SocialSignInButton',
+      'LanguageThemeBar',
+    ],
+    builder: buildAuthPageTemplate,
+  ),
+  const HubPage(
+    level: HubLevel.templates,
     slug: 'dashboard',
     title: 'Dashboard',
     summary:
@@ -836,6 +852,7 @@ final List<HubPage> hubPages = [
     usedBy: '~10 files',
     covers: [
       'BrandLogo',
+      'BrandHeader',
       'BankBrand',
       'OfflineBanner',
       'ProjectMemberAvatar',

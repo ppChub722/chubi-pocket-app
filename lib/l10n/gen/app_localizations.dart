@@ -7692,6 +7692,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only the wallet owner can do this'**
   String get notOwnerError;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTitle;
+
+  /// No description provided for @profileEmailCannotClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Once set, the email can\'t be removed'**
+  String get profileEmailCannotClear;
 }
 
 class _AppLocalizationsDelegate

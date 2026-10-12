@@ -1,0 +1,126 @@
+import 'dart:async';
+
+import 'package:chubi_pocket/core/network/api_client.dart';
+import 'package:chubi_pocket/core/storage/secure_token_storage.dart';
+import 'package:chubi_pocket/features/auth/data/auth_repository.dart';
+import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:chubi_pocket/features/auth/presentation/pages/login_page.dart';
+import 'package:chubi_pocket/features/auth/presentation/pages/register_page.dart';
+import 'package:chubi_pocket/features/preferences/presentation/cubit/locale_cubit.dart';
+import 'package:chubi_pocket/features/preferences/presentation/cubit/theme_mode_cubit.dart';
+import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/theme_builder.dart';
+import 'package:chubi_pocket/ui/ui.dart';
+import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
+import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class _MockRepo extends Mock implements AuthRepository {}
+
+class _MockTokens extends Mock implements SecureTokenStorage {}
+
+class _Pending extends MockCubit<PendingState> implements PendingCubit {}
+
+class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
+
+class _FakeApi extends Fake implements ApiClient {
+  final _c = StreamController<void>.broadcast();
+  @override
+  Stream<void> get onUnauthorized => _c.stream;
+}
+
+/// Login and Register are the Auth template + kit pieces only (owner
+/// 2026-10-12): the page is an AuthPageBody, its fields are kit AppInputs, and
+/// both follow the app theme (dark too).
+void main() {
+  late AuthCubit auth;
+  late LocaleCubit locale;
+  late ThemeModeCubit themeMode;
+  late PendingCubit pendingCubit;
+  late UnreadBadgeCubit unreadCubit;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    locale = LocaleCubit(prefs);
+    themeMode = ThemeModeCubit(prefs);
+    final pending = _Pending();
+    final unread = _Unread();
+    when(() => pending.state).thenReturn(const PendingState());
+    when(() => unread.state).thenReturn(0);
+    pendingCubit = pending;
+    unreadCubit = unread;
+    auth = AuthCubit(
+      repository: _MockRepo(),
+      tokenStorage: _MockTokens(),
+      apiClient: _FakeApi(),
+    );
+  });
+
+  Future<void> pump(
+    WidgetTester t,
+    Widget page, {
+    Brightness b = Brightness.light,
+  }) {
+    final theme = ThemeBuilder.build(
+      theme: ThemeRegistry.byId(ThemeRegistry.defaultThemeId),
+      font: FontRegistry.inter,
+      brightness: b,
+    );
+    return t.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: auth),
+          BlocProvider.value(value: locale),
+          BlocProvider.value(value: themeMode),
+          BlocProvider.value(value: pendingCubit),
+          BlocProvider.value(value: unreadCubit),
+        ],
+        child: MaterialApp(
+          theme: theme,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          builder: (context, child) => AppUiConfig(child: child!),
+          home: page,
+        ),
+      ),
+    );
+  }
+
+  testWidgets('login: AuthPageBody + 2 kit inputs + brand + prefs', (t) async {
+    await pump(t, const LoginPage());
+    expect(find.byType(AuthPageBody), findsOneWidget);
+    expect(find.byType(AppInput), findsNWidgets(2));
+    expect(find.byType(BrandHeader), findsOneWidget);
+    expect(find.byType(LanguageThemeBar), findsOneWidget);
+    expect(find.byType(OrDivider), findsOneWidget);
+  });
+
+  testWidgets('register: AuthPageBody + grouped kit fields', (t) async {
+    await pump(t, const RegisterPage());
+    expect(find.byType(AuthPageBody), findsOneWidget);
+    expect(find.byType(SectionCard), findsNWidgets(2));
+    expect(find.byType(AppInput), findsNWidgets(5));
+  });
+
+  testWidgets('both pages take the app theme in dark mode', (t) async {
+    await pump(t, const LoginPage(), b: Brightness.dark);
+    final dark = Theme.of(
+      t.element(find.byType(Scaffold)),
+    ).scaffoldBackgroundColor;
+    expect(t.widget<Scaffold>(find.byType(Scaffold)).backgroundColor, isNull);
+    expect(dark.computeLuminance(), lessThan(0.3));
+    await pump(t, const RegisterPage(), b: Brightness.dark);
+    final dark2 = Theme.of(
+      t.element(find.byType(Scaffold)),
+    ).scaffoldBackgroundColor;
+    expect(t.widget<Scaffold>(find.byType(Scaffold)).backgroundColor, isNull);
+    expect(dark2.computeLuminance(), lessThan(0.3));
+  });
+}
