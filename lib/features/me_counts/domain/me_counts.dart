@@ -16,8 +16,8 @@ class MeCounts extends Equatable {
     this.owedToMe = 0,
     this.iOwe = 0,
     this.budgetUtilizationPct = 0,
-    this.scheduledActive = 0,
-    this.scheduledUpcoming = 0,
+    this.recurringActive = 0,
+    this.recurringUpcoming = 0,
   });
 
   factory MeCounts.fromJson(Map<String, dynamic> json) {
@@ -27,7 +27,7 @@ class MeCounts extends Equatable {
     final goals = (counts['goals'] as Map?) ?? const {};
     final debts = (counts['debts_summary'] as Map?) ?? const {};
     final budgetsSummary = (counts['budgets_summary'] as Map?) ?? const {};
-    final scheduled = (counts['scheduled'] as Map?) ?? const {};
+    final recurring = (counts['recurring'] as Map?) ?? const {};
     double d(Object? v) => v is num ? v.toDouble() : 0;
     return MeCounts(
       unreadNotifications: i(badges['unread_notifications']),
@@ -45,8 +45,8 @@ class MeCounts extends Equatable {
       owedToMe: d(debts['owed_to_me']),
       iOwe: d(debts['i_owe']),
       budgetUtilizationPct: d(budgetsSummary['utilization_pct']),
-      scheduledActive: i(scheduled['active_count']),
-      scheduledUpcoming: i(scheduled['upcoming_count']),
+      recurringActive: i(recurring['active_count']),
+      recurringUpcoming: i(recurring['upcoming_count']),
     );
   }
 
@@ -63,10 +63,10 @@ class MeCounts extends Equatable {
   final double owedToMe;
   final double iOwe;
   final double budgetUtilizationPct;
-  final int scheduledActive;
+  final int recurringActive;
 
-  /// Active scheduled items due within the next 14 days (overdue included).
-  final int scheduledUpcoming;
+  /// Upcoming recurring items dated within the next 14 days.
+  final int recurringUpcoming;
 
   @override
   List<Object?> get props => [
@@ -83,7 +83,7 @@ class MeCounts extends Equatable {
     owedToMe,
     iOwe,
     budgetUtilizationPct,
-    scheduledActive,
-    scheduledUpcoming,
+    recurringActive,
+    recurringUpcoming,
   ];
 }

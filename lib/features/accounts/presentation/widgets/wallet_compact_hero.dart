@@ -17,14 +17,16 @@ CompactHeroBar walletCompactHero(
     style: accountHeroStyle(context, account),
     leading: AccountIconCircle(account: account, size: 28),
     title: AppText(account.name, role: AppTextRole.title),
-    trailing: MoneyText(
-      accountDisplayBalance(account),
-      symbol: Currencies.symbolOf(account.currency),
-      style: AppTypography.of(
-        context,
-        AppTextRole.money,
-      )?.copyWith(color: accountBalanceColor(context, account)),
-    ),
+    trailing: account.showsBalance
+        ? MoneyText(
+            accountDisplayBalance(account),
+            symbol: Currencies.symbolOf(account.currency),
+            style: AppTypography.of(
+              context,
+              AppTextRole.money,
+            )?.copyWith(color: accountBalanceColor(context, account)),
+          )
+        : null,
     onTap: onTap,
   );
 }

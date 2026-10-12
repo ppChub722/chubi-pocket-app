@@ -311,6 +311,24 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               ),
             ),
             HubUse(
+              label: 'extra neutral action above (ManageAction)',
+              page: 'Budget detail (ปิดงบ)',
+              child: ManageSection(
+                first: true,
+                extraActions: [
+                  ManageAction(
+                    label: 'Close budget',
+                    icon: AppIcons.success,
+                    onTap: noop,
+                  ),
+                ],
+                archiveLabel: 'Archive',
+                onArchive: noop,
+                deleteLabel: 'Delete',
+                onDelete: noop,
+              ),
+            ),
+            HubUse(
               label: 'delete only (no archive)',
               page: 'Contact, Category detail',
               child: ManageSection(

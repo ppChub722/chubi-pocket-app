@@ -58,6 +58,8 @@ class Account extends Equatable {
     this.sortOrder = 0,
     this.myRole = WalletRole.owner,
     this.canEdit = true,
+    this.trackBalance = true,
+    this.savings,
   }) : _group = group;
 
   final String id;
@@ -66,6 +68,18 @@ class Account extends Equatable {
   final String? description;
   final String? note;
   final double balance;
+
+  /// "ติดตามยอดเงิน" (owner 2026-10-12): off → no balance is shown anywhere
+  /// (list / pickers / hero), no ปรับยอด, and the wallet is left out of the
+  /// totals. [balance] is still the running sum — hide it, don't trust it.
+  final bool trackBalance;
+
+  /// The caller's own savings held in this wallet (goals v2); null when the
+  /// BE sent none.
+  final WalletSavings? savings;
+
+  /// Whether any UI may show [balance] (and the credit figures built on it).
+  bool get showsBalance => trackBalance;
 
   /// Read-only: the user's currency, set by the BE (never sent on writes).
   final String currency;
@@ -123,21 +137,26 @@ class Account extends Equatable {
 
   /// A card / pay-later's used credit — what's owed on it. A positive
   /// balance (overpaid) uses none; 0 for other types.
-  double get creditUsed => isLiability && balance < 0 ? -balance : 0;
+  double get creditUsed =>
+      isLiability && trackBalance && balance < 0 ? -balance : 0;
 
   /// Credit left to spend: limit − [creditUsed] (null without a limit).
   /// Overpaid → the whole limit (the overpaid part is money of mine, not
   /// credit).
   double? get creditAvailable {
     final limit = creditLimit;
-    if (!isLiability || limit == null || limit <= 0) return null;
+    if (!isLiability || !trackBalance || limit == null || limit <= 0) {
+      return null;
+    }
     return limit - creditUsed;
   }
 
   /// [creditUsed] / limit, 0..1 (null: not credit, or no limit).
   double? get creditUtilization {
     final limit = creditLimit;
-    if (!isLiability || limit == null || limit <= 0) return null;
+    if (!isLiability || !trackBalance || limit == null || limit <= 0) {
+      return null;
+    }
     return (creditUsed / limit).clamp(0.0, 1.0);
   }
 
@@ -173,6 +192,8 @@ class Account extends Equatable {
     int? sortOrder,
     WalletRole? myRole,
     bool? canEdit,
+    bool? trackBalance,
+    WalletSavings? savings,
   }) {
     return Account(
       id: id ?? this.id,
@@ -199,6 +220,8 @@ class Account extends Equatable {
       sortOrder: sortOrder ?? this.sortOrder,
       myRole: myRole ?? this.myRole,
       canEdit: canEdit ?? this.canEdit,
+      trackBalance: trackBalance ?? this.trackBalance,
+      savings: savings ?? this.savings,
     );
   }
 
@@ -242,6 +265,10 @@ class Account extends Equatable {
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
       myRole: WalletRoleWire.parse(json['my_role'] as String?),
       canEdit: (json['can_edit'] as bool?) ?? false,
+      trackBalance: (json['track_balance'] as bool?) ?? true,
+      savings: json['savings'] is Map<String, dynamic>
+          ? WalletSavings.fromJson(json['savings'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -250,7 +277,9 @@ class Account extends Equatable {
     return <String, dynamic>{
       'name': name,
       'type': type.toJson(),
-      'balance': balance,
+      // Off: no opening balance (the BE ignores one).
+      'track_balance': trackBalance,
+      if (trackBalance) 'balance': balance,
       if (iconCode != null) 'icon_code': iconCode!.toJson(),
       if (description != null) 'description': description,
       if (note != null) 'note': note,
@@ -265,10 +294,15 @@ class Account extends Equatable {
     };
   }
 
-  /// `UpdateAccountRequest` — no `currency`, `status` or `balance`.
-  Map<String, dynamic> toUpdateJson() {
+  /// `UpdateAccountRequest` — no `currency` or `status`. [currentBalance]
+  /// only goes with `track_balance: true` (turning tracking back on: the BE
+  /// books the adjustment when it differs; without the flag it is a 400).
+  Map<String, dynamic> toUpdateJson({double? currentBalance}) {
     return <String, dynamic>{
       'name': name,
+      'track_balance': trackBalance,
+      if (trackBalance && currentBalance != null)
+        'current_balance': currentBalance,
       'type': type.toJson(),
       'icon_code': iconCode?.toJson(),
       'description': description,
@@ -310,6 +344,95 @@ class Account extends Equatable {
     sortOrder,
     myRole,
     canEdit,
+    trackBalance,
+    savings,
+  ];
+}
+
+/// One slice of a wallet's saved money: a goal, or the spare (unassigned)
+/// savings.
+class WalletSavingsBucket extends Equatable {
+  const WalletSavingsBucket({
+    required this.isGoal,
+    required this.name,
+    required this.amount,
+    this.id,
+    this.iconCode,
+  });
+
+  /// `goal` (has an [id]) or `spare`.
+  final bool isGoal;
+  final String? id;
+  final String name;
+  final IconCode? iconCode;
+  final double amount;
+
+  factory WalletSavingsBucket.fromJson(Map<String, dynamic> json) =>
+      WalletSavingsBucket(
+        isGoal: json['type'] == 'goal',
+        id: json['id'] as String?,
+        name: json['name'] as String? ?? '',
+        iconCode: json['icon_code'] is Map<String, dynamic>
+            ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+            : null,
+        amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      );
+
+  @override
+  List<Object?> get props => [isGoal, id, name, iconCode, amount];
+}
+
+/// The caller's own savings in one wallet (`Account.savings`). A warning
+/// only — [savedExceedsBalance] blocks nothing.
+class WalletSavings extends Equatable {
+  const WalletSavings({
+    required this.balance,
+    required this.saved,
+    this.spare = 0,
+    this.available,
+    this.savedExceedsBalance = false,
+    this.overBy = 0,
+    this.buckets = const [],
+  });
+
+  final double balance;
+  final double saved;
+  final double spare;
+
+  /// Null when the wallet doesn't track its balance.
+  final double? available;
+  final bool savedExceedsBalance;
+  final double overBy;
+  final List<WalletSavingsBucket> buckets;
+
+  /// Nothing saved here — the section stays hidden.
+  bool get isEmpty => saved == 0 && buckets.isEmpty;
+
+  factory WalletSavings.fromJson(Map<String, dynamic> json) {
+    double n(String k) => (json[k] as num?)?.toDouble() ?? 0;
+    return WalletSavings(
+      balance: n('balance'),
+      saved: n('saved'),
+      spare: n('spare'),
+      available: (json['available'] as num?)?.toDouble(),
+      savedExceedsBalance: (json['saved_exceeds_balance'] as bool?) ?? false,
+      overBy: n('over_by'),
+      buckets: [
+        for (final b in (json['buckets'] as List? ?? const []))
+          WalletSavingsBucket.fromJson(b as Map<String, dynamic>),
+      ],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    balance,
+    saved,
+    spare,
+    available,
+    savedExceedsBalance,
+    overBy,
+    buckets,
   ];
 }
 
@@ -421,6 +544,7 @@ class AccountTotals extends Equatable {
     this.sharedCount = 0,
     this.sharedBalance = 0,
     this.otherCurrencyCount = 0,
+    this.untrackedCount = 0,
   });
 
   final double assets;
@@ -437,6 +561,9 @@ class AccountTotals extends Equatable {
 
   /// Wallets in another (legacy) currency — left out of the sums.
   final int otherCurrencyCount;
+
+  /// Wallets with "ติดตามยอดเงิน" off — left out of every sum.
+  final int untrackedCount;
 
   factory AccountTotals.fromJson(Map<String, dynamic> json) {
     double n(String k) => (json[k] as num?)?.toDouble() ?? 0;
@@ -458,6 +585,7 @@ class AccountTotals extends Equatable {
       sharedCount: (json['shared_count'] as num?)?.toInt() ?? 0,
       sharedBalance: n('shared_balance'),
       otherCurrencyCount: (json['other_currency_count'] as num?)?.toInt() ?? 0,
+      untrackedCount: (json['untracked_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -473,6 +601,7 @@ class AccountTotals extends Equatable {
     sharedCount,
     sharedBalance,
     otherCurrencyCount,
+    untrackedCount,
   ];
 }
 

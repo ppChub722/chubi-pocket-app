@@ -140,6 +140,44 @@ class _SheetsPageState extends State<_SheetsPage> {
     );
   }
 
+  /// Multi-select: rows with a square check, the count on the confirm.
+  Future<void> _multiPicker() async {
+    const bills = ['Dinner', 'Taxi', 'Hotel', 'Snacks', 'Tickets'];
+    final picked = <String>{};
+    final added = await showAppSheetCustom<Set<String>>(
+      context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => PickerSheet(
+          title: 'Add bills',
+          searchable: true,
+          footer: PickerConfirmBar(
+            label: 'Add (${picked.length})',
+            onPressed: picked.isEmpty
+                ? null
+                : () => Navigator.of(ctx).pop({...picked}),
+          ),
+          builder: (context, query) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final b in bills.where(
+                (b) => b.toLowerCase().contains(query),
+              ))
+                PickerRow(
+                  title: b,
+                  subtitle: '฿240 · 12 Oct',
+                  checked: picked.contains(b),
+                  onTap: () => setSheet(
+                    () => picked.contains(b) ? picked.remove(b) : picked.add(b),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (added != null) _say('added ${added.join(', ')}');
+  }
+
   Future<void> _shortOptions() async {
     final v = await showOptionSheet<String>(
       context,
@@ -389,6 +427,63 @@ class _SheetsPageState extends State<_SheetsPage> {
           ),
         ),
         HubDemo(
+          title: 'showMultiDatePicker + MultiDatePickerSheet',
+          note:
+              'Pick SEVERAL days (a custom recurrence): tap a day to toggle it '
+              '(picked = filled, never ticked), days outside first / last are '
+              'dimmed, the picked days are removable chips under the calendar '
+              '(tap one to drop it). Clear + a confirm labelled by the caller '
+              'with the count, off while nothing is picked. Resolves with the '
+              'day-only dates / null (dismissed). Inline body below (bounded '
+              'height), or open the real sheet.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Builder(
+                builder: (context) {
+                  final now = DateTime.now();
+                  final today = DateTime(now.year, now.month, now.day);
+                  return SizedBox(
+                    height: 600,
+                    child: AppCard(
+                      style: AppCardStyle.bordered,
+                      child: MultiDatePickerSheet(
+                        initial: {
+                          today.add(const Duration(days: 3)),
+                          today.add(const Duration(days: 10)),
+                        },
+                        first: today,
+                        last: DateTime(today.year + 2, today.month, today.day),
+                        title: 'Pick the dates',
+                        confirmLabel: (n) => 'Use $n dates',
+                        onChanged: (s) => _say('picked: ${s.length}'),
+                        onConfirm: (s) => _say((s.toList()..sort()).join(', ')),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _demoButton('Open the multi-date sheet', () async {
+                  final now = DateTime.now();
+                  final today = DateTime(now.year, now.month, now.day);
+                  final r = await showMultiDatePicker(
+                    context,
+                    initial: const {},
+                    first: today,
+                    last: DateTime(today.year + 2, today.month, today.day),
+                    title: 'Pick the dates',
+                    confirmLabel: (n) => n == 0 ? 'Pick dates' : 'Use $n dates',
+                  );
+                  _say(r == null ? null : (r.toList()..sort()).join(', '));
+                }),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'Picker rows — chevron · destructive · disabled create',
           note:
               'PickerRow(chevron: true) opens something further (a bank row); '
@@ -407,6 +502,37 @@ class _SheetsPageState extends State<_SheetsPage> {
                 onTap: () {},
               ),
               const PickerCreateRow(label: 'New contact', onTap: null),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Multi-select picker — PickerRow(checked) + PickerConfirmBar',
+          note:
+              'Several at once (add bills to an event, add members): each row '
+              'leads with the square SelectCheck and a checked row is tinted; '
+              'the pinned confirm shows the count ("Add (n)") and is off with '
+              'nothing checked. Single-select pickers stay highlight-only.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PickerRow(
+                title: 'Dinner',
+                subtitle: '฿240',
+                checked: true,
+                onTap: () {},
+              ),
+              PickerRow(
+                title: 'Taxi',
+                subtitle: '฿120',
+                checked: false,
+                onTap: () {},
+              ),
+              const PickerConfirmBar(label: 'Add (1)', onPressed: null),
+              const SizedBox(height: AppSpacing.sm),
+              AppButton(
+                label: 'Open a multi-select picker',
+                onPressed: _multiPicker,
+              ),
             ],
           ),
         ),

@@ -20,7 +20,6 @@ import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
 import '../../../pending/domain/pending_transaction.dart';
@@ -33,6 +32,7 @@ import '../transaction_edit.dart';
 import '../tx_rules.dart';
 import '../save_failure.dart';
 import '../widgets/draft_form.dart';
+import 'debt_entry_detail_page.dart';
 import '../widgets/event_pick.dart';
 import '../widgets/tx_compact_hero.dart';
 
@@ -66,6 +66,13 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   @override
   void initState() {
     super.initState();
+    // A debt entry's wallet side opens in debt mode, which makes its own
+    // one call (GET /personal-debts/{id}) — no plain read first.
+    final cached = context.read<TransactionsCubit>().byId(widget.transactionId);
+    if (cached?.isDebtEntry ?? false) {
+      _fetching = false;
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
   }
 
@@ -97,6 +104,10 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     return BlocBuilder<TransactionsCubit, TransactionsState>(
       builder: (context, state) {
         final tx = context.read<TransactionsCubit>().byId(widget.transactionId);
+        // The wallet side of a debt entry: the same page in debt mode
+        // (owner 2026-10-12).
+        final link = tx?.counterparty;
+        if (link != null) return DebtEntryDetailPage(entryId: link.entryId);
         if (tx != null) return _Loaded(tx: tx);
         final missing = _error?.statusCode == 404;
         return Scaffold(
@@ -209,9 +220,10 @@ class _LoadedState extends State<_Loaded>
   String? _eventName(AppLocalizations l, Transaction tx) =>
       switch (_eventChange) {
         null =>
-          tx.projectId == null
-              ? null
-              : tx.project?.name ?? l.txDetailSourceProject,
+          tx.eventBill?.event.name ??
+              (tx.projectId == null
+                  ? null
+                  : tx.project?.name ?? l.txDetailSourceProject),
         final change => eventTargetName(l, change),
       };
 
@@ -416,18 +428,52 @@ class _LoadedState extends State<_Loaded>
     }
     if (!await confirmIncompleteSplits(context, _c)) return;
     if (!mounted) return;
+    // Linked to an event bill / a recurring item (owner 2026-10-13): no
+    // sync — ask whether the other side gets the change too.
+    bool? alsoUpdateLink;
+    if (widget.tx.hasPromptedLink) {
+      final choice = await showLinkedPrompt(
+        context,
+        title: l.linkedSaveTitle,
+        cancelLabel: l.linkedCancel,
+        thisSideLabel: l.linkedSaveThisOnly,
+        bothSidesLabel: l.linkedSaveBoth,
+      );
+      if (choice == null || !mounted) return;
+      alsoUpdateLink = choice == LinkedChoice.bothSides;
+    }
     setSaving(true);
+    final router = GoRouter.maybeOf(context);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final back = ShellBackScope.maybeOf(context);
     final projects = context.read<ProjectsRepository>();
     final projectsCubit = context.read<ProjectsCubit>();
     final txCubit = context.read<TransactionsCubit>();
     try {
-      final warn = await saveTransactionEdit(
+      final outcome = await saveTransactionEdit(
         context,
         t: _edited,
         c: _c,
         initialAccountId: _initialAccountId,
         initialToAccountId: _initialToAccountId,
+        alsoUpdateLink: alsoUpdateLink,
       );
+      // A date after today: it's an upcoming item now — not in the book, so
+      // this page has nothing to show (owner 2026-10-13).
+      if (outcome.movedToUpcoming) {
+        commitSaved(working);
+        showAppSnackBarOn(messenger, l.txMovedToUpcoming, tone: Tone.success);
+        if (router == null) {
+          navigator.maybePop();
+        } else if (router.canPop()) {
+          router.pop();
+        } else {
+          back?.call();
+        }
+        return;
+      }
+      final warn = outcome.warning;
       if (!mounted) return;
       // The event goes after the row's own fields. Failing, the fields
       // stay saved and edit mode stays open on the event pick.
@@ -492,15 +538,12 @@ class _LoadedState extends State<_Loaded>
     // Transfers carry a system category too but have their own cascade.
     // (The row's embedded category says it: is_system / system_kind.)
     final isSystemRow =
-        tx.type != TransactionType.transfer &&
-        ((tx.category?.isSystem ?? false) || tx.isRepayment);
+        tx.type != TransactionType.transfer && (tx.category?.isSystem ?? false);
     final canEdit = !isSystemRow && !tx.isLocked;
     // A debt repayment (system Debt Paid / Received): not editable, but
     // deletable — its amount comes off the debt's repaid (BE v2).
     final isRepayment =
-        isSystemRow &&
-        !tx.isLocked &&
-        (tx.isRepayment || (tx.category?.isDebtRepayment ?? false));
+        isSystemRow && !tx.isLocked && (tx.category?.isDebtRepayment ?? false);
     // The row's author edits its splits in place (expense / income only);
     // anyone else sees them read-only, with the way to the debts.
     // Only once the form holds the real people — see [_splitsPrefilled].
@@ -514,7 +557,15 @@ class _LoadedState extends State<_Loaded>
     final hasSplits = splitCount > 0;
     final created = tx.createdAt;
     final updated = tx.updatedAt;
-    void openProject() => openPage(context, '/projects/${tx.projectId}');
+    // The bill this row is on (event_bill) opens on the event's board;
+    // an older row without it opens the event.
+    final bill = tx.eventBill;
+    void openProject() => openPage(
+      context,
+      bill != null
+          ? '/projects/${bill.event.id}?bill=${bill.billId}'
+          : '/projects/${tx.projectId}',
+    );
     // The one rule for the event card ([txCanJoinEvent]).
     final canJoinEvent = canEdit && txCanJoinEvent(_edited);
 
@@ -523,9 +574,11 @@ class _LoadedState extends State<_Loaded>
     // can't change, read-only; the event card as a picker.
     // The sections after the form's own (owner 2026-10-10, rules #16 / #17
     // — the wallet / category detail kit): หารกับ, then อีเวนต์.
-    final eventName = tx.projectId == null
-        ? null
-        : tx.project?.name ?? l.txDetailSourceProject;
+    final eventName =
+        bill?.event.name ??
+        (tx.projectId == null
+            ? null
+            : tx.project?.name ?? l.txDetailSourceProject);
     // View: a long-press on the แบ่งรายการ section enters edit mode, like the
     // note (owner 2026-10-11). Taps (a person → their debts) still go through.
     Widget splitsLongPressable(Widget section) => canEdit
@@ -673,6 +726,11 @@ class _LoadedState extends State<_Loaded>
                         // The wallet · category cards sit inside the hero.
                         cardsInHero: true,
                         allowSplits: canEditSplits,
+                        // Editing to a date after today moves it to the
+                        // upcoming items (owner 2026-10-13): say so.
+                        upcomingHint: editing,
+                        onUpcomingHintTap: () =>
+                            openPage(context, '/recurring?tab=upcoming'),
                         editing: editing,
                         categoryLockedHint: _edited.canEditCategory
                             ? null
@@ -691,7 +749,29 @@ class _LoadedState extends State<_Loaded>
                       ),
                     ],
                   ),
-                  sections: const [],
+                  sections: [
+                    // "🔁 Netflix · 3/12" — the recurring it came from
+                    // (owner 2026-10-13), next to the event row.
+                    if (tx.recurringItem case final item?)
+                      (first) => SectionCard(
+                        first: first,
+                        children: [
+                          DetailRow(
+                            icon: AppIcons.recurring,
+                            label: l.txRecurringRowLabel,
+                            helper: item.label(l.quickUpcomingHintTitle),
+                            // A one-off upcoming item has no recurring: its
+                            // list instead.
+                            onTap: () => openPage(
+                              context,
+                              item.recurringId == null
+                                  ? '/recurring?tab=upcoming'
+                                  : '/recurring/${item.recurringId}',
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                   // Delete: edit mode, or a repayment's only action in view.
                   manage: (editing && canEdit) || isRepayment
                       ? ManageSection(
@@ -746,10 +826,10 @@ class _LoadedState extends State<_Loaded>
       return;
     }
     final s = person ?? splits.single;
-    final query = Uri(
-      queryParameters: {'contact': ?s.contactId, 'name': s.personName},
-    ).query;
-    openPage(context, '/personal-debts/person?$query');
+    final key = s.contactId != null
+        ? 'c:${s.contactId}'
+        : 'n:${s.personName.trim().toLowerCase()}';
+    openPage(context, '/personal-debts/people/${Uri.encodeComponent(key)}');
   }
 
   Future<void> _confirmDelete(
@@ -758,6 +838,25 @@ class _LoadedState extends State<_Loaded>
     bool repayment = false,
   }) async {
     final tx = widget.tx;
+    // Linked to an event bill / a recurring item (owner 2026-10-13): one
+    // prompt asks whether the linked item goes too — it is the confirm.
+    if (tx.hasPromptedLink && !repayment) {
+      final choice = await showLinkedPrompt(
+        context,
+        title: l.linkedDeleteTitle,
+        cancelLabel: l.linkedCancel,
+        thisSideLabel: l.linkedDeleteThisOnly,
+        bothSidesLabel: l.linkedDeleteBoth,
+        destructive: true,
+      );
+      if (choice == null || !context.mounted) return;
+      await _deleteNow(
+        context,
+        l,
+        alsoDeleteLink: choice == LinkedChoice.bothSides,
+      );
+      return;
+    }
     final isTransfer = tx.type == TransactionType.transfer;
     final ok = await showConfirmDialog(
       context,
@@ -780,22 +879,22 @@ class _LoadedState extends State<_Loaded>
     BuildContext context,
     AppLocalizations l, {
     bool repayment = false,
+    bool? alsoDeleteLink,
   }) async {
     final tx = widget.tx;
     final router = GoRouter.of(context);
     final txCubit = context.read<TransactionsCubit>();
     final accountsCubit = context.read<AccountsCubit>();
-    final debtsCubit = context.read<PersonalDebtsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final back = ShellBackScope.maybeOf(context);
     setSaving(true);
     try {
-      final result = await txCubit.remove(tx.id);
+      final result = await txCubit.remove(
+        tx.id,
+        alsoDeleteLink: alsoDeleteLink,
+      );
       // The answer carries the wallets' new balances (both of a transfer).
       accountsCubit.patchBalances(result.accountBalances);
-      // A repayment gone lowers its debt's repaid amount (the debts list is
-      // its own cache).
-      if (repayment) unawaited(debtsCubit.load());
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       // Opened alone in its tab (from another tab) there's nothing to pop
       // — back to where the user came from.
@@ -810,7 +909,12 @@ class _LoadedState extends State<_Loaded>
       showSaveFailure(
         context,
         e,
-        retry: () => _deleteNow(context, l, repayment: repayment),
+        retry: () => _deleteNow(
+          context,
+          l,
+          repayment: repayment,
+          alsoDeleteLink: alsoDeleteLink,
+        ),
       );
     }
   }

@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
+import '../../../transactions/domain/refs.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../../../transactions/presentation/save_failure.dart';
@@ -348,59 +350,75 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     }
 
     // A save / delete in flight dims the page and blocks input.
-    return editScope(
-      SavingOverlay(
-        saving: isSaving,
-        child: Scaffold(
-          appBar: AppTopBar(
-            // Edit mode keeps the page's title (owner QA T1) — the action bar
-            // shows the mode.
-            title: _isCreate ? l.contactTitleNew : _contact!.name,
-            showBack: true,
-            editing: isEditing,
-            onBack: handleBack,
-          ),
-          extendBodyBehindAppBar: true,
-          body: Form(
-            key: _formKey,
-            // Builder: its context sees the floating bar's height.
-            child: Builder(
-              // Pull = the page's one load call; the body turns it off while
-              // editing (a reload resets the draft) and in create.
-              builder: (context) => DetailPageBody(
-                onRefresh: _isCreate ? null : _load,
-                physics: const AlwaysScrollableScrollPhysics(),
-                topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                bottomInset:
-                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                hero: _header(l),
-                sections: [
-                  (first) => _fields(l, first: first),
-                  (first) => _isCreate ? null : _actions(l, first: first),
-                ],
-                // Archive (amber) · delete (red) live at the bottom in edit
-                // mode (no top-bar actions); archive flips to restore.
-                manage: isEditing && !_isCreate
-                    ? ManageSection(
-                        archiveLabel: _contact!.isArchived
-                            ? l.contactRestore
-                            : l.contactArchive,
-                        onArchive: isSaving ? null : _toggleArchive,
-                        deleteLabel: l.contactDeleteThis,
-                        onDelete: isSaving ? null : _delete,
-                      )
-                    : null,
-                metaLines: _isCreate
-                    ? const []
-                    : detailMetaLines(
-                        context,
-                        createdAt: _contact!.createdAt,
-                        updatedAt: _contact!.updatedAt,
-                      ),
+    // The + opens debt mode with this contact (once saved).
+    return QuickCreatePresetScope(
+      preset: _isCreate
+          ? QuickCreatePreset.none
+          : QuickCreatePreset.debt(
+              person: EmbeddedPerson(
+                name: _contact!.name,
+                contactId: _contact!.id,
+                iconCode: _contact!.iconCode,
+                linked: _contact!.isLinked,
+                linkedUserId: _contact!.linkedUser?.id,
               ),
             ),
+      child: editScope(
+        SavingOverlay(
+          saving: isSaving,
+          child: Scaffold(
+            appBar: AppTopBar(
+              // Edit mode keeps the page's title (owner QA T1) — the action bar
+              // shows the mode.
+              title: _isCreate ? l.contactTitleNew : _contact!.name,
+              showBack: true,
+              editing: isEditing,
+              onBack: handleBack,
+            ),
+            extendBodyBehindAppBar: true,
+            body: Form(
+              key: _formKey,
+              // Builder: its context sees the floating bar's height.
+              child: Builder(
+                // Pull = the page's one load call; the body turns it off while
+                // editing (a reload resets the draft) and in create.
+                builder: (context) => DetailPageBody(
+                  onRefresh: _isCreate ? null : _load,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                  bottomInset:
+                      AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                  hero: _header(l),
+                  sections: [
+                    (first) => _fields(l, first: first),
+                    (first) => _isCreate ? null : _actions(l, first: first),
+                  ],
+                  // Archive (amber) · delete (red) live at the bottom in edit
+                  // mode (no top-bar actions); archive flips to restore.
+                  manage: isEditing && !_isCreate
+                      ? ManageSection(
+                          archiveLabel: _contact!.isArchived
+                              ? l.contactRestore
+                              : l.contactArchive,
+                          onArchive: isSaving ? null : _toggleArchive,
+                          deleteLabel: l.contactDeleteThis,
+                          onDelete: isSaving ? null : _delete,
+                        )
+                      : null,
+                  metaLines: _isCreate
+                      ? const []
+                      : detailMetaLines(
+                          context,
+                          createdAt: _contact!.createdAt,
+                          updatedAt: _contact!.updatedAt,
+                        ),
+                ),
+              ),
+            ),
+            bottomNavigationBar: isEditing
+                ? editActionBar(onSave: _save)
+                : null,
           ),
-          bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
         ),
       ),
     );
@@ -644,6 +662,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             trailing: AppButton(
               label: l.contactUnlink,
               variant: AppButtonVariant.text,
+              submits: true,
               onPressed: _unlink,
             ),
           )
@@ -664,10 +683,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           showChevron: true,
           onTap: () => openPage(
             context,
-            Uri(
-              path: '/personal-debts/person',
-              queryParameters: {'contact': c.id, 'name': c.name},
-            ).toString(),
+            '/personal-debts/people/${Uri.encodeComponent('c:${c.id}')}',
           ),
         ),
       ],

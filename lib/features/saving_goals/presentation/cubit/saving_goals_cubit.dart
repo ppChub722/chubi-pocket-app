@@ -4,78 +4,92 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/saving_goals_repository.dart';
-import '../../domain/saving_allocation_summary.dart';
 import '../../domain/saving_goal.dart';
+import '../../domain/saving_goals_overview.dart';
 
-/// State for [SavingGoalsCubit]. Mirrors the single-class-with-enum-status
-/// shape used by [AccountsState] / [CategoriesState].
+enum SavingGoalsStatus { initial, loading, loaded, error }
+
+/// The list page's filter chips.
+enum SavingGoalsFilter {
+  active,
+  completed,
+  archived;
+
+  String get query => name;
+}
+
 class SavingGoalsState extends Equatable {
   const SavingGoalsState({
-    this.goals = const [],
+    this.overview = const SavingGoalsOverview(),
+    this.filter = SavingGoalsFilter.active,
     this.status = SavingGoalsStatus.initial,
     this.error,
   });
 
-  final List<SavingGoal> goals;
+  final SavingGoalsOverview overview;
+  final SavingGoalsFilter filter;
   final SavingGoalsStatus status;
   final ApiException? error;
-  String? get errorMessage => error?.message;
+
+  List<SavingGoal> get goals => overview.goals;
 
   SavingGoalsState copyWith({
-    List<SavingGoal>? goals,
+    SavingGoalsOverview? overview,
+    SavingGoalsFilter? filter,
     SavingGoalsStatus? status,
     ApiException? error,
     bool clearError = false,
-  }) {
-    return SavingGoalsState(
-      goals: goals ?? this.goals,
-      status: status ?? this.status,
-      error: clearError ? null : (error ?? this.error),
-    );
-  }
+  }) => SavingGoalsState(
+    overview: overview ?? this.overview,
+    filter: filter ?? this.filter,
+    status: status ?? this.status,
+    error: clearError ? null : (error ?? this.error),
+  );
 
   @override
-  List<Object?> get props => [goals, status, error];
+  List<Object?> get props => [overview, filter, status, error];
 }
 
-enum SavingGoalsStatus { initial, loading, loaded, error }
-
-/// Saving goals store backed by [SavingGoalsRepository].
-///
-/// Mutators (add / update / archive / restore / remove) re-throw
-/// [ApiException] so the calling page can show a snackbar. The
-/// `ALLOCATION_EXCEEDED` rejection is surfaced verbatim from the API
-/// `message` field — the user sees the same wording the BE chose.
-///
-/// Allocation summary lookups are NOT cached on the cubit — they're
-/// fetched on demand from the form / detail page since they reflect a
-/// computed cross-goal view that goes stale the moment any goal on the
-/// account changes.
+/// The list page's state: ONE call per open (`GET /saving-goals?status=`).
+/// Other cubits never patch it; a page that changed savings calls [markStale]
+/// and the list reloads on its next open (the goal page lives in
+/// `SavingGoalCubit`). Home listens to `goals` to refresh its tile.
 class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
   SavingGoalsCubit({required SavingGoalsRepository repository})
     : _repo = repository,
       super(const SavingGoalsState());
 
   final SavingGoalsRepository _repo;
+  bool _stale = false;
 
   @override
   void clear() => emit(const SavingGoalsState());
 
-  Future<void> loadIfNeeded() async {
-    if (state.status == SavingGoalsStatus.loaded ||
-        state.status == SavingGoalsStatus.loading) {
-      return;
+  /// The list changed elsewhere: reload on the next [loadIfNeeded].
+  void markStale() => _stale = true;
+
+  Future<void> loadIfNeeded() {
+    final fresh = state.status == SavingGoalsStatus.loaded && !_stale;
+    if (fresh || state.status == SavingGoalsStatus.loading) {
+      return Future.value();
     }
     return load();
   }
 
+  /// Switching chip = re-opening the page with another status.
+  Future<void> setFilter(SavingGoalsFilter filter) {
+    emit(state.copyWith(filter: filter));
+    return load();
+  }
+
   Future<void> load() async {
+    _stale = false;
     emit(state.copyWith(status: SavingGoalsStatus.loading, clearError: true));
     try {
-      final list = await _repo.list();
+      final overview = await _repo.list(status: state.filter.query);
       emit(
         state.copyWith(
-          goals: list,
+          overview: overview,
           status: SavingGoalsStatus.loaded,
           clearError: true,
         ),
@@ -88,57 +102,5 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
         ),
       );
     }
-  }
-
-  Future<void> add(SavingGoal draft) async {
-    final created = await _repo.create(draft);
-    emit(state.copyWith(goals: [...state.goals, created]));
-  }
-
-  Future<void> update(SavingGoal goal) async {
-    final updated = await _repo.update(goal);
-    emit(
-      state.copyWith(
-        goals: [
-          for (final g in state.goals)
-            if (g.id == updated.id) updated else g,
-        ],
-      ),
-    );
-  }
-
-  /// Archive (spec §3.6). The active list drops the archived row since
-  /// `loadIfNeeded` only fetches active goals by default.
-  Future<void> archive(String id) async {
-    await _repo.archive(id);
-    emit(state.copyWith(goals: state.goals.where((g) => g.id != id).toList()));
-  }
-
-  /// Restore (spec §3.6). The server may reject with
-  /// `ALLOCATION_EXCEEDED` if the goal's stored `allocation_pct` plus
-  /// the account's current sum would exceed 100% — re-thrown.
-  Future<void> restore(String id) async {
-    final restored = await _repo.restore(id);
-    emit(state.copyWith(goals: [...state.goals, restored]));
-  }
-
-  /// Hard delete (spec §3.5). No cascades — account + transactions
-  /// untouched.
-  Future<void> remove(String id) async {
-    await _repo.delete(id);
-    emit(state.copyWith(goals: state.goals.where((g) => g.id != id).toList()));
-  }
-
-  /// Per-account allocation pie (spec §3.7). Not cached — see class
-  /// docs.
-  Future<SavingAllocationSummary> allocationsFor(String accountId) {
-    return _repo.allocationsFor(accountId);
-  }
-
-  SavingGoal? byId(String id) {
-    for (final g in state.goals) {
-      if (g.id == id) return g;
-    }
-    return null;
   }
 }

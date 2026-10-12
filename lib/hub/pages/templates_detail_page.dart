@@ -247,6 +247,15 @@ class _DetailPageTemplateState extends State<_DetailPageTemplate> {
     );
 
     Widget goalPage() => DetailPageBody(
+      // A tab bar under the hero (a budget's periods / items).
+      tabBar: AppTabBar<int>(
+        tabs: const [
+          AppTab(value: 0, label: 'Periods'),
+          AppTab(value: 1, label: 'Items'),
+        ],
+        selected: 0,
+        onChanged: (_) {},
+      ),
       hero: HeaderCard(
         accent: Theme.of(context).extension<AppColors>()!.success,
         topRow: const [

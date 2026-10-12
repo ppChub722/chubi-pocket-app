@@ -12,10 +12,14 @@ class AccountOption extends Equatable {
     required this.balance,
     this.sortOrder = 0,
     this.isDefault = false,
+    this.trackBalance = true,
   });
 
   final AccountRef ref;
   final double balance;
+
+  /// Off: the balance is not shown (see [Account.trackBalance]).
+  final bool trackBalance;
   final int sortOrder;
   final bool isDefault;
 
@@ -24,12 +28,14 @@ class AccountOption extends Equatable {
     balance: (json['balance'] as num?)?.toDouble() ?? 0,
     sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
     isDefault: (json['is_default'] as bool?) ?? false,
+    trackBalance: (json['track_balance'] as bool?) ?? true,
   );
 
-  Account toAccount() => ref.toAccount(balance: balance);
+  Account toAccount() =>
+      ref.toAccount(balance: balance).copyWith(trackBalance: trackBalance);
 
   @override
-  List<Object?> get props => [ref, balance, sortOrder, isDefault];
+  List<Object?> get props => [ref, balance, sortOrder, isDefault, trackBalance];
 }
 
 /// A category in the form options: flat, in display order (the FE builds the

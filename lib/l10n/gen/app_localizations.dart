@@ -641,7 +641,7 @@ abstract class AppLocalizations {
   /// No description provided for @navProjects.
   ///
   /// In en, this message translates to:
-  /// **'Projects & Events'**
+  /// **'Events'**
   String get navProjects;
 
   /// No description provided for @projectsCreateNew.
@@ -1145,13 +1145,13 @@ abstract class AppLocalizations {
   /// No description provided for @projectsPlaceholderTitle.
   ///
   /// In en, this message translates to:
-  /// **'No projects yet'**
+  /// **'No events yet'**
   String get projectsPlaceholderTitle;
 
   /// No description provided for @projectsPlaceholderMessage.
   ///
   /// In en, this message translates to:
-  /// **'Create a project to track costs you share with others.'**
+  /// **'Create an event to track costs you share with others.'**
   String get projectsPlaceholderMessage;
 
   /// No description provided for @moreCategories.
@@ -1163,7 +1163,7 @@ abstract class AppLocalizations {
   /// No description provided for @moreProjects.
   ///
   /// In en, this message translates to:
-  /// **'Projects & Events'**
+  /// **'Events'**
   String get moreProjects;
 
   /// No description provided for @moreTags.
@@ -1739,7 +1739,7 @@ abstract class AppLocalizations {
   /// No description provided for @debtSourceProject.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Event'**
   String get debtSourceProject;
 
   /// No description provided for @debtCreatedAt.
@@ -1955,7 +1955,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectsSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search projects'**
+  /// **'Search events'**
   String get projectsSearchHint;
 
   /// No description provided for @projectsSortRecent.
@@ -1973,7 +1973,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectsEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'No projects yet'**
+  /// **'No events yet'**
   String get projectsEmptyTitle;
 
   /// No description provided for @projectsEmptyMessage.
@@ -1985,7 +1985,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectsNoMatch.
   ///
   /// In en, this message translates to:
-  /// **'No matching projects'**
+  /// **'No matching events'**
   String get projectsNoMatch;
 
   /// No description provided for @projectsMembersCount.
@@ -2021,19 +2021,19 @@ abstract class AppLocalizations {
   /// No description provided for @projectNewTitle.
   ///
   /// In en, this message translates to:
-  /// **'New project'**
+  /// **'New event'**
   String get projectNewTitle;
 
   /// No description provided for @projectEditTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit project'**
+  /// **'Edit event'**
   String get projectEditTitle;
 
   /// No description provided for @projectNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'Project name'**
+  /// **'Event name'**
   String get projectNameLabel;
 
   /// No description provided for @projectNameRequired.
@@ -2057,7 +2057,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectIconLabel.
   ///
   /// In en, this message translates to:
-  /// **'Project icon'**
+  /// **'Event icon'**
   String get projectIconLabel;
 
   /// No description provided for @projectStatusChangeTitle.
@@ -2075,7 +2075,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectStatusLockBody.
   ///
   /// In en, this message translates to:
-  /// **'The project gets locked: no adding or editing transactions until it is reopened.'**
+  /// **'The event gets locked: no adding or editing transactions until it is reopened.'**
   String get projectStatusLockBody;
 
   /// No description provided for @projectStatusChanged.
@@ -2111,13 +2111,13 @@ abstract class AppLocalizations {
   /// No description provided for @projectDeleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Only projects without transactions can be deleted. If it has some, archive it instead.'**
+  /// **'Only events without transactions can be deleted. If it has some, archive it instead.'**
   String get projectDeleteBody;
 
   /// No description provided for @projectDeleted.
   ///
   /// In en, this message translates to:
-  /// **'Project deleted'**
+  /// **'Event deleted'**
   String get projectDeleted;
 
   /// No description provided for @projectDashTotalExpense.
@@ -2231,7 +2231,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectTxEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No transactions in this project yet'**
+  /// **'No transactions in this event yet'**
   String get projectTxEmpty;
 
   /// No description provided for @projectTxNoMatch.
@@ -2339,7 +2339,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectResolveDebtHint.
   ///
   /// In en, this message translates to:
-  /// **'The person comes from the project member'**
+  /// **'The person comes from the event member'**
   String get projectResolveDebtHint;
 
   /// No description provided for @projectResolveConfirm.
@@ -2447,7 +2447,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectLeave.
   ///
   /// In en, this message translates to:
-  /// **'Leave project'**
+  /// **'Leave event'**
   String get projectLeave;
 
   /// No description provided for @projectLeaveTitle.
@@ -2459,19 +2459,19 @@ abstract class AppLocalizations {
   /// No description provided for @projectLeaveBody.
   ///
   /// In en, this message translates to:
-  /// **'You will not see this project again unless you are invited back.'**
+  /// **'You will not see this event again unless you are invited back.'**
   String get projectLeaveBody;
 
   /// No description provided for @projectLeft.
   ///
   /// In en, this message translates to:
-  /// **'You left the project'**
+  /// **'You left the event'**
   String get projectLeft;
 
   /// No description provided for @projectMemberRemove.
   ///
   /// In en, this message translates to:
-  /// **'Remove from project'**
+  /// **'Remove from event'**
   String get projectMemberRemove;
 
   /// No description provided for @projectMemberRemoveTitle.
@@ -2513,7 +2513,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectMemberTransferNeedsAccount.
   ///
   /// In en, this message translates to:
-  /// **'Only members with an app account can own a project'**
+  /// **'Only members with an app account can own an event'**
   String get projectMemberTransferNeedsAccount;
 
   /// No description provided for @projectAddMemberName.
@@ -2561,7 +2561,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectTxNewTitle.
   ///
   /// In en, this message translates to:
-  /// **'Add project transaction'**
+  /// **'Add event transaction'**
   String get projectTxNewTitle;
 
   /// No description provided for @projectTxEditTitle.
@@ -2615,7 +2615,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectTxDescriptionPast.
   ///
   /// In en, this message translates to:
-  /// **'Used before in this project'**
+  /// **'Used before in this event'**
   String get projectTxDescriptionPast;
 
   /// No description provided for @projectTxSplitMember.
@@ -2777,13 +2777,13 @@ abstract class AppLocalizations {
   /// No description provided for @notifProjectTxForYou.
   ///
   /// In en, this message translates to:
-  /// **'{actor} recorded a project transaction for you'**
+  /// **'{actor} recorded an event transaction for you'**
   String notifProjectTxForYou(String actor);
 
   /// No description provided for @notifProjectTxChanged.
   ///
   /// In en, this message translates to:
-  /// **'{actor} edited a project transaction'**
+  /// **'{actor} edited an event transaction'**
   String notifProjectTxChanged(String actor);
 
   /// No description provided for @notifProjectInvite.
@@ -2849,7 +2849,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifGroupProjects.
   ///
   /// In en, this message translates to:
-  /// **'Projects'**
+  /// **'Events'**
   String get notifGroupProjects;
 
   /// No description provided for @notifGroupRequests.
@@ -2873,13 +2873,13 @@ abstract class AppLocalizations {
   /// No description provided for @notifTypeProjectTxForYou.
   ///
   /// In en, this message translates to:
-  /// **'A project transaction is recorded for me'**
+  /// **'An event transaction is recorded for me'**
   String get notifTypeProjectTxForYou;
 
   /// No description provided for @notifTypeProjectTxChanged.
   ///
   /// In en, this message translates to:
-  /// **'A project transaction is edited'**
+  /// **'An event transaction is edited'**
   String get notifTypeProjectTxChanged;
 
   /// No description provided for @notifTypeAlwaysOn.
@@ -2891,7 +2891,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifTypeProjectAdded.
   ///
   /// In en, this message translates to:
-  /// **'Added to a project'**
+  /// **'Added to an event'**
   String get notifTypeProjectAdded;
 
   /// No description provided for @notifSettingsAutoHint.
@@ -2927,7 +2927,7 @@ abstract class AppLocalizations {
   /// No description provided for @notifAutoResolveProject.
   ///
   /// In en, this message translates to:
-  /// **'Also add project rows I paid to my own book'**
+  /// **'Also add event rows I paid to my own book'**
   String get notifAutoResolveProject;
 
   /// No description provided for @notifActionAddDebt.
@@ -3857,7 +3857,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectDeleteThis.
   ///
   /// In en, this message translates to:
-  /// **'Delete this project'**
+  /// **'Delete this event'**
   String get projectDeleteThis;
 
   /// No description provided for @scheduledDeleteThis.
@@ -4918,7 +4918,7 @@ abstract class AppLocalizations {
   /// No description provided for @pendingSourceProject.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Event'**
   String get pendingSourceProject;
 
   /// No description provided for @pendingSourceOcr.
@@ -7728,6 +7728,2682 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get connectionRetry;
+
+  /// No description provided for @uiLoadMoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load more'**
+  String get uiLoadMoreFailed;
+
+  /// No description provided for @debtsTabEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'Entries'**
+  String get debtsTabEntries;
+
+  /// No description provided for @debtsTabMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get debtsTabMoney;
+
+  /// No description provided for @debtsAddEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Add entry'**
+  String get debtsAddEntry;
+
+  /// No description provided for @debtsSortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get debtsSortLabel;
+
+  /// No description provided for @debtsSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get debtsSortNewest;
+
+  /// No description provided for @debtsSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest'**
+  String get debtsSortOldest;
+
+  /// No description provided for @debtsSortAmountDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest amount'**
+  String get debtsSortAmountDesc;
+
+  /// No description provided for @debtsSortAmountAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'Smallest amount'**
+  String get debtsSortAmountAsc;
+
+  /// No description provided for @debtsDirLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get debtsDirLabel;
+
+  /// No description provided for @debtsDirPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get debtsDirPaid;
+
+  /// No description provided for @debtsDirReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get debtsDirReceived;
+
+  /// No description provided for @debtsPaidChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get debtsPaidChip;
+
+  /// No description provided for @debtsTimelineEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No entries yet'**
+  String get debtsTimelineEmpty;
+
+  /// No description provided for @debtsMoneyEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No payments yet'**
+  String get debtsMoneyEmpty;
+
+  /// No description provided for @debtsEntriesNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching entries'**
+  String get debtsEntriesNoMatch;
+
+  /// No description provided for @debtsEntrySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search entries'**
+  String get debtsEntrySearchHint;
+
+  /// No description provided for @debtEntryPaidTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {name}'**
+  String debtEntryPaidTo(String name);
+
+  /// No description provided for @debtEntryReceivedFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Received from {name}'**
+  String debtEntryReceivedFrom(String name);
+
+  /// No description provided for @eventStartDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get eventStartDateLabel;
+
+  /// No description provided for @eventEndDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'End date'**
+  String get eventEndDateLabel;
+
+  /// No description provided for @eventDatesInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The end date can\'t be before the start date'**
+  String get eventDatesInvalid;
+
+  /// No description provided for @eventDateNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get eventDateNone;
+
+  /// No description provided for @eventTagShowBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Show bills with this tag'**
+  String get eventTagShowBills;
+
+  /// No description provided for @eventTagAddToMine.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to my tags'**
+  String get eventTagAddToMine;
+
+  /// No description provided for @eventTagsImportAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Import all'**
+  String get eventTagsImportAll;
+
+  /// No description provided for @eventTagFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag: {name}'**
+  String eventTagFilter(String name);
+
+  /// No description provided for @quickModeTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction'**
+  String get quickModeTx;
+
+  /// No description provided for @quickModeDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get quickModeDebt;
+
+  /// No description provided for @debtNoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallet'**
+  String get debtNoWallet;
+
+  /// No description provided for @debtPickPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a person'**
+  String get debtPickPerson;
+
+  /// No description provided for @debtPersonPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'With whom?'**
+  String get debtPersonPickerTitle;
+
+  /// No description provided for @debtPersonAddTyped.
+  ///
+  /// In en, this message translates to:
+  /// **'Add “{name}”'**
+  String debtPersonAddTyped(Object name);
+
+  /// No description provided for @debtPersonFromContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'From contacts'**
+  String get debtPersonFromContacts;
+
+  /// No description provided for @debtSettledLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All square'**
+  String get debtSettledLabel;
+
+  /// No description provided for @debtResultAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After saving: {result}'**
+  String debtResultAfter(Object result);
+
+  /// No description provided for @debtMarkPaidTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark entries as paid'**
+  String get debtMarkPaidTitle;
+
+  /// No description provided for @debtMarkPaidNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing open'**
+  String get debtMarkPaidNone;
+
+  /// No description provided for @debtEntrySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt saved'**
+  String get debtEntrySaved;
+
+  /// No description provided for @eventSourceTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Source transaction'**
+  String get eventSourceTx;
+
+  /// No description provided for @eventLinkedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount, date and payer are linked to the source transaction: edits change both'**
+  String get eventLinkedHint;
+
+  /// No description provided for @eventTagsImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {count} tags to my tags'**
+  String eventTagsImported(int count);
+
+  /// No description provided for @debtEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt entry'**
+  String get debtEntryTitle;
+
+  /// No description provided for @debtEntryNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This debt entry doesn\'t exist'**
+  String get debtEntryNotFound;
+
+  /// No description provided for @debtEntryDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this entry'**
+  String get debtEntryDelete;
+
+  /// No description provided for @debtEntryDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this debt entry?'**
+  String get debtEntryDeleteTitle;
+
+  /// No description provided for @debtDeleteBothMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Its transaction in “{wallet}” goes too — the money returns to the wallet.'**
+  String debtDeleteBothMessage(Object wallet);
+
+  /// No description provided for @debtDeleteLedgerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The balance with {name} changes accordingly.'**
+  String debtDeleteLedgerMessage(Object name);
+
+  /// No description provided for @debtSourceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'From {source}: only the description, note and paid label can change.'**
+  String debtSourceHint(Object source);
+
+  /// No description provided for @debtSourceRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get debtSourceRowLabel;
+
+  /// No description provided for @debtBalanceNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now: {result}'**
+  String debtBalanceNow(Object result);
+
+  /// No description provided for @txInEventRow.
+  ///
+  /// In en, this message translates to:
+  /// **'In the event {name}'**
+  String txInEventRow(Object name);
+
+  /// No description provided for @txLinkedMoneyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount and date are shared with the event bill: an edit changes both.'**
+  String get txLinkedMoneyHint;
+
+  /// No description provided for @eventBillLinkedMoneyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount and date are shared with the source transaction: an edit changes both.'**
+  String get eventBillLinkedMoneyHint;
+
+  /// No description provided for @eventErrLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This event is locked: it can\'t be edited'**
+  String get eventErrLocked;
+
+  /// No description provided for @eventErrNotOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the event owner can do this'**
+  String get eventErrNotOwner;
+
+  /// No description provided for @eventErrMoneyLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount and date are linked to a member\'s transaction: its owner edits them'**
+  String get eventErrMoneyLinked;
+
+  /// No description provided for @eventErrTagTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'This event already has a tag with that name'**
+  String get eventErrTagTaken;
+
+  /// No description provided for @eventErrTagNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'That tag isn\'t in this event'**
+  String get eventErrTagNotFound;
+
+  /// No description provided for @eventErrNoShare.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no share in this bill'**
+  String get eventErrNoShare;
+
+  /// No description provided for @eventErrOwnerCannotLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'The owner must transfer ownership before leaving'**
+  String get eventErrOwnerCannotLeave;
+
+  /// No description provided for @eventDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Every bill in the event is deleted · your transactions linked to it can stay or be deleted too'**
+  String get eventDeleteBody;
+
+  /// No description provided for @eventDeleteKeepTxs.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete, keep my transactions'**
+  String get eventDeleteKeepTxs;
+
+  /// No description provided for @eventDeleteWithTxs.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete and remove {count} transactions'**
+  String eventDeleteWithTxs(int count);
+
+  /// No description provided for @eventDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get eventDeleteConfirm;
+
+  /// No description provided for @eventDeleteNotYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get eventDeleteNotYet;
+
+  /// No description provided for @occurrenceStateUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get occurrenceStateUpcoming;
+
+  /// No description provided for @occurrenceStateNotCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Not created'**
+  String get occurrenceStateNotCreated;
+
+  /// No description provided for @occurrenceStatePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get occurrenceStatePending;
+
+  /// No description provided for @occurrenceStateDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get occurrenceStateDone;
+
+  /// No description provided for @occurrenceStateArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get occurrenceStateArchived;
+
+  /// No description provided for @quickUpcomingHintTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get quickUpcomingHintTitle;
+
+  /// No description provided for @quickUpcomingHintText.
+  ///
+  /// In en, this message translates to:
+  /// **'goes to drafts on {date}'**
+  String quickUpcomingHintText(Object date);
+
+  /// No description provided for @quickEditUpcomingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit upcoming item'**
+  String get quickEditUpcomingTitle;
+
+  /// No description provided for @linkedSaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the other side too?'**
+  String get linkedSaveTitle;
+
+  /// No description provided for @linkedCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get linkedCancel;
+
+  /// No description provided for @linkedSaveThisOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this side only'**
+  String get linkedSaveThisOnly;
+
+  /// No description provided for @linkedSaveBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and update the other side'**
+  String get linkedSaveBoth;
+
+  /// No description provided for @linkedDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the linked item too?'**
+  String get linkedDeleteTitle;
+
+  /// No description provided for @linkedDeleteThisOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this side only'**
+  String get linkedDeleteThisOnly;
+
+  /// No description provided for @linkedDeleteBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete both'**
+  String get linkedDeleteBoth;
+
+  /// No description provided for @dueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dueToday;
+
+  /// No description provided for @dueTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get dueTomorrow;
+
+  /// No description provided for @dueYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get dueYesterday;
+
+  /// No description provided for @dueInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{in 1 day} other{in {count} days}}'**
+  String dueInDays(int count);
+
+  /// No description provided for @dueOverdueDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day overdue} other{{count} days overdue}}'**
+  String dueOverdueDays(int count);
+
+  /// No description provided for @recurEveryDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every day} other{Every {count} days}}'**
+  String recurEveryDays(int count);
+
+  /// No description provided for @recurEveryWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every week} other{Every {count} weeks}}'**
+  String recurEveryWeeks(int count);
+
+  /// No description provided for @recurWeekday1.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get recurWeekday1;
+
+  /// No description provided for @recurWeekday2.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get recurWeekday2;
+
+  /// No description provided for @recurWeekday3.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get recurWeekday3;
+
+  /// No description provided for @recurWeekday4.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get recurWeekday4;
+
+  /// No description provided for @recurWeekday5.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get recurWeekday5;
+
+  /// No description provided for @recurWeekday6.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get recurWeekday6;
+
+  /// No description provided for @recurWeekday7.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get recurWeekday7;
+
+  /// No description provided for @recurWeekdayPair.
+  ///
+  /// In en, this message translates to:
+  /// **'{a} and {b}'**
+  String recurWeekdayPair(String a, String b);
+
+  /// No description provided for @recurWeekdayList.
+  ///
+  /// In en, this message translates to:
+  /// **'{list} and {last}'**
+  String recurWeekdayList(String list, String last);
+
+  /// No description provided for @recurWeekdayListSep.
+  ///
+  /// In en, this message translates to:
+  /// **', '**
+  String get recurWeekdayListSep;
+
+  /// No description provided for @recurEveryWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {weekdays}'**
+  String recurEveryWeekdays(String weekdays);
+
+  /// No description provided for @recurOnWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'{weekdays}'**
+  String recurOnWeekdays(String weekdays);
+
+  /// No description provided for @recurEveryMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every month} other{Every {count} months}}'**
+  String recurEveryMonths(int count);
+
+  /// No description provided for @recurMonthlyOnDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on day {day}'**
+  String recurMonthlyOnDay(int day);
+
+  /// No description provided for @recurMonthlyLastDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on the last day'**
+  String get recurMonthlyLastDay;
+
+  /// No description provided for @recurOnDay.
+  ///
+  /// In en, this message translates to:
+  /// **'day {day}'**
+  String recurOnDay(int day);
+
+  /// No description provided for @recurLastDay.
+  ///
+  /// In en, this message translates to:
+  /// **'last day'**
+  String get recurLastDay;
+
+  /// No description provided for @recurMonthlyNthWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'{ord, select, first{Monthly on the first {weekday}} second{Monthly on the second {weekday}} third{Monthly on the third {weekday}} fourth{Monthly on the fourth {weekday}} other{Monthly on the fifth {weekday}}}'**
+  String recurMonthlyNthWeekday(String ord, int nth, String weekday);
+
+  /// No description provided for @recurMonthlyLastWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on the last {weekday}'**
+  String recurMonthlyLastWeekday(String weekday);
+
+  /// No description provided for @recurOnNthWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'{ord, select, first{the first {weekday}} second{the second {weekday}} third{the third {weekday}} fourth{the fourth {weekday}} other{the fifth {weekday}}}'**
+  String recurOnNthWeekday(String ord, int nth, String weekday);
+
+  /// No description provided for @recurOnLastWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'the last {weekday}'**
+  String recurOnLastWeekday(String weekday);
+
+  /// No description provided for @recurEveryYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every year} other{Every {count} years}}'**
+  String recurEveryYears(int count);
+
+  /// No description provided for @recurYearlyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Every year on {date}'**
+  String recurYearlyOn(String date);
+
+  /// No description provided for @recurCustomDates.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Custom} =1{Custom · 1 date} other{Custom · {count} dates}}'**
+  String recurCustomDates(int count);
+
+  /// No description provided for @recurEndCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 time} other{{count} times}}'**
+  String recurEndCount(int count);
+
+  /// No description provided for @recurEndUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'until {date}'**
+  String recurEndUntil(String date);
+
+  /// No description provided for @uiPickDatesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the days to pick them'**
+  String get uiPickDatesHint;
+
+  /// No description provided for @txSavedAsUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved as an upcoming item'**
+  String get txSavedAsUpcoming;
+
+  /// No description provided for @txMovedToUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to upcoming items'**
+  String get txMovedToUpcoming;
+
+  /// No description provided for @txRecurringRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get txRecurringRowLabel;
+
+  /// No description provided for @recurringTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get recurringTitle;
+
+  /// No description provided for @recurringTabRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get recurringTabRecurring;
+
+  /// No description provided for @recurringTabUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get recurringTabUpcoming;
+
+  /// No description provided for @recurringFilterCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get recurringFilterCurrent;
+
+  /// No description provided for @recurringFilterArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get recurringFilterArchived;
+
+  /// No description provided for @recurringFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get recurringFilterAll;
+
+  /// No description provided for @recurringAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add recurring'**
+  String get recurringAdd;
+
+  /// No description provided for @recurringEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No recurring yet'**
+  String get recurringEmptyTitle;
+
+  /// No description provided for @recurringEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up repeating items like rent or internet. When the day comes, they wait in Pending.'**
+  String get recurringEmptyMessage;
+
+  /// No description provided for @recurringArchivedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived recurring'**
+  String get recurringArchivedEmpty;
+
+  /// No description provided for @upcomingEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing upcoming'**
+  String get upcomingEmptyTitle;
+
+  /// No description provided for @upcomingEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Future-dated items and upcoming recurring items show here.'**
+  String get upcomingEmptyMessage;
+
+  /// No description provided for @recurringNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New recurring'**
+  String get recurringNewTitle;
+
+  /// No description provided for @recurringNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring not found'**
+  String get recurringNotFound;
+
+  /// No description provided for @recurringNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted.'**
+  String get recurringNotFoundMessage;
+
+  /// No description provided for @recurringFieldIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get recurringFieldIcon;
+
+  /// No description provided for @recurringFieldAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get recurringFieldAmount;
+
+  /// No description provided for @recurringFieldWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get recurringFieldWallet;
+
+  /// No description provided for @recurringFieldToWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'To wallet'**
+  String get recurringFieldToWallet;
+
+  /// No description provided for @recurringFieldCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get recurringFieldCategory;
+
+  /// No description provided for @recurringFieldRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get recurringFieldRepeat;
+
+  /// No description provided for @recurringFieldStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get recurringFieldStart;
+
+  /// No description provided for @recurringFieldEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get recurringFieldEnd;
+
+  /// No description provided for @recurringNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get recurringNameRequired;
+
+  /// No description provided for @recurringAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above 0'**
+  String get recurringAmountInvalid;
+
+  /// No description provided for @recurringWalletRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet'**
+  String get recurringWalletRequired;
+
+  /// No description provided for @recurringRepeatDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick dates…'**
+  String get recurringRepeatDates;
+
+  /// No description provided for @recurringRepeatDatesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick dates'**
+  String get recurringRepeatDatesTitle;
+
+  /// No description provided for @recurringRepeatDatesConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Pick 1 day} other{Pick {count} days}}'**
+  String recurringRepeatDatesConfirm(int count);
+
+  /// No description provided for @recurringEndNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get recurringEndNever;
+
+  /// No description provided for @recurringEndOnDateOption.
+  ///
+  /// In en, this message translates to:
+  /// **'On a date…'**
+  String get recurringEndOnDateOption;
+
+  /// No description provided for @recurringEndAfterCountOption.
+  ///
+  /// In en, this message translates to:
+  /// **'After a number of times…'**
+  String get recurringEndAfterCountOption;
+
+  /// No description provided for @recurringStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get recurringStatusActive;
+
+  /// No description provided for @recurringStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get recurringStatusPaused;
+
+  /// No description provided for @recurringStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get recurringStatusArchived;
+
+  /// No description provided for @recurringStatusEndingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Ending soon'**
+  String get recurringStatusEndingSoon;
+
+  /// No description provided for @recurringPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get recurringPause;
+
+  /// No description provided for @recurringResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get recurringResume;
+
+  /// No description provided for @recurringArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get recurringArchive;
+
+  /// No description provided for @recurringRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get recurringRestore;
+
+  /// No description provided for @recurringDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete recurring'**
+  String get recurringDelete;
+
+  /// No description provided for @recurringArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this recurring?'**
+  String get recurringArchiveTitle;
+
+  /// No description provided for @recurringArchiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It stops producing items and is hidden. You can restore it later.'**
+  String get recurringArchiveBody;
+
+  /// No description provided for @recurringDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this recurring?'**
+  String get recurringDeleteTitle;
+
+  /// No description provided for @recurringDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes the setting and the items not created yet.'**
+  String get recurringDeleteBody;
+
+  /// No description provided for @recurringDeleteLinkedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item is already saved as a transaction.} other{{count} items are already saved as transactions.}}'**
+  String recurringDeleteLinkedBody(int count);
+
+  /// No description provided for @recurringDeleteKeepTxs.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete, keep the transactions'**
+  String get recurringDeleteKeepTxs;
+
+  /// No description provided for @recurringDeleteWithTxs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete with 1 transaction} other{Delete with {count} transactions}}'**
+  String recurringDeleteWithTxs(int count);
+
+  /// No description provided for @recurringScopeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to'**
+  String get recurringScopeTitle;
+
+  /// No description provided for @recurringScopeUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'All upcoming items'**
+  String get recurringScopeUpcoming;
+
+  /// No description provided for @recurringScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All items'**
+  String get recurringScopeAll;
+
+  /// No description provided for @recurringEndingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Ending soon: 1 item left} other{Ending soon: {count} items left}}'**
+  String recurringEndingSoon(int count);
+
+  /// No description provided for @recurringExtend.
+  ///
+  /// In en, this message translates to:
+  /// **'Extend'**
+  String get recurringExtend;
+
+  /// No description provided for @recurringPausedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused: dates that pass while paused produce nothing.'**
+  String get recurringPausedNotice;
+
+  /// No description provided for @recurringTabProduced.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get recurringTabProduced;
+
+  /// No description provided for @recurringTabUpcomingShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get recurringTabUpcomingShort;
+
+  /// No description provided for @recurringItemsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing due yet'**
+  String get recurringItemsEmpty;
+
+  /// No description provided for @recurringItemsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'When a date comes, the item goes to Pending and shows here.'**
+  String get recurringItemsEmptyMessage;
+
+  /// No description provided for @recurringUpcomingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing upcoming'**
+  String get recurringUpcomingEmpty;
+
+  /// No description provided for @recurringUpcomingEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Extend it or edit the setting to produce more.'**
+  String get recurringUpcomingEmptyMessage;
+
+  /// No description provided for @recurringUpcomingSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} {amount} · {rule}'**
+  String recurringUpcomingSummary(String name, String amount, String rule);
+
+  /// No description provided for @recurringUpcomingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more · tap to see it} other{{count} more · tap to see them all}}'**
+  String recurringUpcomingCount(int count);
+
+  /// No description provided for @recurringSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get recurringSelectAll;
+
+  /// No description provided for @recurringItemSendNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to pending now'**
+  String get recurringItemSendNow;
+
+  /// No description provided for @recurringItemCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get recurringItemCreate;
+
+  /// No description provided for @recurringItemCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create this item'**
+  String get recurringItemCreateTitle;
+
+  /// No description provided for @recurringItemCreateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Send it to Pending first, or save it as a transaction now.'**
+  String get recurringItemCreateBody;
+
+  /// No description provided for @recurringItemToPending.
+  ///
+  /// In en, this message translates to:
+  /// **'To pending'**
+  String get recurringItemToPending;
+
+  /// No description provided for @recurringItemToTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Save now'**
+  String get recurringItemToTx;
+
+  /// No description provided for @recurringItemOpenPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Open pending'**
+  String get recurringItemOpenPending;
+
+  /// No description provided for @recurringItemOpenTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Open transaction'**
+  String get recurringItemOpenTx;
+
+  /// No description provided for @recurringItemOpenRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Open recurring'**
+  String get recurringItemOpenRecurring;
+
+  /// No description provided for @recurringItemArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get recurringItemArchive;
+
+  /// No description provided for @recurringItemRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get recurringItemRestore;
+
+  /// No description provided for @recurringDeleteLinkedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the real transaction too?'**
+  String get recurringDeleteLinkedTitle;
+
+  /// No description provided for @recurringDeleteItemOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only here'**
+  String get recurringDeleteItemOnly;
+
+  /// No description provided for @recurringDeleteItemBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Both'**
+  String get recurringDeleteItemBoth;
+
+  /// No description provided for @recurringItemDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete 1 item?} other{Delete {count} items?}}'**
+  String recurringItemDeleteTitle(int count);
+
+  /// No description provided for @recurringItemDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They are removed from this recurring.'**
+  String get recurringItemDeleteBody;
+
+  /// No description provided for @recurringScopeThis.
+  ///
+  /// In en, this message translates to:
+  /// **'This item only'**
+  String get recurringScopeThis;
+
+  /// No description provided for @recurringScopeFollowing.
+  ///
+  /// In en, this message translates to:
+  /// **'This and following'**
+  String get recurringScopeFollowing;
+
+  /// No description provided for @recurringScopePast.
+  ///
+  /// In en, this message translates to:
+  /// **'All past items'**
+  String get recurringScopePast;
+
+  /// No description provided for @recurringItemEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit item'**
+  String get recurringItemEditTitle;
+
+  /// No description provided for @recurringAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get recurringAddItem;
+
+  /// No description provided for @moreRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get moreRecurring;
+
+  /// No description provided for @moreRecurringDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring bills & upcoming items'**
+  String get moreRecurringDesc;
+
+  /// No description provided for @pendingSourceRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get pendingSourceRecurring;
+
+  /// No description provided for @pendingSourceUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get pendingSourceUpcoming;
+
+  /// No description provided for @notifRecurringDue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 recurring item is due, waiting to confirm} other{{count} recurring items are due, waiting to confirm}}'**
+  String notifRecurringDue(int count);
+
+  /// No description provided for @notifRecurringEnding.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} has {left} items left — extend it?'**
+  String notifRecurringEnding(String name, int left);
+
+  /// No description provided for @recurSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom repeat'**
+  String get recurSheetTitle;
+
+  /// No description provided for @recurSheetEvery.
+  ///
+  /// In en, this message translates to:
+  /// **'Every'**
+  String get recurSheetEvery;
+
+  /// No description provided for @recurSheetUnitDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day} other{days}}'**
+  String recurSheetUnitDay(int count);
+
+  /// No description provided for @recurSheetUnitWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{week} other{weeks}}'**
+  String recurSheetUnitWeek(int count);
+
+  /// No description provided for @recurSheetUnitMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{month} other{months}}'**
+  String recurSheetUnitMonth(int count);
+
+  /// No description provided for @recurSheetUnitYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{year} other{years}}'**
+  String recurSheetUnitYear(int count);
+
+  /// No description provided for @recurSheetRepeatOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat on'**
+  String get recurSheetRepeatOn;
+
+  /// No description provided for @recurSheetMonthlyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on'**
+  String get recurSheetMonthlyOn;
+
+  /// No description provided for @recurSheetLastDayOfMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'the last day of the month'**
+  String get recurSheetLastDayOfMonth;
+
+  /// No description provided for @recurSheetEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get recurSheetEnds;
+
+  /// No description provided for @recurSheetEndNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get recurSheetEndNever;
+
+  /// No description provided for @recurSheetEndOnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'On a date'**
+  String get recurSheetEndOnDate;
+
+  /// No description provided for @recurSheetEndAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After'**
+  String get recurSheetEndAfter;
+
+  /// No description provided for @recurSheetOccurrences.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{time} other{times}}'**
+  String recurSheetOccurrences(int count);
+
+  /// No description provided for @recurringRepeatCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get recurringRepeatCustom;
+
+  /// No description provided for @moreGroupPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Money plans'**
+  String get moreGroupPlan;
+
+  /// No description provided for @moreGroupOthers.
+  ///
+  /// In en, this message translates to:
+  /// **'Money with others'**
+  String get moreGroupOthers;
+
+  /// No description provided for @moreGroupSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup data'**
+  String get moreGroupSetup;
+
+  /// No description provided for @moreGroupMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Main menu'**
+  String get moreGroupMain;
+
+  /// No description provided for @moreSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile & settings'**
+  String get moreSettings;
+
+  /// No description provided for @moreDashboardDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s overview'**
+  String get moreDashboardDesc;
+
+  /// No description provided for @moreTransactionsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'All income and expenses'**
+  String get moreTransactionsDesc;
+
+  /// No description provided for @moreWalletsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash, accounts and cards'**
+  String get moreWalletsDesc;
+
+  /// No description provided for @morePendingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Drafts waiting for you to confirm'**
+  String get morePendingDesc;
+
+  /// No description provided for @moreNotificationsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'News and reminders'**
+  String get moreNotificationsDesc;
+
+  /// No description provided for @moreSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Account, theme and notifications'**
+  String get moreSettingsDesc;
+
+  /// No description provided for @moreLiveUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, other{{count} unread}}'**
+  String moreLiveUnread(int count);
+
+  /// No description provided for @sgv2SavedTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved in total'**
+  String get sgv2SavedTotal;
+
+  /// No description provided for @sgv2InGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'In goals'**
+  String get sgv2InGoals;
+
+  /// No description provided for @sgv2Spare.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allocated'**
+  String get sgv2Spare;
+
+  /// No description provided for @sgv2SpareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings without a goal'**
+  String get sgv2SpareHint;
+
+  /// No description provided for @sgv2FilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get sgv2FilterActive;
+
+  /// No description provided for @sgv2FilterCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reached'**
+  String get sgv2FilterCompleted;
+
+  /// No description provided for @sgv2FilterArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get sgv2FilterArchived;
+
+  /// No description provided for @sgv2EmptyFilteredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No goals here'**
+  String get sgv2EmptyFilteredTitle;
+
+  /// No description provided for @sgv2PaceLate.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} months late'**
+  String sgv2PaceLate(int n);
+
+  /// No description provided for @sgv2PaceOnTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'On track'**
+  String get sgv2PaceOnTrack;
+
+  /// No description provided for @sgv2PaceLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Need {needed}/mo · saving {pace}'**
+  String sgv2PaceLine(String needed, String pace);
+
+  /// No description provided for @sgv2DueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String sgv2DueOn(String date);
+
+  /// No description provided for @sgv2NoDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'No deadline'**
+  String get sgv2NoDeadline;
+
+  /// No description provided for @sgv2ActionAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add savings'**
+  String get sgv2ActionAdd;
+
+  /// No description provided for @sgv2ActionWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get sgv2ActionWithdraw;
+
+  /// No description provided for @sgv2ActionMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get sgv2ActionMove;
+
+  /// No description provided for @sgv2Overview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get sgv2Overview;
+
+  /// No description provided for @sgv2NeededMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed per month'**
+  String get sgv2NeededMonthly;
+
+  /// No description provided for @sgv2PaceMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual (3-month average)'**
+  String get sgv2PaceMonthly;
+
+  /// No description provided for @sgv2Eta.
+  ///
+  /// In en, this message translates to:
+  /// **'At this pace, done'**
+  String get sgv2Eta;
+
+  /// No description provided for @sgv2TimeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Time left'**
+  String get sgv2TimeLeft;
+
+  /// No description provided for @sgv2ByWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'By wallet'**
+  String get sgv2ByWallet;
+
+  /// No description provided for @sgv2ByWalletHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved money remembers its wallet'**
+  String get sgv2ByWalletHint;
+
+  /// No description provided for @sgv2Entries.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving entries'**
+  String get sgv2Entries;
+
+  /// No description provided for @sgv2EntriesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No saving entries yet'**
+  String get sgv2EntriesEmpty;
+
+  /// No description provided for @sgv2EntriesMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get sgv2EntriesMore;
+
+  /// No description provided for @sgv2AutoSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-save'**
+  String get sgv2AutoSave;
+
+  /// No description provided for @sgv2AutoSaveNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get sgv2AutoSaveNone;
+
+  /// No description provided for @sgv2CloseGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Close goal'**
+  String get sgv2CloseGoal;
+
+  /// No description provided for @sgv2CloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close “{name}”'**
+  String sgv2CloseTitle(String name);
+
+  /// No description provided for @sgv2CloseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should the {amount} go?'**
+  String sgv2CloseBody(String amount);
+
+  /// No description provided for @sgv2CloseToSpare.
+  ///
+  /// In en, this message translates to:
+  /// **'Into not allocated'**
+  String get sgv2CloseToSpare;
+
+  /// No description provided for @sgv2CloseToWallets.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the wallets'**
+  String get sgv2CloseToWallets;
+
+  /// No description provided for @sgv2Restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get sgv2Restore;
+
+  /// No description provided for @sgv2KindSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get sgv2KindSave;
+
+  /// No description provided for @sgv2KindWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get sgv2KindWithdraw;
+
+  /// No description provided for @sgv2KindMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get sgv2KindMove;
+
+  /// No description provided for @sgv2SpareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allocated'**
+  String get sgv2SpareTitle;
+
+  /// No description provided for @sgv2Milestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Reached {pct}%'**
+  String sgv2Milestone(int pct);
+
+  /// No description provided for @walletTrackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Track balance'**
+  String get walletTrackLabel;
+
+  /// No description provided for @walletTrackHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off if you do not want a balance for this wallet (you can still log and transfer)'**
+  String get walletTrackHelper;
+
+  /// No description provided for @walletTrackSetBalanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Current balance'**
+  String get walletTrackSetBalanceTitle;
+
+  /// No description provided for @walletTrackSetBalanceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set balance'**
+  String get walletTrackSetBalanceAction;
+
+  /// No description provided for @walletTrackUntrackedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 wallet not tracked} other{{count} wallets not tracked}}'**
+  String walletTrackUntrackedNote(int count);
+
+  /// No description provided for @walletTrackOffHero.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance not tracked'**
+  String get walletTrackOffHero;
+
+  /// No description provided for @walletErrorBalanceNotTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'This wallet does not track its balance - turn tracking on to adjust it'**
+  String get walletErrorBalanceNotTracked;
+
+  /// No description provided for @multiPickCategoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose categories'**
+  String get multiPickCategoriesTitle;
+
+  /// No description provided for @multiPickWalletsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose wallets'**
+  String get multiPickWalletsTitle;
+
+  /// No description provided for @multiPickSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get multiPickSearch;
+
+  /// No description provided for @multiPickIncludeChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'Include subcategories'**
+  String get multiPickIncludeChildren;
+
+  /// No description provided for @multiPickEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get multiPickEmpty;
+
+  /// No description provided for @multiPickNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No match'**
+  String get multiPickNoMatch;
+
+  /// No description provided for @multiPickConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Done ({count})'**
+  String multiPickConfirm(int count);
+
+  /// No description provided for @bgFilterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get bgFilterActive;
+
+  /// No description provided for @bgFilterEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get bgFilterEnded;
+
+  /// No description provided for @bgFilterArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get bgFilterArchived;
+
+  /// No description provided for @bgSortRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Closest to the limit'**
+  String get bgSortRisk;
+
+  /// No description provided for @bgSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get bgSortName;
+
+  /// No description provided for @bgSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get bgSortNewest;
+
+  /// No description provided for @bgSortChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort: {sort}'**
+  String bgSortChip(String sort);
+
+  /// No description provided for @bgSummaryCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Current period of every budget'**
+  String get bgSummaryCaption;
+
+  /// No description provided for @bgStatActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get bgStatActive;
+
+  /// No description provided for @bgStatOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over budget'**
+  String get bgStatOver;
+
+  /// No description provided for @bgStatWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Near the limit'**
+  String get bgStatWarn;
+
+  /// No description provided for @bgStatPace.
+  ///
+  /// In en, this message translates to:
+  /// **'On pace to exceed'**
+  String get bgStatPace;
+
+  /// No description provided for @bgStatusOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over'**
+  String get bgStatusOver;
+
+  /// No description provided for @bgStatusWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Near limit'**
+  String get bgStatusWarn;
+
+  /// No description provided for @bgStatusPace.
+  ///
+  /// In en, this message translates to:
+  /// **'On pace to exceed'**
+  String get bgStatusPace;
+
+  /// No description provided for @bgStatusEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get bgStatusEnded;
+
+  /// No description provided for @bgStatusArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get bgStatusArchived;
+
+  /// No description provided for @bgStatusUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Not started'**
+  String get bgStatusUpcoming;
+
+  /// No description provided for @bgListEmptyEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'No ended budgets yet'**
+  String get bgListEmptyEnded;
+
+  /// No description provided for @bgListEmptyArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'No archived budgets'**
+  String get bgListEmptyArchived;
+
+  /// No description provided for @bgRuleDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get bgRuleDaily;
+
+  /// No description provided for @bgRuleWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get bgRuleWeekly;
+
+  /// No description provided for @bgRuleMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get bgRuleMonthly;
+
+  /// No description provided for @bgRuleYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get bgRuleYearly;
+
+  /// No description provided for @bgRowRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} – {end}'**
+  String bgRowRange(String start, String end);
+
+  /// No description provided for @bgRowOpenEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'No end date'**
+  String get bgRowOpenEnded;
+
+  /// No description provided for @bgRowSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Since {date}'**
+  String bgRowSince(String date);
+
+  /// No description provided for @bgRowStartsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts {date}'**
+  String bgRowStartsOn(String date);
+
+  /// No description provided for @bgRowDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days left'**
+  String bgRowDaysLeft(int count);
+
+  /// No description provided for @bgRowUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {used} of {amount}'**
+  String bgRowUsed(String used, String amount);
+
+  /// No description provided for @bgRowOverBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String bgRowOverBy(String amount);
+
+  /// No description provided for @bgRowExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected +{amount}'**
+  String bgRowExpected(String amount);
+
+  /// No description provided for @bgTabPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'Periods'**
+  String get bgTabPeriods;
+
+  /// No description provided for @bgTabSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup'**
+  String get bgTabSetup;
+
+  /// No description provided for @bgPeriodNow.
+  ///
+  /// In en, this message translates to:
+  /// **'This period'**
+  String get bgPeriodNow;
+
+  /// No description provided for @bgPeriodOverridden.
+  ///
+  /// In en, this message translates to:
+  /// **'This period only'**
+  String get bgPeriodOverridden;
+
+  /// No description provided for @bgPeriodLabelFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Period {seq}'**
+  String bgPeriodLabelFallback(int seq);
+
+  /// No description provided for @bgHeroUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used'**
+  String get bgHeroUsed;
+
+  /// No description provided for @bgHeroOfLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'of {amount}'**
+  String bgHeroOfLimit(String amount);
+
+  /// No description provided for @bgHeroRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String bgHeroRemaining(String amount);
+
+  /// No description provided for @bgHeroOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String bgHeroOver(String amount);
+
+  /// No description provided for @bgLegendUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {pct}%'**
+  String bgLegendUsed(int pct);
+
+  /// No description provided for @bgLegendExpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected +{amount}'**
+  String bgLegendExpected(String amount);
+
+  /// No description provided for @bgSectionOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get bgSectionOverview;
+
+  /// No description provided for @bgOverviewDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {elapsed} of {total}'**
+  String bgOverviewDays(int elapsed, int total);
+
+  /// No description provided for @bgTileAllowance.
+  ///
+  /// In en, this message translates to:
+  /// **'Can spend per day'**
+  String get bgTileAllowance;
+
+  /// No description provided for @bgTileAllowanceSub.
+  ///
+  /// In en, this message translates to:
+  /// **'after what is expected'**
+  String get bgTileAllowanceSub;
+
+  /// No description provided for @bgTilePaceOver.
+  ///
+  /// In en, this message translates to:
+  /// **'On this pace over on'**
+  String get bgTilePaceOver;
+
+  /// No description provided for @bgTilePaceAvg.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg {amount} a day'**
+  String bgTilePaceAvg(String amount);
+
+  /// No description provided for @bgTilePaceOk.
+  ///
+  /// In en, this message translates to:
+  /// **'On this pace: within'**
+  String get bgTilePaceOk;
+
+  /// No description provided for @bgTileForecastEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast at the end'**
+  String get bgTileForecastEnd;
+
+  /// No description provided for @bgTileForecastOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String bgTileForecastOver(String amount);
+
+  /// No description provided for @bgTileHistoryAvg.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg of last {count}'**
+  String bgTileHistoryAvg(int count);
+
+  /// No description provided for @bgTilePerPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'per period'**
+  String get bgTilePerPeriod;
+
+  /// No description provided for @bgTileAvgMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg per month'**
+  String get bgTileAvgMonthly;
+
+  /// No description provided for @bgTileThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get bgTileThisMonth;
+
+  /// No description provided for @bgTileRemainingAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Left after expected'**
+  String get bgTileRemainingAfter;
+
+  /// No description provided for @bgSectionSource.
+  ///
+  /// In en, this message translates to:
+  /// **'By source'**
+  String get bgSectionSource;
+
+  /// No description provided for @bgSourceNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get bgSourceNormal;
+
+  /// No description provided for @bgSourceRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get bgSourceRecurring;
+
+  /// No description provided for @bgSourceEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get bgSourceEvent;
+
+  /// No description provided for @bgSourceUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring · upcoming'**
+  String get bgSourceUpcoming;
+
+  /// No description provided for @bgSourcePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get bgSourcePending;
+
+  /// No description provided for @bgSourceCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items'**
+  String bgSourceCount(int count);
+
+  /// No description provided for @bgSectionCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get bgSectionCategory;
+
+  /// No description provided for @bgNoCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get bgNoCategory;
+
+  /// No description provided for @bgSectionPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'Periods'**
+  String get bgSectionPeriods;
+
+  /// No description provided for @bgPeriodsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a period to view it or edit it alone'**
+  String get bgPeriodsDescription;
+
+  /// No description provided for @bgPeriodsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All earlier periods'**
+  String get bgPeriodsAll;
+
+  /// No description provided for @bgSectionItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted in this period'**
+  String get bgSectionItems;
+
+  /// No description provided for @bgItemsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything this budget counts, with its source'**
+  String get bgItemsDescription;
+
+  /// No description provided for @bgItemsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get bgItemsMore;
+
+  /// No description provided for @bgItemsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing counted in this period yet'**
+  String get bgItemsEmpty;
+
+  /// No description provided for @bgPeriodEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this period only'**
+  String get bgPeriodEditTitle;
+
+  /// No description provided for @bgPeriodAmountField.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount for this period'**
+  String get bgPeriodAmountField;
+
+  /// No description provided for @bgPeriodUseBase.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the base amount ({amount})'**
+  String bgPeriodUseBase(String amount);
+
+  /// No description provided for @bgFieldAmountOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get bgFieldAmountOnce;
+
+  /// No description provided for @bgFieldRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring budget'**
+  String get bgFieldRecurring;
+
+  /// No description provided for @bgFieldRecurringHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The budget repeats every period; each period can be edited alone'**
+  String get bgFieldRecurringHint;
+
+  /// No description provided for @bgSectionScope.
+  ///
+  /// In en, this message translates to:
+  /// **'What it counts'**
+  String get bgSectionScope;
+
+  /// No description provided for @bgScopeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgets may overlap; a row counts when it matches any one'**
+  String get bgScopeDescription;
+
+  /// No description provided for @bgScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Every expense'**
+  String get bgScopeAll;
+
+  /// No description provided for @bgScopeCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get bgScopeCategories;
+
+  /// No description provided for @bgScopeTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get bgScopeTags;
+
+  /// No description provided for @bgScopeWallets.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get bgScopeWallets;
+
+  /// No description provided for @bgScopeTagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Event bills whose event has a tag with the same name count too'**
+  String get bgScopeTagsHint;
+
+  /// No description provided for @bgScopeChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'+ sub'**
+  String get bgScopeChildren;
+
+  /// No description provided for @bgScopeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick what to count, or turn on \"Every expense\"'**
+  String get bgScopeRequired;
+
+  /// No description provided for @bgSectionPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get bgSectionPeriod;
+
+  /// No description provided for @bgFieldRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get bgFieldRepeat;
+
+  /// No description provided for @bgFieldStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get bgFieldStart;
+
+  /// No description provided for @bgFieldEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get bgFieldEnd;
+
+  /// No description provided for @bgEndNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No end'**
+  String get bgEndNone;
+
+  /// No description provided for @bgEndPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date…'**
+  String get bgEndPickDate;
+
+  /// No description provided for @bgEndPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} periods'**
+  String bgEndPeriods(int count);
+
+  /// No description provided for @bgSectionWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get bgSectionWarn;
+
+  /// No description provided for @bgFieldWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn at'**
+  String get bgFieldWarn;
+
+  /// No description provided for @bgWarnOff.
+  ///
+  /// In en, this message translates to:
+  /// **'No warning'**
+  String get bgWarnOff;
+
+  /// No description provided for @bgWarnPct.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}%'**
+  String bgWarnPct(int pct);
+
+  /// No description provided for @bgWarnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Past 100% is always over budget'**
+  String get bgWarnHint;
+
+  /// No description provided for @bgScopeChoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply the new setup to'**
+  String get bgScopeChoiceTitle;
+
+  /// No description provided for @bgScopeFollowing.
+  ///
+  /// In en, this message translates to:
+  /// **'This and following periods'**
+  String get bgScopeFollowing;
+
+  /// No description provided for @bgScopeAllPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'Every period (past ones too)'**
+  String get bgScopeAllPeriods;
+
+  /// No description provided for @bgClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the budget'**
+  String get bgClose;
+
+  /// No description provided for @bgCloseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops counting from today and moves to \"Ended\"'**
+  String get bgCloseHint;
+
+  /// No description provided for @bgCloseConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Close this budget?'**
+  String get bgCloseConfirmTitle;
+
+  /// No description provided for @bgCloseConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It stops counting from today and moves to \"Ended\".'**
+  String get bgCloseConfirmBody;
+
+  /// No description provided for @bgRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get bgRestore;
+
+  /// No description provided for @bgNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get bgNameRequired;
+
+  /// No description provided for @bgChipRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'🔁 {rule}'**
+  String bgChipRecurring(String rule);
+
+  /// No description provided for @pendingSavingConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm as saving?'**
+  String get pendingSavingConfirmTitle;
+
+  /// No description provided for @pendingSavingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get pendingSavingConfirm;
+
+  /// No description provided for @pendingSavingNoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet before confirming'**
+  String get pendingSavingNoWallet;
+
+  /// No description provided for @walletSavingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings'**
+  String get walletSavingsTitle;
+
+  /// No description provided for @walletSavingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Money you have set aside in this wallet'**
+  String get walletSavingsDescription;
+
+  /// No description provided for @walletSavingsBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Real balance'**
+  String get walletSavingsBalance;
+
+  /// No description provided for @walletSavingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get walletSavingsSaved;
+
+  /// No description provided for @walletSavingsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available to spend'**
+  String get walletSavingsAvailable;
+
+  /// No description provided for @walletSavingsOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved more than the real balance {amount}'**
+  String walletSavingsOver(String amount);
+
+  /// No description provided for @quickModeSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Savings'**
+  String get quickModeSaving;
+
+  /// No description provided for @savingEntryTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (optional)'**
+  String get savingEntryTitleHint;
+
+  /// No description provided for @savingEntryTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Save into'**
+  String get savingEntryTarget;
+
+  /// No description provided for @savingEntrySpare.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allocated'**
+  String get savingEntrySpare;
+
+  /// No description provided for @savingEntryPickGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a goal'**
+  String get savingEntryPickGoal;
+
+  /// No description provided for @savingEntryAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} free to save'**
+  String savingEntryAvailable(String amount);
+
+  /// No description provided for @savingEntryOverAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} more than is free (still allowed)'**
+  String savingEntryOverAvailable(String amount);
+
+  /// No description provided for @savingEntryWalletRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the wallet to save from'**
+  String get savingEntryWalletRequired;
+
+  /// No description provided for @savingEntrySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving recorded'**
+  String get savingEntrySaved;
+
+  /// No description provided for @walletSavingsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add savings'**
+  String get walletSavingsAdd;
+
+  /// No description provided for @recurringKindTx.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction'**
+  String get recurringKindTx;
+
+  /// No description provided for @recurringKindSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get recurringKindSaving;
+
+  /// No description provided for @recurringFieldFromWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'From wallet'**
+  String get recurringFieldFromWallet;
+
+  /// No description provided for @recurringFieldGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Save into'**
+  String get recurringFieldGoal;
+
+  /// No description provided for @recurringSavingName.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get recurringSavingName;
+
+  /// No description provided for @recurringSavingNameGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving · {goal}'**
+  String recurringSavingNameGoal(String goal);
+
+  /// No description provided for @sgv2MoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move savings'**
+  String get sgv2MoveTitle;
+
+  /// No description provided for @sgv2WithdrawTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw savings'**
+  String get sgv2WithdrawTitle;
+
+  /// No description provided for @sgv2MoveFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get sgv2MoveFrom;
+
+  /// No description provided for @sgv2MoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get sgv2MoveTo;
+
+  /// No description provided for @sgv2WalletsCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallets'**
+  String get sgv2WalletsCard;
+
+  /// No description provided for @sgv2AmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get sgv2AmountLabel;
+
+  /// No description provided for @sgv2SplitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'By wallet (automatic)'**
+  String get sgv2SplitTitle;
+
+  /// No description provided for @sgv2SplitEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get sgv2SplitEdit;
+
+  /// No description provided for @sgv2SplitHas.
+  ///
+  /// In en, this message translates to:
+  /// **'Has {amount}'**
+  String sgv2SplitHas(String amount);
+
+  /// No description provided for @sgv2SumOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {sum} ✓'**
+  String sgv2SumOk(String sum);
+
+  /// No description provided for @sgv2SumOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {sum} does not match {amount}'**
+  String sgv2SumOff(String sum, String amount);
+
+  /// No description provided for @sgv2ReturnsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'If it goes back'**
+  String get sgv2ReturnsTitle;
+
+  /// No description provided for @sgv2Cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get sgv2Cancel;
+
+  /// No description provided for @sgv2MovePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to where?'**
+  String get sgv2MovePick;
+
+  /// No description provided for @sgv2MoveSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get sgv2MoveSave;
+
+  /// No description provided for @sgv2WithdrawSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get sgv2WithdrawSave;
+
+  /// No description provided for @sgv2ChartCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved so far'**
+  String get sgv2ChartCaption;
+
+  /// No description provided for @sgv2ChartActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved / at this pace'**
+  String get sgv2ChartActual;
+
+  /// No description provided for @sgv2ChartNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Line needed'**
+  String get sgv2ChartNeeded;
+
+  /// No description provided for @sgv2ChartTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal {amount}'**
+  String sgv2ChartTarget(String amount);
+
+  /// No description provided for @sgv2SpareName.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allocated'**
+  String get sgv2SpareName;
+
+  /// No description provided for @sgv2NoOtherGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'No other goal to move to'**
+  String get sgv2NoOtherGoal;
+
+  /// No description provided for @sgv2EntryDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving entry deleted'**
+  String get sgv2EntryDeleted;
 }
 
 class _AppLocalizationsDelegate

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../molecules/app_tab_bar.dart';
 import '../molecules/empty_view.dart';
+import '../molecules/load_more_error_row.dart';
 import '../organisms/async_state_view.dart';
 import '../organisms/divided_rows.dart';
 import '../organisms/page_skeletons.dart';
@@ -29,11 +30,15 @@ import '../tokens/app_spacing.dart';
 ///     the list needs its own scroll view; the template still gives it the
 ///     data states and the header.
 /// - [loading] / [error] / [isEmpty] / [onRetry]: the data state — see
-///   `AsyncStateView`; [empty] is the empty view, [skeleton] overrides the
-///   default skeleton rows.
+///   `AsyncStateView`; [empty] is the empty view. The first-load skeleton is
+///   the template's own [ListPageSkeleton]; a page only says its shape
+///   ([skeletonShape]: rows by default, a cards grid for wallets).
 /// - paging: [onLoadMore] fires when the list scrolls near its end (while
-///   [hasMore] and not [loadingMore]); [loadingMore] shows two row skeletons
-///   at the end (never a spinner).
+///   [hasMore], not [loadingMore] and no [loadMoreError]); [loadingMore]
+///   shows two row skeletons at the end (never a spinner); a failed page
+///   ([loadMoreError]) shows a "couldn't load more · retry" row at the end
+///   instead ([onRetryMore]); the rows already loaded stay.
+/// - [footer]: after the last row (a count, "that's all").
 /// - tabs (a list split by expense / income …): use [TabbedListPageBody] —
 ///   an `AppTabBar` over an `AppTabPager`, each tab its own ListPageBody
 ///   (own empty / refresh state).
@@ -48,15 +53,19 @@ class ListPageBody extends StatefulWidget {
     this.children = const [],
     this.builder,
     this.header = const [],
-    this.skeleton,
+    this.skeletonShape = const ListSkeletonShape(),
     this.hasMore = false,
     this.loadingMore = false,
     this.onLoadMore,
+    this.loadMoreError,
+    this.onRetryMore,
+    this.footer,
     this.controller,
     this.refreshEnabled = true,
     this.clearTopBar = true,
     this.rowDividers = false,
     this.rowDividerIndent = defaultRowDividerIndent,
+    this.rowGap = 0,
     this.topInset = AppSpacing.md,
     this.bottomInset = floatingBarClearance,
     this.sidePadding = AppSpacing.lg,
@@ -83,7 +92,9 @@ class ListPageBody extends StatefulWidget {
   /// where the others do. The system inset is added on top.
   static const double floatingBarClearance = 96;
   final List<Widget> header;
-  final Widget? skeleton;
+
+  /// The first-load skeleton's shape (see [ListSkeletonShape]).
+  final ListSkeletonShape skeletonShape;
 
   /// More pages exist on the server.
   final bool hasMore;
@@ -93,6 +104,14 @@ class ListPageBody extends StatefulWidget {
 
   /// Called when the list scrolls within ~one screen of its end.
   final VoidCallback? onLoadMore;
+
+  /// The next page failed: the end of the list shows a retry row
+  /// ([onRetryMore], else [onLoadMore]) and scrolling stops asking.
+  final Object? loadMoreError;
+  final VoidCallback? onRetryMore;
+
+  /// After the last row (and the paging row).
+  final Widget? footer;
   final ScrollController? controller;
 
   /// false: no pull-to-refresh (an edit / reorder mode, where a pull would fight the drag).
@@ -112,6 +131,11 @@ class ListPageBody extends StatefulWidget {
   /// row text) and ends at the side margin.
   final bool rowDividers;
   final double rowDividerIndent;
+
+  /// Card-list mode: this much space between consecutive [children] (cards,
+  /// boxed rows), so a page needs no `SizedBox` between them. Ignored with
+  /// [rowDividers].
+  final double rowGap;
 
   /// 16 margin + 36 icon + 12 gap — a transaction row's text.
   static const double defaultRowDividerIndent = 64;
@@ -134,7 +158,12 @@ class _ListPageBodyState extends State<ListPageBody> {
 
   bool _onScroll(ScrollNotification n) {
     final more = widget.onLoadMore;
-    if (more == null || !widget.hasMore || widget.loadingMore) return false;
+    if (more == null ||
+        !widget.hasMore ||
+        widget.loadingMore ||
+        widget.loadMoreError != null) {
+      return false;
+    }
     if (n.depth != 0) return false;
     final m = n.metrics;
     if (m.maxScrollExtent - m.pixels < m.viewportDimension) more();
@@ -159,14 +188,12 @@ class _ListPageBodyState extends State<ListPageBody> {
       isEmpty: w.isEmpty,
       onRetry: w.onRetry,
       empty: w.empty,
-      skeleton:
-          w.skeleton ??
-          ListPageSkeleton(
-            grouped: w.rowDividers,
-            rowDividerIndent: w.rowDividerIndent,
-            rows: 6,
-            padding: padding,
-          ),
+      skeleton: ListPageSkeleton(
+        grouped: w.rowDividers,
+        rowDividerIndent: w.rowDividerIndent,
+        shape: w.skeletonShape,
+        padding: padding,
+      ),
       builder: (context) => _refresh(
         w,
         NotificationListener<ScrollNotification>(
@@ -184,11 +211,15 @@ class _ListPageBodyState extends State<ListPageBody> {
                           w.children,
                           indent: w.rowDividerIndent,
                         )
+                      : w.rowGap > 0
+                      ? _gapped(w.children, w.rowGap)
                       : w.children),
                   if (w.loadingMore) ...const [
                     ListRowSkeleton(),
                     ListRowSkeleton(),
-                  ],
+                  ] else if (w.loadMoreError != null)
+                    LoadMoreErrorRow(onRetry: w.onRetryMore ?? w.onLoadMore),
+                  ?w.footer,
                 ],
               ),
         ),
@@ -288,3 +319,10 @@ class TabbedListPageBody<T> extends StatelessWidget {
     );
   }
 }
+
+List<Widget> _gapped(List<Widget> children, double gap) => [
+  for (var i = 0; i < children.length; i++) ...[
+    if (i > 0) SizedBox(height: gap),
+    children[i],
+  ],
+];

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -5,80 +7,103 @@ import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/budgets_repository.dart';
 import '../../domain/budget.dart';
-import '../../domain/budget_overview.dart';
-import '../../domain/budget_period.dart';
-import '../../domain/budget_scope.dart';
 
 class BudgetsState extends Equatable {
   const BudgetsState({
     this.budgets = const [],
+    this.summary = const BudgetListSummary(),
+    this.filter = BudgetFilter.active,
+    this.sort = BudgetSort.risk,
     this.status = BudgetsStatus.initial,
     this.error,
   });
 
+  /// Each budget at its current period (the BE's `listBudgets`).
   final List<Budget> budgets;
+  final BudgetListSummary summary;
+  final BudgetFilter filter;
+  final BudgetSort sort;
   final BudgetsStatus status;
   final ApiException? error;
+
   String? get errorMessage => error?.message;
 
   BudgetsState copyWith({
     List<Budget>? budgets,
+    BudgetListSummary? summary,
+    BudgetFilter? filter,
+    BudgetSort? sort,
     BudgetsStatus? status,
     ApiException? error,
     bool clearError = false,
-  }) {
-    return BudgetsState(
-      budgets: budgets ?? this.budgets,
-      status: status ?? this.status,
-      error: clearError ? null : (error ?? this.error),
-    );
-  }
+  }) => BudgetsState(
+    budgets: budgets ?? this.budgets,
+    summary: summary ?? this.summary,
+    filter: filter ?? this.filter,
+    sort: sort ?? this.sort,
+    status: status ?? this.status,
+    error: clearError ? null : (error ?? this.error),
+  );
 
   @override
-  List<Object?> get props => [budgets, status, error];
+  List<Object?> get props => [budgets, summary, filter, sort, status, error];
 }
 
 enum BudgetsStatus { initial, loading, loaded, error }
 
-/// Budgets store backed by [BudgetsRepository].
-///
-/// The cached list defaults to user-scope active budgets — the standalone
-/// `/budgets` page only renders user-scope. Project-scope budgets render
-/// inside the project detail page (Phase 1c) and fetch on demand without
-/// going through this cubit.
-///
-/// Mutators re-throw [ApiException]; the calling form / detail page
-/// surfaces the message via snackbar.
+/// The budgets LIST page's state (spec 08 v2): one call per open, per filter
+/// chip and per sort. Pages for one budget hold their own state from the
+/// repository; a write there calls [markStale], a transaction write too
+/// ([markStale] reloads once after a short pause, like the dashboard).
 class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
   BudgetsCubit({required BudgetsRepository repository})
     : _repo = repository,
       super(const BudgetsState());
 
   final BudgetsRepository _repo;
+  Timer? _stale;
+
+  /// Bumped per [load] and on [clear]; a stale response is dropped.
+  int _request = 0;
 
   @override
-  void clear() => emit(const BudgetsState());
+  void clear() {
+    _stale?.cancel();
+    _request++;
+    emit(const BudgetsState());
+  }
 
-  Future<void> loadIfNeeded() async {
-    if (state.status == BudgetsStatus.loaded ||
-        state.status == BudgetsStatus.loading) {
-      return;
-    }
-    return load();
+  @override
+  Future<void> close() {
+    _stale?.cancel();
+    return super.close();
+  }
+
+  /// A budget or a transaction changed: reload once, shortly (only when the
+  /// list was ever opened).
+  void markStale() {
+    if (state.status == BudgetsStatus.initial) return;
+    _stale?.cancel();
+    _stale = Timer(const Duration(milliseconds: 400), load);
   }
 
   Future<void> load() async {
+    _stale?.cancel();
+    final request = ++_request;
     emit(state.copyWith(status: BudgetsStatus.loading, clearError: true));
     try {
-      final list = await _repo.list(scope: BudgetScope.user);
+      final list = await _repo.list(filter: state.filter, sort: state.sort);
+      if (request != _request) return;
       emit(
         state.copyWith(
-          budgets: list,
+          budgets: list.budgets,
+          summary: list.summary,
           status: BudgetsStatus.loaded,
           clearError: true,
         ),
       );
     } catch (e, st) {
+      if (request != _request) return;
       emit(
         state.copyWith(
           status: BudgetsStatus.error,
@@ -88,56 +113,16 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
     }
   }
 
-  Future<void> add(Budget draft) async {
-    final created = await _repo.create(draft);
-    emit(state.copyWith(budgets: [...state.budgets, created]));
+  /// A chip: show another list (1 call; the old rows go at once).
+  Future<void> setFilter(BudgetFilter filter) {
+    if (filter == state.filter) return Future.value();
+    emit(state.copyWith(filter: filter, budgets: const []));
+    return load();
   }
 
-  Future<void> update(Budget budget) async {
-    final updated = await _repo.update(budget);
-    emit(
-      state.copyWith(
-        budgets: [
-          for (final b in state.budgets)
-            if (b.id == updated.id) updated else b,
-        ],
-      ),
-    );
-  }
-
-  Future<void> archive(String id) async {
-    await _repo.archive(id);
-    emit(
-      state.copyWith(budgets: state.budgets.where((b) => b.id != id).toList()),
-    );
-  }
-
-  Future<void> restore(String id) async {
-    final restored = await _repo.restore(id);
-    emit(state.copyWith(budgets: [...state.budgets, restored]));
-  }
-
-  Future<void> remove(String id) async {
-    await _repo.delete(id);
-    emit(
-      state.copyWith(budgets: state.budgets.where((b) => b.id != id).toList()),
-    );
-  }
-
-  /// Overview summary (spec §3.7). Not cached — recomputed on demand
-  /// from the list page header / dashboard widget.
-  Future<BudgetOverview> overview({
-    BudgetPeriod period = BudgetPeriod.monthly,
-    BudgetScope scope = BudgetScope.user,
-    String? projectId,
-  }) {
-    return _repo.overview(period: period, scope: scope, projectId: projectId);
-  }
-
-  Budget? byId(String id) {
-    for (final b in state.budgets) {
-      if (b.id == id) return b;
-    }
-    return null;
+  Future<void> setSort(BudgetSort sort) {
+    if (sort == state.sort) return Future.value();
+    emit(state.copyWith(sort: sort));
+    return load();
   }
 }

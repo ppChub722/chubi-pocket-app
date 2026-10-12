@@ -350,6 +350,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     bool clearAccount = false,
     String? transferToAccountId,
     List<String>? tagIds,
+    bool? alsoUpdateLink,
   }) async {
     final result = await _repo.update(
       id: id,
@@ -365,7 +366,13 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       clearAccount: clearAccount,
       transferToAccountId: transferToAccountId,
       tagIds: tagIds,
+      alsoUpdateLink: alsoUpdateLink,
     );
+    // Moved to a future date: it's an upcoming item now, not a transaction.
+    if (result.isUpcoming) {
+      dropRow(id);
+      return result;
+    }
     // An edit can move the row (new date / amount) or take it out of the
     // filters (new type / wallet / category).
     _emitWrite(state.copyWith(transactions: _place(result.rows)));
@@ -392,10 +399,14 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
 
   /// Deletes a transaction. For transfers, the BE cascades to the paired
   /// row; we drop both from the cache by `transfer_group_id`. Returns the
-  /// wallets' balances after the delete.
-  Future<DeleteTransactionResult> remove(String id) async {
+  /// wallets' balances after the delete. [alsoDeleteLink]: see
+  /// [TransactionsRepository.delete].
+  Future<DeleteTransactionResult> remove(
+    String id, {
+    bool? alsoDeleteLink,
+  }) async {
     final tx = byId(id);
-    final result = await _repo.delete(id);
+    final result = await _repo.delete(id, alsoDeleteLink: alsoDeleteLink);
     if (tx?.transferGroupId != null) {
       _emitWrite(
         state.copyWith(
@@ -412,6 +423,18 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       );
     }
     return result;
+  }
+
+  /// A row the server deleted through another record (a debt entry's wallet
+  /// side goes with the entry): out of the cache — no call — and the other
+  /// live lists re-read.
+  void dropRow(String id) {
+    if (isClosed) return;
+    _emitWrite(
+      state.copyWith(
+        transactions: state.transactions.where((t) => t.id != id).toList(),
+      ),
+    );
   }
 
   // ── Read helpers ──────────────────────────────────────────────────

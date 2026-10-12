@@ -53,6 +53,45 @@ class _FeedbackPageState extends State<_FeedbackPage> {
     if (mounted) setState(() => _result = 'Confirm resolved: $ok');
   }
 
+  /// The linked-record prompt (save, or delete with a red both-sides).
+  Future<void> _linked({required bool delete}) async {
+    final v = await showLinkedPrompt(
+      context,
+      title: delete
+          ? 'Delete the linked item too?'
+          : 'Update the other side too?',
+      message: 'This transaction is linked to "Netflix · 3/12".',
+      cancelLabel: 'Not now',
+      thisSideLabel: delete ? 'Delete this side only' : 'Save this side only',
+      bothSidesLabel: delete ? 'Delete both' : 'Save and update the other side',
+      destructive: delete,
+    );
+    if (mounted) setState(() => _result = 'Linked prompt resolved: $v');
+  }
+
+  static const _allScopes = {
+    EditScope.thisOne: 'This item',
+    EditScope.following: 'This and the following',
+    EditScope.past: 'All past items',
+    EditScope.upcoming: 'All upcoming items',
+    EditScope.all: 'All items',
+  };
+
+  /// "Apply to…" — the five scopes, or two for a rule change.
+  Future<void> _scope({required bool all}) async {
+    final v = await showEditScopeChoice(
+      context,
+      title: 'Apply to',
+      options: all
+          ? _allScopes
+          : {
+              EditScope.upcoming: _allScopes[EditScope.upcoming]!,
+              EditScope.all: _allScopes[EditScope.all]!,
+            },
+    );
+    if (mounted) setState(() => _result = 'Edit scope resolved: $v');
+  }
+
   Future<void> _choice() async {
     final v = await showChoiceDialog<String>(
       context,
@@ -342,10 +381,14 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
         HubDemo(
-          title: 'showConfirmDialog / showChoiceDialog + DialogChoice',
+          title: 'showConfirmDialog / showChoiceDialog / showLinkedPrompt',
           note:
               'Confirm: two ways out, resolves a bool. Choice: three or more '
-              'stacked buttons, resolves the picked value or null.',
+              'stacked buttons, resolves the picked value or null. Linked '
+              'prompt (owner 2026-10-13): a tx and the event bill / '
+              'recurring item it is linked to never sync by themselves — at '
+              'save / delete the app asks [Not now] [This side only] '
+              '[Both]; resolves a LinkedChoice or null (cancel).',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -367,10 +410,60 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                     variant: AppButtonVariant.outlined,
                     onPressed: _choice,
                   ),
+                  AppButton(
+                    label: 'Linked prompt (save)',
+                    variant: AppButtonVariant.tonal,
+                    onPressed: () => _linked(delete: false),
+                  ),
+                  AppButton(
+                    label: 'Linked prompt (delete)',
+                    variant: AppButtonVariant.destructiveOutlined,
+                    onPressed: () => _linked(delete: true),
+                  ),
                 ],
               ),
               gap,
               AppText(_result, role: AppTextRole.caption),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'showEditScopeChoice — which items an edit applies to',
+          note:
+              'A central popover with a muted title (owner 2026-10-13): one '
+              'row per EditScope passed, in that order; the selected one '
+              'highlighted, never ✓. Resolves the scope or null. Recurring '
+              'items pass all five; a recurring rule change passes upcoming '
+              '/ all. Labels come in as params.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              HubCell(
+                caption: 'Inline (EditScopeChoice), selected: upcoming',
+                child: EditScopeChoice(
+                  title: 'Apply to',
+                  options: _allScopes,
+                  selected: EditScope.upcoming,
+                  onPicked: (s) => setState(() => _result = 'Picked: $s'),
+                ),
+              ),
+              gap,
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  AppButton(
+                    label: 'Five scopes',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () => _scope(all: true),
+                  ),
+                  AppButton(
+                    label: 'Rule change (two)',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: () => _scope(all: false),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

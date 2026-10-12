@@ -80,6 +80,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
     currency: 'THB',
     creditLimit: 20000,
   );
+  final untracked = bank.copyWith(name: 'ออมทรัพย์', trackBalance: false);
   final shared = bank.copyWith(
     name: 'บัญชีบ้าน',
     isShared: true,
@@ -348,6 +349,11 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             child: gridCard(overpaid),
           ),
           HubUse(
+            label: 'AccountCard grid — untracked: no balance, no credit bar',
+            page: 'Accounts page, Account picker sheet',
+            child: gridCard(untracked),
+          ),
+          HubUse(
             label: 'Hidden balance — symbol + bullets (privacy off)',
             page: 'Accounts page (privacy mode)',
             child: SizedBox(
@@ -418,6 +424,12 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             page: 'Accounts page (reorder)',
             child: AccountCard(account: card, horizontal: true),
           ),
+          HubUse(
+            wide: true,
+            label: 'AccountCard horizontal — untracked: no balance',
+            page: 'Accounts page (reorder)',
+            child: AccountCard(account: untracked, horizontal: true),
+          ),
 
           // ── Wallet icon, pick card ──
           HubUse(
@@ -453,6 +465,17 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             page: 'Transaction / debt / scheduled draft forms',
             child: WalletPickCard(
               account: bank,
+              label: 'Wallet',
+              placeholder: 'Choose a wallet',
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'WalletPickCard — picked, untracked (no balance)',
+            page: 'Transaction / debt / scheduled draft forms',
+            child: WalletPickCard(
+              account: untracked,
               label: 'Wallet',
               placeholder: 'Choose a wallet',
               onTap: () {},

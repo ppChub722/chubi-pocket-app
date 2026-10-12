@@ -49,6 +49,41 @@ class _RowsPageState extends State<_RowsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        HubDemo(
+          title: 'HintLine — where something will go',
+          note:
+              'Quick create, a date after today (owner 2026-10-13): the '
+              'line under the date says it becomes an upcoming item and '
+              'where it goes; the link part opens that page.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              HintLine(
+                icon: AppIcons.scheduled,
+                linkLabel: 'Upcoming',
+                text: 'goes to drafts on 3 Nov 2026',
+                onTap: () {},
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const HintLine(
+                icon: AppIcons.scheduled,
+                text: 'A plain hint, not tappable',
+              ),
+            ],
+          ),
+        ),
+        const HubDemo(
+          title: 'LinkedFieldHint — fields shared with another record',
+          note:
+              'Edit mode, under the money fields of a transaction pulled into '
+              'an event (and of the bill on the event side): amount and date '
+              'are one record, an edit changes both. Muted, not a banner.',
+          child: LinkedFieldHint(
+            text:
+                'Amount and date are shared with the event bill: an edit '
+                'changes both.',
+          ),
+        ),
         // ---- In the app ----
         HubInApp(
           columns: 2,

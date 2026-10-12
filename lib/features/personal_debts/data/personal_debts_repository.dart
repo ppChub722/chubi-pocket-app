@@ -2,250 +2,238 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../../transactions/domain/refs.dart';
-import '../domain/personal_debt.dart';
+import '../domain/debt_ledger.dart';
 
-class DebtsPage {
-  const DebtsPage({
-    required this.debts,
-    required this.page,
-    required this.perPage,
-    required this.total,
-    required this.totalPages,
-  });
-  final List<PersonalDebt> debts;
-  final int page;
-  final int perPage;
-  final int total;
-  final int totalPages;
-  bool get hasMore => page < totalPages;
-}
-
-class SettleResult {
-  const SettleResult({required this.debt, this.accountBalances = const {}});
-  final PersonalDebt debt;
-
-  /// {wallet id: balance} after the settle (API v2 `account_balances`).
-  final Map<String, double> accountBalances;
-}
-
+/// The person ledger API (0.3.1-10, openapi tag "Debts"): people, a
+/// person, their entries, and the entry writes. Every write returns the final
+/// state (entry + person balance + wallet balances): patch, never re-fetch.
 class PersonalDebtsRepository {
   PersonalDebtsRepository({required ApiClient client}) : _client = client;
   final ApiClient _client;
 
-  Future<DebtsPage> list({
-    DebtDirection? direction,
-    String? status,
-    String? counterpartyContactId,
+  /// `GET /personal-debts/people`: ONE list (ติดคุณ and คุณติด together),
+  /// paged; by default only people with something open ([all] shows the
+  /// settled ones too); [side] = the summary-box filter.
+  Future<DebtPeoplePage> listPeople({
     int page = 1,
-    int perPage = 20,
+    int perPage = 30,
+    String? q,
+    bool all = false,
+    NetSide? side,
   }) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
-        '/personal-debts',
+        '/personal-debts/people',
         queryParameters: <String, dynamic>{
-          'direction': ?direction?.wire,
-          'status': ?status,
-          'counterparty_contact_id': ?counterpartyContactId,
+          'page': page.toString(),
+          'per_page': perPage.toString(),
+          if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
+          if (all) 'all': 'true',
+          if (side != null && side != NetSide.even) 'side': side.wire,
+        },
+      );
+      return DebtPeoplePage.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `GET /personal-debts/people/{key}`: the person page in one call (person,
+  /// net, counts, the first timeline page). Works for typed names too.
+  Future<DebtPersonDetail> person(String key, {int perPage = 30}) async {
+    try {
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/personal-debts/people/${Uri.encodeComponent(key)}',
+        queryParameters: <String, dynamic>{'per_page': perPage.toString()},
+      );
+      return DebtPersonDetail.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `GET /personal-debts/people/{key}/entries`: one page of a person's
+  /// entries, searched / filtered / sorted on the server.
+  Future<DebtEntriesPage> entries(
+    String key, {
+    DebtEntryQuery query = const DebtEntryQuery(),
+    int page = 1,
+    int perPage = 30,
+  }) async {
+    try {
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/personal-debts/people/${Uri.encodeComponent(key)}/entries',
+        queryParameters: <String, dynamic>{
+          ...query.toQuery(),
           'page': page.toString(),
           'per_page': perPage.toString(),
         },
       );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      final pag = res.data!['pagination'] as Map<String, dynamic>;
-      // The view shape is identical to PersonalDebt + outstanding; ignore the
-      // server-computed outstanding (FE recomputes from amount/settled).
-      return DebtsPage(
-        debts: data.map(PersonalDebt.fromJson).toList(),
-        page: pag['page'] as int,
-        perPage: pag['per_page'] as int,
-        total: pag['total'] as int,
-        totalPages: pag['total_pages'] as int,
-      );
+      return DebtEntriesPage.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  Future<PersonalDebt> get(String id) async {
+  /// `POST /personal-debts/people/{key}/entries`: the ONE write for a new
+  /// entry (quick create in debt mode). A wallet → the BE also writes the
+  /// wallet tx (paid = expense, received = income); none → ledger-only.
+  /// [tagIds] only with [accountId]; [markPaidIds] labels the person's other
+  /// entries paid in the same call; [personName] = the shown spelling of a
+  /// typed (`n:`) name.
+  Future<DebtEntryWriteResult> createEntry(
+    String key, {
+    required DebtEntryDirection direction,
+    required double amount,
+    DateTime? date,
+    String? accountId,
+    String? description,
+    String? note,
+    List<String>? tagIds,
+    List<String>? markPaidIds,
+    String? personName,
+  }) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/personal-debts/people/${Uri.encodeComponent(key)}/entries',
+        data: <String, dynamic>{
+          'direction': direction.wire,
+          'amount': amount,
+          if (date != null) 'date': debtDateWire(date),
+          'account_id': ?accountId,
+          'description': ?description,
+          'note': ?note,
+          if (accountId != null && tagIds != null) 'tag_ids': tagIds,
+          if (markPaidIds != null && markPaidIds.isNotEmpty)
+            'mark_paid_ids': markPaidIds,
+          'person_name': ?personName,
+        },
+      );
+      return DebtEntryWriteResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `GET /personal-debts/{id}`: the tx detail page in debt mode (entry,
+  /// person balance, the full transaction or null). A deleted id → 404.
+  Future<DebtEntryDetail> getEntry(String id) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/personal-debts/$id',
       );
-      return PersonalDebt.fromJson(res.data!);
+      return DebtEntryDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// `POST /v1/personal-debts/split-requests/:notification_id/accept` —
-  /// "add to my debts" on a split someone shared with me (contract §5).
-  Future<PersonalDebt> acceptSplitRequest(String notificationId) async {
+  /// `PUT /personal-debts/{id}`: a partial edit (see [DebtEntryUpdate]). A
+  /// split-sourced entry takes only description / note / paid (409
+  /// ENTRY_MANAGED_BY_SOURCE otherwise).
+  Future<DebtEntryWriteResult> updateEntry(
+    String id,
+    DebtEntryUpdate update,
+  ) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/personal-debts/$id',
+        data: update.toJson(),
+      );
+      return DebtEntryWriteResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// The "จ่ายแล้ว" label only (it never changes a number).
+  Future<DebtEntryWriteResult> setPaid(String id, bool paid) =>
+      updateEntry(id, DebtEntryUpdate(paid: paid));
+
+  /// `DELETE /personal-debts/{id}`: the entry AND its wallet transaction.
+  Future<DebtEntryDeleteResult> deleteEntry(String id) async {
+    try {
+      final res = await _client.dio.delete<Map<String, dynamic>>(
+        '/personal-debts/$id',
+      );
+      return DebtEntryDeleteResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// `POST /personal-debts/split-requests/{notification_id}/accept`: "add to
+  /// my debts" on a split someone shared with me → my new entry.
+  Future<DebtEntryWriteResult> acceptSplit(String notificationId) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/personal-debts/split-requests/$notificationId/accept',
       );
-      return PersonalDebt.fromJson(res.data!);
+      return DebtEntryWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// `POST /v1/personal-debts/split-changes/:notification_id/apply` —
-  /// "อัปเดตตาม" on a split_changed: my mirror debt follows the splitter's
-  /// change. One-shot. Returns `updated` / `deleted` / `cancelled`.
-  ///
-  /// Refusals: 409 NOTIFICATION_ACTIONED · 409 SPLIT_CHANGE_STALE · 404 (my
-  /// mirror is gone) · 400 NOT_SPLIT_CHANGE.
-  Future<String> applySplitChange(String notificationId) async {
+  /// `POST /personal-debts/split-changes/{notification_id}/apply`:
+  /// "อัปเดตตาม" — my entry follows the splitter's change (or goes).
+  Future<DebtSplitChangeResult> applySplit(String notificationId) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/personal-debts/split-changes/$notificationId/apply',
       );
-      return (res.data?['result'] as String?) ?? 'updated';
+      return DebtSplitChangeResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
+}
 
-  Future<PersonalDebt> create({
-    required DebtDirection direction,
-    required String counterpartyPersonName,
-    required double amount,
-    required String currency,
-    String? counterpartyContactId,
-    String? description,
-    String? note,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/personal-debts',
-        data: <String, dynamic>{
-          'direction': direction.wire,
-          'counterparty_person_name': counterpartyPersonName,
-          'amount': amount,
-          'currency': currency,
-          'counterparty_contact_id': ?counterpartyContactId,
-          'description': ?description,
-          'note': ?note,
-        },
-      );
-      return PersonalDebt.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+/// A partial `PUT /personal-debts/{id}` body: null = unchanged. [clearAccount]
+/// sends `account_id: null` (ledger-only: the wallet tx is deleted), distinct
+/// from leaving it out. [description] / [note]: `''` clears.
+class DebtEntryUpdate {
+  const DebtEntryUpdate({
+    this.direction,
+    this.amount,
+    this.date,
+    this.accountId,
+    this.clearAccount = false,
+    this.description,
+    this.note,
+    this.paid,
+    this.tagIds,
+    this.key,
+    this.personName,
+  }) : assert(
+         !clearAccount || accountId == null,
+         'clearAccount and accountId together',
+       );
 
-  /// Every debt (all pages; the API caps a page at 100).
-  Future<List<PersonalDebt>> listAll({String status = 'all'}) async {
-    final out = <PersonalDebt>[];
-    var page = 1;
-    while (true) {
-      final p = await list(status: status, page: page, perPage: 100);
-      out.addAll(p.debts);
-      if (!p.hasMore) return out;
-      page++;
-    }
-  }
+  final DebtEntryDirection? direction;
+  final double? amount;
+  final DateTime? date;
+  final String? accountId;
+  final bool clearAccount;
+  final String? description;
+  final String? note;
+  final bool? paid;
+  final List<String>? tagIds;
 
-  /// [clearContact] sends an explicit `counterparty_contact_id: null`
-  /// (switching to a typed name) — contract §7. [description] / [note]:
-  /// null = unchanged, `''` = clear (migration 51).
-  Future<PersonalDebt> update(
-    String id, {
-    double? amount,
-    double? settledAmount,
-    String? description,
-    String? note,
-    DebtStatus? status,
-    String? counterpartyPersonName,
-    String? counterpartyContactId,
-    bool clearContact = false,
-  }) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/personal-debts/$id',
-        data: <String, dynamic>{
-          'amount': ?amount,
-          'settled_amount': ?settledAmount,
-          'description': ?description,
-          'note': ?note,
-          'status': ?status?.wire,
-          'counterparty_person_name': ?counterpartyPersonName,
-          if (clearContact)
-            'counterparty_contact_id': null
-          else
-            'counterparty_contact_id': ?counterpartyContactId,
-        },
-      );
-      return PersonalDebt.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// Move the entry to another person (`c:` / `n:` key).
+  final String? key;
+  final String? personName;
 
-  Future<void> delete(String id) async {
-    try {
-      await _client.dio.delete<dynamic>('/personal-debts/$id');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<PersonalDebt> cancel(String id) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/personal-debts/$id/cancel',
-      );
-      return PersonalDebt.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  /// Settle a debt: always records a transaction (income for owed_to_me,
-  /// expense for i_owe) — into [accountId], or a floating (no-wallet) row
-  /// when it's null — and bumps settled_amount. Write-offs use cancel.
-  /// No [description] → the server copies the debt's; no [note] → empty.
-  Future<SettleResult> settle(
-    String id, {
-    String? accountId,
-    double? amount,
-    String? date,
-    String? description,
-    String? note,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/personal-debts/$id/settle',
-        data: <String, dynamic>{
-          // None = a floating (no-wallet) transaction (contract §7).
-          'account_id': ?accountId,
-          'amount': ?amount,
-          'date': ?date,
-          'description': ?description,
-          'note': ?note,
-        },
-      );
-      return SettleResult(
-        debt: PersonalDebt.fromJson(
-          (res.data!['debt'] as Map).cast<String, dynamic>(),
-        ),
-        accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<PeopleResponse> people() async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/personal-debts/people',
-      );
-      return PeopleResponse.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'direction': ?direction?.wire,
+    'amount': ?amount,
+    if (date != null) 'date': debtDateWire(date!),
+    if (clearAccount) 'account_id': null else 'account_id': ?accountId,
+    'description': ?description,
+    'note': ?note,
+    'paid': ?paid,
+    'tag_ids': ?tagIds,
+    'key': ?key,
+    'person_name': ?personName,
+  };
 }

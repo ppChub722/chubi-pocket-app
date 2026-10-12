@@ -23,5 +23,5 @@ abstract final class AppModules {
   // ── เพิ่มเติม: วางแผน ─────────────────────────────────────────────────
   static const budgets = true;
   static const savingGoals = true;
-  static const scheduled = true;
+  static const recurring = true;
 }

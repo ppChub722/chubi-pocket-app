@@ -263,6 +263,7 @@ class DetailRow extends StatelessWidget {
     required this.label,
     this.trailing,
     this.helper,
+    this.error,
     this.leading,
     this.icon,
     this.onTap,
@@ -280,15 +281,19 @@ class DetailRow extends StatelessWidget {
   /// An ENTITY value (a category, wallet, person, event, tag — owner
   /// 2026-10-12) is shown as that entity's chip: pass [valueChip] — an
   /// `AppChip(size: ChipSize.chip, icon:, color:, label:)` (display, no tap) —
-  /// instead of [value]; empty stays the faint [emptyText].
+  /// instead of [value]; empty stays the faint [emptyText]. A value that is
+  /// SEVERAL entities (a budget's categories / tags / wallets) passes
+  /// [valueChips]: they wrap, right-aligned, within the half row.
   factory DetailRow.pick({
     required String label,
     String? value,
     Widget? valueChip,
+    List<Widget>? valueChips,
     required String emptyText,
     VoidCallback? onTap,
     VoidCallback? onLongPress,
     String? helper,
+    String? error,
     Widget? leading,
     IconData? icon,
     bool locked = false,
@@ -298,6 +303,7 @@ class DetailRow extends StatelessWidget {
     key: key,
     label: label,
     helper: helper,
+    error: error,
     leading: leading,
     icon: icon,
     locked: locked,
@@ -305,7 +311,12 @@ class DetailRow extends StatelessWidget {
     onTap: onTap,
     onLongPress: onLongPress,
     showChevron: onTap != null,
-    trailing: _PickValue(value: value, chip: valueChip, emptyText: emptyText),
+    trailing: _PickValue(
+      value: value,
+      chip: valueChip,
+      chips: valueChips,
+      emptyText: emptyText,
+    ),
   );
 
   /// View mode: enter edit on this row (long-press).
@@ -314,6 +325,10 @@ class DetailRow extends StatelessWidget {
   final String label;
   final Widget? trailing;
   final String? helper;
+
+  /// A field error under the label ("category required", a server message):
+  /// error colour, replaces nothing — it shows after the [helper].
+  final String? error;
   final Widget? leading;
 
   /// A leading icon (an [AppIcon], muted) — the grouped section style's row
@@ -367,6 +382,15 @@ class DetailRow extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
+                    ),
+                  ],
+                  if (error != null) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      error!,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: scheme.error),
                     ),
                   ],
                 ],
@@ -436,14 +460,25 @@ class _PickValue extends StatelessWidget {
     required this.value,
     required this.chip,
     required this.emptyText,
+    this.chips,
   });
 
   final String? value;
   final Widget? chip;
+  final List<Widget>? chips;
   final String emptyText;
 
   @override
   Widget build(BuildContext context) {
+    final many = chips;
+    if (many != null && many.isNotEmpty) {
+      return Wrap(
+        alignment: WrapAlignment.end,
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        children: many,
+      );
+    }
     if (chip != null) return chip!;
     final empty = value == null || value!.isEmpty;
     if (empty) return DetailPlaceholder(emptyText);

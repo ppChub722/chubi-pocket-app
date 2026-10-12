@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
+import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/ui/atoms/chip` — the one chip: a playground with every option live,
@@ -8,6 +9,35 @@ import '../hub_playground.dart';
 Widget buildChipPage(BuildContext context) => Column(
   crossAxisAlignment: CrossAxisAlignment.stretch,
   children: [
+    HubDemo(
+      title: 'StatusChip — one tone per status, app-wide',
+      note:
+          'A status is a filled chip with a dot (owner 2026-10-11): pass a '
+          'StatusKind and the tone follows, so "paused" / "near the limit" / '
+          '"waiting" read the same in recurring, budgets and goals. '
+          'StatusChip.tone for a raw tone. Size from the scope (mini in rows). '
+          'onTap adds a ▾: the status opens a menu (a recurring hero\'s '
+          'พัก / ทำต่อ). Recurring items use OccurrenceStateChip (Domain › '
+          'Recurring).',
+      child: Wrap(
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        children: [
+          for (final k in StatusKind.values) StatusChip(label: k.name, kind: k),
+          const StatusChip.tone(label: 'tone: info', tone: AppChipTone.info),
+          const StatusChip(
+            label: 'mini',
+            kind: StatusKind.paused,
+            size: ChipSize.mini,
+          ),
+          StatusChip(
+            label: 'active ▾ (onTap)',
+            kind: StatusKind.active,
+            onTap: () => showAppSnackBar(context, 'พัก / ทำต่อ'),
+          ),
+        ],
+      ),
+    ),
     const HubSubheading(
       'In the app',
       note:

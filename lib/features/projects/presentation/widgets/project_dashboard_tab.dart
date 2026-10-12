@@ -4,27 +4,27 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 import 'project_common.dart';
-import 'project_tx_tiles.dart';
 
-/// "แดชบอร์ด" tab (§12b, default): totals, plan vs actual, members, who
-/// paid, top categories, the latest 3 rows → "ดูทั้งหมด". "My position"
-/// comes from the BE summary (contract §6a); who-paid / categories are
-/// computed on the client from the loaded rows (the summary carries them
-/// too, as `members` / `by_category`).
+/// "สรุป" tab (§12b, default): totals, plan vs actual, my position,
+/// members, who paid, top-5 tags. Every figure comes from the BE summary
+/// (thin FE: no client-side aggregates); "รายการล่าสุด" was dropped (owner
+/// 2026-10-12, E7) — the รายการ tab is one swipe away.
 class ProjectDashboardTab extends StatelessWidget {
   const ProjectDashboardTab({
     required this.view,
     required this.onChanged,
-    required this.onSeeAll,
     required this.onOpenMembers,
     required this.onInvite,
     this.onAdd,
+    this.onShowTag,
+    this.onImportTags,
     super.key,
   });
 
   final ProjectView view;
+
+  /// Pull-to-refresh: the page's one "open" call.
   final Future<void> Function() onChanged;
-  final VoidCallback onSeeAll;
   final VoidCallback onOpenMembers;
 
   /// Null = can't invite (not owner / locked).
@@ -34,6 +34,13 @@ class ProjectDashboardTab extends StatelessWidget {
   /// member who may add).
   final VoidCallback? onAdd;
 
+  /// A tag row: the รายการ tab filtered by that tag.
+  final ValueChanged<BoardTag>? onShowTag;
+
+  /// "นำเข้าทั้งหมด": every event tag I don't have yet into my own set
+  /// (null = nothing to import).
+  final VoidCallback? onImportTags;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -42,34 +49,17 @@ class ProjectDashboardTab extends StatelessWidget {
     final symbol = v.symbol;
     final palette = Theme.of(context).extension<AppColors>()!;
     final members = v.currentMembers;
-
-    // Who paid — parent expense rows by payer.
-    final expenses = v.trees.where((t) => t.parent.type == 'expense');
-    final paidBy = <String, double>{};
-    for (final t in expenses) {
-      paidBy.update(
-        t.parent.transactionMemberId,
-        (a) => a + t.parent.amount,
-        ifAbsent: () => t.parent.amount,
-      );
-    }
-    final totalPaid = paidBy.values.fold<double>(0, (a, b) => a + b);
-    final payers = paidBy.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    // Top tags — a row with several tags counts under each.
-    final byCat = <String, (double, ProjectTransaction)>{};
-    for (final t in expenses) {
-      for (final name in t.parent.tags) {
-        final prev = byCat[name];
-        byCat[name] = ((prev?.$1 ?? 0) + t.parent.amount, prev?.$2 ?? t.parent);
-      }
-    }
-    final cats = byCat.entries.toList()
-      ..sort((a, b) => b.value.$1.compareTo(a.value.$1));
-
-    final recent = [...v.trees]
-      ..sort((a, b) => b.parent.date.compareTo(a.parent.date));
+    final total = s?.totalExpense ?? 0;
+    double shareOf(double x) => total <= 0 ? 0 : x / total;
+    final payers = [
+      for (final p in s?.positions ?? const <ProjectMemberPosition>[])
+        if (p.paid > 0) p,
+    ];
+    // BE-sorted (total desc); the untagged bucket isn't a tag.
+    final tags = [
+      for (final t in s?.byTag ?? const <ProjectTagTotal>[])
+        if (!t.isUntagged) t,
+    ].take(5).toList();
 
     return PullToRefresh(
       onRefresh: onChanged,
@@ -145,7 +135,7 @@ class ProjectDashboardTab extends StatelessWidget {
                     symbol: symbol,
                   ),
                 ),
-              DetailRow(label: l.projectDashTxCount(v.trees.length)),
+              DetailRow(label: l.projectDashTxCount(s?.transactionCount ?? 0)),
               // Add a bill right from the first tab (same handler as the
               // รายการ tab's tile) — folded into the top box, not a lone one.
               if (onAdd != null)
@@ -184,76 +174,53 @@ class ProjectDashboardTab extends StatelessWidget {
             SectionCard(
               title: l.projectDashWhoPaid,
               children: [
-                for (final e in payers)
-                  _barRow(
-                    leading: memberAvatar(v.member(e.key), size: 28),
-                    label: v.member(e.key).displayName,
-                    amount: e.value,
-                    share: totalPaid == 0 ? 0 : e.value / totalPaid,
+                for (final p in payers)
+                  PositionRow(
+                    leading: memberAvatar(v.member(p.memberId), size: 28),
+                    label: p.displayName,
+                    amount: p.paid,
+                    share: shareOf(p.paid),
                     symbol: symbol,
                   ),
               ],
             ),
-          if (cats.isNotEmpty)
+          if (tags.isNotEmpty)
             SectionCard(
               title: l.projectDashTopTags,
+              trailing: onImportTags == null
+                  ? null
+                  : AppButton(
+                      label: l.eventTagsImportAll,
+                      variant: AppButtonVariant.text,
+                      onPressed: onImportTags,
+                    ),
               children: [
-                for (final e in cats.take(5))
-                  _barRow(
-                    leading: ProjectTxIcon(tx: e.value.$2, size: 28),
-                    label: e.key,
-                    amount: e.value.$1,
-                    share: totalPaid == 0 ? 0 : e.value.$1 / totalPaid,
+                for (final t in tags)
+                  PositionRow(
+                    leading: IconTile(
+                      icon: IconRegistry.get(
+                        t.tag?.iconCode?.icon,
+                        fallback: AppIcons.tag,
+                      ),
+                      color: EventTagRef(
+                        t.name,
+                        iconCode: t.tag?.iconCode,
+                      ).colorOf(palette),
+                      size: 28,
+                    ),
+                    label: t.name,
+                    amount: t.total,
+                    share: shareOf(t.total),
                     symbol: symbol,
                     color: palette.expense,
+                    onTap: onShowTag == null || t.tag == null
+                        ? null
+                        : () => onShowTag!(t.tag!),
                   ),
-              ],
-            ),
-          if (recent.isNotEmpty)
-            SectionCard(
-              title: l.projectDashRecent,
-              trailing: AppButton(
-                label: l.projectDashSeeAll,
-                variant: AppButtonVariant.text,
-                onPressed: onSeeAll,
-              ),
-              children: [
-                for (final t in recent.take(3))
-                  ProjectTxTreeTile(tree: t, view: v, onChanged: onChanged),
               ],
             ),
         ],
       ),
     );
   }
-}
-
-/// One bar of a ranking (who paid, top tags): avatar / icon, name + amount,
-/// and the share of the total under them.
-Widget _barRow({
-  required Widget leading,
-  required String label,
-  required double amount,
-  required double share,
-  required String symbol,
-  Color? color,
-}) {
-  return ListRow(
-    leading: leading,
-    body: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            MoneyText(amount, symbol: symbol),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        ProgressRow(value: share, color: color, height: 6),
-      ],
-    ),
-  );
 }

@@ -1,48 +1,78 @@
 import 'package:flutter/material.dart';
 
+import '../../atoms/app_input.dart';
 import '../../atoms/skeleton_box.dart';
-import '../../atoms/skeletons.dart';
 import '../../molecules/hero_shell.dart';
 import '../../molecules/hero_style.dart';
-import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 
-/// The EntryCard (quick create / pending draft) while it loads: the same hero
-/// surface and rhythm — a type-chip row, the amount, the title, then
-/// [rows] picker rows (wallet / category / date).
+/// The EntryCard (quick create / pending draft) while its first load runs,
+/// built from the SAME tokens the real card lays out with, so nothing jumps
+/// when the form appears:
+///
+///   [type chips]                [📅 date]      ← HeroTopRow, control height
+///   description label · amount label           ← AppInputSize.labelRow
+///   description value · amount value           ← AppInputSize.hero.valueRow
+///   [wallet chip row]                          ← [rows] chip rows, control
+///   [category chip row]                           height, itemGap apart
+///
+/// [rows] = the chip rows inside the card: 2 (wallet + category), 2 for a
+/// transfer (from + to wallet). Pass [editing] false for the view look (no
+/// field labels).
 class EntryCardSkeleton extends StatelessWidget {
-  const EntryCardSkeleton({this.rows = 3, super.key});
+  const EntryCardSkeleton({this.rows = 2, this.editing = true, super.key});
 
   final int rows;
+  final bool editing;
+
+  /// Under a sized card field's value row: its bottom inset + the underline
+  /// (kept equal to AppInput's by entry_card_skeleton_geometry_test).
+  static const double _fieldBottom = 8;
 
   @override
   Widget build(BuildContext context) {
+    final control = ChipSize.control.height;
+    final label = editing
+        ? AppInputSize.scaled(context, AppInputSize.labelRow)
+        : 0.0;
+    final value = AppInputSize.scaled(context, AppInputSize.hero.valueRow);
+    Widget pill({double? width}) =>
+        SkeletonBox(width: width, height: control, borderRadius: control / 2);
     return HeroSurface(
       style: const HeroStyle.plain(),
-      child: Padding(
-        padding: const EdgeInsets.all(HeroSpacing.padding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SkeletonBox(
-              width: 200,
-              height: ChipSize.control.height,
-              borderRadius: 20,
+      child: HeroContent(
+        rows: [
+          Row(children: [pill(width: 168), const Spacer(), pill(width: 96)]),
+          SizedBox(
+            height: label + value + _fieldBottom,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 12, right: 48),
+                    child: SkeletonBox(height: 18),
+                  ),
+                ),
+                const SizedBox(width: 24),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: SkeletonBox(width: 104, height: 30),
+                ),
+              ],
             ),
-            const SizedBox(height: HeroSpacing.rowGap),
-            const SkeletonText(style: _displaySmall, width: 160),
-            const SizedBox(height: HeroSpacing.rowGap),
-            const SkeletonText(style: _bodyLarge, width: 220),
-            for (var i = 0; i < rows; i++) ...[
-              const SizedBox(height: AppSpacing.md),
-              SkeletonBox(height: ChipSize.control.height, borderRadius: 20),
-            ],
-          ],
-        ),
+          ),
+          if (rows > 0)
+            Column(
+              children: [
+                for (var i = 0; i < rows; i++) ...[
+                  if (i > 0) const SizedBox(height: HeroSpacing.itemGap),
+                  pill(),
+                ],
+              ],
+            ),
+        ],
       ),
     );
   }
 }
-
-TextStyle? _displaySmall(TextTheme t) => t.headlineMedium;
-TextStyle? _bodyLarge(TextTheme t) => t.bodyLarge;

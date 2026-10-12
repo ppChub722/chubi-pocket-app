@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/shell/main_shell.dart';
 import '../../app/shell/more_page.dart';
+import '../../app/shell/quick_create_context.dart';
 import '../../app/shell/shell_chrome.dart';
 import '../../app/shell/tab_nav.dart';
 import '../../hub/hub_index_screen.dart';
@@ -32,8 +33,6 @@ import '../../features/notifications/presentation/pages/notifications_inbox_page
 import '../../features/pending/presentation/pages/pending_batch_add_page.dart';
 import '../../features/pending/presentation/pages/pending_page.dart';
 import '../../features/personal_debts/presentation/pages/debt_person_page.dart';
-import '../../features/personal_debts/presentation/pages/personal_debt_detail_page.dart';
-import '../../features/personal_debts/presentation/pages/personal_debt_form_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debts_page.dart';
 import '../../features/projects/presentation/pages/project_detail_page.dart';
 import '../../features/projects/presentation/pages/project_form_page.dart';
@@ -41,9 +40,11 @@ import '../../features/projects/presentation/pages/project_members_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goals_list_page.dart';
-import '../../features/scheduled_transactions/presentation/pages/scheduled_transaction_detail_page.dart';
-import '../../features/scheduled_transactions/presentation/pages/scheduled_transactions_list_page.dart';
+import '../../features/recurring/presentation/pages/recurring_home_page.dart';
+import '../../features/recurring/presentation/pages/recurring_page.dart';
+import '../../features/recurring/presentation/pages/recurring_settings_page.dart';
 import '../../features/tags/presentation/pages/tags_page.dart';
+import '../../features/transactions/presentation/pages/debt_entry_detail_page.dart';
 import '../../features/transactions/presentation/pages/transaction_detail_page.dart';
 import '../../features/transactions/presentation/pages/transactions_list_page.dart';
 import '../../features/budgets/presentation/pages/budget_detail_page.dart';
@@ -152,7 +153,11 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
         // In [ShellTab] order — branch index == `ShellTab.index`.
         branches: [
           for (final tab in ShellTab.values)
-            StatefulShellBranch(routes: _tabRoutes(tab)),
+            StatefulShellBranch(
+              routes: _tabRoutes(tab),
+              // The + colour follows pushes / pops in every tab.
+              observers: [QuickCreateRouteObserver()],
+            ),
         ],
       ),
       // The version gate's wall — reached only by the redirect above.
@@ -509,19 +514,41 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           BudgetDetailPage(id: state.pathParameters['id']!, startEditing: true),
     ),
   ],
-  // Scheduled transactions (Phase 1c) — create / edit happen in the quick
-  // create sheet (`scheduled:` mode); no form routes.
-  ShellTab.scheduled => [
+  // Recurring + upcoming items (owner 2026-10-13). The settings page pops
+  // a RecurringSettingsResult; the recurring page pops whether it changed.
+  ShellTab.recurring => [
     GoRoute(
-      path: '/scheduled-transactions',
-      name: 'scheduled-transactions',
-      builder: (context, state) => const ScheduledTransactionsListPage(),
+      path: '/recurring',
+      name: 'recurring',
+      // ?tab=upcoming opens on the upcoming items (quick create's
+      // "รายการล่วงหน้า ›", the dashboard's coming-up cards).
+      builder: (context, state) => RecurringHomePage(
+        initialTab: state.uri.queryParameters['tab'] == 'upcoming'
+            ? RecurringHomeTab.upcoming
+            : RecurringHomeTab.recurring,
+      ),
     ),
     GoRoute(
-      path: '/scheduled-transactions/:id',
-      name: 'scheduled-transaction-detail',
+      path: '/recurring/new',
+      name: 'recurring-new',
+      // ?type=saving&goal=<id>[&account=<id>] → a saving (ออม) recurring.
+      builder: (context, state) => RecurringSettingsPage(
+        saving: state.uri.queryParameters['type'] == 'saving',
+        goalId: state.uri.queryParameters['goal'],
+        accountId: state.uri.queryParameters['account'],
+      ),
+    ),
+    GoRoute(
+      path: '/recurring/:id',
+      name: 'recurring-detail',
       builder: (context, state) =>
-          ScheduledTransactionDetailPage(id: state.pathParameters['id']!),
+          RecurringPage(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/recurring/:id/settings',
+      name: 'recurring-settings',
+      builder: (context, state) =>
+          RecurringSettingsPage(id: state.pathParameters['id']!),
     ),
   ],
   // Saving goals (Phase 1c)
@@ -560,31 +587,29 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       builder: (context, state) => const PersonalDebtsPage(),
     ),
     GoRoute(
-      path: '/personal-debts/new',
-      name: 'personal-debt-new',
-      // `extra` {contactId, name} prefills the person (from their page).
-      // The form hides the nav itself (EditModeMixin).
-      builder: (context, state) {
-        final extra = state.extra;
-        return PersonalDebtFormPage(
-          contactId: extra is Map ? extra['contactId'] as String? : null,
-          name: extra is Map ? extra['name'] as String? : null,
-        );
-      },
-    ),
-    GoRoute(
-      path: '/personal-debts/person',
+      path: '/personal-debts/people/:key',
       name: 'personal-debt-person',
+      // key = c:<contact id> / n:<name> (URL-encoded); `extra` = the name
+      // the opener already shows (the top bar before the load).
       builder: (context, state) => DebtPersonPage(
-        contactId: state.uri.queryParameters['contact'],
-        name: state.uri.queryParameters['name'] ?? '',
+        personKey: state.pathParameters['key']!,
+        name: state.extra is String ? state.extra as String : null,
       ),
     ),
+    // An entry = the transaction detail page in debt mode (also a
+    // ledger-only entry, which has no transaction).
+    GoRoute(
+      path: '/personal-debts/entries/:id',
+      name: 'personal-debt-entry',
+      builder: (context, state) =>
+          DebtEntryDetailPage(entryId: state.pathParameters['id']!),
+    ),
+    // Older links (notification deep links) carry the entry id here.
     GoRoute(
       path: '/personal-debts/:id',
-      name: 'personal-debt-detail',
+      name: 'personal-debt-entry-legacy',
       builder: (context, state) =>
-          PersonalDebtDetailPage(id: state.pathParameters['id']!),
+          DebtEntryDetailPage(entryId: state.pathParameters['id']!),
     ),
   ],
   ShellTab.categories => [

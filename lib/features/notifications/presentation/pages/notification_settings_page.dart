@@ -52,12 +52,15 @@ class _Body extends StatelessWidget {
         builder: (ctx, state) {
           final s = state.settings;
           if (s == null) {
-            return state.status == SettingsStatus.error
-                ? ErrorView(
-                    error: state.error!,
-                    onRetry: ctx.read<NotificationSettingsCubit>().load,
-                  )
-                : const DetailPageSkeleton();
+            // The template's first load: skeleton → error + retry (pull,
+            // offline and slow loads included).
+            final failed = state.status == SettingsStatus.error;
+            return AsyncStateView.fallback(
+              loading: !failed,
+              error: failed ? state.error : null,
+              onRetry: ctx.read<NotificationSettingsCubit>().load,
+              notFound: const SizedBox.shrink(),
+            );
           }
           final cubit = ctx.read<NotificationSettingsCubit>();
 

@@ -36,7 +36,15 @@ abstract final class AppIcons {
   static const debt = Icons.handshake_outlined;
   static const budget = Icons.savings_outlined;
   static const savingGoal = Icons.flag_outlined;
+  // Saving txs (goals v2): a record of its own, never a real tx.
+  static const savingDeposit = Icons.savings; // ออม
+  static const savingWithdraw = Icons.keyboard_return; // ถอนออม
+  static const savingAllocate = Icons.shuffle; // จัดสรร
+  static const goalClose = Icons.flag; // ปิดเป้าหมาย
   static const scheduled = Icons.schedule_outlined;
+
+  /// A recurring item (🔁): TxRow's marker, the recurring rows.
+  static const recurring = Icons.repeat;
   static const member = Icons.person_outline;
   static const inviteMember = Icons.person_add_alt_1_outlined;
   static const addContact = Icons.person_add_outlined;
@@ -158,7 +166,12 @@ abstract final class AppIcons {
       'debt': debt,
       'budget': budget,
       'savingGoal': savingGoal,
+      'savingDeposit': savingDeposit,
+      'savingWithdraw': savingWithdraw,
+      'savingAllocate': savingAllocate,
+      'goalClose': goalClose,
       'scheduled': scheduled,
+      'recurring': recurring,
       'member': member,
       'inviteMember': inviteMember,
       'addContact': addContact,

@@ -66,6 +66,7 @@ void main() {
     WidgetTester t,
     Widget page, {
     Brightness b = Brightness.light,
+    bool offline = false,
   }) {
     final theme = ThemeBuilder.build(
       theme: ThemeRegistry.byId(ThemeRegistry.defaultThemeId),
@@ -86,7 +87,13 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
-          builder: (context, child) => AppUiConfig(child: child!),
+          builder: (context, child) => AppUiConfig(
+            child: ConnectionScope(
+              offline: offline,
+              reconnects: 0,
+              child: child!,
+            ),
+          ),
           home: page,
         ),
       ),
@@ -107,6 +114,33 @@ void main() {
     expect(find.byType(AuthPageBody), findsOneWidget);
     expect(find.byType(SectionCard), findsNWidgets(2));
     expect(find.byType(AppInput), findsNWidgets(5));
+  });
+
+  // Offline mode (owner 2026-10-12): sign in / register can't reach the
+  // server, so the submit button disables itself; what was typed stays.
+  bool submitEnabled(WidgetTester t, String label) => t
+      .widget<ButtonStyleButton>(
+        find.descendant(
+          of: find.widgetWithText(AppButton, label),
+          matching: find.bySubtype<ButtonStyleButton>(),
+        ),
+      )
+      .enabled;
+
+  testWidgets('offline: login submit disabled, typed input kept', (t) async {
+    await pump(t, const LoginPage());
+    expect(submitEnabled(t, 'Log in'), isTrue);
+    await t.enterText(find.byType(TextField).first, 'alice');
+    await pump(t, const LoginPage(), offline: true);
+    expect(submitEnabled(t, 'Log in'), isFalse);
+    expect(find.text('alice'), findsOneWidget);
+    await pump(t, const LoginPage());
+    expect(submitEnabled(t, 'Log in'), isTrue);
+  });
+
+  testWidgets('offline: register submit disabled', (t) async {
+    await pump(t, const RegisterPage(), offline: true);
+    expect(submitEnabled(t, 'Create account'), isFalse);
   });
 
   testWidgets('both pages take the app theme in dark mode', (t) async {

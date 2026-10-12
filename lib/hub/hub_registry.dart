@@ -19,6 +19,14 @@ import 'debug/logs_page.dart';
 import 'debug/cache_page.dart';
 import 'debug/network_page.dart';
 import 'pages/templates_form_sheet_page.dart';
+import 'pages/domain_bottom_bar_page.dart';
+import 'pages/domain_debts_page.dart';
+import 'pages/domain_events_page.dart';
+import 'pages/domain_recurring_page.dart';
+import 'pages/domain_multi_pickers_page.dart';
+import 'pages/domain_saving_page.dart';
+import 'pages/domain_progress_page.dart';
+import 'pages/domain_budgets_page.dart';
 import 'pages/domain_money_page.dart';
 import 'pages/templates_transaction_detail_page.dart';
 import 'pages/domain_transactions_page.dart';
@@ -31,6 +39,7 @@ import 'pages/molecules_rows_page.dart';
 import 'pages/organisms_reorder_charts_page.dart';
 import 'pages/organisms_section_hero_page.dart';
 import 'pages/templates_detail_page.dart';
+import 'pages/templates_tabbed_detail_page.dart';
 import 'pages/domain_others_page.dart';
 import 'pages/domain_people_accounts_page.dart';
 import 'pages/templates_auth_page.dart';
@@ -235,7 +244,14 @@ final List<HubPage> hubPages = [
     title: 'Chip',
     summary: 'The one chip: three sizes, every state, trailing and tone.',
     usedBy: '47 files',
-    covers: ['AppChip', 'AppChipTone', 'AppChipTrailing', 'ChipSizeScope'],
+    covers: [
+      'AppChip',
+      'AppChipTone',
+      'AppChipTrailing',
+      'ChipSizeScope',
+      'StatusChip',
+      'StatusKind',
+    ],
     builder: buildChipPage,
   ),
   const HubPage(
@@ -315,6 +331,8 @@ final List<HubPage> hubPages = [
     usedBy: '32+ files',
     covers: [
       'DetailRow',
+      'LinkedFieldHint',
+      'HintLine',
       'DetailStacked',
       'DetailTextField',
       'DetailAddRow',
@@ -411,6 +429,11 @@ final List<HubPage> hubPages = [
       'showConfirmDialog',
       'showChoiceDialog',
       'DialogChoice',
+      'showLinkedPrompt',
+      'LinkedChoice',
+      'showEditScopeChoice',
+      'EditScopeChoice',
+      'EditScope',
       'EmptyView',
       'ErrorView',
       'LoadingView',
@@ -452,6 +475,8 @@ final List<HubPage> hubPages = [
       'PopoverTriggerBuilder',
       'ColorSwatchGrid',
       'IconSwatchGrid',
+      'SortChip',
+      'SortOption',
     ],
     builder: buildBarsPage,
   ),
@@ -466,6 +491,7 @@ final List<HubPage> hubPages = [
     covers: [
       'HeaderCard',
       'ManageSection',
+      'ManageAction',
       'DetailMeta',
       'LockedInEdit',
       'SummaryStats',
@@ -490,6 +516,7 @@ final List<HubPage> hubPages = [
       'showAppSheetCustom',
       'PickerSheet',
       'PickerRow',
+      'PickerConfirmBar',
       'PickerCreateRow',
       'showOptionSheet',
       'SheetOption',
@@ -508,6 +535,8 @@ final List<HubPage> hubPages = [
       'PeriodUnit',
       'PeriodPickerLabels',
       'AppDateRangePickerSheet',
+      'MultiDatePickerSheet',
+      'showMultiDatePicker',
       'AppDateRangePreset',
       'AppDateResult',
       'AppDatePicked',
@@ -572,13 +601,22 @@ final List<HubPage> hubPages = [
       'DetailPageBody',
       'DetailPlaceholder',
       'DetailPageSkeleton',
-      'DashboardPageSkeleton',
       'DetailRowSkeleton',
       'HeroSkeleton',
       'SectionSkeleton',
       'TagsStripSkeleton',
     ],
     builder: buildDetailPageTemplate,
+  ),
+  const HubPage(
+    level: HubLevel.templates,
+    slug: 'tabbed-detail',
+    title: 'Tabbed detail',
+    summary:
+        'Hero → below-hero block → pinned tab bar → one lazy ListPageBody per tab; compact hero bar.',
+    usedBy: 'Debts person page, events, wallets (adopting)',
+    covers: ['TabbedDetailBody'],
+    builder: buildTabbedDetailTemplate,
   ),
   const HubPage(
     level: HubLevel.templates,
@@ -602,7 +640,11 @@ final List<HubPage> hubPages = [
     summary:
         'Dashboard — home overview: period, KPIs, attention, charts, tiles, lists.',
     usedBy: '1 page (Home) + the Chubi Home example',
-    covers: ['DashboardPageBody'],
+    covers: [
+      'DashboardPageBody',
+      'DashboardPageSkeleton',
+      'DashboardSkeletonShape',
+    ],
     builder: buildDashboardTemplate,
   ),
   const HubPage(
@@ -617,6 +659,8 @@ final List<HubPage> hubPages = [
       'TabbedListPageBody',
       'ListToolbar',
       'ListPageSkeleton',
+      'ListSkeletonShape',
+      'LoadMoreErrorRow',
       'ListRowSkeleton',
       'DayHeaderSkeleton',
       'ListToolbarSkeleton',
@@ -703,6 +747,169 @@ final List<HubPage> hubPages = [
       'showTxFilterSideSheet',
     ],
     builder: buildSheetsTransactionsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'debts',
+    title: 'Debts',
+    summary:
+        'People + balance rows, the net balance (row / hero), the debts summary card, the ledger row.',
+    generic: false,
+    usedBy: 'Debts list, debt person page, quick create debt mode',
+    covers: [
+      'PersonRow',
+      'PersonBalanceRow',
+      'NetBalance',
+      'NetBalanceSize',
+      'DebtSummaryCard',
+      'LedgerRow',
+      'LedgerDirection',
+    ],
+    builder: buildDebtsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'recurring',
+    title: 'Recurring',
+    summary:
+        'Item states, the relative due date, a recurrence rule in words + the RecurrenceRule value class.',
+    generic: false,
+    usedBy: 'Recurring pages, upcoming list, home coming-up',
+    covers: [
+      'OccurrenceState',
+      'OccurrenceStateChip',
+      'DueText',
+      'dueLabel',
+      'RecurrenceText',
+      'recurrenceLabel',
+      'RecurrenceEditor',
+      'showRecurrenceSheet',
+      'RecurrenceRule',
+      'RecurrenceFreq',
+      'RecurrenceMonthly',
+      'RecurrenceMonthlyMode',
+      'RecurrenceEnd',
+      'RecurrenceEndKind',
+    ],
+    builder: buildRecurringPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'multi-pickers',
+    title: 'Multi pickers',
+    summary:
+        'Multi-select pickers: category tree with a per-row include-subcategories switch, and a wallet list.',
+    generic: false,
+    usedBy: 'Budget scope (categories / wallets)',
+    covers: [
+      'CategoryMultiPick',
+      'CategoryMultiPickerLabels',
+      'showCategoryMultiPicker',
+      'CategoryMultiPickerSheet',
+      'AccountMultiPickItem',
+      'AccountMultiPickerLabels',
+      'showAccountMultiPicker',
+      'AccountMultiPickerSheet',
+    ],
+    builder: buildDomainMultiPickersPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'saving',
+    title: 'Saving goals',
+    summary:
+        'Saving goals v2: milestone steps, history chart, saving-tx row (+ draft), move / withdraw sheet, close-goal dialog, action row.',
+    generic: false,
+    usedBy: 'Saving goals list / detail, wallet page, pending list',
+    covers: [
+      'MilestoneRow',
+      'MilestoneStep',
+      'MilestoneState',
+      'SavingHistoryChart',
+      'SavingChartGeometry',
+      'SavingTxRow',
+      'SavingTxKind',
+      'showSavingMoveSheet',
+      'SavingMoveSheet',
+      'SavingMoveEnd',
+      'SavingSplitRow',
+      'SavingMoveSplit',
+      'showCloseGoalDialog',
+      'CloseGoalDialog',
+      'CloseGoalChoice',
+      'CloseGoalReturn',
+    ],
+    builder: buildDomainSavingPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'progress',
+    title: 'Progress',
+    summary:
+        'ProgressRow expected segment, ProgressCard row / compact / skeleton, summary, hero footer, breakdown row, stat grid.',
+    generic: false,
+    usedBy: 'Budgets, saving goals',
+    covers: [
+      'ProgressTone',
+      'ProgressCard',
+      'ProgressHeroFooter',
+      'ProgressSummary',
+      'BreakdownRow',
+      'StatGrid',
+      'StatTile',
+    ],
+    builder: buildProgressPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'budgets',
+    title: 'Budgets',
+    summary:
+        'Source chips, scope prompt, simple period editor, DetailRow error, wallet value chip, card-list gap.',
+    generic: false,
+    usedBy: 'Budget list and detail',
+    covers: [
+      'SourceChip',
+      'SourceChips',
+      'SourceChipItem',
+      'showScopePrompt',
+      'walletValueChip',
+    ],
+    builder: buildBudgetsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'events',
+    title: 'Events',
+    summary:
+        'Event list row, board bill row + split lines with the resolve tick, position / share bar row.',
+    generic: false,
+    usedBy: 'Events list, event detail (summary / bills tabs)',
+    covers: [
+      'EventCard',
+      'EventTagRef',
+      'EventBillRow',
+      'EventBillChildRow',
+      'EventTagAnchorBuilder',
+      'PositionRow',
+    ],
+    builder: buildEventsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'bottom-bar',
+    title: 'Bottom bar & +',
+    summary:
+        'The shell bar; the centre + in every quick create mode (its colour = the mode); the sheet’s mode chips.',
+    generic: false,
+    usedBy: 'The shell (every page)',
+    covers: [
+      'QuickCreateButton',
+      'QuickCreateModeChips',
+      'QuickCreateMode',
+      'QuickCreateModeColors',
+    ],
+    builder: buildBottomBarPage,
   ),
   const HubPage(
     level: HubLevel.domain,

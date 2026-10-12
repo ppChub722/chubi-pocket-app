@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,10 +7,14 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../event_errors.dart';
 import '../../../../ui/ui.dart';
+import '../../../tags/presentation/cubit/tags_cubit.dart';
+import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 import '../cubit/projects_cubit.dart';
+import '../widgets/project_common.dart';
 
-/// `/projects/new` — create a project (edit happens in place on the detail
+/// `/projects/new` — create an event (edit happens in place on the detail
 /// page, §12b). A form is edit mode: nav hidden, ยกเลิก · ↶ · บันทึก.
 class ProjectFormPage extends StatefulWidget {
   const ProjectFormPage({super.key});
@@ -18,7 +23,7 @@ class ProjectFormPage extends StatefulWidget {
   State<ProjectFormPage> createState() => _ProjectFormPageState();
 }
 
-enum _Field { name, type, description, note, planned }
+enum _Field { name, description, note, planned }
 
 class _ProjectFormPageState extends State<ProjectFormPage>
     with EditModeMixin<ProjectFormPage, _NewProject> {
@@ -69,27 +74,61 @@ class _ProjectFormPageState extends State<ProjectFormPage>
     }
   }
 
+  /// Start / end are optional; each bounds the other (end ≥ start).
+  Future<void> _pickDate({required bool start}) async {
+    final l = AppLocalizations.of(context)!;
+    final w = working;
+    final current = start ? w.startDate : w.endDate;
+    final first = start ? null : w.startDate;
+    final last = start ? w.endDate : null;
+    var initial = current ?? DateTime.now();
+    if (first != null && initial.isBefore(first)) initial = first;
+    if (last != null && initial.isAfter(last)) initial = last;
+    final r = await showAppDatePicker(
+      context,
+      title: start ? l.eventStartDateLabel : l.eventEndDateLabel,
+      initial: initial,
+      first: first,
+      last: last,
+      clearable: current != null,
+    );
+    if (!mounted || r == null) return;
+    final picked = r is AppDatePicked ? r.date : null;
+    applyChange(
+      start
+          ? w.copyWith(startDate: () => picked)
+          : w.copyWith(endDate: () => picked),
+    );
+  }
+
   Future<void> _save() async {
     commitTextSession();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l = AppLocalizations.of(context)!;
     final w = working;
+    final s = w.startDate;
+    final e = w.endDate;
+    if (s != null && e != null && e.isBefore(s)) {
+      showAppSnackBar(context, l.eventDatesInvalid, tone: Tone.danger);
+      return;
+    }
     String? opt(String s) => s.trim().isEmpty ? null : s.trim();
     final planned = AmountInput.parse(w.planned);
     final cubit = context.read<ProjectsCubit>();
     FocusScope.of(context).unfocus();
     setSaving(true);
     try {
+      // One call: plan, dates and my tags included.
       final created = await cubit.create(
         name: w.name.trim(),
-        type: opt(w.type),
         description: opt(w.description),
         note: opt(w.note),
+        startDate: s == null ? null : projectDay(s),
+        endDate: e == null ? null : projectDay(e),
+        plannedAmount: planned,
+        tagIds: w.tagIds.toList(),
         iconCode: w.iconCode,
       );
-      // planned_amount is only accepted on PUT (API §10).
-      if (planned != null) {
-        await cubit.update(created.id, plannedAmount: planned);
-      }
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(w);
@@ -97,8 +136,24 @@ class _ProjectFormPageState extends State<ProjectFormPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showAppSnackBar(
+        context,
+        eventErrorText(AppLocalizations.of(context)!, e),
+        tone: Tone.danger,
+      );
     }
+  }
+
+  /// MY tags on the new event (private to me).
+  Future<void> _pickTags() async {
+    final l = AppLocalizations.of(context)!;
+    final picked = await showTagPickerSheet(
+      context,
+      selected: working.tagIds,
+      title: l.transactionFormTagsLabel,
+    );
+    if (picked == null || !mounted) return;
+    applyChange(working.copyWith(tagIds: picked));
   }
 
   @override
@@ -107,6 +162,9 @@ class _ProjectFormPageState extends State<ProjectFormPage>
     void onText(_Field f, String v) =>
         applyTextChange(f, working.withText(f, v));
     final palette = Theme.of(context).extension<AppColors>()!;
+    final tags = context.watch<TagsCubit>();
+    String? day(DateTime? d) =>
+        d == null ? null : projectDateRange(context, projectDay(d), null);
     return editScope(
       Scaffold(
         appBar: AppTopBar(
@@ -155,20 +213,46 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                   onChanged: (v) => onText(_Field.description, v),
                 ),
               ),
+              // My tags, right under the hero (detail-page order).
+              tags: ChipRow(
+                icon: AppIcons.tag,
+                chips: [
+                  for (final id in working.tagIds)
+                    if (tags.byId(id) case final t?)
+                      AppChip(
+                        label: t.name,
+                        icon: IconRegistry.get(
+                          t.iconCode?.icon,
+                          fallback: AppIcons.tag,
+                        ),
+                        color: EventTagRef(
+                          t.name,
+                          iconCode: t.iconCode,
+                        ).colorOf(palette),
+                        selected: true,
+                        size: ChipSize.chip,
+                        onTap: _pickTags,
+                      ),
+                ],
+                onMore: _pickTags,
+              ),
               sections: [
                 (first) => SectionCard(
                   first: first,
                   children: [
-                    DetailStacked(
-                      label: l.projectTypeLabel,
-                      child: AppInput.inline(
-                        editing: true,
-                        controller: _ctrl[_Field.type]!,
-                        hint: l.projectTypeHint,
-                        // No TextLimits constant for a project type.
-                        maxLength: 50,
-                        onChanged: (v) => onText(_Field.type, v),
-                      ),
+                    DetailRow.pick(
+                      label: l.eventStartDateLabel,
+                      icon: AppIcons.date,
+                      value: day(working.startDate),
+                      emptyText: l.eventDateNone,
+                      onTap: () => _pickDate(start: true),
+                    ),
+                    DetailRow.pick(
+                      label: l.eventEndDateLabel,
+                      icon: AppIcons.date,
+                      value: day(working.endDate),
+                      emptyText: l.eventDateNone,
+                      onTap: () => _pickDate(start: false),
                     ),
                     DetailStacked(
                       label: l.commonNote,
@@ -224,23 +308,26 @@ class _ProjectFormPageState extends State<ProjectFormPage>
 class _NewProject {
   const _NewProject({
     this.name = '',
-    this.type = '',
     this.description = '',
     this.note = '',
     this.planned = '',
+    this.startDate,
+    this.endDate,
+    this.tagIds = const {},
     this.iconCode,
   });
 
   final String name;
-  final String type;
   final String description;
   final String note;
   final String planned;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final Set<String> tagIds;
   final IconCode? iconCode;
 
   String text(_Field f) => switch (f) {
     _Field.name => name,
-    _Field.type => type,
     _Field.description => description,
     _Field.note => note,
     _Field.planned => planned,
@@ -248,19 +335,29 @@ class _NewProject {
 
   _NewProject withText(_Field f, String v) => _NewProject(
     name: f == _Field.name ? v : name,
-    type: f == _Field.type ? v : type,
     description: f == _Field.description ? v : description,
     note: f == _Field.note ? v : note,
     planned: f == _Field.planned ? v : planned,
+    startDate: startDate,
+    endDate: endDate,
+    tagIds: tagIds,
     iconCode: iconCode,
   );
 
-  _NewProject copyWith({IconCode? iconCode}) => _NewProject(
+  /// The dates take a getter so a pick can clear them (null).
+  _NewProject copyWith({
+    IconCode? iconCode,
+    DateTime? Function()? startDate,
+    DateTime? Function()? endDate,
+    Set<String>? tagIds,
+  }) => _NewProject(
     name: name,
-    type: type,
     description: description,
     note: note,
     planned: planned,
+    startDate: startDate == null ? this.startDate : startDate(),
+    endDate: endDate == null ? this.endDate : endDate(),
+    tagIds: tagIds ?? this.tagIds,
     iconCode: iconCode ?? this.iconCode,
   );
 
@@ -268,13 +365,23 @@ class _NewProject {
   bool operator ==(Object other) =>
       other is _NewProject &&
       other.name == name &&
-      other.type == type &&
       other.description == description &&
       other.note == note &&
       other.planned == planned &&
+      other.startDate == startDate &&
+      other.endDate == endDate &&
+      setEquals(other.tagIds, tagIds) &&
       other.iconCode == iconCode;
 
   @override
-  int get hashCode =>
-      Object.hash(name, type, description, note, planned, iconCode);
+  int get hashCode => Object.hash(
+    name,
+    description,
+    note,
+    planned,
+    startDate,
+    endDate,
+    Object.hashAllUnordered(tagIds),
+    iconCode,
+  );
 }

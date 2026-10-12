@@ -70,8 +70,8 @@ void main() {
     expect(ShellTab.ofPath('/'), ShellTab.home);
     expect(ShellTab.ofPath('/browse?month=2026-10'), ShellTab.home);
     expect(ShellTab.ofPath('/transactions/abc'), ShellTab.transactions);
-    expect(ShellTab.ofPath('/personal-debts/person'), ShellTab.debts);
-    expect(ShellTab.ofPath('/scheduled-transactions/1'), ShellTab.scheduled);
+    expect(ShellTab.ofPath('/personal-debts/people/c%3A1'), ShellTab.debts);
+    expect(ShellTab.ofPath('/recurring/1/settings'), ShellTab.recurring);
     expect(ShellTab.ofPath('/saving-goals/new'), ShellTab.savingGoals);
     expect(ShellTab.ofPath('/settings/notifications'), ShellTab.settings);
     expect(ShellTab.ofPath('/dev/widgets'), isNull);
@@ -86,7 +86,7 @@ void main() {
               '/projects',
               '/contacts',
               '/budgets',
-              '/scheduled-transactions',
+              '/recurring',
               '/saving-goals',
               '/personal-debts',
               '/categories',
@@ -150,7 +150,7 @@ ShellTab? _homeTab(String path) {
     'projects': ShellTab.projects,
     'contacts': ShellTab.contacts,
     'budgets': ShellTab.budgets,
-    'scheduled_transactions': ShellTab.scheduled,
+    'recurring': ShellTab.recurring,
     'saving_goals': ShellTab.savingGoals,
     'personal_debts': ShellTab.debts,
     'categories': ShellTab.categories,

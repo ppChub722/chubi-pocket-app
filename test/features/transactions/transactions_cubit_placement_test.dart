@@ -93,6 +93,7 @@ class _Repo extends Fake implements TransactionsRepository {
     bool clearAccount = false,
     String? transferToAccountId,
     List<String>? tagIds,
+    bool? alsoUpdateLink,
   }) async => next!;
 }
 

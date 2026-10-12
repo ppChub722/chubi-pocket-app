@@ -31,6 +31,7 @@ class DetailPageBody extends StatelessWidget {
   const DetailPageBody({
     required this.sections,
     this.hero,
+    this.tabBar,
     this.tags,
     this.manage,
     this.metaLines = const [],
@@ -46,6 +47,11 @@ class DetailPageBody extends StatelessWidget {
   /// null when the hero lives outside this list (e.g. above a pager) — the
   /// spacer under it goes too.
   final Widget? hero;
+
+  /// A tab bar ([AppTabBar]) directly under the hero, before the tags and
+  /// every section (a budget's periods / items tabs). The page swaps what
+  /// its sections show on the tab; null = none.
+  final Widget? tabBar;
 
   /// The tag row — ALWAYS directly under the hero (owner 2026-10-12), before
   /// every section. null = the entity has no tags.
@@ -128,6 +134,7 @@ class DetailPageBody extends StatelessWidget {
       ),
       children: [
         if (hero != null) ...[hero!, const SizedBox(height: HeroSpacing.after)],
+        if (tabBar != null) ...[tabBar!, const SizedBox(height: AppSpacing.md)],
         if (tags != null) ...[tags!, const SizedBox(height: AppSpacing.md)],
         ...buildSections(),
         ?manage,

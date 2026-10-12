@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../atoms/ui_config.dart';
 import '../../tokens/app/app_icons.dart';
+import '../../tokens/app/currencies.dart';
 
 /// The app's Thai: fills the generic kit's [UiConfig] from the app
 /// localisation and maps [ApiException] to the three failure descriptions
@@ -57,6 +61,9 @@ class AppUiConfig extends StatelessWidget {
         reorderMoveUp: l.reorderMoveUp,
         reorderMoveDown: l.reorderMoveDown,
         reorderIndent: l.reorderIndent,
+        loadMoreFailed: l.uiLoadMoreFailed,
+        pickDatesHint: l.uiPickDatesHint,
+        currencySymbol: _userCurrencySymbol(context),
       ),
       errors: _AppErrors(l),
       child: child,
@@ -105,4 +112,21 @@ class _AppErrors extends UiErrors {
 
   @override
   int get hashCode => l.hashCode;
+}
+
+/// The signed-in user's currency symbol (from /me), or the kit default
+/// when nobody is signed in / there is no [AuthCubit] (tests, hub).
+String _userCurrencySymbol(BuildContext context) {
+  const fallback = UiStrings();
+  try {
+    final code = context.select<AuthCubit, String?>(
+      (c) => switch (c.state) {
+        AuthAuthenticated(:final user) => user.currency,
+        _ => null,
+      },
+    );
+    return code == null ? fallback.currencySymbol : Currencies.symbolOf(code);
+  } on ProviderNotFoundException {
+    return fallback.currencySymbol;
+  }
 }

@@ -108,11 +108,11 @@ class AccountsRepository {
   /// `PUT /v1/accounts/:id` (owner). Sends the editable surface (no
   /// currency / status / balance); explicit nulls clear `description` and
   /// `note` per [Account.toUpdateJson].
-  Future<Account> update(Account account) {
+  Future<Account> update(Account account, {double? currentBalance}) {
     return _guard(() async {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/accounts/${account.id}',
-        data: account.toUpdateJson(),
+        data: account.toUpdateJson(currentBalance: currentBalance),
       );
       return Account.fromJson(res.data!);
     });

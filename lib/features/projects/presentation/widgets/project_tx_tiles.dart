@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../event_errors.dart';
 import '../../../../ui/ui.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
@@ -42,21 +44,47 @@ class ProjectTxIcon extends StatelessWidget {
   }
 }
 
-/// One board row + its split children. Tap the icon to tick ("I've settled
-/// this") — when it's yours to settle, the "record in my book" sheet comes
-/// first. Tap the row for the action sheet (unmark / record / edit /
-/// delete). Ticked rows fade.
+/// A member's [PersonMark] level: linked to an app account, else a typed
+/// name (with or without an icon of its own).
+PersonLevel projectMemberLevel(ProjectMember m) => m.isLinked
+    ? PersonLevel.linked
+    : (m.iconCode != null ? PersonLevel.contact : PersonLevel.name);
+
+/// One board row + its split children, on the kit's [EventBillRow]. Tap the
+/// tick to tick ("I've settled this") — when it's yours to settle, the
+/// "record in my book" sheet comes first. Tap the row for the action sheet
+/// (unmark / record / edit / delete). Ticked rows fade; locked rows are
+/// inert. A tag chip opens its menu ("ดูบิลที่ติดแท็กนี้").
 class ProjectTxTreeTile extends StatelessWidget {
   const ProjectTxTreeTile({
     required this.tree,
     required this.view,
     required this.onChanged,
+    this.onPatch,
+    this.onShowTag,
+    this.onAddTagToMine,
+    this.highlighted = false,
     super.key,
   });
 
   final ProjectTxTree tree;
   final ProjectView view;
+
+  /// Reload the page (a write whose response can't patch it yet).
   final Future<void> Function() onChanged;
+
+  /// A write's patch: the page applies it (null → [onChanged]).
+  final ValueChanged<EventPatch>? onPatch;
+
+  /// "ดูบิลที่ติดแท็กนี้": the รายการ tab filtered by this tag (null = no
+  /// tag menu).
+  final ValueChanged<BoardTag>? onShowTag;
+
+  /// "+ เพิ่มเข้าแท็กของฉัน" (only on tags I don't have yet).
+  final ValueChanged<BoardTag>? onAddTagToMine;
+
+  /// A brief tint: the bill a link opened the page on (`?bill=`).
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
@@ -65,65 +93,86 @@ class ProjectTxTreeTile extends StatelessWidget {
     final payer = view.memberOf(parent);
     final myId = view.me?.id;
     final marked = myId != null && parent.isMarkedBy(myId);
-    final scheme = Theme.of(context).colorScheme;
-    final subtitleStyle = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        MoneyListTile(
-          dimmed: marked,
-          leading: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: view.rowsLocked
-                ? null
-                : () => marked
-                      ? _actions(context, parent, isParent: true)
-                      : _tick(context, parent, isParent: true),
-            child: CornerBadge(
-              size: 36,
-              icon: AppIcons.check,
-              show: marked,
-              // The tick marks the row — state, not decoration.
-              essential: true,
-              child: ProjectTxIcon(tx: parent),
-            ),
-          ),
-          title: parent.description ?? parent.tags.firstOrNull ?? '—',
-          subtitle: Row(
-            children: [
-              memberAvatar(payer, size: 16),
-              const SizedBox(width: AppSpacing.xs),
-              Flexible(
-                child: Text(
-                  [
-                    payer.displayName,
-                    projectTxDateLabel(context, parent.date),
-                    for (final t in parent.tags) '#$t',
-                  ].join(' · '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: subtitleStyle,
-                ),
-              ),
-            ],
-          ),
-          amount: parent.type == 'expense' ? -parent.amount : parent.amount,
-          onTap: () => _actions(context, parent, isParent: true),
-        ),
-        for (final c in tree.children)
-          _ChildRow(
-            child: c,
-            debtor: view.memberOf(c),
-            marked: myId != null && c.isMarkedBy(myId),
-            onTap: () => myId != null && c.isMarkedBy(myId)
-                ? _actions(context, c, isParent: false)
-                : _tick(context, c, isParent: false),
-            symbol: Currencies.symbolOf(c.currency),
-            owesLabel: l.projectTxOwes(payer.displayName),
-          ),
+    final symbol = Currencies.symbolOf(parent.currency);
+    final locked = view.rowsLocked;
+    final showTag = onShowTag;
+    return EventBillRow(
+      title: parent.description ?? parent.tags.firstOrNull ?? '—',
+      amount: parent.type == 'expense' ? -parent.amount : parent.amount,
+      symbol: symbol,
+      marked: marked,
+      locked: locked,
+      onTickTap: () => marked
+          ? _actions(context, parent, isParent: true)
+          : _tick(context, parent, isParent: true),
+      tags: [
+        for (final t in parent.tagRefs)
+          EventTagRef(t.name, iconCode: t.iconCode),
       ],
+      tagAnchorBuilder: showTag == null
+          ? null
+          : (context, i, chip) {
+              final tag = parent.tagRefs[i];
+              final addToMine = onAddTagToMine;
+              return OptionMenuAnchor<String>(
+                selected: null,
+                options: [
+                  if (!tag.mine && addToMine != null)
+                    SheetOption(
+                      value: 'mine',
+                      leading: const AppIcon(AppIcons.add),
+                      label: l.eventTagAddToMine,
+                    ),
+                  SheetOption(
+                    value: 'show',
+                    leading: const AppIcon(AppIcons.search),
+                    label: l.eventTagShowBills,
+                  ),
+                ],
+                onSelected: (v) =>
+                    v == 'mine' ? addToMine?.call(tag) : showTag(tag),
+                builder: (_, toggle) => chip(toggle),
+              );
+            },
+      linked: parent.linked,
+      highlighted: highlighted,
+      payerName: payer.displayName,
+      payerLevel: projectMemberLevel(payer),
+      payerIconCode: payer.iconCode,
+      caption: projectTxDateLabel(context, parent.date),
+      onTap: () => _actions(context, parent, isParent: true),
+      children: [
+        for (final c in tree.children)
+          _child(context, c, payer: payer, symbol: symbol, myId: myId),
+      ],
+    );
+  }
+
+  Widget _child(
+    BuildContext context,
+    ProjectTransaction c, {
+    required ProjectMember payer,
+    required String symbol,
+    required String? myId,
+  }) {
+    final l = AppLocalizations.of(context)!;
+    final debtor = view.memberOf(c);
+    final marked = myId != null && c.isMarkedBy(myId);
+    void open() => marked
+        ? _actions(context, c, isParent: false)
+        : _tick(context, c, isParent: false);
+    return EventBillChildRow(
+      name: debtor.displayName,
+      amount: c.amount,
+      level: projectMemberLevel(debtor),
+      iconCode: debtor.iconCode,
+      caption: l.projectTxOwes(payer.displayName),
+      tone: MoneyTone.plain,
+      symbol: symbol,
+      marked: marked,
+      locked: view.rowsLocked,
+      onTickTap: open,
+      onTap: open,
     );
   }
 
@@ -141,10 +190,7 @@ class ProjectTxTreeTile extends StatelessWidget {
     ProjectTransaction tx, {
     required bool isParent,
   }) async {
-    if (view.rowsLocked) {
-      await _actions(context, tx, isParent: isParent);
-      return;
-    }
+    if (view.rowsLocked) return;
     if (_canResolve(tx, isParent: isParent)) {
       final done = await _resolve(context, tx, isParent: isParent);
       if (!done || !context.mounted) return;
@@ -181,21 +227,37 @@ class ProjectTxTreeTile extends StatelessWidget {
     return ok;
   }
 
+  /// The write's patch to the page (no reload); a reload without a page
+  /// handler (the hub demo).
+  Future<void> _apply(EventPatch p) async {
+    final apply = onPatch;
+    if (apply != null) {
+      apply(p);
+    } else {
+      await onChanged();
+    }
+  }
+
+  /// One call; the PUT returns the patch.
   Future<void> _mark(
     BuildContext context,
     ProjectTransaction tx,
     bool on,
   ) async {
     try {
-      await context.read<ProjectsRepository>().toggleMark(
+      final p = await context.read<ProjectsRepository>().toggleMark(
         view.project.id,
         tx.id,
         on,
       );
-      await onChanged();
+      await _apply(p);
     } on ApiException catch (e) {
       if (context.mounted) {
-        showAppSnackBar(context, e.message, tone: Tone.danger);
+        showAppSnackBar(
+          context,
+          eventErrorText(AppLocalizations.of(context)!, e),
+          tone: Tone.danger,
+        );
       }
     }
   }
@@ -205,11 +267,11 @@ class ProjectTxTreeTile extends StatelessWidget {
     ProjectTransaction tx, {
     required bool isParent,
   }) async {
+    if (view.rowsLocked) return;
     final l = AppLocalizations.of(context)!;
     final my = view.me?.id;
     final marked = my != null && tx.isMarkedBy(my);
-    final editable = isParent && !view.rowsLocked;
-    final canResolve = !view.rowsLocked && _canResolve(tx, isParent: isParent);
+    final canResolve = _canResolve(tx, isParent: isParent);
     final action = await showActionSheet<String>(
       context,
       header: ActionSheetHeader(
@@ -227,7 +289,16 @@ class ProjectTxTreeTile extends StatelessWidget {
         ),
       ),
       actions: [
-        if (marked && !view.rowsLocked)
+        // The personal transaction this bill was made from (only its
+        // owner gets it from the BE).
+        if (tx.sourceTx case final src?)
+          SheetAction(
+            value: 'source',
+            icon: AppIcons.link,
+            label: l.eventSourceTx,
+            subtitle: src.description ?? src.accountName,
+          ),
+        if (marked)
           SheetAction(
             value: 'unmark',
             icon: AppIcons.undo,
@@ -240,7 +311,9 @@ class ProjectTxTreeTile extends StatelessWidget {
             label: l.projectTxResolve,
             subtitle: l.projectTxResolveHint,
           ),
-        if (editable) ...[
+        // Edit / delete follow the BE's row lock (viewers, inactive
+        // members, cancelled / archived events).
+        if (isParent && !tx.locked) ...[
           SheetAction(
             value: 'edit',
             icon: AppIcons.edit,
@@ -257,17 +330,22 @@ class ProjectTxTreeTile extends StatelessWidget {
     );
     if (!context.mounted) return;
     switch (action) {
+      case 'source':
+        openPage(context, '/transactions/${tx.sourceTx!.id}');
       case 'unmark':
         await _mark(context, tx, false);
       case 'resolve':
         await _resolve(context, tx, isParent: isParent);
       case 'edit':
+        // Quick create hands back the write's patch (no reload).
+        final patch = onPatch;
         final saved = await showQuickCreateSheet(
           context,
           project: view,
           projectRow: tree,
+          onEventSaved: patch,
         );
-        if (saved) await onChanged();
+        if (saved && patch == null) await onChanged();
       case 'delete':
         await _delete(context, tx);
     }
@@ -284,70 +362,22 @@ class ProjectTxTreeTile extends StatelessWidget {
     );
     if (!ok || !context.mounted) return;
     try {
-      await context.read<ProjectsRepository>().deleteTransaction(
+      final p = await context.read<ProjectsRepository>().deleteTransaction(
         view.project.id,
         tx.id,
       );
       if (context.mounted) {
         showAppSnackBar(context, l.projectTxDeleted, tone: Tone.success);
       }
-      await onChanged();
+      await _apply(p);
     } on ApiException catch (e) {
       if (context.mounted) {
-        showAppSnackBar(context, e.message, tone: Tone.danger);
+        showAppSnackBar(
+          context,
+          eventErrorText(AppLocalizations.of(context)!, e),
+          tone: Tone.danger,
+        );
       }
     }
-  }
-}
-
-class _ChildRow extends StatelessWidget {
-  const _ChildRow({
-    required this.child,
-    required this.debtor,
-    required this.marked,
-    required this.onTap,
-    required this.symbol,
-    required this.owesLabel,
-  });
-
-  final ProjectTransaction child;
-  final ProjectMember debtor;
-  final bool marked;
-  final VoidCallback onTap;
-  final String symbol;
-  final String owesLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return ListRow(
-      indent: AppSpacing.xxl,
-      checked: marked,
-      dimmed: marked,
-      onTap: onTap,
-      leading: memberAvatar(debtor, size: 20),
-      body: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(text: debtor.displayName),
-            TextSpan(
-              text: ' $owesLabel',
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: textTheme.bodySmall,
-      ),
-      trailing: MoneyText(
-        child.amount,
-        symbol: symbol,
-        style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-      ),
-    );
   }
 }

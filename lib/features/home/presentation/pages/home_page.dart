@@ -19,9 +19,7 @@ import '../../../notifications/presentation/notification_actions.dart';
 import '../../../notifications/presentation/widgets/notification_tile.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
-import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../../../saving_goals/presentation/cubit/saving_goals_cubit.dart';
-import '../../../scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
@@ -41,6 +39,17 @@ import '../cubit/dashboard_cubit.dart';
 /// elsewhere reloads it (plus pull-to-refresh).
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  /// The first-load skeleton's slot heights = the real cards' heights for a
+  /// typical home (net worth, nothing waiting, the month bar, the month card,
+  /// the donut + trend cards, the tiles row). Kept honest by
+  /// `test/features/home/home_skeleton_geometry_test.dart`.
+  static const skeletonShape = DashboardSkeletonShape(
+    snapshots: [108],
+    kpis: [94],
+    charts: [184, 240],
+    tilesHeight: 132,
+  );
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -137,14 +146,6 @@ class _HomeView extends StatelessWidget {
           listenWhen: (a, b) => a.goals != b.goals,
           listener: (c, _) => c.read<DashboardCubit>().markStale(),
         ),
-        BlocListener<PersonalDebtsCubit, PersonalDebtsState>(
-          listenWhen: (a, b) => a.debts != b.debts,
-          listener: (c, _) => c.read<DashboardCubit>().markStale(),
-        ),
-        BlocListener<ScheduledTransactionsCubit, ScheduledTransactionsState>(
-          listenWhen: (a, b) => a.entries != b.entries,
-          listener: (c, _) => c.read<DashboardCubit>().markStale(),
-        ),
         // Notifications: the badge (polled, and refreshed by the inbox)
         // moving means something changed elsewhere → re-fetch ours.
         BlocListener<UnreadBadgeCubit, int>(
@@ -191,6 +192,7 @@ class _HomeView extends StatelessWidget {
             isEmpty: d == null,
             onRetry: cubit.load,
             refreshing: state.status == DashboardStatus.loading,
+            skeletonShape: HomePage.skeletonShape,
             // Stale data + a failed load → the banner, not a snackbar.
             banner: state.status == DashboardStatus.error
                 ? l.homeLoadError
@@ -512,9 +514,8 @@ class _UpcomingCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.sm),
         onTap: () => openPage(
           context,
-          isCard
-              ? '/accounts/${item.id}'
-              : '/scheduled-transactions/${item.id}',
+          // A recurring card carries the item's id only: the upcoming tab.
+          isCard ? '/accounts/${item.id}' : '/recurring?tab=upcoming',
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

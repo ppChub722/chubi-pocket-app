@@ -10,6 +10,7 @@ class ActionBarItem {
     required this.onPressed,
     this.icon,
     this.primary = false,
+    this.submits = false,
   });
 
   final String label;
@@ -20,6 +21,10 @@ class ActionBarItem {
 
   /// The one emphasised action (filled); the rest are tonal.
   final bool primary;
+
+  /// The action sends to the server (save, delete, create …): disabled while
+  /// the app is offline ([AppButton.submits]). Default false.
+  final bool submits;
 }
 
 /// The actions under a hero (owner 2026-10-12): 2–4 EQUAL-width buttons in one
@@ -56,6 +61,7 @@ class ActionBar extends StatelessWidget {
                 variant: a.primary
                     ? AppButtonVariant.primary
                     : AppButtonVariant.tonal,
+                submits: a.submits,
                 onPressed: a.onPressed,
               ),
             ),

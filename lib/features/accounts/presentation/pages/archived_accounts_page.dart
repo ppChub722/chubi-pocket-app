@@ -96,7 +96,9 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                         ),
                       ),
                       label: a.name,
-                      helper: moneyString(context, a.balance),
+                      helper: a.showsBalance
+                          ? moneyString(context, a.balance)
+                          : null,
                       // Only the owner restores (the BE checks too).
                       trailing: !a.canEdit
                           ? null

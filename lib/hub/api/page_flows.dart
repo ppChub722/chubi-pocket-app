@@ -117,7 +117,12 @@ const List<PageFlow> pageFlows = [
       ),
     ]),
     FlowStep.action('Button "บันทึก" (edit)', [
-      FlowCall('updateTransaction', note: 'returns the row + wallet balances'),
+      FlowCall(
+        'updateTransaction',
+        note:
+            'returns the row + wallet balances; also_update_link from the '
+            'linked prompt; a date after today → an upcoming item',
+      ),
     ]),
     FlowStep.action('Change tags', [
       FlowCall('setTransactionTags', note: 'replaces the tag set'),
@@ -129,44 +134,84 @@ const List<PageFlow> pageFlows = [
       FlowCall('editSplits', note: 'replaces the whole split list'),
     ]),
     FlowStep.action('Button "ลบ"', [
-      FlowCall('deleteTransaction', note: 'returns id + wallet balances'),
+      FlowCall(
+        'deleteTransaction',
+        note:
+            'returns id + wallet balances; also_delete_link from the linked '
+            'prompt',
+      ),
+    ]),
+    FlowStep.action('Event card: out of the event', [
+      FlowCall('removeBillFromProject'),
     ]),
   ]),
-  PageFlow(
-    'quick-create-sheet',
-    'Create a transaction, a draft, or an event bill.',
-    [
-      FlowStep.open(
-        [
-          FlowCall(
-            'getTransactionFormOptions',
-            note:
-                'wallets (+default), categories, tags, active events, fee category',
-          ),
-        ],
-        today:
-            '3 calls on first open (GET /accounts, /categories, /tags), then cached',
-      ),
-      FlowStep.action('Button "บันทึก"', [
+  PageFlow('quick-create-sheet', 'Create a transaction, a draft, or an event bill.', [
+    FlowStep.open(
+      [
         FlowCall(
-          'createTransaction',
-          note: 'creates tx + tags + splits; returns the row + wallet balances',
+          'getTransactionFormOptions',
+          note:
+              'wallets (+default), categories, tags, active events, fee category',
         ),
-      ], today: '3 calls (create, reload wallets, reload the book)'),
-      FlowStep.action('Button "บันทึกร่าง"', [
-        FlowCall('createPending', note: 'saves a draft'),
-      ]),
-      FlowStep.action('Button "สร้างอีเวนต์"', [
-        FlowCall('quickCreateEvent', note: 'creates the event from the bills'),
-      ]),
-      FlowStep.action('Button "เพิ่มเข้าอีเวนต์"', [
-        FlowCall('addBillsToEvent', note: 'adds the bills to an event'),
-      ]),
-      FlowStep.action('Split editor opened (lazy)', [
-        FlowCall('listContacts', note: 'person picker'),
-      ]),
-    ],
-  ),
+      ],
+      today:
+          '3 calls on first open (GET /accounts, /categories, /tags), then cached',
+    ),
+    FlowStep.action('Button "บันทึก"', [
+      FlowCall(
+        'createTransaction',
+        note: 'creates tx + tags + splits; returns the row + wallet balances',
+      ),
+    ], today: '3 calls (create, reload wallets, reload the book)'),
+    FlowStep.action('Button "บันทึกร่าง"', [
+      FlowCall('createPending', note: 'saves a draft'),
+    ]),
+    FlowStep.action('Button "สร้างอีเวนต์"', [
+      FlowCall('quickCreateEvent', note: 'creates the event from the bills'),
+    ]),
+    FlowStep.action('Button "เพิ่มเข้าอีเวนต์"', [
+      FlowCall('addBillsToEvent', note: 'adds the bills to an event'),
+    ]),
+    FlowStep.action('Split editor opened (lazy)', [
+      FlowCall('listContacts', note: 'person picker'),
+    ]),
+    FlowStep.action('Event mode opened', [
+      FlowCall('listProjectTags', note: 'the event tags for the tag row'),
+    ]),
+    FlowStep.action('Button "บันทึก" (event mode)', [
+      FlowCall(
+        'createProjectTag',
+        note: 'only for a new tag name: it becomes an event tag first',
+      ),
+      FlowCall(
+        'createProjectTransaction',
+        note: 'new bill (tag_ids); returns the EventPatch',
+      ),
+      FlowCall(
+        'updateProjectTransaction',
+        note: 'edit a bill (tag_ids); returns the EventPatch',
+      ),
+    ]),
+    FlowStep.action('Mode chip "หนี้" (debt mode)', [
+      FlowCall(
+        'listDebtPeople',
+        note: 'the person chip row (open people first)',
+      ),
+    ]),
+    FlowStep.action('Person picker opened', [
+      FlowCall('listDebtPeople', note: 'all=true, everyone, searchable'),
+    ]),
+    FlowStep.action('Section "ทำเครื่องหมายรายการที่จ่ายครบ" opened', [
+      FlowCall('listDebtEntries', note: 'paid=false: the open entries'),
+    ]),
+    FlowStep.action('Button "บันทึก" (debt mode)', [
+      FlowCall(
+        'createDebtEntry',
+        note:
+            'entry + wallet tx + tags + paid labels; returns the balance + wallet balances',
+      ),
+    ]),
+  ]),
   PageFlow('pending', 'Drafts waiting to be confirmed.', [
     FlowStep.open(
       [FlowCall('listPending', note: 'drafts, rows carry "resolved"')],
@@ -290,6 +335,30 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Wallet invite: accept', [FlowCall('acceptAccountInvite')]),
     FlowStep.action('Wallet invite: reject', [FlowCall('rejectAccountInvite')]),
     FlowStep.action('Unlinked names opened', [FlowCall('listUnlinkedNames')]),
+    FlowStep.action('Event bill: copy to my book', [
+      FlowCall('copyProjectTransactionToPersonal'),
+    ]),
+    FlowStep.action('Event link request: accept', [
+      FlowCall('acceptProjectLinkRequest'),
+    ]),
+    FlowStep.action('Event link request: reject', [
+      FlowCall('rejectProjectLinkRequest'),
+    ]),
+    FlowStep.action('Split request: accept', [
+      FlowCall(
+        'acceptDebtSplitRequest',
+        note: 'my entry; opens the person page',
+      ),
+    ]),
+    FlowStep.action('Split change: "อัปเดตตาม"', [
+      FlowCall('applyDebtSplitChange'),
+    ]),
+    FlowStep.action('Split paid: "บันทึกรับเงิน"', [
+      FlowCall(
+        'getDebtEntry',
+        note: 'the person, then quick create in debt mode',
+      ),
+    ]),
   ]),
   PageFlow('notifications-badge', 'The bell badge in the shell (a poll).', [
     FlowStep.open([FlowCall('getUnreadCount', note: 'the cheap poll')]),
@@ -322,130 +391,199 @@ const List<PageFlow> pageFlows = [
   ]),
 
   // ── Events (projects) ───────────────────────────────────────────────────────
-  PageFlow('events-list', 'All events.', [
-    FlowStep.open([FlowCall('listProjects')]),
-    FlowStep.action('Button "สร้างอีเวนต์"', [FlowCall('createProject')]),
-  ]),
-  PageFlow('event-detail', 'One event: summary, members and board rows.', [
-    FlowStep.open([
-      FlowCall('getProject'),
-      FlowCall('listBoardRows', note: 'event board rows'),
+  PageFlow(
+    'events-list',
+    'All events (paged; search / status / my tags / sort on the server).',
+    [
+      FlowStep.open([FlowCall('listProjects')]),
+      FlowStep.action('Search / status / tags / sort / scroll', [
+        FlowCall('listProjects'),
+      ]),
+    ],
+  ),
+  PageFlow(
+    'event-form',
+    'Create an event (plan, dates, my tags in one call).',
+    [
+      FlowStep.action('Button "บันทึก"', [FlowCall('createProject')]),
+    ],
+  ),
+  PageFlow('event-detail', 'One event: hero, my tags, สรุป, รายการ (board).', [
+    FlowStep.open([FlowCall('getProjectDetail')]),
+    FlowStep.action('รายการ: scroll / search / filter / sort', [
+      FlowCall('listBoardRows'),
     ]),
-    FlowStep.action('Summary tab opened (lazy)', [
-      FlowCall('getProjectSummary'),
-    ]),
-    FlowStep.action('Members tab opened (lazy)', [
-      FlowCall('listProjectMembers'),
-    ]),
-    FlowStep.action('Tag filter opened (lazy)', [FlowCall('listProjectTags')]),
-    FlowStep.action('Button "บันทึก" (edit event)', [
+    FlowStep.action('Button "บันทึก" (edit event) / status / my tags', [
       FlowCall('updateProject'),
     ]),
-    FlowStep.action('Button "ลบอีเวนต์"', [FlowCall('deleteProject')]),
-    FlowStep.action('Button "เพิ่มสมาชิก"', [FlowCall('addProjectMember')]),
+    FlowStep.action('Button "ลบอีเวนต์นี้"', [FlowCall('deleteProject')]),
+    FlowStep.action('Button "เชิญสมาชิก"', [FlowCall('addProjectMember')]),
+    FlowStep.action('Tick a bill / split', [
+      FlowCall('markProjectTransaction'),
+    ]),
+    FlowStep.action('Delete a bill', [FlowCall('deleteProjectTransaction')]),
+    FlowStep.action('Tag menu "+ เพิ่มเข้าแท็กของฉัน" / "นำเข้าทั้งหมด"', [
+      FlowCall('importProjectTags'),
+    ]),
+    FlowStep.action('Resolve sheet "บันทึกเป็นรายการ"', [
+      FlowCall('createTransaction'),
+    ]),
+    FlowStep.action('Resolve sheet "บันทึกเป็นหนี้"', [
+      FlowCall('createDebtEntry'),
+    ]),
+  ]),
+  PageFlow('event-members', 'Members (on hold: kept as is, on the new API).', [
+    FlowStep.open([FlowCall('getProject'), FlowCall('listProjectMembers')]),
+    FlowStep.action('Button "เชิญสมาชิก"', [FlowCall('addProjectMember')]),
     FlowStep.action('Edit a member', [FlowCall('updateProjectMember')]),
     FlowStep.action('Remove a member', [FlowCall('removeProjectMember')]),
-    FlowStep.action('Button "ขอลิงก์"', [FlowCall('requestProjectMemberLink')]),
     FlowStep.action('Button "โอนความเป็นเจ้าของ"', [
       FlowCall('transferProjectOwnership'),
     ]),
     FlowStep.action('Button "ออกจากอีเวนต์"', [FlowCall('leaveProject')]),
-    FlowStep.action('Button "เพิ่มรายการ"', [
-      FlowCall('createProjectTransaction'),
-    ]),
-    FlowStep.action('Edit an event row', [
-      FlowCall('updateProjectTransaction'),
-    ]),
-    FlowStep.action('Delete an event row', [
-      FlowCall('deleteProjectTransaction'),
-    ]),
-    FlowStep.action('Mark an event row', [FlowCall('markProjectTransaction')]),
-    FlowStep.action('Button "คัดลอกเข้าบัญชีฉัน"', [
-      FlowCall('copyProjectTransactionToPersonal'),
-    ]),
-    FlowStep.action('Button "เพิ่มบิล"', [FlowCall('addBillsToEvent')]),
-    FlowStep.action('Remove a bill', [FlowCall('removeBillFromProject')]),
-    FlowStep.action('Link request: accept', [
-      FlowCall('acceptProjectLinkRequest'),
-    ]),
-    FlowStep.action('Link request: reject', [
-      FlowCall('rejectProjectLinkRequest'),
-    ]),
   ]),
 
   // ── Budgets ─────────────────────────────────────────────────────────────────
-  PageFlow('budgets-list', 'Budgets and the period overview.', [
+  PageFlow('budgets-list', 'Budgets and their current periods.', [
     FlowStep.open([FlowCall('listBudgets')]),
-    FlowStep.action('Overview opened (lazy)', [FlowCall('getBudgetsOverview')]),
-    FlowStep.action('Button "เพิ่มงบ"', [FlowCall('createBudget')]),
+    FlowStep.action('Chip active / ended / archived or the sort', [
+      FlowCall('listBudgets'),
+    ]),
   ]),
-  PageFlow('budget-detail', 'One budget.', [
+  PageFlow('budget-detail', 'One budget: its periods, items and rule.', [
     FlowStep.open([FlowCall('getBudget')]),
-    FlowStep.action('Button "บันทึก"', [FlowCall('updateBudget')]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteBudget')]),
+    FlowStep.action('Tap a period', [FlowCall('getBudget')]),
+    FlowStep.action('Button "ดูเพิ่ม" (items)', [FlowCall('listBudgetItems')]),
+    FlowStep.action('Button "ดูรอบก่อนหน้าทั้งหมด"', [
+      FlowCall('listBudgetPeriods'),
+    ]),
+    FlowStep.action('Button "แก้เฉพาะรอบนี้"', [
+      FlowCall('updateBudgetPeriod'),
+    ]),
+    FlowStep.action('Button "บันทึก" (create)', [FlowCall('createBudget')]),
+    FlowStep.action('Button "บันทึก" (edit)', [FlowCall('updateBudget')]),
+    FlowStep.action('Button "ปิดงบ"', [FlowCall('closeBudget')]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveBudget')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreBudget')]),
+    FlowStep.action('Button "ลบ"', [FlowCall('deleteBudget')]),
   ]),
 
   // ── Saving goals ────────────────────────────────────────────────────────────
-  PageFlow('goals-list', 'Saving goals.', [
+  PageFlow('goals-list', 'Saving goals and the spare pool.', [
     FlowStep.open([FlowCall('listSavingGoals')]),
+    FlowStep.action('Spare opened', [
+      FlowCall('getSavingSpare', note: 'saved but not yet in a goal'),
+    ]),
     FlowStep.action('Button "เพิ่มเป้าหมาย"', [FlowCall('createSavingGoal')]),
   ]),
-  PageFlow('goals-detail', 'One saving goal.', [
+  PageFlow('goals-detail', 'One saving goal and its saving entries.', [
     FlowStep.open([FlowCall('getSavingGoal')]),
+    FlowStep.action('Entries opened / scroll', [FlowCall('listSavingEntries')]),
+    FlowStep.action('Button "เพิ่มเงินออม" / "ถอน" / "ย้าย"', [
+      FlowCall('createSavingEntry'),
+    ]),
+    FlowStep.action('Edit an entry', [FlowCall('updateSavingEntry')]),
+    FlowStep.action('Delete an entry', [FlowCall('deleteSavingEntry')]),
     FlowStep.action('Button "บันทึก"', [FlowCall('updateSavingGoal')]),
+    FlowStep.action('Button "ปิดเป้าหมาย"', [FlowCall('closeSavingGoal')]),
     FlowStep.action('Button "ลบ"', [FlowCall('deleteSavingGoal')]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveSavingGoal')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreSavingGoal')]),
   ]),
-  PageFlow('wallet-savings', 'What a wallet has set aside for goals.', [
-    FlowStep.open([FlowCall('getAccountSavingAllocations')]),
-  ]),
 
-  // ── Scheduled ───────────────────────────────────────────────────────────────
-  PageFlow('scheduled-list', 'Scheduled transactions and what is coming up.', [
-    FlowStep.open([FlowCall('listScheduled')]),
-    FlowStep.action('Upcoming opened (lazy)', [
-      FlowCall('listScheduledUpcoming'),
+  // ── Recurring + upcoming items (owner 2026-10-13) ───────────────────────────
+  PageFlow('recurring-home', 'Recurring settings and the upcoming items.', [
+    FlowStep.open([FlowCall('listRecurring', note: 'the shown tab only')]),
+    FlowStep.action('Tab "รายการล่วงหน้า" (lazy)', [
+      FlowCall('listRecurringItems'),
     ]),
-    FlowStep.action('Button "เพิ่มรายการประจำ"', [FlowCall('createScheduled')]),
+    FlowStep.action('Filter chips', [FlowCall('listRecurring')]),
+    FlowStep.action('Item popover', [
+      FlowCall('createFromRecurringItem', note: 'item → a pending draft'),
+      FlowCall('archiveRecurringItem'),
+      FlowCall('restoreRecurringItem'),
+      FlowCall('deleteRecurringItem'),
+    ]),
   ]),
-  PageFlow('scheduled-detail', 'One scheduled transaction.', [
-    FlowStep.open([FlowCall('getScheduled')]),
-    FlowStep.action('History opened (lazy)', [FlowCall('getScheduledHistory')]),
-    FlowStep.action('Button "บันทึก"', [FlowCall('updateScheduled')]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteScheduled')]),
-    FlowStep.action('Button "พัก"', [FlowCall('pauseScheduled')]),
-    FlowStep.action('Button "เริ่มต่อ"', [FlowCall('resumeScheduled')]),
-    FlowStep.action('Button "ยกเลิก"', [FlowCall('cancelScheduled')]),
-    FlowStep.action('Button "สร้างตอนนี้"', [
-      FlowCall('generateScheduledNow', note: 'returns wallet balances'),
+  PageFlow(
+    'recurring-detail',
+    'One recurring: what it made and what is next.',
+    [
+      FlowStep.open([FlowCall('getRecurring')]),
+      FlowStep.action('Tab "ล่วงหน้า" (lazy) + scroll', [
+        FlowCall('listRecurringRuleItems'),
+      ]),
+      FlowStep.action('Status chip พัก / ทำต่อ', [
+        FlowCall('pauseRecurring'),
+        FlowCall('resumeRecurring'),
+      ]),
+      FlowStep.action('Button "ต่ออีก"', [FlowCall('extendRecurring')]),
+      FlowStep.action('Selection toolbar', [FlowCall('batchRecurringItems')]),
+      FlowStep.action('Item popover', [
+        FlowCall('createFromRecurringItem', note: 'item → a pending draft'),
+        FlowCall('archiveRecurringItem'),
+        FlowCall('restoreRecurringItem'),
+        FlowCall('deleteRecurringItem'),
+      ]),
+      FlowStep.action('Item entry sheet "บันทึก"', [
+        FlowCall('updateRecurringItem'),
+        FlowCall('createRecurringItem'),
+      ]),
+    ],
+  ),
+  PageFlow('recurring-settings', 'Create or edit a recurring.', [
+    FlowStep.open([FlowCall('getRecurring', note: 'edit only')]),
+    FlowStep.action('Button "บันทึก"', [
+      FlowCall('createRecurring'),
+      FlowCall('updateRecurring'),
     ]),
+    FlowStep.action('Button "เก็บถาวร" / "กู้คืน"', [
+      FlowCall('archiveRecurring'),
+      FlowCall('restoreRecurring'),
+    ]),
+    FlowStep.action('Button "ลบ"', [FlowCall('deleteRecurring')]),
   ]),
 
   // ── Debts ───────────────────────────────────────────────────────────────────
-  PageFlow('debts-list', 'Debts and the people they are with.', [
+  PageFlow(
+    'debts-people',
+    'One list of people and their net (ติดคุณ / คุณติด together).',
+    [
+      FlowStep.open([FlowCall('listDebtPeople', note: 'page 1 + totals')]),
+      FlowStep.action('Search / "ทั้งหมด" / a summary box / scroll', [
+        FlowCall('listDebtPeople'),
+      ]),
+    ],
+  ),
+  PageFlow('debt-person', 'One person: the net, the timeline, the payments.', [
     FlowStep.open([
-      FlowCall('listDebts'),
-      FlowCall('listDebtPeople', note: 'grouped by person'),
-    ]),
-    FlowStep.action('Button "เพิ่มหนี้"', [FlowCall('createDebt')]),
-  ]),
-  PageFlow('debt-detail', 'One debt and its payments.', [
-    FlowStep.open([FlowCall('getDebt')]),
-    FlowStep.action('Button "ชำระ"', [
       FlowCall(
-        'settleDebt',
-        note: 'records a payment; returns wallet balances',
+        'getDebtPerson',
+        note: 'balance + counts + the first timeline page',
       ),
     ]),
-    FlowStep.action('Button "บันทึก"', [FlowCall('updateDebt')]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteDebt')]),
-    FlowStep.action('Button "ยกเลิกหนี้"', [FlowCall('cancelDebt')]),
-    FlowStep.action('Split request: accept', [
-      FlowCall('acceptDebtSplitRequest'),
+    FlowStep.action(
+      'Tab "ประวัติการจ่าย" (first open) / search / filter / sort / scroll',
+      [FlowCall('listDebtEntries')],
+    ),
+    FlowStep.action('The paid label on an entry', [
+      FlowCall('updateDebtEntry', note: 'paid only'),
     ]),
-    FlowStep.action('Split change: apply', [FlowCall('applyDebtSplitChange')]),
   ]),
+  PageFlow(
+    'debt-entry',
+    'An entry: the transaction detail page in debt mode.',
+    [
+      FlowStep.open([
+        FlowCall('getDebtEntry', note: 'entry + balance + the full tx row'),
+      ]),
+      FlowStep.action('Button "บันทึก"', [FlowCall('updateDebtEntry')]),
+      FlowStep.action('Button "ลบ"', [
+        FlowCall(
+          'deleteDebtEntry',
+          note: 'deletes the wallet tx too; returns balances',
+        ),
+      ]),
+    ],
+  ),
 ];

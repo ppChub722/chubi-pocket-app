@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -521,7 +522,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   Widget _page(AppLocalizations l) {
-    return editScope(_scaffold(l));
+    // The + presets this category (and its type) while this page is on
+    // screen.
+    return QuickCreatePresetScope(
+      preset: QuickCreatePreset(category: _persisted),
+      child: editScope(_scaffold(l)),
+    );
   }
 
   Widget _scaffold(AppLocalizations l) {

@@ -46,6 +46,10 @@ class EntryCard extends StatelessWidget {
     this.amountFocus,
     this.titleFocus,
     this.amountNote,
+    this.debt = false,
+    this.typeBadge,
+    this.accentColor,
+    this.dateNote,
     super.key,
   });
 
@@ -79,6 +83,17 @@ class EntryCard extends StatelessWidget {
   /// A line under the amount (the split share).
   final Widget? amountNote;
 
+  /// Debt mode: Paid / Received in place of the type (see
+  /// [TxHeroCard.debt]); [categoryRow] holds the PERSON row.
+  final bool debt;
+
+  /// See [TxHeroCard.typeBadge] / [TxHeroCard.accentColor].
+  final Widget? typeBadge;
+  final Color? accentColor;
+
+  /// See [TxHeroCard.dateNote].
+  final Widget? dateNote;
+
   Widget _slot(BuildContext context, Widget row, {required bool flagged}) {
     if (!flagged) return row;
     final error = Theme.of(context).colorScheme.error;
@@ -109,6 +124,10 @@ class EntryCard extends StatelessWidget {
       amountFocus: amountFocus,
       titleFocus: titleFocus,
       amountNote: amountNote,
+      debt: debt,
+      typeBadge: typeBadge,
+      accentColor: accentColor,
+      dateNote: dateNote,
       inline: true,
       footer: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

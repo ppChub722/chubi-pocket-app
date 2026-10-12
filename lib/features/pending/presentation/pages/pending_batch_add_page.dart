@@ -179,11 +179,13 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                     label: l.pendingSaveAsDrafts(n),
                     expand: true,
                     loading: _saving,
+                    submits: true,
                     onPressed: n == 0 ? null : () => _save(submit: false),
                   ),
                   AppButton(
                     label: l.pendingSubmitAllNow(n),
                     variant: AppButtonVariant.text,
+                    submits: true,
                     onPressed: _saving || n == 0
                         ? null
                         : () => _save(submit: true),

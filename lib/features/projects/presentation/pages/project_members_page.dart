@@ -6,11 +6,13 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../event_errors.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../widgets/add_member_sheet.dart';
+import '../cubit/projects_cubit.dart';
 import '../widgets/project_common.dart';
 
 /// `/projects/:id/members` (§12b): members / waiting / left groups, owner
@@ -68,14 +70,22 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     return s is AuthAuthenticated ? s.user.id : null;
   }
 
-  bool get _isOwner => _project != null && _project!.ownerUserId == _uid;
+  bool get _isOwner =>
+      _project != null && (_project!.isOwner || _project!.ownerUserId == _uid);
 
   Future<void> _invite() async {
     final l = AppLocalizations.of(context)!;
-    final name = await showAddMemberSheet(context, projectId: widget.projectId);
-    if (name == null || !mounted) return;
-    showAppSnackBar(context, l.projectAddMemberAdded(name), tone: Tone.success);
-    await _load();
+    final added = await showAddMemberSheet(
+      context,
+      projectId: widget.projectId,
+    );
+    if (added == null || !mounted) return;
+    _apply(added.patch);
+    showAppSnackBar(
+      context,
+      l.projectAddMemberAdded(added.name),
+      tone: Tone.success,
+    );
   }
 
   Future<void> _memberActions(ProjectMember m) async {
@@ -167,21 +177,42 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       showAppSnackBar(context, l.projectLeft);
       context.go('/projects');
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          eventErrorText(AppLocalizations.of(context)!, e),
+          tone: Tone.danger,
+        );
+      }
     }
   }
 
+  /// A write's patch: the members and the event in place (no reload).
+  void _apply(EventPatch p) {
+    context.read<ProjectsCubit>().patch(p.project);
+    setState(() {
+      _project = p.project;
+      _members = p.members;
+    });
+  }
+
   Future<void> _run(
-    Future<void> Function() action, {
+    Future<EventPatch> Function() action, {
     required String done,
   }) async {
     try {
-      await action();
+      final p = await action();
       if (!mounted) return;
+      _apply(p);
       showAppSnackBar(context, done, tone: Tone.success);
-      await _load();
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          eventErrorText(AppLocalizations.of(context)!, e),
+          tone: Tone.danger,
+        );
+      }
     }
   }
 

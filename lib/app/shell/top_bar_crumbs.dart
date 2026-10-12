@@ -44,7 +44,7 @@ TopBarCrumb? defaultTopBarCrumb(BuildContext context) {
     'categories' => (l.moreCategories, 'categories'),
     'budgets' => (l.moreBudgets, 'budgets'),
     'saving-goals' => (l.moreSavingGoals, 'saving-goals'),
-    'scheduled-transactions' => (l.moreScheduled, 'scheduled-transactions'),
+    'recurring' => (l.moreRecurring, 'recurring'),
     'settings' => (l.settingsTitle, 'settings'),
     'notifications' => (l.moreNotifications, 'notifications'),
     'dev' => ('Dev', 'dev-hub'),

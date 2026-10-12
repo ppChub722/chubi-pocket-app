@@ -100,6 +100,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
   final _title = TextEditingController(text: 'ข้าวมันไก่');
   final _empty = TextEditingController();
   TransactionType _type = TransactionType.expense;
+  TransactionType _debtDir = TransactionType.expense;
   bool _selected = false;
   bool _selected2 = true;
   String _last = '—';
@@ -267,6 +268,74 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
         HubDemo(
+          title: 'TxRow — recurring / linked / status / archived markers',
+          note:
+              'recurring adds 🔁 + progress ("3/12"), linked adds 🔗 (the '
+              'EventBillRow glyph); metaLeading leads line 2 with its own '
+              'style (a DueText keeps its overdue tint), meta adds texts; '
+              'statusChip is a mini chip on line 1 after the wallet; dimmed '
+              'fades the row (archived). None changes the row height.',
+          child: Column(
+            children: [
+              TxRow(
+                leading: _leading(AppIcons.expense, palette.expense),
+                title: 'Netflix',
+                amount: -419,
+                walletLabel: 'กสิกร',
+                walletIcon: const Icon(AppIcons.wallet, size: 12),
+                metaLeading: DueText(
+                  date: DateTime.now().add(const Duration(days: 3)),
+                  withDate: false,
+                ),
+                meta: const ['ทุกวันที่ 3'],
+                recurring: true,
+              ),
+              const AppDivider(),
+              TxRow(
+                leading: _leading(AppIcons.expense, palette.expense),
+                title: 'ผ่อนโทรศัพท์',
+                amount: -1290,
+                metaLeading: DueText(
+                  date: DateTime.now().subtract(const Duration(days: 2)),
+                  withDate: false,
+                ),
+                category: 'ช้อปปิ้ง',
+                recurring: true,
+                progress: '3/12',
+                linked: true,
+              ),
+              const AppDivider(),
+              TxRow(
+                leading: _leading(AppIcons.expense, palette.expense),
+                title: 'ค่ายิม',
+                amount: -900,
+                category: 'สุขภาพ',
+                meta: const ['ทุกเดือน'],
+                recurring: true,
+                statusChip: const AppChip(
+                  label: 'หยุดชั่วคราว',
+                  tone: AppChipTone.warning,
+                  size: ChipSize.mini,
+                ),
+              ),
+              const AppDivider(),
+              TxRow(
+                leading: _leading(AppIcons.income, palette.income),
+                title: 'ค่าเช่าห้อง',
+                amount: 6000,
+                category: 'รายได้อื่น',
+                recurring: true,
+                progress: '12/12',
+                statusChip: const AppChip(
+                  label: 'เก็บถาวร',
+                  size: ChipSize.mini,
+                ),
+                dimmed: true,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'TxHeroCard — type switch, editing',
           note:
               'Inline layout (a transaction). Tap a chip or swipe the card to '
@@ -348,6 +417,61 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   selected: -1,
                 ),
               ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'EntryCard(debt: true) — quick create in debt mode',
+          note:
+              'The same card (owner 2026-10-12): Paid / Received replace the '
+              'type (paid = the expense colour: I paid them; received = the '
+              'income colour), the PERSON chip row replaces the category, the '
+              'wallet row adds "ไม่ผูก" (no wallet = ledger only), and the '
+              'line under the amount shows the result. Tags sit under the card '
+              'only while a wallet is picked.',
+          child: EntryCard(
+            debt: true,
+            type: _debtDir,
+            amount: _amount,
+            title: _title,
+            dateLabel: 'Today',
+            onTypeChanged: (t) => setState(() => _debtDir = t),
+            onPickDate: () {},
+            amountNote: Text(
+              _debtDir == TransactionType.expense
+                  ? 'After saving: Mom owes you ฿1,450'
+                  : 'After saving: Mom owes you ฿-1,050',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            walletRow: const _DemoChipRow(
+              icon: AppIcons.wallet,
+              blank: 'เลือกกระเป๋า',
+              chips: ['ไม่ผูก', 'กสิกร', 'เงินสด'],
+              selected: 0,
+            ),
+            categoryRow: const _DemoChipRow(
+              icon: AppIcons.contact,
+              blank: 'เลือกคน',
+              chips: ['แม่', 'บีม', 'โอ๊ต'],
+              selected: 0,
+            ),
+          ),
+        ),
+        const HubDemo(
+          title: 'EntryCardSkeleton — a draft’s first load',
+          note:
+              'แก้ร่าง opens at once and shows this until the form options '
+              'land, then the draft fills the real EntryCard. Built from the '
+              'same tokens (top row = control height, the hero field rows, '
+              'chip rows itemGap apart), so nothing jumps; a pixel test keeps '
+              'it equal to the real card at text scale 1.0 and 1.3. A new '
+              'transaction shows the real card at once (typing starts right '
+              'away); only its chip rows shimmer.',
+          child: Column(
+            children: [
+              EntryCardSkeleton(),
+              SizedBox(height: AppSpacing.md),
+              EntryCardSkeleton(editing: false),
             ],
           ),
         ),

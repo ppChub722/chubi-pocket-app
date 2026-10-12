@@ -123,7 +123,7 @@ void main() {
         onRetry: noop,
         topInset: 0,
         snapshot: const [SizedBox(height: 110)],
-        period: const SizedBox(height: 40),
+        period: const SizedBox(height: DashboardPageSkeleton.periodHeight),
         kpis: const [SizedBox(height: 90)],
         charts: const [SizedBox(height: 160), SizedBox(height: 140)],
         tiles: const SizedBox(height: 176),

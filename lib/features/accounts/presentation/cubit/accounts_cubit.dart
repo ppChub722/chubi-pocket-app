@@ -138,10 +138,16 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
     return created;
   }
 
-  /// Saves the wallet's edits; returns the server's row.
-  Future<Account> update(Account account) async {
-    final updated = await _repo.update(account);
+  /// Saves the wallet's edits; returns the server's row. [currentBalance]:
+  /// tracking turned back on — the balance it has now (one call; the BE
+  /// books the adjustment). Totals change when tracking flips.
+  Future<Account> update(Account account, {double? currentBalance}) async {
+    final before = state.accounts.where((a) => a.id == account.id).firstOrNull;
+    final updated = await _repo.update(account, currentBalance: currentBalance);
     _replace(updated);
+    if (before != null && before.trackBalance != updated.trackBalance) {
+      emit(state.copyWith(totalsStale: true));
+    }
     return updated;
   }
 
@@ -333,6 +339,23 @@ class AccountsCubit extends Cubit<AccountsState> with Clearable {
   /// `account_balance_after` (spec §3.1).
   void patchBalance({required String accountId, required double newBalance}) {
     patchBalances({accountId: newBalance});
+  }
+
+  /// The wallets' new savings after a saving write (`wallets[].savings`), by
+  /// account id. Wallets not in the map are left alone.
+  void patchSavings(Map<String, WalletSavings> savings) {
+    if (savings.isEmpty) return;
+    emit(
+      state.copyWith(
+        accounts: [
+          for (final a in state.accounts)
+            if (savings.containsKey(a.id))
+              a.copyWith(savings: savings[a.id])
+            else
+              a,
+        ],
+      ),
+    );
   }
 
   /// [patchBalance] for several wallets at once (a transfer moves two): the

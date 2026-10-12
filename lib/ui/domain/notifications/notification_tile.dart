@@ -149,6 +149,7 @@ class NotificationTileView extends StatelessWidget {
                     child: AppButton(
                       label: acceptLabel,
                       icon: AppIcons.check,
+                      submits: true,
                       onPressed: onAccept,
                     ),
                   ),
@@ -157,6 +158,7 @@ class NotificationTileView extends StatelessWidget {
                     child: AppButton(
                       label: rejectLabel,
                       variant: AppButtonVariant.outlined,
+                      submits: true,
                       onPressed: () => _reject(context),
                     ),
                   ),

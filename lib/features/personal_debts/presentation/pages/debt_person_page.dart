@@ -2,68 +2,133 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/quick_create_context.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
-import '../../domain/personal_debt.dart';
-import '../cubit/personal_debts_cubit.dart';
-import '../widgets/debt_widgets.dart';
+import '../../../transactions/domain/refs.dart';
+import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
+import '../../data/personal_debts_repository.dart';
+import '../../domain/debt_ledger.dart';
+import '../cubit/debt_people_cubit.dart';
+import '../cubit/debt_person_cubit.dart';
+import '../debt_wiring.dart';
 
-/// `/personal-debts/person?contact=…&name=…` — everything with one person
-/// (§11): net, what's outstanding, collapsed history, "+ บันทึกหนี้กับคนนี้".
-/// A typed-name person can be merged into a contact (absorb).
-class DebtPersonPage extends StatefulWidget {
-  const DebtPersonPage({required this.name, this.contactId, super.key});
+/// `/personal-debts/people/:key` — everything with one person: the hero
+/// (net), ONE button "+ บันทึกรายการ" (quick create in debt mode, preset to
+/// this person), then the tabs "รายการหนี้" (every entry) / "ประวัติการจ่าย"
+/// (entries that moved wallet money). Open = 1 call; the money tab = 1 call
+/// on its first open; search / filter / sort / next page = 1 call each.
+class DebtPersonPage extends StatelessWidget {
+  const DebtPersonPage({required this.personKey, this.name, super.key});
 
-  final String? contactId;
-  final String name;
+  /// `c:<contact id>` / `n:<name>` (decoded).
+  final String personKey;
+
+  /// The name the opener already knows (the top bar before the load).
+  final String? name;
 
   @override
-  State<DebtPersonPage> createState() => _DebtPersonPageState();
+  Widget build(BuildContext context) => BlocProvider(
+    create: (context) => DebtPersonCubit(
+      repository: context.read<PersonalDebtsRepository>(),
+      personKey: personKey,
+    )..load(),
+    child: _PersonView(name: name),
+  );
 }
 
-class _DebtPersonPageState extends State<DebtPersonPage> {
+class _PersonView extends StatefulWidget {
+  const _PersonView({this.name});
+
+  final String? name;
+
+  @override
+  State<_PersonView> createState() => _PersonViewState();
+}
+
+class _PersonViewState extends State<_PersonView> {
+  DebtPersonTab _tab = DebtPersonTab.entries;
+  final _search = {
+    for (final t in DebtPersonTab.values) t: TextEditingController(),
+  };
   bool _linking = false;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<PersonalDebtsCubit>().loadIfNeeded();
-    });
+  void dispose() {
+    for (final c in _search.values) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
-  String get _key => widget.contactId != null
-      ? 'c:${widget.contactId}'
-      : 'n:${widget.name.trim().toLowerCase()}';
+  DebtPersonCubit get _cubit => context.read<DebtPersonCubit>();
 
+  String _name(DebtPersonState s) =>
+      s.balance?.person.name ?? widget.name ?? '';
+
+  /// The person for quick create's preset — known from the key before the
+  /// load lands (a contact id / the typed name).
+  EmbeddedPerson _person(DebtPersonState s) {
+    final p = s.balance?.person;
+    if (p != null) return p;
+    final key = s.personKey;
+    return EmbeddedPerson(
+      name: _name(s),
+      contactId: key.startsWith('c:') ? key.substring(2) : null,
+    );
+  }
+
+  void _selectTab(DebtPersonTab t) {
+    setState(() => _tab = t);
+    _cubit.openTab(t);
+  }
+
+  Future<void> _addEntry() async {
+    // The page patches from the write response (no re-fetch).
+    await showQuickCreateSheet(
+      context,
+      preset: QuickCreatePreset.debt(person: _person(_cubit.state)),
+      onDebtSaved: _cubit.addEntry,
+    );
+  }
+
+  /// The entry's detail = the transaction detail page in debt mode
+  /// (fe-core). TODO(debt-mode): push `/personal-debts/entries/<id>` once
+  /// that route exists; until then an entry with a wallet tx opens the tx.
+  void _openEntry(DebtEntry e) {
+    final tx = e.transaction;
+    if (tx != null) openPage(context, '/transactions/${tx.id}');
+  }
+
+  /// A typed name joins a contact (absorb); the page moves to the contact's
+  /// key.
   Future<void> _linkToContact() async {
     final l = AppLocalizations.of(context)!;
+    final name = _name(_cubit.state);
     final picked = await showContactPickerSheet(context, allowFreeText: false);
     if (picked is! ContactPicked || !mounted) return;
     final contact = picked.contact;
-    final debts = context.read<PersonalDebtsCubit>();
     setState(() => _linking = true);
     try {
       final n = (await context.read<ContactsCubit>().absorb(contact.id, [
-        widget.name,
+        name,
       ])).absorbedCount;
-      await debts.load();
       if (!mounted) return;
       showAppSnackBar(
         context,
         l.debtsPersonLinked(n, contact.name),
         tone: Tone.success,
       );
+      // Same tab: the page moves to the contact's key.
       context.pushReplacement(
-        Uri(
-          path: '/personal-debts/person',
-          queryParameters: {'contact': contact.id, 'name': contact.name},
-        ).toString(),
+        Uri(path: '/personal-debts/people/c:${contact.id}').toString(),
+        extra: contact.name,
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -72,137 +137,276 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
     }
   }
 
-  void _addDebt() => context.push(
-    '/personal-debts/new',
-    extra: {'contactId': widget.contactId, 'name': widget.name},
-  );
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(title: widget.name, showBack: true),
-      extendBodyBehindAppBar: true,
-      body: BlocBuilder<PersonalDebtsCubit, PersonalDebtsState>(
-        builder: (context, state) => AsyncStateView(
-          loading:
-              state.status == PersonalDebtsStatus.initial ||
-              state.status == PersonalDebtsStatus.loading,
-          error: state.error,
-          isEmpty: state.debts.isEmpty,
-          onRetry: context.read<PersonalDebtsCubit>().load,
-          // No debts with this person → the page's own empty sections.
-          builder: (context) {
-            final mine =
-                state.debts.where((d) => DebtPerson.keyOf(d) == _key).toList()
-                  ..sort(
-                    (a, b) => (b.createdAt ?? DateTime(0)).compareTo(
-                      a.createdAt ?? DateTime(0),
-                    ),
-                  );
-            final person = DebtPerson(
-              contactId: widget.contactId,
-              displayName: widget.name,
-              debts: mine,
-              person: mine.firstOrNull?.person,
-            );
-            final open = mine.where((d) => d.isOpen).toList();
-            final closed = mine.where((d) => !d.isOpen).toList();
-            return DetailPageBody(
-              onRefresh: () => context.read<PersonalDebtsCubit>().load(),
-              physics: const AlwaysScrollableScrollPhysics(),
-              // Top: clear the floating top bar.
-              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-              bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
-              hero: _Header(person: person),
-              sections: [
-                // ONE headless box right after the hero: add a debt (+ link
-                // a typed name to a contact). Icons on every row.
-                (first) => SectionCard(
-                  first: first,
-                  children: [
-                    DetailAddRow(label: l.debtsPersonAdd, onTap: _addDebt),
-                    if (widget.contactId == null)
-                      DetailRow(
-                        leading: _linking
-                            ? const AppSpinner(size: AppSpinnerSize.medium)
-                            : const AppIcon(AppIcons.link),
-                        label: l.debtsPersonLinkContact,
-                        helper: l.debtsPersonLinkContactHint,
-                        showChevron: true,
-                        onTap: _linking ? null : _linkToContact,
-                      ),
-                  ],
-                ),
-                (first) => open.isEmpty
-                    ? null
-                    : SectionCard(
-                        first: first,
-                        title: l.debtsStatusOpen,
-                        children: [for (final d in open) DebtTile(debt: d)],
-                      ),
-                (first) => closed.isEmpty
-                    ? null
-                    : CollapsibleSection(
-                        title: l.debtsPersonHistory(closed.length),
-                        leading: const AppIcon(AppIcons.history),
-                        initiallyOpen: false,
-                        children: [for (final d in closed) DebtTile(debt: d)],
-                      ),
-              ],
-            );
-          },
+    return BlocBuilder<DebtPersonCubit, DebtPersonState>(
+      builder: (context, s) {
+        final notFound = s.error?.statusCode == 404;
+        return QuickCreatePresetScope(
+          preset: QuickCreatePreset.debt(person: _person(s)),
+          child: Scaffold(
+            appBar: AppTopBar(title: _name(s), showBack: true),
+            extendBodyBehindAppBar: true,
+            body: AsyncStateView(
+              loading: s.firstLoad,
+              error: notFound ? null : s.error,
+              isEmpty: s.balance == null,
+              onRetry: _cubit.load,
+              empty: EmptyView(
+                icon: AppIcons.debt,
+                title: l.debtsTimelineEmpty,
+                message: l.debtsEmptyMessage,
+              ),
+              builder: (context) => _body(context, s),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _body(BuildContext context, DebtPersonState s) {
+    final l = AppLocalizations.of(context)!;
+    final b = s.balance!;
+    final symbol = debtCurrencySymbol(context);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final style = HeroStyle.tinted(
+      color: b.person.iconCode.tintFor(palette, avatarName: b.person.name),
+    );
+    return TabbedDetailBody<DebtPersonTab>(
+      hero: HeaderCard(
+        heroStyle: style,
+        leading: PersonMark(
+          name: b.person.name,
+          level: debtPersonLevel(b.person),
+          iconCode: b.person.iconCode,
+          size: 52,
+        ),
+        title: Text(b.person.name),
+        trailing: b.person.contactId == null
+            ? null
+            : AppIconButton(
+                icon: AppIcons.contact,
+                tooltip: l.debtsPersonOpenContact,
+                onPressed: () =>
+                    openPage(context, '/contacts/${b.person.contactId}'),
+              ),
+        footer: NetBalance(
+          amount: b.net,
+          size: NetBalanceSize.hero,
+          owedToMeLabel: l.debtsOwedToMe,
+          iOweLabel: l.debtsIOwe,
+          settledLabel: l.debtsEven,
+          currencySymbol: symbol,
         ),
       ),
+      compactBar: CompactHeroBar(
+        title: Text(b.person.name),
+        leading: PersonMark(
+          name: b.person.name,
+          level: debtPersonLevel(b.person),
+          iconCode: b.person.iconCode,
+          size: 28,
+        ),
+        style: style,
+      ),
+      belowHero: [
+        AppButton(
+          label: l.debtsAddEntry,
+          icon: AppIcons.add,
+          expand: true,
+          onPressed: _addEntry,
+        ),
+        if (b.person.contactId == null)
+          SectionCard(
+            children: [
+              DetailRow(
+                leading: _linking
+                    ? const AppSpinner(size: AppSpinnerSize.medium)
+                    : const AppIcon(AppIcons.link),
+                label: l.debtsPersonLinkContact,
+                helper: l.debtsPersonLinkContactHint,
+                showChevron: true,
+                onTap: _linking ? null : _linkToContact,
+              ),
+            ],
+          ),
+      ],
+      tabs: [
+        AppTab(value: DebtPersonTab.entries, label: l.debtsTabEntries),
+        AppTab(value: DebtPersonTab.money, label: l.debtsTabMoney),
+      ],
+      selected: _tab,
+      onChanged: _selectTab,
+      tabBuilder: (context, t) => BlocBuilder<DebtPersonCubit, DebtPersonState>(
+        buildWhen: (a, b) => a.tab(t) != b.tab(t) || a.balance != b.balance,
+        builder: (context, s) => _tabList(context, s, t),
+      ),
     );
   }
-}
 
-class _Header extends StatelessWidget {
-  const _Header({required this.person});
-
-  final DebtPerson person;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _tabList(BuildContext context, DebtPersonState s, DebtPersonTab t) {
     final l = AppLocalizations.of(context)!;
-    final p = person;
-    final symbol = Currencies.symbolOf(p.currency);
-    final even = p.net.abs() < 0.005;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return HeaderCard(
-      accent: p.person?.iconCode.tintFor(palette, avatarName: p.displayName),
-      leading: PersonMark(
-        name: p.displayName,
-        level: p.contactId == null ? PersonLevel.name : PersonLevel.linked,
-        iconCode: p.person?.iconCode,
-        size: 52,
-      ),
-      title: Text(p.displayName),
-      subtitle: Text(
-        even
-            ? l.debtsEven
-            : (p.net > 0
-                  ? l.debtTheyOweYou(p.displayName)
-                  : l.debtYouOwe(p.displayName)),
-      ),
-      trailing: p.contactId == null
-          ? null
-          : AppIconButton(
-              icon: AppIcons.contact,
-              tooltip: l.debtsPersonOpenContact,
-              onPressed: () => openPage(context, '/contacts/${p.contactId}'),
+    final list = s.tab(t);
+    final q = list.query;
+    final symbol = debtCurrencySymbol(context);
+    final locale = Localizations.localeOf(context).languageCode;
+    final name = _name(s);
+    return ListPageBody(
+      clearTopBar: false,
+      loading:
+          list.status == DebtLoadStatus.initial ||
+          list.status == DebtLoadStatus.loading,
+      error: list.error,
+      isEmpty: list.items.isEmpty,
+      onRetry: _cubit.load,
+      empty: q.isFiltered
+          ? EmptyView.compact(message: l.debtsEntriesNoMatch)
+          : EmptyView.compact(
+              message: t == DebtPersonTab.entries
+                  ? l.debtsTimelineEmpty
+                  : l.debtsMoneyEmpty,
             ),
-      footer: even
-          ? null
-          : MoneyText(
-              p.net.abs(),
-              symbol: symbol,
-              tone: p.net > 0 ? MoneyTone.income : MoneyTone.expense,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+      hasMore: list.hasMore,
+      loadingMore: list.loadingMore,
+      onLoadMore: () => _cubit.loadMore(t),
+      loadMoreError: list.moreError,
+      rowDividers: true,
+      header: [
+        ListToolbar(
+          searchController: _search[t],
+          onSearchChanged: (v) => _cubit.search(t, v),
+          searchHint: l.debtsEntrySearchHint,
+          chips: [
+            _optionChip<DebtEntryDirection?>(
+              label: l.debtsDirLabel,
+              value: q.direction,
+              options: {
+                null: l.debtsStatusAll,
+                DebtEntryDirection.paid: l.debtsDirPaid,
+                DebtEntryDirection.received: l.debtsDirReceived,
+              },
+              onSelected: (d) => _cubit.setQuery(
+                t,
+                q.copyWith(direction: d, clearDirection: d == null),
+              ),
             ),
+            if (t == DebtPersonTab.entries)
+              _optionChip<bool?>(
+                label: l.debtsStatusLabel,
+                value: q.paid,
+                options: {
+                  null: l.debtsStatusAll,
+                  false: l.debtsStatusOpen,
+                  true: l.debtsPaidChip,
+                },
+                onSelected: (p) => _cubit.setQuery(
+                  t,
+                  q.copyWith(paid: p, clearPaid: p == null),
+                ),
+              ),
+          ],
+          trailing: SortChip<DebtEntrySort>(
+            value: q.sort,
+            tooltip: l.debtsSortLabel,
+            options: [
+              SortOption(DebtEntrySort.dateDesc, l.debtsSortNewest),
+              SortOption(DebtEntrySort.dateAsc, l.debtsSortOldest),
+              SortOption(DebtEntrySort.amountDesc, l.debtsSortAmountDesc),
+              SortOption(DebtEntrySort.amountAsc, l.debtsSortAmountAsc),
+            ],
+            onChanged: (v) => _cubit.setQuery(t, q.copyWith(sort: v)),
+          ),
+        ),
+      ],
+      children: [
+        for (final row in _rows(list.items, q))
+          row is DateTime
+              ? DateGroupHeader(label: _dayLabel(l, row, locale))
+              : _ledgerRow(l, row as DebtEntry, name, symbol, locale),
+      ],
     );
   }
+
+  /// Day headers only in the default date order (a search / filter / amount
+  /// sort shows the entries alone).
+  List<Object> _rows(List<DebtEntry> items, DebtEntryQuery q) {
+    final byDate =
+        q.sort == DebtEntrySort.dateDesc || q.sort == DebtEntrySort.dateAsc;
+    if (!byDate) return items;
+    final out = <Object>[];
+    DateTime? day;
+    for (final e in items) {
+      final d = e.date;
+      if (d != null && (day == null || !DateUtils.isSameDay(day, d))) {
+        day = d;
+        out.add(d);
+      }
+      out.add(e);
+    }
+    return out;
+  }
+
+  Widget _ledgerRow(
+    AppLocalizations l,
+    DebtEntry e,
+    String name,
+    String symbol,
+    String locale,
+  ) {
+    final wallet = e.transaction?.account;
+    return LedgerRow(
+      key: ValueKey(e.id),
+      direction: e.iPaid ? LedgerDirection.paid : LedgerDirection.received,
+      amount: e.amount,
+      title:
+          e.description ??
+          (e.iPaid ? l.debtEntryPaidTo(name) : l.debtEntryReceivedFrom(name)),
+      dateLabel: e.date == null
+          ? ''
+          : DateFormatter.short(e.date!, locale: locale),
+      walletLabel: wallet?.name,
+      walletIcon: wallet == null
+          ? null
+          : IconDisplay(
+              type: IconType.account,
+              size: 14,
+              iconCode: wallet.iconCode,
+            ),
+      paidLabel: e.paid ? l.debtsPaidChip : null,
+      sourceLabel: e.source?.title,
+      currencySymbol: symbol,
+      onTap: e.transaction == null ? null : () => _openEntry(e),
+    );
+  }
+
+  String _dayLabel(AppLocalizations l, DateTime d, String locale) =>
+      DateFormatter.friendly(
+        d,
+        today: l.commonToday,
+        yesterday: l.commonYesterday,
+        locale: locale,
+      );
+
+  /// A filter chip with the central popover (few short options).
+  Widget _optionChip<T>({
+    required String label,
+    required T value,
+    required Map<T, String> options,
+    required ValueChanged<T> onSelected,
+  }) => OptionMenuAnchor<T>(
+    selected: value,
+    onSelected: onSelected,
+    options: [
+      for (final o in options.entries)
+        SheetOption(value: o.key, label: o.value),
+    ],
+    builder: (context, toggle) => AppChip(
+      label: '$label: ${options[value]}',
+      selected: value != null,
+      trailing: AppChipTrailing.dropdown,
+      onTap: toggle,
+    ),
+  );
 }

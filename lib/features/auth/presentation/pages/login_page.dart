@@ -89,6 +89,7 @@ class _LoginPageState extends State<LoginPage> {
             ],
             submit: AppButton(
               label: l.authLoginSubmit,
+              submits: true,
               onPressed: isSubmitting ? null : _submit,
               loading: isSubmitting,
               size: AppButtonSize.large,

@@ -6,6 +6,7 @@ import '../atoms/skeletons.dart';
 import '../molecules/detail_rows.dart';
 import '../molecules/hero_shell.dart';
 import '../molecules/hero_style.dart';
+import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/chip_size.dart';
 import 'divided_rows.dart';
@@ -104,10 +105,43 @@ class ListToolbarSkeleton extends StatelessWidget {
   }
 }
 
+/// What a list page looks like on its first load — `ListPageBody.skeletonShape`
+/// (the template builds the [ListPageSkeleton]; a page never draws its own):
+///
+/// - default: [rows] list rows (grouped by day when the list has row
+///   dividers);
+/// - [ListSkeletonShape.grid]: a cards grid (wallets) — an optional summary
+///   block of [headerHeight] on top, an optional sort row (a chip at the
+///   right), then two rows of [gridColumns] cards of [gridItemExtent], all
+///   inset by [AppSpacing.lg] like the real cards.
+class ListSkeletonShape {
+  const ListSkeletonShape({this.rows = 6})
+    : headerHeight = 0,
+      sortRow = false,
+      gridColumns = 0,
+      gridItemExtent = 0;
+
+  const ListSkeletonShape.grid({
+    required this.gridColumns,
+    required this.gridItemExtent,
+    this.headerHeight = 0,
+    this.sortRow = false,
+  }) : rows = 0;
+
+  final int rows;
+  final double headerHeight;
+  final bool sortRow;
+  final int gridColumns;
+  final double gridItemExtent;
+
+  bool get isGrid => gridColumns > 0;
+}
+
 /// The body of a list page while it loads for the first time: [toolbar] (when
 /// the page has one and doesn't render it itself), then rows. [grouped] draws
 /// [days] day groups (header · rows) with the SAME hairlines / band the real
-/// grouped list has; otherwise [rows] plain rows.
+/// grouped list has; otherwise [rows] plain rows. [shape] = a grid page (see
+/// [ListSkeletonShape.grid]) instead of rows.
 class ListPageSkeleton extends StatelessWidget {
   const ListPageSkeleton({
     this.toolbar = false,
@@ -116,6 +150,7 @@ class ListPageSkeleton extends StatelessWidget {
     this.rows = 5,
     this.padding = EdgeInsets.zero,
     this.rowDividerIndent = 64,
+    this.shape,
     super.key,
   });
 
@@ -125,9 +160,62 @@ class ListPageSkeleton extends StatelessWidget {
   final int rows;
   final EdgeInsets padding;
   final double rowDividerIndent;
+  final ListSkeletonShape? shape;
+
+  Widget _grid(ListSkeletonShape s) {
+    const inset = EdgeInsets.symmetric(horizontal: AppSpacing.lg);
+    return Padding(
+      padding: inset,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (s.headerHeight > 0) ...[
+            SkeletonBox(height: s.headerHeight, borderRadius: AppRadius.md),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+          if (s.sortRow) ...[
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: SkeletonBox(
+                width: 120,
+                height: ChipSize.chip.height,
+                borderRadius: ChipSize.chip.height / 2,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          for (var r = 0; r < 2; r++) ...[
+            if (r > 0) const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                for (var c = 0; c < s.gridColumns; c++) ...[
+                  if (c > 0) const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: SkeletonBox(
+                      height: s.gridItemExtent,
+                      borderRadius: AppRadius.lg,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final s = shape;
+    if (s != null && s.isGrid) {
+      return ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: padding,
+        children: [if (toolbar) const ListToolbarSkeleton(), _grid(s)],
+      );
+    }
+    final rows = s?.rows ?? this.rows;
     final items = <Widget>[
       if (grouped)
         for (var d = 0; d < days; d++) ...[
@@ -331,19 +419,18 @@ TextStyle? _labelLarge(TextTheme t) => t.labelLarge;
 TextStyle? _labelBold(TextTheme t) =>
     t.titleMedium?.copyWith(fontWeight: FontWeight.bold);
 
-/// A dashboard while it loads: the SAME slot order and gaps as
-/// `DashboardPageBody` (snapshot → gap → period bar → gap → KPI cards → charts →
-/// gap → tiles), each slot a block of the height the real card has. The heights
-/// default to a typical home; a page with different cards passes its own.
-class DashboardPageSkeleton extends StatelessWidget {
-  const DashboardPageSkeleton({
+/// The slot heights of a dashboard's first-load skeleton: one block per real
+/// card, each height INCLUDING the margin / section header the real card
+/// carries. The defaults are a generic dashboard; a page passes the heights its
+/// own cards really have (Home keeps a geometry test on them) to
+/// `DashboardPageBody.skeletonShape`.
+class DashboardSkeletonShape {
+  const DashboardSkeletonShape({
     this.snapshots = const [110],
     this.period = true,
     this.kpis = const [90],
     this.charts = const [160, 140],
     this.tilesHeight = 176,
-    this.padding = EdgeInsets.zero,
-    super.key,
   });
 
   /// Heights of the "right now" blocks.
@@ -360,7 +447,24 @@ class DashboardPageSkeleton extends StatelessWidget {
 
   /// Height of the tiles grid; 0 = none.
   final double tilesHeight;
+}
+
+/// A dashboard while it loads: the SAME slot order and gaps as
+/// `DashboardPageBody` (snapshot → gap → period bar → gap → KPI cards → charts →
+/// gap → tiles), each slot a block of the height the real card has
+/// ([shape]). The template builds it; pages only pass the shape.
+class DashboardPageSkeleton extends StatelessWidget {
+  const DashboardPageSkeleton({
+    this.shape = const DashboardSkeletonShape(),
+    this.padding = EdgeInsets.zero,
+    super.key,
+  });
+
+  final DashboardSkeletonShape shape;
   final EdgeInsets padding;
+
+  /// The period bar's height (a `StepperPill.month`).
+  static const double periodHeight = 36;
 
   // A card slot: its height INCLUDES any margin the real card carries.
   Widget _block(double h) => SkeletonBox(height: h, borderRadius: 16);
@@ -371,17 +475,17 @@ class DashboardPageSkeleton extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       padding: padding,
       children: [
-        for (final h in snapshots) _block(h),
-        if (period) ...[
+        for (final h in shape.snapshots) _block(h),
+        if (shape.period) ...[
           const SizedBox(height: AppSpacing.md),
-          const SkeletonBox(height: 40, borderRadius: 20),
+          const SkeletonBox(height: periodHeight, borderRadius: 20),
           const SizedBox(height: AppSpacing.sm),
         ],
-        for (final h in kpis) _block(h),
-        for (final h in charts) _block(h),
-        if (tilesHeight > 0) ...[
+        for (final h in shape.kpis) _block(h),
+        for (final h in shape.charts) _block(h),
+        if (shape.tilesHeight > 0) ...[
           const SizedBox(height: AppSpacing.lg),
-          SkeletonBox(height: tilesHeight, borderRadius: 16),
+          SkeletonBox(height: shape.tilesHeight, borderRadius: 16),
         ],
       ],
     );

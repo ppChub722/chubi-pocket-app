@@ -19,7 +19,7 @@ enum ShellTab {
   projects,
   contacts,
   budgets,
-  scheduled,
+  recurring,
   savingGoals,
   debts,
   categories,
@@ -33,7 +33,7 @@ enum ShellTab {
     projects => AppModules.projects,
     contacts => AppModules.contacts,
     budgets => AppModules.budgets,
-    scheduled => AppModules.scheduled,
+    recurring => AppModules.recurring,
     savingGoals => AppModules.savingGoals,
     debts => AppModules.debts,
     categories => AppModules.categories,
@@ -53,7 +53,7 @@ enum ShellTab {
     'projects': projects,
     'contacts': contacts,
     'budgets': budgets,
-    'scheduled-transactions': scheduled,
+    'recurring': recurring,
     'saving-goals': savingGoals,
     'personal-debts': debts,
     'categories': categories,
@@ -112,10 +112,16 @@ enum ShellRow {
   /// The top bar's ⏳ / 🔔 / 👤 chips.
   top([ShellTab.pending, ShellTab.notifications, ShellTab.settings]),
 
-  // เพิ่มเติม hub sections, top to bottom.
-  library([ShellTab.categories, ShellTab.tags]),
-  people([ShellTab.contacts, ShellTab.projects, ShellTab.debts]),
-  planning([ShellTab.budgets, ShellTab.savingGoals, ShellTab.scheduled]);
+  // เพิ่มเติม hub sections, top to bottom. (The hub's last section, เมนูหลัก,
+  // lists the nav / top-bar tabs and is no row of its own.)
+  /// แผนการเงิน.
+  planning([ShellTab.budgets, ShellTab.savingGoals, ShellTab.recurring]),
+
+  /// เงินกับคนอื่น.
+  people([ShellTab.debts, ShellTab.projects]),
+
+  /// ข้อมูลตั้งต้น — one section at the bottom of the cards.
+  library([ShellTab.categories, ShellTab.tags, ShellTab.contacts]);
 
   const ShellRow(this.all);
 
@@ -129,7 +135,7 @@ enum ShellRow {
   ];
 
   /// A section of the เพิ่มเติม hub.
-  bool get inMore => index >= library.index;
+  bool get inMore => index >= planning.index;
 }
 
 /// Where the router sends [location] when its module is switched off

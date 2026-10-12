@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../atoms/connection_scope.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/app_button.dart';
@@ -87,9 +86,8 @@ class ModeActionBar extends StatelessWidget {
                 size: AppButtonSize.large,
                 expand: true,
                 loading: saving,
-                onPressed: canSave && !ConnectionScope.isOffline(context)
-                    ? onSave
-                    : null,
+                submits: true,
+                onPressed: canSave ? onSave : null,
               ),
             ),
           ],

@@ -47,8 +47,9 @@ class _MainShellState extends State<MainShell>
   final ShellChromeController _chrome = ShellChromeController();
 
   /// Pages that preset the centre +'s quick create (a wallet's page →
-  /// that wallet).
-  final QuickCreateContext _quickCreate = QuickCreateContext();
+  /// that wallet) and colour it by mode.
+  late final QuickCreateContext _quickCreate = QuickCreateContext()
+    ..currentBranch = widget.navigationShell.currentIndex;
 
   static final _moreBranch = ShellTab.more.index;
 
@@ -75,6 +76,7 @@ class _MainShellState extends State<MainShell>
     super.didUpdateWidget(old);
     final from = old.navigationShell.currentIndex;
     final to = widget.navigationShell.currentIndex;
+    _quickCreate.currentBranch = to;
     if (from == to) return;
     _history.remove(to);
     if (_backTo == to) {
@@ -90,6 +92,7 @@ class _MainShellState extends State<MainShell>
   void dispose() {
     _nudge.dispose();
     _chrome.dispose();
+    _quickCreate.dispose();
     super.dispose();
   }
 
@@ -246,6 +249,17 @@ class _MainShellState extends State<MainShell>
     );
   }
 
+  /// The + : the quick create with the on-screen page's preset (read fresh
+  /// at the tap).
+  void _openQuickCreate(BuildContext context) {
+    // A debt preset only colours the + until debt mode lands in the
+    // sheet (TODO(debt-mode) in showQuickCreateSheet).
+    showQuickCreateSheet(
+      context,
+      preset: _quickCreate.active() ?? QuickCreatePreset.none,
+    );
+  }
+
   Widget _shell(BuildContext context) {
     return ShellChrome(
       controller: _chrome,
@@ -293,20 +307,22 @@ class _MainShellState extends State<MainShell>
       ),
       child: hidden
           ? const SizedBox(key: ValueKey('nav-hidden'), width: double.infinity)
-          : MainBottomNav(
+          : ListenableBuilder(
               key: const ValueKey('nav'),
-              currentIndex: widget.navigationShell.currentIndex,
-              moreSelected: widget.navigationShell.currentIndex == _moreBranch,
-              onTabSelected: _goBranch,
-              // Quick create event-from-bills lives INSIDE the + sheet
-              // (spec §10/4.24).
-              // Preset by the page on screen, if it offers one.
-              onAddPressed: () {
-                final preset = _quickCreate.active();
-                if (preset?.onAdd != null) return preset!.onAdd!();
-                showQuickCreateSheet(context, account: preset?.account);
-              },
-              onMorePressed: () => _goBranch(_moreBranch),
+              listenable: _quickCreate,
+              builder: (context, _) => MainBottomNav(
+                currentIndex: widget.navigationShell.currentIndex,
+                moreSelected:
+                    widget.navigationShell.currentIndex == _moreBranch,
+                onTabSelected: _goBranch,
+                // The + wears the mode it will open in on this page.
+                addMode: _quickCreate.preset.mode,
+                // Quick create event-from-bills lives INSIDE the + sheet
+                // (spec §10/4.24). Preset by the page on screen, if it
+                // offers one.
+                onAddPressed: () => _openQuickCreate(context),
+                onMorePressed: () => _goBranch(_moreBranch),
+              ),
             ),
     );
   }

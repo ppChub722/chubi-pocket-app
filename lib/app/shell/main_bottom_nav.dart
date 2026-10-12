@@ -17,7 +17,7 @@ import '../../ui/ui.dart';
 /// (owner 2026-10-09: the expanding capsule shifted the bar).
 /// The centre `+` is an oversized button centred on the bar (it pokes out
 /// above and below, ringed in the page colour) and opens the
-/// QuickAdd transaction modal. More is a real tab whose root is the card hub
+/// quick create; it wears [addMode]'s colour (the kit's [QuickCreateButton]). More is a real tab whose root is the card hub
 /// (`/more`) — Projects / Categories / Tags / etc. stack inside it.
 ///
 /// **Swipe along the bar = switch tab** (owner 2026-10-10), on every tab —
@@ -33,8 +33,12 @@ class MainBottomNav extends StatefulWidget {
     required this.onAddPressed,
     required this.onMorePressed,
     this.moreSelected = false,
+    this.addMode = QuickCreateMode.tx,
     super.key,
   });
+
+  /// The mode the + opens in on the page on screen — its colour.
+  final QuickCreateMode addMode;
 
   /// Branch index of the active tab (Dashboard=0, Transactions=1,
   /// Accounts=2). Any other tab (a เพิ่มเติม card, ⏳ 🔔 👤) lights no slot.
@@ -272,7 +276,8 @@ class _MainBottomNavState extends State<MainBottomNav> {
                     ),
                   ),
                 ),
-                _AddButton(
+                QuickCreateButton(
+                  mode: widget.addMode,
                   size: MainBottomNav._addSize,
                   tooltip: l.navAddTransaction,
                   onPressed: widget.onAddPressed,
@@ -377,58 +382,6 @@ class _SlidingHighlight extends StatelessWidget {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(MainBottomNav._radius),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Centre `+` — a big filled circle wrapped in a page-coloured ring, so it
-/// reads as punched through the bar (a notch on both edges).
-class _AddButton extends StatelessWidget {
-  const _AddButton({
-    required this.size,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  /// Outer diameter, ring included.
-  final double size;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  static const double _ring = 4;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: Container(
-        width: size,
-        height: size,
-        padding: const EdgeInsets.all(_ring),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-          shape: BoxShape.circle,
-        ),
-        child: Material(
-          color: scheme.primary,
-          shape: const CircleBorder(),
-          elevation: 6,
-          shadowColor: scheme.primary.withValues(alpha: 0.6),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: Center(
-              child: AppIcon(
-                AppIcons.add,
-                size: AppIconSize.xl,
-                color: scheme.onPrimary,
-              ),
             ),
           ),
         ),

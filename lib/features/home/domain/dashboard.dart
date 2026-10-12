@@ -267,7 +267,7 @@ class TrendPoint extends Equatable {
   List<Object?> get props => [month, income, expense];
 }
 
-enum UpcomingKind { scheduled, cardDue }
+enum UpcomingKind { recurring, cardDue }
 
 class UpcomingItem extends Equatable {
   const UpcomingItem({
@@ -285,7 +285,8 @@ class UpcomingItem extends Equatable {
 
   final UpcomingKind kind;
 
-  /// Scheduled transaction id, or the account id for [UpcomingKind.cardDue].
+  /// The upcoming recurring item's id, or the account id for
+  /// [UpcomingKind.cardDue].
   final String id;
   final String name;
   final TransactionType type;
@@ -301,7 +302,7 @@ class UpcomingItem extends Equatable {
   factory UpcomingItem.fromJson(Map<String, dynamic> json) => UpcomingItem(
     kind: json['kind'] == 'card_due'
         ? UpcomingKind.cardDue
-        : UpcomingKind.scheduled,
+        : UpcomingKind.recurring,
     id: json['id'] as String,
     name: json['name'] as String? ?? '',
     type: json['type'] == 'income'

@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import '../../transactions/domain/refs.dart';
+import '../../transactions/domain/transaction.dart';
 import '../../../ui/ui.dart';
 
 /// Project lifecycle states.
@@ -84,13 +86,22 @@ extension MemberStatusWire on MemberStatus {
   }
 }
 
+IconCode? _icon(Object? json) =>
+    json is Map<String, dynamic> ? IconCode.fromJson(json) : null;
+
+double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
+
+List<Map<String, dynamic>> _list(Object? json) =>
+    ((json as List?) ?? const []).cast<Map<String, dynamic>>();
+
+/// An event (API `Event`), page-ready: the list row and the detail header.
+/// Single currency: every amount is in the user's currency.
 class Project extends Equatable {
   const Project({
     required this.id,
     required this.ownerUserId,
     required this.name,
     required this.status,
-    this.type,
     this.description,
     this.note,
     this.startDate,
@@ -98,6 +109,18 @@ class Project extends Equatable {
     this.membersCount = 0,
     this.iconCode,
     this.plannedAmount,
+    this.totalExpense = 0,
+    this.totalIncome = 0,
+    this.myNet = 0,
+    this.tags = const [],
+    this.myMemberId,
+    this.myRole,
+    this.isOwner = false,
+    this.readOnly = false,
+    this.canAddBill = false,
+    this.canEdit = false,
+    this.canManageMembers = false,
+    this.linkedTxCount = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -105,9 +128,10 @@ class Project extends Equatable {
   final String id;
   final String ownerUserId;
   final String name;
-  final String? type;
   final String? description;
   final String? note;
+
+  /// `YYYY-MM-DD`, both optional.
   final String? startDate;
   final String? endDate;
   final ProjectStatus status;
@@ -119,6 +143,31 @@ class Project extends Equatable {
   /// constraint.
   final double? plannedAmount;
 
+  final double totalExpense;
+  final double totalIncome;
+
+  /// My position: paid − share (> 0 = the others owe me; 0 = no part).
+  final double myNet;
+
+  /// MY personal tags on the event (private to me).
+  final List<EmbeddedTag> tags;
+
+  final String? myMemberId;
+  final MemberRole? myRole;
+
+  /// Server flags (thin FE: the BE decides who may do what).
+  final bool isOwner;
+
+  /// Not active: bills and tags are read-only (API `is_locked`).
+  final bool readOnly;
+  final bool canAddBill;
+  final bool canEdit;
+  final bool canManageMembers;
+
+  /// My personal transactions linked to its bills (the delete confirm's
+  /// "ยืนยันและลบ [x] รายการ").
+  final int linkedTxCount;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -126,6 +175,8 @@ class Project extends Equatable {
       v is String ? DateTime.tryParse(v)?.toLocal() : null;
 
   bool get isActive => status == ProjectStatus.active;
+
+  /// Cancelled / archived: rows can't be edited, deleted or ticked.
   bool get isLocked =>
       status == ProjectStatus.cancelled || status == ProjectStatus.archived;
   bool get isResolveReady =>
@@ -136,17 +187,28 @@ class Project extends Equatable {
       id: json['id'] as String,
       ownerUserId: json['owner_user_id'] as String,
       name: json['name'] as String,
-      type: json['type'] as String?,
       description: json['description'] as String?,
       note: json['note'] as String?,
       startDate: json['start_date'] as String?,
       endDate: json['end_date'] as String?,
       status: ProjectStatusWire.parse(json['status'] as String?),
       membersCount: (json['members_count'] as num?)?.toInt() ?? 0,
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
+      iconCode: _icon(json['icon_code']),
       plannedAmount: (json['planned_amount'] as num?)?.toDouble(),
+      totalExpense: _money(json['total_expense']),
+      totalIncome: _money(json['total_income']),
+      myNet: _money(json['my_net']),
+      tags: [for (final t in _list(json['tags'])) EmbeddedTag.fromJson(t)],
+      myMemberId: json['my_member_id'] as String?,
+      myRole: json['my_role'] == null
+          ? null
+          : MemberRoleWire.parse(json['my_role'] as String?),
+      isOwner: json['is_owner'] == true,
+      readOnly: json['is_locked'] == true,
+      canAddBill: json['can_add_bill'] == true,
+      canEdit: json['can_edit'] == true,
+      canManageMembers: json['can_manage_members'] == true,
+      linkedTxCount: (json['linked_tx_count'] as num?)?.toInt() ?? 0,
       createdAt: _date(json['created_at']),
       updatedAt: _date(json['updated_at']),
     );
@@ -157,7 +219,6 @@ class Project extends Equatable {
     id,
     ownerUserId,
     name,
-    type,
     description,
     note,
     startDate,
@@ -166,16 +227,25 @@ class Project extends Equatable {
     membersCount,
     iconCode,
     plannedAmount,
+    totalExpense,
+    totalIncome,
+    myNet,
+    tags,
+    myMemberId,
+    myRole,
+    isOwner,
+    readOnly,
+    canAddBill,
+    canEdit,
+    canManageMembers,
+    linkedTxCount,
     createdAt,
     updatedAt,
   ];
 }
 
-/// Post-migration 27: members are linked (userId set) or ad-hoc (userId null).
-/// The previous "contact" kind was collapsed — contacts are user-scoped, so
-/// storing a contact_id on a shared project_members row was ambiguous. FE
-/// resolves contact -> linkedUserId locally and adds members by-email or
-/// ad-hoc.
+/// An event member (API `EventMember`): linked (an app user) or a typed
+/// name.
 class ProjectMember extends Equatable {
   const ProjectMember({
     required this.id,
@@ -185,31 +255,38 @@ class ProjectMember extends Equatable {
     required this.status,
     this.userId,
     this.iconCode,
+    this.isMe = false,
   });
 
   final String id;
   final String projectId;
   final String? userId;
+
+  /// Live profile name for an app user, else the typed name.
   final String displayName;
   final MemberRole role;
   final MemberStatus status;
   final IconCode? iconCode;
+  final bool isMe;
 
   bool get isLinked => userId != null;
   bool get isAdHoc => userId == null;
   bool get isOwner => role == MemberRole.owner;
 
-  factory ProjectMember.fromJson(Map<String, dynamic> json) {
+  factory ProjectMember.fromJson(
+    Map<String, dynamic> json, {
+    String projectId = '',
+  }) {
     return ProjectMember(
       id: json['id'] as String,
-      projectId: json['project_id'] as String,
+      projectId: (json['project_id'] as String?) ?? projectId,
       userId: json['user_id'] as String?,
-      displayName: json['display_name'] as String,
+      displayName:
+          (json['name'] as String?) ?? (json['display_name'] as String?) ?? '?',
       role: MemberRoleWire.parse(json['role'] as String?),
       status: MemberStatusWire.parse(json['status'] as String?),
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
+      iconCode: _icon(json['icon_code']),
+      isMe: json['is_me'] == true,
     );
   }
 
@@ -222,10 +299,11 @@ class ProjectMember extends Equatable {
     role,
     status,
     iconCode,
+    isMe,
   ];
 }
 
-/// `MemberRef` embedded on board rows (API v2): the payer / debtor.
+/// `MemberRef` embedded on board rows and positions: the payer / debtor.
 class ProjectMemberRef extends Equatable {
   const ProjectMemberRef({
     required this.id,
@@ -247,9 +325,7 @@ class ProjectMemberRef extends Equatable {
       id: json['id'] as String,
       userId: json['user_id'] as String?,
       name: (json['name'] as String?) ?? '?',
-      iconCode: json['icon_code'] is Map<String, dynamic>
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
+      iconCode: _icon(json['icon_code']),
       isMe: json['is_me'] == true,
     );
   }
@@ -258,6 +334,68 @@ class ProjectMemberRef extends Equatable {
   List<Object?> get props => [id, userId, name, iconCode, isMe];
 }
 
+/// An event-scoped tag (API `EventTagRef` / `EventTag`): shared by the
+/// members, usable only inside its event.
+class BoardTag extends Equatable {
+  const BoardTag({
+    required this.id,
+    required this.name,
+    this.iconCode,
+    this.mine = false,
+    this.count = 0,
+  });
+
+  final String id;
+  final String name;
+  final IconCode? iconCode;
+
+  /// I have a personal tag with this name: hide "+ เพิ่มเข้าแท็กของฉัน".
+  final bool mine;
+
+  /// Bills carrying it (`EventTag` only).
+  final int count;
+
+  factory BoardTag.fromJson(Map<String, dynamic> json) => BoardTag(
+    id: json['id'] as String,
+    name: (json['name'] as String?) ?? '',
+    iconCode: _icon(json['icon_code']),
+    mine: json['mine'] == true,
+    count: (json['count'] as num?)?.toInt() ?? 0,
+  );
+
+  @override
+  List<Object?> get props => [id, name, iconCode, mine, count];
+}
+
+/// The personal transaction a linked bill was made from (API
+/// `BoardSourceTx`, only for that transaction's owner).
+class BoardSourceTx extends Equatable {
+  const BoardSourceTx({required this.id, this.description, this.accountName});
+
+  final String id;
+  final String? description;
+  final String? accountName;
+
+  static BoardSourceTx? tryParse(Object? json) {
+    if (json is! Map<String, dynamic>) return null;
+    final account = json['account'];
+    return BoardSourceTx(
+      id: json['id'] as String,
+      description: json['description'] as String?,
+      accountName: account is Map<String, dynamic>
+          ? account['name'] as String?
+          : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, description, accountName];
+}
+
+/// One board row: a bill (parent, API `BoardRow`) or one of its splits
+/// (child, API `BoardSplit`, which inherits the parent's type / date).
+/// The app keeps them flat — parents followed by their children — and
+/// [buildProjectTxTree] groups them.
 class ProjectTransaction extends Equatable {
   const ProjectTransaction({
     required this.id,
@@ -273,13 +411,19 @@ class ProjectTransaction extends Equatable {
     this.description,
     this.note,
     this.tags = const [],
+    this.tagRefs = const [],
     this.transactionMember,
+    this.myMark = false,
+    this.myShare = 0,
+    this.locked = false,
+    this.linked = false,
+    this.sourceTx,
   });
 
   final String id;
   final String projectId;
 
-  /// Embedded payer / debtor (null from an older server).
+  /// Embedded payer / debtor.
   final ProjectMemberRef? transactionMember;
 
   /// null for parent rows; set on split-child rows.
@@ -290,45 +434,149 @@ class ProjectTransaction extends Equatable {
   final String transactionMemberId;
   final String recordUserId;
   final String type; // expense | income
-  final double amount;
+
+  /// Empty from the events API (single currency: the user's).
   final String currency;
+  final double amount;
   final String date;
   final String? description;
   final String? note;
 
-  /// Free labels shared by the project's members (replaced the category).
+  /// The event tags' names (= [tagRefs]' names).
   final List<String> tags;
+
+  /// The event tags on the bill (children carry none).
+  final List<BoardTag> tagRefs;
 
   /// project_member ids who have flagged this row resolved on the board.
   final List<String> marks;
+  final bool myMark;
+
+  /// My part of the bill (payer: amount − others' splits; split member: my
+  /// split; else 0).
+  final double myShare;
+
+  /// I can't edit it (event not active / I'm a viewer).
+  final bool locked;
+
+  /// Made from a member's personal transaction: amount / date / payer are
+  /// shared with it.
+  final bool linked;
+
+  /// That personal transaction, only when it's mine.
+  final BoardSourceTx? sourceTx;
 
   bool get isParent => parentProjectTransactionId == null;
   bool get isChild => parentProjectTransactionId != null;
 
   bool isMarkedBy(String projectMemberId) => marks.contains(projectMemberId);
 
+  static List<String> _ids(Object? json) =>
+      ((json as List?) ?? const []).map((e) => e as String).toList();
+
+  /// A bill (API `BoardRow`) without its children — see [flatten].
   factory ProjectTransaction.fromJson(Map<String, dynamic> json) {
+    final member = ProjectMemberRef.tryParse(json['transaction_member']);
+    final tagRefs = [
+      for (final t in ((json['tags'] as List?) ?? const []))
+        if (t is Map<String, dynamic>) BoardTag.fromJson(t),
+    ];
     return ProjectTransaction(
       id: json['id'] as String,
-      projectId: json['project_id'] as String,
+      projectId: (json['project_id'] as String?) ?? '',
       parentProjectTransactionId:
           json['parent_project_transaction_id'] as String?,
-      transactionMemberId: json['transaction_member_id'] as String,
-      transactionMember: ProjectMemberRef.tryParse(json['transaction_member']),
-      recordUserId: json['record_user_id'] as String,
-      type: json['type'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      currency: json['currency'] as String,
-      date: json['date'] as String,
+      transactionMemberId:
+          member?.id ?? (json['transaction_member_id'] as String? ?? ''),
+      transactionMember: member,
+      recordUserId: (json['record_user_id'] as String?) ?? '',
+      type: (json['type'] as String?) ?? 'expense',
+      amount: _money(json['amount']),
+      currency: (json['currency'] as String?) ?? '',
+      date: (json['date'] as String?) ?? '',
       description: json['description'] as String?,
       note: json['note'] as String?,
-      tags: ((json['tags'] as List?) ?? const [])
-          .map((e) => e as String)
-          .toList(growable: false),
-      marks: ((json['marks'] as List?) ?? const [])
-          .map((e) => e as String)
-          .toList(growable: false),
+      tags: [for (final t in tagRefs) t.name],
+      tagRefs: tagRefs,
+      marks: _ids(json['marks']),
+      myMark: json['my_mark'] == true,
+      myShare: _money(json['my_share']),
+      locked: json['locked'] == true,
+      linked: json['linked'] == true,
+      sourceTx: BoardSourceTx.tryParse(json['source_tx']),
     );
+  }
+
+  /// One split (API `BoardSplit`) of [parent].
+  factory ProjectTransaction.split(
+    Map<String, dynamic> json,
+    ProjectTransaction parent,
+  ) {
+    final member = ProjectMemberRef.tryParse(json['transaction_member']);
+    return ProjectTransaction(
+      id: json['id'] as String,
+      projectId: parent.projectId,
+      parentProjectTransactionId: parent.id,
+      transactionMemberId: member?.id ?? '',
+      transactionMember: member,
+      recordUserId: parent.recordUserId,
+      type: parent.type,
+      amount: _money(json['amount']),
+      currency: parent.currency,
+      date: parent.date,
+      marks: _ids(json['marks']),
+      myMark: json['my_mark'] == true,
+      locked: parent.locked,
+    );
+  }
+
+  /// The same row with its tags' `mine` flags taken from [tags] (by id).
+  ProjectTransaction withTagsFrom(List<BoardTag> tags) {
+    if (tagRefs.isEmpty) return this;
+    final byId = {for (final t in tags) t.id: t};
+    return ProjectTransaction(
+      id: id,
+      projectId: projectId,
+      parentProjectTransactionId: parentProjectTransactionId,
+      transactionMemberId: transactionMemberId,
+      transactionMember: transactionMember,
+      recordUserId: recordUserId,
+      type: type,
+      amount: amount,
+      currency: currency,
+      date: date,
+      description: description,
+      note: note,
+      tags: this.tags,
+      tagRefs: [
+        for (final t in tagRefs)
+          byId[t.id] == null
+              ? t
+              : BoardTag(
+                  id: t.id,
+                  name: t.name,
+                  iconCode: t.iconCode,
+                  mine: byId[t.id]!.mine,
+                ),
+      ],
+      marks: marks,
+      myMark: myMark,
+      myShare: myShare,
+      locked: locked,
+      linked: linked,
+      sourceTx: sourceTx,
+    );
+  }
+
+  /// A `BoardRow` with its nested `children`, flat: the bill then its
+  /// splits.
+  static List<ProjectTransaction> flatten(Map<String, dynamic> json) {
+    final parent = ProjectTransaction.fromJson(json);
+    return [
+      parent,
+      for (final c in _list(json['children']))
+        ProjectTransaction.split(c, parent),
+    ];
   }
 
   @override
@@ -346,7 +594,13 @@ class ProjectTransaction extends Equatable {
     description,
     note,
     tags,
+    tagRefs,
     marks,
+    myMark,
+    myShare,
+    locked,
+    linked,
+    sourceTx,
   ];
 }
 
@@ -400,6 +654,7 @@ List<ProjectTxTree> buildProjectTxTree(List<ProjectTransaction> flat) {
   ];
 }
 
+/// The event summary (API `EventSummary`): every figure from the BE.
 class ProjectSummary extends Equatable {
   const ProjectSummary({
     required this.projectId,
@@ -413,6 +668,8 @@ class ProjectSummary extends Equatable {
     this.myPaid,
     this.myShare,
     this.myNet,
+    this.positions = const [],
+    this.byTag = const [],
   });
 
   final String projectId;
@@ -421,36 +678,51 @@ class ProjectSummary extends Equatable {
   final int transactionCount;
   final int memberCount;
 
-  /// Plan-vs-actual trio (API §10 summary): present only when the
-  /// project's `planned_amount` is set — all three omitted when NULL.
-  /// `remaining` may be negative — the FE flips the label ("เกินงบ X"),
-  /// never shows a raw negative (spec §10/4.23).
+  /// Plan-vs-actual trio: null without a plan. `remaining` may be negative —
+  /// the FE flips the label ("เกินงบ X"), never shows a raw negative.
   final double? plannedAmount;
   final double? spentNet;
   final double? remaining;
 
-  /// Caller's standing (contract §6a, expense parents only): null when
-  /// the caller isn't a member. net > 0 = the others owe me.
+  /// Caller's standing: null when the caller isn't a member. net > 0 = the
+  /// others owe me.
   final double? myPaid;
   final double? myShare;
   final double? myNet;
 
+  /// Who paid: every member's standing, paid desc (API `members`).
+  final List<ProjectMemberPosition> positions;
+
+  /// Top 5 expense totals by event tag (API `by_tag`; untagged = no tag).
+  final List<ProjectTagTotal> byTag;
+
   bool get hasPlan => plannedAmount != null;
   bool get isOverPlan => (remaining ?? 0) < 0;
 
-  factory ProjectSummary.fromJson(Map<String, dynamic> json) {
+  factory ProjectSummary.fromJson(
+    Map<String, dynamic> json, {
+    String projectId = '',
+  }) {
+    final my = json['my_position'];
     return ProjectSummary(
-      projectId: json['project_id'] as String,
-      totalExpense: (json['total_expense'] as num?)?.toDouble() ?? 0,
-      totalIncome: (json['total_income'] as num?)?.toDouble() ?? 0,
+      projectId: (json['project_id'] as String?) ?? projectId,
+      totalExpense: _money(json['total_expense']),
+      totalIncome: _money(json['total_income']),
       transactionCount: (json['transaction_count'] as num?)?.toInt() ?? 0,
       memberCount: (json['member_count'] as num?)?.toInt() ?? 0,
       plannedAmount: (json['planned_amount'] as num?)?.toDouble(),
       spentNet: (json['spent_net'] as num?)?.toDouble(),
       remaining: (json['remaining'] as num?)?.toDouble(),
-      myPaid: (json['my_position']?['paid'] as num?)?.toDouble(),
-      myShare: (json['my_position']?['share'] as num?)?.toDouble(),
-      myNet: (json['my_position']?['net'] as num?)?.toDouble(),
+      myPaid: my is Map ? _money(my['paid']) : null,
+      myShare: my is Map ? _money(my['share']) : null,
+      myNet: my is Map ? _money(my['net']) : null,
+      positions: [
+        for (final m in _list(json['members']))
+          ProjectMemberPosition.fromJson(m),
+      ],
+      byTag: [
+        for (final t in _list(json['by_tag'])) ProjectTagTotal.fromJson(t),
+      ],
     );
   }
 
@@ -467,5 +739,221 @@ class ProjectSummary extends Equatable {
     myPaid,
     myShare,
     myNet,
+    positions,
+    byTag,
   ];
+}
+
+/// One member's standing (API `EventPosition`): paid = expense bills they
+/// paid; net = paid − share (> 0: the others owe them).
+class ProjectMemberPosition extends Equatable {
+  const ProjectMemberPosition({
+    required this.memberId,
+    required this.displayName,
+    required this.paid,
+    required this.share,
+    required this.net,
+    this.userId,
+    this.iconCode,
+  });
+
+  final String memberId;
+  final String? userId;
+  final String displayName;
+  final IconCode? iconCode;
+  final double paid;
+  final double share;
+  final double net;
+
+  factory ProjectMemberPosition.fromJson(Map<String, dynamic> json) {
+    final m = ProjectMemberRef.tryParse(json['member']);
+    return ProjectMemberPosition(
+      memberId: m?.id ?? (json['member_id'] as String? ?? ''),
+      userId: m?.userId ?? json['user_id'] as String?,
+      displayName: m?.name ?? (json['display_name'] as String? ?? '?'),
+      iconCode: m?.iconCode,
+      paid: _money(json['paid']),
+      share: _money(json['share']),
+      net: _money(json['net']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    memberId,
+    userId,
+    displayName,
+    iconCode,
+    paid,
+    share,
+    net,
+  ];
+}
+
+/// Expense total for one event tag (API `EventTagTotal`); no tag =
+/// untagged.
+class ProjectTagTotal extends Equatable {
+  const ProjectTagTotal({
+    required this.total,
+    required this.count,
+    this.tag,
+    this.share = 0,
+  });
+
+  final BoardTag? tag;
+  final double total;
+
+  /// My share of those bills.
+  final double share;
+  final int count;
+
+  String get name => tag?.name ?? '';
+  bool get isUntagged => tag == null;
+
+  factory ProjectTagTotal.fromJson(Map<String, dynamic> json) {
+    final t = json['tag'];
+    return ProjectTagTotal(
+      tag: t is Map<String, dynamic> ? BoardTag.fromJson(t) : null,
+      total: _money(json['total']),
+      share: _money(json['share']),
+      count: (json['count'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  @override
+  List<Object?> get props => [tag, total, share, count];
+}
+
+List<ProjectTransaction> _board(Object? rows) => [
+  for (final r in _list(rows)) ...ProjectTransaction.flatten(r),
+];
+
+/// Everything the event page shows (API `EventDetail`, the one "open"
+/// call).
+class ProjectDetail {
+  const ProjectDetail({
+    required this.project,
+    required this.members,
+    required this.transactions,
+    required this.summary,
+    this.tags = const [],
+    this.page = 1,
+    this.totalPages = 1,
+  });
+
+  final Project project;
+  final List<ProjectMember> members;
+
+  /// Board rows, flat: parents followed by their split children.
+  final List<ProjectTransaction> transactions;
+  final ProjectSummary summary;
+
+  /// The event's tags (shared by the members).
+  final List<BoardTag> tags;
+
+  /// The board's paging.
+  final int page;
+  final int totalPages;
+
+  factory ProjectDetail.fromJson(Map<String, dynamic> json) {
+    final project = Project.fromJson(json['event'] as Map<String, dynamic>);
+    final board = json['board'] as Map<String, dynamic>?;
+    final pag = board?['pagination'] as Map<String, dynamic>?;
+    return ProjectDetail(
+      project: project,
+      members: [
+        for (final m in _list(json['members']))
+          ProjectMember.fromJson(m, projectId: project.id),
+      ],
+      transactions: _board(board?['data']),
+      summary: ProjectSummary.fromJson(
+        json['summary'] as Map<String, dynamic>,
+        projectId: project.id,
+      ),
+      tags: [for (final t in _list(json['tags'])) BoardTag.fromJson(t)],
+      page: (pag?['page'] as num?)?.toInt() ?? 1,
+      totalPages: (pag?['total_pages'] as num?)?.toInt() ?? 1,
+    );
+  }
+}
+
+/// What every event write returns (API `EventPatch`): the final state to
+/// patch the page from — never a re-fetch.
+class EventPatch {
+  const EventPatch({
+    required this.project,
+    required this.summary,
+    required this.members,
+    required this.tags,
+    this.row = const [],
+    this.removedRowId,
+    this.accountBalances = const {},
+  });
+
+  final Project project;
+  final ProjectSummary summary;
+  final List<ProjectMember> members;
+  final List<BoardTag> tags;
+
+  /// The bill the write created / changed, flat (bill + its splits); empty
+  /// when none.
+  final List<ProjectTransaction> row;
+
+  /// A bill that left the board.
+  final String? removedRowId;
+
+  /// {account id: balance} for wallets a linked transaction moved.
+  final Map<String, double> accountBalances;
+
+  factory EventPatch.fromJson(Map<String, dynamic> json) {
+    final project = Project.fromJson(json['event'] as Map<String, dynamic>);
+    final row = json['row'];
+    return EventPatch(
+      project: project,
+      summary: ProjectSummary.fromJson(
+        json['summary'] as Map<String, dynamic>,
+        projectId: project.id,
+      ),
+      members: [
+        for (final m in _list(json['members']))
+          ProjectMember.fromJson(m, projectId: project.id),
+      ],
+      tags: [for (final t in _list(json['tags'])) BoardTag.fromJson(t)],
+      row: row is Map<String, dynamic>
+          ? ProjectTransaction.flatten(row)
+          : const [],
+      removedRowId: json['removed_row_id'] as String?,
+      accountBalances: WalletBalance.mapOf(json['account_balances']),
+    );
+  }
+
+  /// `AddBillsResult.rows`: every bill the call added, flat.
+  static List<ProjectTransaction> rowsOf(Map<String, dynamic> json) =>
+      _board(json['rows']);
+}
+
+/// One page of `GET /projects` (API `EventList`).
+class ProjectPage {
+  const ProjectPage({
+    required this.projects,
+    required this.page,
+    required this.totalPages,
+  });
+
+  final List<Project> projects;
+  final int page;
+  final int totalPages;
+
+  bool get hasMore => page < totalPages;
+}
+
+/// The list's sort (API `sort`).
+enum ProjectSort { updatedDesc, startDateDesc, nameAsc }
+
+extension ProjectSortWire on ProjectSort {
+  String get wire => switch (this) {
+    ProjectSort.updatedDesc => 'updated_desc',
+    ProjectSort.startDateDesc => 'start_date_desc',
+    ProjectSort.nameAsc => 'name_asc',
+  };
 }

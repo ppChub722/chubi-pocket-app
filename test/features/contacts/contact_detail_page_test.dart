@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/app/shell/quick_create_context.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/contacts/data/contacts_repository.dart';
@@ -7,6 +8,7 @@ import 'package:chubi_pocket/features/contacts/presentation/cubit/contacts_cubit
 import 'package:chubi_pocket/features/contacts/presentation/pages/contact_detail_page.dart';
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
+import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
@@ -69,8 +71,14 @@ Map<String, dynamic> _prodContact() => {
 
 void main() {
   late _Repo repo;
+  late QuickCreateContext registry;
 
-  setUp(() => repo = _Repo()..body = _prodContact());
+  setUp(() {
+    repo = _Repo()..body = _prodContact();
+    registry = QuickCreateContext();
+  });
+
+  tearDown(() => registry.dispose());
 
   Future<void> pump(WidgetTester t) async {
     final auth = _Auth();
@@ -102,7 +110,9 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('en'),
-            builder: (context, child) => AppUiConfig(child: child!),
+            builder: (context, child) => AppUiConfig(
+              child: QuickCreateContextScope(registry: registry, child: child!),
+            ),
             home: const ContactDetailPage(id: 'c1'),
           ),
         ),
@@ -117,6 +127,22 @@ void main() {
     expect(find.byType(ErrorView), findsNothing);
     expect(find.byType(DetailPageSkeleton), findsNothing);
     expect(find.text('Lee Cooper'), findsWidgets);
+  });
+
+  testWidgets('the + opens debt mode with this contact', (t) async {
+    await pump(t);
+    expect(
+      registry.active(),
+      const QuickCreatePreset.debt(
+        person: EmbeddedPerson(
+          name: 'Lee Cooper',
+          contactId: 'c1',
+          linked: true,
+          linkedUserId: 'u9',
+        ),
+      ),
+    );
+    expect(registry.preset.mode, QuickCreateMode.debt);
   });
 
   testWidgets('network down → error + retry; retry loads the contact', (

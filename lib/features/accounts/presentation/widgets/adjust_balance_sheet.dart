@@ -43,3 +43,40 @@ Future<AdjustBalanceInput?> showAdjustBalanceSheet(
 
 /// What the ปรับยอด sheet resolves to.
 typedef AdjustBalanceInput = AdjustBalanceSheetResult;
+
+/// Turning "ติดตามยอดเงิน" back on: asks the wallet's balance once (the same
+/// sheet, in its set-only form — no current / difference lines). Resolves the
+/// balance as the BE stores it (a credit wallet's debt negative), or null on
+/// cancel; the caller sends it as `current_balance` in the same update.
+Future<double?> showSetBalanceSheet(
+  BuildContext context,
+  Account account,
+) async {
+  final l = AppLocalizations.of(context)!;
+  final palette = Theme.of(context).extension<AppColors>()!;
+  final scheme = Theme.of(context).colorScheme;
+  final credit = account.isLiability;
+  final result = await showAdjustBalanceFormSheet(
+    context,
+    name: account.name,
+    balance: 0,
+    symbol: Currencies.symbolOf(account.currency),
+    tint: account.iconCode.tintFor(palette, fallback: scheme.primary),
+    isCredit: credit,
+    setOnly: true,
+    strings: AdjustBalanceStrings(
+      title: l.walletTrackSetBalanceTitle,
+      primaryLabel: l.walletTrackSetBalanceAction,
+      currentLabel: l.accountAdjustBalanceCurrentLabel,
+      newLabel: credit
+          ? l.accountAdjustBalanceNewDebtLabel
+          : l.accountAdjustBalanceNewLabel,
+      diffLabel: l.accountAdjustBalanceDiffLabel,
+      descriptionLabel: l.commonDescription,
+      noteLabel: l.commonNote,
+      noChange: l.accountAdjustBalanceNoChange,
+      willCreate: l.accountAdjustBalanceWillCreate,
+    ),
+  );
+  return result?.balance;
+}

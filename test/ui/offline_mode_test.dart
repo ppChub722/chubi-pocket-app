@@ -22,6 +22,17 @@ void main() {
         ),
       );
 
+  // The real tap state of an AppButton (it may hold an onPressed and still be
+  // disabled: a `submits` button while offline).
+  bool enabled(WidgetTester t, String label) => t
+      .widget<ButtonStyleButton>(
+        find.descendant(
+          of: find.widgetWithText(AppButton, label),
+          matching: find.bySubtype<ButtonStyleButton>(),
+        ),
+      )
+      .enabled;
+
   testWidgets('no data + offline: error + retry at once, no skeleton', (
     t,
   ) async {
@@ -81,17 +92,109 @@ void main() {
       offline: offline,
     );
     await t.pumpWidget(bar(offline: false));
-    expect(
-      t.widget<AppButton>(find.widgetWithText(AppButton, 'Save')).onPressed,
-      isNotNull,
-    );
+    expect(enabled(t, 'Save'), isTrue);
     await t.pumpWidget(bar(offline: true));
-    expect(
-      t.widget<AppButton>(find.widgetWithText(AppButton, 'Save')).onPressed,
-      isNull,
-    );
+    expect(enabled(t, 'Save'), isFalse);
+    expect(enabled(t, 'Cancel'), isTrue);
     expect(ctrl.text, 'half-written note');
     expect(find.text('half-written note'), findsOneWidget);
+  });
+
+  testWidgets('AppButton(submits): off while offline, others untouched', (
+    t,
+  ) async {
+    var taps = 0;
+    Widget buttons({required bool offline}) => host(
+      Column(
+        children: [
+          AppButton(label: 'Send', submits: true, onPressed: () => taps++),
+          AppButton(label: 'Local', onPressed: () => taps++),
+        ],
+      ),
+      offline: offline,
+    );
+    await t.pumpWidget(buttons(offline: true));
+    expect(enabled(t, 'Send'), isFalse);
+    expect(enabled(t, 'Local'), isTrue);
+    await t.tap(find.text('Send'));
+    expect(taps, 0);
+    await t.pumpWidget(buttons(offline: false));
+    expect(enabled(t, 'Send'), isTrue);
+    await t.tap(find.text('Send'));
+    expect(taps, 1);
+  });
+
+  testWidgets('FormSheet: primary off while offline, cancel stays', (t) async {
+    final ctrl = TextEditingController(text: '120');
+    Widget sheet({required bool offline}) => host(
+      FormSheet(
+        title: 'Adjust balance',
+        primaryLabel: 'Adjust',
+        cancelLabel: 'Cancel',
+        onPrimary: () {},
+        child: TextField(controller: ctrl),
+      ),
+      offline: offline,
+    );
+    await t.pumpWidget(sheet(offline: false));
+    expect(enabled(t, 'Adjust'), isTrue);
+    await t.pumpWidget(sheet(offline: true));
+    expect(enabled(t, 'Adjust'), isFalse);
+    expect(enabled(t, 'Cancel'), isTrue);
+    expect(find.text('120'), findsOneWidget);
+  });
+
+  testWidgets('quick create: save, draft and delete off while offline', (
+    t,
+  ) async {
+    final ctrl = TextEditingController(text: 'coffee');
+    Widget sheet({required bool offline}) => host(
+      QuickCreateSheetShell(
+        title: 'Edit draft',
+        saveLabel: 'Confirm',
+        draftLabel: 'Save as draft',
+        closeTooltip: 'Close',
+        deleteTooltip: 'Delete',
+        dirty: true,
+        onCloseBlocked: () {},
+        onSave: () {},
+        onSaveDraft: () {},
+        onDelete: () {},
+        body: TextField(controller: ctrl),
+      ),
+      offline: offline,
+    );
+    AppIconButton delete() => t.widget<AppIconButton>(
+      find.byWidgetPredicate(
+        (w) => w is AppIconButton && w.tooltip == 'Delete',
+      ),
+    );
+    await t.pumpWidget(sheet(offline: false));
+    expect(enabled(t, 'Confirm'), isTrue);
+    expect(enabled(t, 'Save as draft'), isTrue);
+    expect(delete().onPressed, isNotNull);
+    await t.pumpWidget(sheet(offline: true));
+    expect(enabled(t, 'Confirm'), isFalse);
+    expect(enabled(t, 'Save as draft'), isFalse);
+    expect(delete().onPressed, isNull);
+    expect(find.text('coffee'), findsOneWidget);
+  });
+
+  testWidgets('bulk delete dims while offline', (t) async {
+    Widget bar({required bool offline}) => host(
+      BulkDeleteButton(tooltip: 'Delete', onPressed: () {}),
+      offline: offline,
+    );
+    AppIconButton button() => t.widget<AppIconButton>(
+      find.descendant(
+        of: find.byType(BulkDeleteButton),
+        matching: find.byType(AppIconButton),
+      ),
+    );
+    await t.pumpWidget(bar(offline: false));
+    expect(button().onPressed, isNotNull);
+    await t.pumpWidget(bar(offline: true));
+    expect(button().onPressed, isNull);
   });
 
   testWidgets('coming back online re-runs the page load (pull-to-refresh)', (

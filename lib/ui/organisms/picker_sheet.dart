@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_button.dart';
 import '../atoms/app_icon_button.dart';
+import '../atoms/select_check.dart';
 import '../atoms/app_input.dart';
 
 import '../tokens/app/app_icons.dart';
@@ -171,6 +173,11 @@ class _PickerSheetState extends State<PickerSheet> {
 /// every picker: never a ✓). [indent] shifts it right (a tree's levels).
 /// [titleStyle] merges into the title (a font name in its font); a null
 /// [onTap] = disabled, faded.
+///
+/// Multi-select (add several bills / members at once): give every row
+/// [checked] (true / false) — a square [SelectCheck] leads the row and a
+/// checked row gets the same highlight tint; put a [PickerConfirmBar]
+/// ("เพิ่ม (n)") in the sheet's footer.
 class PickerRow extends StatelessWidget {
   const PickerRow({
     required this.title,
@@ -182,8 +189,13 @@ class PickerRow extends StatelessWidget {
     this.indent = 0,
     this.selected = false,
     this.titleStyle,
+    this.checked,
     super.key,
   });
+
+  /// Multi-select mode: null = a single-select row; true / false = the
+  /// row's check (it also tints like [selected]).
+  final bool? checked;
 
   /// Every row's height (an [IconButton] ▾ fits inside it).
   static const double rowHeight = 56;
@@ -212,6 +224,7 @@ class PickerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final selected = this.selected || (checked ?? false);
     final row = Material(
       color: selected
           ? scheme.primary.withValues(alpha: 0.10)
@@ -231,6 +244,10 @@ class PickerRow extends StatelessWidget {
             ),
             child: Row(
               children: [
+                if (checked != null) ...[
+                  SelectCheck(value: checked, onTap: null),
+                  const SizedBox(width: AppSpacing.md),
+                ],
                 if (leading != null) ...[
                   IconTheme.merge(
                     data: IconThemeData(
@@ -283,9 +300,48 @@ class PickerRow extends StatelessWidget {
     );
     return Semantics(
       selected: selected,
+      checked: checked,
       button: true,
       enabled: onTap != null,
       child: onTap == null ? Opacity(opacity: 0.38, child: row) : row,
+    );
+  }
+}
+
+/// The confirm button pinned under a multi-select picker: one full-width
+/// primary button, e.g. "เพิ่ม (3)" — the caller builds the label with the
+/// count; [onPressed] null (nothing checked) = disabled. Put it in
+/// [PickerSheet.footer].
+class PickerConfirmBar extends StatelessWidget {
+  const PickerConfirmBar({
+    required this.label,
+    required this.onPressed,
+    this.submits = false,
+    super.key,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  /// The confirm itself calls the server (off while offline).
+  final bool submits;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
+      child: AppButton(
+        label: label,
+        expand: true,
+        size: AppButtonSize.large,
+        submits: submits,
+        onPressed: onPressed,
+      ),
     );
   }
 }

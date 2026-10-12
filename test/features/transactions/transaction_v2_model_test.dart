@@ -40,7 +40,19 @@ Map<String, dynamic> _row({
     'parent_id': 'c0',
   },
   'project': {'id': 'p1', 'name': 'Trip', 'status': 'active'},
-  'is_repayment': true,
+  'counterparty': {
+    'entry_id': 'e1',
+    'key': 'n:bee',
+    'person': {
+      'name': 'Bee',
+      'contact_id': null,
+      'icon_code': null,
+      'linked': false,
+      'linked_user_id': null,
+    },
+    'direction': 'received',
+    'paid': true,
+  },
   'split_count': 1,
   'splits': [
     {
@@ -66,7 +78,10 @@ void main() {
     expect(t.categoryId, 'c1');
     expect(t.projectId, 'p1');
     expect(t.currency, 'THB');
-    expect(t.isRepayment, isTrue);
+    expect(t.isDebtEntry, isTrue);
+    expect(t.counterparty?.entryId, 'e1');
+    expect(t.counterparty?.key, 'n:bee');
+    expect(t.counterparty?.paid, isTrue);
 
     final a = t.account!;
     expect(a.name, 'KBank');
@@ -104,7 +119,7 @@ void main() {
     expect(t.accountId, isNull);
     expect(t.categoryId, isNull);
     expect(t.projectId, isNull);
-    expect(t.isRepayment, isFalse);
+    expect(t.isDebtEntry, isFalse);
     expect(t.transferPeer, isNull);
   });
 

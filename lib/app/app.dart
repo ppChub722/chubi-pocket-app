@@ -17,7 +17,7 @@ import '../features/accounts/data/accounts_repository.dart';
 import '../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../features/app_version/data/app_version_repository.dart';
 import '../features/app_version/presentation/cubit/app_version_cubit.dart';
-import '../features/app_version/presentation/widgets/update_banner.dart';
+import 'connection_shell.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/budgets/data/budgets_repository.dart';
 import '../features/budgets/presentation/cubit/budgets_cubit.dart';
@@ -33,13 +33,11 @@ import '../features/home/presentation/cubit/dashboard_cubit.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../features/personal_debts/data/personal_debts_repository.dart';
-import '../features/personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../features/projects/data/projects_repository.dart';
 import '../features/projects/presentation/cubit/projects_cubit.dart';
 import '../features/saving_goals/data/saving_goals_repository.dart';
 import '../features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
-import '../features/scheduled_transactions/data/scheduled_transactions_repository.dart';
-import '../features/scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
+import '../features/recurring/data/recurring_repository.dart';
 import '../features/tags/data/tags_repository.dart';
 import '../features/tags/presentation/cubit/tags_cubit.dart';
 import '../features/transactions/data/transactions_repository.dart';
@@ -80,7 +78,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
   late final ProjectsRepository _projectsRepository;
   late final SavingGoalsRepository _savingGoalsRepository;
   late final BudgetsRepository _budgetsRepository;
-  late final ScheduledTransactionsRepository _scheduledTransactionsRepository;
+  late final RecurringRepository _recurringRepository;
   late final DashboardRepository _dashboardRepository;
   late final PendingRepository _pendingRepository;
   late final AuthCubit _authCubit;
@@ -105,9 +103,7 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     _projectsRepository = ProjectsRepository(client: _apiClient);
     _savingGoalsRepository = SavingGoalsRepository(client: _apiClient);
     _budgetsRepository = BudgetsRepository(client: _apiClient);
-    _scheduledTransactionsRepository = ScheduledTransactionsRepository(
-      client: _apiClient,
-    );
+    _recurringRepository = RecurringRepository(client: _apiClient);
     _dashboardRepository = DashboardRepository(client: _apiClient);
     _pendingRepository = PendingRepository(client: _apiClient);
     _authCubit = AuthCubit(
@@ -180,8 +176,8 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           value: _savingGoalsRepository,
         ),
         RepositoryProvider<BudgetsRepository>.value(value: _budgetsRepository),
-        RepositoryProvider<ScheduledTransactionsRepository>.value(
-          value: _scheduledTransactionsRepository,
+        RepositoryProvider<RecurringRepository>.value(
+          value: _recurringRepository,
         ),
         RepositoryProvider<DashboardRepository>.value(
           value: _dashboardRepository,
@@ -239,10 +235,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           BlocProvider<ContactsCubit>(
             create: (_) => ContactsCubit(repository: _contactsRepository),
           ),
-          BlocProvider<PersonalDebtsCubit>(
-            create: (_) =>
-                PersonalDebtsCubit(repository: _personalDebtsRepository),
-          ),
           BlocProvider<ProjectsCubit>(
             create: (_) => ProjectsCubit(repository: _projectsRepository),
           ),
@@ -251,11 +243,6 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
           ),
           BlocProvider<BudgetsCubit>(
             create: (_) => BudgetsCubit(repository: _budgetsRepository),
-          ),
-          BlocProvider<ScheduledTransactionsCubit>(
-            create: (_) => ScheduledTransactionsCubit(
-              repository: _scheduledTransactionsRepository,
-            ),
           ),
           // App-scoped so the เพิ่มเติม hub can show live figures too.
           BlocProvider<DashboardCubit>(
@@ -326,31 +313,10 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                     // with it open is dropped here, for every page and
                     // sheet below.
                     child: KeyboardInsetsGuard(
-                      child: BlocBuilder<ConnectionCubit, ServerConnectionState>(
-                        builder: (context, conn) => ConnectionScope(
-                          offline: conn.isOffline,
-                          reconnects: conn.reconnects,
-                          child: Column(
-                            children: [
-                              OfflineBanner(
-                                state: conn,
-                                onRetry: context
-                                    .read<ConnectionCubit>()
-                                    .retryNow,
-                              ),
-                              const UpdateBanner(),
-                              Expanded(
-                                // The banner took the status-bar inset: pages
-                                // below must not add it again.
-                                child: MediaQuery.removePadding(
-                                  context: context,
-                                  removeTop: OfflineBanner.visible(conn),
-                                  child: child ?? const SizedBox.shrink(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      // Offline mode: ConnectionScope + banners for every
+                      // page and sheet below.
+                      child: ConnectionShell(
+                        child: child ?? const SizedBox.shrink(),
                       ),
                     ),
                   ),
@@ -394,11 +360,9 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     ctx.read<TagsCubit>().clear();
     ctx.read<TransactionsCubit>().clear();
     ctx.read<ContactsCubit>().clear();
-    ctx.read<PersonalDebtsCubit>().clear();
     ctx.read<ProjectsCubit>().clear();
     ctx.read<SavingGoalsCubit>().clear();
     ctx.read<BudgetsCubit>().clear();
-    ctx.read<ScheduledTransactionsCubit>().clear();
     ctx.read<DashboardCubit>().clear();
     ctx.read<PendingCubit>().clear();
     ctx.read<UnreadBadgeCubit>().clear();

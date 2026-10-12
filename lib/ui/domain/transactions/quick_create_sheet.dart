@@ -299,7 +299,11 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                                   icon: AppIcons.delete,
                                   tooltip: widget.deleteTooltip,
                                   color: scheme.error,
-                                  onPressed: widget.saving
+                                  // Offline: the delete can't reach the
+                                  // server.
+                                  onPressed:
+                                      widget.saving ||
+                                          ConnectionScope.isOffline(context)
                                       ? null
                                       : widget.onDelete,
                                 ),
@@ -336,6 +340,7 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                         label: widget.saveLabel,
                         expand: true,
                         loading: widget.saving,
+                        submits: true,
                         onPressed: widget.onSave,
                       ),
                     )
@@ -348,6 +353,7 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                               label: widget.draftLabel!,
                               variant: AppButtonVariant.outlined,
                               expand: true,
+                              submits: true,
                               onPressed: widget.onSaveDraft,
                             ),
                           ),
@@ -358,6 +364,7 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                               label: widget.saveLabel,
                               expand: true,
                               loading: widget.saving,
+                              submits: true,
                               onPressed: widget.onSave,
                             ),
                           ),

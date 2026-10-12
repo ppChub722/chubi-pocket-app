@@ -93,6 +93,18 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
     variant: AppButtonVariant.outlined,
   );
 
+  Future<void> _setBalance() async {
+    final r = await showAdjustBalanceFormSheet(
+      context,
+      name: 'Savings',
+      balance: 0,
+      symbol: '฿',
+      setOnly: true,
+      strings: _adjustStrings(credit: false),
+    );
+    _say(r == null ? 'dismissed' : 'balance ${r.balance}');
+  }
+
   Future<void> _adjust({required bool credit, required double balance}) async {
     final r = await showAdjustBalanceFormSheet(
       context,
@@ -181,6 +193,11 @@ class _SheetsAccountsPageState extends State<_SheetsAccountsPage> {
                 'Open',
                 () => _adjust(credit: true, balance: -12400),
               ),
+            ),
+            HubUse(
+              label: 'Set balance — tracking turned back on (set-only form)',
+              page: 'Wallet edit (ติดตามยอดเงิน off → on)',
+              child: _open('Open', _setBalance),
             ),
             HubUse(
               label: 'Bank picker — with "none"',

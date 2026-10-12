@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../atoms/ui_config.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -34,7 +35,7 @@ class MoneyText extends StatelessWidget {
     this.amount, {
     this.tone = MoneyTone.plain,
     this.style,
-    this.symbol = '฿',
+    this.symbol,
     this.hideable = true,
     this.textAlign,
     super.key,
@@ -43,12 +44,15 @@ class MoneyText extends StatelessWidget {
   final num amount;
   final MoneyTone tone;
   final TextStyle? style;
-  final String symbol;
+
+  /// Null = the user's currency symbol from `UiConfig` (set from /me).
+  final String? symbol;
   final bool hideable;
   final TextAlign? textAlign;
 
   @override
   Widget build(BuildContext context) {
+    final symbol = this.symbol ?? UiConfig.stringsOf(context).currencySymbol;
     final hidden = hideable && isMoneyHidden(context);
     final palette = Theme.of(context).extension<AppColors>()!;
     final (Color? color, String sign) = switch (tone) {
@@ -83,10 +87,15 @@ class MoneyText extends StatelessWidget {
 
 /// An amount as plain text for captions / sentences ("คืนแล้ว ฿300 จาก
 /// ฿500") — honours the 👁 privacy toggle like [MoneyText].
-String moneyString(BuildContext context, num amount, {String symbol = '฿'}) =>
-    isMoneyHidden(context)
-    ? '$symbol••••'
-    : CurrencyFormatter.format(amount, symbol: symbol);
+String moneyString(BuildContext context, num amount, {String? symbol}) =>
+    _moneyString(context, amount, symbol);
+
+String _moneyString(BuildContext context, num amount, String? symbolOrNull) {
+  final symbol = symbolOrNull ?? UiConfig.stringsOf(context).currencySymbol;
+  return isMoneyHidden(context)
+      ? '$symbol••••'
+      : CurrencyFormatter.format(amount, symbol: symbol);
+}
 
 /// Whether the 👁 money-privacy toggle is offered at all. Off for now
 /// (owner 2026-10-10: show the numbers, always — a new way to turn it on

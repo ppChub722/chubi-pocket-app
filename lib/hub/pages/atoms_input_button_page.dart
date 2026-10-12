@@ -58,6 +58,30 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
+          title: 'submits — offline',
+          note:
+              'A button that sends to the server (save, submit, sign in, '
+              'delete) passes submits: true and disables itself while the '
+              'app is offline (ConnectionScope). Other buttons stay live. '
+              'Shown here inside an offline scope.',
+          child: ConnectionScope(
+            offline: true,
+            reconnects: 0,
+            child: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                AppButton(label: 'Save', submits: true, onPressed: () {}),
+                AppButton(
+                  label: 'Cancel',
+                  variant: AppButtonVariant.outlined,
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+        HubDemo(
           title: 'Large, full width',
           child: AppButton(
             label: _loading ? 'Saving…' : 'Tap to fake a save',

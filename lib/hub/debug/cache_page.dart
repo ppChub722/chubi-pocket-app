@@ -11,10 +11,8 @@ import '../../features/contacts/presentation/cubit/contacts_cubit.dart';
 import '../../features/home/presentation/cubit/dashboard_cubit.dart';
 import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../../features/pending/presentation/cubit/pending_cubit.dart';
-import '../../features/personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../../features/projects/presentation/cubit/projects_cubit.dart';
 import '../../features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
-import '../../features/scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
 import '../../features/tags/presentation/cubit/tags_cubit.dart';
 import '../../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../../ui/ui.dart';
@@ -111,13 +109,6 @@ class _CachePageState extends State<CachePage> {
         count: (s) => s.contacts.length,
         load: (c) => c.load(),
       ),
-      list<PersonalDebtsCubit, PersonalDebtsState>(
-        name: 'Debts',
-        what: 'personal debts (all statuses)',
-        status: (s) => s.status.name,
-        count: (s) => s.debts.length,
-        load: (c) => c.load(),
-      ),
       list<ProjectsCubit, ProjectsState>(
         name: 'Events',
         what: 'events (status filter applies)',
@@ -137,13 +128,6 @@ class _CachePageState extends State<CachePage> {
         what: 'budgets',
         status: (s) => s.status.name,
         count: (s) => s.budgets.length,
-        load: (c) => c.load(),
-      ),
-      list<ScheduledTransactionsCubit, ScheduledTransactionsState>(
-        name: 'Scheduled',
-        what: 'scheduled transactions',
-        status: (s) => s.status.name,
-        count: (s) => s.entries.length,
         load: (c) => c.load(),
       ),
       list<DashboardCubit, DashboardState>(

@@ -3,385 +3,405 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../transactions/domain/refs.dart';
+import '../../transactions/domain/transaction.dart';
 import '../domain/project.dart';
 import '../../../ui/ui.dart';
 
-/// `POST /v1/projects/quick` response envelope (API §10 "Quick create"):
-/// the created project (same shape as `POST /v1/projects`) plus
-/// `linked_count` — the number of board rows created from the included
-/// bills (new + ticked).
+/// `POST /v1/projects/quick` / `POST /v1/projects/:id/bills` result: the
+/// event, the new bill's personal transaction and the wallets it moved.
 class QuickCreateResult {
   const QuickCreateResult({
     required this.project,
     required this.linkedCount,
     this.transactionId,
     this.accountBalances = const {},
+    this.patch,
   });
 
   final Project project;
+
+  /// Bills the call added.
   final int linkedCount;
 
-  /// The new bill the call created (null from an older server) — used to
-  /// attach tags after the fact.
+  /// The new bill's personal transaction (null when only existing ones
+  /// were pulled in).
   final String? transactionId;
 
-  /// {account id: balance after the write} (API v2 `account_balances`).
+  /// {account id: balance after the write} (API `account_balances`).
   final Map<String, double> accountBalances;
+
+  /// The event page's patch (bills added to an existing event).
+  final EventPatch? patch;
 }
 
-/// Thin Dio wrapper around `/v1/projects` (API §10).
+/// `POST /projects/:id/tags/import` result.
+class EventTagImportResult {
+  const EventTagImportResult({required this.created, required this.tags});
+
+  /// My new personal tags.
+  final List<EmbeddedTag> created;
+
+  /// The event's tags, `mine` updated.
+  final List<BoardTag> tags;
+}
+
+/// Thin Dio wrapper around `/v1/projects` (API tag "Events"). Every write
+/// returns an [EventPatch] the page applies — no re-fetch.
 class ProjectsRepository {
   ProjectsRepository({required ApiClient client}) : _client = client;
   final ApiClient _client;
 
-  // --- Project CRUD ---
-
-  Future<List<Project>> list({String? status, String? type}) async {
+  Future<T> _call<T>(Future<T> Function() run) async {
     try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/projects',
-        queryParameters: <String, dynamic>{'status': ?status, 'type': ?type},
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(Project.fromJson).toList();
+      return await run();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  Future<Project> get(String id) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>('/projects/$id');
-      return Project.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Future<EventPatch> _patch(Future<Response<Map<String, dynamic>>> request) =>
+      _call(() async => EventPatch.fromJson((await request).data!));
 
-  Future<Project> create({
+  // --- Events ---
+
+  /// One page of my events. [status]: active (default) / completed /
+  /// cancelled / archived / all; [q] searches the name; [tagIds] = MY
+  /// personal tags (any of them).
+  Future<ProjectPage> list({
+    String? status,
+    String? q,
+    List<String> tagIds = const [],
+    ProjectSort? sort,
+    int page = 1,
+    int perPage = 20,
+  }) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects',
+      queryParameters: <String, dynamic>{
+        'status': ?status,
+        if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
+        if (tagIds.isNotEmpty) 'tag_id': tagIds,
+        'sort': ?sort?.wire,
+        'page': page.toString(),
+        'per_page': perPage.toString(),
+      },
+    );
+    final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
+    final pag = res.data!['pagination'] as Map<String, dynamic>?;
+    return ProjectPage(
+      projects: data.map(Project.fromJson).toList(),
+      page: (pag?['page'] as num?)?.toInt() ?? page,
+      totalPages: (pag?['total_pages'] as num?)?.toInt() ?? page,
+    );
+  });
+
+  Future<Project> get(String id) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>('/projects/$id');
+    return Project.fromJson(res.data!);
+  });
+
+  /// The event page in one call: event, summary, members, tags and the
+  /// board's first page.
+  Future<ProjectDetail> detail(String id, {int perPage = 50}) =>
+      _call(() async {
+        final res = await _client.dio.get<Map<String, dynamic>>(
+          '/projects/$id/detail',
+          queryParameters: <String, dynamic>{'per_page': perPage.toString()},
+        );
+        return ProjectDetail.fromJson(res.data!);
+      });
+
+  /// One call (plan, dates and my tags included) → the new event's detail.
+  /// [startDate] / [endDate] are `YYYY-MM-DD`.
+  Future<ProjectDetail> create({
     required String name,
-    String? type,
     String? description,
     String? note,
     String? startDate,
     String? endDate,
+    double? plannedAmount,
+    List<String> tagIds = const [],
     IconCode? iconCode,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/projects',
-        data: <String, dynamic>{
-          'name': name,
-          'type': ?type,
-          'description': ?description,
-          'note': ?note,
-          'start_date': ?startDate,
-          'end_date': ?endDate,
-          if (iconCode != null) 'icon_code': iconCode.toJson(),
-        },
-      );
-      return Project.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects',
+      data: <String, dynamic>{
+        'name': name,
+        'description': ?description,
+        'note': ?note,
+        'start_date': ?startDate,
+        'end_date': ?endDate,
+        'planned_amount': ?plannedAmount,
+        if (tagIds.isNotEmpty) 'tag_ids': tagIds,
+        if (iconCode != null) 'icon_code': iconCode.toJson(),
+      },
+    );
+    return ProjectDetail.fromJson(res.data!);
+  });
 
-  /// `planned_amount` (API §10, spec §10/4.23) uses presence semantics:
-  /// pass [plannedAmount] to set the plan, set [clearPlannedAmount] to
-  /// send an explicit `null` (turns the plan display off), leave both
-  /// unset to keep the column unchanged. [description] / [note]: null =
-  /// unchanged, `''` = clear (migration 51).
-  Future<Project> update(
+  /// Partial update. [description] / [note]: null = unchanged, `''` =
+  /// clear. [plannedAmount] / [startDate] / [endDate]: a value sets it,
+  /// [clearPlannedAmount] / [clearStartDate] / [clearEndDate] send an
+  /// explicit null (clear). [tagIds] = MY personal tags (any member).
+  Future<EventPatch> update(
     String id, {
     String? name,
-    String? type,
     String? description,
     String? note,
     String? startDate,
     String? endDate,
+    bool clearStartDate = false,
+    bool clearEndDate = false,
     ProjectStatus? status,
     IconCode? iconCode,
     double? plannedAmount,
     bool clearPlannedAmount = false,
-  }) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/projects/$id',
-        data: <String, dynamic>{
-          'name': ?name,
-          'type': ?type,
-          'description': ?description,
-          'note': ?note,
-          'start_date': ?startDate,
-          'end_date': ?endDate,
-          'status': ?status?.wire,
-          if (iconCode != null) 'icon_code': iconCode.toJson(),
-          if (plannedAmount != null)
-            'planned_amount': plannedAmount
-          else if (clearPlannedAmount)
-            'planned_amount': null,
-        },
-      );
-      return Project.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+    List<String>? tagIds,
+  }) => _patch(
+    _client.dio.put<Map<String, dynamic>>(
+      '/projects/$id',
+      data: <String, dynamic>{
+        'name': ?name,
+        'description': ?description,
+        'note': ?note,
+        if (startDate != null)
+          'start_date': startDate
+        else if (clearStartDate)
+          'start_date': null,
+        if (endDate != null)
+          'end_date': endDate
+        else if (clearEndDate)
+          'end_date': null,
+        'status': ?status?.wire,
+        if (iconCode != null) 'icon_code': iconCode.toJson(),
+        if (plannedAmount != null)
+          'planned_amount': plannedAmount
+        else if (clearPlannedAmount)
+          'planned_amount': null,
+        'tag_ids': ?tagIds,
+      },
+    ),
+  );
 
-  /// `POST /v1/projects/quick` (API §10 "Quick create", spec §10/4.24) —
-  /// atomic: create project + auto-add members + board rows for every
-  /// included bill, born auto-claimed. Settled debt state is never
-  /// modified.
-  ///
-  /// Request shape:
-  /// - `name` — required (FE composes the members+date default, editable)
-  /// - `new_transaction` — optional; the exact `POST /v1/transactions`
-  ///   body (splits[] allowed), processed through the normal personal
-  ///   transaction create path
-  /// - `transaction_ids` — saved rows to pull in; each must belong to the
-  ///   caller and have `project_id IS NULL` (unless [move]), else the whole
-  ///   call fails (atomic)
-  /// - `move` — true: rows already in another event move here (atomic)
+  /// `POST /v1/projects/quick` — atomic: create the event + auto-add
+  /// members + board bills from the new transaction ([newTransaction], the
+  /// exact `POST /v1/transactions` body) and / or saved rows
+  /// ([transactionIds]; [move] takes them out of another event).
   ///
   /// Errors: `400 VALIDATION_ERROR` (a transfer), `404 TX_NOT_FOUND`,
-  /// `409 TX_ALREADY_IN_PROJECT`, `422 TX_NOT_BILLABLE` (repayment /
-  /// opening balance / adjustment).
+  /// `409 TX_ALREADY_IN_PROJECT`, `422 TX_NOT_BILLABLE`.
   Future<QuickCreateResult> quickCreate({
     required String name,
     Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
     bool move = false,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/projects/quick',
-        data: <String, dynamic>{
-          'name': name,
-          'new_transaction': ?newTransaction,
-          if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
-          if (move) 'move': true,
-        },
-      );
-      return QuickCreateResult(
-        project: Project.fromJson(res.data!),
-        linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
-        transactionId: res.data!['transaction_id'] as String?,
-        accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects/quick',
+      data: <String, dynamic>{
+        'name': name,
+        'new_transaction': ?newTransaction,
+        if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
+        if (move) 'move': true,
+      },
+    );
+    final detail = ProjectDetail.fromJson(
+      res.data!['detail'] as Map<String, dynamic>,
+    );
+    return QuickCreateResult(
+      project: detail.project,
+      linkedCount: detail.transactions.where((t) => t.isParent).length,
+      transactionId: res.data!['new_transaction_id'] as String?,
+      accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
+    );
+  });
 
-  /// `POST /v1/projects/:id/bills` — a new bill and / or saved rows
-  /// ([transactionIds]) pulled into an existing project; [move] takes rows
-  /// out of the event they're in. Same response and errors as
-  /// [quickCreate], plus the project's own (NOT_MEMBER, FORBIDDEN_ROLE,
-  /// PROJECT_LOCKED, PROJECT_NOT_ACTIVE).
+  /// `POST /v1/projects/:id/bills` — a new bill and / or saved rows pulled
+  /// into an existing event (`AddBillsResult`: the patch + the new rows).
   Future<QuickCreateResult> addBills(
     String projectId, {
     Map<String, dynamic>? newTransaction,
     List<String> transactionIds = const [],
     bool move = false,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/projects/$projectId/bills',
-        data: <String, dynamic>{
-          'new_transaction': ?newTransaction,
-          if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
-          if (move) 'move': true,
-        },
-      );
-      return QuickCreateResult(
-        project: Project.fromJson(res.data!),
-        linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
-        transactionId: res.data!['transaction_id'] as String?,
-        accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/bills',
+      data: <String, dynamic>{
+        'new_transaction': ?newTransaction,
+        if (transactionIds.isNotEmpty) 'transaction_ids': transactionIds,
+        if (move) 'move': true,
+      },
+    );
+    final patch = EventPatch.fromJson(res.data!);
+    return QuickCreateResult(
+      project: patch.project,
+      linkedCount: EventPatch.rowsOf(res.data!).where((t) => t.isParent).length,
+      transactionId: res.data!['new_transaction_id'] as String?,
+      accountBalances: patch.accountBalances,
+      patch: patch,
+    );
+  });
 
-  /// `DELETE /v1/projects/:id/bills/:transaction_id` → 204 — takes a saved
-  /// row back out of the event (it stays in the book). Errors: 404
-  /// TX_NOT_FOUND / TX_NOT_IN_PROJECT, the project's own.
-  Future<void> removeBill(String projectId, String transactionId) async {
-    try {
-      await _client.dio.delete<dynamic>(
-        '/projects/$projectId/bills/$transactionId',
+  /// `DELETE /v1/projects/:id/bills/:transaction_id` — takes a saved row
+  /// back out of the event (it stays in the book).
+  Future<void> removeBill(String projectId, String transactionId) =>
+      _call(() async {
+        await _client.dio.delete<dynamic>(
+          '/projects/$projectId/bills/$transactionId',
+        );
+      });
+
+  /// Deletes the event and its bills; [deleteLinkedTxs] also deletes MY
+  /// personal transactions linked to them (else they stay, unlinked).
+  /// Returns the wallets those deletions moved ({account id: balance}).
+  Future<Map<String, double>> delete(
+    String id, {
+    bool deleteLinkedTxs = false,
+  }) => _call(() async {
+    final res = await _client.dio.delete<dynamic>(
+      '/projects/$id',
+      queryParameters: <String, dynamic>{
+        if (deleteLinkedTxs) 'delete_linked_txs': 'true',
+      },
+    );
+    final body = res.data;
+    return body is Map<String, dynamic>
+        ? WalletBalance.mapOf(body['account_balances'])
+        : const <String, double>{};
+  });
+
+  Future<void> leave(String id) => _call(() async {
+    await _client.dio.post<dynamic>('/projects/$id/leave');
+  });
+
+  Future<EventPatch> transferOwnership(String id, String newOwnerUserId) =>
+      _patch(
+        _client.dio.post<Map<String, dynamic>>(
+          '/projects/$id/transfer-ownership',
+          data: <String, dynamic>{'new_owner_user_id': newOwnerUserId},
+        ),
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<void> delete(String id) async {
-    try {
-      await _client.dio.delete<dynamic>('/projects/$id');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<void> leave(String id) async {
-    try {
-      await _client.dio.post<dynamic>('/projects/$id/leave');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<void> transferOwnership(String id, String newOwnerUserId) async {
-    try {
-      await _client.dio.post<dynamic>(
-        '/projects/$id/transfer-ownership',
-        data: <String, dynamic>{'new_owner_user_id': newOwnerUserId},
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
 
   // --- Members ---
 
-  Future<List<ProjectMember>> listMembers(String projectId) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/projects/$projectId/members',
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(ProjectMember.fromJson).toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Future<List<ProjectMember>> listMembers(String projectId) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects/$projectId/members',
+    );
+    final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
+    return [
+      for (final m in data) ProjectMember.fromJson(m, projectId: projectId),
+    ];
+  });
 
-  /// Two variants (post-migration 27 — the from-contact variant is gone):
-  ///   by-email:  pass `email` + `displayName`
-  ///   ad-hoc:    pass `displayName` + `adHoc=true`
-  ///
-  /// "Add my contact X": resolve the contact's `linkedUserId` locally first,
-  /// then call this with the contact's email (if any), or fall back to ad-hoc.
-  Future<ProjectMember> addMember(
+  /// By email (+ [displayName]) or a typed person ([displayName] +
+  /// [adHoc]); bad input → 400.
+  Future<EventPatch> addMember(
     String projectId, {
     String? email,
     String? displayName,
     MemberRole role = MemberRole.contributor,
     bool adHoc = false,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/projects/$projectId/members',
-        data: <String, dynamic>{
-          'email': ?email,
-          'display_name': ?displayName,
-          'role': role.wire,
-          if (adHoc) 'ad_hoc': true,
-        },
-      );
-      return ProjectMember.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  }) => _patch(
+    _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/members',
+      data: <String, dynamic>{
+        'email': ?email,
+        'display_name': ?displayName,
+        'role': role.wire,
+        if (adHoc) 'ad_hoc': true,
+      },
+    ),
+  );
 
-  Future<ProjectMember> updateMemberRole(
+  Future<EventPatch> updateMemberRole(
     String projectId,
     String memberId,
     MemberRole role,
-  ) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/projects/$projectId/members/$memberId',
-        data: <String, dynamic>{'role': role.wire},
-      );
-      return ProjectMember.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  ) => _patch(
+    _client.dio.put<Map<String, dynamic>>(
+      '/projects/$projectId/members/$memberId',
+      data: <String, dynamic>{'role': role.wire},
+    ),
+  );
 
-  Future<void> removeMember(String projectId, String memberId) async {
-    try {
-      await _client.dio.delete<dynamic>(
-        '/projects/$projectId/members/$memberId',
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Future<EventPatch> removeMember(String projectId, String memberId) => _patch(
+    _client.dio.delete<Map<String, dynamic>>(
+      '/projects/$projectId/members/$memberId',
+    ),
+  );
 
-  Future<void> requestLink(String projectId, String memberId) async {
-    try {
-      await _client.dio.post<dynamic>(
-        '/projects/$projectId/members/$memberId/request-link',
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  // --- Board ---
 
-  // --- Project transactions ---
-
+  /// A board page (bills with their splits, flat). Filters: [type]
+  /// (expense / income), [mine], [q], [tagId]; [sort]: date_desc (default) /
+  /// date_asc / amount_desc / amount_asc.
   Future<List<ProjectTransaction>> listTransactions(
     String projectId, {
     int page = 1,
     int perPage = 20,
-  }) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/projects/$projectId/transactions',
-        queryParameters: <String, dynamic>{
-          'page': page.toString(),
-          'per_page': perPage.toString(),
-        },
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(ProjectTransaction.fromJson).toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+    String? type,
+    bool mine = false,
+    String? q,
+    String? tagId,
+    String? sort,
+  }) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects/$projectId/transactions',
+      queryParameters: <String, dynamic>{
+        'page': page.toString(),
+        'per_page': perPage.toString(),
+        'type': ?type,
+        if (mine) 'mine': 'true',
+        if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
+        'tag_id': ?tagId,
+        'sort': ?sort,
+      },
+    );
+    return [
+      for (final r in (res.data!['data'] as List).cast<Map<String, dynamic>>())
+        ...ProjectTransaction.flatten(r),
+    ];
+  });
 
-  Future<ProjectTransaction> createTransaction(
+  /// A board bill (no wallet). [tagIds] = this event's tags. [tags] /
+  /// [currency] are ignored (the API takes tag ids; single currency) — kept
+  /// until quick create moves to [tagIds].
+  Future<EventPatch> createTransaction(
     String projectId, {
     required String transactionMemberId,
     required String type,
     required double amount,
-    required String currency,
     required String date,
+    String? currency,
     String? description,
     String? note,
     List<String> tags = const [],
+    List<String> tagIds = const [],
     List<ProjectSplitInput> splits = const [],
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/projects/$projectId/project-transactions',
-        data: <String, dynamic>{
-          'transaction_member_id': transactionMemberId,
-          'type': type,
-          'amount': amount,
-          'currency': currency,
-          'date': date,
-          'description': ?description,
-          'note': ?note,
-          if (tags.isNotEmpty) 'tags': tags,
-          if (splits.isNotEmpty)
-            'splits': splits.map((s) => s.toJson()).toList(),
-        },
-      );
-      return ProjectTransaction.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  }) => _patch(
+    _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/project-transactions',
+      data: <String, dynamic>{
+        'transaction_member_id': transactionMemberId,
+        'type': type,
+        'amount': amount,
+        'date': date,
+        'description': ?description,
+        'note': ?note,
+        if (tagIds.isNotEmpty) 'tag_ids': tagIds,
+        if (splits.isNotEmpty) 'splits': splits.map((s) => s.toJson()).toList(),
+      },
+    ),
+  );
 
   /// `splits` semantics: pass `null` to leave existing children untouched;
-  /// pass a list (possibly empty) to full-replace children.
-  Future<ProjectTransaction> updateTransaction(
+  /// pass a list (possibly empty) to full-replace children. [tagIds]: null =
+  /// unchanged. [tags] (names) is ignored, see [createTransaction].
+  /// [alsoUpdateLink]: my OWN linked bill — also change my transaction
+  /// (amount / date; the app asks at save). Ignored for anyone else (the
+  /// owner gets "อัปเดตตาม").
+  Future<EventPatch> updateTransaction(
     String projectId,
     String ptId, {
     double? amount,
@@ -389,92 +409,106 @@ class ProjectsRepository {
     String? description,
     String? note,
     List<String>? tags,
+    List<String>? tagIds,
     List<ProjectSplitInput>? splits,
-  }) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/projects/$projectId/project-transactions/$ptId',
-        data: <String, dynamic>{
-          'amount': ?amount,
-          'date': ?date,
-          'description': ?description,
-          'note': ?note,
-          'tags': ?tags,
-          if (splits != null) 'splits': splits.map((s) => s.toJson()).toList(),
-        },
-      );
-      return ProjectTransaction.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+    bool alsoUpdateLink = false,
+  }) => _patch(
+    _client.dio.put<Map<String, dynamic>>(
+      '/projects/$projectId/project-transactions/$ptId',
+      data: <String, dynamic>{
+        'amount': ?amount,
+        'date': ?date,
+        'description': ?description,
+        'note': ?note,
+        'tag_ids': ?tagIds,
+        if (splits != null) 'splits': splits.map((s) => s.toJson()).toList(),
+        if (alsoUpdateLink) 'also_update_link': true,
+      },
+    ),
+  );
 
-  Future<void> deleteTransaction(String projectId, String ptId) async {
-    try {
-      await _client.dio.delete<dynamic>(
-        '/projects/$projectId/project-transactions/$ptId',
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Future<EventPatch> deleteTransaction(String projectId, String ptId) => _patch(
+    _client.dio.delete<Map<String, dynamic>>(
+      '/projects/$projectId/project-transactions/$ptId',
+    ),
+  );
 
-  /// Toggle the caller's per-row "marked resolved" flag. Idempotent.
-  /// Independent of personal-book resolve — does NOT create personal
-  /// entries.
-  /// `POST /v1/projects/:id/project-transactions/:pt_id/copy` — copy a
-  /// project row into my own book (floating, no wallet; contract §5).
-  /// Idempotent; returns the personal transaction id.
-  Future<String> copyToPersonal(String projectId, String ptId) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/projects/$projectId/project-transactions/$ptId/copy',
-      );
-      return res.data!['transaction_id'] as String;
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `POST /v1/projects/:id/project-transactions/:pt_id/copy` — copy my
+  /// share of a bill into my own book. Returns the personal transaction id.
+  Future<String> copyToPersonal(String projectId, String ptId) =>
+      _call(() async {
+        final res = await _client.dio.post<Map<String, dynamic>>(
+          '/projects/$projectId/project-transactions/$ptId/copy',
+        );
+        final tx = res.data!['transaction'];
+        return tx is Map<String, dynamic>
+            ? tx['id'] as String
+            : res.data!['transaction_id'] as String;
+      });
 
-  Future<ProjectTransaction> toggleMark(
+  /// Tick / untick a bill (or split) as resolved for me. Idempotent;
+  /// independent of the personal-book resolve.
+  Future<EventPatch> toggleMark(String projectId, String ptId, bool marked) =>
+      _patch(
+        _client.dio.put<Map<String, dynamic>>(
+          '/projects/$projectId/project-transactions/$ptId/mark',
+          data: <String, dynamic>{'marked': marked},
+        ),
+      );
+
+  // --- Event tags ---
+
+  /// The event's tags (shared by the members), with ids.
+  Future<List<BoardTag>> eventTags(String projectId) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/projects/$projectId/tags',
+    );
+    return [
+      for (final t in ((res.data!['data'] as List?) ?? const []))
+        BoardTag.fromJson(t as Map<String, dynamic>),
+    ];
+  });
+
+  /// The event tags' names (quick create's suggestions).
+  Future<List<String>> listTags(String projectId) async => [
+    for (final t in await eventTags(projectId)) t.name,
+  ];
+
+  /// A new event tag → the tag (+ the patch).
+  Future<BoardTag> createEventTag(
     String projectId,
-    String ptId,
-    bool marked,
-  ) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/projects/$projectId/project-transactions/$ptId/mark',
-        data: <String, dynamic>{'marked': marked},
-      );
-      return ProjectTransaction.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+    String name, {
+    IconCode? iconCode,
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/tags',
+      data: <String, dynamic>{
+        'name': name,
+        if (iconCode != null) 'icon_code': iconCode.toJson(),
+      },
+    );
+    return BoardTag.fromJson(res.data!['tag'] as Map<String, dynamic>);
+  });
 
-  /// `GET /projects/:id/tags` — names in use on the project's rows, most
-  /// used first.
-  Future<List<String>> listTags(String projectId) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/projects/$projectId/tags',
-      );
-      return ((res.data!['data'] as List?) ?? const [])
-          .map((e) => (e as Map<String, dynamic>)['name'] as String)
-          .toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  Future<ProjectSummary> summary(String projectId) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/projects/$projectId/summary',
-      );
-      return ProjectSummary.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// Copies event tags into MY personal set ([tagIds] empty = every one I
+  /// don't have yet).
+  Future<EventTagImportResult> importTags(
+    String projectId, {
+    List<String> tagIds = const [],
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/projects/$projectId/tags/import',
+      data: <String, dynamic>{if (tagIds.isNotEmpty) 'tag_ids': tagIds},
+    );
+    return EventTagImportResult(
+      created: [
+        for (final t in ((res.data!['created'] as List?) ?? const []))
+          EmbeddedTag.fromJson(t as Map<String, dynamic>),
+      ],
+      tags: [
+        for (final t in ((res.data!['tags'] as List?) ?? const []))
+          BoardTag.fromJson(t as Map<String, dynamic>),
+      ],
+    );
+  });
 }

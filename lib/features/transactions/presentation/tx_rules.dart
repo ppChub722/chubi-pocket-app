@@ -6,7 +6,7 @@ import '../domain/transaction_type.dart';
 // capability flags win when it sends them (can_join_event,
 // can_edit_splits); a BE that doesn't yet falls back to the FE's own
 // reading of the row. The row's embedded category (is_system) and its
-// is_repayment flag tell system rows apart; the optional [category] is an
+// debt link (counterparty) tell system rows apart; the optional [category] is an
 // extra hint (e.g. the category picked in a form).
 
 /// Can a row of [type] go into an event at all? Not a transfer. (A new
@@ -25,8 +25,7 @@ bool txCanJoinEvent(Transaction t, {Category? category}) =>
     (typeCanJoinEvent(t.type) &&
         t.canEditCategory &&
         !t.isLocked &&
-        !t.isRepayment &&
-        t.sourcePersonalDebtId == null &&
+        !t.isDebtEntry &&
         !_isSystemRow(t, category));
 
 /// Does [t] get the split editor: [Transaction.canEditSplits] when sent,

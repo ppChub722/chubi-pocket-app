@@ -536,6 +536,7 @@ class _TagsPageState extends State<TagsPage>
                 isEmpty: isEmpty,
                 // Pull to refresh reloads in view mode only; a reload
                 // under a batch edit would fight the drafts.
+                refreshEnabled: !isEditing,
                 onRetry: isEditing
                     ? () async {}
                     : () async {

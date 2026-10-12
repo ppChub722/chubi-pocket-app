@@ -274,7 +274,10 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
           note:
               'Dashboard — home overview: period, KPIs, attention, charts, '
               'tiles, lists. One generic skeleton; the Chubi Home page fills '
-              'the slots with its own blocks.',
+              'the slots with its own blocks. The first-load skeleton '
+              '(DashboardPageSkeleton) is built by the template; a page only '
+              'passes skeletonShape (DashboardSkeletonShape), the heights its '
+              'real cards have.',
           uses: [
             HubUse(
               wide: true,

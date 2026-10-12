@@ -66,43 +66,48 @@ class _SplashPageState extends State<SplashPage> {
               const Spacer(),
               const BrandLogo(),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 360),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: AppSpacing.lg),
-                          Text(
-                            AppLocalizations.of(context)!.appName,
-                            style: theme.textTheme.headlineMedium,
+                // Cold start offline: couldn't reach the server → the ONE
+                // full-screen error + retry (the stored token is kept; the
+                // app's offline banner stays out of the way until auth
+                // resolves). Pull, Retry, or the connection coming back
+                // (PullToRefresh follows ConnectionScope) all re-run the
+                // check; otherwise the spinner.
+                child: BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    final error = state is AuthInitial
+                        ? state.startupError
+                        : null;
+                    final retry = context.read<AuthCubit>().init;
+                    return PullToRefresh(
+                      enabled: error != null,
+                      onRefresh: retry,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 360),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: AppSpacing.lg),
+                                Text(
+                                  AppLocalizations.of(context)!.appName,
+                                  style: theme.textTheme.headlineMedium,
+                                ),
+                                const SizedBox(height: AppSpacing.xl),
+                                if (error == null)
+                                  const AppSpinner(size: AppSpinnerSize.large)
+                                else
+                                  ErrorView(error: error, onRetry: retry),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: AppSpacing.xl),
-                          // Couldn't reach the server → why + retry (the
-                          // stored token is kept); otherwise the spinner.
-                          BlocBuilder<AuthCubit, AuthState>(
-                            builder: (context, state) {
-                              final error = state is AuthInitial
-                                  ? state.startupError
-                                  : null;
-                              if (error == null) {
-                                return const AppSpinner(
-                                  size: AppSpinnerSize.large,
-                                );
-                              }
-                              return ErrorView(
-                                error: error,
-                                onRetry: context.read<AuthCubit>().init,
-                              );
-                            },
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ],

@@ -35,6 +35,10 @@ class NotificationTile extends StatelessWidget {
       notification.type == NotificationType.contactLinkRequest ||
       notification.type == NotificationType.accountInvite;
 
+  bool get _isRecurring =>
+      notification.type == NotificationType.recurringDue ||
+      notification.type == NotificationType.recurringEnding;
+
   /// Types that carry an action (request or one-tap, contract §5): once
   /// taken — or auto-run on arrival — the row says "ทำแล้ว".
   bool get _hasAction => switch (notification.type) {
@@ -59,7 +63,10 @@ class NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final n = notification;
-    final actor = n.actor?.displayName ?? l.notificationsSomeone;
+    // The recurring notices come from the app itself, not a person.
+    final actor =
+        n.actor?.displayName ??
+        (_isRecurring ? l.moreRecurring : l.notificationsSomeone);
     final accepted = (_isRequest || _hasAction) && n.isActioned;
 
     return NotificationTileView(
@@ -110,6 +117,8 @@ class NotificationTile extends StatelessWidget {
     NotificationType.projectAdded => AppIcons.project,
     NotificationType.contactLinkRequest => AppIcons.link,
     NotificationType.accountInvite => AppIcons.bank,
+    NotificationType.recurringDue ||
+    NotificationType.recurringEnding => AppIcons.recurring,
     NotificationType.unknown => AppIcons.notifications,
   };
 
@@ -137,6 +146,13 @@ class NotificationTile extends StatelessWidget {
     NotificationType.accountInvite => l.notificationWalletInviteTitle(
       actor,
       (n.payload['account_name'] as String?) ?? '',
+    ),
+    NotificationType.recurringDue => l.notifRecurringDue(
+      (n.payload['count'] as num?)?.toInt() ?? 1,
+    ),
+    NotificationType.recurringEnding => l.notifRecurringEnding(
+      (n.payload['name'] as String?) ?? '',
+      (n.payload['left'] as num?)?.toInt() ?? 0,
     ),
     NotificationType.unknown => l.notifUnknown,
   };

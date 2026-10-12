@@ -31,6 +31,9 @@ String walletErrorMessage(AppLocalizations l, ApiException e) {
     // adjust-balance to the balance it already has.
     case 'NO_OP':
       return l.accountAdjustBalanceNoChange;
+    // adjust-balance on a wallet that does not track its balance.
+    case 'BALANCE_NOT_TRACKED':
+      return l.walletErrorBalanceNotTracked;
     case 'NOT_OWNER':
       return l.notOwnerError;
     // BALANCE_NOT_EDITABLE (400) has no localized copy yet — the BE's own

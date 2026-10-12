@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../event_errors.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../data/projects_repository.dart';
@@ -11,15 +12,16 @@ import '../../domain/project.dart';
 /// "เชิญสมาชิก" — `POST /projects/:id/members`. With an email the matching
 /// app user gets an invite; without one it's a member without an account
 /// (can be linked later). "เลือกจากผู้ติดต่อ" fills name + email. Returns
-/// the added name, or null when dismissed. Thin wrapper over the kit's
-/// [AddMemberSheet]: the POST + snackbar live here.
-Future<String?> showAddMemberSheet(
+/// the added name + the write's patch, or null when dismissed. Thin wrapper
+/// over the kit's [AddMemberSheet]: the POST + error snackbar live here.
+Future<({String name, EventPatch patch})?> showAddMemberSheet(
   BuildContext context, {
   required String projectId,
-}) {
+}) async {
   final l = AppLocalizations.of(context)!;
   final repo = context.read<ProjectsRepository>();
-  return showAddMemberFormSheet(
+  EventPatch? patch;
+  final name = await showAddMemberFormSheet(
     context,
     labels: AddMemberLabels(
       title: l.projectMembersInvite,
@@ -39,7 +41,7 @@ Future<String?> showAddMemberSheet(
       try {
         // New members start as members; the owner can make them view-only
         // from the members page (contract §6b).
-        await repo.addMember(
+        patch = await repo.addMember(
           projectId,
           displayName: name,
           email: email,
@@ -49,10 +51,16 @@ Future<String?> showAddMemberSheet(
         return true;
       } on ApiException catch (e) {
         if (context.mounted) {
-          showAppSnackBar(context, e.message, tone: Tone.danger);
+          showAppSnackBar(
+            context,
+            eventErrorText(AppLocalizations.of(context)!, e),
+            tone: Tone.danger,
+          );
         }
         return false;
       }
     },
   );
+  final p = patch;
+  return name == null || p == null ? null : (name: name, patch: p);
 }

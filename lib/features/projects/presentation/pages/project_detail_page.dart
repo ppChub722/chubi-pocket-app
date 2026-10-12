@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,7 +7,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../tags/presentation/cubit/tags_cubit.dart';
+import '../../../transactions/presentation/cubit/transactions_cubit.dart';
+import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../event_errors.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/projects_repository.dart';
@@ -31,11 +39,16 @@ class ProjectDetailPage extends StatefulWidget {
   const ProjectDetailPage({
     required this.id,
     this.startEditing = false,
+    this.initialBillId,
     super.key,
   });
 
   final String id;
   final bool startEditing;
+
+  /// A bill to show (tx detail's "อยู่ในอีเวนต์ … ›"): the page opens on
+  /// รายการ, scrolled to it. Null = read `?bill=` from the route.
+  final String? initialBillId;
 
   @override
   State<ProjectDetailPage> createState() => _ProjectDetailPageState();
@@ -51,11 +64,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   ApiException? _error;
   _Tab _tab = _Tab.dashboard;
 
+  /// The รายการ tab's tag filter (a tag chip's "ดูบิลที่ติดแท็กนี้").
+  BoardTag? _tagFilter;
+
   /// The hero (the compact bar watches it), the page's outer scroll and the
   /// tab pager.
   final _heroKey = GlobalKey();
   final _outerScroll = ScrollController();
-  final _pages = PageController();
+  late final PageController _pages;
 
   @override
   void initState() {
@@ -77,37 +93,76 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     super.dispose();
   }
 
+  /// The page's one "open" call (also pull-to-refresh and the reload after a
+  /// write whose response can't patch the page yet).
   Future<void> _load({bool enterEdit = false}) async {
     try {
       final repo = context.read<ProjectsRepository>();
+      final projects = context.read<ProjectsCubit>();
       final auth = context.read<AuthCubit>().state;
-      final results = await Future.wait([
-        repo.get(widget.id),
-        repo.listMembers(widget.id),
-        repo.listTransactions(widget.id, perPage: 100),
-        repo.summary(widget.id),
-      ]);
+      final user = auth is AuthAuthenticated ? auth.user : null;
+      final detail = await repo.detail(widget.id);
       if (!mounted) return;
-      final view = ProjectView(
-        project: results[0] as Project,
-        members: results[1] as List<ProjectMember>,
-        txs: results[2] as List<ProjectTransaction>,
-        summary: results[3] as ProjectSummary,
-        currentUserId: auth is AuthAuthenticated ? auth.user.id : null,
+      // The list shows this event too: keep it fresh without its own reload.
+      projects.patch(detail.project);
+      _show(
+        ProjectView.of(
+          detail,
+          currentUserId: user?.id,
+          userCurrency: user?.currency,
+        ),
       );
-      setState(() {
-        _view = view;
-        _error = null;
-        if (_tab == _Tab.resolve && !view.project.isResolveReady) {
-          _tab = _Tab.dashboard;
-        }
-      });
-      resetDraft(_InfoDraft.from(view.project));
-      if (enterEdit && view.isOwner) this.enterEdit();
+      if (enterEdit && _view!.isOwner) this.enterEdit();
     } catch (e, st) {
       // ANY failure (a parse error too) lands in the error + retry view.
       if (mounted) setState(() => _error = ApiException.from(e, st));
     }
+  }
+
+  /// The bill to scroll to once (`?bill=`), cleared after.
+  String? _focusBill;
+  bool _focusRead = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_focusRead) return;
+    _focusRead = true;
+    _focusBill = widget.initialBillId ?? _routeBill();
+    if (_focusBill != null) _tab = _Tab.transactions;
+    // The pager starts on the opening tab (สรุป = 0, รายการ = 1).
+    _pages = PageController(initialPage: _tab == _Tab.transactions ? 1 : 0);
+  }
+
+  /// `?bill=` on this page's route; null outside a router (tests).
+  String? _routeBill() {
+    try {
+      return GoRouterState.of(context).uri.queryParameters['bill'];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Puts [view] on screen (a load, or a write's response patched in).
+  void _show(ProjectView view) {
+    setState(() {
+      _view = view;
+      _error = null;
+      if (_tab == _Tab.resolve && !view.project.isResolveReady) {
+        _tab = _Tab.dashboard;
+      }
+    });
+    resetDraft(_InfoDraft.from(view.project));
+  }
+
+  /// A write's [EventPatch]: the page and the events list patched in
+  /// place (no reload).
+  void _applyPatch(EventPatch p) {
+    final v = _view;
+    if (v == null || !mounted) return;
+    context.read<ProjectsCubit>().patch(p.project);
+    context.read<AccountsCubit>().patchBalances(p.accountBalances);
+    setState(() => _view = v.apply(p));
   }
 
   // ── EditModeMixin hooks ─────────────────────────────────────────────
@@ -136,18 +191,30 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   Future<void> _save() async {
     commitTextSession();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l = AppLocalizations.of(context)!;
     final w = working;
+    final s = w.startDate;
+    final e = w.endDate;
+    if (s != null && e != null && e.isBefore(s)) {
+      showAppSnackBar(context, l.eventDatesInvalid, tone: Tone.danger);
+      return;
+    }
     final planned = AmountInput.parse(w.planned);
     final hadPlan = original.planned.trim().isNotEmpty;
     FocusScope.of(context).unfocus();
     setSaving(true);
     try {
-      await context.read<ProjectsCubit>().update(
+      final updated = await context.read<ProjectsCubit>().update(
         widget.id,
         name: w.name.trim(),
         // '' clears (migration 51).
         description: w.description.trim(),
         note: w.note.trim(),
+        startDate: s == null ? null : projectDay(s),
+        endDate: e == null ? null : projectDay(e),
+        // A date taken away → explicit null clears it.
+        clearStartDate: s == null && original.startDate != null,
+        clearEndDate: e == null && original.endDate != null,
         iconCode: w.iconCode,
         plannedAmount: planned,
         // Blanked an existing plan → explicit null hides it (§10/4.23).
@@ -156,28 +223,66 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(w);
-      await _load();
+      // The PUT returns the patch (event + summary): no reload.
+      _show(_view!.apply(updated));
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showAppSnackBar(
+        context,
+        eventErrorText(AppLocalizations.of(context)!, e),
+        tone: Tone.danger,
+      );
     }
   }
 
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final p = _view!.project;
-    final ok = await showConfirmDialog(
+    final linked = p.linkedTxCount;
+    // ยังก่อน · ยืนยัน ไม่ลบรายการ · ยืนยันและลบ [x] รายการ (owner
+    // 2026-10-13); without linked transactions: ยังก่อน · ยืนยันลบ.
+    final choice = await showChoiceDialog<_DeleteChoice>(
       context,
       title: l.projectDeleteTitle(p.name),
-      message: l.projectDeleteBody,
-      confirmLabel: l.commonDelete,
-      destructive: true,
+      message: linked > 0 ? l.eventDeleteBody : null,
+      choices: [
+        DialogChoice(
+          value: _DeleteChoice.notYet,
+          label: l.eventDeleteNotYet,
+          variant: AppButtonVariant.primary,
+        ),
+        if (linked > 0) ...[
+          DialogChoice(
+            value: _DeleteChoice.keepTxs,
+            label: l.eventDeleteKeepTxs,
+          ),
+          DialogChoice(
+            value: _DeleteChoice.withTxs,
+            label: l.eventDeleteWithTxs(linked),
+            variant: AppButtonVariant.destructive,
+          ),
+        ] else
+          DialogChoice(
+            value: _DeleteChoice.keepTxs,
+            label: l.eventDeleteConfirm,
+            variant: AppButtonVariant.destructive,
+          ),
+      ],
     );
-    if (!ok || !mounted) return;
+    if (choice == null || choice == _DeleteChoice.notYet || !mounted) return;
+    final withTxs = choice == _DeleteChoice.withTxs;
     setSaving(true);
     try {
-      await context.read<ProjectsCubit>().delete(p.id);
+      final accounts = context.read<AccountsCubit>();
+      final balances = await context.read<ProjectsCubit>().delete(
+        p.id,
+        deleteLinkedTxs: withTxs,
+      );
+      // My book lost transactions: wallets from the answer, the lists
+      // refresh themselves.
+      accounts.patchBalances(balances);
+      if (withTxs) await TransactionsCubit.bookChanged();
       if (!mounted) return;
       showAppSnackBar(context, l.projectDeleted, tone: Tone.success);
       commitSaved(working);
@@ -185,7 +290,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
+      showAppSnackBar(
+        context,
+        eventErrorText(AppLocalizations.of(context)!, e),
+        tone: Tone.danger,
+      );
     }
   }
 
@@ -199,6 +308,33 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
     if (!mounted || r is! IconMakerSelected) return;
     applyChange(working.copyWith(iconCode: r.iconCode));
+  }
+
+  /// Start / end bound each other (end ≥ start); both optional.
+  Future<void> _pickDate({required bool start}) async {
+    final l = AppLocalizations.of(context)!;
+    final w = working;
+    final first = start ? null : w.startDate;
+    final last = start ? w.endDate : null;
+    final current = start ? w.startDate : w.endDate;
+    var initial = current ?? DateTime.now();
+    if (first != null && initial.isBefore(first)) initial = first;
+    if (last != null && initial.isAfter(last)) initial = last;
+    final r = await showAppDatePicker(
+      context,
+      title: start ? l.eventStartDateLabel : l.eventEndDateLabel,
+      initial: initial,
+      first: first,
+      last: last,
+      clearable: current != null,
+    );
+    if (!mounted || r == null) return;
+    final picked = r is AppDatePicked ? r.date : null;
+    applyChange(
+      start
+          ? w.copyWith(startDate: () => picked)
+          : w.copyWith(endDate: () => picked),
+    );
   }
 
   // ── Status / members / rows ─────────────────────────────────────────
@@ -219,15 +355,24 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       if (!ok || !mounted) return;
     }
     try {
-      await context.read<ProjectsCubit>().update(widget.id, status: next);
+      final updated = await context.read<ProjectsCubit>().update(
+        widget.id,
+        status: next,
+      );
       if (!mounted) return;
       showAppSnackBar(
         context,
         l.projectStatusChanged(projectStatusLabel(l, next)),
       );
-      await _load();
+      _show(_view!.apply(updated));
     } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          eventErrorText(AppLocalizations.of(context)!, e),
+          tone: Tone.danger,
+        );
+      }
     }
   }
 
@@ -238,17 +383,69 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   Future<void> _invite() async {
     final l = AppLocalizations.of(context)!;
-    final name = await showAddMemberSheet(context, projectId: widget.id);
-    if (name == null || !mounted) return;
-    showAppSnackBar(context, l.projectAddMemberAdded(name), tone: Tone.success);
-    await _load();
+    final added = await showAddMemberSheet(context, projectId: widget.id);
+    if (added == null || !mounted) return;
+    _applyPatch(added.patch);
+    showAppSnackBar(
+      context,
+      l.projectAddMemberAdded(added.name),
+      tone: Tone.success,
+    );
   }
 
+  /// Quick create in event mode hands back the write's patch.
   Future<void> _addTx() async {
     final view = _view;
     if (view == null) return;
-    final saved = await showQuickCreateSheet(context, project: view);
-    if (saved && mounted) await _load();
+    await showQuickCreateSheet(
+      context,
+      project: view,
+      onEventSaved: _applyPatch,
+    );
+  }
+
+  /// The board's next page (the unfiltered รายการ list).
+  Future<void> _loadMoreRows() async {
+    final v = _view;
+    if (v == null || !v.hasMoreRows) return;
+    final rows = await context.read<ProjectsRepository>().listTransactions(
+      widget.id,
+      page: v.page + 1,
+      perPage: 50,
+    );
+    if (!mounted || !identical(_view, v)) return;
+    setState(() => _view = v.withMore(rows, page: v.page + 1));
+  }
+
+  /// Copies event tags into MY personal set ([ids] empty = all I don't
+  /// have): one call; the event's tags come back with `mine` updated.
+  Future<void> _importTags([List<String> ids = const []]) async {
+    final l = AppLocalizations.of(context)!;
+    final tags = context.read<TagsCubit>();
+    try {
+      final r = await context.read<ProjectsRepository>().importTags(
+        widget.id,
+        tagIds: ids,
+      );
+      if (!mounted) return;
+      setState(() => _view = _view?.withEventTags(r.tags));
+      // TODO(tags owner): TagsCubit has no patch-in; refresh it once so the
+      // pickers see the new tags.
+      if (r.created.isNotEmpty) unawaited(tags.load());
+      showAppSnackBar(
+        context,
+        l.eventTagsImported(r.created.length),
+        tone: Tone.success,
+      );
+    } on ApiException catch (e) {
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          eventErrorText(AppLocalizations.of(context)!, e),
+          tone: Tone.danger,
+        );
+      }
+    }
   }
 
   // ── Build ───────────────────────────────────────────────────────────
@@ -371,6 +568,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                                 key: _heroKey,
                                 child: _header(l, v, style),
                               ),
+                              // My own tags on the event, right under the
+                              // hero (detail-page order).
+                              if (!isEditing) ...[
+                                const SizedBox(height: AppSpacing.md),
+                                _tagRow(l, v),
+                              ],
                               if (texts != null) ...[
                                 const SizedBox(height: HeroSpacing.after),
                                 texts,
@@ -443,21 +646,35 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
+  /// "ดูบิลที่ติดแท็กนี้": the รายการ tab, filtered by [tag].
+  void _showTag(BoardTag tag) => setState(() {
+    _tagFilter = tag;
+    _tab = _Tab.transactions;
+  });
+
   Widget _tabBody(AppLocalizations l, ProjectView v, _Tab t) => switch (t) {
     _Tab.dashboard => ProjectDashboardTab(
       view: v,
       onChanged: _load,
-      onSeeAll: () => _goTab(_Tab.transactions),
       onAdd: v.canAddTx ? _addTx : null,
       onOpenMembers: _openMembers,
       onInvite: v.isOwner && v.project.status != ProjectStatus.archived
           ? _invite
           : null,
+      onShowTag: _showTag,
+      onImportTags: v.eventTags.any((t) => !t.mine) ? _importTags : null,
     ),
     _Tab.transactions => ProjectTxListTab(
       view: v,
       onChanged: _load,
+      onPatch: _applyPatch,
+      onLoadMore: _loadMoreRows,
+      onAddTagToMine: (t) => _importTags([t.id]),
       onAdd: v.canAddTx ? _addTx : null,
+      tagFilter: _tagFilter,
+      focusBillId: _focusBill,
+      onFocused: () => _focusBill = null,
+      onTagFilterChanged: (tag) => setState(() => _tagFilter = tag),
     ),
     _Tab.resolve => EmptyView(
       icon: AppIcons.settle,
@@ -525,12 +742,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             onTap: v.isOwner && !editing ? toggle : null,
           ),
         ),
-        if (project.type?.isNotEmpty ?? false)
-          AppChip(
-            label: project.type!,
-            tone: AppChipTone.neutral,
-            selected: true,
-          ),
       ],
       footer: editing
           ? Column(
@@ -555,6 +766,54 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             )
           : null,
     );
+  }
+
+  /// MY personal tags on the event (private to me; any member sets theirs):
+  /// one PUT, its patch applied.
+  Widget _tagRow(AppLocalizations l, ProjectView v) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    return ChipRow(
+      icon: AppIcons.tag,
+      chips: [
+        for (final t in v.project.tags)
+          AppChip(
+            label: t.name,
+            icon: IconRegistry.get(t.iconCode?.icon, fallback: AppIcons.tag),
+            color: EventTagRef(t.name, iconCode: t.iconCode).colorOf(palette),
+            selected: true,
+            size: ChipSize.chip,
+            onTap: _pickMyTags,
+          ),
+      ],
+      onMore: _pickMyTags,
+    );
+  }
+
+  Future<void> _pickMyTags() async {
+    final l = AppLocalizations.of(context)!;
+    final v = _view;
+    if (v == null) return;
+    final picked = await showTagPickerSheet(
+      context,
+      selected: {for (final t in v.project.tags) t.id},
+      title: l.transactionFormTagsLabel,
+    );
+    if (picked == null || !mounted) return;
+    try {
+      final p = await context.read<ProjectsCubit>().update(
+        widget.id,
+        tagIds: picked.toList(),
+      );
+      _applyPatch(p);
+    } on ApiException catch (e) {
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          eventErrorText(AppLocalizations.of(context)!, e),
+          tone: Tone.danger,
+        );
+      }
+    }
   }
 
   /// คำอธิบาย / โน้ต under the header — both while editing; in view mode
@@ -585,7 +844,25 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       );
     }
 
+    String? day(DateTime? d) =>
+        d == null ? null : projectDateRange(context, projectDay(d), null);
+    // The dates: pick rows while editing; in view only the ones set.
+    Widget? date({required bool start}) {
+      final d = start ? working.startDate : working.endDate;
+      if (!editing && d == null) return null;
+      return DetailRow.pick(
+        label: start ? l.eventStartDateLabel : l.eventEndDateLabel,
+        icon: AppIcons.date,
+        value: day(d),
+        emptyText: l.eventDateNone,
+        onTap: editing ? () => _pickDate(start: start) : null,
+        onLongPress: !editing && v.isOwner ? enterEdit : null,
+      );
+    }
+
     final rows = [
+      ?date(start: true),
+      ?date(start: false),
       ?row(
         _Field.note,
         l.commonNote,
@@ -599,12 +876,16 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   }
 }
 
+enum _DeleteChoice { notYet, keepTxs, withTxs }
+
 class _InfoDraft {
   const _InfoDraft({
     this.name = '',
     this.description = '',
     this.note = '',
     this.planned = '',
+    this.startDate,
+    this.endDate,
     this.iconCode,
   });
 
@@ -615,6 +896,8 @@ class _InfoDraft {
     planned: p.plannedAmount == null
         ? ''
         : AmountInput.format(p.plannedAmount!),
+    startDate: DateFormatter.parseDay(p.startDate),
+    endDate: DateFormatter.parseDay(p.endDate),
     iconCode: p.iconCode,
   );
 
@@ -624,6 +907,8 @@ class _InfoDraft {
 
   /// Formatted, as in the field; empty = no plan.
   final String planned;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final IconCode? iconCode;
 
   _InfoDraft copyWith({
@@ -631,12 +916,16 @@ class _InfoDraft {
     String? description,
     String? note,
     String? planned,
+    DateTime? Function()? startDate,
+    DateTime? Function()? endDate,
     IconCode? iconCode,
   }) => _InfoDraft(
     name: name ?? this.name,
     description: description ?? this.description,
     note: note ?? this.note,
     planned: planned ?? this.planned,
+    startDate: startDate == null ? this.startDate : startDate(),
+    endDate: endDate == null ? this.endDate : endDate(),
     iconCode: iconCode ?? this.iconCode,
   );
 
@@ -647,8 +936,18 @@ class _InfoDraft {
       other.description == description &&
       other.note == note &&
       other.planned == planned &&
+      other.startDate == startDate &&
+      other.endDate == endDate &&
       other.iconCode == iconCode;
 
   @override
-  int get hashCode => Object.hash(name, description, note, planned, iconCode);
+  int get hashCode => Object.hash(
+    name,
+    description,
+    note,
+    planned,
+    startDate,
+    endDate,
+    iconCode,
+  );
 }

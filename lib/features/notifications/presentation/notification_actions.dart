@@ -14,8 +14,11 @@ import '../../contacts/data/contacts_repository.dart';
 import '../../contacts/domain/contact.dart';
 import '../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../personal_debts/data/personal_debts_repository.dart';
-import '../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
-import '../../personal_debts/presentation/widgets/debt_widgets.dart';
+import '../../home/presentation/cubit/dashboard_cubit.dart';
+import '../../personal_debts/domain/debt_ledger.dart';
+import '../../personal_debts/presentation/debt_wiring.dart';
+import '../../transactions/presentation/widgets/quick_create_sheet.dart';
+import '../../../app/shell/quick_create_context.dart';
 import '../../projects/data/projects_repository.dart';
 import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../domain/notification.dart';
@@ -128,18 +131,18 @@ Future<void> _onRejectLinkRequest(BuildContext ctx, String id) async {
 }
 
 /// "Add to my debts" on a split someone shared with me (contract §5 — only
-/// offered when my auto-add is off). Creates my side of the debt, then
-/// opens it.
+/// offered when my auto-add is off). Creates my side (one entry), then
+/// opens that person's page.
 Future<void> _onAcceptSplit(BuildContext ctx, String id) async {
   final repo = ctx.read<PersonalDebtsRepository>();
-  final debtsCubit = ctx.read<PersonalDebtsCubit>();
+  final dashboard = ctx.read<DashboardCubit>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    final debt = await repo.acceptSplitRequest(id);
+    final result = await repo.acceptSplit(id);
     await _reload(inboxCubit);
-    unawaited(debtsCubit.load());
-    if (ctx.mounted) openPage(ctx, '/personal-debts/${debt.id}');
+    dashboard.markStale();
+    if (ctx.mounted) openPage(ctx, debtPersonPath(result.balance.key));
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
@@ -152,18 +155,18 @@ Future<void> _onAcceptSplit(BuildContext ctx, String id) async {
 Future<void> _onApplySplitChange(BuildContext ctx, AppNotification n) async {
   final l = AppLocalizations.of(ctx)!;
   final repo = ctx.read<PersonalDebtsRepository>();
-  final debtsCubit = ctx.read<PersonalDebtsCubit>();
+  final dashboard = ctx.read<DashboardCubit>();
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    final result = await repo.applySplitChange(n.id);
+    final result = await repo.applySplit(n.id);
     await _reload(inboxCubit);
-    unawaited(debtsCubit.load());
-    showAppSnackBarOn(messenger, switch (result) {
-      'deleted' => l.notifSplitChangeDeleted,
-      'zeroed' => l.notifSplitChangeZeroed,
-      _ => l.notifSplitChangeUpdated,
-    }, tone: Tone.success);
+    dashboard.markStale();
+    showAppSnackBarOn(
+      messenger,
+      result.deleted ? l.notifSplitChangeDeleted : l.notifSplitChangeUpdated,
+      tone: Tone.success,
+    );
   } on ApiException catch (e) {
     final known = switch (e.code) {
       'NOTIFICATION_ACTIONED' => l.notifSplitChangeUsed,
@@ -177,19 +180,21 @@ Future<void> _onApplySplitChange(BuildContext ctx, AppNotification n) async {
   }
 }
 
-/// "บันทึกรับเงิน" on split_paid — my settle sheet for my side of the debt,
-/// pre-filled with what they paid. Saved → the row is actioned.
+/// "บันทึกรับเงิน" on split_paid — quick create in DEBT MODE with that
+/// person, Received, pre-filled with what they paid (owner 2026-10-12: the
+/// one debt form). Saved → the row is actioned.
 Future<void> _onRecordReceipt(BuildContext ctx, AppNotification n) async {
   final debtId = n.payload['recipient_debt_id'] as String?;
   if (debtId == null) return;
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    final debt = await ctx.read<PersonalDebtsRepository>().get(debtId);
+    final detail = await ctx.read<PersonalDebtsRepository>().getEntry(debtId);
     if (!ctx.mounted) return;
-    final saved = await showSettleDebtSheet(
+    final saved = await showQuickCreateSheet(
       ctx,
-      debt,
+      preset: QuickCreatePreset.debt(person: detail.balance.person),
+      debtDirection: DebtEntryDirection.received,
       amount: (n.payload['amount'] as num?)?.toDouble(),
     );
     if (saved) await inboxCubit.markActioned(n.id);
@@ -219,8 +224,10 @@ Future<void> _onCopyToBook(BuildContext ctx, AppNotification n) async {
   }
 }
 
-/// "อัปเดตตาม" on project_tx_changed — write the suggested amount / date /
-/// description / note onto my personal copy.
+/// "อัปเดตตาม" on project_tx_changed — another member edited the bill made
+/// from my transaction (owner 2026-10-13: linked by prompt, not sync):
+/// write the suggested amount / date / description / note onto my
+/// transaction only — the bill already has them.
 Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
   final txId = n.payload['personal_transaction_id'] as String?;
   final s = n.payload['suggested'];
@@ -230,19 +237,24 @@ Future<void> _onUpdateCopy(BuildContext ctx, AppNotification n) async {
   final accountsCubit = ctx.read<AccountsCubit>();
   final messenger = ScaffoldMessenger.of(ctx);
   try {
-    await ctx.read<TransactionsCubit>().updateTransaction(
+    final result = await ctx.read<TransactionsCubit>().updateTransaction(
       id: txId,
       amount: (s['amount'] as num?)?.toDouble(),
       date: s['date'] as String?,
       description: s['description'] as String?,
       note: s['note'] as String?,
+      alsoUpdateLink: false,
     );
     await inboxCubit.markActioned(n.id);
-    // A new amount moves the wallet's balance; every list re-fetches
-    // (the copy may not be in the one on screen).
-    unawaited(accountsCubit.load());
+    // A new amount moves the wallet's balance (the answer carries it);
+    // every list re-fetches (the copy may not be in the one on screen).
+    accountsCubit.patchBalances(result.accountBalances);
     unawaited(TransactionsCubit.bookChanged());
-    showAppSnackBarOn(messenger, l.notifCopyUpdated, tone: Tone.success);
+    showAppSnackBarOn(
+      messenger,
+      result.isUpcoming ? l.txMovedToUpcoming : l.notifCopyUpdated,
+      tone: Tone.success,
+    );
   } on ApiException catch (e) {
     _showError(messenger, e);
   }

@@ -32,7 +32,9 @@ import '../tokens/tone.dart';
 ///   [AppSpacing.sm] under the period bar, [AppSpacing.lg] before the tiles).
 /// - **Data state:** [loading] / [error] / [isEmpty] / [onRetry] as
 ///   `AsyncStateView`; [banner] shows above the content (a failed refresh
-///   with data still on screen); [skeleton] overrides the default blocks.
+///   with data still on screen). The first-load skeleton is the template's
+///   own [DashboardPageSkeleton]; a page only passes [skeletonShape], the
+///   heights its real cards have.
 class DashboardPageBody extends StatelessWidget {
   const DashboardPageBody({
     required this.loading,
@@ -47,7 +49,7 @@ class DashboardPageBody extends StatelessWidget {
     this.charts = const [],
     this.tiles,
     this.lists = const [],
-    this.skeleton,
+    this.skeletonShape = const DashboardSkeletonShape(),
     this.topInset = AppSpacing.xs,
     this.bottomInset = 96,
     this.sidePadding = AppSpacing.lg,
@@ -83,7 +85,8 @@ class DashboardPageBody extends StatelessWidget {
   /// Lists under their own `SectionHeader` ("coming up", recent).
   final List<Widget> lists;
 
-  final Widget? skeleton;
+  /// The first-load skeleton's slot heights (see [DashboardSkeletonShape]).
+  final DashboardSkeletonShape skeletonShape;
   final double topInset;
   final double bottomInset;
   final double sidePadding;
@@ -104,16 +107,15 @@ class DashboardPageBody extends StatelessWidget {
       onRetry: onRetry,
       // Stale data + a failed load → the banner, not a snackbar.
       snackOnRefreshError: false,
-      skeleton:
-          skeleton ??
-          DashboardPageSkeleton(
-            padding: EdgeInsets.fromLTRB(
-              sidePadding,
-              mq.top + topInset,
-              sidePadding,
-              bottomInset + mq.bottom,
-            ),
-          ),
+      skeleton: DashboardPageSkeleton(
+        shape: skeletonShape,
+        padding: EdgeInsets.fromLTRB(
+          sidePadding,
+          mq.top + topInset,
+          sidePadding,
+          bottomInset + mq.bottom,
+        ),
+      ),
       builder: (context) => PullToRefresh(
         onRefresh: onRetry,
         child: ListView(

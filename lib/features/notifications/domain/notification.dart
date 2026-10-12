@@ -28,6 +28,14 @@ enum NotificationType {
   /// "You were added to a project" (quick create, spec §10/4.24) —
   /// informational, mutable.
   projectAdded('project_added'),
+
+  /// Recurring items fell due and wait as drafts (owner 2026-10-13): ONE
+  /// grouped notice while unread, payload {count}, deep link /pending.
+  recurringDue('recurring_due'),
+
+  /// A recurring has few upcoming items left: payload {recurring_id, name,
+  /// left}, deep link /recurring/{id}.
+  recurringEnding('recurring_ending'),
   unknown('unknown');
 
   const NotificationType(this.wire);

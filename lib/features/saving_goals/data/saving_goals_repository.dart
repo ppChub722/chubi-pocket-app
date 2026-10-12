@@ -2,128 +2,161 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../domain/saving_allocation_summary.dart';
+import '../domain/saving_entry.dart';
 import '../domain/saving_goal.dart';
+import '../domain/saving_goals_overview.dart';
 
-/// Thin Dio wrapper for `/v1/saving-goals` (spec §09/§3).
-///
-/// Pure data layer — translates [DioException] into [ApiException] and
-/// parses JSON into [SavingGoal]. State + caching live in
-/// `SavingGoalsCubit`.
+/// Thin Dio wrapper for the saving goals v2 API. Pure data layer: it turns
+/// [DioException] into [ApiException] and parses JSON; state lives in the
+/// cubits.
 class SavingGoalsRepository {
   SavingGoalsRepository({required ApiClient client}) : _client = client;
 
   final ApiClient _client;
 
-  /// `GET /v1/saving-goals`. Default returns active goals; pass
-  /// `status: 'all'` to include archived in the user's history view.
-  Future<List<SavingGoal>> list({
-    String status = 'active',
-    String? accountId,
-    bool? isCompleted,
-  }) async {
+  /// The id the detail endpoint uses for the "ยังไม่จัดสรร" bucket.
+  static const spareId = 'spare';
+
+  Future<T> _guard<T>(Future<T> Function() run) async {
     try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/saving-goals',
-        queryParameters: <String, dynamic>{
-          'status': status,
-          'account_id': ?accountId,
-          'is_completed': ?isCompleted,
-        },
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(SavingGoal.fromJson).toList();
+      return await run();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  Future<SavingGoal> getById(String id) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/saving-goals/$id',
-      );
-      return SavingGoal.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `GET /saving-goals?status=` — the whole list page (summary + spare +
+  /// goals) in one call.
+  Future<SavingGoalsOverview> list({String status = 'active'}) =>
+      _guard(() async {
+        final res = await _client.dio.get<Map<String, dynamic>>(
+          '/saving-goals',
+          queryParameters: {'status': status},
+        );
+        return SavingGoalsOverview.fromJson(res.data!);
+      });
 
-  /// `POST /v1/saving-goals`. Server may reject with `ALLOCATION_EXCEEDED`
-  /// or `ACCOUNT_NOT_OWNED` — both come back as [ApiException] with the
-  /// API message which the form page surfaces inline.
-  Future<SavingGoal> create(SavingGoal draft) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/saving-goals',
-        data: draft.toCreateJson(),
-      );
-      return SavingGoal.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `GET /saving-goals/{id}` (or `spare`) — the whole goal page in one call.
+  Future<SavingGoalDetail> detail(String id) => _guard(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/saving-goals/$id',
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
 
-  /// `PUT /v1/saving-goals/:id`. Spec §3.4: `linked_account_id` is not
-  /// editable; allocation changes re-check sum ≤ 100.
-  Future<SavingGoal> update(SavingGoal goal) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
-        '/saving-goals/${goal.id}',
-        data: goal.toUpdateJson(),
-      );
-      return SavingGoal.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `GET /saving-entries` — one page of a bucket entries (newest first).
+  Future<SavingEntryPage> entries({
+    required String bucketId,
+    required int page,
+  }) => _guard(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/saving-entries',
+      queryParameters: {
+        if (bucketId == spareId) 'bucket': spareId else 'goal_id': bucketId,
+        'page': page,
+      },
+    );
+    return SavingEntryPage.fromJson(res.data!);
+  });
 
-  /// `DELETE /v1/saving-goals/:id` — hard delete (spec §3.5). Always
-  /// permitted; account + transactions untouched.
-  Future<void> delete(String id) async {
-    try {
-      await _client.dio.delete<void>('/saving-goals/$id');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `POST /saving-goals` — name, target, deadline, icon, description, note.
+  Future<SavingGoalDetail> create(SavingGoal draft) => _guard(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/saving-goals',
+      data: draft.toWriteJson(),
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
 
-  /// `POST /v1/saving-goals/:id/archive` — frees allocation capacity.
-  Future<SavingGoal> archive(String id) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/saving-goals/$id/archive',
-      );
-      return SavingGoal.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `PUT /saving-goals/{id}`.
+  Future<SavingGoalDetail> update(SavingGoal goal) => _guard(() async {
+    final res = await _client.dio.put<Map<String, dynamic>>(
+      '/saving-goals/${goal.id}',
+      data: goal.toWriteJson(),
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
 
-  /// `POST /v1/saving-goals/:id/restore` — re-checks allocation sum
-  /// against the goal's stored `allocation_pct`; may return
-  /// `ALLOCATION_EXCEEDED`.
-  Future<SavingGoal> restore(String id) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/saving-goals/$id/restore',
-      );
-      return SavingGoal.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `DELETE /saving-goals/{id}`.
+  Future<void> delete(String id) =>
+      _guard(() => _client.dio.delete<void>('/saving-goals/$id'));
 
-  /// `GET /v1/accounts/:id/saving-allocations` (spec §3.7) — pie helper.
-  /// Returns the per-account allocation breakdown across active goals.
-  Future<SavingAllocationSummary> allocationsFor(String accountId) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/accounts/$accountId/saving-allocations',
-      );
-      return SavingAllocationSummary.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// `POST /saving-goals/{id}/archive` / `/restore`.
+  Future<SavingGoalDetail> archive(String id) => _guard(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/saving-goals/$id/archive',
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
+
+  Future<SavingGoalDetail> restore(String id) => _guard(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/saving-goals/$id/restore',
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
+
+  /// `POST /saving-goals/{id}/close` — `toWallets` false = into spare, true =
+  /// each part back to its own wallet.
+  Future<SavingWriteResult> close(String id, {required bool toWallets}) =>
+      _guard(() async {
+        final res = await _client.dio.post<Map<String, dynamic>>(
+          '/saving-goals/$id/close',
+          data: {'to': toWallets ? 'wallets' : 'spare'},
+        );
+        return SavingWriteResult.fromJson(res.data!);
+      });
+
+  /// `POST /saving-entries` — ONE call per button: save / withdraw / move.
+  /// [goalId] null = the spare bucket. [splits] only when the user edited the
+  /// automatic wallet split.
+  Future<SavingWriteResult> addEntry({
+    required SavingEntryKind kind,
+    required double amount,
+    required String date,
+    String? goalId,
+    String? walletId,
+    String? toGoalId,
+    bool toSpare = false,
+    List<SavingSplit>? splits,
+    String? note,
+  }) => _guard(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/saving-entries',
+      data: {
+        'kind': kind.toJson(),
+        'amount': amount,
+        'date': date,
+        'goal_id': goalId,
+        'wallet_id': ?walletId,
+        if (kind == SavingEntryKind.move)
+          'to_goal_id': toSpare ? null : toGoalId,
+        if (splits != null) 'splits': [for (final s in splits) s.toJson()],
+        'note': ?note,
+      },
+    );
+    return SavingWriteResult.fromJson(res.data!);
+  });
+
+  /// `PUT /saving-entries/{id}`.
+  Future<SavingWriteResult> updateEntry(
+    String id, {
+    required double amount,
+    required String date,
+    String? note,
+  }) => _guard(() async {
+    final res = await _client.dio.put<Map<String, dynamic>>(
+      '/saving-entries/$id',
+      data: {'amount': amount, 'date': date, 'note': note},
+    );
+    return SavingWriteResult.fromJson(res.data!);
+  });
+
+  /// `DELETE /saving-entries/{id}`.
+  Future<SavingWriteResult> deleteEntry(String id) => _guard(() async {
+    final res = await _client.dio.delete<Map<String, dynamic>>(
+      '/saving-entries/$id',
+    );
+    return SavingWriteResult.fromJson(res.data!);
+  });
 }

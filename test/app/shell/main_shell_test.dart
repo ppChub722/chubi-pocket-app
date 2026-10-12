@@ -461,14 +461,14 @@ void main() {
     expect(find.text('tab settings').hitTestable(), findsOneWidget);
     await swipe(t, find.text('tab settings').hitTestable(), -300);
     expect(find.text('tab settings').hitTestable(), findsOneWidget);
-    // A เพิ่มเติม section, in the hub's order: contacts ↔ projects ↔ debts.
+    // A เพิ่มเติม section, in the hub's order: debts ↔ projects.
     await pump(t, at: '/projects');
     await swipe(t, find.text('tab projects').hitTestable(), 300);
-    expect(find.text('tab contacts').hitTestable(), findsOneWidget);
-    // Library's last card doesn't spill into the people section.
-    await pump(t, at: '/tags');
-    await swipe(t, find.text('tab tags').hitTestable(), -300);
-    expect(find.text('tab tags').hitTestable(), findsOneWidget);
+    expect(find.text('tab debts').hitTestable(), findsOneWidget);
+    // A section's last card does not spill into the next section.
+    await pump(t, at: '/recurring');
+    await swipe(t, find.text('tab recurring').hitTestable(), -300);
+    expect(find.text('tab recurring').hitTestable(), findsOneWidget);
   });
   testWidgets('another tab\'s page opens in its own tab; back returns', (
     t,

@@ -160,13 +160,14 @@ class _HorizontalLayout extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
-            MoneyText(
-              accountDisplayBalance(account),
-              style: AppTypography.of(
-                context,
-                AppTextRole.money,
-              )?.copyWith(color: accountBalanceColor(context, account)),
-            ),
+            if (account.showsBalance)
+              MoneyText(
+                accountDisplayBalance(account),
+                style: AppTypography.of(
+                  context,
+                  AppTextRole.money,
+                )?.copyWith(color: accountBalanceColor(context, account)),
+              ),
             if (account.creditUtilization != null) ...[
               const SizedBox(height: AppSpacing.xs),
               SizedBox(
@@ -229,14 +230,16 @@ class _VerticalLayout extends StatelessWidget {
           role: AppTextRole.caption,
           maxLines: 1,
         ),
-        const SizedBox(height: AppSpacing.xs),
-        MoneyText(
-          accountDisplayBalance(account),
-          style: AppTypography.of(
-            context,
-            AppTextRole.money,
-          )?.copyWith(color: accountBalanceColor(context, account)),
-        ),
+        if (account.showsBalance) ...[
+          const SizedBox(height: AppSpacing.xs),
+          MoneyText(
+            accountDisplayBalance(account),
+            style: AppTypography.of(
+              context,
+              AppTextRole.money,
+            )?.copyWith(color: accountBalanceColor(context, account)),
+          ),
+        ],
         if (utilization != null) ...[
           const SizedBox(height: AppSpacing.xs),
           // Bar beside its percent (one line, keeps the card's height).

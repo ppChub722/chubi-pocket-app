@@ -66,6 +66,7 @@ Future<AdjustBalanceSheetResult?> showAdjustBalanceFormSheet(
   required AdjustBalanceStrings strings,
   Color? tint,
   bool isCredit = false,
+  bool setOnly = false,
 }) {
   return showAppSheetCustom<AdjustBalanceSheetResult>(
     context,
@@ -76,6 +77,7 @@ Future<AdjustBalanceSheetResult?> showAdjustBalanceFormSheet(
       strings: strings,
       tint: tint,
       isCredit: isCredit,
+      setOnly: setOnly,
     ),
   );
 }
@@ -88,6 +90,7 @@ class AdjustBalanceSheet extends StatefulWidget {
     required this.strings,
     this.tint,
     this.isCredit = false,
+    this.setOnly = false,
     super.key,
   });
 
@@ -97,6 +100,11 @@ class AdjustBalanceSheet extends StatefulWidget {
   final AdjustBalanceStrings strings;
   final Color? tint;
   final bool isCredit;
+
+  /// "Set the balance" rather than "adjust it": a blank field, no current /
+  /// difference lines, no description / note, and any parsed amount saves
+  /// (turning a wallet's balance tracking back on asks for it once).
+  final bool setOnly;
 
   @override
   State<AdjustBalanceSheet> createState() => _AdjustBalanceSheetState();
@@ -115,7 +123,9 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
     final b = widget.balance;
     // Credit → the field shows the debt (positive while owing).
     final shown = _isCredit ? -b : b;
-    _controller = TextEditingController(text: AmountInput.format(shown));
+    _controller = TextEditingController(
+      text: widget.setOnly ? '' : AmountInput.format(shown),
+    );
   }
 
   @override
@@ -150,7 +160,7 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
     final diff = next == null
         ? 0.0
         : ((next - widget.balance) * 100).roundToDouble() / 100;
-    final canAdjust = next != null && diff != 0;
+    final canAdjust = next != null && (widget.setOnly || diff != 0);
     final diffText =
         '${diff > 0 ? '+' : '−'}${moneyString(context, diff.abs(), symbol: symbol)}';
     final bigAmount = text.headlineMedium?.copyWith(
@@ -191,15 +201,17 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                _CardLine(
-                  label: s.currentLabel,
-                  value: MoneyText(
-                    widget.balance,
-                    symbol: symbol,
-                    style: moneyStyle?.copyWith(color: tint),
+                if (!widget.setOnly) ...[
+                  _CardLine(
+                    label: s.currentLabel,
+                    value: MoneyText(
+                      widget.balance,
+                      symbol: symbol,
+                      style: moneyStyle?.copyWith(color: tint),
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.md),
+                ],
                 Text(
                   s.newLabel,
                   style: text.labelMedium?.copyWith(
@@ -224,45 +236,49 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
                   hideHintOnFocus: true,
                   onChanged: (_) => setState(() {}),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _CardLine(
-                  label: s.diffLabel,
-                  value: MoneyText(
-                    diff,
-                    symbol: symbol,
-                    tone: MoneyTone.signed,
-                    hideable: false,
-                    style: moneyStyle,
+                if (!widget.setOnly) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _CardLine(
+                    label: s.diffLabel,
+                    value: MoneyText(
+                      diff,
+                      symbol: symbol,
+                      tone: MoneyTone.signed,
+                      hideable: false,
+                      style: moneyStyle,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          _FieldRow(
-            label: s.descriptionLabel,
-            child: AppInput(
-              controller: _description,
-              dense: true,
-              maxLength: TextLimits.description,
+          if (!widget.setOnly) ...[
+            const SizedBox(height: AppSpacing.md),
+            _FieldRow(
+              label: s.descriptionLabel,
+              child: AppInput(
+                controller: _description,
+                dense: true,
+                maxLength: TextLimits.description,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _FieldRow(
-            label: s.noteLabel,
-            child: AppInput(
-              controller: _note,
-              dense: true,
-              maxLength: TextLimits.note,
-              maxLines: 3,
+            const SizedBox(height: AppSpacing.sm),
+            _FieldRow(
+              label: s.noteLabel,
+              child: AppInput(
+                controller: _note,
+                dense: true,
+                maxLength: TextLimits.note,
+                maxLines: 3,
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Inline caption — no banner.
-          Text(
-            canAdjust ? s.willCreate(diffText) : s.noChange,
-            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
+            const SizedBox(height: AppSpacing.sm),
+            // Inline caption — no banner.
+            Text(
+              canAdjust ? s.willCreate(diffText) : s.noChange,
+              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm),
         ],
       ),

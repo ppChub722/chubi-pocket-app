@@ -140,6 +140,85 @@ class EmbeddedCategory extends Equatable {
 }
 
 /// `EventRef`: an event (project) as shown on a row.
+/// `recurring_item`: a transaction produced by a recurring (or a one-off
+/// upcoming item that came due) — tx detail "🔁 Netflix · 3/12 ›". The link
+/// works like an event bill's: no sync, the app asks at save / delete
+/// (owner 2026-10-13).
+class RecurringItemLink extends Equatable {
+  const RecurringItemLink({
+    required this.itemId,
+    this.recurringId,
+    this.recurringName,
+    this.recurringIconCode,
+    this.seq,
+    this.total,
+  });
+
+  final String itemId;
+
+  /// Null = a one-off upcoming item (no recurring parent).
+  final String? recurringId;
+  final String? recurringName;
+  final IconCode? recurringIconCode;
+  final int? seq;
+  final int? total;
+
+  factory RecurringItemLink.fromJson(Map<String, dynamic> json) {
+    final r = json['recurring'];
+    final rec = r is Map ? r.cast<String, dynamic>() : null;
+    return RecurringItemLink(
+      itemId: json['item_id'] as String,
+      recurringId: rec?['id'] as String?,
+      recurringName: rec?['name'] as String?,
+      recurringIconCode: _icon(rec?['icon_code']),
+      seq: (json['seq'] as num?)?.toInt(),
+      total: (json['total'] as num?)?.toInt(),
+    );
+  }
+
+  /// "Netflix · 3/12" — [fallback] names a one-off upcoming item.
+  String label(String fallback) => [
+    recurringName ?? fallback,
+    if (seq != null && total != null) '$seq/$total',
+  ].join(' · ');
+
+  @override
+  List<Object?> get props => [
+    itemId,
+    recurringId,
+    recurringName,
+    recurringIconCode,
+    seq,
+    total,
+  ];
+}
+
+/// `EventBillLink`: on a transaction that is in an event (owner 2026-10-12)
+/// — tx detail "อยู่ในอีเวนต์ … ›" opens [billId] on [event]'s board.
+/// [linked] = the bill was made from this transaction: the money (amount ·
+/// date · payer · wallet) is shared, an edit on either side changes both;
+/// false = my personal copy of my share.
+class EventBillLink extends Equatable {
+  const EventBillLink({
+    required this.event,
+    required this.billId,
+    this.linked = false,
+  });
+
+  final EventRef event;
+  final String billId;
+  final bool linked;
+
+  factory EventBillLink.fromJson(Map<String, dynamic> json) => EventBillLink(
+    event: EventRef.fromJson((json['event'] as Map).cast<String, dynamic>()),
+    billId: json['bill_id'] as String,
+    linked: (json['linked'] as bool?) ?? false,
+  );
+
+  @override
+  List<Object?> get props => [event, billId, linked];
+}
+
 class EventRef extends Equatable {
   const EventRef({
     required this.id,

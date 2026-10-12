@@ -5,9 +5,6 @@ import '../../features/app_version/presentation/widgets/update_banner.dart';
 import '../../features/auth/presentation/widgets/auth_widgets.dart';
 import '../../features/notifications/domain/notification.dart';
 import '../../features/notifications/presentation/widgets/notification_tile.dart';
-import '../../features/transactions/domain/refs.dart';
-import '../../features/personal_debts/domain/personal_debt.dart';
-import '../../features/personal_debts/presentation/widgets/debt_widgets.dart';
 import '../../features/projects/domain/project.dart';
 import '../../features/projects/presentation/widgets/project_common.dart';
 import '../../features/projects/presentation/widgets/project_tx_tiles.dart';
@@ -15,38 +12,18 @@ import '../../ui/ui.dart';
 import '../hub_kit.dart';
 import '../hub_playground.dart';
 
-/// `/dev/domain/others` — debt tiles, notification tiles, project pieces,
+/// `/dev/domain/others` — notification tiles, project pieces,
 /// the brand logo, the auth header and the two top-of-screen banners.
 ///
 /// Gate pieces: BrandLogo, OfflineBanner. Feature pieces (sample models, no
-/// cubit): DebtTile, debtStatusChip, NotificationTile, ProjectTxIcon,
+/// cubit): NotificationTile, ProjectTxIcon,
 /// ProjectMemberAvatar, projectStatusTone chips, AuthBrandHeader,
 /// AuthOrDivider, GoogleSignInButton, UpdateBannerStrip. Skipped (need
-/// cubits / repositories): DebtAvatar (ContactsCubit), ProjectTxTreeTile
+/// cubits / repositories): ProjectTxTreeTile
 /// (ProjectView + repository), AuthPrefsBar (locale / theme cubits),
 /// UpdateBanner (AppVersionCubit; its strip is shown instead).
 Widget buildOthersPage(BuildContext context) {
   final now = DateTime.now();
-
-  PersonalDebt debt({
-    required String id,
-    required DebtDirection direction,
-    required double amount,
-    double settled = 0,
-    DebtStatus status = DebtStatus.open,
-    String? description,
-  }) => PersonalDebt(
-    id: id,
-    userId: 'me',
-    direction: direction,
-    person: EmbeddedPerson(name: 'บี'),
-    amount: amount,
-    settledAmount: settled,
-    currency: 'THB',
-    status: status,
-    description: description,
-    createdAt: now,
-  );
 
   AppNotification notif(
     NotificationType type, {
@@ -108,11 +85,6 @@ Widget buildOthersPage(BuildContext context) {
     marks: const [],
   );
 
-  Widget debtCard(PersonalDebt d) => AppCard(
-    padding: EdgeInsets.zero,
-    child: DebtTile(debt: d),
-  );
-
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -122,94 +94,6 @@ Widget buildOthersPage(BuildContext context) {
             'Real pieces from sample models (no cubit), many variants side by '
             'side. Wide ones take a whole row.',
         uses: [
-          // ── Debts ──
-          HubUse(
-            wide: true,
-            label: 'DebtTile — owed to me, with a description',
-            page: 'Debt person page',
-            child: debtCard(
-              debt(
-                id: 'd1',
-                direction: DebtDirection.owedToMe,
-                amount: 1500,
-                description: 'Dinner',
-              ),
-            ),
-          ),
-          HubUse(
-            wide: true,
-            label: 'DebtTile — I owe, no description',
-            page: 'Debt person page',
-            child: debtCard(
-              debt(id: 'd2', direction: DebtDirection.iOwe, amount: 800),
-            ),
-          ),
-          HubUse(
-            wide: true,
-            label: 'DebtTile — part repaid: progress shown',
-            page: 'Debt person page',
-            child: debtCard(
-              debt(
-                id: 'd3',
-                direction: DebtDirection.owedToMe,
-                amount: 2000,
-                settled: 500,
-                description: 'Concert tickets',
-              ),
-            ),
-          ),
-          HubUse(
-            wide: true,
-            label: 'DebtTile — overpaid: owed the other way, flagged',
-            page: 'Debt person page, Debt detail',
-            child: debtCard(
-              debt(
-                id: 'd4',
-                direction: DebtDirection.owedToMe,
-                amount: 1000,
-                settled: 1200,
-                description: 'Taxi',
-              ),
-            ),
-          ),
-          HubUse(
-            wide: true,
-            label: 'DebtTile — settled: status chip, full amount, muted',
-            page: 'Debt person page',
-            child: debtCard(
-              debt(
-                id: 'd5',
-                direction: DebtDirection.iOwe,
-                amount: 600,
-                settled: 600,
-                status: DebtStatus.settled,
-                description: 'Lunch',
-              ),
-            ),
-          ),
-          HubUse(
-            wide: true,
-            label: 'DebtTile — cancelled: status chip, muted',
-            page: 'Debt person page',
-            child: debtCard(
-              debt(
-                id: 'd6',
-                direction: DebtDirection.owedToMe,
-                amount: 300,
-                status: DebtStatus.cancelled,
-              ),
-            ),
-          ),
-          for (final s in DebtStatus.values)
-            HubUse(
-              label: 'debtStatusChip — ${s.name}',
-              page: 'Debt detail page',
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: debtStatusChip(context, s),
-              ),
-            ),
-
           // ── Notifications ──
           HubUse(
             wide: true,
@@ -553,42 +437,6 @@ Widget buildOthersPage(BuildContext context) {
             child: UpdateBannerStrip(onUpdate: () {}, onDismiss: () {}),
           ),
         ],
-      ),
-      HubPlayground(
-        title: 'DebtTile',
-        note:
-            'One debt row. The tile reads its whole look from the debt: '
-            'direction, status, amount, settledAmount (progress / overpaid) '
-            'and description.',
-        controls: [
-          PlayChoice<DebtDirection>('direction', [
-            for (final d in DebtDirection.values) (d.name, d),
-          ]),
-          PlayChoice<DebtStatus>('status', [
-            for (final s in DebtStatus.values) (s.name, s),
-          ]),
-          const PlayNum(
-            'settled',
-            min: 0,
-            max: 1200,
-            step: 100,
-            initialValue: 500,
-          ),
-          const PlayBool('description', initialValue: true),
-        ],
-        builder: (context, v) => AppCard(
-          padding: EdgeInsets.zero,
-          child: DebtTile(
-            debt: debt(
-              id: 'play',
-              direction: v<DebtDirection>('direction'),
-              amount: 1000,
-              settled: v<double>('settled'),
-              status: v<DebtStatus>('status'),
-              description: v<bool>('description') ? 'Dinner' : null,
-            ),
-          ),
-        ),
       ),
       HubPlayground(
         title: 'NotificationTile',

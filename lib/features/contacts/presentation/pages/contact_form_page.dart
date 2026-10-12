@@ -168,12 +168,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
       body: Builder(
         builder: (context) {
           final top = MediaQuery.paddingOf(context).top;
-          if (loadingExisting) {
-            return Padding(
-              padding: EdgeInsets.only(top: top),
-              child: const LoadingView(),
-            );
-          }
+          // First load (linking an existing contact): the template's detail
+          // skeleton, never a spinner; it clears the floating bar itself.
+          if (loadingExisting) return const DetailPageSkeleton();
           return ListView(
             padding: EdgeInsets.fromLTRB(
               AppSpacing.lg,

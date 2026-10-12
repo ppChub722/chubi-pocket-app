@@ -195,6 +195,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ],
             submit: AppButton(
               label: l.authRegisterSubmit,
+              submits: true,
               onPressed: isSubmitting ? null : _submit,
               loading: isSubmitting,
               size: AppButtonSize.large,

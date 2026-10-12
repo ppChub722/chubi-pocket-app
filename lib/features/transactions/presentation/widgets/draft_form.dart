@@ -24,8 +24,6 @@ import '../../domain/transaction_type.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/widgets/member_pick_card.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
-import '../../../scheduled_transactions/domain/scheduled_enums.dart';
-import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import 'account_picker_sheet.dart';
@@ -35,7 +33,6 @@ import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 
 part 'draft_form_event.dart';
-part 'draft_form_scheduled.dart';
 
 /// The fields of one transaction draft — owned by whoever shows a
 /// [DraftForm] (the `+` quick create sheet, one row of "เพิ่มร่าง"), so the
@@ -45,14 +42,10 @@ class DraftFormController extends ChangeNotifier {
     amount.addListener(notifyListeners);
     note.addListener(notifyListeners);
     description.addListener(notifyListeners);
-    schedule.addListener(notifyListeners);
   }
 
   final amount = TextEditingController();
   final note = TextEditingController();
-
-  /// Scheduled mode (a recurring template) — see draft_form_scheduled.dart.
-  final schedule = ScheduleFields();
 
   /// What it was for — the record's title (the hero's big line). A
   /// project row's คำอธิบาย too.
@@ -535,7 +528,6 @@ class DraftFormController extends ChangeNotifier {
     amount.dispose();
     note.dispose();
     description.dispose();
-    schedule.dispose();
     for (final s in memberSplits) {
       s.amount.dispose();
     }
@@ -555,6 +547,16 @@ String _ymd(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 /// "วันนี้" / "เมื่อวาน" / a short date.
+/// Whether [d] (a day) is after today, on this device's calendar.
+bool isAfterToday(DateTime d) {
+  final now = DateTime.now();
+  return DateTime(
+    d.year,
+    d.month,
+    d.day,
+  ).isAfter(DateTime(now.year, now.month, now.day));
+}
+
 String _dayLabel(BuildContext context, DateTime d) {
   final l = AppLocalizations.of(context)!;
   return DateFormatter.friendly(
@@ -593,6 +595,8 @@ class DraftForm extends StatefulWidget {
     this.extra,
     this.typeLocked = false,
     this.allowSplits = true,
+    this.upcomingHint = false,
+    this.onUpcomingHintTap,
     this.categoryLockedHint,
     this.readOnly = false,
     this.editing = true,
@@ -604,7 +608,6 @@ class DraftForm extends StatefulWidget {
     this.splitsCollapsible = false,
     this.splitsInitiallyOpen = true,
     this.event,
-    this.schedule,
     this.heroKey,
     this.chipLayout = false,
     this.cardsInHero = false,
@@ -643,12 +646,16 @@ class DraftForm extends StatefulWidget {
   /// Non-null → event mode: the form is a project row (see [DraftEvent]).
   final DraftEvent? event;
 
-  /// Non-null → scheduled mode: the form is a recurring template (see
-  /// [DraftSchedule]); its fields are [DraftFormController.schedule].
-  final DraftSchedule? schedule;
-
   final bool typeLocked;
   final bool allowSplits;
+
+  /// A date after today shows "รายการล่วงหน้า › จะเข้ารอยืนยันวันที่ …"
+  /// under the date (owner 2026-10-13: saving it makes an upcoming item, not
+  /// a transaction). Not for transfers (the BE refuses future transfers).
+  final bool upcomingHint;
+
+  /// The hint's tap (the recurring page, upcoming tab); null = not tappable.
+  final VoidCallback? onUpcomingHintTap;
 
   /// Non-null → the category card can't be changed; this says why.
   final String? categoryLockedHint;
@@ -766,6 +773,26 @@ class _DraftFormState extends State<DraftForm> {
     } else {
       _c.setAccount(r is AccountPickerSelected ? r.account : null);
     }
+  }
+
+  /// The upcoming hint under the date, when it applies
+  /// ([DraftForm.upcomingHint]).
+  Widget? _upcomingNote(BuildContext context) {
+    if (!widget.upcomingHint || _c.isTransfer || !isAfterToday(_c.date)) {
+      return null;
+    }
+    final l = AppLocalizations.of(context)!;
+    return HintLine(
+      icon: AppIcons.scheduled,
+      linkLabel: l.quickUpcomingHintTitle,
+      text: l.quickUpcomingHintText(
+        DateFormatter.medium(
+          _c.date,
+          locale: Localizations.localeOf(context).toLanguageTag(),
+        ),
+      ),
+      onTap: widget.onUpcomingHintTap,
+    );
   }
 
   /// Tags "เพิ่มเติม": the full picker (search, "+ แท็กใหม่").
@@ -913,17 +940,6 @@ class _DraftFormState extends State<DraftForm> {
         ? context.watch<AccountsCubit>().state.accounts
         : (opts.state.options?.accountList ?? const <Account>[]);
     _c.applyDefaultAccount(widget.defaultAccount ?? accounts.firstOrNull);
-    final schedule = widget.schedule;
-    if (schedule != null) {
-      return _ScheduledForm(
-        controller: _c,
-        schedule: schedule,
-        compact: widget.compact,
-        autofocus: widget.autofocus && !widget.readOnly,
-        heroKey: widget.heroKey,
-      );
-    }
-
     final editing = widget.editing;
     final enterEdit = widget.onEnterEdit;
     // View mode: a long-press anywhere on the cards enters edit mode too.
@@ -949,6 +965,7 @@ class _DraftFormState extends State<DraftForm> {
                 amount: _c.amount,
                 title: _c.description,
                 dateLabel: _dayLabel(context, _c.date),
+                dateNote: _upcomingNote(context),
                 onPickDate: _pickDate,
                 autofocus: widget.autofocus && !widget.readOnly,
                 compact: widget.compact,
@@ -975,6 +992,7 @@ class _DraftFormState extends State<DraftForm> {
                     ? _titlePlaceholder(l)
                     : null,
                 dateLabel: _dayLabel(context, _c.date),
+                dateNote: _upcomingNote(context),
                 onPickDate: _pickDate,
                 editing: editing,
                 autofocus: widget.autofocus && !widget.readOnly,

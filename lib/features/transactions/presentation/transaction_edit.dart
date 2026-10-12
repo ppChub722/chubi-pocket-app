@@ -97,14 +97,20 @@ Future<bool> confirmIncompleteSplits(
 /// [initialAccountId] / [initialToAccountId] are the wallets as first
 /// loaded (only a changed wallet is sent).
 ///
-/// Returns a warning to show instead of "saved" (none today: the tags are
-/// part of the one save); throws [ApiException] when the save failed.
-Future<String?> saveTransactionEdit(
+/// [alsoUpdateLink]: the answer of the linked-record prompt (owner
+/// 2026-10-13) for a row linked to an event bill / a recurring item; null =
+/// not linked (not sent).
+///
+/// Returns what happened (a warning to show instead of "saved", or that a
+/// future date moved it to the upcoming items); throws [ApiException] when
+/// the save failed.
+Future<TransactionEditOutcome> saveTransactionEdit(
   BuildContext context, {
   required Transaction t,
   required DraftFormController c,
   required String? initialAccountId,
   required String? initialToAccountId,
+  bool? alsoUpdateLink,
 }) async {
   final txCubit = context.read<TransactionsCubit>();
   final accounts = context.read<AccountsCubit>();
@@ -163,7 +169,13 @@ Future<String?> saveTransactionEdit(
     transferToAccountId: toAccountChanged ? c.toAccount?.id : null,
     // The whole tag set replaces the row's.
     tagIds: c.tagIds.toList(),
+    alsoUpdateLink: alsoUpdateLink,
   );
+  // A date after today: it left the book for the upcoming items.
+  if (result.isUpcoming) {
+    accounts.patchBalances(result.accountBalances);
+    return const TransactionEditOutcome(movedToUpcoming: true);
+  }
   // The answer carries every wallet the write touched (an old wallet too).
   accounts.patchBalances(result.accountBalances);
   if (!lowering && splitsChanged) {
@@ -171,7 +183,18 @@ Future<String?> saveTransactionEdit(
     // The split PUT's row (people, split_count) goes into the cache: no GET.
     if (row != null) txCubit.patchRow(row, afterWrite: true);
   }
-  return null;
+  return const TransactionEditOutcome();
+}
+
+/// What [saveTransactionEdit] did.
+class TransactionEditOutcome {
+  const TransactionEditOutcome({this.warning, this.movedToUpcoming = false});
+
+  /// Shown instead of "saved" (none today).
+  final String? warning;
+
+  /// A future date: the row is an upcoming item now (not in the book).
+  final bool movedToUpcoming;
 }
 
 String _ymd(DateTime d) =>

@@ -225,9 +225,13 @@ class TransactionsRepository {
     bool clearAccount = false,
     String? transferToAccountId,
     List<String>? tagIds,
+    bool? alsoUpdateLink,
   }) async {
     try {
       final body = <String, dynamic>{'amount': ?amount, 'date': ?date};
+      // A row linked to an event bill / a recurring item: the app asked
+      // (owner 2026-10-13) — true = the other side gets the change too.
+      if (alsoUpdateLink != null) body['also_update_link'] = alsoUpdateLink;
       // Present = REPLACES the tag set (`[]` clears); omitted = unchanged.
       if (tagIds != null) body['tag_ids'] = tagIds;
       if (categoryId != null) {
@@ -265,10 +269,17 @@ class TransactionsRepository {
 
   /// `DELETE /v1/transactions/:id`. For transfers the paired row is also
   /// deleted and both balances reverse. Returns `{id, account_balances}`.
-  Future<DeleteTransactionResult> delete(String id) async {
+  /// [alsoDeleteLink] (owner 2026-10-13): a row linked to an event bill or a
+  /// recurring item takes that item with it when true; the answer then names
+  /// it (`bill_id` / `recurring_item_id`).
+  Future<DeleteTransactionResult> delete(
+    String id, {
+    bool? alsoDeleteLink,
+  }) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(
         '/transactions/$id',
+        queryParameters: {'also_delete_link': ?alsoDeleteLink},
       );
       return DeleteTransactionResult.fromJson(res.data!);
     } on DioException catch (e) {

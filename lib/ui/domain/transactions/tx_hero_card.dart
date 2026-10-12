@@ -43,6 +43,11 @@ class TxHeroCard extends StatelessWidget {
     required this.dateLabel,
     this.onTypeChanged,
     this.allowTransfer = true,
+    this.debt = false,
+    this.typeBadge,
+    this.accentColor,
+    this.amountLocked = false,
+    this.dateNote,
     this.onPickDate,
     this.symbol = '฿',
     this.editing = true,
@@ -73,6 +78,26 @@ class TxHeroCard extends StatelessWidget {
 
   /// False for project rows and scheduled entries (expense | income).
   final bool allowTransfer;
+
+  /// Debt mode (owner 2026-10-12, quick create + tx detail on a debt
+  /// entry): the type chips read Paid / Received — expense = paid (I paid
+  /// them), income = received — in the same colours; never a transfer.
+  final bool debt;
+
+  /// Replaces the type chips with one badge (a saving entry has no
+  /// expense / income: "ออม"). Not tappable here.
+  final Widget? typeBadge;
+
+  /// Overrides the type colour (the amount, the cursor) — the saving mode's.
+  final Color? accentColor;
+
+  /// Edit mode, but the amount stays as it is (a split-sourced debt entry:
+  /// only its description / note / paid label change).
+  final bool amountLocked;
+
+  /// A line under the top row, right under the date (quick create: "the
+  /// date is ahead → an upcoming item", a [HintLine]). Inline layout only.
+  final Widget? dateNote;
 
   final TextEditingController amount;
   final TextEditingController title;
@@ -141,7 +166,7 @@ class TxHeroCard extends StatelessWidget {
   List<TransactionType> get _types => [
     TransactionType.expense,
     TransactionType.income,
-    if (allowTransfer) TransactionType.transfer,
+    if (allowTransfer && !debt) TransactionType.transfer,
   ];
 
   /// Swipe left (+1) → the next type, right (−1) → the previous one (no
@@ -160,8 +185,8 @@ class TxHeroCard extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final accent = txTypeColor(context, type);
-    final canSwitch = editing && onTypeChanged != null;
+    final accent = accentColor ?? txTypeColor(context, type);
+    final canSwitch = editing && onTypeChanged != null && typeBadge == null;
     final titleStyle = textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w600,
     );
@@ -183,28 +208,34 @@ class TxHeroCard extends StatelessWidget {
     // chips 4 apart; a large text scale shrinks the group rather than
     // wrapping it under itself.
     final chips = [
-      FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: AlignmentDirectional.centerStart,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final (i, t) in [
-              for (final t in _types)
-                if (canSwitch || t == type) t,
-            ].indexed) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.xs),
-              txTypeChip(
-                context,
-                type: t,
-                selected: t == type,
-                onTap: canSwitch && t != type ? () => onTypeChanged!(t) : null,
-                locked: editing && onTypeChanged == null,
-              ),
+      if (typeBadge != null)
+        typeBadge!
+      else
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final (i, t) in [
+                for (final t in _types)
+                  if (canSwitch || t == type) t,
+              ].indexed) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.xs),
+                txTypeChip(
+                  context,
+                  type: t,
+                  selected: t == type,
+                  onTap: canSwitch && t != type
+                      ? () => onTypeChanged!(t)
+                      : null,
+                  locked: editing && onTypeChanged == null,
+                  debt: debt,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
     ];
     // The date: a control-height chip, read-only (no ink) in view mode.
     final datePill = AppChip(
@@ -234,10 +265,10 @@ class TxHeroCard extends StatelessWidget {
         controller: amount,
         focusNode: amountFocus,
         type: AppInputType.amount,
-        autofocus: autofocus && editing,
-        readOnly: !editing,
-        enableInteractiveSelection: editing,
-        showCursor: editing ? null : false,
+        autofocus: autofocus && editing && !amountLocked,
+        readOnly: !editing || amountLocked,
+        enableInteractiveSelection: editing && !amountLocked,
+        showCursor: editing && !amountLocked ? null : false,
         textAlign: align,
         style: bigAmount,
         cursorColor: scheme.primary,
@@ -251,7 +282,7 @@ class TxHeroCard extends StatelessWidget {
         hint: '0',
         hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
         hideHintOnFocus: true,
-        underline: editing,
+        underline: editing && !amountLocked,
       ),
       amountFocus,
     );
@@ -311,6 +342,8 @@ class TxHeroCard extends StatelessWidget {
         ? const []
         : [
             HeroTopRow(leading: chips, trailing: [datePill, ?editChip]),
+            if (dateNote != null)
+              Align(alignment: AlignmentDirectional.centerEnd, child: dateNote),
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
@@ -529,12 +562,19 @@ AppChip txTypeChip(
   required bool selected,
   VoidCallback? onTap,
   bool locked = false,
+  bool debt = false,
 }) {
   final l = AppLocalizations.of(context)!;
   final (IconData? icon, label) = switch (type) {
     null => (null, l.transactionsListFilterAll),
-    TransactionType.expense => (AppIcons.expense, l.transactionTypeExpense),
-    TransactionType.income => (AppIcons.income, l.transactionTypeIncome),
+    TransactionType.expense => (
+      AppIcons.expense,
+      debt ? l.debtsDirPaid : l.transactionTypeExpense,
+    ),
+    TransactionType.income => (
+      AppIcons.income,
+      debt ? l.debtsDirReceived : l.transactionTypeIncome,
+    ),
     TransactionType.transfer => (AppIcons.transfer, l.transactionTypeTransfer),
   };
   return AppChip(

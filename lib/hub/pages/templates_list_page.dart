@@ -244,6 +244,25 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
             ),
             HubUse(
               wide: true,
+              label:
+                  'loading — a cards grid: ListPageBody(skeletonShape: '
+                  'ListSkeletonShape.grid(...)) — summary block, sort row, two '
+                  'rows of cards at the cards height',
+              page: 'Wallets',
+              child: framed(
+                const ListPageSkeleton(
+                  shape: ListSkeletonShape.grid(
+                    headerHeight: 168,
+                    sortRow: true,
+                    gridColumns: 2,
+                    gridItemExtent: 156,
+                  ),
+                ),
+                520,
+              ),
+            ),
+            HubUse(
+              wide: true,
               label: 'data — search above a short list',
               page: 'Contacts, Budgets lists',
               child: framed(stateBody(_State.data), 320),
@@ -271,6 +290,53 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
               label: 'empty — message only',
               page: 'Transactions (filtered to nothing)',
               child: framed(stateBody(_State.empty), 320),
+            ),
+            HubUse(
+              wide: true,
+              label:
+                  'paging — the next page loading: two row skeletons at the '
+                  'end (onLoadMore fires near the end while hasMore)',
+              page: 'Transactions, debts, event bills',
+              child: framed(
+                ListPageBody(
+                  loading: false,
+                  error: null,
+                  isEmpty: false,
+                  onRetry: _refresh,
+                  empty: const EmptyView.compact(message: 'Nothing'),
+                  hasMore: true,
+                  loadingMore: true,
+                  onLoadMore: () {},
+                  children: rows.take(2).toList(),
+                ),
+                300,
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label:
+                  'paging — the next page failed: LoadMoreErrorRow (could not '
+                  'load more · Retry); the loaded rows stay, scrolling stops '
+                  'asking until Retry',
+              page: 'Transactions, debts, event bills',
+              child: framed(
+                ListPageBody(
+                  loading: false,
+                  error: null,
+                  isEmpty: false,
+                  onRetry: _refresh,
+                  empty: const EmptyView.compact(message: 'Nothing'),
+                  hasMore: true,
+                  loadMoreError: const _DemoError(),
+                  onRetryMore: () {},
+                  footer: const Padding(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Center(child: Text('footer slot')),
+                  ),
+                  children: rows.take(2).toList(),
+                ),
+                300,
+              ),
             ),
           ],
         ),

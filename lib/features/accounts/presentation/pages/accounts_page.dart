@@ -107,7 +107,11 @@ class _AccountsPageState extends State<AccountsPage> {
     final int Function((int, Account), (int, Account)) cmp = switch (_sort) {
       _WalletSort.custom => byOrder,
       _WalletSort.balance => (a, b) {
-        final c = b.$2.balance.compareTo(a.$2.balance);
+        // Untracked wallets have no balance to rank by: they go last.
+        final c = (b.$2.showsBalance ? b.$2.balance : double.negativeInfinity)
+            .compareTo(
+              a.$2.showsBalance ? a.$2.balance : double.negativeInfinity,
+            );
         return c != 0 ? c : byOrder(a, b);
       },
       _WalletSort.name => (a, b) {
@@ -212,7 +216,13 @@ class _AccountsPageState extends State<AccountsPage> {
               error: state.accounts.isEmpty ? state.error : null,
               isEmpty: accounts.isEmpty,
               onRetry: _refresh,
-              skeleton: _AccountsSkeleton(cols: cols),
+              // Summary · sort row · the cards grid at the cards' height.
+              skeletonShape: ListSkeletonShape.grid(
+                headerHeight: 168,
+                sortRow: true,
+                gridColumns: cols,
+                gridItemExtent: _cardExtent,
+              ),
               empty: EmptyView(
                 icon: AppIcons.wallet,
                 title: l.accountsEmptyTitle,
@@ -577,57 +587,16 @@ class _WalletsSummary extends StatelessWidget {
                 role: AppTextRole.caption,
               ),
             ],
+            if (totals.untrackedCount > 0) ...[
+              const SizedBox(height: AppSpacing.xs),
+              AppText(
+                l.walletTrackUntrackedNote(totals.untrackedCount),
+                role: AppTextRole.caption,
+              ),
+            ],
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Loading placeholder mirroring the real layout: summary, the toolbar
-/// and the grid at the cards' own height.
-class _AccountsSkeleton extends StatelessWidget {
-  const _AccountsSkeleton({required this.cols});
-  final int cols;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        MediaQuery.paddingOf(context).top + AppSpacing.sm,
-        AppSpacing.lg,
-        MediaQuery.paddingOf(context).bottom,
-      ),
-      children: [
-        const SkeletonBox(height: 168, borderRadius: AppRadius.md),
-        const SizedBox(height: AppSpacing.lg),
-        const Align(
-          alignment: Alignment.centerRight,
-          child: SkeletonBox(
-            width: 120,
-            height: 28,
-            borderRadius: AppRadius.xs,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: cols * 2,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: cols,
-            mainAxisSpacing: AppSpacing.md,
-            crossAxisSpacing: AppSpacing.md,
-            mainAxisExtent: _cardExtent,
-          ),
-          itemBuilder: (_, _) => const SkeletonBox(
-            height: _cardExtent,
-            borderRadius: AppRadius.lg,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../personal_debts/domain/debt_link.dart';
 import '../../tags/domain/tag.dart';
 import 'refs.dart';
 import 'transaction_type.dart';
@@ -92,8 +93,9 @@ class Transaction extends Equatable {
     this.splitCount = 0,
     this.splits = const [],
     this.project,
-    this.sourcePersonalDebtId,
-    this.isRepayment = false,
+    this.counterparty,
+    this.eventBill,
+    this.recurringItem,
     this.transferPeer,
     this.currency,
     this.myShare,
@@ -141,9 +143,26 @@ class Transaction extends Equatable {
   /// Set on both rows of a transfer. Used to identify pair members.
   final String? transferGroupId;
 
-  /// Debt repayment row (replaces `is_resolve`): can't join an event, can't be
-  /// moved to another category.
-  final bool isRepayment;
+  /// Set when this row IS a debt entry's wallet side (one record with the
+  /// entry: editing / deleting either changes both) — tx detail opens it in
+  /// debt mode (owner 2026-10-12). Replaces `is_repayment` /
+  /// `source_personal_debt_id`.
+  final DebtLink? counterparty;
+
+  /// The wallet side of a debt entry ([counterparty]).
+  bool get isDebtEntry => counterparty != null;
+
+  /// Set when this row is in an event: the board bill it belongs to.
+  final EventBillLink? eventBill;
+
+  /// Set when this row came from a recurring / an upcoming item.
+  final RecurringItemLink? recurringItem;
+
+  /// Linked to another record whose money the app asks about at save /
+  /// delete (owner 2026-10-13: an event bill made from it, or its recurring
+  /// item).
+  bool get hasPromptedLink =>
+      (eventBill?.linked ?? false) || recurringItem != null;
 
   /// The other side of a transfer row (null on every other row); its
   /// `isOut` is for THIS row.
@@ -179,9 +198,6 @@ class Transaction extends Equatable {
 
   /// `{id, name}` of [projectId]'s project — the detail page's event card.
   final EventRef? project;
-
-  /// Set on a debt repayment (the debt it pays back).
-  final String? sourcePersonalDebtId;
 
   /// My part of an expense / income — what reports count (the total minus
   /// what others owe / get, or my event share). Null on transfers, and
@@ -267,8 +283,21 @@ class Transaction extends Equatable {
                 .toList()
           : const [],
       project: project,
-      sourcePersonalDebtId: json['source_personal_debt_id'] as String?,
-      isRepayment: (json['is_repayment'] as bool?) ?? false,
+      recurringItem: json['recurring_item'] is Map
+          ? RecurringItemLink.fromJson(
+              (json['recurring_item'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      eventBill: json['event_bill'] is Map
+          ? EventBillLink.fromJson(
+              (json['event_bill'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+      counterparty: json['counterparty'] is Map
+          ? DebtLink.fromJson(
+              (json['counterparty'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       transferPeer: json['transfer_peer'] is Map<String, dynamic>
           ? TransferPeer.fromJson(json['transfer_peer'] as Map<String, dynamic>)
           : null,
@@ -302,8 +331,9 @@ class Transaction extends Equatable {
     int? splitCount,
     List<TxSplit>? splits,
     EventRef? project,
-    String? sourcePersonalDebtId,
-    bool? isRepayment,
+    DebtLink? counterparty,
+    EventBillLink? eventBill,
+    RecurringItemLink? recurringItem,
     TransferPeer? transferPeer,
     String? currency,
     double? myShare,
@@ -333,8 +363,9 @@ class Transaction extends Equatable {
       splitCount: splitCount ?? this.splitCount,
       splits: splits ?? this.splits,
       project: project ?? this.project,
-      sourcePersonalDebtId: sourcePersonalDebtId ?? this.sourcePersonalDebtId,
-      isRepayment: isRepayment ?? this.isRepayment,
+      counterparty: counterparty ?? this.counterparty,
+      eventBill: eventBill ?? this.eventBill,
+      recurringItem: recurringItem ?? this.recurringItem,
       transferPeer: transferPeer ?? this.transferPeer,
       currency: currency ?? this.currency,
       myShare: myShare ?? this.myShare,
@@ -367,8 +398,9 @@ class Transaction extends Equatable {
     splitCount,
     splits,
     project,
-    sourcePersonalDebtId,
-    isRepayment,
+    counterparty,
+    eventBill,
+    recurringItem,
     transferPeer,
     currency,
     myShare,
@@ -385,17 +417,26 @@ class TransactionWriteResult {
   const TransactionWriteResult({
     required this.rows,
     this.accountBalances = const {},
+    this.upcoming,
   });
 
   /// One row (expense / income); balances unknown.
   TransactionWriteResult.single(Transaction tx)
     : rows = [tx],
-      accountBalances = const {};
+      accountBalances = const {},
+      upcoming = null;
 
   final List<Transaction> rows;
 
   /// {account id: balance after the write}.
   final Map<String, double> accountBalances;
+
+  /// A date after today (owner 2026-10-13): the write made / moved it to a
+  /// one-off UPCOMING item instead (`rows` is then empty). The raw item —
+  /// the recurring feature owns its model.
+  final Map<String, dynamic>? upcoming;
+
+  bool get isUpcoming => upcoming != null;
 
   bool get isTransfer => rows.length > 1;
 
@@ -404,11 +445,14 @@ class TransactionWriteResult {
 
   factory TransactionWriteResult.fromJson(Map<String, dynamic> json) =>
       TransactionWriteResult(
-        rows: (json['rows'] as List)
+        rows: ((json['rows'] as List?) ?? const [])
             .cast<Map<String, dynamic>>()
             .map(Transaction.fromJson)
             .toList(),
         accountBalances: WalletBalance.mapOf(json['account_balances']),
+        upcoming: json['upcoming'] is Map
+            ? (json['upcoming'] as Map).cast<String, dynamic>()
+            : null,
       );
 }
 
@@ -419,15 +463,23 @@ class DeleteTransactionResult {
   const DeleteTransactionResult({
     required this.id,
     this.accountBalances = const {},
+    this.recurringItemId,
+    this.billId,
   });
 
   final String id;
   final Map<String, double> accountBalances;
 
+  /// The linked item deleted along (`also_delete_link=true`), if any.
+  final String? recurringItemId;
+  final String? billId;
+
   factory DeleteTransactionResult.fromJson(Map<String, dynamic> json) =>
       DeleteTransactionResult(
         id: json['id'] as String,
         accountBalances: WalletBalance.mapOf(json['account_balances']),
+        recurringItemId: json['recurring_item_id'] as String?,
+        billId: json['bill_id'] as String?,
       );
 }
 

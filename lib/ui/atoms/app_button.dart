@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_spacing.dart';
 import 'app_spinner.dart';
+import 'connection_scope.dart';
 
 /// Visual weight of an [AppButton].
 enum AppButtonVariant {
@@ -35,6 +36,10 @@ enum AppButtonSize { regular, large }
 /// - [loading] swaps the label for a spinner and disables the button.
 /// - [expand] stretches to the parent width (form / sheet footers).
 /// - `onPressed: null` renders the disabled state.
+/// - [submits] marks a button that sends something to the server (save,
+///   submit, sign in, delete …): it disables itself while the app is offline
+///   ([ConnectionScope]) — the banner says why — and typed input is left
+///   alone. Pages never check the connection themselves.
 class AppButton extends StatelessWidget {
   const AppButton({
     required this.label,
@@ -44,6 +49,7 @@ class AppButton extends StatelessWidget {
     this.size = AppButtonSize.regular,
     this.loading = false,
     this.expand = false,
+    this.submits = false,
     super.key,
   });
 
@@ -55,12 +61,22 @@ class AppButton extends StatelessWidget {
   final bool loading;
   final bool expand;
 
+  /// Sends to the server: disabled while offline (see the class doc).
+  final bool submits;
+
   double get _height => size == AppButtonSize.large ? 48 : 40;
+
+  /// Whether the button takes taps right now ([onPressed] set, not
+  /// [loading], and not a [submits] button while offline).
+  bool isEnabled(BuildContext context) =>
+      onPressed != null &&
+      !loading &&
+      !(submits && ConnectionScope.isOffline(context));
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final enabled = onPressed != null && !loading;
+    final enabled = isEnabled(context);
     final callback = enabled ? onPressed : null;
     final minSize = Size(expand ? double.infinity : 0, _height);
     const padding = EdgeInsets.symmetric(horizontal: AppSpacing.lg);

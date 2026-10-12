@@ -15,10 +15,16 @@ void main() {
       ShellTab.notifications,
       ShellTab.settings,
     ]);
-    expect(ShellRow.people.all, [
+    expect(ShellRow.planning.all, [
+      ShellTab.budgets,
+      ShellTab.savingGoals,
+      ShellTab.recurring,
+    ]);
+    expect(ShellRow.people.all, [ShellTab.debts, ShellTab.projects]);
+    expect(ShellRow.library.all, [
+      ShellTab.categories,
+      ShellTab.tags,
       ShellTab.contacts,
-      ShellTab.projects,
-      ShellTab.debts,
     ]);
   });
 
@@ -27,13 +33,14 @@ void main() {
     expect(ShellTab.home.beside(-1), isNull);
     expect(ShellTab.more.beside(1), isNull); // not into ⏳
     expect(ShellTab.notifications.beside(1), ShellTab.settings);
-    expect(ShellTab.tags.beside(1), isNull); // not into contacts
-    expect(ShellTab.projects.beside(-1), ShellTab.contacts);
+    expect(ShellTab.contacts.beside(1), isNull); // last of the hub
+    expect(ShellTab.recurring.beside(1), isNull); // not into debts
+    expect(ShellTab.projects.beside(-1), ShellTab.debts);
   });
 
   test('sideOf: in-row by position, across rows none', () {
     expect(ShellTab.transactions.sideOf(ShellTab.more), 1);
-    expect(ShellTab.debts.sideOf(ShellTab.contacts), -1);
+    expect(ShellTab.projects.sideOf(ShellTab.debts), -1);
     expect(ShellTab.more.sideOf(ShellTab.projects), 0);
     expect(ShellTab.home.sideOf(ShellTab.pending), 0);
   });

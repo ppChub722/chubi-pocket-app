@@ -1,317 +1,357 @@
 import 'package:equatable/equatable.dart';
 
-import 'budget_period.dart';
-import 'budget_scope.dart';
-import 'budget_status.dart';
 import '../../../ui/ui.dart';
+import '../../recurring/domain/recurrence_rule.dart' show parseYmd;
+import '../../transactions/domain/refs.dart';
+import 'budget_period.dart';
 
-/// One budget — a per-category spending limit with a recurrence period.
-///
-/// Per [`08-budgets.md`](../../../../../chubi-pocket-docs/design/spec/08-budgets.md):
-/// budgets are advisory (warn-not-block); spending rolls up across the
-/// category's descendants; uniqueness is enforced on
-/// `(user_id, category_id, period, project_id)` for active rows.
-///
-/// Migration 000037 dropped the per-budget `icon_code` — the icon is now
-/// always taken from the linked category (see [BudgetCategoryRef.iconCode]).
-/// Migration 51: [name] is the title — the server fills it with the
-/// category's name when left blank (create) or cleared (update), so it's
-/// never empty in responses. [description] is a real description now.
-///
-/// [currentPeriod] and [childBreakdown] come back populated from the API
-/// on every read; the client never stores or computes these for writes.
+double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
+
+/// Where a budget is in its life: `upcoming` starts after today, `ended` =
+/// closed (ปิดงบ) or past its end.
+enum BudgetState {
+  upcoming,
+  active,
+  ended,
+  archived;
+
+  static BudgetState fromJson(String? v) => BudgetState.values.firstWhere(
+    (s) => s.name == v,
+    orElse: () => BudgetState.active,
+  );
+}
+
+/// The list filter (`status` of `listBudgets`).
+enum BudgetFilter {
+  active,
+  ended,
+  archived;
+
+  String toJson() => name;
+}
+
+/// The list sort (`sort` of `listBudgets`).
+enum BudgetSort {
+  risk,
+  alphabetical,
+  newest;
+
+  String toJson() => switch (this) {
+    BudgetSort.risk => 'risk',
+    BudgetSort.alphabetical => 'name',
+    BudgetSort.newest => 'newest',
+  };
+}
+
+/// A recurring budget's period length: every [interval] [freq]s.
+class BudgetRule extends Equatable {
+  const BudgetRule({required this.freq, this.interval = 1});
+
+  /// `daily` | `weekly` | `monthly` | `yearly`.
+  final String freq;
+  final int interval;
+
+  factory BudgetRule.fromJson(Map<String, dynamic> json) => BudgetRule(
+    freq: (json['freq'] as String?) ?? 'monthly',
+    interval: (json['interval'] as num?)?.toInt() ?? 1,
+  );
+
+  Map<String, dynamic> toJson() => {'freq': freq, 'interval': interval};
+
+  @override
+  List<Object?> get props => [freq, interval];
+}
+
+/// Where a budget stops (`RecurrenceEnd`): none | date | count (periods).
+class BudgetEnd extends Equatable {
+  const BudgetEnd.none() : kind = 'none', date = null, count = null;
+  const BudgetEnd.onDate(DateTime this.date) : kind = 'date', count = null;
+  const BudgetEnd.afterCount(int this.count) : kind = 'count', date = null;
+
+  final String kind;
+  final DateTime? date;
+  final int? count;
+
+  factory BudgetEnd.fromJson(Map<String, dynamic>? json) {
+    switch (json?['kind']) {
+      case 'date':
+        final d = parseYmd(json?['date'] as String?);
+        if (d != null) return BudgetEnd.onDate(d);
+      case 'count':
+        final c = (json?['count'] as num?)?.toInt();
+        if (c != null) return BudgetEnd.afterCount(c);
+    }
+    return const BudgetEnd.none();
+  }
+
+  @override
+  List<Object?> get props => [kind, date, count];
+}
+
+/// One category a budget counts, with its sub-categories or not.
+class BudgetScopeCategory extends Equatable {
+  const BudgetScopeCategory({
+    required this.category,
+    this.includeChildren = true,
+  });
+
+  final EmbeddedCategory category;
+  final bool includeChildren;
+
+  factory BudgetScopeCategory.fromJson(Map<String, dynamic> json) =>
+      BudgetScopeCategory(
+        category: EmbeddedCategory.fromJson(
+          json['category'] as Map<String, dynamic>,
+        ),
+        includeChildren: json['include_children'] as bool? ?? true,
+      );
+
+  @override
+  List<Object?> get props => [category, includeChildren];
+}
+
+/// What a budget counts: every expense, or a row that matches ANY of the
+/// listed categories / tag NAMES / wallets.
+class BudgetScope extends Equatable {
+  const BudgetScope({
+    this.all = false,
+    this.categories = const [],
+    this.tags = const [],
+    this.wallets = const [],
+  });
+
+  final bool all;
+  final List<BudgetScopeCategory> categories;
+  final List<String> tags;
+  final List<AccountRef> wallets;
+
+  bool get isEmpty =>
+      !all && categories.isEmpty && tags.isEmpty && wallets.isEmpty;
+
+  factory BudgetScope.fromJson(Map<String, dynamic>? json) => BudgetScope(
+    all: json?['all'] as bool? ?? false,
+    categories: [
+      for (final c in (json?['categories'] as List?) ?? const [])
+        BudgetScopeCategory.fromJson(c as Map<String, dynamic>),
+    ],
+    tags: [for (final t in (json?['tags'] as List?) ?? const []) t as String],
+    wallets: [
+      for (final w in (json?['wallets'] as List?) ?? const [])
+        AccountRef.fromJson(w as Map<String, dynamic>),
+    ],
+  );
+
+  /// The request shape (`BudgetScopeInput`).
+  Map<String, dynamic> toInputJson() => {
+    'all': all,
+    'categories': [
+      for (final c in categories)
+        {'id': c.category.id, 'include_children': c.includeChildren},
+    ],
+    'tags': tags,
+    'wallet_ids': [for (final w in wallets) w.id],
+  };
+
+  @override
+  List<Object?> get props => [all, categories, tags, wallets];
+}
+
+/// What the BE lets the caller do with this budget right now.
+class BudgetActions extends Equatable {
+  const BudgetActions({
+    this.edit = true,
+    this.close = false,
+    this.archive = true,
+    this.restore = false,
+  });
+
+  final bool edit;
+  final bool close;
+  final bool archive;
+  final bool restore;
+
+  factory BudgetActions.fromJson(Map<String, dynamic>? json) => BudgetActions(
+    edit: json?['edit'] as bool? ?? true,
+    close: json?['close'] as bool? ?? false,
+    archive: json?['archive'] as bool? ?? true,
+    restore: json?['restore'] as bool? ?? false,
+  );
+
+  @override
+  List<Object?> get props => [edit, close, archive, restore];
+}
+
+/// A budget — a NAMED personal tracker (spec 08 v2) — with the one
+/// [period] it is shown at (the list: the current one; an ended budget: the
+/// last). Everything is computed by the BE.
 class Budget extends Equatable {
   const Budget({
     required this.id,
-    required this.categoryId,
-    required this.amount,
-    required this.period,
-    required this.scope,
-    required this.currency,
-    required this.status,
     required this.name,
-    this.projectId,
+    required this.amount,
+    required this.scope,
+    required this.startDate,
+    required this.period,
     this.description,
     this.note,
-    this.category,
-    this.currentPeriod,
-    this.childBreakdown = const [],
+    this.iconCode,
+    this.warnPct = 80,
+    this.recurring = false,
+    this.rule,
+    this.end = const BudgetEnd.none(),
+    this.state = BudgetState.active,
+    this.closedOn,
+    this.actions = const BudgetActions(),
     this.createdAt,
     this.updatedAt,
   });
 
   final String id;
-  final String categoryId;
-  final double amount;
-  final BudgetPeriod period;
-  final BudgetScope scope;
-  final String currency;
-  final BudgetStatus status;
-  final String? projectId;
-
-  /// The budget's title. Empty only on a create draft (→ the server uses
-  /// the category's name); changing the category doesn't rename it.
   final String name;
-
-  /// Short one-liner; shown under the title on the list card.
   final String? description;
-
-  /// Free-form longer narrative; detail page only.
   final String? note;
+  final IconCode? iconCode;
 
-  final BudgetCategoryRef? category;
-  final BudgetCurrentPeriod? currentPeriod;
-  final List<BudgetChildBreakdown> childBreakdown;
+  /// The base amount per period.
+  final double amount;
 
+  /// Null = ไม่เตือน.
+  final int? warnPct;
+  final BudgetScope scope;
+
+  /// "งบระยะยาว".
+  final bool recurring;
+  final BudgetRule? rule;
+  final DateTime startDate;
+  final BudgetEnd end;
+  final BudgetState state;
+  final DateTime? closedOn;
+  final BudgetPeriod period;
+  final BudgetActions actions;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  /// One range with no end: open until ปิดงบ.
+  bool get openEnded => !recurring && end.kind == 'none';
+
+  /// A fixed range (not recurring) that ends by itself.
+  bool get oneOff => !recurring && end.kind == 'date';
+
+  bool get isArchived => state == BudgetState.archived;
+  bool get isEnded => state == BudgetState.ended;
 
   static DateTime? _date(Object? v) =>
       v is String ? DateTime.tryParse(v)?.toLocal() : null;
 
-  /// Convenience: spent / amount as a 0..1 progress fraction. Null when
-  /// the API hasn't populated current-period info yet (e.g. local draft).
-  double? get progress {
-    final cp = currentPeriod;
-    if (cp == null || amount <= 0) return null;
-    return (cp.spent / amount).clamp(0.0, 1.0);
-  }
-
-  /// The category's icon (if the API embedded it). The budget itself no
-  /// longer carries an icon — UI renders this everywhere.
-  IconCode? get iconCode => category?.iconCode;
-
-  Budget copyWith({
-    String? id,
-    String? categoryId,
-    double? amount,
-    BudgetPeriod? period,
-    BudgetScope? scope,
-    String? currency,
-    BudgetStatus? status,
-    String? projectId,
-    String? name,
-    String? description,
-    String? note,
-    BudgetCategoryRef? category,
-    BudgetCurrentPeriod? currentPeriod,
-    List<BudgetChildBreakdown>? childBreakdown,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return Budget(
-      id: id ?? this.id,
-      categoryId: categoryId ?? this.categoryId,
-      amount: amount ?? this.amount,
-      period: period ?? this.period,
-      scope: scope ?? this.scope,
-      currency: currency ?? this.currency,
-      status: status ?? this.status,
-      projectId: projectId ?? this.projectId,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      note: note ?? this.note,
-      category: category ?? this.category,
-      currentPeriod: currentPeriod ?? this.currentPeriod,
-      childBreakdown: childBreakdown ?? this.childBreakdown,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  factory Budget.fromJson(Map<String, dynamic> json) {
-    final category = json['category'] as Map<String, dynamic>?;
-    final currentPeriod = json['current_period'] as Map<String, dynamic>?;
-    final breakdown = (json['child_breakdown'] as List? ?? const [])
-        .cast<Map<String, dynamic>>()
-        .map(BudgetChildBreakdown.fromJson)
-        .toList();
-    return Budget(
-      id: json['id'] as String,
-      categoryId:
-          (json['category_id'] as String?) ??
-          (category?['id'] as String? ?? ''),
-      amount: (json['amount'] as num).toDouble(),
-      period: BudgetPeriod.fromJson(json['period'] as String),
-      scope: BudgetScope.fromJson(json['scope'] as String),
-      currency: json['currency'] as String,
-      status: BudgetStatus.fromJson(json['status'] as String),
-      projectId: json['project_id'] as String?,
-      // Always sent since migration 51; a pre-51 server sends none — the
-      // category's name is what it would have filled in.
-      name: (json['name'] as String?) ?? (category?['name'] as String? ?? ''),
-      description: json['description'] as String?,
-      note: json['note'] as String?,
-      category: category != null ? BudgetCategoryRef.fromJson(category) : null,
-      currentPeriod: currentPeriod != null
-          ? BudgetCurrentPeriod.fromJson(currentPeriod)
-          : null,
-      childBreakdown: breakdown,
-      createdAt: _date(json['created_at']),
-      updatedAt: _date(json['updated_at']),
-    );
-  }
-
-  Map<String, dynamic> toCreateJson() {
-    return <String, dynamic>{
-      'category_id': categoryId,
-      'amount': amount,
-      'period': period.toJson(),
-      'scope': scope.toJson(),
-      if (projectId != null) 'project_id': projectId,
-      'currency': currency,
-      // Blank → the server names it after the category.
-      if (name.isNotEmpty) 'name': name,
-      if (description != null) 'description': description,
-      if (note != null) 'note': note,
-    };
-  }
-
-  /// Spec §3.4: `scope` and `project_id` are NOT editable; `category_id` is
-  /// (since 2026-10-09).
-  /// Status changes go through dedicated archive / restore endpoints.
-  Map<String, dynamic> toUpdateJson() {
-    return <String, dynamic>{
-      'category_id': categoryId,
-      'amount': amount,
-      'period': period.toJson(),
-      'currency': currency,
-      // Blank → the server resets it to the current category's name.
-      'name': name,
-      'description': description,
-      'note': note,
-    };
-  }
+  factory Budget.fromJson(Map<String, dynamic> json) => Budget(
+    id: json['id'] as String,
+    name: (json['name'] as String?) ?? '',
+    description: json['description'] as String?,
+    note: json['note'] as String?,
+    iconCode: json['icon_code'] is Map<String, dynamic>
+        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+        : null,
+    amount: _money(json['amount']),
+    warnPct: (json['warn_pct'] as num?)?.toInt(),
+    scope: BudgetScope.fromJson(json['scope'] as Map<String, dynamic>?),
+    recurring: json['recurring'] as bool? ?? false,
+    rule: json['rule'] is Map<String, dynamic>
+        ? BudgetRule.fromJson(json['rule'] as Map<String, dynamic>)
+        : null,
+    startDate: parseYmd(json['start_date'] as String?) ?? DateTime.now(),
+    end: BudgetEnd.fromJson(json['end'] as Map<String, dynamic>?),
+    state: BudgetState.fromJson(json['state'] as String?),
+    closedOn: parseYmd(json['closed_on'] as String?),
+    period: BudgetPeriod.fromJson(json['period'] as Map<String, dynamic>),
+    actions: BudgetActions.fromJson(json['actions'] as Map<String, dynamic>?),
+    createdAt: _date(json['created_at']),
+    updatedAt: _date(json['updated_at']),
+  );
 
   @override
   List<Object?> get props => [
     id,
-    categoryId,
-    amount,
-    period,
-    scope,
-    currency,
-    status,
-    projectId,
     name,
     description,
     note,
-    category,
-    currentPeriod,
-    childBreakdown,
+    iconCode,
+    amount,
+    warnPct,
+    scope,
+    recurring,
+    rule,
+    startDate,
+    end,
+    state,
+    closedOn,
+    period,
+    actions,
     createdAt,
     updatedAt,
   ];
 }
 
-/// Embedded category snapshot the BE returns on every Budget read. The
-/// FE renders [iconCode] as the budget's icon (per migration 000037 —
-/// budgets no longer carry a per-row icon).
-class BudgetCategoryRef extends Equatable {
-  const BudgetCategoryRef({
-    required this.id,
-    required this.name,
-    this.iconCode,
-    this.type,
-    this.parentId,
-    this.isSystem = false,
-    this.systemKind,
+/// The list header: the counts the chips and the hero show.
+class BudgetListSummary extends Equatable {
+  const BudgetListSummary({
+    this.activeCount = 0,
+    this.overCount = 0,
+    this.warnCount = 0,
+    this.paceCount = 0,
+    this.endedCount = 0,
+    this.archivedCount = 0,
   });
 
-  final String id;
-  final String name;
-  final IconCode? iconCode;
+  final int activeCount;
+  final int overCount;
+  final int warnCount;
+  final int paceCount;
+  final int endedCount;
+  final int archivedCount;
 
-  // Shared `CategoryRef` keys; all optional.
-  final String? type;
-  final String? parentId;
-  final bool isSystem;
-  final String? systemKind;
-
-  factory BudgetCategoryRef.fromJson(Map<String, dynamic> json) {
-    return BudgetCategoryRef(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
-      type: json['type'] as String?,
-      parentId: json['parent_id'] as String?,
-      isSystem: json['is_system'] as bool? ?? false,
-      systemKind: json['system_kind'] as String?,
+  factory BudgetListSummary.fromJson(Map<String, dynamic>? json) {
+    int n(String k) => (json?[k] as num?)?.toInt() ?? 0;
+    return BudgetListSummary(
+      activeCount: n('active_count'),
+      overCount: n('over_count'),
+      warnCount: n('warn_count'),
+      paceCount: n('pace_count'),
+      endedCount: n('ended_count'),
+      archivedCount: n('archived_count'),
     );
   }
 
   @override
   List<Object?> get props => [
-    id,
-    name,
-    iconCode,
-    type,
-    parentId,
-    isSystem,
-    systemKind,
+    activeCount,
+    overCount,
+    warnCount,
+    paceCount,
+    endedCount,
+    archivedCount,
   ];
 }
 
-class BudgetCurrentPeriod extends Equatable {
-  const BudgetCurrentPeriod({
-    required this.start,
-    required this.end,
-    required this.spent,
-    required this.remaining,
-    required this.utilizationPct,
-    required this.overLimit,
+/// `listBudgets`: the summary + each budget at its current period.
+class BudgetList extends Equatable {
+  const BudgetList({
+    this.summary = const BudgetListSummary(),
+    this.budgets = const [],
   });
 
-  final String start;
-  final String end;
-  final double spent;
-  final double remaining;
-  final double utilizationPct;
-  final bool overLimit;
+  final BudgetListSummary summary;
+  final List<Budget> budgets;
 
-  factory BudgetCurrentPeriod.fromJson(Map<String, dynamic> json) {
-    return BudgetCurrentPeriod(
-      start: json['start'] as String,
-      end: json['end'] as String,
-      spent: (json['spent'] as num).toDouble(),
-      remaining: (json['remaining'] as num).toDouble(),
-      utilizationPct: (json['utilization_pct'] as num).toDouble(),
-      overLimit: json['over_limit'] as bool? ?? false,
-    );
-  }
+  factory BudgetList.fromJson(Map<String, dynamic> json) => BudgetList(
+    summary: BudgetListSummary.fromJson(
+      json['summary'] as Map<String, dynamic>?,
+    ),
+    budgets: [
+      for (final b in (json['data'] as List?) ?? const [])
+        Budget.fromJson(b as Map<String, dynamic>),
+    ],
+  );
 
   @override
-  List<Object?> get props => [
-    start,
-    end,
-    spent,
-    remaining,
-    utilizationPct,
-    overLimit,
-  ];
-}
-
-class BudgetChildBreakdown extends Equatable {
-  const BudgetChildBreakdown({
-    required this.categoryId,
-    required this.name,
-    required this.spent,
-  });
-
-  final String categoryId;
-  final String name;
-  final double spent;
-
-  factory BudgetChildBreakdown.fromJson(Map<String, dynamic> json) {
-    return BudgetChildBreakdown(
-      categoryId: json['category_id'] as String,
-      name: json['name'] as String,
-      spent: (json['spent'] as num).toDouble(),
-    );
-  }
-
-  @override
-  List<Object?> get props => [categoryId, name, spent];
+  List<Object?> get props => [summary, budgets];
 }

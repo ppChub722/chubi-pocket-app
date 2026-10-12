@@ -125,7 +125,14 @@ class AuthCubit extends Cubit<AuthState> {
   /// [AuthInitial.startupError]; calling [init] again retries (owner
   /// 2026-10-09: opening the app without signal used to log you out).
   /// A 12 s wall-clock cap is the last line of defence against a hang.
-  Future<void> init() async {
+  /// Calls while one is running join it (the version-check splash and the
+  /// auth splash both start it on cold start; a reconnect retries it too).
+  Future<void> init() =>
+      _initRun ??= _init().whenComplete(() => _initRun = null);
+
+  Future<void>? _initRun;
+
+  Future<void> _init() async {
     final s = state;
     if (s is! AuthInitial) return;
     // Retry → back to the plain spinner while it runs.

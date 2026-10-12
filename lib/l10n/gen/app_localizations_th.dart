@@ -291,7 +291,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get appExitConfirm => 'ปิดแอป';
 
   @override
-  String get navProjects => 'โปรเจกต์ & อีเวนต์';
+  String get navProjects => 'อีเวนต์';
 
   @override
   String get projectsCreateNew => 'สร้างใหม่';
@@ -566,17 +566,17 @@ class AppLocalizationsTh extends AppLocalizations {
   String get colorPickerUse => 'ใช้สีนี้';
 
   @override
-  String get projectsPlaceholderTitle => 'ยังไม่มีโปรเจกต์';
+  String get projectsPlaceholderTitle => 'ยังไม่มีอีเวนต์';
 
   @override
   String get projectsPlaceholderMessage =>
-      'สร้างโปรเจกต์เพื่อบันทึกค่าใช้จ่ายร่วมกับคนอื่น';
+      'สร้างอีเวนต์เพื่อบันทึกค่าใช้จ่ายร่วมกับคนอื่น';
 
   @override
   String get moreCategories => 'หมวดหมู่';
 
   @override
-  String get moreProjects => 'โปรเจกต์ & อีเวนต์';
+  String get moreProjects => 'อีเวนต์';
 
   @override
   String get moreTags => 'แท็ก';
@@ -910,7 +910,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtSourceTransaction => 'หารบิลจากรายการ';
 
   @override
-  String get debtSourceProject => 'โปรเจกต์';
+  String get debtSourceProject => 'อีเวนต์';
 
   @override
   String get debtCreatedAt => 'วันที่สร้าง';
@@ -1027,7 +1027,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectsStatusLabel => 'สถานะ';
 
   @override
-  String get projectsSearchHint => 'ค้นหาโปรเจกต์';
+  String get projectsSearchHint => 'ค้นหาอีเวนต์';
 
   @override
   String get projectsSortRecent => 'ล่าสุด';
@@ -1036,14 +1036,14 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectsSortName => 'ชื่อ';
 
   @override
-  String get projectsEmptyTitle => 'ยังไม่มีโปรเจกต์';
+  String get projectsEmptyTitle => 'ยังไม่มีอีเวนต์';
 
   @override
   String get projectsEmptyMessage =>
       'รวมรายจ่ายของทริปหรืองานไว้ที่เดียว แล้วเคลียร์ยอดกับเพื่อนตอนจบ';
 
   @override
-  String get projectsNoMatch => 'ไม่พบโปรเจกต์ที่ค้นหา';
+  String get projectsNoMatch => 'ไม่พบอีเวนต์ที่ค้นหา';
 
   @override
   String projectsMembersCount(int count) {
@@ -1063,13 +1063,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectAddTransaction => 'เพิ่มรายการ';
 
   @override
-  String get projectNewTitle => 'โปรเจกต์ใหม่';
+  String get projectNewTitle => 'อีเวนต์ใหม่';
 
   @override
-  String get projectEditTitle => 'แก้ไขโปรเจกต์';
+  String get projectEditTitle => 'แก้ไขอีเวนต์';
 
   @override
-  String get projectNameLabel => 'ชื่อโปรเจกต์';
+  String get projectNameLabel => 'ชื่ออีเวนต์';
 
   @override
   String get projectNameRequired => 'ต้องใส่ชื่อ';
@@ -1081,7 +1081,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectTypeHint => 'เช่น ทริป งานฟรีแลนซ์';
 
   @override
-  String get projectIconLabel => 'ไอคอนโปรเจกต์';
+  String get projectIconLabel => 'ไอคอนอีเวนต์';
 
   @override
   String get projectStatusChangeTitle => 'เปลี่ยนสถานะ';
@@ -1093,7 +1093,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectStatusLockBody =>
-      'โปรเจกต์จะถูกล็อก — เพิ่มหรือแก้รายการไม่ได้จนกว่าจะเปิดอีกครั้ง';
+      'อีเวนต์จะถูกล็อก — เพิ่มหรือแก้รายการไม่ได้จนกว่าจะเปิดอีกครั้ง';
 
   @override
   String projectStatusChanged(String status) {
@@ -1117,10 +1117,10 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectDeleteBody =>
-      'ลบได้เฉพาะโปรเจกต์ที่ยังไม่มีรายการ · ถ้ามีรายการแล้ว ให้เปลี่ยนสถานะเป็นเก็บถาวรแทน';
+      'ลบได้เฉพาะอีเวนต์ที่ยังไม่มีรายการ · ถ้ามีรายการแล้ว ให้เปลี่ยนสถานะเป็นเก็บถาวรแทน';
 
   @override
-  String get projectDeleted => 'ลบโปรเจกต์แล้ว';
+  String get projectDeleted => 'ลบอีเวนต์แล้ว';
 
   @override
   String get projectDashTotalExpense => 'รายจ่ายรวม';
@@ -1185,7 +1185,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectTxSortTag => 'แท็ก';
 
   @override
-  String get projectTxEmpty => 'ยังไม่มีรายการในโปรเจกต์';
+  String get projectTxEmpty => 'ยังไม่มีรายการในอีเวนต์';
 
   @override
   String get projectTxNoMatch => 'ไม่พบรายการที่ค้นหา';
@@ -1243,7 +1243,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectResolveCategoryNone => 'ไม่ระบุหมวด';
 
   @override
-  String get projectResolveDebtHint => 'ชื่อคนมาจากสมาชิกในโปรเจกต์';
+  String get projectResolveDebtHint => 'ชื่อคนมาจากสมาชิกในอีเวนต์';
 
   @override
   String get projectResolveConfirm => 'ลงบัญชี';
@@ -1300,7 +1300,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get projectMembersInvite => 'เชิญสมาชิก';
 
   @override
-  String get projectLeave => 'ออกจากโปรเจกต์';
+  String get projectLeave => 'ออกจากอีเวนต์';
 
   @override
   String projectLeaveTitle(String name) {
@@ -1309,13 +1309,13 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get projectLeaveBody =>
-      'คุณจะไม่เห็นโปรเจกต์นี้อีก จนกว่าจะได้รับเชิญใหม่';
+      'คุณจะไม่เห็นอีเวนต์นี้อีก จนกว่าจะได้รับเชิญใหม่';
 
   @override
-  String get projectLeft => 'ออกจากโปรเจกต์แล้ว';
+  String get projectLeft => 'ออกจากอีเวนต์แล้ว';
 
   @override
-  String get projectMemberRemove => 'นำออกจากโปรเจกต์';
+  String get projectMemberRemove => 'นำออกจากอีเวนต์';
 
   @override
   String projectMemberRemoveTitle(String name) {
@@ -1370,7 +1370,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get projectTxNewTitle => 'เพิ่มรายการโปรเจกต์';
+  String get projectTxNewTitle => 'เพิ่มรายการอีเวนต์';
 
   @override
   String get projectTxEditTitle => 'แก้ไขรายการ';
@@ -1399,7 +1399,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get projectTxDescriptionPast => 'เคยใช้ในโปรเจกต์นี้';
+  String get projectTxDescriptionPast => 'เคยใช้ในอีเวนต์นี้';
 
   @override
   String get projectTxSplitMember => 'ใคร';
@@ -1495,17 +1495,17 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String notifProjectTxForYou(String actor) {
-    return '$actor บันทึกรายการโปรเจกต์ให้คุณ';
+    return '$actor บันทึกรายการอีเวนต์ให้คุณ';
   }
 
   @override
   String notifProjectTxChanged(String actor) {
-    return '$actor แก้ไขรายการในโปรเจกต์';
+    return '$actor แก้ไขรายการในอีเวนต์';
   }
 
   @override
   String notifProjectInvite(String actor, String project) {
-    return '$actor ชวนคุณเข้าโปรเจกต์ $project';
+    return '$actor ชวนคุณเข้าอีเวนต์ $project';
   }
 
   @override
@@ -1538,7 +1538,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifGroupSplits => 'การหารบิล';
 
   @override
-  String get notifGroupProjects => 'โปรเจกต์';
+  String get notifGroupProjects => 'อีเวนต์';
 
   @override
   String get notifGroupRequests => 'คำเชิญและคำขอ';
@@ -1550,16 +1550,16 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifTypeSplitPaid => 'มีคนจ่ายส่วนของเขาคืน';
 
   @override
-  String get notifTypeProjectTxForYou => 'มีคนบันทึกรายการโปรเจกต์ให้ฉัน';
+  String get notifTypeProjectTxForYou => 'มีคนบันทึกรายการอีเวนต์ให้ฉัน';
 
   @override
-  String get notifTypeProjectTxChanged => 'มีการแก้ไขรายการในโปรเจกต์';
+  String get notifTypeProjectTxChanged => 'มีการแก้ไขรายการในอีเวนต์';
 
   @override
   String get notifTypeAlwaysOn => 'เปิดตลอด';
 
   @override
-  String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าโปรเจกต์';
+  String get notifTypeProjectAdded => 'ถูกเพิ่มเข้าอีเวนต์';
 
   @override
   String get notifSettingsAutoHint =>
@@ -1601,7 +1601,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String notifProjectAdded(String actor, String project) {
-    return '$actor เพิ่มคุณเข้าโปรเจกต์ $project';
+    return '$actor เพิ่มคุณเข้าอีเวนต์ $project';
   }
 
   @override
@@ -2135,7 +2135,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtDeleteThis => 'ลบหนี้นี้';
 
   @override
-  String get projectDeleteThis => 'ลบโปรเจกต์นี้';
+  String get projectDeleteThis => 'ลบอีเวนต์นี้';
 
   @override
   String get scheduledDeleteThis => 'ลบรายการตามกำหนดนี้';
@@ -2728,7 +2728,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pendingSourceSplitPaid => 'จ่ายแล้ว';
 
   @override
-  String get pendingSourceProject => 'โปรเจกต์';
+  String get pendingSourceProject => 'อีเวนต์';
 
   @override
   String get pendingSourceOcr => 'สแกน';
@@ -4317,4 +4317,1647 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get connectionRetry => 'ลองใหม่';
+
+  @override
+  String get uiLoadMoreFailed => 'โหลดเพิ่มไม่สำเร็จ';
+
+  @override
+  String get debtsTabEntries => 'รายการหนี้';
+
+  @override
+  String get debtsTabMoney => 'ประวัติการจ่าย';
+
+  @override
+  String get debtsAddEntry => 'บันทึกรายการ';
+
+  @override
+  String get debtsSortLabel => 'เรียง';
+
+  @override
+  String get debtsSortNewest => 'ใหม่สุด';
+
+  @override
+  String get debtsSortOldest => 'เก่าสุด';
+
+  @override
+  String get debtsSortAmountDesc => 'จำนวนมากสุด';
+
+  @override
+  String get debtsSortAmountAsc => 'จำนวนน้อยสุด';
+
+  @override
+  String get debtsDirLabel => 'ประเภท';
+
+  @override
+  String get debtsDirPaid => 'จ่าย';
+
+  @override
+  String get debtsDirReceived => 'รับ';
+
+  @override
+  String get debtsPaidChip => 'จ่ายแล้ว';
+
+  @override
+  String get debtsTimelineEmpty => 'ยังไม่มีรายการ';
+
+  @override
+  String get debtsMoneyEmpty => 'ยังไม่มีประวัติการจ่าย';
+
+  @override
+  String get debtsEntriesNoMatch => 'ไม่พบรายการที่ค้นหา';
+
+  @override
+  String get debtsEntrySearchHint => 'ค้นหารายการ';
+
+  @override
+  String debtEntryPaidTo(String name) {
+    return 'จ่ายให้ $name';
+  }
+
+  @override
+  String debtEntryReceivedFrom(String name) {
+    return 'รับจาก $name';
+  }
+
+  @override
+  String get eventStartDateLabel => 'วันเริ่ม';
+
+  @override
+  String get eventEndDateLabel => 'วันสิ้นสุด';
+
+  @override
+  String get eventDatesInvalid => 'วันสิ้นสุดต้องไม่ก่อนวันเริ่ม';
+
+  @override
+  String get eventDateNone => 'ไม่ระบุ';
+
+  @override
+  String get eventTagShowBills => 'ดูบิลที่ติดแท็กนี้';
+
+  @override
+  String get eventTagAddToMine => 'เพิ่มเข้าแท็กของฉัน';
+
+  @override
+  String get eventTagsImportAll => 'นำเข้าทั้งหมด';
+
+  @override
+  String eventTagFilter(String name) {
+    return 'แท็ก: $name';
+  }
+
+  @override
+  String get quickModeTx => 'รายการ';
+
+  @override
+  String get quickModeDebt => 'หนี้';
+
+  @override
+  String get debtNoWallet => 'ไม่ผูก';
+
+  @override
+  String get debtPickPerson => 'เลือกคน';
+
+  @override
+  String get debtPersonPickerTitle => 'กับใคร';
+
+  @override
+  String debtPersonAddTyped(Object name) {
+    return 'เพิ่มชื่อ “$name”';
+  }
+
+  @override
+  String get debtPersonFromContacts => 'เลือกจากผู้ติดต่อ';
+
+  @override
+  String get debtSettledLabel => 'หายกัน';
+
+  @override
+  String debtResultAfter(Object result) {
+    return 'หลังบันทึก: $result';
+  }
+
+  @override
+  String get debtMarkPaidTitle => 'ทำเครื่องหมายรายการที่จ่ายครบ';
+
+  @override
+  String get debtMarkPaidNone => 'ไม่มีรายการค้าง';
+
+  @override
+  String get debtEntrySaved => 'บันทึกหนี้แล้ว';
+
+  @override
+  String get eventSourceTx => 'รายการต้นทาง';
+
+  @override
+  String get eventLinkedHint =>
+      'จำนวน วันที่ และผู้จ่ายผูกกับรายการต้นทาง แก้แล้วเปลี่ยนทั้งสองฝั่ง';
+
+  @override
+  String eventTagsImported(int count) {
+    return 'เพิ่ม $count แท็กเข้าแท็กของฉันแล้ว';
+  }
+
+  @override
+  String get debtEntryTitle => 'รายการหนี้';
+
+  @override
+  String get debtEntryNotFound => 'ไม่พบรายการหนี้นี้';
+
+  @override
+  String get debtEntryDelete => 'ลบรายการหนี้';
+
+  @override
+  String get debtEntryDeleteTitle => 'ลบรายการหนี้นี้?';
+
+  @override
+  String debtDeleteBothMessage(Object wallet) {
+    return 'รายการใน “$wallet” จะถูกลบด้วย — ยอดเงินคืนเข้ากระเป๋า';
+  }
+
+  @override
+  String debtDeleteLedgerMessage(Object name) {
+    return 'ยอดกับ $name จะเปลี่ยนตาม';
+  }
+
+  @override
+  String debtSourceHint(Object source) {
+    return 'มาจาก $source — แก้ได้เฉพาะคำอธิบาย โน้ต และจ่ายแล้ว';
+  }
+
+  @override
+  String get debtSourceRowLabel => 'มาจาก';
+
+  @override
+  String debtBalanceNow(Object result) {
+    return 'ตอนนี้: $result';
+  }
+
+  @override
+  String txInEventRow(Object name) {
+    return 'อยู่ในอีเวนต์ $name';
+  }
+
+  @override
+  String get txLinkedMoneyHint =>
+      'จำนวนเงินและวันที่ผูกกับบิลในอีเวนต์ — แก้แล้วเปลี่ยนทั้งสองฝั่ง';
+
+  @override
+  String get eventBillLinkedMoneyHint =>
+      'จำนวนเงินและวันที่ผูกกับรายการต้นทาง — แก้แล้วเปลี่ยนทั้งสองฝั่ง';
+
+  @override
+  String get eventErrLocked => 'อีเวนต์นี้ล็อกอยู่ แก้ไขไม่ได้';
+
+  @override
+  String get eventErrNotOwner => 'เฉพาะเจ้าของอีเวนต์ทำได้';
+
+  @override
+  String get eventErrMoneyLinked =>
+      'จำนวนเงินและวันที่ผูกกับรายการของสมาชิก ให้เจ้าของรายการเป็นคนแก้';
+
+  @override
+  String get eventErrTagTaken => 'มีแท็กชื่อนี้ในอีเวนต์แล้ว';
+
+  @override
+  String get eventErrTagNotFound => 'ไม่พบแท็กนี้ในอีเวนต์';
+
+  @override
+  String get eventErrNoShare => 'บิลนี้ไม่มีส่วนของคุณ';
+
+  @override
+  String get eventErrOwnerCannotLeave =>
+      'เจ้าของต้องโอนความเป็นเจ้าของก่อนออกจากอีเวนต์';
+
+  @override
+  String get eventDeleteBody =>
+      'บิลทั้งหมดในอีเวนต์จะถูกลบ · รายการในบัญชีของคุณที่ผูกกับอีเวนต์นี้ เลือกได้ว่าจะเก็บไว้หรือลบด้วย';
+
+  @override
+  String get eventDeleteKeepTxs => 'ยืนยัน ไม่ลบรายการ';
+
+  @override
+  String eventDeleteWithTxs(int count) {
+    return 'ยืนยันและลบ $count รายการ';
+  }
+
+  @override
+  String get eventDeleteConfirm => 'ยืนยันลบ';
+
+  @override
+  String get eventDeleteNotYet => 'ยังก่อน';
+
+  @override
+  String get occurrenceStateUpcoming => 'ล่วงหน้า';
+
+  @override
+  String get occurrenceStateNotCreated => 'ยังไม่สร้าง';
+
+  @override
+  String get occurrenceStatePending => 'รอยืนยัน';
+
+  @override
+  String get occurrenceStateDone => 'บันทึกแล้ว';
+
+  @override
+  String get occurrenceStateArchived => 'เก็บถาวร';
+
+  @override
+  String get quickUpcomingHintTitle => 'รายการล่วงหน้า';
+
+  @override
+  String quickUpcomingHintText(Object date) {
+    return 'จะเข้ารอยืนยันวันที่ $date';
+  }
+
+  @override
+  String get quickEditUpcomingTitle => 'แก้รายการล่วงหน้า';
+
+  @override
+  String get linkedSaveTitle => 'แก้อีกฝั่งด้วยไหม?';
+
+  @override
+  String get linkedCancel => 'ยังก่อน';
+
+  @override
+  String get linkedSaveThisOnly => 'บันทึกเฉพาะฝั่งนี้';
+
+  @override
+  String get linkedSaveBoth => 'บันทึกและแก้อีกฝั่ง';
+
+  @override
+  String get linkedDeleteTitle => 'ลบรายการที่ผูกไว้ด้วยไหม?';
+
+  @override
+  String get linkedDeleteThisOnly => 'ลบเฉพาะฝั่งนี้';
+
+  @override
+  String get linkedDeleteBoth => 'ลบทั้งสองฝั่ง';
+
+  @override
+  String get dueToday => 'วันนี้';
+
+  @override
+  String get dueTomorrow => 'พรุ่งนี้';
+
+  @override
+  String get dueYesterday => 'เมื่อวาน';
+
+  @override
+  String dueInDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'อีก $count วัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dueOverdueDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'เลยกำหนด $count วัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurEveryDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ทุก $count วัน',
+      one: 'ทุกวัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurEveryWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ทุก $count สัปดาห์',
+      one: 'ทุกสัปดาห์',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurWeekday1 => 'จันทร์';
+
+  @override
+  String get recurWeekday2 => 'อังคาร';
+
+  @override
+  String get recurWeekday3 => 'พุธ';
+
+  @override
+  String get recurWeekday4 => 'พฤหัสบดี';
+
+  @override
+  String get recurWeekday5 => 'ศุกร์';
+
+  @override
+  String get recurWeekday6 => 'เสาร์';
+
+  @override
+  String get recurWeekday7 => 'อาทิตย์';
+
+  @override
+  String recurWeekdayPair(String a, String b) {
+    return '$aและ$b';
+  }
+
+  @override
+  String recurWeekdayList(String list, String last) {
+    return '$list และ$last';
+  }
+
+  @override
+  String get recurWeekdayListSep => ' ';
+
+  @override
+  String recurEveryWeekdays(String weekdays) {
+    return 'ทุกวัน$weekdays';
+  }
+
+  @override
+  String recurOnWeekdays(String weekdays) {
+    return 'วัน$weekdays';
+  }
+
+  @override
+  String recurEveryMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ทุก $count เดือน',
+      one: 'ทุกเดือน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurMonthlyOnDay(int day) {
+    return 'ทุกวันที่ $day';
+  }
+
+  @override
+  String get recurMonthlyLastDay => 'ทุกวันสุดท้ายของเดือน';
+
+  @override
+  String recurOnDay(int day) {
+    return 'วันที่ $day';
+  }
+
+  @override
+  String get recurLastDay => 'วันสุดท้าย';
+
+  @override
+  String recurMonthlyNthWeekday(String ord, int nth, String weekday) {
+    return 'ทุกวัน$weekdayที่ $nth ของเดือน';
+  }
+
+  @override
+  String recurMonthlyLastWeekday(String weekday) {
+    return 'ทุกวัน$weekdayสุดท้ายของเดือน';
+  }
+
+  @override
+  String recurOnNthWeekday(String ord, int nth, String weekday) {
+    return 'วัน$weekdayที่ $nth';
+  }
+
+  @override
+  String recurOnLastWeekday(String weekday) {
+    return 'วัน$weekdayสุดท้าย';
+  }
+
+  @override
+  String recurEveryYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ทุก $count ปี',
+      one: 'ทุกปี',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurYearlyOn(String date) {
+    return 'ทุกปี $date';
+  }
+
+  @override
+  String recurCustomDates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'กำหนดเอง $count วัน',
+      zero: 'กำหนดเอง',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurEndCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ครั้ง',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurEndUntil(String date) {
+    return 'ถึง $date';
+  }
+
+  @override
+  String get uiPickDatesHint => 'แตะวันที่เพื่อเลือก';
+
+  @override
+  String get txSavedAsUpcoming => 'บันทึกเป็นรายการล่วงหน้าแล้ว';
+
+  @override
+  String get txMovedToUpcoming => 'ย้ายไปรายการล่วงหน้าแล้ว';
+
+  @override
+  String get txRecurringRowLabel => 'รายการประจำ';
+
+  @override
+  String get recurringTitle => 'รายการประจำ';
+
+  @override
+  String get recurringTabRecurring => 'รายการประจำ';
+
+  @override
+  String get recurringTabUpcoming => 'รายการล่วงหน้า';
+
+  @override
+  String get recurringFilterCurrent => 'ใช้งาน';
+
+  @override
+  String get recurringFilterArchived => 'เก็บถาวร';
+
+  @override
+  String get recurringFilterAll => 'ทั้งหมด';
+
+  @override
+  String get recurringAdd => 'เพิ่มรายการประจำ';
+
+  @override
+  String get recurringEmptyTitle => 'ยังไม่มีรายการประจำ';
+
+  @override
+  String get recurringEmptyMessage =>
+      'ตั้งรายการที่เกิดซ้ำ เช่น ค่าเน็ต ค่าห้อง พอถึงวันจะมีรายการรอยืนยันให้';
+
+  @override
+  String get recurringArchivedEmpty => 'ไม่มีรายการประจำที่เก็บถาวร';
+
+  @override
+  String get upcomingEmptyTitle => 'ไม่มีรายการล่วงหน้า';
+
+  @override
+  String get upcomingEmptyMessage =>
+      'รายการที่ลงวันที่ในอนาคต และรายการประจำที่จะถึง จะอยู่ที่นี่';
+
+  @override
+  String get recurringNewTitle => 'รายการประจำใหม่';
+
+  @override
+  String get recurringNotFound => 'ไม่พบรายการประจำ';
+
+  @override
+  String get recurringNotFoundMessage => 'อาจถูกลบไปแล้ว';
+
+  @override
+  String get recurringFieldIcon => 'ไอคอน';
+
+  @override
+  String get recurringFieldAmount => 'จำนวนเงิน';
+
+  @override
+  String get recurringFieldWallet => 'กระเป๋า';
+
+  @override
+  String get recurringFieldToWallet => 'โอนไปกระเป๋า';
+
+  @override
+  String get recurringFieldCategory => 'หมวดหมู่';
+
+  @override
+  String get recurringFieldRepeat => 'ทำซ้ำ';
+
+  @override
+  String get recurringFieldStart => 'เริ่ม';
+
+  @override
+  String get recurringFieldEnd => 'สิ้นสุด';
+
+  @override
+  String get recurringNameRequired => 'ใส่ชื่อรายการ';
+
+  @override
+  String get recurringAmountInvalid => 'ใส่จำนวนเงินมากกว่า 0';
+
+  @override
+  String get recurringWalletRequired => 'เลือกกระเป๋า';
+
+  @override
+  String get recurringRepeatDates => 'เลือกวันเอง…';
+
+  @override
+  String get recurringRepeatDatesTitle => 'เลือกวัน';
+
+  @override
+  String recurringRepeatDatesConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'เลือก $count วัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringEndNever => 'ไม่สิ้นสุด';
+
+  @override
+  String get recurringEndOnDateOption => 'สิ้นสุดวันที่…';
+
+  @override
+  String get recurringEndAfterCountOption => 'ครบจำนวนครั้ง…';
+
+  @override
+  String get recurringStatusActive => 'ใช้งาน';
+
+  @override
+  String get recurringStatusPaused => 'พักไว้';
+
+  @override
+  String get recurringStatusArchived => 'เก็บถาวร';
+
+  @override
+  String get recurringStatusEndingSoon => 'ใกล้ครบ';
+
+  @override
+  String get recurringPause => 'พัก';
+
+  @override
+  String get recurringResume => 'ทำต่อ';
+
+  @override
+  String get recurringArchive => 'เก็บถาวร';
+
+  @override
+  String get recurringRestore => 'กู้คืน';
+
+  @override
+  String get recurringDelete => 'ลบรายการประจำ';
+
+  @override
+  String get recurringArchiveTitle => 'เก็บรายการประจำนี้ถาวร?';
+
+  @override
+  String get recurringArchiveBody =>
+      'จะหยุดสร้างรายการและซ่อนไว้ กู้คืนได้ภายหลัง';
+
+  @override
+  String get recurringDeleteTitle => 'ลบรายการประจำนี้?';
+
+  @override
+  String get recurringDeleteBody => 'ลบการตั้งค่าและรายการที่ยังไม่ได้สร้าง';
+
+  @override
+  String recurringDeleteLinkedBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'มีรายการที่บันทึกแล้ว $count รายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringDeleteKeepTxs => 'ลบ แต่เก็บรายการที่บันทึกแล้วไว้';
+
+  @override
+  String recurringDeleteWithTxs(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ลบพร้อมรายการที่บันทึกแล้ว $count รายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringScopeTitle => 'ใช้กับรายการไหน';
+
+  @override
+  String get recurringScopeUpcoming => 'รายการที่จะถึงทั้งหมด';
+
+  @override
+  String get recurringScopeAll => 'ทุกรายการ';
+
+  @override
+  String recurringEndingSoon(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ใกล้ครบแล้ว เหลืออีก $count รายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringExtend => 'ต่ออีก';
+
+  @override
+  String get recurringPausedNotice =>
+      'พักไว้อยู่ วันที่ผ่านไประหว่างพักจะไม่สร้างรายการ';
+
+  @override
+  String get recurringTabProduced => 'รายการ';
+
+  @override
+  String get recurringTabUpcomingShort => 'ล่วงหน้า';
+
+  @override
+  String get recurringItemsEmpty => 'ยังไม่มีรายการที่ถึงกำหนด';
+
+  @override
+  String get recurringItemsEmptyMessage =>
+      'พอถึงวัน รายการจะเข้ารอยืนยันและแสดงที่นี่';
+
+  @override
+  String get recurringUpcomingEmpty => 'ไม่มีรายการที่จะถึง';
+
+  @override
+  String get recurringUpcomingEmptyMessage =>
+      'กด \"ต่ออีก\" หรือแก้การตั้งค่าเพื่อสร้างรายการต่อ';
+
+  @override
+  String recurringUpcomingSummary(String name, String amount, String rule) {
+    return '$name $amount · $rule';
+  }
+
+  @override
+  String recurringUpcomingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'อีก $count รายการ · แตะเพื่อดูทั้งหมด',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringSelectAll => 'เลือกทั้งหมด';
+
+  @override
+  String get recurringItemSendNow => 'ส่งเข้ารอยืนยันเลย';
+
+  @override
+  String get recurringItemCreate => 'สร้างใหม่';
+
+  @override
+  String get recurringItemCreateTitle => 'สร้างรายการนี้ใหม่';
+
+  @override
+  String get recurringItemCreateBody =>
+      'ส่งเข้ารอยืนยันก่อน หรือบันทึกเป็นรายการเลย';
+
+  @override
+  String get recurringItemToPending => 'ส่งเข้ารอยืนยัน';
+
+  @override
+  String get recurringItemToTx => 'บันทึกเลย';
+
+  @override
+  String get recurringItemOpenPending => 'เปิดรายการรอยืนยัน';
+
+  @override
+  String get recurringItemOpenTx => 'เปิดรายการ';
+
+  @override
+  String get recurringItemOpenRecurring => 'ไปที่รายการประจำ';
+
+  @override
+  String get recurringItemArchive => 'เก็บถาวร';
+
+  @override
+  String get recurringItemRestore => 'กู้คืน';
+
+  @override
+  String get recurringDeleteLinkedTitle => 'ลบรายการจริงด้วยไหม';
+
+  @override
+  String get recurringDeleteItemOnly => 'ลบเฉพาะที่นี่';
+
+  @override
+  String get recurringDeleteItemBoth => 'ลบทั้งสองฝั่ง';
+
+  @override
+  String recurringItemDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ลบ $count รายการ?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringItemDeleteBody => 'ลบออกจากรายการประจำนี้';
+
+  @override
+  String get recurringScopeThis => 'เฉพาะรายการนี้';
+
+  @override
+  String get recurringScopeFollowing => 'รายการนี้และถัดไป';
+
+  @override
+  String get recurringScopePast => 'รายการที่ผ่านมาทั้งหมด';
+
+  @override
+  String get recurringItemEditTitle => 'แก้ไขรายการ';
+
+  @override
+  String get recurringAddItem => 'เพิ่มรายการ';
+
+  @override
+  String get moreRecurring => 'รายการประจำ';
+
+  @override
+  String get moreRecurringDesc => 'บิลประจำและรายการล่วงหน้า';
+
+  @override
+  String get pendingSourceRecurring => 'รายการประจำ';
+
+  @override
+  String get pendingSourceUpcoming => 'ล่วงหน้า';
+
+  @override
+  String notifRecurringDue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'รายการประจำถึงกำหนด $count รายการ รอยืนยัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifRecurringEnding(String name, int left) {
+    return '$name เหลืออีก $left รายการ — ต่ออีกไหม';
+  }
+
+  @override
+  String get recurSheetTitle => 'ทำซ้ำแบบกำหนดเอง';
+
+  @override
+  String get recurSheetEvery => 'ทุก';
+
+  @override
+  String recurSheetUnitDay(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'วัน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurSheetUnitWeek(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'สัปดาห์',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurSheetUnitMonth(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'เดือน',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String recurSheetUnitYear(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ปี',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurSheetRepeatOn => 'ทำซ้ำในวัน';
+
+  @override
+  String get recurSheetMonthlyOn => 'วันในเดือน';
+
+  @override
+  String get recurSheetLastDayOfMonth => 'วันสุดท้ายของเดือน';
+
+  @override
+  String get recurSheetEnds => 'สิ้นสุด';
+
+  @override
+  String get recurSheetEndNever => 'ไม่สิ้นสุด';
+
+  @override
+  String get recurSheetEndOnDate => 'ถึงวันที่';
+
+  @override
+  String get recurSheetEndAfter => 'ครบจำนวนครั้ง';
+
+  @override
+  String recurSheetOccurrences(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ครั้ง',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringRepeatCustom => 'กำหนดเอง…';
+
+  @override
+  String get moreGroupPlan => 'แผนการเงิน';
+
+  @override
+  String get moreGroupOthers => 'เงินกับคนอื่น';
+
+  @override
+  String get moreGroupSetup => 'ข้อมูลตั้งต้น';
+
+  @override
+  String get moreGroupMain => 'เมนูหลัก';
+
+  @override
+  String get moreSettings => 'โปรไฟล์และตั้งค่า';
+
+  @override
+  String get moreDashboardDesc => 'ภาพรวมการเงินของเดือนนี้';
+
+  @override
+  String get moreTransactionsDesc => 'รายรับ-รายจ่ายทั้งหมด';
+
+  @override
+  String get moreWalletsDesc => 'เงินสด บัญชี และบัตร';
+
+  @override
+  String get morePendingDesc => 'รายการที่รอให้คุณยืนยัน';
+
+  @override
+  String get moreNotificationsDesc => 'ข่าวและเตือนความจำ';
+
+  @override
+  String get moreSettingsDesc => 'บัญชี ธีม และการแจ้งเตือน';
+
+  @override
+  String moreLiveUnread(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ยังไม่ได้อ่าน $count รายการ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sgv2SavedTotal => 'ออมแล้วทั้งหมด';
+
+  @override
+  String get sgv2InGoals => 'อยู่ในเป้าหมาย';
+
+  @override
+  String get sgv2Spare => 'ยังไม่จัดสรร';
+
+  @override
+  String get sgv2SpareHint => 'เงินออมที่ยังไม่มีเป้าหมาย';
+
+  @override
+  String get sgv2FilterActive => 'กำลังออม';
+
+  @override
+  String get sgv2FilterCompleted => 'สำเร็จ';
+
+  @override
+  String get sgv2FilterArchived => 'เก็บถาวร';
+
+  @override
+  String get sgv2EmptyFilteredTitle => 'ไม่มีเป้าหมายในหมวดนี้';
+
+  @override
+  String sgv2PaceLate(int n) {
+    return 'ช้า $n เดือน';
+  }
+
+  @override
+  String get sgv2PaceOnTrack => 'ตามแผน';
+
+  @override
+  String sgv2PaceLine(String needed, String pace) {
+    return 'ต้องออม $needed/เดือน · ออมจริง $pace';
+  }
+
+  @override
+  String sgv2DueOn(String date) {
+    return 'ครบ $date';
+  }
+
+  @override
+  String get sgv2NoDeadline => 'ไม่มีกำหนด';
+
+  @override
+  String get sgv2ActionAdd => 'เพิ่มเงินออม';
+
+  @override
+  String get sgv2ActionWithdraw => 'ถอน';
+
+  @override
+  String get sgv2ActionMove => 'ย้าย';
+
+  @override
+  String get sgv2Overview => 'ภาพรวม';
+
+  @override
+  String get sgv2NeededMonthly => 'ต้องออมต่อเดือน';
+
+  @override
+  String get sgv2PaceMonthly => 'ออมจริง (เฉลี่ย 3 เดือน)';
+
+  @override
+  String get sgv2Eta => 'ตามเพซจะครบ';
+
+  @override
+  String get sgv2TimeLeft => 'เหลือเวลา';
+
+  @override
+  String get sgv2ByWallet => 'แยกตามกระเป๋า';
+
+  @override
+  String get sgv2ByWalletHint => 'เงินออมจำว่ามาจากกระเป๋าไหน';
+
+  @override
+  String get sgv2Entries => 'รายการออม';
+
+  @override
+  String get sgv2EntriesEmpty => 'ยังไม่มีรายการออม';
+
+  @override
+  String get sgv2EntriesMore => 'ดูเพิ่ม';
+
+  @override
+  String get sgv2AutoSave => 'ออมอัตโนมัติ';
+
+  @override
+  String get sgv2AutoSaveNone => 'ยังไม่ได้ตั้ง';
+
+  @override
+  String get sgv2CloseGoal => 'ปิดเป้าหมาย';
+
+  @override
+  String sgv2CloseTitle(String name) {
+    return 'ปิดเป้าหมาย “$name”';
+  }
+
+  @override
+  String sgv2CloseBody(String amount) {
+    return 'เงินออม $amount จะไปที่ไหน?';
+  }
+
+  @override
+  String get sgv2CloseToSpare => 'เข้ายังไม่จัดสรร';
+
+  @override
+  String get sgv2CloseToWallets => 'กลับกระเป๋า';
+
+  @override
+  String get sgv2Restore => 'กู้คืน';
+
+  @override
+  String get sgv2KindSave => 'ออม';
+
+  @override
+  String get sgv2KindWithdraw => 'ถอนออม';
+
+  @override
+  String get sgv2KindMove => 'จัดสรร';
+
+  @override
+  String get sgv2SpareTitle => 'ยังไม่จัดสรร';
+
+  @override
+  String sgv2Milestone(int pct) {
+    return 'ถึง $pct%';
+  }
+
+  @override
+  String get walletTrackLabel => 'ติดตามยอดเงิน';
+
+  @override
+  String get walletTrackHelper =>
+      'ปิดไว้ถ้าไม่ต้องการดูยอดคงเหลือของกระเป๋านี้ (ยังบันทึกรายการและโอนได้)';
+
+  @override
+  String get walletTrackSetBalanceTitle => 'ยอดเงินตอนนี้';
+
+  @override
+  String get walletTrackSetBalanceAction => 'ตั้งยอด';
+
+  @override
+  String walletTrackUntrackedNote(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count กระเป๋าไม่ติดตามยอด',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walletTrackOffHero => 'ไม่ติดตามยอดเงิน';
+
+  @override
+  String get walletErrorBalanceNotTracked =>
+      'กระเป๋านี้ไม่ได้ติดตามยอดเงิน เปิดสวิตช์ก่อนจึงจะปรับยอดได้';
+
+  @override
+  String get multiPickCategoriesTitle => 'เลือกหมวดหมู่';
+
+  @override
+  String get multiPickWalletsTitle => 'เลือกกระเป๋า';
+
+  @override
+  String get multiPickSearch => 'ค้นหา';
+
+  @override
+  String get multiPickIncludeChildren => 'รวมหมวดย่อย';
+
+  @override
+  String get multiPickEmpty => 'ยังไม่มีรายการ';
+
+  @override
+  String get multiPickNoMatch => 'ไม่พบรายการ';
+
+  @override
+  String multiPickConfirm(int count) {
+    return 'ตกลง ($count)';
+  }
+
+  @override
+  String get bgFilterActive => 'กำลังใช้งาน';
+
+  @override
+  String get bgFilterEnded => 'จบแล้ว';
+
+  @override
+  String get bgFilterArchived => 'เก็บถาวร';
+
+  @override
+  String get bgSortRisk => 'ใกล้เกินก่อน';
+
+  @override
+  String get bgSortName => 'ชื่อ';
+
+  @override
+  String get bgSortNewest => 'ใหม่สุด';
+
+  @override
+  String bgSortChip(String sort) {
+    return 'เรียง: $sort';
+  }
+
+  @override
+  String get bgSummaryCaption => 'รอบปัจจุบันของทุกงบ';
+
+  @override
+  String get bgStatActive => 'กำลังใช้งาน';
+
+  @override
+  String get bgStatOver => 'เกินงบ';
+
+  @override
+  String get bgStatWarn => 'ใกล้เต็ม';
+
+  @override
+  String get bgStatPace => 'ตามเพซจะเกิน';
+
+  @override
+  String get bgStatusOver => 'เกินงบ';
+
+  @override
+  String get bgStatusWarn => 'ใกล้เต็ม';
+
+  @override
+  String get bgStatusPace => 'ตามเพซจะเกิน';
+
+  @override
+  String get bgStatusEnded => 'จบแล้ว';
+
+  @override
+  String get bgStatusArchived => 'เก็บถาวร';
+
+  @override
+  String get bgStatusUpcoming => 'ยังไม่เริ่ม';
+
+  @override
+  String get bgListEmptyEnded => 'ยังไม่มีงบที่จบแล้ว';
+
+  @override
+  String get bgListEmptyArchived => 'ไม่มีงบที่เก็บถาวร';
+
+  @override
+  String get bgRuleDaily => 'รายวัน';
+
+  @override
+  String get bgRuleWeekly => 'รายสัปดาห์';
+
+  @override
+  String get bgRuleMonthly => 'รายเดือน';
+
+  @override
+  String get bgRuleYearly => 'รายปี';
+
+  @override
+  String bgRowRange(String start, String end) {
+    return '$start – $end';
+  }
+
+  @override
+  String get bgRowOpenEnded => 'ไม่มีกำหนดจบ';
+
+  @override
+  String bgRowSince(String date) {
+    return 'ตั้งแต่ $date';
+  }
+
+  @override
+  String bgRowStartsOn(String date) {
+    return 'เริ่ม $date';
+  }
+
+  @override
+  String bgRowDaysLeft(int count) {
+    return 'เหลือ $count วัน';
+  }
+
+  @override
+  String bgRowUsed(String used, String amount) {
+    return 'ใช้ $used จาก $amount';
+  }
+
+  @override
+  String bgRowOverBy(String amount) {
+    return 'เกิน $amount';
+  }
+
+  @override
+  String bgRowExpected(String amount) {
+    return 'คาด +$amount';
+  }
+
+  @override
+  String get bgTabPeriods => 'รอบงบ';
+
+  @override
+  String get bgTabSetup => 'ตั้งค่า';
+
+  @override
+  String get bgPeriodNow => 'รอบนี้';
+
+  @override
+  String get bgPeriodOverridden => 'เฉพาะรอบนี้';
+
+  @override
+  String bgPeriodLabelFallback(int seq) {
+    return 'รอบที่ $seq';
+  }
+
+  @override
+  String get bgHeroUsed => 'ใช้ไปแล้ว';
+
+  @override
+  String bgHeroOfLimit(String amount) {
+    return 'จาก $amount';
+  }
+
+  @override
+  String bgHeroRemaining(String amount) {
+    return 'เหลือ $amount';
+  }
+
+  @override
+  String bgHeroOver(String amount) {
+    return 'เกินงบ $amount';
+  }
+
+  @override
+  String bgLegendUsed(int pct) {
+    return 'ใช้แล้ว $pct%';
+  }
+
+  @override
+  String bgLegendExpected(String amount) {
+    return 'คาดว่าจะใช้ +$amount';
+  }
+
+  @override
+  String get bgSectionOverview => 'ภาพรวม';
+
+  @override
+  String bgOverviewDays(int elapsed, int total) {
+    return 'วันที่ $elapsed จาก $total วัน';
+  }
+
+  @override
+  String get bgTileAllowance => 'ใช้ได้อีกวันละ';
+
+  @override
+  String get bgTileAllowanceSub => 'หลังหักที่คาดไว้';
+
+  @override
+  String get bgTilePaceOver => 'ตามเพซนี้จะเกินวันที่';
+
+  @override
+  String bgTilePaceAvg(String amount) {
+    return 'เฉลี่ยวันละ $amount';
+  }
+
+  @override
+  String get bgTilePaceOk => 'ตามเพซนี้ไม่เกิน';
+
+  @override
+  String get bgTileForecastEnd => 'คาดสิ้นรอบ';
+
+  @override
+  String bgTileForecastOver(String amount) {
+    return 'เกิน $amount';
+  }
+
+  @override
+  String bgTileHistoryAvg(int count) {
+    return 'เฉลี่ย $count รอบก่อน';
+  }
+
+  @override
+  String get bgTilePerPeriod => 'ต่อรอบ';
+
+  @override
+  String get bgTileAvgMonthly => 'เฉลี่ยเดือนละ';
+
+  @override
+  String get bgTileThisMonth => 'เดือนนี้';
+
+  @override
+  String get bgTileRemainingAfter => 'เหลือหลังที่คาดไว้';
+
+  @override
+  String get bgSectionSource => 'แยกตามที่มา';
+
+  @override
+  String get bgSourceNormal => 'ปกติ';
+
+  @override
+  String get bgSourceRecurring => 'รายการประจำ';
+
+  @override
+  String get bgSourceEvent => 'อีเวนต์';
+
+  @override
+  String get bgSourceUpcoming => 'รายการประจำ · ล่วงหน้า';
+
+  @override
+  String get bgSourcePending => 'รอยืนยัน';
+
+  @override
+  String bgSourceCount(int count) {
+    return '$count รายการ';
+  }
+
+  @override
+  String get bgSectionCategory => 'แยกตามหมวดหมู่';
+
+  @override
+  String get bgNoCategory => 'ไม่มีหมวดหมู่';
+
+  @override
+  String get bgSectionPeriods => 'รอบงบ';
+
+  @override
+  String get bgPeriodsDescription => 'แตะรอบเพื่อดูหรือแก้เฉพาะรอบนั้น';
+
+  @override
+  String get bgPeriodsAll => 'ดูรอบก่อนหน้าทั้งหมด';
+
+  @override
+  String get bgSectionItems => 'รายการในรอบนี้';
+
+  @override
+  String get bgItemsDescription => 'ทุกอย่างที่นับเข้างบนี้ พร้อมที่มา';
+
+  @override
+  String get bgItemsMore => 'ดูเพิ่ม';
+
+  @override
+  String get bgItemsEmpty => 'ยังไม่มีรายการในรอบนี้';
+
+  @override
+  String get bgPeriodEditTitle => 'แก้เฉพาะรอบนี้';
+
+  @override
+  String get bgPeriodAmountField => 'งบรอบนี้';
+
+  @override
+  String bgPeriodUseBase(String amount) {
+    return 'ใช้ยอดตั้งต้น ($amount)';
+  }
+
+  @override
+  String get bgFieldAmountOnce => 'งบ';
+
+  @override
+  String get bgFieldRecurring => 'งบระยะยาว';
+
+  @override
+  String get bgFieldRecurringHint => 'ตั้งงบซ้ำทุกรอบ แต่ละรอบแก้ได้แยกกัน';
+
+  @override
+  String get bgSectionScope => 'นับอะไรบ้าง';
+
+  @override
+  String get bgScopeDescription => 'งบซ้อนกันได้ นับรายการที่ตรงข้อใดข้อหนึ่ง';
+
+  @override
+  String get bgScopeAll => 'ทุกรายจ่าย';
+
+  @override
+  String get bgScopeCategories => 'หมวดหมู่';
+
+  @override
+  String get bgScopeTags => 'แท็ก';
+
+  @override
+  String get bgScopeWallets => 'กระเป๋า';
+
+  @override
+  String get bgScopeTagsHint => 'นับบิลในอีเวนต์ที่มีแท็กชื่อเดียวกันด้วย';
+
+  @override
+  String get bgScopeChildren => '+ย่อย';
+
+  @override
+  String get bgScopeRequired => 'เลือกสิ่งที่จะนับ หรือเปิด \"ทุกรายจ่าย\"';
+
+  @override
+  String get bgSectionPeriod => 'ช่วงเวลา';
+
+  @override
+  String get bgFieldRepeat => 'รอบ';
+
+  @override
+  String get bgFieldStart => 'เริ่ม';
+
+  @override
+  String get bgFieldEnd => 'สิ้นสุด';
+
+  @override
+  String get bgEndNone => 'ไม่มีกำหนดจบ';
+
+  @override
+  String get bgEndPickDate => 'เลือกวันที่…';
+
+  @override
+  String bgEndPeriods(int count) {
+    return '$count รอบ';
+  }
+
+  @override
+  String get bgSectionWarn => 'การเตือน';
+
+  @override
+  String get bgFieldWarn => 'เตือนเมื่อใช้ถึง';
+
+  @override
+  String get bgWarnOff => 'ไม่เตือน';
+
+  @override
+  String bgWarnPct(int pct) {
+    return '$pct%';
+  }
+
+  @override
+  String get bgWarnHint => 'เกิน 100% = เกินงบ เสมอ';
+
+  @override
+  String get bgScopeChoiceTitle => 'ใช้การตั้งค่าใหม่กับรอบไหน';
+
+  @override
+  String get bgScopeFollowing => 'รอบนี้และถัดไป';
+
+  @override
+  String get bgScopeAllPeriods => 'ทุกรอบ (รวมรอบที่ผ่านมา)';
+
+  @override
+  String get bgClose => 'ปิดงบ';
+
+  @override
+  String get bgCloseHint => 'หยุดนับตั้งแต่วันนี้ ย้ายไปอยู่ใน \"จบแล้ว\"';
+
+  @override
+  String get bgCloseConfirmTitle => 'ปิดงบนี้?';
+
+  @override
+  String get bgCloseConfirmBody =>
+      'งบจะหยุดนับตั้งแต่วันนี้ และย้ายไปอยู่ใน \"จบแล้ว\"';
+
+  @override
+  String get bgRestore => 'กู้คืน';
+
+  @override
+  String get bgNameRequired => 'ใส่ชื่องบ';
+
+  @override
+  String bgChipRecurring(String rule) {
+    return '🔁 $rule';
+  }
+
+  @override
+  String get pendingSavingConfirmTitle => 'ยืนยันเป็นเงินออม?';
+
+  @override
+  String get pendingSavingConfirm => 'ยืนยัน';
+
+  @override
+  String get pendingSavingNoWallet => 'ต้องเลือกกระเป๋าก่อนยืนยัน';
+
+  @override
+  String get walletSavingsTitle => 'เงินออม';
+
+  @override
+  String get walletSavingsDescription => 'เงินที่กันไว้ในกระเป๋านี้';
+
+  @override
+  String get walletSavingsBalance => 'ยอดเงินจริง';
+
+  @override
+  String get walletSavingsSaved => 'ออมไว้';
+
+  @override
+  String get walletSavingsAvailable => 'ใช้ได้';
+
+  @override
+  String walletSavingsOver(String amount) {
+    return 'ออมเกินยอดเงินจริง $amount';
+  }
+
+  @override
+  String get quickModeSaving => 'ออม';
+
+  @override
+  String get savingEntryTitleHint => 'โน้ต (ไม่บังคับ)';
+
+  @override
+  String get savingEntryTarget => 'ออมเข้า';
+
+  @override
+  String get savingEntrySpare => 'ยังไม่จัดสรร';
+
+  @override
+  String get savingEntryPickGoal => 'เลือกเป้าหมาย';
+
+  @override
+  String savingEntryAvailable(String amount) {
+    return 'ว่างออมได้ $amount';
+  }
+
+  @override
+  String savingEntryOverAvailable(String amount) {
+    return 'เกินเงินที่ว่าง $amount (ยังบันทึกได้)';
+  }
+
+  @override
+  String get savingEntryWalletRequired => 'เลือกกระเป๋าที่จะออมจาก';
+
+  @override
+  String get savingEntrySaved => 'บันทึกเงินออมแล้ว';
+
+  @override
+  String get walletSavingsAdd => 'เพิ่มเงินออม';
+
+  @override
+  String get recurringKindTx => 'รายการ';
+
+  @override
+  String get recurringKindSaving => 'ออม';
+
+  @override
+  String get recurringFieldFromWallet => 'จากกระเป๋า';
+
+  @override
+  String get recurringFieldGoal => 'ออมเข้า';
+
+  @override
+  String get recurringSavingName => 'ออมเงิน';
+
+  @override
+  String recurringSavingNameGoal(String goal) {
+    return 'ออม · $goal';
+  }
+
+  @override
+  String get sgv2MoveTitle => 'ย้ายเงินออม';
+
+  @override
+  String get sgv2WithdrawTitle => 'ถอนเงินออม';
+
+  @override
+  String get sgv2MoveFrom => 'จาก';
+
+  @override
+  String get sgv2MoveTo => 'ไป';
+
+  @override
+  String get sgv2WalletsCard => 'กระเป๋า';
+
+  @override
+  String get sgv2AmountLabel => 'จำนวนเงิน';
+
+  @override
+  String get sgv2SplitTitle => 'แบ่งตามกระเป๋า (อัตโนมัติ)';
+
+  @override
+  String get sgv2SplitEdit => 'แก้ไข';
+
+  @override
+  String sgv2SplitHas(String amount) {
+    return 'มี $amount';
+  }
+
+  @override
+  String sgv2SumOk(String sum) {
+    return 'รวม $sum ✓';
+  }
+
+  @override
+  String sgv2SumOff(String sum, String amount) {
+    return 'รวม $sum ไม่ตรงกับ $amount';
+  }
+
+  @override
+  String get sgv2ReturnsTitle => 'ถ้ากลับกระเป๋า';
+
+  @override
+  String get sgv2Cancel => 'ยกเลิก';
+
+  @override
+  String get sgv2MovePick => 'ย้ายไปที่ไหน?';
+
+  @override
+  String get sgv2MoveSave => 'ย้าย';
+
+  @override
+  String get sgv2WithdrawSave => 'ถอน';
+
+  @override
+  String get sgv2ChartCaption => 'ยอดสะสม';
+
+  @override
+  String get sgv2ChartActual => 'ออมแล้ว / ตามเพซ';
+
+  @override
+  String get sgv2ChartNeeded => 'เส้นที่ต้องออม';
+
+  @override
+  String sgv2ChartTarget(String amount) {
+    return 'เป้า $amount';
+  }
+
+  @override
+  String get sgv2SpareName => 'ยังไม่จัดสรร';
+
+  @override
+  String get sgv2NoOtherGoal => 'ไม่มีเป้าหมายอื่นให้ย้ายไป';
+
+  @override
+  String get sgv2EntryDeleted => 'ลบรายการออมแล้ว';
 }

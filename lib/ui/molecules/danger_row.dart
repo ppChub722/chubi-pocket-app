@@ -20,8 +20,13 @@ class DangerRow extends StatelessWidget {
     required this.onTap,
     this.padding = const EdgeInsets.only(top: AppSpacing.xl),
     this.caution = false,
+    this.neutral = false,
     super.key,
   });
+
+  /// The primary colour, same shape: a harmless action that ends something
+  /// without losing it (ปิดงบ) — not a warning.
+  final bool neutral;
 
   /// Amber (warning) instead of red: an undoable action (archive).
   final bool caution;
@@ -36,7 +41,9 @@ class DangerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tint = caution
+    final tint = neutral
+        ? scheme.primary
+        : caution
         ? Theme.of(context).extension<AppColors>()!.warning
         : scheme.error;
     final color = onTap == null ? scheme.onSurfaceVariant : tint;

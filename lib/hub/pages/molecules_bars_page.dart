@@ -7,6 +7,7 @@ import '../../features/transactions/domain/transaction_type.dart';
 import '../../features/accounts/presentation/widgets/wallet_compact_hero.dart';
 import '../../features/transactions/presentation/widgets/tx_compact_hero.dart';
 import '../../ui/ui.dart';
+import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/molecules/bars` — tab, action, hero, filter and chip bars, and the
@@ -458,6 +459,16 @@ class _BarsPageState extends State<_BarsPage> {
               page: 'Account detail',
               wide: true,
               child: walletCompactHero(context, _wallet, onTap: () {}),
+            ),
+            HubUse(
+              label: 'CompactHeroBar — wallet, balance not tracked',
+              page: 'Account detail',
+              wide: true,
+              child: walletCompactHero(
+                context,
+                _wallet.copyWith(trackBalance: false),
+                onTap: () {},
+              ),
             ),
             HubUse(
               label: 'CompactHeroBar — tinted entity hero',
@@ -997,6 +1008,54 @@ class _BarsPageState extends State<_BarsPage> {
             ),
           ),
         ),
+        // ---- SortChip ----
+        HubDemo(
+          title: 'SortChip',
+          note:
+              'A list\'s sort: the current option + ▾; tap opens the central '
+              'popover with the current one highlighted (no ✓). In a '
+              'ListToolbar\'s trailing slot it follows the toolbar\'s chip '
+              'size (28); alone it is a control chip (40).',
+          child: HubStateful<String>(
+            initial: 'newest',
+            builder: (context, sort, set) {
+              const options = [
+                SortOption('newest', 'ใหม่สุด'),
+                SortOption('oldest', 'เก่าสุด'),
+                SortOption('amount_desc', 'จำนวนมาก'),
+                SortOption('amount_asc', 'จำนวนน้อย'),
+              ];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _frame(
+                    ListToolbar(
+                      chips: [
+                        AppChip(label: 'ฉันจ่าย', onTap: () {}),
+                        AppChip(label: 'ค้าง', onTap: () {}),
+                      ],
+                      trailing: SortChip<String>(
+                        value: sort,
+                        options: options,
+                        onChanged: set,
+                        tooltip: 'Sort',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SortChip<String>(
+                      value: sort,
+                      options: options,
+                      onChanged: set,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
         // ---- ChipRow ----
         HubPlayground(
           title: 'ChipRow',
@@ -1119,6 +1178,121 @@ class _BarsPageState extends State<_BarsPage> {
                 onTap: toggle,
               ),
               contentBuilder: (context, close) => _swatchGrid(scheme),
+            ),
+          ),
+        ),
+        // ---- Popover title ----
+        HubDemo(
+          title: 'Popover title — OptionMenuAnchor(title:)',
+          note:
+              'An optional small muted header at the top of a popover: the '
+              'question the options answer (the edit-scope choice "Save '
+              'how?", the cycle choice). MultiOptionMenuAnchor and '
+              'PopoverAnchor take it too. No title = no change.',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              HubStateful<String>(
+                initial: 'one',
+                builder: (context, sel, set) => OptionMenuAnchor<String>(
+                  title: 'Save how?',
+                  options: const [
+                    SheetOption(value: 'one', label: 'This one'),
+                    SheetOption(
+                      value: 'following',
+                      label: 'This and following',
+                    ),
+                    SheetOption(value: 'past', label: 'All past'),
+                    SheetOption(value: 'upcoming', label: 'All upcoming'),
+                    SheetOption(value: 'all', label: 'All'),
+                  ],
+                  selected: sel,
+                  onSelected: set,
+                  builder: (context, toggle) => AppChip(
+                    label: 'Scope: $sel',
+                    trailing: AppChipTrailing.dropdown,
+                    onTap: toggle,
+                  ),
+                ),
+              ),
+              PopoverAnchor(
+                title: 'Colour',
+                builder: (context, toggle) => AppChip(
+                  label: 'Titled colours',
+                  trailing: AppChipTrailing.dropdown,
+                  onTap: toggle,
+                ),
+                contentBuilder: (context, close) => _swatchGrid(scheme),
+              ),
+            ],
+          ),
+        ),
+        // ---- Offline: submits ----
+        HubDemo(
+          title: 'Offline — ActionBarItem(submits) · SheetOption(submits)',
+          note:
+              'Actions that send to the server pass submits: true and disable '
+              'themselves while the app is offline (ConnectionScope): an '
+              'ActionBar button, a popover row, an option-sheet row. Others '
+              'stay live. Shown here inside an offline scope: Adjust / '
+              'Transfer and Archive / Delete are off, + Entry and Edit work.',
+          child: ConnectionScope(
+            offline: true,
+            reconnects: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ActionBar(
+                  actions: [
+                    ActionBarItem(
+                      label: 'Adjust',
+                      icon: AppIcons.edit,
+                      submits: true,
+                      onPressed: () {},
+                    ),
+                    ActionBarItem(
+                      label: 'Entry',
+                      icon: AppIcons.add,
+                      primary: true,
+                      onPressed: () {},
+                    ),
+                    ActionBarItem(
+                      label: 'Transfer',
+                      icon: AppIcons.transfer,
+                      submits: true,
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+                _gap(),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OptionMenuAnchor<String>(
+                    options: const [
+                      SheetOption(value: 'edit', label: 'Edit'),
+                      SheetOption(
+                        value: 'archive',
+                        label: 'Archive',
+                        submits: true,
+                      ),
+                      SheetOption(
+                        value: 'delete',
+                        label: 'Delete',
+                        submits: true,
+                        destructive: true,
+                      ),
+                    ],
+                    onSelected: (_) {},
+                    builder: (context, toggle) => AppChip(
+                      label: 'Row options (offline)',
+                      icon: AppIcons.more,
+                      trailing: AppChipTrailing.dropdown,
+                      onTap: toggle,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

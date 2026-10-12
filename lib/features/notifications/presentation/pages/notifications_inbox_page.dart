@@ -117,6 +117,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                       label: l.notificationsMarkAllRead,
                       icon: AppIcons.markAllRead,
                       variant: AppButtonVariant.text,
+                      submits: true,
                       onPressed: cubit.markReadAll,
                     ),
                   ),

@@ -51,7 +51,7 @@ class WalletPickCard extends StatelessWidget {
       value: a?.name,
       placeholder: placeholder,
       leading: icon ?? PickCardEmptyIcon(AppIcons.noWallet, size: _icon),
-      subtitle: a == null
+      subtitle: a == null || !a.showsBalance
           ? null
           : MoneyText(
               a.balance,

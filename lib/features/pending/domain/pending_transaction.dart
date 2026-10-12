@@ -13,6 +13,10 @@ enum PendingSource {
   projectUpdate('project_update'),
   ocr('ocr'),
   chat('chat'),
+  // Made from a recurring item / a one-off upcoming item when it fell due
+  // (owner 2026-10-13); [PendingTransaction.recurringRef] says which.
+  recurring('recurring'),
+  upcoming('upcoming'),
   other('');
 
   const PendingSource(this.wire);
@@ -24,13 +28,18 @@ enum PendingSource {
   );
 
   bool get isManual => this == manual;
+
+  bool get isRecurring => this == recurring || this == upcoming;
 }
 
 /// What submitting does.
 enum PendingKind {
   create('create'),
   settleDebt('settle_debt'),
-  updateTx('update_tx');
+  updateTx('update_tx'),
+
+  /// Saving draft: on submit a saving entry (never a transaction).
+  saving('saving');
 
   const PendingKind(this.wire);
   final String wire;
@@ -53,8 +62,11 @@ class PendingDraft extends Equatable {
     this.tagIds = const [],
     this.splits = const [],
     this.projectId,
+    this.goalId,
+    this.isSaving = false,
   });
 
+  /// Null for a saving draft (its wire type is `saving`, see [isSaving]).
   final TransactionType? type;
   final double? amount;
   final String? accountId;
@@ -73,10 +85,19 @@ class PendingDraft extends Equatable {
   /// The event this draft will join on confirm (`project_id`, nullable).
   final String? projectId;
 
+  /// Saving draft: the goal it goes into (null = spare).
+  final String? goalId;
+
+  /// The draft's wire `type` is `saving`.
+  final bool isSaving;
+
   factory PendingDraft.fromJson(Map<String, dynamic> json) {
     final t = json['type'] as String?;
+    final saving = t == 'saving';
     return PendingDraft(
-      type: t == null ? null : TransactionType.fromJson(t),
+      isSaving: saving,
+      goalId: json['goal_id'] as String?,
+      type: t == null || saving ? null : TransactionType.fromJson(t),
       amount: (json['amount'] as num?)?.toDouble(),
       accountId: json['account_id'] as String?,
       categoryId: json['category_id'] as String?,
@@ -92,7 +113,8 @@ class PendingDraft extends Equatable {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'type': ?type?.toJson(),
+    'type': ?(isSaving ? 'saving' : type?.toJson()),
+    'goal_id': ?goalId,
     'amount': ?amount,
     'account_id': ?accountId,
     'category_id': ?categoryId,
@@ -118,6 +140,8 @@ class PendingDraft extends Equatable {
     tagIds,
     splits,
     projectId,
+    goalId,
+    isSaving,
   ];
 }
 
@@ -144,6 +168,26 @@ class TagRef extends Equatable {
   final IconCode? iconCode;
 
   factory TagRef.fromJson(Map<String, dynamic> json) => TagRef(
+    id: json['id'] as String,
+    name: (json['name'] as String?) ?? '',
+    iconCode: json['icon_code'] is Map<String, dynamic>
+        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+        : null,
+  );
+
+  @override
+  List<Object?> get props => [id, name, iconCode];
+}
+
+/// `SavingGoalRef`: the goal a saving draft goes into.
+class SavingGoalRef extends Equatable {
+  const SavingGoalRef({required this.id, required this.name, this.iconCode});
+
+  final String id;
+  final String name;
+  final IconCode? iconCode;
+
+  factory SavingGoalRef.fromJson(Map<String, dynamic> json) => SavingGoalRef(
     id: json['id'] as String,
     name: (json['name'] as String?) ?? '',
     iconCode: json['icon_code'] is Map<String, dynamic>
@@ -183,6 +227,7 @@ class DraftResolved extends Equatable {
     this.tags = const [],
     this.project,
     this.splits = const [],
+    this.goal,
     this.missing = const [],
   });
 
@@ -192,6 +237,9 @@ class DraftResolved extends Equatable {
   final List<TagRef> tags;
   final EventRef? project;
   final List<ResolvedSplit> splits;
+
+  /// Saving draft: its goal (null = spare).
+  final SavingGoalRef? goal;
 
   /// `account_id`, `category_id`, `tag_ids` … the draft points at but are gone.
   final List<String> missing;
@@ -211,6 +259,7 @@ class DraftResolved extends Equatable {
     tags: _list(json['tags'], TagRef.fromJson),
     project: _obj(json['project'], EventRef.fromJson),
     splits: _list(json['splits'], ResolvedSplit.fromJson),
+    goal: _obj(json['goal'], SavingGoalRef.fromJson),
     missing: ((json['missing'] as List?) ?? const []).cast<String>(),
   );
 
@@ -222,6 +271,7 @@ class DraftResolved extends Equatable {
     tags,
     project,
     splits,
+    goal,
     missing,
   ];
 }
@@ -256,6 +306,17 @@ class PendingTransaction extends Equatable {
 
   /// What the draft is based on (display only).
   final Map<String, dynamic>? sourceRef;
+
+  /// A saving draft (kind or wire type `saving`).
+  bool get isSaving => kind == PendingKind.saving || draft.isSaving;
+
+  /// The recurring / upcoming item it came from ("🔁 Netflix · 3/12").
+  RecurringItemLink? get recurringRef {
+    final ref = sourceRef;
+    return source.isRecurring && ref != null && ref['item_id'] is String
+        ? RecurringItemLink.fromJson(ref)
+        : null;
+  }
 
   factory PendingTransaction.fromJson(Map<String, dynamic> json) {
     final err = json['last_error'];

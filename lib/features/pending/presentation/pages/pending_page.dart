@@ -5,14 +5,15 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/shell_chrome.dart';
-import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../categories/presentation/category_label.dart';
+import '../../../saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
@@ -64,17 +65,24 @@ class _PendingPageState extends State<PendingPage> {
         _Filter.others => all.where((p) => !p.source.isManual).toList(),
       };
 
-  Future<void> _submitSelected() async {
+  Future<void> _submitSelected() => _submit(_selected.toList());
+
+  Future<void> _submit(List<String> ids) async {
     final l = AppLocalizations.of(context)!;
     final pending = context.read<PendingCubit>();
     final accounts = context.read<AccountsCubit>();
+    final goals = context.read<SavingGoalsCubit>();
+    final dashboard = context.read<DashboardCubit>();
     final messenger = ScaffoldMessenger.of(context);
-    final ids = _selected.toList();
     setState(() => _submitting = true);
     try {
       final r = await pending.submit(ids);
       if (r.submitted.isNotEmpty) {
         accounts.patchBalances(r.accountBalances);
+        // A saving draft makes no transaction row: the goals list and the
+        // Home block go stale; the transaction lists re-fetch as before.
+        goals.markStale();
+        dashboard.markStale();
         await TransactionsCubit.bookChanged();
       }
       if (!mounted) return;
@@ -160,135 +168,149 @@ class _PendingPageState extends State<PendingPage> {
                   label: l.pendingSubmitSelected(_selected.length),
                   expand: true,
                   loading: _submitting,
+                  submits: true,
                   onPressed: _submitSelected,
                 ),
               ),
             ),
       // Pinned rows clear the floating bar; the list below them must not
       // add the bar height again.
-      body: QuickCreatePresetScope(
-        preset: QuickCreatePreset(onAdd: () => context.push('/pending/new')),
-        child: TabSwitchBody(
-          child: ListPageBody(
-            header: [
-              if (visible.isNotEmpty)
-                SelectionToolbar(
-                  selected: pickedVisible,
-                  total: visible.length,
-                  selectAllTooltip: l.pendingSelectAll,
-                  onSelectAll: () => setState(
-                    () => pickedVisible == visible.length
-                        ? _selected.removeAll(visible.map((p) => p.id))
-                        : _selected.addAll(visible.map((p) => p.id)),
-                  ),
-                  trailing: [
-                    if (canImportSlip)
-                      AppChip(
-                        icon: AppIcons.importSlip,
-                        label: l.pendingImportSlip,
-                        tone: AppChipTone.primary,
-                        selected: true,
-                        onTap: importSlip,
-                      ),
-                  ],
-                  deleteTooltip: l.commonDelete,
-                  onDelete: () => _discardSelected(visible),
+      body: TabSwitchBody(
+        child: ListPageBody(
+          header: [
+            if (visible.isNotEmpty)
+              SelectionToolbar(
+                selected: pickedVisible,
+                total: visible.length,
+                selectAllTooltip: l.pendingSelectAll,
+                onSelectAll: () => setState(
+                  () => pickedVisible == visible.length
+                      ? _selected.removeAll(visible.map((p) => p.id))
+                      : _selected.addAll(visible.map((p) => p.id)),
                 ),
-              if (others > 0)
-                FilterBar(
-                  chips: [
-                    for (final f in _Filter.values)
-                      AppChip(
-                        trailing: AppChipTrailing.dropdown,
-                        label: switch (f) {
-                          _Filter.all => l.pendingFilterAll(all.length),
-                          _Filter.manual => l.pendingFilterManual(manual),
-                          _Filter.others => l.pendingFilterOthers(others),
-                        },
-                        selected: _filter == f,
-                        // Ticks the new filter hides are dropped, so
-                        // "ยืนยันที่เลือก (n)" counts and sends only
-                        // what's on screen (owner 2026-10-10).
-                        onTap: () => setState(() {
-                          _filter = f;
-                          final shown = _visible(all).map((p) => p.id);
-                          _selected.retainAll(shown);
-                        }),
-                      ),
-                  ],
-                ),
-              if (result != null && result.failed > 0)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    0,
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                  ),
-                  child: AppMessage(
-                    message: l.pendingResult(result.done, result.failed),
-                    tone: Tone.warning,
-                    onClose: () => setState(() => _lastResult = null),
-                  ),
-                ),
-            ],
-            loading:
-                state.status == PendingStatus.initial ||
-                state.status == PendingStatus.loading,
-            error: state.error,
-            isEmpty: visible.isEmpty,
-            onRetry: context.read<PendingCubit>().load,
-            // Rows are full-bleed (they pad themselves); the template's
-            // bottomInset clears the floating chat button.
-            topInset: 0,
-            sidePadding: 0,
-            // A hairline between rows (the default indent = a TxRow's text).
-            rowDividers: true,
-            empty: EmptyView(
-              icon: AppIcons.empty,
-              title: l.pendingEmptyTitle,
-              message: l.pendingEmptyMessage,
-              cta: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (canImportSlip) ...[
-                    AddTile(
-                      label: l.pendingImportSlip,
+                trailing: [
+                  if (canImportSlip)
+                    AppChip(
                       icon: AppIcons.importSlip,
-                      variant: AddTileVariant.row,
+                      label: l.pendingImportSlip,
+                      tone: AppChipTone.primary,
+                      selected: true,
                       onTap: importSlip,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                  AddTile(
-                    label: l.pendingAdd,
-                    onTap: () => context.push('/pending/new'),
-                  ),
+                ],
+                deleteTooltip: l.commonDelete,
+                onDelete: () => _discardSelected(visible),
+              ),
+            if (others > 0)
+              FilterBar(
+                chips: [
+                  for (final f in _Filter.values)
+                    AppChip(
+                      trailing: AppChipTrailing.dropdown,
+                      label: switch (f) {
+                        _Filter.all => l.pendingFilterAll(all.length),
+                        _Filter.manual => l.pendingFilterManual(manual),
+                        _Filter.others => l.pendingFilterOthers(others),
+                      },
+                      selected: _filter == f,
+                      // Ticks the new filter hides are dropped, so
+                      // "ยืนยันที่เลือก (n)" counts and sends only
+                      // what's on screen (owner 2026-10-10).
+                      onTap: () => setState(() {
+                        _filter = f;
+                        final shown = _visible(all).map((p) => p.id);
+                        _selected.retainAll(shown);
+                      }),
+                    ),
                 ],
               ),
-            ),
-            children: [
-              ..._rows(context, visible),
-              // "เพิ่มร่าง" closes the list.
+            if (result != null && result.failed > 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
-                  AppSpacing.md,
-                  AppSpacing.lg,
                   0,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
                 ),
-                child: AddTile(
-                  label: l.pendingAdd,
-                  variant: AddTileVariant.row,
-                  onTap: () => context.push('/pending/new'),
+                child: AppMessage(
+                  message: l.pendingResult(result.done, result.failed),
+                  tone: Tone.warning,
+                  onClose: () => setState(() => _lastResult = null),
                 ),
               ),
-            ],
+          ],
+          loading:
+              state.status == PendingStatus.initial ||
+              state.status == PendingStatus.loading,
+          error: state.error,
+          isEmpty: visible.isEmpty,
+          onRetry: context.read<PendingCubit>().load,
+          // Rows are full-bleed (they pad themselves); the template's
+          // bottomInset clears the floating chat button.
+          topInset: 0,
+          sidePadding: 0,
+          // A hairline between rows (the default indent = a TxRow's text).
+          rowDividers: true,
+          empty: EmptyView(
+            icon: AppIcons.empty,
+            title: l.pendingEmptyTitle,
+            message: l.pendingEmptyMessage,
+            cta: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (canImportSlip) ...[
+                  AddTile(
+                    label: l.pendingImportSlip,
+                    icon: AppIcons.importSlip,
+                    variant: AddTileVariant.row,
+                    onTap: importSlip,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                AddTile(
+                  label: l.pendingAdd,
+                  onTap: () => context.push('/pending/new'),
+                ),
+              ],
+            ),
           ),
+          children: [
+            ..._rows(context, visible),
+            // "เพิ่มร่าง" closes the list.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                0,
+              ),
+              child: AddTile(
+                label: l.pendingAdd,
+                variant: AddTileVariant.row,
+                onTap: () => context.push('/pending/new'),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _open(PendingTransaction p) async {
+    if (!p.isSaving) {
+      await showQuickCreateSheet(context, draft: p);
+      return;
+    }
+    // TODO(quick-create-saving): open the saving draft in the quick create
+    // sheet's ออม mode; until then a tap just offers to confirm it.
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.pendingSavingConfirmTitle,
+      confirmLabel: l.pendingSavingConfirm,
+    );
+    if (ok && mounted) await _submit([p.id]);
   }
 
   /// Rows under day headers (the draft's date; undated first) — the same
@@ -329,7 +351,7 @@ class _PendingPageState extends State<PendingPage> {
                   ? _selected.remove(p.id)
                   : _selected.add(p.id),
             ),
-            onOpen: () => showQuickCreateSheet(context, draft: p),
+            onOpen: () => _open(p),
           ),
         );
       }
@@ -360,6 +382,14 @@ class _PendingCard extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
+    if (item.isSaving) {
+      return PendingSavingRow(
+        item: item,
+        selected: selected,
+        onToggle: onToggle,
+        onOpen: onOpen,
+      );
+    }
     final d = item.draft;
     // Everything below comes from the draft's own `resolved` — no joins.
     final r = item.resolved;
@@ -427,7 +457,11 @@ class _PendingCard extends StatelessWidget {
               iconCode: wallet.iconCode,
             ),
       source: AppChip(
-        label: _sourceLabel(l, item.source),
+        label: _sourceLabel(l, item),
+        // From a recurring item: 🔁 + its name · n/N (owner 2026-10-13).
+        icon: item.source == PendingSource.recurring
+            ? AppIcons.recurring
+            : null,
         tone: item.source.isManual ? AppChipTone.info : AppChipTone.primary,
         selected: true,
         size: ChipSize.mini,
@@ -452,14 +486,119 @@ class _PendingCard extends StatelessWidget {
     );
   }
 
-  static String _sourceLabel(AppLocalizations l, PendingSource s) =>
-      switch (s) {
+  static String _sourceLabel(AppLocalizations l, PendingTransaction p) =>
+      switch (p.source) {
         PendingSource.manual => l.pendingSourceManual,
         PendingSource.splitPaid => l.pendingSourceSplitPaid,
         PendingSource.projectCopy ||
         PendingSource.projectUpdate => l.pendingSourceProject,
         PendingSource.ocr => l.pendingSourceOcr,
         PendingSource.chat => l.pendingSourceChat,
+        PendingSource.recurring =>
+          p.recurringRef?.label(l.pendingSourceRecurring) ??
+              l.pendingSourceRecurring,
+        PendingSource.upcoming => l.pendingSourceUpcoming,
         PendingSource.other => l.pendingSourceOther,
       };
+}
+
+/// A 🐷 saving draft: the kit [SavingTxRow] in draft mode (wallet → goal, or
+/// the spare bucket), a checkbox first, and why it can't go yet under it.
+class PendingSavingRow extends StatelessWidget {
+  const PendingSavingRow({
+    required this.item,
+    required this.selected,
+    required this.onToggle,
+    required this.onOpen,
+    super.key,
+  });
+
+  final PendingTransaction item;
+  final bool selected;
+  final VoidCallback onToggle;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final d = item.draft;
+    final wallet = item.resolved.account;
+    final bucket = item.resolved.goal?.name ?? l.sgv2Spare;
+    final note = d.note?.trim() ?? '';
+    final warn = item.lastError != null
+        ? pendingErrorText(l, item.lastError!)
+        : wallet == null
+        ? l.pendingSavingNoWallet
+        : (d.amount ?? 0) <= 0
+        ? l.pendingErrMissingAmount
+        : null;
+    final recurring = item.recurringRef;
+
+    final row = SavingTxRow(
+      kind: SavingTxKind.deposit,
+      title: note.isNotEmpty ? note : bucket,
+      amount: d.amount ?? 0,
+      walletLabel: wallet?.name ?? l.transactionFormAccountNone,
+      walletIcon: wallet == null
+          ? null
+          : IconDisplay(
+              type: IconType.account,
+              size: 14,
+              iconCode: wallet.iconCode,
+            ),
+      to: bucket,
+      draft: true,
+      draftChips: [
+        AppChip(
+          label: l.sgv2KindSave,
+          icon: AppIcons.savingDeposit,
+          tone: AppChipTone.primary,
+          selected: true,
+          size: ChipSize.mini,
+        ),
+      ],
+      source: item.source.isRecurring
+          ? AppChip(
+              label:
+                  recurring?.label(l.pendingSourceRecurring) ??
+                  l.pendingSourceRecurring,
+              icon: item.source == PendingSource.recurring
+                  ? AppIcons.recurring
+                  : null,
+              tone: AppChipTone.primary,
+              selected: true,
+              size: ChipSize.mini,
+            )
+          : null,
+      select: SelectCheck(
+        value: selected,
+        tooltip: l.pendingSelectOne,
+        onTap: onToggle,
+      ),
+      onTap: onOpen,
+    );
+    if (warn == null) return row;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        row,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.sm,
+          ),
+          child: Text(
+            warn,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: palette.warning),
+          ),
+        ),
+      ],
+    );
+  }
 }

@@ -29,6 +29,7 @@ import '../widgets/adjust_balance_sheet.dart';
 import '../widgets/identifier_widgets.dart';
 import '../widgets/member_avatar_stack.dart';
 import '../widgets/wallet_members_view.dart';
+import '../widgets/wallet_savings_section.dart';
 import '../widgets/wallet_compact_hero.dart';
 
 /// The wallet page's tabs.
@@ -54,6 +55,7 @@ class AccountDetailPage extends StatefulWidget {
     this.accountId,
     this.initialTab = AccountDetailTab.overview,
     this.popOnCreate = false,
+    this.onAddSaving,
     super.key,
   });
 
@@ -65,6 +67,10 @@ class AccountDetailPage extends StatefulWidget {
   /// with the new [Account] instead of becoming its view, so the page
   /// underneath stays (QA W2).
   final bool popOnCreate;
+
+  /// Overrides what the wallet bar's "เพิ่มเงินออม" does (default: quick create
+  /// in ออม mode on this wallet).
+  final VoidCallback? onAddSaving;
 
   bool get isCreate => accountId == null;
 
@@ -151,6 +157,7 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
             onAccount: _onAccount,
             onMembers: _onMembers,
             onRefresh: _fetch,
+            onAddSaving: widget.onAddSaving,
           );
         }
         final notFound = _error?.code == 'NOT_FOUND';
@@ -194,6 +201,7 @@ class _AccountDetailView extends StatefulWidget {
     this.onAccount,
     this.onMembers,
     this.onRefresh,
+    this.onAddSaving,
   });
 
   /// See [AccountDetailPage.popOnCreate].
@@ -216,6 +224,9 @@ class _AccountDetailView extends StatefulWidget {
 
   /// Pull-to-refresh: the page's one detail call again.
   final Future<void> Function()? onRefresh;
+
+  /// See [AccountDetailPage.onAddSaving].
+  final VoidCallback? onAddSaving;
 
   bool get isCreate => account == null;
 
@@ -387,6 +398,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       status: base?.status ?? AccountStatus.active,
       canEdit: base?.canEdit ?? true,
       myRole: base?.myRole ?? WalletRole.owner,
+      // Edit: the saved state (the switch applies on save); create: live.
+      trackBalance: base?.trackBalance ?? w.trackBalance,
     );
   }
 
@@ -439,12 +452,23 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final dueDay = isCredit ? int.tryParse(w.dueDay.trim()) : null;
     final minPayment = isCredit ? AmountInput.parse(w.minPayment) : null;
 
+    // Edit: tracking turned back on asks the balance ONCE, before saving; it
+    // goes in the same update call. Cancelling the sheet cancels the save.
+    double? currentBalance;
+    final prev = widget.account;
+    if (prev != null && !prev.trackBalance && w.trackBalance) {
+      currentBalance = await showSetBalanceSheet(context, prev);
+      if (currentBalance == null || !mounted) return;
+    }
+
     FocusScope.of(context).unfocus();
     setSaving(true);
     Account? created;
     try {
       if (_isCreate) {
-        final opening = AmountInput.parse(w.opening) ?? 0;
+        final opening = w.trackBalance
+            ? (AmountInput.parse(w.opening) ?? 0)
+            : 0.0;
         // Server assigns the id (toCreateJson omits it) and books a
         // non-zero opening balance as an Opening Balance transaction.
         created = await cubit.add(
@@ -455,6 +479,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             balance: _openingBalance(w.type, opening),
             currency: _currency,
             iconCode: w.iconCode,
+            trackBalance: w.trackBalance,
             description: opt(w.description),
             note: opt(w.note),
             creditLimit: creditLimit,
@@ -482,13 +507,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             creditLimit: creditLimit,
             statementDate: statementDay,
             paymentDueDate: dueDay,
+            trackBalance: w.trackBalance,
             minimumPayment: minPayment,
             members: p.members,
             myReportScope: p.myReportScope,
             isShared: p.isShared,
             identifiers: w.cleanIdentifiers,
           ),
+          currentBalance: currentBalance,
         );
+        // A balance given = an adjustment was booked: the lists catch up.
+        if (currentBalance != null) await TransactionsCubit.bookChanged();
         widget.onAccount?.call(updated);
       }
     } on ApiException catch (e) {
@@ -782,13 +811,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                         ),
                         AccountDetailTab.members =>
                           widget.members == null
-                              ? ListView(
+                              ? ListPageSkeleton(
+                                  rows: 3,
                                   padding: _tabInsets(bottom),
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  children: [
-                                    for (var i = 0; i < 3; i++)
-                                      const SkeletonListTile(),
-                                  ],
                                 )
                               : WalletMembersView(
                                   account: a,
@@ -836,7 +861,10 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final a = widget.account;
     return [
       (f) => _noteSection(l, first: f),
+      if (a != null && !isEditing && WalletSavingsSection.shows(a))
+        (f) => WalletSavingsSection(account: a, first: f),
       (f) => _typeSection(l, first: f),
+      (f) => _trackSection(l, first: f),
       (f) => _creditSection(l, first: f),
       (f) => _identifiersSection(l, first: f),
       if (a != null) (f) => _membersSection(l, a, first: f),
@@ -851,6 +879,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   /// The wallet's actions under the hero. ปรับยอด: every member (as before);
   /// + รายการ / ⇄ โอน: the quick create with this wallet preset (a transfer
   /// starts from it). The sheet patches the cubits itself.
+  /// "เพิ่มเงินออม" is a 3rd action once [_AccountDetailView.onAddSaving] is
+  /// wired (nobody passes it yet).
   Widget _actionBar(AppLocalizations l, Account a) => ActionBar(
     padding: const EdgeInsets.fromLTRB(
       AppSpacing.lg,
@@ -859,11 +889,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       0,
     ),
     actions: [
-      ActionBarItem(
-        label: l.accountDetailAdjustBalance,
-        icon: AppIcons.refresh,
-        onPressed: _adjustBalance,
-      ),
+      // Nothing to adjust on a wallet that does not track its balance.
+      if (a.trackBalance)
+        ActionBarItem(
+          label: l.accountDetailAdjustBalance,
+          icon: AppIcons.refresh,
+          onPressed: _adjustBalance,
+        ),
       ActionBarItem(
         label: l.navTransactions,
         icon: AppIcons.add,
@@ -878,6 +910,19 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           type: TransactionType.transfer,
         ),
       ),
+      // Saving from a wallet that tracks its balance (notebook entry, goals v2).
+      if (a.trackBalance)
+        ActionBarItem(
+          label: l.walletSavingsAdd,
+          icon: AppIcons.savingDeposit,
+          onPressed:
+              widget.onAddSaving ??
+              () => showQuickCreateSheet(
+                context,
+                account: a,
+                preset: const QuickCreatePreset.saving(),
+              ),
+        ),
     ],
   );
 
@@ -888,7 +933,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return _HeroHeader(
       account: _preview(l),
       symbol: Currencies.symbolOf(_currency),
-      balanceField: _isCreate ? _openingField(l) : null,
+      balanceField: _isCreate && working.trackBalance ? _openingField(l) : null,
       nameField: HeroNameInput(
         editing: editing,
         controller: _nameController,
@@ -974,6 +1019,28 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                   color: t.colorOf(context),
                 ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// ติดตามยอดเงิน — the on / off switch, create and edit (owner only). Off: no
+  /// balance anywhere for this wallet; turning it on again asks the balance
+  /// once, on save.
+  Widget? _trackSection(AppLocalizations l, {required bool first}) {
+    if (!isEditing || !_isOwner) return null;
+    final w = working;
+    return SectionCard(
+      first: first,
+      children: [
+        DetailRow(
+          label: l.walletTrackLabel,
+          helper: l.walletTrackHelper,
+          trailing: AppSwitch(
+            value: w.trackBalance,
+            semanticLabel: l.walletTrackLabel,
+            onChanged: (v) => applyChange(w.copyWith(trackBalance: v)),
           ),
         ),
       ],
@@ -1497,15 +1564,19 @@ class _HeroHeader extends StatelessWidget {
               ),
             ],
           ),
-          balanceField ??
-              MoneyText(
-                accountDisplayBalance(account),
-                symbol: symbol,
-                style: AppTypography.of(
-                  context,
-                  AppTextRole.display,
-                )?.copyWith(color: accountBalanceColor(context, account)),
-              ),
+          if (balanceField != null)
+            balanceField!
+          else if (account.showsBalance)
+            MoneyText(
+              accountDisplayBalance(account),
+              symbol: symbol,
+              style: AppTypography.of(
+                context,
+                AppTextRole.display,
+              )?.copyWith(color: accountBalanceColor(context, account)),
+            )
+          else
+            AppText(l.walletTrackOffHero, role: AppTextRole.caption),
           // Used credit only — an overpaid card uses none.
           if (utilization != null && available != null)
             ProgressRow(
@@ -1541,6 +1612,7 @@ class _AccountDraft {
     this.dueDay = '',
     this.minPayment = '',
     this.identifiers = const [],
+    this.trackBalance = true,
   });
 
   final String name;
@@ -1557,6 +1629,9 @@ class _AccountDraft {
   final String minPayment;
   final List<AccountIdentifier> identifiers;
 
+  /// "ติดตามยอดเงิน" ([Account.trackBalance]).
+  final bool trackBalance;
+
   factory _AccountDraft.from(Account a) => _AccountDraft(
     name: a.name,
     type: a.type,
@@ -1572,6 +1647,7 @@ class _AccountDraft {
         ? ''
         : AmountInput.format(a.minimumPayment!),
     identifiers: a.identifiers,
+    trackBalance: a.trackBalance,
   );
 
   /// What the server stores (text trimmed) — the post-save baseline.
@@ -1604,6 +1680,7 @@ class _AccountDraft {
     String? dueDay,
     String? minPayment,
     List<AccountIdentifier>? identifiers,
+    bool? trackBalance,
   }) {
     return _AccountDraft(
       name: name ?? this.name,
@@ -1617,6 +1694,7 @@ class _AccountDraft {
       dueDay: dueDay ?? this.dueDay,
       minPayment: minPayment ?? this.minPayment,
       identifiers: identifiers ?? this.identifiers,
+      trackBalance: trackBalance ?? this.trackBalance,
     );
   }
 
@@ -1633,6 +1711,7 @@ class _AccountDraft {
       other.statementDay == statementDay &&
       other.dueDay == dueDay &&
       other.minPayment == minPayment &&
+      other.trackBalance == trackBalance &&
       listEquals(other.identifiers, identifiers);
 
   @override
@@ -1648,6 +1727,7 @@ class _AccountDraft {
     dueDay,
     minPayment,
     Object.hashAll(identifiers),
+    trackBalance,
   );
 }
 

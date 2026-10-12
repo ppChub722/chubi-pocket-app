@@ -10,16 +10,25 @@ import '../money/money_text.dart';
 /// The ONE row of the transaction list and the pending list (owner
 /// 2026-10-11) — two lines, an amount on the right:
 ///
-///   [☐] (icon)  title [wallet chip]                      −฿540
-///               [source chip] · category · #tags  ⑂
+///   [☐] (icon)  title [wallet chip] [status chip]         −฿540
+///               [source chip] [metaLeading] · category · meta · #tags  🔁 3/12 🔗 ⑂
 ///
 /// - Line 1: the title (description ?? category) and the wallet as a mini
-///   [AppChip] with the wallet's icon right after it; the amount at the end.
+///   [AppChip] with the wallet's icon right after it; then the optional
+///   [statusChip] (a mini chip, e.g. "หยุดชั่วคราว"); the amount at the end.
+///   The status chip rides on line 1 because a mini chip (20) is taller than
+///   the line-2 text: there it would grow the row.
 /// - Line 2: the pending [source] as a mini chip (pending only), then
-///   [category], [extra] (a date, "→ wallet") and the [tags] (coloured
-///   `#name` spans), one ellipsised line; ⑂ when it has splits.
+///   [metaLeading] (a widget that keeps its own colour, e.g. a `DueText`),
+///   [category], [extra] (a date, "→ wallet"), the [meta] texts and the
+///   [tags] (coloured `#name` spans), one ellipsised line; then the trailing
+///   glyphs: 🔁 + [progress] when [recurring], 🔗 when [linked], ⑂ when it
+///   has splits.
 /// - [select] (a `SelectCheck`) leads the row in the pending list; [warning]
 ///   adds a line under line 2 (why a draft can't be submitted yet).
+/// - [dimmed] fades the whole row (archived), like `ListRow.dimmed`.
+///
+/// None of the markers changes the row height (geometry-tested).
 ///
 /// Domain-agnostic: callers resolve names, icons and colours. Dates live in
 /// the list's day-group headers ([DateGroupHeader]), not on the row.
@@ -40,6 +49,13 @@ class TxRow extends StatelessWidget {
     this.warning,
     this.warningColor,
     this.onTap,
+    this.metaLeading,
+    this.meta = const [],
+    this.recurring = false,
+    this.progress,
+    this.linked = false,
+    this.statusChip,
+    this.dimmed = false,
     super.key,
   });
 
@@ -70,6 +86,29 @@ class TxRow extends StatelessWidget {
   final Color? warningColor;
   final VoidCallback? onTap;
 
+  /// Leads line 2 (after [source]) and keeps its own style — e.g. a
+  /// `DueText` whose overdue tint must survive.
+  final Widget? metaLeading;
+
+  /// More line-2 texts, after [category] / [extra] ("ทุกวันที่ 3").
+  final List<String> meta;
+
+  /// 🔁 — made by a recurring item.
+  final bool recurring;
+
+  /// Shown right after the 🔁 glyph ("3/12"); needs [recurring].
+  final String? progress;
+
+  /// 🔗 — linked to another record (the glyph `EventBillRow` uses).
+  final bool linked;
+
+  /// A mini status chip on line 1, after the wallet chip (only when not the
+  /// normal state, e.g. paused / archived).
+  final Widget? statusChip;
+
+  /// Fades the row (archived).
+  final bool dimmed;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -79,6 +118,8 @@ class TxRow extends StatelessWidget {
     final parts = [
       if (category != null && category!.isNotEmpty) category!,
       if (extra != null && extra!.isNotEmpty) extra!,
+      for (final m in meta)
+        if (m.isNotEmpty) m,
     ];
     final line2 = Text.rich(
       TextSpan(
@@ -98,7 +139,30 @@ class TxRow extends StatelessWidget {
     );
     final hasLine2 = parts.isNotEmpty || tags.isNotEmpty;
 
-    return InkWell(
+    Widget glyph(IconData icon) =>
+        Icon(icon, size: 12, color: scheme.onSurfaceVariant);
+    final glyphs = <Widget>[
+      if (recurring) ...[
+        const SizedBox(width: AppSpacing.sm),
+        glyph(AppIcons.recurring),
+        if (progress != null && progress!.isNotEmpty) ...[
+          const SizedBox(width: 2),
+          Text(progress!, style: small, maxLines: 1),
+        ],
+      ],
+      if (linked) ...[
+        const SizedBox(width: AppSpacing.sm),
+        glyph(AppIcons.link),
+      ],
+      if (hasSplits) ...[
+        const SizedBox(width: AppSpacing.sm),
+        glyph(AppIcons.split),
+      ],
+    ];
+    final showLine2 =
+        source != null || metaLeading != null || hasLine2 || glyphs.isNotEmpty;
+
+    final Widget row = InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -139,26 +203,28 @@ class TxRow extends StatelessWidget {
                           ),
                         ),
                       ],
+                      if (statusChip != null) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        Flexible(child: statusChip!),
+                      ],
                     ],
                   ),
-                  if (source != null || hasLine2 || hasSplits)
+                  if (showLine2)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Row(
                         children: [
                           if (source != null) ...[
                             source!,
-                            if (hasLine2) const SizedBox(width: AppSpacing.xs),
+                            if (hasLine2 || metaLeading != null)
+                              const SizedBox(width: AppSpacing.xs),
+                          ],
+                          if (metaLeading != null) ...[
+                            Flexible(child: metaLeading!),
+                            if (hasLine2) Text(' · ', style: small),
                           ],
                           if (hasLine2) Flexible(child: line2),
-                          if (hasSplits) ...[
-                            const SizedBox(width: AppSpacing.sm),
-                            Icon(
-                              AppIcons.split,
-                              size: 12,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ],
+                          ...glyphs,
                         ],
                       ),
                     ),
@@ -200,5 +266,6 @@ class TxRow extends StatelessWidget {
         ),
       ),
     );
+    return dimmed ? Opacity(opacity: 0.55, child: row) : row;
   }
 }

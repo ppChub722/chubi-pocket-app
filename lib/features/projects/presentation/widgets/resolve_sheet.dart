@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../event_errors.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -11,7 +12,7 @@ import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
-import '../../../personal_debts/domain/personal_debt.dart';
+import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
@@ -142,19 +143,27 @@ Future<bool> showResolveSheet(
           accounts.patchBalances(created.accountBalances);
           await TransactionsCubit.bookChanged();
         } else {
-          await debtsRepo.create(
-            direction: iAmDebtor ? DebtDirection.iOwe : DebtDirection.owedToMe,
-            counterpartyPersonName: name,
+          // One signed person ledger (debts 0.3.1-10): I owe them = they
+          // paid for me (received); they owe me = I paid for them (paid).
+          await debtsRepo.createEntry(
+            debtPersonKey(name: name),
+            direction: iAmDebtor
+                ? DebtEntryDirection.received
+                : DebtEntryDirection.paid,
             amount: amount,
-            currency: tx.currency,
             description: tx.description,
             note: tx.note,
+            personName: name,
           );
         }
         return true;
       } on ApiException catch (e) {
         if (context.mounted) {
-          showAppSnackBar(context, e.message, tone: Tone.danger);
+          showAppSnackBar(
+            context,
+            eventErrorText(AppLocalizations.of(context)!, e),
+            tone: Tone.danger,
+          );
         }
         return false;
       }

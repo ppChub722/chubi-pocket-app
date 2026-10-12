@@ -45,9 +45,17 @@ class UiStrings {
     this.reorderMoveUp = 'Move up',
     this.reorderMoveDown = 'Move down',
     this.reorderIndent = 'Move in a level',
+    this.loadMoreFailed = "Couldn't load more",
+    this.pickDatesHint = 'Tap the days to pick them',
   });
 
   final String close;
+
+  /// The paging footer of a list when the next page failed.
+  final String loadMoreFailed;
+
+  /// The multi-date picker's line while nothing is picked.
+  final String pickDatesHint;
   final String cancel;
   final String save;
   final String undo;

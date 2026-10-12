@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../atoms/app_divider.dart';
+import '../atoms/connection_scope.dart';
 
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_radius.dart';
@@ -38,6 +39,35 @@ MenuStyle _menuStyle(BuildContext context) {
 
 void _toggle(MenuController c) => c.isOpen ? c.close() : c.open();
 
+/// The optional small, muted header at the top of a popover ("Save how?") —
+/// the question the options answer. Not tappable.
+class _PopoverTitle extends StatelessWidget {
+  const _PopoverTitle(this.title, {this.padding});
+
+  final String title;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding:
+          padding ??
+          const EdgeInsets.fromLTRB(
+            AppSpacing.md + 2,
+            AppSpacing.xs,
+            AppSpacing.md + 2,
+            AppSpacing.xs,
+          ),
+      child: Text(
+        title,
+        style: text.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
 /// One popover row. Selected rows get the highlight ring (primary outline +
 /// tint, inset from the menu edge) instead of a ✓ — same language as
 /// `SelectableFrame`.
@@ -57,6 +87,10 @@ class _PopoverItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // A [SheetOption.submits] row is off while the app is offline.
+    final enabled =
+        option.enabled &&
+        !(option.submits && ConnectionScope.isOffline(context));
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs + 2,
@@ -64,7 +98,7 @@ class _PopoverItem extends StatelessWidget {
       ),
       child: MenuItemButton(
         closeOnActivate: closeOnActivate,
-        onPressed: option.enabled ? onPressed : null,
+        onPressed: enabled ? onPressed : null,
         leadingIcon: option.leading,
         style: ButtonStyle(
           minimumSize: const WidgetStatePropertyAll(Size(140, 44)),
@@ -106,13 +140,16 @@ class _PopoverItem extends StatelessWidget {
 }
 
 /// Single-select popover. Picking an option closes it and calls
-/// [onSelected]; the current [selected] option is ring-highlighted.
+/// [onSelected]; the current [selected] option is ring-highlighted. An
+/// optional [title] heads the list with a small muted line (the question the
+/// options answer: "Save how?").
 class OptionMenuAnchor<T> extends StatelessWidget {
   const OptionMenuAnchor({
     required this.options,
     required this.onSelected,
     required this.builder,
     this.selected,
+    this.title,
     super.key,
   });
 
@@ -120,6 +157,9 @@ class OptionMenuAnchor<T> extends StatelessWidget {
   final T? selected;
   final ValueChanged<T> onSelected;
   final PopoverTriggerBuilder builder;
+
+  /// A small muted header above the options; null = none.
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +170,7 @@ class OptionMenuAnchor<T> extends StatelessWidget {
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
+        if (title != null) _PopoverTitle(title!),
         for (final o in options)
           _PopoverItem(
             option: o,
@@ -182,6 +223,7 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
     required this.builder,
     this.showClear = true,
     this.clearLabel,
+    this.title,
     super.key,
   });
 
@@ -190,6 +232,9 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
   final ValueChanged<Set<T>> onChanged;
   final PopoverTriggerBuilder builder;
   final bool showClear;
+
+  /// A small muted header above the options; null = none.
+  final String? title;
 
   /// Overrides the localized "ล้าง".
   final String? clearLabel;
@@ -203,6 +248,7 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
       consumeOutsideTap: true,
       alignmentOffset: const Offset(0, AppSpacing.xs),
       menuChildren: [
+        if (title != null) _PopoverTitle(title!),
         for (final o in options)
           _PopoverItem(
             option: o,
@@ -235,6 +281,7 @@ class PopoverAnchor extends StatelessWidget {
     required this.builder,
     required this.contentBuilder,
     this.maxWidth = 304,
+    this.title,
     super.key,
   });
 
@@ -242,6 +289,9 @@ class PopoverAnchor extends StatelessWidget {
   final Widget Function(BuildContext context, VoidCallback close)
   contentBuilder;
   final double maxWidth;
+
+  /// A small muted header above the content; null = none.
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +312,21 @@ class PopoverAnchor extends StatelessWidget {
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.sm,
                 ),
-                child: contentBuilder(ctx, () => controller?.close()),
+                child: title == null
+                    ? contentBuilder(ctx, () => controller?.close())
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _PopoverTitle(
+                            title!,
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
+                          ),
+                          contentBuilder(ctx, () => controller?.close()),
+                        ],
+                      ),
               ),
             );
           },

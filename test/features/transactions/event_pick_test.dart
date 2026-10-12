@@ -19,8 +19,15 @@ Transaction _tx({
   'date': '2026-10-10',
   'can_edit_category': author,
   'is_locked': locked,
-  'is_repayment': repays != null,
-  'source_personal_debt_id': ?repays,
+  // A debt entry's wallet side (the BE's link to the entry).
+  if (repays != null)
+    'counterparty': {
+      'entry_id': repays,
+      'key': 'n:bee',
+      'person': {'name': 'Bee'},
+      'direction': 'paid',
+      'paid': false,
+    },
 });
 
 const _project = Project(
@@ -78,7 +85,7 @@ void main() {
       expect(txCanJoinEvent(_tx(locked: true)), isFalse);
     });
 
-    test('a debt repayment or a system category can’t', () {
+    test('a debt entry or a system category can’t', () {
       expect(txCanJoinEvent(_tx(repays: 'd1')), isFalse);
       const system = Category(
         id: 'c',

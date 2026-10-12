@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -13,7 +14,12 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
+import '../../../categories/domain/category.dart';
+import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../home/presentation/cubit/dashboard_cubit.dart';
+import '../../../personal_debts/data/personal_debts_repository.dart';
+import '../../../personal_debts/domain/debt_ledger.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
@@ -21,8 +27,7 @@ import '../../../projects/presentation/widgets/project_common.dart';
 import '../../../pending/domain/pending_transaction.dart';
 import '../../../pending/presentation/cubit/pending_cubit.dart';
 import '../../../pending/presentation/pending_errors.dart';
-import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
-import '../../../scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
+import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/form_options.dart';
@@ -31,6 +36,12 @@ import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import '../save_failure.dart';
 import '../transaction_edit.dart';
+import '../../../saving_goals/data/saving_goals_repository.dart';
+import '../../../saving_goals/domain/saving_entry.dart';
+import '../../../saving_goals/domain/saving_goals_overview.dart';
+import '../../../saving_goals/presentation/cubit/saving_goals_cubit.dart';
+import 'debt_entry_form.dart';
+import 'saving_entry_form.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
 import 'tx_summary_title.dart';
@@ -70,57 +81,121 @@ import 'tx_summary_title.dart';
 /// [DraftEvent]). [projectRow] edits that row (its type and payer are
 /// fixed). Saves through the project API.
 ///
-/// With [scheduled] it's scheduled mode — a recurring / installment / loan
-/// template (title "ตั้งรายการประจำ"; see [DraftSchedule]): variant, type,
-/// amount, icon + name, category + wallet (both required), note, cycle,
-/// next due date and the installment fields. [scheduledEntry] edits that
-/// entry (title "แก้รายการประจำ"; variant and type fixed). One save button;
-/// saves through [ScheduledTransactionsCubit].
-///
 /// [account] presets the wallet of a new transaction (adding from a
 /// wallet's page) instead of the last-used one; [type] opens a new one on
-/// that type (a wallet's ⇄ โอน → a transfer from it).
+/// that type (a wallet's ⇄ โอน → a transfer from it). [category] presets a
+/// new transaction's category (and its type: expense / income) — the +
+/// over a category's page; [tag] presets one tag — the + over a tag's page.
+///
+/// [preset] = the same per-page default the shell's + uses
+/// ([QuickCreatePreset]: mode + wallet / category / tag / person); its
+/// fields fill in where [account] / [category] / [tag] are not given. A
+/// page's own button opens quick create with it, e.g. the debts person
+/// page: `showQuickCreateSheet(context, preset: QuickCreatePreset.debt(person: p))`.
+///
+/// One footer button of [showEntrySheet]: [onPressed] gets the edited body
+/// and does the ONE call; true = saved (the sheet closes), false = it
+/// failed (the sheet stays, typed input kept — the caller says why).
+class EntrySheetAction {
+  const EntrySheetAction({
+    required this.label,
+    required this.onPressed,
+    this.primary = true,
+  });
+
+  final String label;
+  final Future<bool> Function(PendingDraft draft) onPressed;
+
+  /// The main button (filled); the other one is outlined.
+  final bool primary;
+}
+
+/// The settings of [showEntrySheet] (call that, not [showQuickCreateSheet]).
+class EntrySheetConfig {
+  const EntrySheetConfig({
+    required this.title,
+    required this.initial,
+    required this.actions,
+    this.onDelete,
+  });
+
+  final String title;
+  final PendingDraft initial;
+  final List<EntrySheetAction> actions;
+  final Future<bool> Function()? onDelete;
+}
+
+/// Edit ONE item in the quick-form look (owner 2026-10-13: an upcoming /
+/// produced recurring item, a pending draft): the EntryCard (type · date ·
+/// description · amount · wallet · category), tags, note — any date. The
+/// caller owns the save: 1–2 [actions] (the last is the main button, e.g.
+/// [บันทึก], or [รอยืนยัน] [บันทึกเลย]) each get the edited body. [onDelete]
+/// adds the 🗑 (true = done, closes). The pickers come from the form options
+/// (one call; the EntryCard skeleton shows until they land). Returns true
+/// when an action (or delete) went through.
+Future<bool> showEntrySheet(
+  BuildContext context, {
+  required String title,
+  required PendingDraft initial,
+  required List<EntrySheetAction> actions,
+  Future<bool> Function()? onDelete,
+}) {
+  assert(actions.isNotEmpty && actions.length <= 2, '1 or 2 actions');
+  return showQuickCreateSheet(
+    context,
+    entry: EntrySheetConfig(
+      title: title,
+      initial: initial,
+      actions: actions,
+      onDelete: onDelete,
+    ),
+  );
+}
+
+/// Debt mode (owner 2026-10-12): a debt preset opens it with the person;
+/// the mode chips at the top switch a new entry between รายการ / หนี้.
+/// [onDebtSaved] gets the write response of a saved debt entry (the debts
+/// pages patch from it — no re-fetch). [onEventSaved] likewise gets an
+/// event row's write answer ([EventPatch]: the board, totals, tags).
 ///
 /// Returns true when something was saved.
 Future<bool> showQuickCreateSheet(
   BuildContext context, {
+  QuickCreatePreset? preset,
+  ValueChanged<DebtEntryWriteResult>? onDebtSaved,
+  ValueChanged<SavingWriteResult>? onSavingSaved,
+  ValueChanged<EventPatch>? onEventSaved,
   PendingTransaction? draft,
   ProjectView? project,
   ProjectTxTree? projectRow,
-  bool scheduled = false,
-  ScheduledTransaction? scheduledEntry,
   Account? account,
   TransactionType? type,
+  Category? category,
+  Tag? tag,
+  double? amount,
+  DebtEntryDirection? debtDirection,
+  EntrySheetConfig? entry,
 }) async {
-  assert(
-    [draft, project, scheduled ? true : null].where((x) => x != null).length <=
-        1,
-  );
+  assert(draft == null || project == null);
   assert(projectRow == null || project != null);
-  assert(scheduledEntry == null || scheduled);
+  account ??= preset?.account;
+  category ??= preset?.category;
+  tag ??= preset?.tag;
   // A new transaction AND a draft edit read their pickers from ONE call
-  // (form options, one per open: fresh balances). Scheduled and event rows
-  // still use the app-wide caches.
-  final fromOptions = project == null && !scheduled;
+  // (form options, one per open: fresh balances). Event rows still use the
+  // app-wide caches.
+  final fromOptions = project == null;
   TxFormOptionsCubit? options;
   if (fromOptions) {
     options = TxFormOptionsCubit(context.read<TransactionsRepository>());
-    // A draft prefills from the options at once: wait for them (a failure
-    // falls back to the draft's own resolved refs, the sheet shows retry).
-    if (draft != null) {
-      await options.load();
-    } else {
-      unawaited(options.load());
-    }
+    // The sheet opens at once. A draft shows the EntryCard skeleton until
+    // the options are here, then prefills from them (a failure falls back
+    // to the draft's own resolved refs, the sheet shows retry).
+    unawaited(options.load());
   } else {
-    final accounts = context.read<AccountsCubit>().loadIfNeeded();
-    final categories = context.read<CategoriesCubit>().loadIfNeeded();
+    context.read<AccountsCubit>().loadIfNeeded();
+    context.read<CategoriesCubit>().loadIfNeeded();
     context.read<TagsCubit>().loadIfNeeded();
-    // Prefilling resolves wallet / category ids against the caches — wait
-    // for them, or a cold start would open with both empty.
-    if (scheduledEntry != null) {
-      await Future.wait([accounts, categories]);
-    }
   }
   if (!context.mounted) {
     unawaited(options?.close());
@@ -145,10 +220,27 @@ Future<bool> showQuickCreateSheet(
         draft: draft,
         project: project,
         projectRow: projectRow,
-        scheduled: scheduled,
-        scheduledEntry: scheduledEntry,
         account: account,
         initialType: type,
+        initialCategory: category,
+        initialTag: tag,
+        initialMode: preset?.mode ?? QuickCreateMode.tx,
+        debtPerson: preset?.person == null
+            ? null
+            : DebtPick(
+                key: debtPersonKey(
+                  contactId: preset!.person!.contactId,
+                  name: preset.person!.name,
+                ),
+                person: preset.person!,
+              ),
+        onDebtSaved: onDebtSaved,
+        onSavingSaved: onSavingSaved,
+        savingGoalId: preset?.goalId,
+        onEventSaved: onEventSaved,
+        entry: entry,
+        initialAmount: amount,
+        initialDebtDirection: debtDirection,
       );
       if (options == null) return sheet;
       return BlocProvider<TxFormOptionsCubit>.value(
@@ -173,10 +265,19 @@ class _QuickCreateSheet extends StatefulWidget {
     this.draft,
     this.project,
     this.projectRow,
-    this.scheduled = false,
-    this.scheduledEntry,
     this.account,
     this.initialType,
+    this.initialCategory,
+    this.initialTag,
+    this.initialMode = QuickCreateMode.tx,
+    this.debtPerson,
+    this.onDebtSaved,
+    this.onSavingSaved,
+    this.savingGoalId,
+    this.onEventSaved,
+    this.entry,
+    this.initialAmount,
+    this.initialDebtDirection,
   });
   final SharedPreferences prefs;
 
@@ -186,6 +287,33 @@ class _QuickCreateSheet extends StatefulWidget {
   /// A new transaction's type to start on (else expense).
   final TransactionType? initialType;
 
+  /// A new transaction's preset category (its type follows).
+  final Category? initialCategory;
+
+  /// A new transaction's preset tag.
+  final Tag? initialTag;
+
+  /// รายการ or หนี้ to open in (a new entry only).
+  final QuickCreateMode initialMode;
+
+  /// Debt mode's preset person.
+  final DebtPick? debtPerson;
+  final ValueChanged<DebtEntryWriteResult>? onDebtSaved;
+
+  /// ออม mode: the write answer of a saved saving entry.
+  final ValueChanged<SavingWriteResult>? onSavingSaved;
+
+  /// ออม mode's preset target goal (null = spare).
+  final String? savingGoalId;
+  final ValueChanged<EventPatch>? onEventSaved;
+
+  /// [showEntrySheet]: edit one item, the caller saves.
+  final EntrySheetConfig? entry;
+
+  /// A new entry's amount (e.g. "บันทึกรับเงิน" from what they paid).
+  final double? initialAmount;
+  final DebtEntryDirection? initialDebtDirection;
+
   /// Editing this pending draft instead of creating.
   final PendingTransaction? draft;
 
@@ -194,12 +322,6 @@ class _QuickCreateSheet extends StatefulWidget {
 
   /// Event mode, editing this row.
   final ProjectTxTree? projectRow;
-
-  /// Scheduled mode: a recurring template.
-  final bool scheduled;
-
-  /// Scheduled mode, editing this entry.
-  final ScheduledTransaction? scheduledEntry;
 
   @override
   State<_QuickCreateSheet> createState() => _QuickCreateSheetState();
@@ -220,6 +342,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   bool get _editingDraft => widget.draft != null;
 
+  /// [showEntrySheet]: one item, the caller's actions save it.
+  bool get _isEntry => widget.entry != null;
+
+  /// A draft or an entry: prefilled from a body, its baseline decides dirty.
+  bool get _draftLike => _editingDraft || _isEntry;
+
   bool get _isEvent => widget.project != null;
   bool get _editingRow => widget.projectRow != null;
 
@@ -233,37 +361,27 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         t.parent.description!.trim(),
   ]);
 
-  bool get _isScheduled => widget.scheduled;
-  bool get _editingScheduled => widget.scheduledEntry != null;
-
-  /// Scheduled mode: the fields as first shown.
-  String? _scheduledBaseline;
-
   /// A draft as first shown — after prefill, so the defaults it fills in
   /// (today, expense) for a draft without them don't count as edits.
   PendingDraft? _draftBaseline;
 
   /// Worth asking before closing (owner 2026-10-10): an edit asks when
   /// anything changed; a new entry only once it has an amount or a
-  /// description (a scheduled one: a name) — anything less closes quietly.
-  bool get _dirty => _isScheduled
-      ? (_editingScheduled
-            ? _c.scheduledSnapshot() != _scheduledBaseline
-            : _hasKeyData)
-      : _isEvent
+  /// description — anything less closes quietly.
+  bool get _dirty => _isEvent
       ? (_editingRow ? _c.eventSnapshot() != _eventBaseline : _hasKeyData)
-      : _editingDraft
-      ? _c.toDraft(keepIncomplete: true) != _draftBaseline
+      : _draftLike
+      // Not prefilled yet (the skeleton): nothing to lose.
+      ? _draftBaseline != null &&
+            _c.toDraft(keepIncomplete: true) != _draftBaseline
       : _hasKeyData;
 
   bool get _hasKeyData =>
-      _c.amountValue > 0 ||
-      _c.description.text.trim().isNotEmpty ||
-      (_isScheduled && _c.schedule.name.text.trim().isNotEmpty);
+      _c.amountValue > 0 || _c.description.text.trim().isNotEmpty;
 
   /// A new entry with nothing in it — its save buttons are off, and a save
   /// that slips through just closes (never an empty draft).
-  bool get _isEmpty => !_editingDraft && !_c.hasContent && _event == null;
+  bool get _isEmpty => !_draftLike && !_c.hasContent && _event == null;
 
   /// Distinct values, most frequent first.
   static List<String> _mostUsed(Iterable<String> values) {
@@ -327,34 +445,60 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         if (s.memberId != null && s.amountValue > 0)
           ProjectSplitInput(memberId: s.memberId!, amount: s.amountValue),
     ];
+    // My OWN bill made from my transaction (the BE sends source_tx only to
+    // its owner): ask whether the tx changes too (owner 2026-10-13: linked
+    // by prompt, not sync). Another member's edit just saves (BE notifies).
+    var alsoUpdateLink = false;
+    if (widget.projectRow?.parent.sourceTx != null) {
+      final choice = await showLinkedPrompt(
+        context,
+        title: l.linkedSaveTitle,
+        cancelLabel: l.linkedCancel,
+        thisSideLabel: l.linkedSaveThisOnly,
+        bothSidesLabel: l.linkedSaveBoth,
+      );
+      if (choice == null || !mounted) return;
+      alsoUpdateLink = choice == LinkedChoice.bothSides;
+    }
     setState(() => _saving = true);
     try {
+      // Bills take EVENT tags by id (owner 2026-10-12): a name the event
+      // doesn't have yet becomes an event tag first.
+      final tagIds = <String>[];
+      for (final name in _c.tagNames) {
+        tagIds.add(
+          view.eventTag(name)?.id ??
+              (await repo.createEventTag(view.project.id, name)).id,
+        );
+      }
       final row = widget.projectRow;
+      final EventPatch patch;
       if (row == null) {
-        await repo.createTransaction(
+        patch = await repo.createTransaction(
           view.project.id,
           transactionMemberId: payer,
           type: _c.type == TransactionType.income ? 'income' : 'expense',
           amount: amount,
-          currency: view.currency,
           date: _ymd(_c.date),
           description: description.isEmpty ? null : description,
           note: note.isEmpty ? null : note,
-          tags: List.of(_c.tagNames),
+          tagIds: tagIds,
           splits: splits,
         );
       } else {
-        await repo.updateTransaction(
+        patch = await repo.updateTransaction(
           view.project.id,
           row.parent.id,
           amount: amount,
           date: _ymd(_c.date),
           description: description,
           note: note,
-          tags: List.of(_c.tagNames),
+          tagIds: tagIds,
           splits: splits,
+          alsoUpdateLink: alsoUpdateLink,
         );
       }
+      widget.onEventSaved?.call(patch);
       HapticFeedback.mediumImpact();
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
@@ -365,58 +509,78 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     }
   }
 
-  void _initScheduled() {
-    final e = widget.scheduledEntry;
-    if (e != null) {
-      _c.prefillScheduled(
-        e,
-        accounts: context.read<AccountsCubit>().state.accounts,
-        categories: context.read<CategoriesCubit>().state.categories,
-      );
-    }
-    _scheduledBaseline = _c.scheduledSnapshot();
-  }
-
-  /// Scheduled mode "บันทึก": create or update the entry. Edits affect
-  /// future cycles only (spec §2.5).
-  Future<void> _saveScheduled() async {
-    final l = AppLocalizations.of(context)!;
-    final problem = _c.scheduledProblem(l);
-    if (problem != null) {
-      HapticFeedback.lightImpact();
-      _c.schedule.revealErrors();
-      _toast(problem);
-      return;
-    }
-    final cubit = context.read<ScheduledTransactionsCubit>();
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-    final initial = widget.scheduledEntry;
-    final entry = _c.toScheduled(initial: initial);
-    setState(() => _saving = true);
-    try {
-      if (initial == null) {
-        await cubit.add(entry);
-      } else {
-        await cubit.update(entry);
-      }
-      HapticFeedback.mediumImpact();
-      navigator.pop(true);
-      showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showSaveFailure(context, e, retry: _saveScheduled);
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     final type = widget.initialType;
     if (type != null) _c.setType(type);
+    if (widget.initialAmount != null && widget.draft == null) {
+      _c.amount.text = _amountText(widget.initialAmount);
+    }
+    final category = widget.initialCategory;
+    if (category != null) {
+      _c
+        ..setType(
+          category.type == CategoryType.income
+              ? TransactionType.income
+              : TransactionType.expense,
+        )
+        ..setCategory(category);
+    }
+    final tag = widget.initialTag;
+    if (tag != null) {
+      _c.knownTags[tag.id] = tag;
+      _c.setTagIds({tag.id});
+    }
     if (_isEvent) _initEvent();
-    if (_isScheduled) _initScheduled();
+    if (_draftLike) _prefillDraftWhenReady();
+    // Typing / picking rebuilds the sheet (summary bar, close guard). A
+    // switch to transfer keeps the event pick and splits, just unused, so
+    // switching back finds them (owner 2026-10-10).
+    _c.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  /// A draft fills the form from the form options: at once when they're
+  /// here (or failed: the draft's own resolved refs), else as soon as they
+  /// land — the EntryCard skeleton shows until then.
+  void _prefillDraftWhenReady() {
+    final opts = maybeTxFormOptions(context, watch: false);
+    if (opts == null || !opts.state.isLoading) {
+      _prefillDraft();
+      return;
+    }
+    opts.stream
+        .firstWhere((s) => !s.isLoading)
+        .then((_) {
+          if (!mounted) return;
+          _prefillDraft();
+          setState(() {});
+        })
+        // Closed before answering (the sheet went away).
+        .catchError((Object _) {});
+  }
+
+  void _prefillDraft() {
+    final entry = widget.entry;
+    if (entry != null) {
+      final options = maybeTxFormOptions(context, watch: false)?.state.options;
+      _c.prefill(
+        entry.initial,
+        accounts: [
+          ...?options?.accountList,
+          if (options == null) ...context.read<AccountsCubit>().state.accounts,
+        ],
+        categories: [
+          ...?options?.categoryList,
+          if (options == null)
+            ...context.read<CategoriesCubit>().state.categories,
+        ],
+      );
+      _draftBaseline = _c.toDraft(keepIncomplete: true);
+      return;
+    }
     final p = widget.draft;
     if (p != null) {
       // The pickers' options (one call), plus what the draft itself carries
@@ -446,12 +610,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       _c.prefill(p.draft, accounts: accounts, categories: categories);
       _draftBaseline = _c.toDraft(keepIncomplete: true);
     }
-    // Typing / picking rebuilds the sheet (summary bar, close guard). A
-    // switch to transfer keeps the event pick and splits, just unused, so
-    // switching back finds them (owner 2026-10-10).
-    _c.addListener(() {
-      if (mounted) setState(() {});
-    });
   }
 
   /// "บันทึกร่าง": park it in รอยืนยัน (new) or save the edits back.
@@ -526,6 +684,51 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   }
 
   /// Draft mode "ลบ": deletes the whole draft.
+  /// [showEntrySheet]'s main action (the last primary one, else the last).
+  EntrySheetAction _entryAction({required bool primary}) {
+    final actions = widget.entry!.actions;
+    return actions.lastWhere((a) => a.primary, orElse: () => actions.last);
+  }
+
+  /// The other action of a two-button entry sheet, if any.
+  EntrySheetAction? get _entrySecondary {
+    final actions = widget.entry?.actions ?? const [];
+    if (actions.length < 2) return null;
+    final main = _entryAction(primary: true);
+    return actions.firstWhere((a) => !identical(a, main));
+  }
+
+  /// Runs a caller's action with the edited body; closes on success.
+  Future<void> _runEntry(EntrySheetAction action) async {
+    final l = AppLocalizations.of(context)!;
+    if (_c.amountValue <= 0) {
+      HapticFeedback.lightImpact();
+      _toast(l.quickAmountRequired);
+      return;
+    }
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+    final ok = await action.onPressed(_c.toDraft());
+    if (!mounted) return;
+    if (ok) {
+      navigator.pop(true);
+    } else {
+      setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _deleteEntry() async {
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+    final ok = await widget.entry!.onDelete!();
+    if (!mounted) return;
+    if (ok) {
+      navigator.pop(true);
+    } else {
+      setState(() => _saving = false);
+    }
+  }
+
   Future<void> _discardDraft() async {
     final l = AppLocalizations.of(context)!;
     final pending = context.read<PendingCubit>();
@@ -558,7 +761,193 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   @override
   void dispose() {
     _c.dispose();
+    _debt.dispose();
+    _sav.dispose();
     super.dispose();
+  }
+
+  // ── Debt mode ─────────────────────────────────────────────────────
+
+  /// รายการ / หนี้ — only a new plain entry switches (not a draft or an
+  /// event row).
+  late QuickCreateMode _mode = _canSwitchMode
+      ? widget.initialMode
+      : QuickCreateMode.tx;
+  late final DebtEntryController _debt =
+      DebtEntryController(person: widget.debtPerson)
+        ..direction = widget.initialDebtDirection ?? DebtEntryDirection.paid
+        ..amount.text = _amountText(widget.initialAmount)
+        ..addListener(_onDebtChanged);
+
+  late final SavingEntryController _sav =
+      SavingEntryController(goalId: widget.savingGoalId)
+        ..account = widget.account
+        ..amount.text = _amountText(widget.initialAmount)
+        ..addListener(_onDebtChanged);
+
+  static String _amountText(double? v) => v == null || v <= 0
+      ? ''
+      : (v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
+
+  void _onDebtChanged() {
+    if (mounted) setState(() {});
+  }
+
+  bool get _canSwitchMode => !_draftLike && !_isEvent;
+  bool get _isDebt => _mode == QuickCreateMode.debt;
+  bool get _isSaving => _mode == QuickCreateMode.saving;
+
+  /// (amount, description, note) of a mode's form — saving has one text, its note.
+  (TextEditingController, TextEditingController, TextEditingController?)
+  _fieldsOf(QuickCreateMode m) => switch (m) {
+    QuickCreateMode.debt => (_debt.amount, _debt.description, _debt.note),
+    QuickCreateMode.saving => (_sav.amount, _sav.note, null),
+    _ => (_c.amount, _c.description, _c.note),
+  };
+
+  DateTime _dateOf(QuickCreateMode m) => switch (m) {
+    QuickCreateMode.debt => _debt.date,
+    QuickCreateMode.saving => _sav.date,
+    _ => _c.date,
+  };
+
+  void _setDateOf(QuickCreateMode m, DateTime d) {
+    switch (m) {
+      case QuickCreateMode.debt:
+        _debt.setDate(d);
+      case QuickCreateMode.saving:
+        _sav.setDate(d);
+      default:
+        _c.setDate(d);
+    }
+  }
+
+  /// Switching keeps what was typed: amount, description, note, date.
+  void _switchMode(QuickCreateMode m) {
+    if (m == _mode) return;
+    final from = _fieldsOf(_mode);
+    final to = _fieldsOf(m);
+    to.$1.text = from.$1.text;
+    to.$2.text = from.$2.text;
+    final toNote = to.$3;
+    final fromNote = from.$3;
+    if (toNote != null && fromNote != null) toNote.text = fromNote.text;
+    _setDateOf(m, _dateOf(_mode));
+    setState(() => _mode = m);
+  }
+
+  Widget _modeChips(AppLocalizations l) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    child: QuickCreateModeChips(
+      mode: _mode,
+      labels: {
+        QuickCreateMode.tx: l.quickModeTx,
+        QuickCreateMode.debt: l.quickModeDebt,
+        QuickCreateMode.saving: l.quickModeSaving,
+      },
+      onChanged: _saving ? null : _switchMode,
+    ),
+  );
+
+  /// Debt mode "บันทึก": ONE call (the entry + its wallet tx + the paid
+  /// labels); everything shown is patched from the answer.
+  Future<void> _saveDebt() async {
+    final l = AppLocalizations.of(context)!;
+    final d = _debt;
+    final person = d.person;
+    final problem = d.amountValue <= 0
+        ? l.quickAmountRequired
+        : person == null
+        ? l.debtCounterpartyRequired
+        : null;
+    if (problem != null || person == null) {
+      HapticFeedback.lightImpact();
+      _toast(problem!);
+      return;
+    }
+    final repo = context.read<PersonalDebtsRepository>();
+    final accounts = context.read<AccountsCubit>();
+    final txCubit = context.read<TransactionsCubit>();
+    final dashboard = context.read<DashboardCubit>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    String? text(TextEditingController c) =>
+        c.text.trim().isEmpty ? null : c.text.trim();
+    setState(() => _saving = true);
+    try {
+      final r = await repo.createEntry(
+        person.key,
+        direction: d.direction,
+        amount: d.amountValue,
+        date: d.date,
+        accountId: d.account?.id,
+        description: text(d.description),
+        note: text(d.note),
+        tagIds: d.account == null ? null : d.tagIds.toList(),
+        markPaidIds: d.markPaidIds.isEmpty ? null : d.markPaidIds.toList(),
+        personName: person.typedName,
+      );
+      accounts.patchBalances(r.accountBalances);
+      final tx = r.transaction;
+      if (tx != null) txCubit.patchRow(tx, afterWrite: true);
+      // Home's debts tile.
+      dashboard.markStale();
+      widget.onDebtSaved?.call(r);
+      navigator.pop(true);
+      showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSaveFailure(context, e, retry: _saveDebt);
+    }
+  }
+
+  /// ออม mode "บันทึก": ONE call; the touched wallets' savings are patched
+  /// from the answer (no wallet balance moves — it is a notebook entry).
+  Future<void> _saveSaving() async {
+    final l = AppLocalizations.of(context)!;
+    final s = _sav;
+    final problem = s.amountValue <= 0
+        ? l.quickAmountRequired
+        : s.account == null
+        ? l.savingEntryWalletRequired
+        : null;
+    if (problem != null) {
+      HapticFeedback.lightImpact();
+      _toast(problem);
+      return;
+    }
+    final repo = context.read<SavingGoalsRepository>();
+    final accounts = context.read<AccountsCubit>();
+    final goals = context.read<SavingGoalsCubit>();
+    final dashboard = context.read<DashboardCubit>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final d = s.date;
+    final iso =
+        '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    final note = s.note.text.trim();
+    setState(() => _saving = true);
+    try {
+      final r = await repo.addEntry(
+        kind: SavingEntryKind.save,
+        amount: s.amountValue,
+        date: iso,
+        goalId: s.goalId,
+        walletId: s.account!.id,
+        note: note.isEmpty ? null : note,
+      );
+      accounts.patchSavings(r.walletSavings);
+      goals.markStale();
+      dashboard.markStale();
+      widget.onSavingSaved?.call(r);
+      navigator.pop(true);
+      showAppSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSaveFailure(context, e, retry: _saveSaving);
+    }
   }
 
   /// Wallet default: the one used last, else the first — re-evaluated until
@@ -622,13 +1011,13 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// [แก้ต่อ] · [ยกเลิกรายการนี้]. An edit: [แก้ต่อ] · [ยกเลิกการแก้ไข].
   Future<void> _confirmClose() async {
     final l = AppLocalizations.of(context)!;
-    final editing = _editingDraft || _editingRow || _editingScheduled;
+    final editing = _draftLike || _editingRow;
     final choice = await showChoiceDialog<_CloseChoice>(
       context,
       title: editing ? l.editDiscardTitle : l.quickUnsavedTitle,
       message: editing ? l.editDiscardMessage : l.quickUnsavedMessage,
       choices: [
-        if (!editing && !_isEvent && !_isScheduled)
+        if (!editing && !_isEvent)
           DialogChoice(
             value: _CloseChoice.draft,
             label: l.pendingKeepAsDraft,
@@ -721,6 +1110,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
     setState(() => _saving = true);
     String? warn;
+    var savedAsUpcoming = false;
     try {
       if (event == null) {
         // ONE call (API v2): tags + splits ride in the create body, and the
@@ -739,6 +1129,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           splits: splits.isEmpty ? null : splits,
         );
         accounts.patchBalances(saved.accountBalances);
+        // A date after today: an upcoming item, not a transaction.
+        if (saved.isUpcoming) savedAsUpcoming = true;
       } else {
         final body = <String, dynamic>{
           'type': type.toJson(),
@@ -782,7 +1174,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       navigator.pop(true);
       showAppSnackBarOn(
         messenger,
-        warn ?? l.quickSaved,
+        warn ?? (savedAsUpcoming ? l.txSavedAsUpcoming : l.quickSaved),
         tone: warn == null ? Tone.success : Tone.warning,
       );
     } on ApiException catch (e) {
@@ -802,7 +1194,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   // ── Title-row summary ─────────────────────────────────────────────
 
   /// Only a new transaction swaps its title for the amount.
-  bool get _summaryTitle => !_editingDraft && !_isEvent && !_isScheduled;
+  bool get _summaryTitle => !_draftLike && !_isEvent;
 
   // ── Build ─────────────────────────────────────────────────────────
 
@@ -822,17 +1214,15 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
     return QuickCreateSheetShell(
       heroKey: _heroKey,
-      title: _isScheduled
-          ? (_editingScheduled
-                ? l.scheduledSheetTitleEdit
-                : l.scheduledSheetTitleNew)
-          : _isEvent
+      title: _isEvent
           ? (_editingRow ? l.projectTxEditTitle : l.projectTxNewTitle)
+          : _isEntry
+          ? widget.entry!.title
           : _editingDraft
           ? l.pendingEditTitle
           : l.transactionFormTitleNew,
       // Only a new transaction swaps its title for the amount · category.
-      summaryBuilder: _summaryTitle
+      summaryBuilder: _summaryTitle && !_isDebt && !_isSaving
           ? (scrollToTop) => TxSummaryTitle(
               type: _c.type,
               amount: _c.amountValue,
@@ -842,74 +1232,128 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           : null,
       closeTooltip: l.commonClose,
       deleteTooltip: l.commonDelete,
-      onDelete: _editingDraft ? _discardDraft : null,
+      onDelete: _isEntry
+          ? (widget.entry!.onDelete == null ? null : _deleteEntry)
+          : _editingDraft
+          ? _discardDraft
+          : null,
       saving: _saving,
-      dirty: _dirty,
+      dirty: _isDebt
+          ? _debt.hasKeyData
+          : _isSaving
+          ? _sav.hasKeyData
+          : _dirty,
       onCloseBlocked: _confirmClose,
-      // Event / scheduled: one button — drafts are for one-off rows.
-      saveLabel: _isEvent || _isScheduled
-          ? (_isScheduled && !_editingScheduled
-                ? l.scheduledFormSave
-                : l.transactionFormSave)
+      // Event rows: one button — drafts are for one-off rows.
+      saveLabel: _isEntry
+          ? _entryAction(primary: true).label
+          : _isEvent
+          ? l.transactionFormSave
           : (_editingDraft ? l.pendingSubmitThis : l.quickSave),
-      draftLabel: _isEvent || _isScheduled ? null : l.pendingSaveDraft,
-      onSave: _isEvent || _isScheduled
-          ? (_isScheduled ? _saveScheduled : _saveEvent)
+      // Debt entries have no drafts.
+      draftLabel: _isEntry
+          ? _entrySecondary?.label
+          : _isEvent || _isDebt || _isSaving
+          ? null
+          : l.pendingSaveDraft,
+      onSave: _isEntry
+          ? (waiting ? null : () => _runEntry(_entryAction(primary: true)))
+          : _isDebt
+          ? _saveDebt
+          : _isSaving
+          ? _saveSaving
+          : _isEvent
+          ? _saveEvent
           : (_isEmpty || waiting
                 ? null
                 : (_editingDraft ? _submitDraft : _save)),
       // A draft can't go to an event.
-      onSaveDraft: _saving || _activeEvent != null || _isEmpty || waiting
+      onSaveDraft: _isEntry
+          ? (_entrySecondary == null || _saving || waiting
+                ? null
+                : () => _runEntry(_entrySecondary!))
+          : _isDebt ||
+                _isSaving ||
+                _saving ||
+                _activeEvent != null ||
+                _isEmpty ||
+                waiting
           ? null
           : _saveDraft,
-      body: waiting && optState!.status == TxFormOptionsStatus.error
-          ? Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xl),
-              child: ErrorView(error: optState.error!, onRetry: opts.load),
-            )
-          : DraftForm(
-              heroKey: _heroKey,
-              // The pending drafts layout: chip rows, collapsible
-              // หารกับ / อีเวนต์.
-              chipLayout: _editingDraft,
-              // The entry card (wallet · category chip rows inside it),
-              // tags outside: new transactions and drafts alike.
-              chipRows: true,
-              controller: _c,
-              defaultAccount: _defaultAccount(accounts, options: options),
-              // A saved project row keeps its type.
-              typeLocked: _editingRow,
-              event: _isEvent
-                  ? DraftEvent(
-                      members: widget.project!.currentMembers,
-                      symbol: widget.project!.symbol,
-                      pastDescriptions: _pastDescriptions,
-                      tags: _eventTags,
-                    )
-                  : null,
-              schedule: _isScheduled
-                  ? DraftSchedule(editing: _editingScheduled)
-                  : null,
-              eventPending: _activeEvent != null,
-              // The one "แบ่งรายการ" section, open (the heading
-              // collapses it). Drafts keep their own event; here
-              // the อีเวนต์ row only exists when creating, for a
-              // type that can join one ([typeCanJoinEvent]).
-              splitsCollapsible: !_editingDraft && !_isEvent && !_isScheduled,
-              eventSlot:
-                  !_editingDraft &&
-                      !_isEvent &&
-                      !_isScheduled &&
-                      typeCanJoinEvent(_c.type)
-                  ? SplitEventSlot(
-                      name: eventTargetName(l, _event),
-                      onTap: _pickEvent,
-                      onClear: _event == null
-                          ? null
-                          : () => setState(() => _event = null),
-                    )
-                  : null,
-            ),
+      body: _withModes(
+        l,
+        () => waiting && optState!.status == TxFormOptionsStatus.error
+            ? Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xl),
+                child: ErrorView(error: optState.error!, onRetry: opts.load),
+              )
+            // A draft's first load: the EntryCard's skeleton until it's
+            // prefilled (a new transaction shows the real card at once, so
+            // typing can start; only its chip rows wait).
+            : _draftLike && _draftBaseline == null
+            ? const EntryCardSkeleton()
+            : DraftForm(
+                heroKey: _heroKey,
+                // The pending drafts layout: chip rows, collapsible
+                // หารกับ / อีเวนต์.
+                chipLayout: _draftLike,
+                // The entry card (wallet · category chip rows inside it),
+                // tags outside: new transactions and drafts alike.
+                chipRows: true,
+                // A date after today → "รายการล่วงหน้า · จะเข้ารอยืนยัน…"
+                // (owner 2026-10-13). No link here: leaving the sheet would
+                // drop what's typed.
+                upcomingHint: !_draftLike && !_isEvent,
+                controller: _c,
+                defaultAccount: _defaultAccount(accounts, options: options),
+                // A saved project row keeps its type.
+                typeLocked: _editingRow,
+                event: _isEvent
+                    ? DraftEvent(
+                        members: widget.project!.currentMembers,
+                        symbol: widget.project!.symbol,
+                        pastDescriptions: _pastDescriptions,
+                        tags: _eventTags,
+                      )
+                    : null,
+                eventPending: _activeEvent != null,
+                // The one "แบ่งรายการ" section, open (the heading
+                // collapses it). Drafts keep their own event; here
+                // the อีเวนต์ row only exists when creating, for a
+                // type that can join one ([typeCanJoinEvent]).
+                splitsCollapsible: !_draftLike && !_isEvent,
+                eventSlot: !_draftLike && !_isEvent && typeCanJoinEvent(_c.type)
+                    ? SplitEventSlot(
+                        name: eventTargetName(l, _event),
+                        onTap: _pickEvent,
+                        onClear: _event == null
+                            ? null
+                            : () => setState(() => _event = null),
+                      )
+                    : null,
+              ),
+      ),
+    );
+  }
+
+  /// The mode chips on top (a new entry only), then the mode's body: the
+  /// debt form, or [txBody].
+  Widget _withModes(AppLocalizations l, Widget Function() txBody) {
+    if (!_canSwitchMode) {
+      return txBody();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _modeChips(l),
+        if (_isDebt)
+          DebtEntryForm(controller: _debt, heroKey: _heroKey, autofocus: true)
+        else if (_isSaving)
+          SavingEntryForm(controller: _sav, heroKey: _heroKey, autofocus: true)
+        else
+          txBody(),
+      ],
     );
   }
 }
