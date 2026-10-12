@@ -78,67 +78,6 @@ Future<void> applyEventChange(
   }
 }
 
-/// The อีเวนต์ row of a transaction form's sections (owner 2026-10-10) —
-/// "อีเวนต์   🎉 name ›", the same in quick create and the detail page.
-/// View: [onTap] opens the event (the one link there). Editing: [onTap]
-/// opens the picker, [onClear] adds ✕. No event: "ไม่ได้เลือก", muted.
-/// [locked]: a 🔒 instead (a row that can't change its event).
-class EventRow extends StatelessWidget {
-  const EventRow({
-    required this.name,
-    this.onTap,
-    this.onClear,
-    this.locked = false,
-    super.key,
-  });
-
-  final String? name;
-  final VoidCallback? onTap;
-  final VoidCallback? onClear;
-  final bool locked;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final accent = ModuleColors.of(context).people;
-    final n = name;
-    return DetailRow(
-      label: l.quickEventLabel,
-      leading: locked ? const AppIcon(AppIcons.lock) : null,
-      onTap: onTap,
-      showChevron: onTap != null && (n == null || onClear == null),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (n != null) ...[
-            AppIcon(AppIcons.project, size: AppIconSize.md, color: accent),
-            const SizedBox(width: AppSpacing.xs),
-          ],
-          Flexible(
-            child: n == null
-                ? DetailPlaceholder(l.quickEventNone)
-                : Text(
-                    n,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DefaultTextStyle.of(
-                      context,
-                    ).style.copyWith(fontWeight: FontWeight.w600),
-                  ),
-          ),
-          if (n != null && onClear != null)
-            AppIconButton.clear(
-              tooltip: l.quickEventRemove,
-              iconSize: AppIconSize.md,
-              dense: true,
-              onPressed: onClear,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 /// [target]'s row text: "ใหม่: name" for one made on save.
 String? eventTargetName(AppLocalizations l, EventTarget? target) =>
     switch (target) {

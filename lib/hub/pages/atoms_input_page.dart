@@ -217,6 +217,56 @@ class _InputPageState extends State<_InputPage> {
               ),
             ),
             HubUse(
+              label: 'Token geometry — AppInputSize, side by side',
+              page: 'Tx hero + EntryCard (description · amount), entity heroes',
+              wide: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final size in AppInputSize.values) ...[
+                    Text(
+                      'size: ${size.name}  (value row ${size.valueRow.round()}, '
+                      'baseline ${size.valueBaseline.round()})',
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: AppInput.card(
+                            size: size,
+                            label: 'คำอธิบาย',
+                            labelPlacement: AppInputLabelPlacement.above,
+                            hint: 'ค่าอะไร?',
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: AppInput.card(
+                            size: size,
+                            label: 'จำนวนเงิน',
+                            labelPlacement: AppInputLabelPlacement.above,
+                            type: AppInputType.amount,
+                            currencySymbol: '฿',
+                            textAlign: TextAlign.end,
+                            hint: '0',
+                            style: TextStyle(
+                              fontSize: switch (size) {
+                                AppInputSize.regular => 18,
+                                AppInputSize.title => 22,
+                                AppInputSize.hero => 28,
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                ],
+              ),
+            ),
+            HubUse(
               label: 'Field-name labels — left of the underline / above it',
               page:
                   'Entity heroes (left); transaction hero + EntryCard (above)',

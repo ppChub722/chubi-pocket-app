@@ -314,59 +314,62 @@ class DetailRow extends StatelessWidget {
         horizontal: horizontalInset,
         vertical: AppSpacing.md,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (leading != null || icon != null) ...[
-            IconTheme.merge(
-              data: IconThemeData(color: scheme.onSurfaceVariant, size: 22),
-              child: leading ?? AppIcon(icon!),
-            ),
-            const SizedBox(width: AppSpacing.md),
-          ] else if (DetailGroupScope.reserves(context)) ...[
-            const SizedBox(width: 22 + AppSpacing.md),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label, style: detailLabelStyle(context)),
-                if (helper != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    helper!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+      child: LayoutBuilder(
+        builder: (context, box) => Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (leading != null || icon != null) ...[
+              IconTheme.merge(
+                data: IconThemeData(color: scheme.onSurfaceVariant, size: 22),
+                child: leading ?? AppIcon(icon!),
+              ),
+              const SizedBox(width: AppSpacing.md),
+            ] else if (DetailGroupScope.reserves(context)) ...[
+              const SizedBox(width: 22 + AppSpacing.md),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label, style: detailLabelStyle(context)),
+                  if (helper != null) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      helper!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          if (trailing != null) ...[
-            const SizedBox(width: AppSpacing.md),
-            Flexible(
-              child: Align(
-                alignment: Alignment.centerRight,
+            if (trailing != null) ...[
+              const SizedBox(width: AppSpacing.md),
+              // The value takes only what it needs (up to half the row); the label +
+              // helper column is Expanded and gets ALL the rest — a switch row's
+              // helper never wraps at half width.
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: box.maxWidth * 0.5),
                 child: DefaultTextStyle.merge(
                   style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.right,
                   child: trailing!,
                 ),
               ),
-            ),
+            ],
+            // Locked: a 🔒 right after the value, so every label stays aligned.
+            if (locked) ...[
+              const SizedBox(width: AppSpacing.xs),
+              Icon(AppIcons.lock, size: 16, color: scheme.onSurfaceVariant),
+            ],
+            if (showChevron) ...[
+              const SizedBox(width: AppSpacing.xs),
+              Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
+            ],
           ],
-          // Locked: a 🔒 right after the value, so every label stays aligned.
-          if (locked) ...[
-            const SizedBox(width: AppSpacing.xs),
-            Icon(AppIcons.lock, size: 16, color: scheme.onSurfaceVariant),
-          ],
-          if (showChevron) ...[
-            const SizedBox(width: AppSpacing.xs),
-            Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
-          ],
-        ],
+        ),
       ),
     );
     if (onTap == null && onLongPress == null) return row;

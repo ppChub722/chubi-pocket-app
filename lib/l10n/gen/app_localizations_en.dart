@@ -4369,6 +4369,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txSplitRowLabel => 'Split';
 
   @override
+  String get quickEventAdd => 'Add event';
+
+  @override
   String get dayPickerLastShort => 'Last';
 
   @override

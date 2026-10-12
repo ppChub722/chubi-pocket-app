@@ -63,6 +63,8 @@ class FramedInput extends StatefulWidget {
     this.underline = true,
     this.symbolScale = 1.0,
     this.hideHintOnFocus = false,
+    this.valueRow,
+    this.valueBaseline,
     this.focusColor,
     this.hintStyle,
     this.decimals,
@@ -86,6 +88,12 @@ class FramedInput extends StatefulWidget {
 
   /// Drop the placeholder while the field has focus (a hero's faint "0").
   final bool hideHintOnFocus;
+
+  /// In-card only (see `AppInputSize`): the value row's minimum height and
+  /// where the text baseline sits in it — both already text-scaled. null =
+  /// the font-driven geometry.
+  final double? valueRow;
+  final double? valueBaseline;
 
   /// The focused outline / underline colour (a type-colour accent); null =
   /// the primary.
@@ -439,7 +447,16 @@ class _FramedInputState extends State<FramedInput> {
             focusedErrorBorder: frame(scheme.error, 2),
             disabledBorder: frame(idle, 1),
           ),
-          child: content,
+          child: w.valueRow == null || w.valueBaseline == null
+              ? content
+              : ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: w.valueRow!),
+                  child: Baseline(
+                    baseline: w.valueBaseline!,
+                    baselineType: TextBaseline.alphabetic,
+                    child: content,
+                  ),
+                ),
         );
         decorator = GestureDetector(
           behavior: HitTestBehavior.translucent,

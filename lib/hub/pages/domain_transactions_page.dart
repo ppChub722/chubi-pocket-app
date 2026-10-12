@@ -26,6 +26,43 @@ import '../hub_kit.dart';
 /// builders and the pieces that need live app data.
 Widget buildTransactionsPage(BuildContext context) => const _TransactionsPage();
 
+void _noop() {}
+
+/// A static "Split" row for the [SplitEventSection] demo: the add chip, and
+/// with [people] two plain person lines under it.
+Widget _splitSample(SplitEventVariant variant, bool people) {
+  final compact = variant == SplitEventVariant.compact;
+  final chip = AppChip(
+    icon: AppIcons.add,
+    label: 'Add person',
+    tone: AppChipTone.primary,
+    selected: true,
+    dashed: compact,
+    size: compact ? ChipSize.chip : ChipSize.control,
+    onTap: _noop,
+  );
+  final lines = [
+    for (final p in const ['Lee  ฿200', 'Mai  ฿150'])
+      Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 0 : AppSpacing.lg,
+          vertical: AppSpacing.xs,
+        ),
+        child: Text(p),
+      ),
+  ];
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (compact)
+        DraftFieldRow(label: 'Split', dense: true, child: chip)
+      else
+        DetailRow(label: 'Split', trailing: chip),
+      if (people) ...lines,
+    ],
+  );
+}
+
 const _tagFood = Tag(
   id: 't1',
   name: 'lunch',
@@ -472,6 +509,62 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title:
+              'SplitEventSection — compact (quick create / pending) and full (detail)',
+          note:
+              'One organism, two variants. compact: one-line green header, rows '
+              'like the Note row (72 px muted label column, chips beside it). '
+              'full: the detail page section. Static samples; the event is an '
+              'entity chip (empty = add chip, locked = chip + lock).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final variant in SplitEventVariant.values) ...[
+                Text(
+                  variant.name,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                for (final (label, people, slot) in [
+                  ('empty', false, const SplitEventSlot(onTap: _noop)),
+                  (
+                    'with people',
+                    true,
+                    const SplitEventSlot(onTap: _noop, onClear: _noop),
+                  ),
+                  (
+                    'with event',
+                    false,
+                    const SplitEventSlot(
+                      name: 'Trip · 12 Oct',
+                      onTap: _noop,
+                      onClear: _noop,
+                    ),
+                  ),
+                  (
+                    'locked event',
+                    false,
+                    const SplitEventSlot(name: 'Trip · 12 Oct', locked: true),
+                  ),
+                ]) ...[
+                  Text(label, style: Theme.of(context).textTheme.bodySmall),
+                  SplitEventSection(
+                    first: true,
+                    variant: variant,
+                    collapsible: variant == SplitEventVariant.compact,
+                    event: slot,
+                    splits: _splitSample(variant, people),
+                    helper: people
+                        ? 'This split will live in the event.'
+                        : null,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+              ],
             ],
           ),
         ),

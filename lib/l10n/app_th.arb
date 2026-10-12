@@ -1393,6 +1393,7 @@
   "txSplitSectionTitle": "แบ่งรายการ",
   "txSplitSectionHint": "แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์",
   "txSplitRowLabel": "แบ่งยอด",
+  "quickEventAdd": "เพิ่มอีเวนต์",
   "dayPickerLastShort": "สิ้นเดือน",
   "profileCurrencyLabel": "สกุลเงิน",
   "contactNicknameLabel": "ชื่อเล่น",

@@ -233,10 +233,6 @@ class TxHeroCard extends StatelessWidget {
       AppInput.card(
         controller: amount,
         focusNode: amountFocus,
-        // The field names sit ABOVE the inputs in create / edit (owner
-        // 2026-10-12): clear labels, friendly placeholders.
-        label: inline && editing ? l.transactionFormAmountLabel : null,
-        labelPlacement: AppInputLabelPlacement.above,
         type: AppInputType.amount,
         autofocus: autofocus && editing,
         readOnly: !editing,
@@ -249,6 +245,9 @@ class TxHeroCard extends StatelessWidget {
         symbolScale: 0.7,
         currencySymbol: symbol,
         minWidth: 12,
+        size: AppInputSize.hero,
+        label: editing && inline ? l.transactionFormAmountLabel : null,
+        labelPlacement: AppInputLabelPlacement.above,
         hint: '0',
         hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
         hideHintOnFocus: true,
@@ -268,13 +267,14 @@ class TxHeroCard extends StatelessWidget {
         child: AppInput.card(
           controller: title,
           focusNode: titleFocus,
-          label: inline && editing ? l.commonDescription : null,
-          labelPlacement: AppInputLabelPlacement.above,
           readOnly: !editing || onTitleTap != null,
           onTap: editing ? onTitleTap : null,
           showCursor: editing && onTitleTap == null ? null : false,
           enableInteractiveSelection: editing && onTitleTap == null,
           maxLength: titleMaxLength,
+          size: inline ? AppInputSize.hero : null,
+          label: editing && inline ? l.commonDescription : null,
+          labelPlacement: AppInputLabelPlacement.above,
           minLines: 1,
           maxLines: maxLines,
           textInputAction: TextInputAction.done,
@@ -319,70 +319,77 @@ class TxHeroCard extends StatelessWidget {
                   // Both cells as tall as the row, each centring its
                   // content: the amount's whole cell — the right half of
                   // the row — is its tap target, not just the digits.
-                  builder: (context, box) => IntrinsicHeight(
-                    child: Stack(
-                      children: [
-                        Row(
-                          // Both cells sit on the SAME bottom line, so the
-                          // description's and the amount's underlines line up.
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              // Bottom-aligned (NOT centred): the description cell is as
-                              // tall as the amount cell, its underline on the same y.
-                              child: Align(
-                                alignment: AlignmentDirectional.bottomStart,
-                                child: !editing && title.text.trim().isEmpty
-                                    ? (titlePlaceholder == null
-                                          ? const SizedBox.shrink()
-                                          : longPressable(
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: AppSpacing.xs,
+                  builder: (context, box) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // No IntrinsicHeight: a sized AppInput has a fixed-baseline value row,
+                      // whose intrinsic height is not its real one.
+                      Stack(
+                        children: [
+                          Row(
+                            // Both fields are AppInputSize.hero: same label top,
+                            // baseline and underline y by their own tokens.
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                // Bottom-aligned (NOT centred): the description cell is as
+                                // tall as the amount cell, its underline on the same y.
+                                child: Align(
+                                  alignment: AlignmentDirectional.bottomStart,
+                                  child: !editing && title.text.trim().isEmpty
+                                      ? (titlePlaceholder == null
+                                            ? const SizedBox.shrink()
+                                            : longPressable(
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: AppSpacing.xs,
+                                                      ),
+                                                  child: Text(
+                                                    titlePlaceholder!,
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: titleStyle?.copyWith(
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                      color: scheme
+                                                          .onSurfaceVariant,
                                                     ),
-                                                child: Text(
-                                                  titlePlaceholder!,
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: titleStyle?.copyWith(
-                                                    fontStyle: FontStyle.italic,
-                                                    color:
-                                                        scheme.onSurfaceVariant,
                                                   ),
                                                 ),
-                                              ),
-                                              titleFocus,
-                                            ))
-                                    : titleField(maxLines: 2),
+                                                titleFocus,
+                                              ))
+                                      : titleField(maxLines: 2),
+                                ),
+                              ),
+                              // The amount keeps its spot however long the
+                              // description wraps.
+                              // A tight width: the numeric field fills its cell, so its
+                              // underline spans it like the description's.
+                              SizedBox(
+                                width: box.maxWidth * 0.48,
+                                child: amountField(align: TextAlign.end),
+                              ),
+                            ],
+                          ),
+                          // The amount's half of the row, whatever the description's height
+                          // (and over its label): the whole cell focuses the amount.
+                          if (editing && amountFocus != null)
+                            Positioned(
+                              top: 0,
+                              bottom: 0,
+                              right: 0,
+                              width: box.maxWidth * 0.48,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onTap: amountFocus!.requestFocus,
                               ),
                             ),
-                            // The amount keeps its spot however long the
-                            // description wraps.
-                            // A tight width: the numeric field fills its cell, so its
-                            // underline spans it like the description's.
-                            SizedBox(
-                              width: box.maxWidth * 0.48,
-                              child: amountField(align: TextAlign.end),
-                            ),
-                          ],
-                        ),
-                        // The amount's half of the row, whatever the description's height
-                        // (and over its label): the whole cell focuses the amount.
-                        if (editing && amountFocus != null)
-                          Positioned(
-                            top: 0,
-                            bottom: 0,
-                            right: 0,
-                            width: box.maxWidth * 0.48,
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.translucent,
-                              onTap: amountFocus!.requestFocus,
-                            ),
-                          ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 ?amountErrorText,

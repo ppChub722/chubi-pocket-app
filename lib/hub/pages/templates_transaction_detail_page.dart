@@ -8,7 +8,6 @@ import '../../features/transactions/domain/refs.dart';
 import '../../features/transactions/domain/transaction.dart';
 import '../../features/transactions/domain/transaction_type.dart';
 import '../../features/transactions/presentation/widgets/draft_form.dart';
-import '../../features/transactions/presentation/widgets/split_event_section.dart';
 import '../../features/transactions/presentation/widgets/tx_compact_hero.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';

@@ -9,7 +9,6 @@ import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_form.dart';
-import 'package:chubi_pocket/features/transactions/presentation/widgets/event_pick.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
@@ -110,7 +109,7 @@ void main() {
   testWidgets('the note is one inline row', (t) async {
     await pump(t);
     expect(find.text('โน้ต'), findsOneWidget);
-    expect(find.byType(DraftFieldRow), findsOneWidget);
+    expect(find.byType(DraftFieldRow), findsWidgets);
   });
 
   testWidgets('แบ่งรายการ is collapsed; tap opens it, tap closes', (t) async {

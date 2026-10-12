@@ -1597,6 +1597,7 @@
   "txSplitSectionTitle": "Split transaction",
   "txSplitSectionHint": "Split the amount with other people, or put it in an event",
   "txSplitRowLabel": "Split",
+  "quickEventAdd": "Add event",
   "dayPickerLastShort": "Last",
   "profileCurrencyLabel": "Currency",
   "contactNicknameLabel": "Nickname",

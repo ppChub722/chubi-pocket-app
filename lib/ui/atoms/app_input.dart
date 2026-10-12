@@ -14,6 +14,43 @@ enum _Kind { field, card, inline, title, search }
 /// EntryCard two-column layout).
 enum AppInputLabelPlacement { left, above }
 
+/// The GEOMETRY of an in-card / title field, fixed by tokens — not by the
+/// value's font (owner 2026-10-12: "both are AppInput, so they are the same
+/// height; labels use the same token, so they line up"). A sized field is:
+/// a label row of [labelRow] (when it has a label, placement above), then a
+/// value row of at least [valueRow], the value's text BASELINE at
+/// [valueBaseline] from the row's top, and the underline right under the row.
+/// Two sized fields side by side therefore share their label top, their
+/// baseline and their underline y — whatever their text styles (a big amount
+/// vs a normal description), empty or filled, focused, TH / EN, text scale.
+/// A field without a size keeps the old, font-driven geometry. Pick the SAME
+/// size for fields that sit side by side.
+enum AppInputSize {
+  /// Normal text (about 16-18 px) alone in a card.
+  regular(valueRow: 34, valueBaseline: 24),
+
+  /// A hero's name (about 20-22 px).
+  title(valueRow: 44, valueBaseline: 32),
+
+  /// A hero's big value (the amount, about 28 px) and whatever sits beside it.
+  hero(valueRow: 52, valueBaseline: 38);
+
+  const AppInputSize({required this.valueRow, required this.valueBaseline});
+
+  /// Minimum height of the value row (grows for a multi-line value).
+  final double valueRow;
+
+  /// Distance from the value row's top to the text baseline.
+  final double valueBaseline;
+
+  /// The label row's height (one line of the row-label role).
+  static const double labelRow = 24;
+
+  /// A token scaled with the user's text scale.
+  static double scaled(BuildContext context, double v) =>
+      MediaQuery.textScalerOf(context).scale(v).roundToDouble();
+}
+
 /// THE text input (owner 2026-10-12: one input for the whole app). Replaces
 /// the old AppTextField, InlineField, InlineTitleField, AppSearchBar and every
 /// raw `TextField` / `TextFormField` in the features.
@@ -97,6 +134,7 @@ class AppInput extends StatefulWidget {
        hideHintOnFocus = false,
        labelPlacement = AppInputLabelPlacement.left,
        labelWidth = null,
+       size = null,
        editing = true,
        onEnterEdit = null,
        viewHint = null,
@@ -149,6 +187,7 @@ class AppInput extends StatefulWidget {
     this.label,
     this.labelPlacement = AppInputLabelPlacement.left,
     this.labelWidth,
+    this.size,
     super.key,
   }) : _kind = _Kind.card,
        dense = false,
@@ -227,6 +266,7 @@ class AppInput extends StatefulWidget {
        hideHintOnFocus = false,
        labelPlacement = AppInputLabelPlacement.left,
        labelWidth = null,
+       size = null,
        clearTooltip = null,
        padding = null;
 
@@ -245,6 +285,7 @@ class AppInput extends StatefulWidget {
     this.label,
     this.labelPlacement = AppInputLabelPlacement.left,
     this.labelWidth,
+    this.size,
     super.key,
   }) : _kind = _Kind.title,
        helper = null,
@@ -355,6 +396,7 @@ class AppInput extends StatefulWidget {
        hideHintOnFocus = false,
        labelPlacement = AppInputLabelPlacement.left,
        labelWidth = null,
+       size = null,
        editing = true,
        onEnterEdit = null,
        viewHint = null;
@@ -368,6 +410,10 @@ class AppInput extends StatefulWidget {
   /// column width so several fields' underlines start at the same x.
   final AppInputLabelPlacement labelPlacement;
   final double? labelWidth;
+
+  /// In-card / title only: the token geometry (see [AppInputSize]); null =
+  /// the font-driven legacy geometry.
+  final AppInputSize? size;
   final String? hint;
   final String? helper;
 
@@ -527,17 +573,33 @@ class _AppInputState extends State<AppInput> {
         color: theme.colorScheme.onSurface,
       ),
     );
+    final size = w.size;
     if (w.labelPlacement == AppInputLabelPlacement.above) {
       return Column(
         // Hug the content: under a loose bounded parent (an Align in a row) a
         // max-size Column would take the whole height and push the field up.
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [text, field],
+        children: [
+          size == null
+              ? text
+              : SizedBox(
+                  height: AppInputSize.scaled(context, AppInputSize.labelRow),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: text,
+                  ),
+                ),
+          field,
+        ],
       );
     }
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      // A sized field's value baseline is fixed: the label sits on it.
+      crossAxisAlignment: size == null
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.baseline,
+      textBaseline: size == null ? null : TextBaseline.alphabetic,
       children: [
         w.labelWidth == null
             ? Flexible(flex: 0, child: text)
@@ -554,6 +616,12 @@ class _AppInputState extends State<AppInput> {
       controller: w.controller,
       focusNode: w.focusNode,
       label: w._kind == _Kind.field ? w.label : null,
+      valueRow: w.size == null
+          ? null
+          : AppInputSize.scaled(context, w.size!.valueRow),
+      valueBaseline: w.size == null
+          ? null
+          : AppInputSize.scaled(context, w.size!.valueBaseline),
       hint: w.hint,
       helper: w.helper,
       errorText: w.errorText,
@@ -666,6 +734,7 @@ class _AppInputState extends State<AppInput> {
     final scheme = Theme.of(context).colorScheme;
     final textStyle = w.style ?? Theme.of(context).textTheme.titleMedium;
     final editing = w.editing;
+    final sz = w.size;
     final field = TextFormField(
       controller: w.controller,
       focusNode: w.focusNode,
@@ -678,25 +747,68 @@ class _AppInputState extends State<AppInput> {
         filled: false,
         isDense: true,
         counterText: '',
-        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        contentPadding: sz == null
+            ? const EdgeInsets.symmetric(vertical: AppSpacing.xs)
+            : EdgeInsets.zero,
         hintText: w.hint,
         hintStyle: textStyle?.copyWith(
           color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),
-        enabledBorder: _underline(
-          editing ? scheme.outline : Colors.transparent,
-        ),
-        focusedBorder: _underline(scheme.primary),
-        border: _underline(editing ? scheme.outline : Colors.transparent),
+        // A sized title draws its own underline under the fixed value row.
+        enabledBorder: sz == null
+            ? _underline(editing ? scheme.outline : Colors.transparent)
+            : InputBorder.none,
+        focusedBorder: sz == null
+            ? _underline(scheme.primary)
+            : InputBorder.none,
+        border: sz == null
+            ? _underline(editing ? scheme.outline : Colors.transparent)
+            : InputBorder.none,
       ),
       onChanged: w.onChanged,
       validator: w.validator,
     );
-    if (editing) return field;
+    Widget body = field;
+    if (sz != null) {
+      body = Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        child: Builder(
+          builder: (ctx) => DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: !editing
+                      ? Colors.transparent
+                      : Focus.of(ctx).hasFocus
+                      ? scheme.primary
+                      : scheme.outline,
+                  width: Focus.of(ctx).hasFocus ? 2 : 1,
+                ),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: AppInputSize.scaled(ctx, sz.valueRow),
+                ),
+                child: Baseline(
+                  baseline: AppInputSize.scaled(ctx, sz.valueBaseline),
+                  baselineType: TextBaseline.alphabetic,
+                  child: field,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    if (editing) return body;
     return GestureDetector(
       onLongPress: w.onEnterEdit,
       behavior: HitTestBehavior.opaque,
-      child: AbsorbPointer(child: field),
+      child: AbsorbPointer(child: body),
     );
   }
 

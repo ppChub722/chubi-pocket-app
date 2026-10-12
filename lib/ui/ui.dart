@@ -129,6 +129,7 @@ export 'domain/transactions/tx_row.dart';
 export 'domain/transactions/tx_filter_sheet.dart';
 export 'domain/money/account_picker_sheet.dart';
 export 'domain/transactions/event_target_sheet.dart';
+export 'domain/transactions/split_event_section.dart';
 export 'domain/brand/brand_logo.dart';
 export 'domain/brand/bank_brand.dart';
 export 'domain/people/wire_names_sheet.dart';

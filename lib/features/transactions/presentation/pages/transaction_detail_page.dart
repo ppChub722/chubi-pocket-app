@@ -34,7 +34,6 @@ import '../tx_rules.dart';
 import '../save_failure.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/event_pick.dart';
-import '../widgets/split_event_section.dart';
 import '../widgets/tx_compact_hero.dart';
 
 /// `/transactions/:id` (§9) — the quick-create form's own layout, in the

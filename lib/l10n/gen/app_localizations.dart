@@ -7633,6 +7633,12 @@ abstract class AppLocalizations {
   /// **'Split'**
   String get txSplitRowLabel;
 
+  /// No description provided for @quickEventAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event'**
+  String get quickEventAdd;
+
   /// No description provided for @dayPickerLastShort.
   ///
   /// In en, this message translates to:

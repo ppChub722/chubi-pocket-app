@@ -51,6 +51,7 @@ class HeroDescription extends StatelessWidget {
         maxLength: maxLength,
         onChanged: onChanged,
         style: style,
+        size: AppInputSize.regular,
       );
     }
     return ValueListenableBuilder<TextEditingValue>(
@@ -116,5 +117,6 @@ class HeroNameInput extends StatelessWidget {
     maxLines: maxLines,
     style: style,
     label: UiConfig.stringsOf(context).fieldName,
+    size: AppInputSize.title,
   );
 }

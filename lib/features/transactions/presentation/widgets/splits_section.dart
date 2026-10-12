@@ -171,6 +171,7 @@ class SplitsSection extends StatefulWidget {
     this.onMeAutoChanged,
     this.overText,
     this.embedded = false,
+    this.compact = false,
     this.helper,
     super.key,
   });
@@ -205,6 +206,11 @@ class SplitsSection extends StatefulWidget {
   /// with at least one person) หารเท่ากัน, then the people, inset like
   /// the detail rows around them.
   final bool embedded;
+
+  /// The quick forms' look (with [embedded]): the "แบ่งยอด" label sits in the
+  /// same 72 px column as the Note row ([DraftFieldRow]), muted, with 28 px
+  /// dashed chips beside it; the people follow full width, no extra inset.
+  final bool compact;
 
   final List<SplitDraft> drafts;
   final ValueChanged<List<SplitDraft>> onChanged;
@@ -295,30 +301,41 @@ class _SplitsSectionState extends State<SplitsSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
-    final sectioned = widget.embedded;
-    final pills = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
+    final sectioned = widget.embedded && !widget.compact;
+    final chipSize = widget.compact ? ChipSize.chip : ChipSize.control;
+    final pillChildren = <Widget>[
+      AppChip(
+        icon: AppIcons.add,
+        label: l.txSplitAddPerson,
+        tone: AppChipTone.primary,
+        selected: true,
+        dashed: widget.compact,
+        size: chipSize,
+        onTap: _addPerson,
+      ),
+      if (!widget.embedded || widget.drafts.isNotEmpty) ...[
+        const SizedBox(width: AppSpacing.xs),
         AppChip(
-          icon: AppIcons.add,
-          label: l.txSplitAddPerson,
+          icon: AppIcons.split,
+          label: l.txSplitEqually,
           tone: AppChipTone.primary,
           selected: true,
-          onTap: _addPerson,
+          size: chipSize,
+          enabled: widget.drafts.isNotEmpty && widget.totalAmount > 0,
+          onTap: _splitEqually,
         ),
-        if (!widget.embedded || widget.drafts.isNotEmpty) ...[
-          const SizedBox(width: AppSpacing.xs),
-          AppChip(
-            icon: AppIcons.split,
-            label: l.txSplitEqually,
-            tone: AppChipTone.primary,
-            selected: true,
-            enabled: widget.drafts.isNotEmpty && widget.totalAmount > 0,
-            onTap: _splitEqually,
-          ),
-        ],
       ],
-    );
+    ];
+    final pills = widget.compact
+        ? Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final c in pillChildren)
+                if (c is! SizedBox) c,
+            ],
+          )
+        : Row(mainAxisSize: MainAxisSize.min, children: pillChildren);
     // A section row is inset like the detail rows around it.
     Widget inset(Widget w) => sectioned
         ? Padding(
@@ -392,6 +409,34 @@ class _SplitsSectionState extends State<SplitsSection> {
               ),
             ),
           );
+    if (widget.embedded && widget.compact) {
+      // Quick forms: "แบ่งยอด" in the Note row's label column, the chips
+      // beside it, then the people.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DraftFieldRow(label: widget.label, dense: true, child: pills),
+          if (widget.helper != null)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: DraftFieldRow.labelWidth,
+                top: AppSpacing.xs,
+              ),
+              child: Text(
+                widget.helper!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          for (final r in rows) ...[const SizedBox(height: AppSpacing.xs), r],
+          if (closing != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            closing,
+          ],
+        ],
+      );
+    }
     if (widget.embedded) {
       // The one section's "แบ่งยอด" row: the row label (same style as
       // "อีเวนต์") with the actions, then the people. No separators.

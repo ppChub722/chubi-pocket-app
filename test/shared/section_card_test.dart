@@ -126,4 +126,33 @@ void main() {
       closeTo(t.getCenter(find.text('หัวข้อ')).dy, 12),
     );
   });
+
+  testWidgets(
+    'switch row: a helper that fits one line is not wrapped at half width',
+    (t) async {
+      await t.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 400,
+                child: DetailRow(
+                  label: 'Show nickname',
+                  helper: 'Use the nickname here',
+                  trailing: Switch(value: true, onChanged: (_) {}),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final helper = t.getSize(find.text('Use the nickname here'));
+      // One line (bodySmall ~16 px), and wider than half the row.
+      expect(helper.height, lessThan(24));
+      expect(
+        helper.width,
+        greaterThan(200),
+      ); // more than half of the free width
+    },
+  );
 }

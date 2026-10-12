@@ -939,6 +939,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       symbolScale: 0.7,
       currencySymbol: Currencies.symbolOf(_currency),
       minWidth: 12,
+      size: AppInputSize.hero,
+      labelPlacement: AppInputLabelPlacement.above,
       hint: '0',
       hintStyle: style?.copyWith(color: accent.withValues(alpha: 0.35)),
       hideHintOnFocus: true,

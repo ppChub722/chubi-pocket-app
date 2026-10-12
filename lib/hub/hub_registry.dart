@@ -263,7 +263,12 @@ final List<HubPage> hubPages = [
     summary:
         'One text input: field, inline, title, search; looks filled, outlined, underline, pill, bare.',
     usedBy: '~95 sites',
-    covers: ['AppInput', 'AppInputType', 'AppInputLabelPlacement'],
+    covers: [
+      'AppInput',
+      'AppInputType',
+      'AppInputLabelPlacement',
+      'AppInputSize',
+    ],
     builder: buildInputPage,
   ),
   const HubPage(
@@ -694,6 +699,11 @@ final List<HubPage> hubPages = [
       'EntryCard',
       'EntryCardSkeleton',
       'EntryField',
+      'SplitEventSection',
+      'SplitEventSlot',
+      'SplitEventVariant',
+      'EventRow',
+      'DraftFieldRow',
     ],
     builder: buildTransactionsPage,
   ),

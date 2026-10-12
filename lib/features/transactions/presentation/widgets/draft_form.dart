@@ -31,7 +31,6 @@ import '../cubit/tx_form_options_cubit.dart';
 import 'account_picker_sheet.dart';
 import 'event_pick.dart';
 import 'pick_chip_rows.dart';
-import 'split_event_section.dart';
 import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 
@@ -1186,18 +1185,23 @@ class _DraftFormState extends State<DraftForm> {
     bool first = false,
   }) {
     final canEdit = editing && widget.allowSplits;
+    // The quick forms (quick create + the drafts) get the compact look; the
+    // detail page the full one.
+    final compact = widget.chipLayout || widget.chipRows;
+    final helper = widget.eventPending || _c.projectId != null
+        ? l.txSplitInEventHelper
+        // An event bill staying put: my splits sit on my share.
+        : _c.savedInEvent
+        ? l.txSplitFromMyShare
+        : null;
     final splits = canEdit
         ? SplitsSection(
             embedded: true,
+            compact: compact,
             // "แบ่งยอด" — the row label; going into an event the people
             // become the event's (the helper says so).
             label: l.txSplitRowLabel,
-            helper: widget.eventPending || _c.projectId != null
-                ? l.txSplitInEventHelper
-                // An event bill staying put: my splits sit on my share.
-                : _c.savedInEvent
-                ? l.txSplitFromMyShare
-                : null,
+            helper: compact ? null : helper,
             totalAmount: _c.splitCap,
             overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
             drafts: _c.splits,
@@ -1213,6 +1217,8 @@ class _DraftFormState extends State<DraftForm> {
     if (splits == null && slot == null) return null;
     return SplitEventSection(
       first: first,
+      variant: compact ? SplitEventVariant.compact : SplitEventVariant.full,
+      helper: compact && canEdit ? helper : null,
       splits: splits,
       event: slot,
       // The drafts collapse it, closed; quick create, open.
@@ -1402,41 +1408,6 @@ class _TextBlock extends StatelessWidget {
             maxLines: 4,
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// A labelled row under the transaction form's cards — โน้ต, หารกับ,
-/// อีเวนต์: the label in a fixed column on the left so the fields line up.
-class DraftFieldRow extends StatelessWidget {
-  const DraftFieldRow({required this.label, required this.child, super.key});
-
-  final String label;
-  final Widget child;
-
-  static const labelWidth = 72.0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: labelWidth,
-          child: Padding(
-            // Lines up with the first line of a field / button beside it.
-            padding: const EdgeInsets.only(top: 10),
-            child: Text(
-              label,
-              maxLines: 2,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
-        Expanded(child: child),
       ],
     );
   }

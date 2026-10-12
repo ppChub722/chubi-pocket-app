@@ -191,7 +191,8 @@ void main() {
     );
     final symbol = t.getRect(find.text('฿'));
     final titleTop = t.getTopLeft(find.text(note.text)).dy;
-    expect(titleTop, lessThan(symbol.top));
+    // Token geometry: the description starts level with the ฿ (shared baseline).
+    expect(titleTop, lessThan(symbol.bottom));
     // Left of the ฿, level with the description's first line: empty space
     // in the amount's half of the row.
     await t.tapAt(Offset(symbol.left - 24, titleTop + 2));

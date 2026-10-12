@@ -33,7 +33,6 @@ import '../save_failure.dart';
 import '../transaction_edit.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
-import 'split_event_section.dart';
 import 'tx_summary_title.dart';
 
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
