@@ -521,35 +521,26 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       TextInputType? keyboard,
       FormFieldValidator<String>? validator,
     }) {
-      // View mode, nothing set: the one faint placeholder; tap → edit and
-      // type it.
-      if (placeholderWhenEmpty &&
-          !editing &&
-          !locked &&
-          _ctrl[f]!.text.trim().isEmpty) {
-        return DetailRow(
-          label: label,
-          trailing: DetailPlaceholder(l.contactFieldNotSet),
-          onTap: () => enterEdit(focus: _focus[f]),
-        );
-      }
-      return DetailStacked(
+      // ONE field implementation for every detail page (DetailTextField):
+      // view + nothing set = the one-row "not set" placeholder.
+      return DetailTextField(
         label: label,
-        child: AppInput.inline(
-          editing: editing && !locked,
-          controller: _ctrl[f]!,
-          focusNode: _focus[f],
-          maxLines: maxLines,
-          maxLength: maxLength,
-          keyboardType: keyboard,
-          // Edit mode: say what goes here and that it's optional (the
-          // name, in the header, is the only required one).
-          hint: hint,
-          viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-          onEnterEdit: locked ? null : () => enterEdit(focus: _focus[f]),
-          onChanged: (v) => _onText(f, v),
-          validator: validator,
-        ),
+        controller: _ctrl[f]!,
+        editing: editing,
+        focusNode: _focus[f],
+        locked: locked,
+        placeholderWhenEmpty: placeholderWhenEmpty,
+        notSetLabel: l.contactFieldNotSet,
+        maxLines: maxLines,
+        maxLength: maxLength,
+        keyboardType: keyboard,
+        // Edit mode: say what goes here and that it's optional (the
+        // name, in the header, is the only required one).
+        hint: hint,
+        viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
+        onEnterEdit: () => enterEdit(focus: _focus[f]),
+        onChanged: (v) => _onText(f, v),
+        validator: validator,
       );
     }
 

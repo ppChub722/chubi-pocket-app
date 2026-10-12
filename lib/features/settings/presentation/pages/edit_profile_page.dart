@@ -178,26 +178,25 @@ class _EditProfilePageState extends State<EditProfilePage>
                   (first) => SectionCard(
                     first: first,
                     children: [
-                      DetailStacked(
+                      DetailTextField(
                         label: l.editProfileDisplayNameLabel,
-                        child: AppInput.inline(
-                          editing: editing,
-                          controller: _nameCtrl,
-                          maxLength: TextLimits.name,
-                          onEnterEdit: () => enterEdit(),
-                          onChanged: (v) => applyTextChange(
-                            _Field.name,
-                            working.copyWith(name: v),
-                          ),
-                          validator: (v) {
-                            final s = v?.trim() ?? '';
-                            if (s.isEmpty) return l.commonRequired;
-                            if (s.length > 100) {
-                              return l.authRegisterDisplayNameTooLong;
-                            }
-                            return null;
-                          },
+                        controller: _nameCtrl,
+                        editing: editing,
+                        maxLength: TextLimits.name,
+                        viewHint: l.commonLongPressToEdit,
+                        onEnterEdit: () => enterEdit(),
+                        onChanged: (v) => applyTextChange(
+                          _Field.name,
+                          working.copyWith(name: v),
                         ),
+                        validator: (v) {
+                          final s = v?.trim() ?? '';
+                          if (s.isEmpty) return l.commonRequired;
+                          if (s.length > 100) {
+                            return l.authRegisterDisplayNameTooLong;
+                          }
+                          return null;
+                        },
                       ),
                       DetailRow(
                         leading: const AppIcon(AppIcons.lock),
@@ -205,43 +204,42 @@ class _EditProfilePageState extends State<EditProfilePage>
                         locked: true,
                         trailing: Text('@${_user.username}'),
                       ),
-                      DetailStacked(
+                      // The same field as the contact page's email row
+                      // (DetailTextField): one row "not set" when empty.
+                      DetailTextField(
                         label: l.editProfileEmailLabel,
-                        child: AppInput.inline(
-                          editing: editing,
-                          controller: _emailCtrl,
-                          maxLength: 255,
-                          keyboardType: TextInputType.emailAddress,
-                          viewHint: l.draftExtrasNone,
-                          onEnterEdit: () => enterEdit(),
-                          onChanged: (v) {
-                            if (_emailError != null) {
-                              setState(() => _emailError = null);
-                            }
-                            applyTextChange(
-                              _Field.email,
-                              working.copyWith(email: v),
-                            );
-                          },
-                          validator: (v) {
-                            if (_emailError != null) return _emailError;
-                            final s = v?.trim() ?? '';
-                            // Once set, the email can't go back to empty.
-                            if (s.isEmpty) {
-                              return original.email.isEmpty
-                                  ? null
-                                  : l.profileEmailCannotClear;
-                            }
-                            if (s.length > 255) {
-                              return l.editProfileEmailTooLong;
-                            }
-                            return RegExp(
-                                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                                ).hasMatch(s)
+                        controller: _emailCtrl,
+                        editing: editing,
+                        placeholderWhenEmpty: true,
+                        notSetLabel: l.contactFieldNotSet,
+                        maxLength: TextLimits.email,
+                        keyboardType: TextInputType.emailAddress,
+                        viewHint: l.commonLongPressToEdit,
+                        onEnterEdit: () => enterEdit(),
+                        onChanged: (v) {
+                          if (_emailError != null) {
+                            setState(() => _emailError = null);
+                          }
+                          applyTextChange(
+                            _Field.email,
+                            working.copyWith(email: v),
+                          );
+                        },
+                        validator: (v) {
+                          if (_emailError != null) return _emailError;
+                          final s = v?.trim() ?? '';
+                          // Once set, the email can't go back to empty.
+                          if (s.isEmpty) {
+                            return original.email.isEmpty
                                 ? null
-                                : l.editProfileEmailInvalid;
-                          },
-                        ),
+                                : l.profileEmailCannotClear;
+                          }
+                          return RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                              ).hasMatch(s)
+                              ? null
+                              : l.editProfileEmailInvalid;
+                        },
                       ),
                       DetailRow(
                         leading: const AppIcon(AppIcons.currency),

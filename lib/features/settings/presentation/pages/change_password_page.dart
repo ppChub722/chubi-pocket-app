@@ -1,6 +1,6 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
@@ -8,6 +8,12 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/data/auth_repository.dart';
 
+/// `/settings/password` — a create-style form page on the detail template
+/// (like the other create / edit pages): ONE headless box of three password
+/// fields (label above the underline, eye at the right), the helper under the
+/// new one, field errors for a wrong current password / a mismatch, a banner
+/// for a failed call. Edit mode from the start: ✕ + ยกเลิก · บันทึก, the
+/// saving overlay and the discard guard come from [EditModeMixin].
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
 
@@ -15,15 +21,23 @@ class ChangePasswordPage extends StatefulWidget {
   State<ChangePasswordPage> createState() => _ChangePasswordPageState();
 }
 
-class _ChangePasswordPageState extends State<ChangePasswordPage> {
+enum _Field { current, next, confirm }
+
+class _ChangePasswordPageState extends State<ChangePasswordPage>
+    with EditModeMixin<ChangePasswordPage, _PasswordDraft> {
   final _formKey = GlobalKey<FormState>();
   final _currentCtrl = TextEditingController();
   final _newCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
 
-  bool _submitting = false;
   ApiException? _error;
   String? _currentFieldError;
+
+  @override
+  void initState() {
+    super.initState();
+    initDraft(const _PasswordDraft(), editing: true);
+  }
 
   @override
   void dispose() {
@@ -33,23 +47,43 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
-  /// ยกเลิก and ✕ alike: leave the form (nothing while submitting).
-  void _cancel() {
-    if (!_submitting) context.pop();
+  /// A form: ยกเลิก / ✕ leave the page (no view mode to fall back to).
+  @override
+  bool get leaveOnCancel => true;
+
+  @override
+  void onDraftRestored() {
+    _sync(_currentCtrl, working.current);
+    _sync(_newCtrl, working.next);
+    _sync(_confirmCtrl, working.confirm);
   }
 
+  void _sync(TextEditingController c, String v) {
+    if (c.text != v) c.text = v;
+  }
+
+  void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
+    _Field.current => working.copyWith(current: v),
+    _Field.next => working.copyWith(next: v),
+    _Field.confirm => working.copyWith(confirm: v),
+  });
+
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    commitTextSession();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     final l = AppLocalizations.of(context)!;
+    final repo = context.read<AuthRepository>();
+    final w = working;
+    FocusScope.of(context).unfocus();
+    setSaving(true);
     setState(() {
-      _submitting = true;
       _error = null;
       _currentFieldError = null;
     });
     try {
-      await context.read<AuthRepository>().changePassword(
-        currentPassword: _currentCtrl.text,
-        newPassword: _newCtrl.text,
+      await repo.changePassword(
+        currentPassword: w.current,
+        newPassword: w.next,
       );
       if (!mounted) return;
       showAppSnackBar(
@@ -57,9 +91,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         l.changePasswordSnackSuccess,
         tone: Tone.success,
       );
-      context.pop();
+      commitSaved(w);
+      leavePage();
     } on ApiException catch (e) {
       if (!mounted) return;
+      setSaving(false);
       setState(() {
         if (e.code == 'WRONG_PASSWORD' || e.statusCode == 401) {
           _currentFieldError = l.changePasswordCurrentWrong;
@@ -67,38 +103,26 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           _error = e;
         }
       });
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (_currentFieldError != null) _formKey.currentState?.validate();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return SavingOverlay(
-      saving: _submitting,
-      child: Scaffold(
-        // A form = edit mode (§1.4): ✕ + ยกเลิก · บันทึก, no nav.
+    final editing = isEditing;
+    return editScope(
+      Scaffold(
+        // A form = edit mode: ✕ + ยกเลิก · บันทึก, no nav.
         appBar: AppTopBar(
           title: l.changePasswordTitle,
           showBack: true,
-          editing: true,
-          // ✕ = ยกเลิก (owner 2026-10-10).
-          onBack: _cancel,
-        ),
-        // No undo on a password form — the bar hides it (onUndo null).
-        bottomNavigationBar: ModeActionBar(
-          canSave: !_submitting,
-          saving: _submitting,
-          cancelLabel: l.commonCancel,
-          saveLabel: l.changePasswordSubmit,
-          onCancel: _cancel,
-          onSave: _submit,
+          editing: editing,
+          onBack: handleBack,
         ),
         extendBodyBehindAppBar: true,
         body: Form(
           key: _formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
           // Builder: the floating bar's height is only visible inside the body.
           child: Builder(
             builder: (context) => DetailPageBody(
@@ -117,23 +141,26 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   fields: true,
                   dividers: false,
                   children: [
-                    AppInput(
+                    _passwordField(
                       controller: _currentCtrl,
-                      enabled: !_submitting,
-                      obscurable: true,
-                      autofillHints: const [AutofillHints.password],
                       label: l.changePasswordCurrentLabel,
+                      autofocus: true,
                       errorText: _currentFieldError,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? l.commonRequired : null,
+                      onChanged: (v) {
+                        if (_currentFieldError != null) {
+                          setState(() => _currentFieldError = null);
+                        }
+                        _onText(_Field.current, v);
+                      },
+                      validator: (v) => (v == null || v.isEmpty)
+                          ? l.commonRequired
+                          : (_currentFieldError),
                     ),
-                    AppInput(
+                    _passwordField(
                       controller: _newCtrl,
-                      enabled: !_submitting,
-                      obscurable: true,
-                      autofillHints: const [AutofillHints.newPassword],
                       label: l.changePasswordNewLabel,
                       helper: l.changePasswordNewHelper,
+                      onChanged: (v) => _onText(_Field.next, v),
                       validator: (v) {
                         if (v == null || v.length < 8) {
                           return l.authRegisterPasswordTooShort;
@@ -147,18 +174,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         return null;
                       },
                     ),
-                    AppInput(
+                    _passwordField(
                       controller: _confirmCtrl,
-                      enabled: !_submitting,
-                      obscurable: true,
-                      onSubmitted: (_) => _submit(),
                       label: l.changePasswordConfirmLabel,
-                      validator: (v) {
-                        if (v != _newCtrl.text) {
-                          return l.changePasswordConfirmMismatch;
-                        }
-                        return null;
-                      },
+                      onChanged: (v) => _onText(_Field.confirm, v),
+                      onSubmitted: (_) => _submit(),
+                      validator: (v) => v != _newCtrl.text
+                          ? l.changePasswordConfirmMismatch
+                          : null,
                     ),
                   ],
                 ),
@@ -166,9 +189,33 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
           ),
         ),
+        bottomNavigationBar: editActionBar(onSave: _submit),
       ),
     );
   }
+
+  /// The form-field look: label above the underline, the eye at the right.
+  Widget _passwordField({
+    required TextEditingController controller,
+    required String label,
+    required ValueChanged<String> onChanged,
+    required FormFieldValidator<String> validator,
+    String? helper,
+    String? errorText,
+    bool autofocus = false,
+    ValueChanged<String>? onSubmitted,
+  }) => AppInput.card(
+    controller: controller,
+    label: label,
+    labelPlacement: AppInputLabelPlacement.above,
+    helper: helper,
+    obscurable: true,
+    autofocus: autofocus,
+    errorText: errorText,
+    onChanged: onChanged,
+    onSubmitted: onSubmitted,
+    validator: validator,
+  );
 
   String _bannerMessageFor(AppLocalizations l, ApiException e) {
     if (e.code == 'NETWORK_ERROR' || e.code == 'NETWORK_TIMEOUT') {
@@ -176,4 +223,22 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     }
     return e.message;
   }
+}
+
+class _PasswordDraft extends Equatable {
+  const _PasswordDraft({this.current = '', this.next = '', this.confirm = ''});
+
+  final String current;
+  final String next;
+  final String confirm;
+
+  _PasswordDraft copyWith({String? current, String? next, String? confirm}) =>
+      _PasswordDraft(
+        current: current ?? this.current,
+        next: next ?? this.next,
+        confirm: confirm ?? this.confirm,
+      );
+
+  @override
+  List<Object?> get props => [current, next, confirm];
 }

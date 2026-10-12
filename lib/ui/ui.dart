@@ -75,6 +75,7 @@ export 'molecules/compact_hero_bar.dart';
 export 'molecules/danger_row.dart';
 export 'molecules/detail_meta.dart';
 export 'molecules/detail_rows.dart';
+export 'molecules/detail_text_field.dart';
 export 'organisms/header_card.dart';
 export 'molecules/list_row.dart';
 export 'molecules/hero_shell.dart';

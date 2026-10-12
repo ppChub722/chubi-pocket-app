@@ -316,6 +316,7 @@ final List<HubPage> hubPages = [
     covers: [
       'DetailRow',
       'DetailStacked',
+      'DetailTextField',
       'DetailAddRow',
       'SectionCard',
       'DetailGroupScope',
