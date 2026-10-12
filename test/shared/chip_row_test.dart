@@ -1,5 +1,5 @@
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
-import 'package:chubi_pocket/shared/widgets/chips/chip_row.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/molecules/chip_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/payment_provider.dart';
 
 /// What [showBankPicker] resolves to — `null` = dismissed. [bank] null =
@@ -59,7 +57,7 @@ Future<BankPick?> showBankPicker(
           children: [
             if (allowNone && query.isEmpty)
               PickerRow(
-                leading: const Icon(AppIcons.bank),
+                leading: const AppIcon(AppIcons.bank),
                 title: l.identifierBankNone,
                 selected: selectedCode == null,
                 onTap: () => Navigator.pop(context, const BankPick(null)),

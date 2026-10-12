@@ -6502,7 +6502,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountIdentifiersTitle.
   ///
   /// In en, this message translates to:
-  /// **'Account numbers'**
+  /// **'Reference numbers'**
   String get accountIdentifiersTitle;
 
   /// No description provided for @accountIdentifiersHelper.
@@ -6858,12 +6858,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'others\' share {amount}'**
   String txShareOthers(String amount);
-
-  /// No description provided for @txSplitPersonLocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Linked to a contact — to change who, remove this row and add the person again'**
-  String get txSplitPersonLocked;
 
   /// No description provided for @txSplitAuthorOnly.
   ///
@@ -7270,7 +7264,7 @@ abstract class AppLocalizations {
   /// No description provided for @txSplitMe.
   ///
   /// In en, this message translates to:
-  /// **'Me'**
+  /// **'My share'**
   String get txSplitMe;
 
   /// No description provided for @txSplitLeft.
@@ -7309,11 +7303,17 @@ abstract class AppLocalizations {
   /// **'you owe others {amount}'**
   String txShareYouOweOthers(String amount);
 
-  /// No description provided for @txSplitPersonLockedLinked.
+  /// No description provided for @txSplitNoContact.
   ///
   /// In en, this message translates to:
-  /// **'Linked to their app account — to change who, remove this row and add the person again'**
-  String get txSplitPersonLockedLinked;
+  /// **'No contact'**
+  String get txSplitNoContact;
+
+  /// No description provided for @txSplitNoContactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the name, still editable'**
+  String get txSplitNoContactHint;
 
   /// No description provided for @accountFormNameExample.
   ///
@@ -7366,7 +7366,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountReportSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'In my reports'**
+  /// **'Reports'**
   String get accountReportSectionTitle;
 
   /// No description provided for @accountOpeningSectionTitle.
@@ -7524,6 +7524,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can only view that event — nothing can be added'**
   String get pendingErrProjectReadOnly;
+
+  /// No description provided for @accountReportSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how much of this wallet counts in your reports'**
+  String get accountReportSectionDescription;
+
+  /// No description provided for @accountMembersSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'People who share this wallet with you'**
+  String get accountMembersSectionDescription;
+
+  /// No description provided for @accountCreditSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Statement day, due day and minimum payment for this card'**
+  String get accountCreditSectionDescription;
+
+  /// No description provided for @accountOpeningSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The wallet\'s starting balance; after creating, change it with Adjust balance'**
+  String get accountOpeningSectionDescription;
+
+  /// No description provided for @accountTypeSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What kind of wallet this is'**
+  String get accountTypeSectionDescription;
+
+  /// No description provided for @walletMembersHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'People who were in this wallet and have left'**
+  String get walletMembersHistoryDescription;
+
+  /// No description provided for @categorySettingsSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether this category counts in reports and is used for fees'**
+  String get categorySettingsSectionDescription;
+
+  /// No description provided for @contactActionsSectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to a user account, match split names and see this person\'s debts'**
+  String get contactActionsSectionDescription;
+
+  /// No description provided for @budgetDetailBreakdownDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Spending split by sub-category this period'**
+  String get budgetDetailBreakdownDescription;
+
+  /// No description provided for @scheduledDetailHistoryDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions already created from this schedule'**
+  String get scheduledDetailHistoryDescription;
+
+  /// No description provided for @projectMembersDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'People currently taking part in this event'**
+  String get projectMembersDescription;
+
+  /// No description provided for @projectMembersPendingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited and waiting to accept'**
+  String get projectMembersPendingDescription;
+
+  /// No description provided for @projectMembersLeftDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'People who have left this event'**
+  String get projectMembersLeftDescription;
+
+  /// No description provided for @contactFieldNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get contactFieldNotSet;
+
+  /// No description provided for @txSplitSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split transaction'**
+  String get txSplitSectionTitle;
+
+  /// No description provided for @txSplitSectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Split the amount with other people, or put it in an event'**
+  String get txSplitSectionHint;
+
+  /// No description provided for @txSplitRowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Split'**
+  String get txSplitRowLabel;
+
+  /// No description provided for @dayPickerLastShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Last'**
+  String get dayPickerLastShort;
+
+  /// No description provided for @profileCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get profileCurrencyLabel;
+
+  /// No description provided for @contactNicknameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get contactNicknameLabel;
+
+  /// No description provided for @contactNicknameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional · e.g. Mum'**
+  String get contactNicknameHint;
+
+  /// No description provided for @contactShowNicknameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show nickname'**
+  String get contactShowNicknameLabel;
+
+  /// No description provided for @contactShowNicknameHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'On = use the nickname instead of the name everywhere'**
+  String get contactShowNicknameHelper;
+
+  /// No description provided for @accountsSummarySharedPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared wallets'**
+  String get accountsSummarySharedPot;
+
+  /// No description provided for @accountsSummaryOtherCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 wallet in another currency is not counted} other{{count} wallets in another currency are not counted}}'**
+  String accountsSummaryOtherCurrency(num count);
+
+  /// No description provided for @notOwnerError.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the wallet owner can do this'**
+  String get notOwnerError;
 }
 
 class _AppLocalizationsDelegate

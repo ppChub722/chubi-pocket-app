@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/contact.dart';
 
 /// The one "linked to an app account" mark (owner 2026-10-11) — the kit's
@@ -31,9 +31,9 @@ class ContactAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PersonMark(
-    name: contact.effectiveName,
+    name: contact.name,
     level: contact.isLinked ? PersonLevel.linked : PersonLevel.contact,
-    iconCode: contact.effectiveIconCode,
+    iconCode: contact.iconCode,
     size: size,
     reserveLinkSlot: reserveLinkSlot,
   );

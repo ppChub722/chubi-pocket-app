@@ -57,9 +57,41 @@ class PendingRepository {
     }
   }
 
-  Future<void> delete(String id) async {
+  /// Discards one draft.
+  Future<DiscardResult> delete(String id) async {
     try {
-      await _client.dio.delete<dynamic>('/pending-transactions/$id');
+      final res = await _client.dio.delete<Map<String, dynamic>>(
+        '/pending-transactions/$id',
+      );
+      return DiscardResult.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// Discards many in one call (the API takes 1..100 ids; a longer list goes
+  /// in chunks).
+  Future<DiscardResult> discard(List<String> ids) async {
+    try {
+      final discarded = <String>[];
+      final skipped = <String>[];
+      var remaining = 0;
+      for (var i = 0; i < ids.length; i += 100) {
+        final end = i + 100 > ids.length ? ids.length : i + 100;
+        final res = await _client.dio.post<Map<String, dynamic>>(
+          '/pending-transactions/discard',
+          data: <String, dynamic>{'ids': ids.sublist(i, end)},
+        );
+        final r = DiscardResult.fromJson(res.data!);
+        discarded.addAll(r.discarded);
+        skipped.addAll(r.skipped);
+        remaining = r.remainingCount;
+      }
+      return DiscardResult(
+        discarded: discarded,
+        skipped: skipped,
+        remainingCount: remaining,
+      );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

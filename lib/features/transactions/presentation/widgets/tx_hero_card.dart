@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/transaction_type.dart';
 
 /// The top card of every transaction form — quick create, แก้ร่าง, event
@@ -211,9 +206,8 @@ class TxHeroCard extends StatelessWidget {
       onTap: editing ? onPickDate : null,
     );
     final editChip = !editing && onEdit != null
-        ? AppIconButton(
-            icon: AppIcons.edit,
-            size: 32,
+        ? AppIconButton.edit(
+            size: AppIconButton.sizeHero,
             tooltip: l.commonEdit,
             onPressed: onEdit,
           )
@@ -240,7 +234,7 @@ class TxHeroCard extends StatelessWidget {
     Widget titleField({int maxLines = 3}) => longPressable(
       Padding(
         padding: const EdgeInsets.only(right: AppSpacing.sm),
-        child: TextField(
+        child: AppInput(
           controller: title,
           focusNode: titleFocus,
           readOnly: !editing || onTitleTap != null,
@@ -252,27 +246,15 @@ class TxHeroCard extends StatelessWidget {
           maxLines: maxLines,
           textInputAction: TextInputAction.done,
           style: titleStyle,
-          decoration: InputDecoration(
-            hintText: editing
-                ? (titleHint ?? l.txHeroTitleHint)
-                : (onLongPressField != null ? l.commonLongPressToEdit : null),
-            hintStyle: titleStyle?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
-            ),
-            counterText: '',
-            isDense: true,
-            filled: false,
-            contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-            border: InputBorder.none,
-            enabledBorder: editing
-                ? UnderlineInputBorder(
-                    borderSide: BorderSide(color: scheme.outlineVariant),
-                  )
-                : InputBorder.none,
-            focusedBorder: editing
-                ? UnderlineInputBorder(borderSide: BorderSide(color: accent))
-                : InputBorder.none,
-          ),
+          hint: editing
+              ? (titleHint ?? l.txHeroTitleHint)
+              : (onLongPressField != null ? l.commonLongPressToEdit : null),
+          // An underline while editing (idle grey, focused in the type's
+          // colour), plain text in view.
+          look: editing ? AppInputLook.underline : AppInputLook.bare,
+          borderColor: scheme.outlineVariant,
+          focusColor: accent,
+          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         ),
       ),
       titleFocus,
@@ -377,24 +359,7 @@ class TxHeroCard extends StatelessWidget {
 
     final body = HeroContent(rows: inline ? rows : stacked);
 
-    final card = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-      decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          accent.withValues(alpha: 0.06),
-          scheme.surfaceContainerLow,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: type == TransactionType.transfer
-              ? scheme.outline
-              : accent.withValues(alpha: 0.6),
-          width: 1.5,
-        ),
-      ),
-      child: body,
-    );
+    final card = HeroSurface(style: txHeroStyle(context, type), child: body);
     if (!canSwitch) return card;
     return _SwipeSteps(onStep: _step, child: card);
   }
@@ -449,6 +414,18 @@ class _SwipeStepsState extends State<_SwipeSteps> {
 }
 
 /// A type's colour: expense red, income green, transfer neutral.
+/// The transaction hero's look as one [HeroStyle]: the type colour as a wash with
+/// a border in it (a transfer's is neutral). The hero card AND its compact
+/// bar are built from it.
+HeroStyle txHeroStyle(BuildContext context, TransactionType type) {
+  return HeroStyle.tinted(
+    color: txTypeColor(context, type),
+    borderColor: type == TransactionType.transfer
+        ? Theme.of(context).colorScheme.outline
+        : null,
+  );
+}
+
 Color txTypeColor(BuildContext context, TransactionType t) {
   final palette = Theme.of(context).extension<AppColors>()!;
   return switch (t) {
@@ -546,7 +523,6 @@ class _AmountInputState extends State<_AmountInput> {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
     final color = txTypeColor(context, widget.type);
     final base = widget.compact
         ? Theme.of(context).textTheme.titleLarge
@@ -560,7 +536,7 @@ class _AmountInputState extends State<_AmountInput> {
     // which), and the symbol hugs the digits — the field is only as wide
     // as what's typed, so the pair grows together from the aligned side.
     final field = IntrinsicWidth(
-      child: TextField(
+      child: AppInput(
         controller: widget.controller,
         focusNode: _focus,
         autofocus: widget.autofocus,
@@ -572,18 +548,11 @@ class _AmountInputState extends State<_AmountInput> {
         inputFormatters: [ThousandsInputFormatter()],
         style: big,
         cursorColor: Theme.of(context).colorScheme.primary,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          filled: false,
-          isDense: true,
-          constraints: const BoxConstraints(minWidth: 12),
-          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          hintText: _focus.hasFocus ? null : '0',
-          hintStyle: big?.copyWith(color: color.withValues(alpha: 0.35)),
-          semanticCounterText: l.transactionFormAmountLabel,
-        ),
+        look: AppInputLook.bare,
+        minWidth: 12,
+        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        hint: _focus.hasFocus ? null : '0',
+        hintStyle: big?.copyWith(color: color.withValues(alpha: 0.35)),
       ),
     );
     // The whole box is the tap target (owner 2026-10-11): the symbol and

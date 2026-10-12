@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/currencies.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 import 'account_card.dart';
 
@@ -15,6 +14,7 @@ CompactHeroBar walletCompactHero(
   VoidCallback? onTap,
 }) {
   return CompactHeroBar(
+    style: accountHeroStyle(context, account),
     leading: AccountIconCircle(account: account, size: 28),
     title: Text(account.name),
     trailing: MoneyText(

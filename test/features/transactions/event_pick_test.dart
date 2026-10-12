@@ -13,12 +13,13 @@ Transaction _tx({
   String? repays,
 }) => Transaction.fromJson({
   'id': 't1',
-  'account_id': 'a1',
+  'account': {'id': 'a1', 'name': 'A'},
   'type': type,
   'amount': 100,
   'date': '2026-10-10',
   'can_edit_category': author,
   'is_locked': locked,
+  'is_repayment': repays != null,
   'source_personal_debt_id': ?repays,
 });
 

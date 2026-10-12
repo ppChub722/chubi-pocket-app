@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/saving_goal.dart';
 
 /// Saving goals list card: icon · name · description (when set) · linked
@@ -35,9 +30,7 @@ class SavingGoalCard extends StatelessWidget {
     final secondary = Theme.of(
       context,
     ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
+    return AppCard(
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -105,7 +98,7 @@ class SavingGoalCard extends StatelessWidget {
                     icon: AppIcons.success,
                     tone: AppChipTone.success,
                     selected: true,
-                    size: PillSize.chip,
+                    size: ChipSize.chip,
                   ),
                 ),
               ],

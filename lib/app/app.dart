@@ -6,13 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'shell/keyboard_insets_guard.dart';
-import '../core/fonts/font_registry.dart';
 import '../core/network/api_client.dart';
 import '../core/network/connectivity_cubit.dart';
+import '../core/network/network_recorder.dart';
 import '../core/router/app_router.dart';
 import '../core/storage/secure_token_storage.dart';
-import '../core/theme/theme_builder.dart';
-import '../core/theme/theme_registry.dart';
+import '../ui/tokens/app/theme/theme_builder.dart';
 import '../features/accounts/data/accounts_repository.dart';
 import '../features/accounts/presentation/cubit/accounts_cubit.dart';
 import '../features/app_version/data/app_version_repository.dart';
@@ -51,7 +50,7 @@ import '../features/preferences/presentation/cubit/money_visibility_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_id_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import '../l10n/gen/app_localizations.dart';
-import '../shared/widgets/offline_banner.dart';
+import '../ui/ui.dart';
 
 /// Root widget. Owns the long-lived singletons (token storage, API client,
 /// auth repo + cubit) and rebuilds [MaterialApp.router] when theme / locale
@@ -125,6 +124,12 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
     );
     _lifecycle = AppLifecycleListener(onResume: _versionCubit.check);
     _router = buildAppRouter(_authCubit, versionCubit: _versionCubit);
+    // The dev hub's Network page labels each call with the page it came from.
+    _router.routerDelegate.addListener(
+      () => NetworkRecorder.instance.noteRoute(
+        _router.routerDelegate.currentConfiguration.uri.path,
+      ),
+    );
     _versionCubit.check();
 
     // Resolve cold-start auth state.
@@ -211,8 +216,16 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                 TransactionsCubit(repository: _transactionsRepository),
           ),
           BlocProvider<UnreadBadgeCubit>(
-            create: (_) =>
-                UnreadBadgeCubit(repository: _notificationsRepository)..start(),
+            // Polls only while signed in, and starts ONCE: here when a session
+            // is already there, otherwise from the auth listener below at
+            // login (a poll before login only 401s).
+            create: (ctx) {
+              final cubit = UnreadBadgeCubit(
+                repository: _notificationsRepository,
+              );
+              if (_authCubit.state is AuthAuthenticated) cubit.start();
+              return cubit;
+            },
           ),
           BlocProvider<ContactsCubit>(
             create: (_) => ContactsCubit(repository: _contactsRepository),
@@ -295,24 +308,25 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                 onGenerateTitle: (ctx) => AppLocalizations.of(ctx)!.appName,
                 routerConfig: _router,
                 // Same status-bar style on screens without an AppTopBar.
-                builder: (context, child) =>
-                    AnnotatedRegion<SystemUiOverlayStyle>(
-                      value: ThemeBuilder.systemBarsStyle(
-                        Theme.of(context).scaffoldBackgroundColor,
-                      ),
-                      // A keyboard height left over from leaving the app
-                      // with it open is dropped here, for every page and
-                      // sheet below.
-                      child: KeyboardInsetsGuard(
-                        child: Column(
-                          children: [
-                            const OfflineBanner(),
-                            const UpdateBanner(),
-                            Expanded(child: child ?? const SizedBox.shrink()),
-                          ],
-                        ),
+                builder: (context, child) => AppUiConfig(
+                  child: AnnotatedRegion<SystemUiOverlayStyle>(
+                    value: ThemeBuilder.systemBarsStyle(
+                      Theme.of(context).scaffoldBackgroundColor,
+                    ),
+                    // A keyboard height left over from leaving the app
+                    // with it open is dropped here, for every page and
+                    // sheet below.
+                    child: KeyboardInsetsGuard(
+                      child: Column(
+                        children: [
+                          const OfflineBanner(),
+                          const UpdateBanner(),
+                          Expanded(child: child ?? const SizedBox.shrink()),
+                        ],
                       ),
                     ),
+                  ),
+                ),
               ),
             );
           },

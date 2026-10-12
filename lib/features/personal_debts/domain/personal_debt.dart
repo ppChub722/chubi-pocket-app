@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:equatable/equatable.dart';
 
+import '../../transactions/domain/refs.dart';
+
 enum DebtDirection { iOwe, owedToMe }
 
 extension DebtDirectionWire on DebtDirection {
@@ -55,7 +57,7 @@ class PersonalDebt extends Equatable {
     required this.id,
     required this.userId,
     required this.direction,
-    required this.counterpartyPersonName,
+    required this.person,
     required this.amount,
     required this.settledAmount,
     required this.currency,
@@ -73,7 +75,11 @@ class PersonalDebt extends Equatable {
   final String userId;
   final DebtDirection direction;
   final String? counterpartyContactId;
-  final String counterpartyPersonName;
+
+  /// The counterparty as the BE resolved it (live name by the one name rule,
+  /// icon, linked) — the API no longer returns the stored snapshot name.
+  final EmbeddedPerson person;
+  String get counterpartyPersonName => person.name;
   final String? sourceTransactionId;
   final String? sourceProjectTransactionId;
   final String? projectId;
@@ -99,7 +105,7 @@ class PersonalDebt extends Equatable {
       userId: json['user_id'] as String,
       direction: DebtDirectionWire.parse(json['direction'] as String?),
       counterpartyContactId: json['counterparty_contact_id'] as String?,
-      counterpartyPersonName: json['counterparty_person_name'] as String,
+      person: EmbeddedPerson.fromJson(json['person'] as Map<String, dynamic>),
       sourceTransactionId: json['source_transaction_id'] as String?,
       sourceProjectTransactionId:
           json['source_project_transaction_id'] as String?,
@@ -122,7 +128,7 @@ class PersonalDebt extends Equatable {
     userId,
     direction,
     counterpartyContactId,
-    counterpartyPersonName,
+    person,
     sourceTransactionId,
     sourceProjectTransactionId,
     projectId,
@@ -139,7 +145,7 @@ class PersonalDebt extends Equatable {
 /// Person row from `GET /personal-debts/people` — aggregated by counterparty.
 class PersonRow extends Equatable {
   const PersonRow({
-    required this.displayName,
+    required this.person,
     required this.owedToMeOpen,
     required this.iOweOpen,
     required this.netPosition,
@@ -148,7 +154,8 @@ class PersonRow extends Equatable {
   });
 
   final String? contactId;
-  final String displayName;
+  final EmbeddedPerson person;
+  String get displayName => person.name;
   final double owedToMeOpen;
   final double iOweOpen;
   final double netPosition;
@@ -161,7 +168,7 @@ class PersonRow extends Equatable {
   factory PersonRow.fromJson(Map<String, dynamic> json) {
     return PersonRow(
       contactId: json['contact_id'] as String?,
-      displayName: json['display_name'] as String,
+      person: EmbeddedPerson.fromJson(json['person'] as Map<String, dynamic>),
       owedToMeOpen: (json['owed_to_me_open'] as num).toDouble(),
       iOweOpen: (json['i_owe_open'] as num).toDouble(),
       netPosition: (json['net_position'] as num).toDouble(),
@@ -172,7 +179,7 @@ class PersonRow extends Equatable {
   @override
   List<Object?> get props => [
     contactId,
-    displayName,
+    person,
     owedToMeOpen,
     iOweOpen,
     netPosition,
@@ -227,11 +234,15 @@ class DebtPerson {
     required this.contactId,
     required this.displayName,
     required this.debts,
+    this.person,
   });
 
   final String? contactId;
   final String displayName;
   final List<PersonalDebt> debts;
+
+  /// The resolved person (icon, linked) when known.
+  final EmbeddedPerson? person;
 
   static String keyOf(PersonalDebt d) => d.counterpartyContactId != null
       ? 'c:${d.counterpartyContactId}'
@@ -270,6 +281,7 @@ class DebtPerson {
             () => DebtPerson(
               contactId: d.counterpartyContactId,
               displayName: d.counterpartyPersonName,
+              person: d.person,
               debts: [],
             ),
           )

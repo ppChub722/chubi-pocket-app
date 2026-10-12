@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../domain/form_options.dart';
 import '../domain/transaction.dart';
 import '../domain/transaction_type.dart';
 import '../domain/transactions_summary.dart';
@@ -137,7 +138,7 @@ class TransactionsRepository {
   /// and repayments stay. One WITH a contact can't change who it is.
   /// Omitted or unchanged fields leave the person as is.
   ///
-  /// Refusals: 422 SPLIT_IDENTITY_LOCKED · 400 CONTACT_NOT_FOUND ·
+  /// Refusals: 400 CONTACT_NOT_FOUND ·
   /// 409 CONTACT_ARCHIVED · 403 SPLITS_AUTHOR_ONLY · 400
   /// SPLITS_EXCEED_AMOUNT · 400 SPLITS_ON_TRANSFER · 400 VALIDATION_ERROR ·
   /// 400 SYSTEM_TRANSACTION_IMMUTABLE. Repayments never limit an edit: a
@@ -157,9 +158,9 @@ class TransactionsRepository {
     }
   }
 
-  /// `POST /v1/transactions`. Returns either a single [Transaction]
-  /// (expense / income) or a [TransferResult] of two rows (transfer)
-  /// per spec §3.1 — wrapped in [TransactionMutationResult].
+  /// `POST /v1/transactions` (API v2). One call creates the row with its
+  /// tags and splits; returns `{rows, account_balances}` (a transfer returns
+  /// both rows, OUT first; its tags go on the OUT row).
   ///
   /// For transfers, [transferToAccountId] must be set and differ from
   /// [accountId]; both accounts must share the same currency in
@@ -173,6 +174,7 @@ class TransactionsRepository {
     String? description,
     String? note,
     String? transferToAccountId,
+    List<String> tagIds = const [],
     List<Map<String, dynamic>>? splits,
     String? sourceProjectTransactionId,
   }) async {
@@ -186,6 +188,7 @@ class TransactionsRepository {
         'description': ?description,
         'note': ?note,
         'transfer_to_account_id': ?transferToAccountId,
+        if (tagIds.isNotEmpty) 'tag_ids': tagIds,
         if (splits != null && splits.isNotEmpty) 'splits': splits,
         'source_project_transaction_id': ?sourceProjectTransactionId,
       };
@@ -193,7 +196,7 @@ class TransactionsRepository {
         '/transactions',
         data: body,
       );
-      return TransactionMutationResult.fromJson(res.data!);
+      return TransactionWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -221,9 +224,12 @@ class TransactionsRepository {
     String? accountId,
     bool clearAccount = false,
     String? transferToAccountId,
+    List<String>? tagIds,
   }) async {
     try {
       final body = <String, dynamic>{'amount': ?amount, 'date': ?date};
+      // Present = REPLACES the tag set (`[]` clears); omitted = unchanged.
+      if (tagIds != null) body['tag_ids'] = tagIds;
       if (categoryId != null) {
         body['category_id'] = categoryId;
       } else if (clearCategory) {
@@ -251,58 +257,48 @@ class TransactionsRepository {
         '/transactions/$id',
         data: body,
       );
-      return TransactionMutationResult.fromJson(res.data!);
+      return TransactionWriteResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// `DELETE /v1/transactions/:id`. For transfers the paired row is
-  /// also deleted and both balances reverse (spec §3.5). The endpoint
-  /// returns no body of interest beyond status.
-  Future<void> delete(String id) async {
+  /// `DELETE /v1/transactions/:id`. For transfers the paired row is also
+  /// deleted and both balances reverse. Returns `{id, account_balances}`.
+  Future<DeleteTransactionResult> delete(String id) async {
     try {
-      await _client.dio.delete<Map<String, dynamic>>('/transactions/$id');
+      final res = await _client.dio.delete<Map<String, dynamic>>(
+        '/transactions/$id',
+      );
+      return DeleteTransactionResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// `POST /v1/transactions/:id/tags` — attaches a list of tag ids
-  /// to a transaction. Idempotent (already-attached tags are no-ops
-  /// per spec §3.11). Returns the transaction's full tag list as
-  /// [EmbeddedTag] so the caller can patch its cache without a
-  /// follow-up GET.
-  Future<List<EmbeddedTag>> attachTags({
-    required String transactionId,
-    required List<String> tagIds,
-  }) async {
-    if (tagIds.isEmpty) return const [];
+  /// `PUT /v1/transactions/:id/tags` — REPLACES the tag set (`[]` clears).
+  /// Returns the full row.
+  Future<Transaction> setTags(String id, List<String> tagIds) async {
     try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/transactions/$transactionId/tags',
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/transactions/$id/tags',
         data: <String, dynamic>{'tag_ids': tagIds},
       );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      // The Tag shape from /v1/tags is a superset of EmbeddedTag —
-      // pulling only the fields we care about.
-      return data.map(EmbeddedTag.fromJson).toList();
+      return Transaction.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// `DELETE /v1/transactions/:id/tags/:tag_id` — detaches one tag.
-  /// Idempotent. No useful body returned; caller should patch its
-  /// local list.
-  Future<void> detachTag({
-    required String transactionId,
-    required String tagId,
-  }) async {
+  /// `GET /v1/transactions/form-options` — wallets (+ default), categories,
+  /// tags, active events and the fee category in ONE call; the pickers of
+  /// quick create, the draft editors and the filter sheet read from it.
+  Future<TxFormOptions> formOptions() async {
     try {
-      await _client.dio.delete<Map<String, dynamic>>(
-        '/transactions/$transactionId/tags/$tagId',
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/transactions/form-options',
       );
+      return TxFormOptions.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

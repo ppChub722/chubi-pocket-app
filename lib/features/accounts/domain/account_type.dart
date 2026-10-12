@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../../core/constants/app_icons.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../ui/ui.dart';
 
 /// The five account types from
 /// [`design/spec/03-accounts.md §3.1`](../../../../../chubi-pocket-docs/design/spec/03-accounts.md).

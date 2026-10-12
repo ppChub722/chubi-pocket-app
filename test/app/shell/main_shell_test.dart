@@ -2,9 +2,9 @@ import 'package:chubi_pocket/app/shell/fade_branch_container.dart';
 import 'package:chubi_pocket/app/shell/main_shell.dart';
 import 'package:chubi_pocket/app/shell/shell_chrome.dart';
 import 'package:chubi_pocket/app/shell/tab_nav.dart';
-import 'package:chubi_pocket/core/constants/app_icons.dart';
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -165,11 +165,13 @@ void main() {
         locale: const Locale('th'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(disableAnimations: reduceMotion),
-          child: child!,
+        builder: (context, child) => AppUiConfig(
+          child: MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(disableAnimations: reduceMotion),
+            child: child!,
+          ),
         ),
       ),
     );

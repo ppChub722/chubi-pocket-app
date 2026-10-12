@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/shared/widgets/reorder/reorder_outline.dart';
+import 'package:chubi_pocket/ui/organisms/reorder/reorder_outline.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// `'A:1 A1:2 B:1'` → an outline (one section).

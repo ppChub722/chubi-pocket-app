@@ -301,19 +301,11 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     }
   }
 
-  /// Creates a transaction (or transfer pair). Appends to the cache;
-  /// re-throws [ApiException] so the form can show a snackbar.
-  ///
-  /// `tagIds`: optional list of tag ids to attach immediately after
-  /// the create. Two HTTP calls under the hood (create then attach);
-  /// no transaction-level "create with tags" endpoint exists in the
-  /// spec. For transfers, tags are attached **only** to the OUT row
-  /// — the user mentally tagged "the transfer", not "this side of
-  /// the transfer".
-  ///
-  /// Returns the mutation result so callers can use the embedded
-  /// `account_balance_after` to update the [AccountsCubit] surgically.
-  Future<TransactionMutationResult> add({
+  /// Creates a transaction (or transfer pair) in ONE call — tags and splits
+  /// ride in the body (API v2). The returned rows go into the cache where the
+  /// list's filters put them; the result's `accountBalances` are for
+  /// [AccountsCubit.patchBalances]. Re-throws [ApiException].
+  Future<TransactionWriteResult> add({
     required TransactionType type,
     String? accountId,
     required double amount,
@@ -334,56 +326,17 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       description: description,
       note: note,
       transferToAccountId: transferToAccountId,
+      tagIds: tagIds,
       splits: splits,
     );
-    // Attach tags if any. For transfers we attach only to the OUT row
-    // (the one the user "owns" — the source account). The IN side is
-    // a mirror entry for the destination account's ledger.
-    if (tagIds.isNotEmpty) {
-      final target = result.transfer != null
-          ? result.transfer!.rows.firstWhere(
-              (r) => r.signedAmount < 0,
-              orElse: () => result.transfer!.rows.first,
-            )
-          : result.single!;
-      try {
-        final tags = await _repo.attachTags(
-          transactionId: target.id,
-          tagIds: tagIds,
-        );
-        // Patch the affected row's tags into our local copy of result
-        // so the in-memory state reflects the attached tags.
-        final patchedRow = target.copyWith(tags: tags);
-        if (result.single != null) {
-          _emitWrite(state.copyWith(transactions: _place([patchedRow])));
-          return TransactionMutationResult.single(patchedRow);
-        }
-        // Transfer — replace OUT row with the patched one.
-        final newRows = [
-          for (final r in result.transfer!.rows)
-            if (r.id == target.id) patchedRow else r,
-        ];
-        _emitWrite(state.copyWith(transactions: _place(newRows)));
-        return TransactionMutationResult.transfer(
-          TransferResult(
-            transferGroupId: result.transfer!.transferGroupId,
-            rows: newRows,
-          ),
-        );
-      } on ApiException catch (e) {
-        // Attach failed — but the transaction IS created. Never rethrow the
-        // ApiException: a form would stay open and a second Save would
-        // create a duplicate. [TagsAttachFailed] says "saved, tags not".
-        _emitWrite(state.copyWith(transactions: _place(result.rows)));
-        throw TagsAttachFailed(result, e);
-      }
-    }
     // Only where the list's filters and sort put it (see [_place]).
     _emitWrite(state.copyWith(transactions: _place(result.rows)));
     return result;
   }
 
-  Future<TransactionMutationResult> updateTransaction({
+  /// Edits a transaction in ONE call. [tagIds] (when not null) replaces the
+  /// tag set. Returns the rows + balances after the write.
+  Future<TransactionWriteResult> updateTransaction({
     required String id,
     double? amount,
     String? date,
@@ -396,6 +349,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     String? accountId,
     bool clearAccount = false,
     String? transferToAccountId,
+    List<String>? tagIds,
   }) async {
     final result = await _repo.update(
       id: id,
@@ -410,6 +364,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       accountId: accountId,
       clearAccount: clearAccount,
       transferToAccountId: transferToAccountId,
+      tagIds: tagIds,
     );
     // An edit can move the row (new date / amount) or take it out of the
     // filters (new type / wallet / category).
@@ -417,48 +372,30 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     return result;
   }
 
-  /// Reconciles the tags attached to [transactionId] against [tagIds].
-  /// Computes the diff, calls attach for newcomers and detach for the
-  /// removals. Used by the edit form's Save flow when the user
-  /// changes the chip selection.
-  ///
-  /// Patches the row in cubit state with the new tag list once the
-  /// reconciliation succeeds.
+  /// Replaces the tags of [transactionId] with [tagIds] (one `PUT`); the
+  /// row in the response goes into the cache.
   Future<void> setTags({
     required String transactionId,
     required List<String> tagIds,
   }) async {
     final current = byId(transactionId);
-    if (current == null) return;
-    final currentIds = current.tags.map((t) => t.id).toSet();
-    final desired = tagIds.toSet();
-    final toAttach = desired.difference(currentIds).toList();
-    final toDetach = currentIds.difference(desired);
-
-    if (toAttach.isEmpty && toDetach.isEmpty) return;
-
-    // Apply removals first so a tag the user just unchecked doesn't
-    // linger if the attach call fails partway.
-    for (final id in toDetach) {
-      await _repo.detachTag(transactionId: transactionId, tagId: id);
+    if (current != null) {
+      final same =
+          current.tags.length == tagIds.length &&
+          current.tags.map((t) => t.id).toSet().containsAll(tagIds);
+      if (same) return;
     }
-    if (toAttach.isNotEmpty) {
-      await _repo.attachTags(transactionId: transactionId, tagIds: toAttach);
-    }
-
-    // Refresh the row by fetching it — simplest correct path; gives us
-    // the BE's authoritative ordered tag list with full embedded
-    // metadata (color/icon).
-    final fresh = await _repo.get(transactionId);
+    final fresh = await _repo.setTags(transactionId, tagIds);
     // Tags can take it in / out of a tag filter.
     _emitWrite(state.copyWith(transactions: _place([fresh])));
   }
 
-  /// Deletes a transaction. For transfers, the BE cascades to the
-  /// paired row; we drop both from the cache by `transfer_group_id`.
-  Future<void> remove(String id) async {
+  /// Deletes a transaction. For transfers, the BE cascades to the paired
+  /// row; we drop both from the cache by `transfer_group_id`. Returns the
+  /// wallets' balances after the delete.
+  Future<DeleteTransactionResult> remove(String id) async {
     final tx = byId(id);
-    await _repo.delete(id);
+    final result = await _repo.delete(id);
     if (tx?.transferGroupId != null) {
       _emitWrite(
         state.copyWith(
@@ -474,6 +411,7 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         ),
       );
     }
+    return result;
   }
 
   // ── Read helpers ──────────────────────────────────────────────────
@@ -493,9 +431,20 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
   /// (no `splits`) straight back over the row just fetched. [afterWrite]:
   /// the row changed on the server (its splits were saved), so this goes
   /// the write path and the other lists re-fetch too.
-  Future<void> refreshOne(String id, {bool afterWrite = false}) async {
+  Future<Transaction> refreshOne(String id, {bool afterWrite = false}) async {
     final fresh = await _repo.get(id);
+    if (isClosed) return fresh;
+    patchRow(fresh, afterWrite: afterWrite);
+    return fresh;
+  }
+
+  /// Puts a row the server just returned (a write response, a read) into the
+  /// cache without another call: replaced in place when this list holds it,
+  /// otherwise placed only if the list's filters want it. [afterWrite]: the
+  /// row changed on the server, so the other live lists re-fetch too.
+  void patchRow(Transaction fresh, {bool afterWrite = false}) {
     if (isClosed) return;
+    final id = fresh.id;
     final known = state.transactions.any((t) => t.id == id);
     final next = state.copyWith(
       // A row this list doesn't hold (opened from elsewhere) is placed
@@ -652,13 +601,4 @@ class _ListQuery {
       _ => byDate == 0 ? -1 : -byDate, // date_desc
     };
   }
-}
-
-/// Thrown by [TransactionsCubit.add] when the transaction was created but
-/// attaching its tags failed. Callers treat it as saved (close the form)
-/// and warn that the tags didn't stick.
-class TagsAttachFailed implements Exception {
-  const TagsAttachFailed(this.result, this.cause);
-  final TransactionMutationResult result;
-  final ApiException cause;
 }

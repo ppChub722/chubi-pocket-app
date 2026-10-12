@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/skeleton_box.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transactions_summary.dart';
 
@@ -97,7 +95,7 @@ class _PeriodSummaryCardState extends State<PeriodSummaryCard> {
       SummaryPeriod.year: l.transactionsRangeYear,
       SummaryPeriod.all: l.transactionsRangeAll,
     };
-    return Card(
+    return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(

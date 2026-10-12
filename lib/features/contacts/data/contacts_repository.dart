@@ -2,22 +2,40 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../shared/icon_maker/icon_code.dart';
+import '../../notifications/domain/notification.dart';
 import '../domain/contact.dart';
+import '../../../ui/ui.dart';
 
-class ContactCreateResult {
-  const ContactCreateResult({
+/// `{contact, notification, badges}` of a link-request action. [contact] is
+/// null for accept (the linked contact belongs to the sender) and reject.
+class LinkRequestResult {
+  const LinkRequestResult({
     required this.contact,
-    required this.absorbedCount,
+    required this.notification,
+    required this.badges,
   });
-  final Contact contact;
-  final int absorbedCount;
+  final Contact? contact;
+  final AppNotification notification;
+  final Map<String, dynamic> badges;
+
+  factory LinkRequestResult.fromJson(Map<String, dynamic> json) =>
+      LinkRequestResult(
+        contact: json['contact'] != null
+            ? Contact.fromJson(json['contact'] as Map<String, dynamic>)
+            : null,
+        notification: AppNotification.fromJson(
+          json['notification'] as Map<String, dynamic>,
+        ),
+        badges: (json['badges'] as Map<String, dynamic>?) ?? const {},
+      );
 }
 
 class ContactsRepository {
   ContactsRepository({required ApiClient client}) : _client = client;
   final ApiClient _client;
 
+  /// `GET /contacts` — the server orders (active first, then resolved name,
+  /// case-insensitive) and searches name / nickname / display_name / email.
   Future<List<Contact>> list({
     String? status,
     bool? linked,
@@ -39,17 +57,24 @@ class ContactsRepository {
     }
   }
 
-  Future<Contact> get(String id) async {
+  /// `GET /contacts/:id?include=unlinked_names` — one call: the contact plus
+  /// the split names still free to wire to it.
+  Future<ContactDetail> get(String id) async {
     try {
-      final res = await _client.dio.get<Map<String, dynamic>>('/contacts/$id');
-      return Contact.fromJson(res.data!);
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/contacts/$id',
+        queryParameters: const {'include': 'unlinked_names'},
+      );
+      return ContactDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  Future<ContactCreateResult> create({
+  Future<AbsorbResult> create({
     required String displayName,
+    String? nickname,
+    bool? showNickname,
     String? email,
     String? phone,
     String? description,
@@ -62,6 +87,8 @@ class ContactsRepository {
         '/contacts',
         data: <String, dynamic>{
           'display_name': displayName,
+          'nickname': ?(nickname == null || nickname.isEmpty ? null : nickname),
+          'show_nickname': ?showNickname,
           'email': ?email,
           'phone': ?phone,
           'description': ?description,
@@ -70,18 +97,19 @@ class ContactsRepository {
           'absorb_names': ?absorbNames,
         },
       );
-      return ContactCreateResult(
-        contact: Contact.fromJson(res.data!['contact'] as Map<String, dynamic>),
-        absorbedCount: (res.data!['absorbed_count'] as num?)?.toInt() ?? 0,
-      );
+      return AbsorbResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
+  /// Partial update. A null argument is left out of the body (unchanged);
+  /// an empty [nickname] is sent as an explicit `null` (clears it).
   Future<Contact> update(
     String id, {
     String? displayName,
+    String? nickname,
+    bool? showNickname,
     String? email,
     String? phone,
     String? description,
@@ -93,6 +121,8 @@ class ContactsRepository {
         '/contacts/$id',
         data: <String, dynamic>{
           'display_name': ?displayName,
+          if (nickname != null) 'nickname': nickname.isEmpty ? null : nickname,
+          'show_nickname': ?showNickname,
           'email': ?email,
           'phone': ?phone,
           'description': ?description,
@@ -110,43 +140,36 @@ class ContactsRepository {
   Future<Contact> restore(String id) => _post('/contacts/$id/restore');
   Future<Contact> unlink(String id) => _post('/contacts/$id/unlink');
 
-  Future<int> delete(String id) async {
+  /// `POST /contacts/:id/request-link`. Privacy-preserving: same response on
+  /// hit and miss. Returns the contact.
+  Future<Contact> requestLink(String id) => _post('/contacts/$id/request-link');
+
+  Future<DeleteContactResult> delete(String id) async {
     try {
       final res = await _client.dio.delete<Map<String, dynamic>>(
         '/contacts/$id',
       );
-      return (res.data?['splits_restored'] as num?)?.toInt() ?? 0;
+      return DeleteContactResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  Future<int> absorb(String id, List<String> names) async {
+  Future<AbsorbResult> absorb(String id, List<String> names) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/contacts/$id/absorb',
         data: <String, dynamic>{'names': names},
       );
-      return (res.data?['absorbed_count'] as num?)?.toInt() ?? 0;
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  /// `POST /contacts/:id/request-link`. Privacy-preserving: same response on
-  /// hit and miss.
-  Future<void> requestLink(String id) async {
-    try {
-      await _client.dio.post<dynamic>('/contacts/$id/request-link');
+      return AbsorbResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
   /// `GET /contacts/link-requests/:notification_id/sender-profile` —
-  /// returns the sender's display_name + email + icon for pre-filling
-  /// the contact form during the inbox tap flow. BE gates this to the
-  /// recipient while the request is still pending.
+  /// the sender's display_name + email + icon (+ the caller's `contact_id`
+  /// that already links to them) for the inbox tap flow.
   Future<SenderProfile> senderProfile(String notificationId) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
@@ -160,88 +183,56 @@ class ContactsRepository {
 
   /// `POST /contacts/link-requests/:notification_id/accept` — links the
   /// sender's contact to the caller and marks the notification actioned.
-  /// Does NOT touch the caller's address book; that's a separate
-  /// post-accept tap-flow step (see [createLinkedContactFromLinkRequest]
-  /// / [linkExistingContactFromLinkRequest]).
-  Future<Contact> acceptLinkRequest(String notificationId) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/contacts/link-requests/$notificationId/accept',
-      );
-      return Contact.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  /// Returns `contact: null`; the post-accept tap-flow step creates / links
+  /// the caller's own contact separately.
+  Future<LinkRequestResult> acceptLinkRequest(String notificationId) =>
+      _linkAction('/contacts/link-requests/$notificationId/accept');
 
   /// `POST /contacts/link-requests/:notification_id/reject` — marks the
   /// recipient's notification dismissed. Silent on the sender's side.
-  Future<void> rejectLinkRequest(String notificationId) async {
-    try {
-      await _client.dio.post<dynamic>(
-        '/contacts/link-requests/$notificationId/reject',
-      );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  Future<LinkRequestResult> rejectLinkRequest(String notificationId) =>
+      _linkAction('/contacts/link-requests/$notificationId/reject');
 
   /// `POST /contacts/link-requests/:notification_id/create-linked-contact`
   ///
   /// Post-accept "no existing contact, create one" — the BE pulls
-  /// display_name + email from the sender's user record (so the snapshot
-  /// is correct as a fallback if the contact is later unlinked). Phone /
+  /// display_name + email from the sender's user record. Phone /
   /// description / note come from the form.
-  Future<Contact> createLinkedContactFromLinkRequest(
+  Future<LinkRequestResult> createLinkedContactFromLinkRequest(
     String notificationId, {
     String? phone,
     String? description,
     String? note,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/contacts/link-requests/$notificationId/create-linked-contact',
-        data: <String, dynamic>{
-          'phone': ?phone,
-          'description': ?description,
-          'note': ?note,
-        },
-      );
-      return Contact.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  }) => _linkAction(
+    '/contacts/link-requests/$notificationId/create-linked-contact',
+    data: <String, dynamic>{
+      'phone': ?phone,
+      'description': ?description,
+      'note': ?note,
+    },
+  );
 
   /// `POST /contacts/link-requests/:notification_id/link-existing-contact/:contact_id`
   ///
-  /// Post-accept "I already have a contact for them, just wire the link"
-  /// — the BE sets `linked_user_id` on the existing caller-owned contact.
-  /// `display_name` and `email` are NOT sent — those project from the
-  /// linked user once the contact is linked. Phone / description / note are
-  /// optional B-side updates.
-  Future<Contact> linkExistingContactFromLinkRequest(
+  /// Post-accept "I already have a contact for them, just wire the link".
+  /// Phone / description / note are optional B-side updates.
+  Future<LinkRequestResult> linkExistingContactFromLinkRequest(
     String notificationId,
     String contactId, {
     String? phone,
     String? description,
     String? note,
-  }) async {
-    try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/contacts/link-requests/$notificationId/link-existing-contact/$contactId',
-        data: <String, dynamic>{
-          'phone': ?phone,
-          'description': ?description,
-          'note': ?note,
-        },
-      );
-      return Contact.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
+  }) => _linkAction(
+    '/contacts/link-requests/$notificationId/link-existing-contact/$contactId',
+    data: <String, dynamic>{
+      'phone': ?phone,
+      'description': ?description,
+      'note': ?note,
+    },
+  );
 
+  /// `GET /contacts/unlinked-names` — create-sheet suggestions only (the
+  /// detail page gets its names from [get]).
   Future<List<UnlinkedName>> unlinkedNames() async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
@@ -249,6 +240,21 @@ class ContactsRepository {
       );
       final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
       return data.map(UnlinkedName.fromJson).toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  Future<LinkRequestResult> _linkAction(
+    String path, {
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        path,
+        data: data,
+      );
+      return LinkRequestResult.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
 import 'bank_picker_sheet.dart';
@@ -49,7 +47,7 @@ Widget _mark(
 }) {
   final bank = identifierHasBank(id.kind) ? _bankOf(id, providers) : null;
   if (bank != null) return BankMark(provider: bank, size: size);
-  return Icon(
+  return AppIcon(
     identifierKindIcon(id.kind),
     size: size * 0.9,
     color: Theme.of(context).colorScheme.primary,
@@ -111,10 +109,10 @@ class IdentifierRow extends StatelessWidget {
             ),
           ),
           if (onDelete != null)
-            IconButton(
+            AppIconButton.close(
               tooltip: l.identifierDelete,
-              visualDensity: VisualDensity.compact,
-              icon: Icon(AppIcons.close, color: scheme.error),
+              dense: true,
+              color: scheme.error,
               onPressed: onDelete,
             ),
         ],
@@ -231,7 +229,7 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: TextFormField(
+            child: AppInput(
               controller: _number,
               autofocus: widget.autofocus,
               keyboardType: id.kind == IdentifierKind.other
@@ -241,23 +239,8 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
-              decoration: InputDecoration(
-                hintText: _hint(l, id.kind),
-                isDense: true,
-                filled: false,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.sm,
-                ),
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: scheme.outlineVariant),
-                ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: scheme.outlineVariant),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: scheme.primary),
-                ),
-              ),
+              look: AppInputLook.underline,
+              hint: _hint(l, id.kind),
               validator: (v) => _validate(v, l),
               onChanged: (v) => widget.onChanged(
                 AccountIdentifier(
@@ -268,10 +251,10 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
               ),
             ),
           ),
-          IconButton(
+          AppIconButton.close(
             tooltip: l.identifierDelete,
-            icon: const Icon(AppIcons.close, size: 18),
-            visualDensity: VisualDensity.compact,
+            iconSize: AppIconSize.md,
+            dense: true,
             color: scheme.onSurfaceVariant,
             onPressed: widget.onRemove,
           ),
@@ -389,7 +372,7 @@ class _KindSheet extends StatelessWidget {
         children: [
           for (final k in IdentifierKind.values)
             PickerRow(
-              leading: Icon(identifierKindIcon(k)),
+              leading: AppIcon(identifierKindIcon(k)),
               title: identifierKindLabel(l, k),
               selected: k == current,
               onTap: () {
@@ -408,16 +391,16 @@ class _KindSheet extends StatelessWidget {
               },
             ),
           if (identifierHasBank(current)) ...[
-            const Divider(height: 1),
+            const AppDivider(),
             PickerRow(
               leading: bank == null
-                  ? const Icon(AppIcons.bank)
+                  ? const AppIcon(AppIcons.bank)
                   : BankMark(provider: bank, size: 24),
               title: l.identifierBankLabel,
               subtitle: bank?.name(lang) ?? l.identifierBankNone,
               trailing: const Padding(
                 padding: EdgeInsets.only(right: AppSpacing.md),
-                child: Icon(AppIcons.chevronRight),
+                child: AppIcon(AppIcons.chevronRight),
               ),
               onTap: () => _pickBank(context, current),
             ),

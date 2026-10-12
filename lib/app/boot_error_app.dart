@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/logger/app_logger.dart';
+import '../ui/ui.dart';
 
 /// Shown instead of the real app when boot fails BEFORE `runApp` could
 /// mount [ChubiPocketApp] — the case that used to be an infinite white
@@ -43,7 +44,11 @@ class BootErrorApp extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.error_outline, size: 56, color: Colors.red),
+                const AppIcon(
+                  Icons.error_outline,
+                  size: AppIconSize.hero,
+                  color: Colors.red,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'เปิดแอปไม่สำเร็จ\nFailed to start',
@@ -79,7 +84,7 @@ class BootErrorApp extends StatelessWidget {
                 const SizedBox(height: 16),
                 Builder(
                   builder: (ctx) => FilledButton.icon(
-                    icon: const Icon(Icons.copy, size: 18),
+                    icon: const AppIcon(Icons.copy, size: AppIconSize.md),
                     label: const Text('คัดลอกรายละเอียด / Copy details'),
                     onPressed: () async {
                       await Clipboard.setData(ClipboardData(text: _report()));

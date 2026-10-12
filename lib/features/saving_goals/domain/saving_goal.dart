@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../shared/icon_maker/icon_code.dart';
 import 'saving_goal_status.dart';
+import '../../../ui/ui.dart';
 
 /// One saving goal — a target overlaid on top of a real account balance.
 ///
@@ -27,6 +27,7 @@ class SavingGoal extends Equatable {
     this.description,
     this.note,
     this.linkedAccount,
+    this.linkedAccountBalance = 0,
     this.currentAmount = 0,
     this.progressPct = 0,
     this.isCompleted = false,
@@ -53,6 +54,10 @@ class SavingGoal extends Equatable {
   /// Embedded ref returned in list responses so rows can render the
   /// linked account name + current balance without a separate fetch.
   final SavingGoalLinkedAccount? linkedAccount;
+
+  /// Balance of the linked wallet (`linked_account_balance`; the embedded
+  /// ref carries none). 0 when absent.
+  final double linkedAccountBalance;
 
   /// Computed: linkedAccount.balance × allocationPct / 100.
   final double currentAmount;
@@ -104,6 +109,7 @@ class SavingGoal extends Equatable {
     String? description,
     String? note,
     SavingGoalLinkedAccount? linkedAccount,
+    double? linkedAccountBalance,
     double? currentAmount,
     double? progressPct,
     bool? isCompleted,
@@ -125,6 +131,7 @@ class SavingGoal extends Equatable {
       description: description ?? this.description,
       note: note ?? this.note,
       linkedAccount: linkedAccount ?? this.linkedAccount,
+      linkedAccountBalance: linkedAccountBalance ?? this.linkedAccountBalance,
       currentAmount: currentAmount ?? this.currentAmount,
       progressPct: progressPct ?? this.progressPct,
       isCompleted: isCompleted ?? this.isCompleted,
@@ -145,7 +152,11 @@ class SavingGoal extends Equatable {
           (json['linked_account_id'] as String?) ??
           (embedded?['id'] as String? ?? ''),
       allocationPct: (json['allocation_pct'] as num).toDouble(),
-      currency: json['currency'] as String,
+      // Own key first, else the embedded wallet ref's currency.
+      currency:
+          (json['currency'] as String?) ??
+          (embedded?['currency'] as String?) ??
+          '',
       status: SavingGoalStatus.fromJson(json['status'] as String),
       deadline: json['deadline'] as String?,
       iconCode: json['icon_code'] != null
@@ -156,6 +167,8 @@ class SavingGoal extends Equatable {
       linkedAccount: embedded != null
           ? SavingGoalLinkedAccount.fromJson(embedded)
           : null,
+      linkedAccountBalance:
+          (json['linked_account_balance'] as num?)?.toDouble() ?? 0,
       currentAmount: (json['current_amount'] as num?)?.toDouble() ?? 0,
       progressPct: (json['progress_pct'] as num?)?.toDouble() ?? 0,
       isCompleted: json['is_completed'] as bool? ?? false,
@@ -210,6 +223,7 @@ class SavingGoal extends Equatable {
     description,
     note,
     linkedAccount,
+    linkedAccountBalance,
     currentAmount,
     progressPct,
     isCompleted,
@@ -223,25 +237,53 @@ class SavingGoal extends Equatable {
 /// Embedded linked-account ref returned alongside each saving goal so the
 /// list / detail UI can show the account name + current balance without
 /// a follow-up `/v1/accounts/:id` fetch.
+///
+/// Shared `AccountRef`: it carries no balance, see
+/// [SavingGoal.linkedAccountBalance].
 class SavingGoalLinkedAccount extends Equatable {
   const SavingGoalLinkedAccount({
     required this.id,
     required this.name,
-    required this.balance,
+    this.iconCode,
+    this.logoUrl,
+    this.type,
+    this.group,
+    this.currency,
+    this.archived = false,
   });
 
   final String id;
   final String name;
-  final double balance;
+  final IconCode? iconCode;
+  final String? logoUrl;
+  final String? type;
+  final String? group;
+  final String? currency;
+  final bool archived;
 
   factory SavingGoalLinkedAccount.fromJson(Map<String, dynamic> json) {
+    final icon = json['icon_code'];
     return SavingGoalLinkedAccount(
       id: json['id'] as String,
       name: json['name'] as String,
-      balance: (json['balance'] as num).toDouble(),
+      iconCode: icon is Map<String, dynamic> ? IconCode.fromJson(icon) : null,
+      logoUrl: json['logo_url'] as String?,
+      type: json['type'] as String?,
+      group: json['group'] as String?,
+      currency: json['currency'] as String?,
+      archived: json['archived'] as bool? ?? false,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, balance];
+  List<Object?> get props => [
+    id,
+    name,
+    iconCode,
+    logoUrl,
+    type,
+    group,
+    currency,
+    archived,
+  ];
 }

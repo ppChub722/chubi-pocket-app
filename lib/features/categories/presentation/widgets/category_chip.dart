@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../category_label.dart';
@@ -20,7 +17,7 @@ AppChip categoryAppChip(
   required List<Category> all,
   bool selected = false,
   VoidCallback? onTap,
-  PillSize size = PillSize.control,
+  ChipSize size = ChipSize.control,
 }) {
   final palette = Theme.of(context).extension<AppColors>()!;
   final code = CategoryTree.resolveIconCode(category, all);

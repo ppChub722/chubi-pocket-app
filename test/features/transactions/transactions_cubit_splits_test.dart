@@ -9,11 +9,11 @@ import 'package:flutter_test/flutter_test.dart';
 Transaction _tx(String id, {int splitCount = 0, bool withSplits = false}) =>
     Transaction.fromJson({
       'id': id,
-      'account_id': 'a1',
+      'account': {'id': 'a1', 'name': 'A'},
       'type': 'expense',
       'amount': 300,
       'date': '2026-10-10',
-      'category_id': 'c1',
+      'category': {'id': 'c1', 'name': 'C'},
       'split_count': splitCount,
       if (withSplits)
         'splits': [

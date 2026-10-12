@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/storage_keys.dart';
-import '../../../../core/theme/theme_registry.dart';
+import '../../../../ui/ui.dart';
 
 /// Holds the active theme id (e.g. `mint`, `sweet`) and persists it.
 ///

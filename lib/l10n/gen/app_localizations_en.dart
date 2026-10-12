@@ -3731,7 +3731,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledSheetTitleEdit => 'Edit scheduled entry';
 
   @override
-  String get accountIdentifiersTitle => 'Account numbers';
+  String get accountIdentifiersTitle => 'Reference numbers';
 
   @override
   String get accountIdentifiersHelper => 'Matches bank slips to this wallet';
@@ -3918,10 +3918,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String txShareOthers(String amount) {
     return 'others\' share $amount';
   }
-
-  @override
-  String get txSplitPersonLocked =>
-      'Linked to a contact — to change who, remove this row and add the person again';
 
   @override
   String get txSplitAuthorOnly =>
@@ -4154,7 +4150,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txSplitMe => 'Me';
+  String get txSplitMe => 'My share';
 
   @override
   String txSplitLeft(String amount) {
@@ -4184,8 +4180,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txSplitPersonLockedLinked =>
-      'Linked to their app account — to change who, remove this row and add the person again';
+  String get txSplitNoContact => 'No contact';
+
+  @override
+  String get txSplitNoContactHint => 'Keep the name, still editable';
 
   @override
   String get accountFormNameExample => 'e.g. Salary account';
@@ -4214,7 +4212,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountsSummaryCardDebt => 'Card debt';
 
   @override
-  String get accountReportSectionTitle => 'In my reports';
+  String get accountReportSectionTitle => 'Reports';
 
   @override
   String get accountOpeningSectionTitle => 'Opening balance';
@@ -4303,4 +4301,103 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pendingErrProjectReadOnly =>
       'You can only view that event — nothing can be added';
+
+  @override
+  String get accountReportSectionDescription =>
+      'Choose how much of this wallet counts in your reports';
+
+  @override
+  String get accountMembersSectionDescription =>
+      'People who share this wallet with you';
+
+  @override
+  String get accountCreditSectionDescription =>
+      'Statement day, due day and minimum payment for this card';
+
+  @override
+  String get accountOpeningSectionDescription =>
+      'The wallet\'s starting balance; after creating, change it with Adjust balance';
+
+  @override
+  String get accountTypeSectionDescription => 'What kind of wallet this is';
+
+  @override
+  String get walletMembersHistoryDescription =>
+      'People who were in this wallet and have left';
+
+  @override
+  String get categorySettingsSectionDescription =>
+      'Whether this category counts in reports and is used for fees';
+
+  @override
+  String get contactActionsSectionDescription =>
+      'Link to a user account, match split names and see this person\'s debts';
+
+  @override
+  String get budgetDetailBreakdownDescription =>
+      'Spending split by sub-category this period';
+
+  @override
+  String get scheduledDetailHistoryDescription =>
+      'Transactions already created from this schedule';
+
+  @override
+  String get projectMembersDescription =>
+      'People currently taking part in this event';
+
+  @override
+  String get projectMembersPendingDescription =>
+      'Invited and waiting to accept';
+
+  @override
+  String get projectMembersLeftDescription => 'People who have left this event';
+
+  @override
+  String get contactFieldNotSet => 'Not set';
+
+  @override
+  String get txSplitSectionTitle => 'Split transaction';
+
+  @override
+  String get txSplitSectionHint =>
+      'Split the amount with other people, or put it in an event';
+
+  @override
+  String get txSplitRowLabel => 'Split';
+
+  @override
+  String get dayPickerLastShort => 'Last';
+
+  @override
+  String get profileCurrencyLabel => 'Currency';
+
+  @override
+  String get contactNicknameLabel => 'Nickname';
+
+  @override
+  String get contactNicknameHint => 'Optional · e.g. Mum';
+
+  @override
+  String get contactShowNicknameLabel => 'Show nickname';
+
+  @override
+  String get contactShowNicknameHelper =>
+      'On = use the nickname instead of the name everywhere';
+
+  @override
+  String get accountsSummarySharedPot => 'Shared wallets';
+
+  @override
+  String accountsSummaryOtherCurrency(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count wallets in another currency are not counted',
+      one: '1 wallet in another currency is not counted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notOwnerError => 'Only the wallet owner can do this';
 }

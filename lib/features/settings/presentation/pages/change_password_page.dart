@@ -3,10 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/data/auth_repository.dart';
 
 class ChangePasswordPage extends StatefulWidget {
@@ -115,7 +114,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       MessageBanner(message: _bannerMessageFor(l, _error!)),
                       const SizedBox(height: AppSpacing.md),
                     ],
-                    AppTextField(
+                    AppInput(
                       controller: _currentCtrl,
                       enabled: !_submitting,
                       obscurable: true,
@@ -126,7 +125,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           (v == null || v.isEmpty) ? l.commonRequired : null,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    AppTextField(
+                    AppInput(
                       controller: _newCtrl,
                       enabled: !_submitting,
                       obscurable: true,
@@ -147,7 +146,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       },
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    AppTextField(
+                    AppInput(
                       controller: _confirmCtrl,
                       enabled: !_submitting,
                       obscurable: true,

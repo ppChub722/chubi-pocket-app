@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
-import '../../../../core/constants/text_limits.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 
 /// "ปรับยอด" bottom sheet (spec §2.5): current balance → the new balance →
@@ -50,7 +45,7 @@ class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
   final _description = TextEditingController();
   final _note = TextEditingController();
 
-  bool get _isCredit => widget.account.type.isCredit;
+  bool get _isCredit => widget.account.isLiability;
 
   @override
   void initState() {
@@ -58,7 +53,7 @@ class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
     final b = widget.account.balance;
     // Credit → the field shows the debt (positive while owing).
     final shown = _isCredit ? -b : b;
-    _controller = TextEditingController(text: AmountField.format(shown));
+    _controller = TextEditingController(text: AmountInput.format(shown));
   }
 
   @override
@@ -76,7 +71,7 @@ class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
 
   /// The balance the field describes; null while it doesn't parse.
   double? get _newBalance {
-    final v = AmountField.parse(_controller.text);
+    final v = AmountInput.parse(_controller.text);
     if (v == null) return null;
     return _isCredit ? -v : v;
   }
@@ -98,116 +93,93 @@ class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
     final diffText =
         '${diff > 0 ? '+' : '−'}${moneyString(context, diff.abs(), symbol: symbol)}';
 
-    return AppSheetScaffold(
+    return FormSheet(
       title: l.accountAdjustBalanceTitle,
-      footer: Row(
+      primaryLabel: l.accountDetailAdjustBalance,
+      onPrimary: canAdjust
+          ? () => Navigator.of(context).pop((
+              balance: next,
+              description: _opt(_description),
+              note: _opt(_note),
+            ))
+          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: AppButton(
-              label: l.commonCancel,
-              variant: AppButtonVariant.outlined,
-              size: AppButtonSize.large,
-              expand: true,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.accountAdjustBalanceCurrentLabel,
+                  style: detailLabelStyle(context),
+                ),
+              ),
+              MoneyText(
+                a.balance,
+                symbol: symbol,
+                style: textTheme.titleMedium?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: AppButton(
-              label: l.accountDetailAdjustBalance,
-              size: AppButtonSize.large,
-              expand: true,
-              onPressed: canAdjust
-                  ? () => Navigator.of(context).pop((
-                      balance: next,
-                      description: _opt(_description),
-                      note: _opt(_note),
-                    ))
-                  : null,
-            ),
+          const SizedBox(height: AppSpacing.lg),
+          AmountInput(
+            controller: _controller,
+            label: _isCredit
+                ? l.accountAdjustBalanceNewDebtLabel
+                : l.accountAdjustBalanceNewLabel,
+            currencySymbol: symbol,
+            autofocus: true,
+            allowNegative: true,
+            onChanged: (_) => setState(() {}),
           ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.accountAdjustBalanceDiffLabel,
+                  style: textTheme.bodyLarge,
+                ),
+              ),
+              MoneyText(
+                diff,
+                symbol: symbol,
+                tone: MoneyTone.signed,
+                hideable: false,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppInput(
+            controller: _description,
+            label: l.commonDescription,
+            prefixIcon: AppIcons.font,
+            maxLength: TextLimits.description,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppInput(
+            controller: _note,
+            label: l.commonNote,
+            prefixIcon: AppIcons.note,
+            maxLength: TextLimits.note,
+            maxLines: 3,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          MessageBanner(
+            tone: canAdjust ? Tone.info : Tone.neutral,
+            message: canAdjust
+                ? l.accountAdjustBalanceWillCreate(diffText)
+                : l.accountAdjustBalanceNoChange,
+          ),
+          const SizedBox(height: AppSpacing.sm),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l.accountAdjustBalanceCurrentLabel,
-                    style: detailLabelStyle(context),
-                  ),
-                ),
-                MoneyText(
-                  a.balance,
-                  symbol: symbol,
-                  style: textTheme.titleMedium?.copyWith(
-                    color: accent,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AmountField(
-              controller: _controller,
-              label: _isCredit
-                  ? l.accountAdjustBalanceNewDebtLabel
-                  : l.accountAdjustBalanceNewLabel,
-              currencySymbol: symbol,
-              autofocus: true,
-              allowNegative: true,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l.accountAdjustBalanceDiffLabel,
-                    style: textTheme.bodyLarge,
-                  ),
-                ),
-                MoneyText(
-                  diff,
-                  symbol: symbol,
-                  tone: MoneyTone.signed,
-                  hideable: false,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              controller: _description,
-              label: l.commonDescription,
-              prefixIcon: AppIcons.font,
-              maxLength: TextLimits.description,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            AppTextField(
-              controller: _note,
-              label: l.commonNote,
-              prefixIcon: AppIcons.note,
-              maxLength: TextLimits.note,
-              maxLines: 3,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            MessageBanner(
-              tone: canAdjust ? Tone.info : Tone.neutral,
-              message: canAdjust
-                  ? l.accountAdjustBalanceWillCreate(diffText)
-                  : l.accountAdjustBalanceNoChange,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-        ),
       ),
     );
   }

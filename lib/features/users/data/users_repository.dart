@@ -2,10 +2,11 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../shared/icon_maker/icon_code.dart';
 import '../../auth/domain/user.dart';
+import '../../../ui/ui.dart';
 
-/// `PUT /v1/users/me` — partial update of profile fields.
+/// `PUT /v1/users/me` — partial update of profile fields (never the
+/// currency: read-only on the profile).
 ///
 /// `GET /v1/users/me` is owned by [AuthRepository] (used at cold-start to
 /// validate the stored token); putting the writer here keeps user-profile
@@ -17,14 +18,12 @@ class UsersRepository {
 
   Future<User> updateMe({
     String? displayName,
-    String? currency,
     String? email,
     IconCode? iconCode,
     bool clearIconCode = false,
   }) async {
     final body = <String, dynamic>{};
     if (displayName != null) body['display_name'] = displayName;
-    if (currency != null) body['currency'] = currency;
     if (email != null) body['email'] = email;
     if (clearIconCode) {
       body['icon_code'] = null;

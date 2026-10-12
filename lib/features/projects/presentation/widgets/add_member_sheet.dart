@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
@@ -102,7 +100,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
               onPressed: _saving ? null : _fromContacts,
             ),
             const SizedBox(height: AppSpacing.md),
-            AppTextField(
+            AppInput(
               controller: _name,
               label: l.projectAddMemberName,
               prefixIcon: AppIcons.member,
@@ -111,7 +109,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
                   : null,
             ),
             const SizedBox(height: AppSpacing.md),
-            AppTextField(
+            AppInput(
               controller: _email,
               label: l.projectAddMemberEmail,
               helper: l.projectAddMemberEmailHint,

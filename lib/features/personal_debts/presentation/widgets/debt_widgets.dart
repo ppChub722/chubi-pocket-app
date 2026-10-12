@@ -5,19 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
 import '../../../../core/constants/storage_keys.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
-import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
@@ -25,31 +20,25 @@ import '../../../transactions/presentation/widgets/tx_hero_card.dart';
 import '../../domain/personal_debt.dart';
 import '../cubit/personal_debts_cubit.dart';
 
-/// Avatar for a debt counterparty — the API doesn't send icons, so a linked
-/// contact's icon is looked up in [ContactsCubit] (contract §7 will add it).
+/// Avatar for a debt counterparty — the icon comes embedded in the BE's
+/// `person` (no contacts cache).
 class DebtAvatar extends StatelessWidget {
   const DebtAvatar({
-    required this.contactId,
     required this.name,
+    this.iconCode,
     this.size = 40,
     super.key,
   });
 
-  final String? contactId;
   final String name;
+  final IconCode? iconCode;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final contacts = context.select<ContactsCubit, List>(
-      (c) => c.state.contacts,
-    );
-    final match = contactId == null
-        ? null
-        : contacts.where((c) => c.id == contactId).firstOrNull;
     return UserAvatar(
       displayName: name.isEmpty ? '?' : name,
-      iconCode: match?.effectiveIconCode,
+      iconCode: iconCode,
       size: size,
     );
   }
@@ -59,7 +48,7 @@ class DebtAvatar extends StatelessWidget {
 AppChip debtStatusChip(
   BuildContext context,
   DebtStatus s, {
-  PillSize size = PillSize.control,
+  ChipSize size = ChipSize.control,
 }) {
   final l = AppLocalizations.of(context)!;
   final (String label, AppChipTone tone) = switch (s) {
@@ -145,7 +134,7 @@ class DebtTile extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 if (!debt.isOpen) ...[
-                  debtStatusChip(context, debt.status, size: PillSize.chip),
+                  debtStatusChip(context, debt.status, size: ChipSize.chip),
                   const SizedBox(width: AppSpacing.sm),
                 ],
                 // Overpaid: the difference, owed the other way, flagged.
@@ -155,7 +144,7 @@ class DebtTile extends StatelessWidget {
                     dot: true,
                     tone: AppChipTone.warning,
                     selected: true,
-                    size: PillSize.chip,
+                    size: ChipSize.chip,
                   ),
                   const SizedBox(width: AppSpacing.sm),
                 ],
@@ -235,7 +224,7 @@ class _SettleSheet extends StatefulWidget {
 
 class _SettleSheetState extends State<_SettleSheet> {
   late final _amount = TextEditingController(
-    text: AmountField.format(
+    text: AmountInput.format(
       // An overpaid debt has a negative outstanding — never an upper bound
       // below 0 (clamp would throw).
       (widget.amount ?? widget.debt.outstanding).clamp(
@@ -301,7 +290,7 @@ class _SettleSheetState extends State<_SettleSheet> {
 
   /// Amount within (0, outstanding]; null = fine.
   String? _amountProblem(AppLocalizations l, String symbol) {
-    final n = AmountField.parse(_amount.text);
+    final n = AmountInput.parse(_amount.text);
     final out = widget.debt.outstanding;
     if (n == null || n <= 0) return l.debtAmountRequired;
     if (n > out + 0.005) {
@@ -324,10 +313,10 @@ class _SettleSheetState extends State<_SettleSheet> {
         c.text.trim().isEmpty ? null : c.text.trim();
     setState(() => _saving = true);
     try {
-      await debts.settle(
+      final settled = await debts.settle(
         widget.debt.id,
         accountId: _account?.id,
-        amount: AmountField.parse(_amount.text),
+        amount: AmountInput.parse(_amount.text),
         date: _ymd(_date),
         // Left blank → the server uses the debt's description.
         description: opt(_description),
@@ -337,8 +326,10 @@ class _SettleSheetState extends State<_SettleSheet> {
       if (account != null) {
         await widget.prefs.setString(StorageKeys.lastAccountId, account.id);
       }
-      // A transaction was recorded (and maybe a wallet moved).
-      await Future.wait([TransactionsCubit.bookChanged(), accounts.load()]);
+      // A transaction was recorded: the wallets' new balances come with the
+      // answer; the tx lists re-fetch.
+      accounts.patchBalances(settled.accountBalances);
+      await TransactionsCubit.bookChanged();
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -354,7 +345,7 @@ class _SettleSheetState extends State<_SettleSheet> {
   }
 
   void _fill(double amount) {
-    _amount.text = AmountField.format(amount);
+    _amount.text = AmountInput.format(amount);
     setState(() => _amountError = null);
   }
 
@@ -415,7 +406,7 @@ class _SettleSheetState extends State<_SettleSheet> {
             onTap: _pickAccount,
           ),
           const SizedBox(height: AppSpacing.md),
-          AppTextField(
+          AppInput(
             controller: _note,
             label: l.commonNote,
             prefixIcon: AppIcons.note,

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../shared/widgets/skeletons.dart';
+import '../../../../ui/ui.dart';
 
 /// Cold-load skeleton for the categories list — a section-header line
 /// followed by tree-indented rows, mirroring [CategoriesPage]'s layout so

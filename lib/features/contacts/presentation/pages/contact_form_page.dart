@@ -3,13 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../data/contacts_repository.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
@@ -89,12 +85,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
   Future<void> _loadExisting() async {
     setState(() => _loading = true);
     try {
-      final c = await context.read<ContactsRepository>().get(widget.editingId!);
+      final c = (await context.read<ContactsRepository>().get(
+        widget.editingId!,
+      )).contact;
       if (!mounted) return;
       _existing = c;
-      // The linked user's current values where the contact has them.
-      _name.text = c.effectiveDisplayName;
-      _email.text = c.effectiveEmail ?? '';
+      // The BE-resolved values.
+      _name.text = c.name;
+      _email.text = c.email ?? '';
       _phone.text = c.phone ?? '';
       _description.text = c.description ?? '';
       _note.text = c.note ?? '';
@@ -108,7 +106,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
   Future<void> _submit() async {
     if (!(_form.currentState?.validate() ?? false)) return;
     final cubit = context.read<ContactsCubit>();
-    final repo = context.read<ContactsRepository>();
     setState(() {
       _loading = true;
       _error = null;
@@ -120,26 +117,26 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final note = _note.text.trim().isEmpty ? null : _note.text.trim();
     try {
       if (_isLinkExisting) {
-        await repo.linkExistingContactFromLinkRequest(
+        // The cubit patches its list from the returned contact.
+        await cubit.linkExistingFromRequest(
           widget.linkRequestId,
           widget.editingId!,
           phone: phone,
           description: description,
           note: note,
         );
-        await cubit.load();
         if (!mounted) return;
         context.pushReplacement('/contacts/${widget.editingId!}');
       } else {
-        final created = await repo.createLinkedContactFromLinkRequest(
+        final res = await cubit.createLinkedFromRequest(
           widget.linkRequestId,
           phone: phone,
           description: description,
           note: note,
         );
-        await cubit.load();
         if (!mounted) return;
-        context.pushReplacement('/contacts/${created.id}');
+        final id = res.contact?.id;
+        if (id != null) context.pushReplacement('/contacts/$id');
       }
     } on ApiException catch (e) {
       _error = e.message;
@@ -189,7 +186,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                     isExisting: _isLinkExisting,
                   ),
                 ),
-                AppTextField(
+                AppInput(
                   controller: _name,
                   label: l.commonName,
                   readOnly: true,
@@ -202,7 +199,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 // The contact's own — editable even when name/email are locked.
-                AppTextField(
+                AppInput(
                   controller: _description,
                   label: l.commonDescription,
                   hint: l.contactDescriptionHint,
@@ -210,7 +207,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   maxLength: TextLimits.description,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                AppTextField(
+                AppInput(
                   controller: _email,
                   label: l.contactEmailLabel,
                   readOnly: true,
@@ -219,14 +216,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                AppTextField(
+                AppInput(
                   controller: _phone,
                   label: l.contactPhoneLabel,
                   maxLength: TextLimits.phone,
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: AppSpacing.md),
-                AppTextField(
+                AppInput(
                   controller: _note,
                   label: l.commonNote,
                   hint: l.contactNoteHint,
@@ -278,15 +275,13 @@ class _LinkBanner extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final name = senderName.isEmpty ? '…' : senderName;
-    return Container(
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
+    return AppCard(
+      style: AppCardStyle.tinted,
+      color: scheme.primary,
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
-          Icon(AppIcons.link, color: scheme.primary, size: 20),
+          AppIcon(AppIcons.link, color: scheme.primary, size: AppIconSize.md),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(

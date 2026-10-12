@@ -1,19 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../shared/widgets/layout/tinted_card.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/data/money_text.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/editable_circle.dart';
-import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import 'member_avatar_stack.dart';
+import '../../../../ui/ui.dart';
 
 /// Renders one wallet (account) in the grid.
 ///
@@ -63,6 +54,22 @@ class AccountCard extends StatelessWidget {
 /// (same language as the เพิ่มเติม hub cards). Shared by the grid
 /// [AccountCard] and the wallet detail page's hero header, so both read as
 /// the same object.
+/// The wallet's hero look as one [HeroStyle]: the wallet colour as a wash, a soft
+/// border and the account type's glyph. The wallet hero AND its compact bar
+/// are built from it, so the bar mirrors the card.
+HeroStyle accountHeroStyle(
+  BuildContext context,
+  Account account, {
+  bool showGlyph = true,
+}) {
+  final palette = Theme.of(context).extension<AppColors>()!;
+  return HeroStyle.tinted(
+    color: account.iconCode?.accentColorFor(palette) ?? palette.primary,
+    glyph: showGlyph ? account.type.icon : null,
+    strongBorder: false,
+  );
+}
+
 class AccountCardSurface extends StatelessWidget {
   const AccountCardSurface({
     required this.account,
@@ -85,14 +92,11 @@ class AccountCardSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = account.iconCode?.accentColorFor(palette) ?? palette.primary;
-    return TintedCard(
-      tint: accent,
-      glyph: showGlyph ? account.type.icon : null,
+    return HeroSurface(
+      style: accountHeroStyle(context, account, showGlyph: showGlyph),
       glyphSize: glyphSize,
       onTap: onTap,
-      margin: margin,
+      margin: margin ?? EdgeInsets.zero,
       child: child,
     );
   }
@@ -282,15 +286,16 @@ class AccountIconCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = EditableCircle(
+    final display = IconDisplay(
+      type: IconType.account,
       size: size,
-      onTap: onTap,
-      child: IconDisplay(
-        type: IconType.account,
-        size: size,
-        iconCode: account.iconCode,
-      ),
+      iconCode: account.iconCode,
     );
+    // Only an EDITABLE icon is an EditableCircle (never below 40, with the
+    // pencil); a plain one — the compact bar's 28 — is just the icon.
+    final icon = onTap == null
+        ? SizedBox(width: size, height: size, child: display)
+        : EditableCircle(size: size, onTap: onTap, child: display);
     if (!account.isShared) return icon;
     return SharedWalletIconBadge(size: size, child: icon);
   }
@@ -313,37 +318,15 @@ class SharedWalletIconBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final badgeSize = (size * 0.42).clamp(14.0, 22.0);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          child,
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: Tooltip(
-              message: l.walletSharedLabel,
-              child: Container(
-                width: badgeSize,
-                height: badgeSize,
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: scheme.surface, width: 1),
-                ),
-                child: Icon(
-                  AppIcons.link,
-                  size: badgeSize * 0.68,
-                  color: scheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return CornerBadge(
+      size: size,
+      icon: AppIcons.link,
+      color: scheme.primaryContainer,
+      iconColor: scheme.onPrimaryContainer,
+      tooltip: l.walletSharedLabel,
+      // Shared is state, not decoration: kept on small icons too.
+      essential: true,
+      child: child,
     );
   }
 }
@@ -358,9 +341,7 @@ class OtherMembersStack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthCubit>().state;
-    final selfId = auth is AuthAuthenticated ? auth.user.id : null;
-    final others = account.otherMembers(selfId);
+    final others = account.otherMembers;
     if (others.isEmpty) return const SizedBox.shrink();
     return MemberAvatarStack(members: others, size: size);
   }
@@ -401,7 +382,7 @@ class _UtilizationBar extends StatelessWidget {
 /// credit-type wallet — in the liability token; otherwise the wallet's own
 /// icon colour (the card wash keeps that colour either way).
 Color accountBalanceColor(BuildContext context, Account account) {
-  if (account.type.isCredit) return account.type.colorOf(context);
+  if (account.isLiability) return account.colorOf(context);
   final palette = Theme.of(context).extension<AppColors>()!;
   return account.iconCode?.accentColorFor(palette) ?? palette.primary;
 }

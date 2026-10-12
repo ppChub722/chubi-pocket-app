@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/currencies.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 
 // ────────────────────────────────────────────────────────────────────
@@ -71,18 +68,7 @@ class ProjectMemberAvatar extends StatelessWidget {
     }
     final color = _palette[member.id.hashCode.abs() % _palette.length];
     final name = member.displayName;
-    return CircleAvatar(
-      radius: size / 2,
-      backgroundColor: color.withValues(alpha: 0.28),
-      child: Text(
-        name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-        style: TextStyle(
-          fontSize: size * 0.4,
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
+    return AppAvatar.tinted(name: name, color: color, size: size);
   }
 }
 
@@ -128,6 +114,23 @@ class ProjectView {
 
   List<ProjectMember> get currentMembers =>
       members.where((m) => m.status != MemberStatus.left).toList();
+
+  /// The payer / debtor of [tx]: the embedded `transaction_member` when the
+  /// server sent it, else the members-list lookup.
+  ProjectMember memberOf(ProjectTransaction tx) {
+    final r = tx.transactionMember;
+    if (r == null) return member(tx.transactionMemberId);
+    final listed = members.where((m) => m.id == r.id);
+    return ProjectMember(
+      id: r.id,
+      projectId: project.id,
+      userId: r.userId,
+      displayName: r.name,
+      iconCode: r.iconCode,
+      role: listed.isEmpty ? MemberRole.contributor : listed.first.role,
+      status: listed.isEmpty ? MemberStatus.active : listed.first.status,
+    );
+  }
 
   ProjectMember member(String id) => members.firstWhere(
     (m) => m.id == id,

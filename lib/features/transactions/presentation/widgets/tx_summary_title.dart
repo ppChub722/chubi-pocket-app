@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../domain/transaction_type.dart';

@@ -6,16 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/shell_chrome.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/color_token.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
@@ -387,7 +380,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   ) {
     final browse = Column(
       children: [
-        AppSearchBar(
+        AppInput.search(
           controller: _search,
           hint: l.categoriesSearchHint,
           onChanged: (v) => setState(() => _query = v),
@@ -505,9 +498,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
       ],
-      trailing: AppIconButton(
-        icon: AppIcons.edit,
-        size: 36,
+      trailing: AppIconButton.edit(
         tooltip: l.categoriesReorderEnter,
         onPressed: typeUsers.length < 2
             ? null
@@ -647,7 +638,7 @@ class _ListBody extends StatelessWidget {
       children: [
         // Hairline-separated, as on the other library lists.
         for (final (i, row) in rows.indexed) ...[
-          if (i > 0) const RowDivider(),
+          if (i > 0) const AppDivider.row(),
           row,
         ],
         if (onAdd != null)
@@ -788,12 +779,12 @@ class _RowContent extends StatelessWidget {
                     label: l.categoryHiddenFromReport,
                     icon: AppIcons.hidden,
                     tone: AppChipTone.neutral,
-                    size: PillSize.chip,
+                    size: ChipSize.chip,
                   ),
                 if (hasChildren)
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    icon: Icon(
+                    icon: AppIcon(
                       isCollapsed ? AppIcons.expand : AppIcons.collapse,
                     ),
                     onPressed: onToggleCollapse,

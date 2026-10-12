@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-
-import '../../../shared/icon_maker/icon_code.dart';
+import '../../../ui/ui.dart';
 
 /// Project lifecycle states.
 enum ProjectStatus { active, completed, cancelled, archived }
@@ -226,6 +225,39 @@ class ProjectMember extends Equatable {
   ];
 }
 
+/// `MemberRef` embedded on board rows (API v2): the payer / debtor.
+class ProjectMemberRef extends Equatable {
+  const ProjectMemberRef({
+    required this.id,
+    required this.name,
+    this.userId,
+    this.iconCode,
+    this.isMe = false,
+  });
+
+  final String id;
+  final String? userId;
+  final String name;
+  final IconCode? iconCode;
+  final bool isMe;
+
+  static ProjectMemberRef? tryParse(Object? json) {
+    if (json is! Map<String, dynamic>) return null;
+    return ProjectMemberRef(
+      id: json['id'] as String,
+      userId: json['user_id'] as String?,
+      name: (json['name'] as String?) ?? '?',
+      iconCode: json['icon_code'] is Map<String, dynamic>
+          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+          : null,
+      isMe: json['is_me'] == true,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, userId, name, iconCode, isMe];
+}
+
 class ProjectTransaction extends Equatable {
   const ProjectTransaction({
     required this.id,
@@ -241,10 +273,14 @@ class ProjectTransaction extends Equatable {
     this.description,
     this.note,
     this.tags = const [],
+    this.transactionMember,
   });
 
   final String id;
   final String projectId;
+
+  /// Embedded payer / debtor (null from an older server).
+  final ProjectMemberRef? transactionMember;
 
   /// null for parent rows; set on split-child rows.
   final String? parentProjectTransactionId;
@@ -278,6 +314,7 @@ class ProjectTransaction extends Equatable {
       parentProjectTransactionId:
           json['parent_project_transaction_id'] as String?,
       transactionMemberId: json['transaction_member_id'] as String,
+      transactionMember: ProjectMemberRef.tryParse(json['transaction_member']),
       recordUserId: json['record_user_id'] as String,
       type: json['type'] as String,
       amount: (json['amount'] as num).toDouble(),
@@ -300,6 +337,7 @@ class ProjectTransaction extends Equatable {
     projectId,
     parentProjectTransactionId,
     transactionMemberId,
+    transactionMember,
     recordUserId,
     type,
     amount,

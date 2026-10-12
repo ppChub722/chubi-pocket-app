@@ -3,23 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
-import '../../../../shared/widgets/user_profile_preview.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 
 /// `/settings/profile` (§7) — opens straight in edit mode: header card
-/// (avatar → icon maker, name inline), username (locked), email. Default
-/// currency lives on the settings page only.
+/// (avatar → icon maker, name inline), username (locked), email. The
+/// currency is locked (shown on settings only).
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
@@ -161,7 +154,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                       size: 64,
                     ),
                   ),
-                  title: InlineTitleField(
+                  title: AppInput.title(
                     editing: true,
                     controller: _nameCtrl,
                     hint: l.editProfileDisplayNameLabel,
@@ -183,7 +176,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                   first: true,
                   children: [
                     DetailRow(
-                      leading: const Icon(AppIcons.lock),
+                      leading: const AppIcon(AppIcons.lock),
                       label: l.editProfileUsernameLabel,
                       helper: l.profileUsernameLocked,
                       trailing: Text('@${_user.username}'),
@@ -193,7 +186,7 @@ class _EditProfilePageState extends State<EditProfilePage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          InlineField(
+                          AppInput.inline(
                             editing: true,
                             controller: _emailCtrl,
                             maxLength: 255,

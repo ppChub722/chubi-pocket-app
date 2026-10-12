@@ -1,4 +1,5 @@
 import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
+import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_form.dart';
@@ -133,7 +134,13 @@ void main() {
         amount: 500,
         date: '2026-10-11',
         splitCount: 1,
-        splits: [TxSplit(debtId: 'd1', personName: 'บี', amount: 200)],
+        splits: [
+          TxSplit(
+            debtId: 'd1',
+            person: EmbeddedPerson(name: 'บี'),
+            amount: 200,
+          ),
+        ],
       );
       c.prefillTransaction(tx, accounts: const [], categories: const []);
       expect(c.meAuto, isTrue);
@@ -151,8 +158,16 @@ void main() {
         date: '2026-10-11',
         splitCount: 2,
         splits: [
-          TxSplit(debtId: 'd1', personName: 'บี', amount: 300),
-          TxSplit(debtId: 'd2', personName: 'ต้น', amount: 200),
+          TxSplit(
+            debtId: 'd1',
+            person: EmbeddedPerson(name: 'บี'),
+            amount: 300,
+          ),
+          TxSplit(
+            debtId: 'd2',
+            person: EmbeddedPerson(name: 'ต้น'),
+            amount: 200,
+          ),
         ],
       );
       c.prefillTransaction(tx, accounts: const [], categories: const []);
@@ -173,7 +188,13 @@ void main() {
         splitCount: 1,
         projectId: 'p1',
         myShare: 500,
-        splits: [TxSplit(debtId: 'd1', personName: 'บี', amount: 100)],
+        splits: [
+          TxSplit(
+            debtId: 'd1',
+            person: EmbeddedPerson(name: 'บี'),
+            amount: 100,
+          ),
+        ],
       );
       c.prefillTransaction(tx, accounts: const [], categories: const []);
       expect(c.eventOthers, 600);
@@ -214,10 +235,9 @@ void main() {
     });
   });
 
-  group('lock per level', () {
+  group('who a saved row is, per level', () {
     test('L1 typed name, saved: can change who, in place', () {
       final d = SplitDraft(debtId: 'd1', personName: 'ลี', owedAmount: 100);
-      expect(d.identityLocked, isFalse);
       d.setPerson('ลีน่า');
       expect(d.toUpdateJson(), {
         'debt_id': 'd1',
@@ -234,7 +254,6 @@ void main() {
         contactId: 'c1',
         owedAmount: 100,
       );
-      expect(d.identityLocked, isFalse);
       // Another contact.
       d.setPerson('ต้น', contact: 'c2');
       expect(d.toUpdateJson(), {
@@ -261,26 +280,20 @@ void main() {
       expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 120.0});
     });
 
-    test('L3 linked to an app user, saved: locked — amount only', () {
+    test('L3 linked to an app user, saved: swappable like any other', () {
+      // The BE does the remove + add (new debt_id); the request is the same.
       final d = SplitDraft(
         debtId: 'd1',
         personName: 'บี',
         contactId: 'c1',
         owedAmount: 100,
-        savedContactLinked: true,
-      );
-      expect(d.identityLocked, isTrue);
-      d.owedAmount = 80;
-      expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 80.0});
-    });
-
-    test('a new row never locks, whatever its contact', () {
-      final d = SplitDraft(
-        personName: 'บี',
-        contactId: 'c1',
-        savedContactLinked: true,
-      );
-      expect(d.identityLocked, isFalse);
+      )..setPerson('ต้น', contact: 'c2');
+      expect(d.toUpdateJson(), {
+        'debt_id': 'd1',
+        'owed_amount': 100.0,
+        'contact_id': 'c2',
+        'person_name': 'ต้น',
+      });
     });
   });
 }

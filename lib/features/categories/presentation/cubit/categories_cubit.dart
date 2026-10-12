@@ -148,8 +148,23 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
     return created;
   }
 
-  Future<void> update(Category category) async {
+  /// `GET /categories/:id` — the detail page's one call. Patches the list
+  /// row with the fresh data when the row is there.
+  Future<CategoryDetail> fetchDetail(String id) async {
+    final detail = await _repo.get(id);
+    _patch(detail);
+    return detail;
+  }
+
+  /// Saves [category]; the response (a [CategoryDetail]) replaces the row.
+  Future<CategoryDetail> update(Category category) async {
     final updated = await _repo.update(category);
+    _patch(updated);
+    return updated;
+  }
+
+  void _patch(Category updated) {
+    if (!state.categories.any((c) => c.id == updated.id)) return;
     emit(
       state.copyWith(
         categories: [
@@ -160,15 +175,20 @@ class CategoriesCubit extends Cubit<CategoriesState> with Clearable {
     );
   }
 
-  /// Real delete (see [CategoriesRepository.delete]). Reloads afterwards
-  /// because the server also re-parents the row's children.
+  /// Real delete (see [CategoriesRepository.delete]). Drops the row and
+  /// patches the children the server re-parented; no reload.
   Future<void> remove(String id) async {
-    await _repo.delete(id);
-    await load();
+    final reparented = await _repo.delete(id);
+    final byId = {for (final r in reparented) r.id: r};
+    emit(
+      state.copyWith(
+        categories: [
+          for (final c in state.categories)
+            if (c.id != id) byId[c.id] ?? c,
+        ],
+      ),
+    );
   }
-
-  /// Transactions / budgets a delete of [id] would affect.
-  Future<({int transactions, int budgets})> usage(String id) => _repo.usage(id);
 
   /// Saves the user's drag-and-drop reorder by sending the staged tree
   /// to `PATCH /v1/categories/reorder`. Server returns the user's full

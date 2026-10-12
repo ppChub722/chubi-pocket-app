@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
 import 'package:chubi_pocket/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:chubi_pocket/features/contacts/presentation/cubit/contacts_cubit.dart';
@@ -12,7 +12,7 @@ import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_fo
 import 'package:chubi_pocket/features/transactions/presentation/widgets/event_pick.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,7 +33,7 @@ class _Projects extends MockCubit<ProjectsState> implements ProjectsCubit {}
 
 /// The pending drafts' layout (owner 2026-10-11, "เพิ่มร่าง" + "แก้ร่าง"):
 /// dashed pick chips lead a wallet row above a category row, the note is
-/// inline, and หารกับ / อีเวนต์ is collapsed until tapped. A draft keeps
+/// inline, and แบ่งรายการ is collapsed until tapped. A draft keeps
 /// half-filled splits and its event.
 void main() {
   late DraftFormController c;
@@ -113,22 +113,20 @@ void main() {
     expect(find.byType(DraftFieldRow), findsOneWidget);
   });
 
-  testWidgets('หารกับ / อีเวนต์ is collapsed; tap opens it, tap closes', (
-    t,
-  ) async {
+  testWidgets('แบ่งรายการ is collapsed; tap opens it, tap closes', (t) async {
     c.setProject('p1', name: 'ทริปเชียงใหม่');
     await pump(t);
-    expect(find.text('หารกับ / อีเวนต์'), findsOneWidget);
+    expect(find.text('แบ่งรายการ'), findsOneWidget);
     // Closed: the one-line summary (the event), no editor.
     expect(find.text('ทริปเชียงใหม่'), findsOneWidget);
     expect(find.byType(SplitsSection), findsNothing);
 
-    await t.tap(find.text('หารกับ / อีเวนต์'));
+    await t.tap(find.text('แบ่งรายการ'));
     await t.pump();
     expect(find.byType(SplitsSection), findsOneWidget);
     expect(find.byType(EventRow), findsOneWidget);
 
-    await t.tap(find.text('หารกับ / อีเวนต์'));
+    await t.tap(find.text('แบ่งรายการ'));
     await t.pump();
     expect(find.byType(SplitsSection), findsNothing);
   });
@@ -142,7 +140,7 @@ void main() {
     expect(find.text('เลือกกระเป๋าต้นทาง'), findsOneWidget);
     expect(find.text('เลือกกระเป๋าปลายทาง'), findsOneWidget);
     expect(find.text('เลือกหมวด'), findsNothing);
-    expect(find.text('หารกับ / อีเวนต์'), findsNothing);
+    expect(find.text('แบ่งรายการ'), findsNothing);
   });
 
   test('a draft keeps half-filled splits and its event; confirm does not', () {

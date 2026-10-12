@@ -4,11 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
@@ -205,17 +203,20 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
       body = ErrorView(error: _error!, onRetry: _load);
     } else {
       final readOnly = p!.status == ProjectStatus.archived;
-      final groups = <(String, List<ProjectMember>)>[
+      final groups = <(String, String, List<ProjectMember>)>[
         (
           l.projectMembersTitle,
+          l.projectMembersDescription,
           _members.where((m) => m.status == MemberStatus.active).toList(),
         ),
         (
           l.projectMembersPending,
+          l.projectMembersPendingDescription,
           _members.where((m) => m.status == MemberStatus.pending).toList(),
         ),
         (
           l.projectMembersLeft,
+          l.projectMembersLeftDescription,
           _members.where((m) => m.status == MemberStatus.left).toList(),
         ),
       ];
@@ -230,9 +231,23 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
               bottom: 96 + MediaQuery.paddingOf(context).bottom,
             ),
             children: [
-              for (final (title, list) in groups)
+              for (final (title, description, list) in groups)
                 if (list.isNotEmpty) ...[
                   SectionHeader(title: title, count: list.length),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      0,
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                    ),
+                    child: Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                   for (final m in list)
                     Opacity(
                       opacity: m.status == MemberStatus.active ? 1 : 0.6,
@@ -257,7 +272,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                               ? AppChipTone.primary
                               : AppChipTone.neutral,
                           selected: true,
-                          size: PillSize.chip,
+                          size: ChipSize.chip,
                         ),
                         // Owner manages everyone but themself.
                         onTap: _isOwner && !readOnly && !m.isOwner

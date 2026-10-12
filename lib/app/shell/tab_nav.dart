@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_modules.dart';
+import '../../ui/tokens/app/app_modules.dart';
 
 /// The shell's tabs, in branch order — app_router.dart builds one
 /// [StatefulShellBranch] per value, in this order (owner 2026-10-09: every

@@ -1,13 +1,12 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
 import 'package:chubi_pocket/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/pick_chip_rows.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/skeleton_box.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -4,10 +4,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../core/constants/app_durations.dart';
-import '../../core/constants/app_icons.dart';
-import '../../core/constants/app_spacing.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../ui/ui.dart';
 
 /// Floating rounded-rect bottom navigation:
 ///
@@ -426,7 +424,11 @@ class _AddButton extends StatelessWidget {
           child: InkWell(
             onTap: onPressed,
             child: Center(
-              child: Icon(AppIcons.add, size: 32, color: scheme.onPrimary),
+              child: AppIcon(
+                AppIcons.add,
+                size: AppIconSize.xl,
+                color: scheme.onPrimary,
+              ),
             ),
           ),
         ),
@@ -488,7 +490,11 @@ class _NavItem extends StatelessWidget {
               builder: (context, color, _) => Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(selected ? iconSelected : icon, size: 28, color: color),
+                  AppIcon(
+                    selected ? iconSelected : icon,
+                    size: AppIconSize.xl,
+                    color: color,
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     label,

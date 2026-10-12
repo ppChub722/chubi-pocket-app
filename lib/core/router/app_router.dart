@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,13 +9,9 @@ import '../../app/shell/main_shell.dart';
 import '../../app/shell/more_page.dart';
 import '../../app/shell/shell_chrome.dart';
 import '../../app/shell/tab_nav.dart';
-import '../../dev/detail_playground_screen.dart';
-import '../../dev/dev_hub_screen.dart';
-import '../../dev/imports_lab_screen.dart';
-import '../../dev/logs_viewer_screen.dart';
-import '../../dev/state_widgets_preview_screen.dart';
-import '../../dev/theme_preview_screen.dart';
-import '../../dev/widget_gallery_screen.dart';
+import '../../hub/hub_index_screen.dart';
+import '../../hub/hub_page_frame.dart';
+import '../../hub/hub_registry.dart';
 import '../../app/shell/fade_branch_container.dart';
 import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
 import '../../features/app_version/presentation/pages/update_required_page.dart';
@@ -24,6 +21,7 @@ import '../../features/transactions/data/transactions_repository.dart';
 import '../../features/transactions/presentation/cubit/transactions_cubit.dart';
 import '../../features/accounts/presentation/pages/account_detail_page.dart';
 import '../../features/accounts/presentation/pages/accounts_page.dart';
+import '../../features/categories/domain/category_type.dart';
 import '../../features/categories/presentation/pages/categories_page.dart';
 import '../../features/categories/presentation/pages/category_detail_page.dart';
 import '../../features/contacts/presentation/pages/contact_detail_page.dart';
@@ -176,37 +174,61 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
       GoRoute(
         path: '/dev',
         name: 'dev-hub',
-        builder: (context, state) => const DevHubScreen(),
+        builder: (context, state) => const HubIndexScreen(),
         routes: [
+          // The portal's menus and pages (lib/hub):
+          //   /dev/ui                      → the UI levels (cards)
+          //   /dev/ui/<level>              → a level's pages (cards)
+          //   /dev/ui/<level>/<slug>       → one UI page
+          //   /dev/<api|labs|debug>        → that section's pages (cards)
+          //   /dev/<api|labs|debug>/<slug> → one page
           GoRoute(
-            path: 'theme-preview',
-            name: 'dev-theme-preview',
-            builder: (context, state) => const ThemePreviewScreen(),
+            path: 'ui/:level',
+            name: 'hub-ui-level',
+            builder: (context, state) {
+              final level = HubLevel.values
+                  .where(
+                    (l) => l.isUi && l.name == state.pathParameters['level'],
+                  )
+                  .firstOrNull;
+              return level == null
+                  ? const HubIndexScreen()
+                  : HubLevelScreen(level: level);
+            },
+            routes: [
+              GoRoute(
+                path: ':slug',
+                name: 'hub-ui-page',
+                builder: (context, state) => _hubPage(
+                  context,
+                  state.pathParameters['level']!,
+                  state.pathParameters['slug']!,
+                ),
+              ),
+            ],
           ),
           GoRoute(
-            path: 'detail-playground',
-            name: 'dev-detail-playground',
-            builder: (context, state) => const DetailPlaygroundScreen(),
-          ),
-          GoRoute(
-            path: 'state-widgets',
-            name: 'dev-state-widgets',
-            builder: (context, state) => const StateWidgetsPreviewScreen(),
-          ),
-          GoRoute(
-            path: 'logs',
-            name: 'dev-logs',
-            builder: (context, state) => const LogsViewerScreen(),
-          ),
-          GoRoute(
-            path: 'imports',
-            name: 'dev-imports',
-            builder: (context, state) => const ImportsLabScreen(),
-          ),
-          GoRoute(
-            path: 'widgets',
-            name: 'dev-widgets',
-            builder: (context, state) => const WidgetGalleryScreen(),
+            path: ':section',
+            name: 'hub-section',
+            builder: (context, state) {
+              final section = HubSection.byName(
+                state.pathParameters['section']!,
+              );
+              return section == null
+                  ? const HubIndexScreen()
+                  : HubSectionScreen(section: section);
+            },
+            routes: [
+              GoRoute(
+                path: ':slug',
+                name: 'hub-page',
+                builder: (context, state) => _hubPage(
+                  context,
+                  state.pathParameters['section']!,
+                  state.pathParameters['slug']!,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -238,6 +260,13 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
               ),
               child: TransactionsListPage(
                 initialCategoryId: p['category'],
+                // The slice's label IS the category's name (the link carries it
+                // as &title=), and the dashboard's slices are expense — so the
+                // chip needs no categories cache or first-row lookup.
+                initialCategoryName: p['category'] == null ? null : p['title'],
+                initialCategoryType: p['category'] == null
+                    ? null
+                    : CategoryType.expense,
                 initialUncategorized: p['uncategorized'] == 'true',
                 initialMonth: month == null
                     ? null
@@ -605,4 +634,12 @@ class _StreamToListenable extends ChangeNotifier {
     _sub.cancel();
     super.dispose();
   }
+}
+
+/// The hub page for [group]/[slug] (a UI level name or an api | labs | debug
+/// section name), else the portal index.
+Widget _hubPage(BuildContext context, String group, String slug) {
+  final page = hubPageFor(group, slug);
+  if (page == null) return const HubIndexScreen();
+  return page.screen?.call(context) ?? HubPageScreen(page: page);
 }

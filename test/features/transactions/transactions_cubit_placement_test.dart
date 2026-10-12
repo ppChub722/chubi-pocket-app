@@ -13,11 +13,13 @@ Transaction _tx(
   String? categoryId = 'c1',
 }) => Transaction.fromJson({
   'id': id,
-  'account_id': accountId,
+  'account': accountId == null ? null : {'id': accountId, 'name': accountId},
   'type': type.toJson(),
   'amount': amount,
   'date': date,
-  'category_id': categoryId,
+  'category': categoryId == null
+      ? null
+      : {'id': categoryId, 'name': categoryId},
 });
 
 /// Serves [book] filtered like the BE would (the parts the tests use),
@@ -71,6 +73,7 @@ class _Repo extends Fake implements TransactionsRepository {
     String? description,
     String? note,
     String? transferToAccountId,
+    List<String> tagIds = const [],
     List<Map<String, dynamic>>? splits,
     String? sourceProjectTransactionId,
   }) async => next!;
@@ -89,6 +92,7 @@ class _Repo extends Fake implements TransactionsRepository {
     String? accountId,
     bool clearAccount = false,
     String? transferToAccountId,
+    List<String>? tagIds,
   }) async => next!;
 }
 

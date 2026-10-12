@@ -5,25 +5,17 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/fonts/font_registry.dart';
-import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/theme_registry.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../preferences/presentation/cubit/font_id_cubit.dart';
 import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_id_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
-import '../../../users/data/users_repository.dart';
 
 /// `/settings` (its own tab, opened by the 👤 chip): profile card → บัญชี
-/// (password, default currency — edited only here) → การแจ้งเตือน →
+/// (password, locked currency) → การแจ้งเตือน →
 /// การตั้งค่าส่วนตัว (theme cards, mode, language & font sheets) →
 /// เกี่ยวกับ → ออกจากระบบ.
 class SettingsPage extends StatelessWidget {
@@ -62,7 +54,7 @@ class SettingsPage extends StatelessWidget {
                       if (user.email?.isNotEmpty ?? false) user.email!,
                     ].join(' · '),
                   ),
-                  trailing: const Icon(AppIcons.chevronRight),
+                  trailing: const AppIcon(AppIcons.chevronRight),
                   onTap: () => context.push('/settings/profile'),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -71,18 +63,18 @@ class SettingsPage extends StatelessWidget {
                   title: l.settingsSectionAccount,
                   children: [
                     DetailRow(
-                      leading: const Icon(AppIcons.lock),
+                      leading: const AppIcon(AppIcons.lock),
                       label: l.settingsChangePassword,
                       showChevron: true,
                       onTap: () => context.push('/settings/password'),
                     ),
-                    // Inset like a DetailRow.
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.md,
+                    DetailRow(
+                      leading: const AppIcon(AppIcons.currency),
+                      label: l.profileCurrencyLabel,
+                      locked: true,
+                      trailing: Text(
+                        '${Currencies.symbolOf(user.currency)}  ${user.currency}',
                       ),
-                      child: _CurrencyRow(user: user),
                     ),
                   ],
                 ),
@@ -90,7 +82,7 @@ class SettingsPage extends StatelessWidget {
                   title: l.settingsNotifications,
                   children: [
                     DetailRow(
-                      leading: const Icon(AppIcons.notifications),
+                      leading: const AppIcon(AppIcons.notifications),
                       label: l.settingsNotifications,
                       helper: l.settingsNotificationsHint,
                       showChevron: true,
@@ -148,61 +140,6 @@ User? _userOf(AuthState state) {
   return null;
 }
 
-/// Default currency — the one place it's edited (saves on pick).
-class _CurrencyRow extends StatefulWidget {
-  const _CurrencyRow({required this.user});
-  final User user;
-
-  @override
-  State<_CurrencyRow> createState() => _CurrencyRowState();
-}
-
-class _CurrencyRowState extends State<_CurrencyRow> {
-  bool _saving = false;
-
-  Future<void> _set(String code) async {
-    if (code == widget.user.currency) return;
-    final l = AppLocalizations.of(context)!;
-    final auth = context.read<AuthCubit>();
-    setState(() => _saving = true);
-    try {
-      final updated = await context.read<UsersRepository>().updateMe(
-        currency: code,
-      );
-      auth.updateUser(updated);
-      if (mounted) {
-        showAppSnackBar(context, l.settingsCurrencySaved, tone: Tone.success);
-      }
-    } on ApiException catch (e) {
-      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        CurrencyTile(
-          value: widget.user.currency,
-          label: l.settingsDefaultCurrency,
-          onChanged: _saving ? null : _set,
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: Text(
-            l.settingsDefaultCurrencyHint,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// Themes as colour-swatch cards with their translated names.
 class _ThemeCards extends StatelessWidget {
   const _ThemeCards();
@@ -235,39 +172,33 @@ class _ThemeCards extends StatelessWidget {
                   child: SelectableFrame(
                     selected: t.id == selected,
                     radius: AppRadius.md,
-                    child: Material(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        onTap: () => context.read<ThemeIdCubit>().set(t.id),
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: AppCard(
+                      style: AppCardStyle.bordered,
+                      onTap: () => context.read<ThemeIdCubit>().set(t.id),
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  for (final c in t.previewSwatch.take(4))
-                                    Container(
-                                      width: 18,
-                                      height: 18,
-                                      margin: const EdgeInsets.only(right: 4),
-                                      decoration: BoxDecoration(
-                                        color: c,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              Text(
-                                _name(l, t),
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
+                              for (final c in t.previewSwatch.take(4))
+                                Container(
+                                  width: 18,
+                                  height: 18,
+                                  margin: const EdgeInsets.only(right: 4),
+                                  decoration: BoxDecoration(
+                                    color: c,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            _name(l, t),
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -325,7 +256,7 @@ class _LanguageRow extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final code = context.watch<LocaleCubit>().state.languageCode;
     return DetailRow(
-      leading: const Icon(AppIcons.language),
+      leading: const AppIcon(AppIcons.language),
       label: l.settingsLanguage,
       trailing: Text(_names[code] ?? code),
       showChevron: true,
@@ -361,7 +292,7 @@ class _FontRow extends StatelessWidget {
         available.where((f) => f.id == fontId).firstOrNull ??
         (available.isNotEmpty ? available.first : null);
     return DetailRow(
-      leading: const Icon(AppIcons.font),
+      leading: const AppIcon(AppIcons.font),
       label: l.settingsFont,
       trailing: Text(current?.family ?? '—'),
       showChevron: available.length > 1,
@@ -418,7 +349,7 @@ class _VersionRowState extends State<_VersionRow> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return DetailRow(
-      leading: const Icon(AppIcons.info),
+      leading: const AppIcon(AppIcons.info),
       label: l.settingsAppVersion,
       trailing: Text(_version),
       onTap: () {

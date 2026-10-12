@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
-import '../../../shared/widgets/ui.dart';
+import '../../../ui/ui.dart';
 
 /// A save / delete that failed — the page stays as it is (nothing typed is
 /// lost) and says so in a snackbar.

@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
-import '../../../auth/presentation/cubit/auth_cubit.dart';
-import '../../data/accounts_repository.dart';
+import '../../../../ui/ui.dart';
+import '../../domain/account.dart';
 import '../../domain/wallet_member.dart';
 import '../cubit/accounts_cubit.dart';
 import '../wallet_errors.dart';
@@ -26,15 +23,21 @@ import 'wallet_invite_picker.dart';
 /// - History: members who left (dimmed, joined / left dates) —
 ///   membership is append-only (spec §14/2.4).
 /// - Leave (self), remove / transfer ownership (owner — spec §14/2.5).
+///
+/// The members list comes from the wallet page's single detail call
+/// (`members_history`); each action's response ([MembersResult]) goes back
+/// to the page through `onResult` — nothing is refetched.
+
 /// The invite flow (owner): pick a linked contact ([showWalletInvitePicker],
 /// [members] still in the wallet hidden), confirm the FIRST invite on a
-/// personal wallet (spec §14/4 — sharing exposes its history), send, then
-/// refresh the wallets cache. Returns whether an invite went out. Used by
-/// the สมาชิก tab and the wallet page's "invite" row.
+/// personal wallet (spec §14/4 — sharing exposes its history), send. The
+/// response ([MembersResult]) is handed to [onResult]. Returns whether an
+/// invite went out. Used by the สมาชิก tab and the wallet page's "invite" row.
 Future<bool> inviteWalletMember(
   BuildContext context, {
-  required String accountId,
+  required Account account,
   required List<WalletMember> members,
+  required void Function(MembersResult) onResult,
 }) async {
   final l = AppLocalizations.of(context)!;
   // Hidden: everyone in the wallet or already invited.
@@ -46,30 +49,29 @@ Future<bool> inviteWalletMember(
     },
   );
   if (contact == null || !context.mounted) return false;
-  final name = contact.effectiveName;
+  final name = contact.name;
 
   // Conversion warning: gate the FIRST invite on a currently-personal
   // wallet. Adding to an already-shared wallet skips the warning.
-  if (members.where((m) => m.isActive).length <= 1) {
-    final account = context.read<AccountsCubit>().byId(accountId);
+  if (!account.isShared) {
     final ok = await showConfirmDialog(
       context,
       title: l.walletConvertWarnTitle(name),
-      message: l.walletConvertWarnBody(account?.name ?? '', name),
+      message: l.walletConvertWarnBody(account.name, name),
       confirmLabel: l.walletInviteSend,
     );
     if (!ok || !context.mounted) return false;
   }
 
-  final repo = context.read<AccountsRepository>();
-  final accountsCubit = context.read<AccountsCubit>();
+  final cubit = context.read<AccountsCubit>();
   final messenger = ScaffoldMessenger.of(context);
   try {
-    await repo.inviteMember(accountId: accountId, contactId: contact.id);
+    final result = await cubit.inviteMember(
+      accountId: account.id,
+      contactId: contact.id,
+    );
+    onResult(result);
     showAppSnackBarOn(messenger, l.walletInviteSent, tone: Tone.success);
-    // Membership changed server-side; refresh the accounts cache so
-    // is_shared / members[] on the list + detail stay in sync.
-    await accountsCubit.load();
     return true;
   } on ApiException catch (e) {
     showAppSnackBarOn(
@@ -83,91 +85,42 @@ Future<bool> inviteWalletMember(
   }
 }
 
-class WalletMembersView extends StatefulWidget {
+class WalletMembersView extends StatelessWidget {
   const WalletMembersView({
-    required this.accountId,
+    required this.account,
+    required this.members,
+    required this.onResult,
+    required this.onRefresh,
     this.padding = EdgeInsets.zero,
     super.key,
   });
 
-  final String accountId;
+  final Account account;
+
+  /// The whole membership (`members_history`): active, pending, left.
+  final List<WalletMember> members;
+
+  /// A members action's response — the page patches itself from it.
+  final void Function(MembersResult) onResult;
+  final Future<void> Function() onRefresh;
 
   /// Around the list (the tab's insets).
   final EdgeInsetsGeometry padding;
 
-  @override
-  State<WalletMembersView> createState() => _WalletMembersViewState();
-}
-
-class _WalletMembersViewState extends State<WalletMembersView> {
-  List<WalletMember> _members = const [];
-  bool _loading = true;
-  ApiException? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final ms = await context.read<AccountsRepository>().listMembers(
-        widget.accountId,
-      );
-      if (!mounted) return;
-      setState(() {
-        _members = ms;
-        _loading = false;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e;
-        _loading = false;
-      });
-    }
-  }
-
-  String? get _currentUserId {
-    final s = context.read<AuthCubit>().state;
-    if (s is AuthAuthenticated) return s.user.id;
-    return null;
-  }
-
-  bool get _isOwner {
-    final uid = _currentUserId;
-    for (final m in _members) {
-      if (m.userId == uid && m.isActive) return m.isOwner;
-    }
-    return false;
-  }
+  /// Only the owner invites / removes / transfers (the BE checks too).
+  bool get _isOwner => account.canEdit;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final error = _error;
-    if (error != null) return ErrorView(error: error, onRetry: _load);
-    if (_loading && _members.isEmpty) {
-      return ListView(
-        padding: widget.padding,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [for (var i = 0; i < 3; i++) const SkeletonListTile()],
-      );
-    }
-    final uid = _currentUserId;
     final owner = _isOwner;
-    final active = _members.where((m) => !m.hasLeft).toList(); // + pending
-    final history = _members.where((m) => m.hasLeft).toList();
+    final active = members.where((m) => !m.hasLeft).toList(); // + pending
+    final history = members.where((m) => m.hasLeft).toList();
     return PullToRefresh(
-      onRefresh: _load,
+      onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: widget.padding,
+        padding: padding,
         children: [
           SectionCard(
             first: true,
@@ -175,15 +128,15 @@ class _WalletMembersViewState extends State<WalletMembersView> {
               for (final m in active)
                 _MemberRow(
                   member: m,
-                  isSelf: m.userId == uid,
+                  isSelf: m.isMe,
                   viewerIsOwner: owner,
-                  onLeave: () => _onLeave(l, m),
-                  onRemove: () => _onRemove(l, m),
-                  onTransferOwnership: () => _onTransferOwnership(l, m),
+                  onLeave: () => _onLeave(context, l, m),
+                  onRemove: () => _onRemove(context, l, m),
+                  onTransferOwnership: () =>
+                      _onTransferOwnership(context, l, m),
                 ),
             ],
           ),
-          // Only the owner invites (the BE checks too).
           if (owner)
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.md),
@@ -191,7 +144,12 @@ class _WalletMembersViewState extends State<WalletMembersView> {
                 label: l.walletInviteFromContacts,
                 variant: AddTileVariant.row,
                 icon: AppIcons.inviteMember,
-                onTap: () => _onInvitePressed(l),
+                onTap: () => inviteWalletMember(
+                  context,
+                  account: account,
+                  members: members,
+                  onResult: onResult,
+                ),
               ),
             ),
           if (history.isNotEmpty)
@@ -199,13 +157,10 @@ class _WalletMembersViewState extends State<WalletMembersView> {
               opacity: 0.55,
               child: SectionCard(
                 title: l.walletMembersHistoryTitle,
+                description: l.walletMembersHistoryDescription,
                 children: [
                   for (final m in history)
-                    _MemberRow(
-                      member: m,
-                      isSelf: m.userId == uid,
-                      viewerIsOwner: false,
-                    ),
+                    _MemberRow(member: m, isSelf: m.isMe, viewerIsOwner: false),
                 ],
               ),
             ),
@@ -214,20 +169,13 @@ class _WalletMembersViewState extends State<WalletMembersView> {
     );
   }
 
-  // ─── Invite flow ─────────────────────────────────────────────────────
-
-  Future<void> _onInvitePressed(AppLocalizations l) async {
-    final invited = await inviteWalletMember(
-      context,
-      accountId: widget.accountId,
-      members: _members,
-    );
-    if (invited && mounted) await _load();
-  }
-
   // ─── Member actions ──────────────────────────────────────────────────
 
-  Future<void> _onLeave(AppLocalizations l, WalletMember me) async {
+  Future<void> _onLeave(
+    BuildContext context,
+    AppLocalizations l,
+    WalletMember me,
+  ) async {
     final ok = await showConfirmDialog(
       context,
       title: l.walletLeaveConfirmTitle,
@@ -235,16 +183,18 @@ class _WalletMembersViewState extends State<WalletMembersView> {
       confirmLabel: l.walletLeaveAction,
       destructive: true,
     );
-    if (!ok || !mounted) return;
-    final repo = context.read<AccountsRepository>();
-    final accountsCubit = context.read<AccountsCubit>();
+    if (!ok || !context.mounted) return;
+    final cubit = context.read<AccountsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
     try {
-      await repo.removeMember(accountId: widget.accountId, memberId: me.id);
-      // No longer a member — the wallet drops out of my list, and its page
-      // with it: straight back to the wallets list, however we got here.
-      await accountsCubit.load();
+      // Leaving returns {account: null}: the cubit drops the wallet from the
+      // list, and its page with it — straight back to the wallets list.
+      final r = await cubit.removeMember(
+        accountId: account.id,
+        memberId: me.id,
+      );
+      onResult(r);
       router.go('/accounts');
     } on ApiException catch (e) {
       // OWNER_MUST_TRANSFER lands here when the owner tries to leave a
@@ -253,50 +203,53 @@ class _WalletMembersViewState extends State<WalletMembersView> {
     }
   }
 
-  Future<void> _onRemove(AppLocalizations l, WalletMember m) async {
+  Future<void> _onRemove(
+    BuildContext context,
+    AppLocalizations l,
+    WalletMember m,
+  ) async {
     final ok = await showConfirmDialog(
       context,
-      title: l.walletRemoveMemberConfirmTitle(m.displayName),
+      title: l.walletRemoveMemberConfirmTitle(m.name),
       message: l.walletRemoveMemberConfirmBody,
       confirmLabel: l.commonRemove,
       destructive: true,
     );
-    if (!ok || !mounted) return;
-    final repo = context.read<AccountsRepository>();
-    final accountsCubit = context.read<AccountsCubit>();
+    if (!ok || !context.mounted) return;
+    final cubit = context.read<AccountsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await repo.removeMember(accountId: widget.accountId, memberId: m.id);
-      await _load();
-      await accountsCubit.load();
+      onResult(await cubit.removeMember(accountId: account.id, memberId: m.id));
     } on ApiException catch (e) {
       showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
     }
   }
 
-  Future<void> _onTransferOwnership(AppLocalizations l, WalletMember m) async {
+  Future<void> _onTransferOwnership(
+    BuildContext context,
+    AppLocalizations l,
+    WalletMember m,
+  ) async {
     final ok = await showConfirmDialog(
       context,
-      title: l.walletTransferOwnershipConfirmTitle(m.displayName),
+      title: l.walletTransferOwnershipConfirmTitle(m.name),
       message: l.walletTransferOwnershipConfirmBody,
       confirmLabel: l.walletTransferOwnershipConfirm,
     );
-    if (!ok || !mounted) return;
-    final repo = context.read<AccountsRepository>();
-    final accountsCubit = context.read<AccountsCubit>();
+    if (!ok || !context.mounted) return;
+    final cubit = context.read<AccountsCubit>();
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await repo.transferOwnership(
-        accountId: widget.accountId,
+      final r = await cubit.transferOwnership(
+        accountId: account.id,
         newOwnerUserId: m.userId,
       );
+      onResult(r);
       showAppSnackBarOn(
         messenger,
         l.walletTransferOwnershipSuccess,
         tone: Tone.success,
       );
-      await _load();
-      await accountsCubit.load();
     } on ApiException catch (e) {
       showAppSnackBarOn(messenger, walletErrorMessage(l, e), tone: Tone.danger);
     }
@@ -351,7 +304,7 @@ class _MemberRow extends StatelessWidget {
             label: l.walletMemberPending,
             tone: AppChipTone.warning,
             selected: true,
-            size: PillSize.chip,
+            size: ChipSize.chip,
           )
         : AppChip(
             label: member.isOwner
@@ -359,18 +312,16 @@ class _MemberRow extends StatelessWidget {
                 : l.walletMemberRoleMember,
             tone: member.isOwner ? AppChipTone.primary : AppChipTone.neutral,
             selected: true,
-            size: PillSize.chip,
+            size: ChipSize.chip,
           );
     final destructive = TextStyle(color: scheme.error);
     return DetailRow(
       leading: UserAvatar(
-        displayName: member.displayName,
+        displayName: member.name,
         iconCode: member.iconCode,
         size: 40,
       ),
-      label: isSelf
-          ? '${member.displayName} (${l.walletMemberYou})'
-          : member.displayName,
+      label: isSelf ? '${member.name} (${l.walletMemberYou})' : member.name,
       helper: dates.isEmpty ? null : dates.join(' · '),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -402,11 +353,8 @@ class _MemberRow extends StatelessWidget {
                     labelStyle: destructive,
                   ),
               ],
-              builder: (context, toggle) => IconButton(
-                tooltip: l.commonMore,
-                icon: const Icon(AppIcons.more),
-                onPressed: toggle,
-              ),
+              builder: (context, toggle) =>
+                  AppIconButton.more(tooltip: l.commonMore, onPressed: toggle),
             ),
         ],
       ),

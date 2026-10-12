@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -73,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: AppSpacing.md),
                           ],
-                          AppTextField(
+                          AppInput(
                             controller: _identifierCtrl,
                             enabled: !isSubmitting,
                             label: l.authLoginIdentifierLabel,
@@ -89,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                                 : null,
                           ),
                           const SizedBox(height: AppSpacing.md),
-                          AppTextField(
+                          AppInput(
                             controller: _passwordCtrl,
                             enabled: !isSubmitting,
                             label: l.authLoginPasswordLabel,

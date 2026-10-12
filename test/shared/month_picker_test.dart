@@ -1,5 +1,5 @@
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,7 +15,11 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Center(
-            child: MonthPill(month: month, last: last, onChanged: picked.add),
+            child: StepperPill.month(
+              value: month,
+              last: last,
+              onChanged: picked.add,
+            ),
           ),
         ),
       ),

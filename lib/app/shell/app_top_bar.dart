@@ -2,21 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_durations.dart';
-import '../../core/constants/app_icons.dart';
-import '../../core/constants/app_spacing.dart';
 import '../../features/auth/domain/user.dart';
 import '../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import '../../features/pending/presentation/cubit/pending_cubit.dart';
 import '../../l10n/gen/app_localizations.dart';
-import '../../shared/icon_maker/icon_code.dart';
-import '../../shared/widgets/buttons/app_icon_button.dart';
-import '../../shared/icon_maker/icon_shape.dart';
-import '../../shared/widgets/user_avatar.dart';
 import 'fade_branch_container.dart';
 import 'tab_nav.dart';
 import 'top_bar_crumbs.dart';
+import '../../ui/ui.dart';
 
 /// Universal top bar — the top-chrome counterpart to `MainBottomNav`.
 ///
@@ -497,29 +491,24 @@ class _UniversalChips extends StatelessWidget {
               left: AppSpacing.sm,
               right: AppSpacing.md,
             ),
-            child: Tooltip(
-              message: l.navProfileTooltip,
-              child: InkWell(
-                customBorder: RoundedRectangleBorder(borderRadius: outline),
-                onTap: () => _open(context, ShellTab.settings, '/settings'),
-                child: _ProfileFrame(
-                  outline: outline,
-                  active: active,
-                  child: UserAvatar(
-                    displayName: user.displayName,
-                    // No always-on border: the frame says active / not.
-                    iconCode: user.iconCode == null
-                        ? null
-                        : IconCode(
-                            icon: user.iconCode!.icon,
-                            iconColors: user.iconCode!.iconColors,
-                            background: user.iconCode!.background,
-                            bgColors: user.iconCode!.bgColors,
-                            shape: user.iconCode!.shape,
-                          ),
-                    size: 32,
-                  ),
-                ),
+            child: AppAvatarButton(
+              tooltip: l.navProfileTooltip,
+              outline: outline,
+              active: active,
+              onTap: () => _open(context, ShellTab.settings, '/settings'),
+              // No always-on border: the frame says active / not.
+              child: UserAvatar(
+                displayName: user.displayName,
+                iconCode: user.iconCode == null
+                    ? null
+                    : IconCode(
+                        icon: user.iconCode!.icon,
+                        iconColors: user.iconCode!.iconColors,
+                        background: user.iconCode!.background,
+                        bgColors: user.iconCode!.bgColors,
+                        shape: user.iconCode!.shape,
+                      ),
+                size: 32,
               ),
             ),
           );
@@ -546,47 +535,6 @@ class _UniversalChips extends StatelessWidget {
         selected: active,
         onPressed: onPressed,
       ),
-    );
-  }
-}
-
-/// The profile chip: the avatar in the same frame as the other top-bar chips
-/// — a neutral surface ring, or the bottom nav's active look (primary
-/// container + primary ring) while the profile page is on screen.
-class _ProfileFrame extends StatelessWidget {
-  const _ProfileFrame({
-    required this.outline,
-    required this.active,
-    required this.child,
-  });
-
-  final BorderRadius outline;
-  final bool active;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: 40,
-      height: 40,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: active ? scheme.primaryContainer : scheme.surfaceContainerHigh,
-        borderRadius: outline,
-        border: Border.all(
-          color: active ? scheme.primary : scheme.outlineVariant,
-          width: active ? 1.5 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: 0.2),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: child,
     );
   }
 }
@@ -667,7 +615,11 @@ class _LeftGroup extends StatelessWidget {
                           child: child,
                         ),
                       ),
-                      child: Icon(backIcon, key: ValueKey(backIcon), size: 20),
+                      child: AppIcon(
+                        backIcon,
+                        key: ValueKey(backIcon),
+                        size: AppIconSize.md,
+                      ),
                     ),
                   ),
                 ),
@@ -700,9 +652,9 @@ class _LeftGroup extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(
+                AppIcon(
                   AppIcons.chevronRight,
-                  size: 16,
+                  size: AppIconSize.sm,
                   color: scheme.onSurfaceVariant,
                 ),
               ],

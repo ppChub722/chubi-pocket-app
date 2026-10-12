@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../../core/constants/app_durations.dart';
 import 'tab_nav.dart';
+import '../../ui/ui.dart';
 
 /// Tab-switch container for the shell: keeps every branch alive in an
 /// [IndexedStack] (state + scroll preserved) and runs a fade / slide each

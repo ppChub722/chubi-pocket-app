@@ -5,21 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/icon_maker/color_token.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
 import '../widgets/tag_chip.dart';
@@ -558,7 +546,7 @@ class _TagsPageState extends State<TagsPage>
                   children: [
                     // Clear the transparent top bar.
                     SizedBox(height: MediaQuery.paddingOf(context).top),
-                    AppSearchBar(
+                    AppInput.search(
                       controller: _searchController,
                       hint: l.tagsSearchHint,
                       onChanged: (v) => _onFilterChanged(() => _query = v),
@@ -616,12 +604,7 @@ class _TagsPageState extends State<TagsPage>
           // Batch edit (the top bar carries no page actions; long-pressing
           // a row works too) — the app's round ✏️.
           const SizedBox(width: AppSpacing.sm),
-          AppIconButton(
-            icon: AppIcons.edit,
-            size: 36,
-            tooltip: l.commonEdit,
-            onPressed: _beginEdit,
-          ),
+          AppIconButton.edit(tooltip: l.commonEdit, onPressed: _beginEdit),
         ],
       ),
     );
@@ -776,11 +759,6 @@ class _TagsPageState extends State<TagsPage>
   }
 
   Widget _editList(AppLocalizations l, List<_TagDraft> visible) {
-    final scheme = Theme.of(context).colorScheme;
-    OutlineInputBorder border(Color c) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-      borderSide: BorderSide(color: c),
-    );
     return Form(
       key: _formKey,
       child: _RowList(
@@ -799,7 +777,7 @@ class _TagsPageState extends State<TagsPage>
                   iconCode: d.iconCode,
                 ),
               ),
-              body: TextFormField(
+              body: AppInput(
                 controller: _controllerFor(d),
                 focusNode: _focusFor(d.key),
                 maxLength: TextLimits.tagName,
@@ -811,18 +789,10 @@ class _TagsPageState extends State<TagsPage>
                   working.map((e) => e.key == d.key ? e.copyWith(name: v) : e),
                 ),
                 validator: (v) => _validateName(l, d.key, v),
-                decoration: InputDecoration(
-                  isDense: true,
-                  counterText: '',
-                  filled: false,
-                  errorMaxLines: 2,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.sm,
-                  ),
-                  enabledBorder: border(scheme.outlineVariant),
-                  focusedBorder: border(scheme.primary),
-                  border: border(scheme.outlineVariant),
+                look: AppInputLook.outlined,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.sm,
                 ),
               ),
             ),
@@ -865,7 +835,7 @@ class _RowList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (final (i, row) in rows.indexed) ...[
-            if (i > 0) const RowDivider(),
+            if (i > 0) const AppDivider.row(),
             row,
           ],
           Padding(

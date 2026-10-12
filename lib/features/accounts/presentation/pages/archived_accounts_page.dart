@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 import '../cubit/accounts_cubit.dart';
 
@@ -22,6 +19,9 @@ class ArchivedAccountsPage extends StatefulWidget {
 class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
   late Future<List<Account>> _future = _fetch();
   final Set<String> _busy = {};
+
+  /// Restored here: hidden from the list without a refetch.
+  final Set<String> _restored = {};
 
   Future<List<Account>> _fetch() =>
       context.read<AccountsCubit>().listArchived();
@@ -43,7 +43,7 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
       await context.read<AccountsCubit>().restore(a.id);
       if (!mounted) return;
       showAppSnackBar(context, l.accountRestored(a.name), tone: Tone.success);
-      await _refresh();
+      setState(() => _restored.add(a.id));
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
     } finally {
@@ -60,7 +60,10 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
       body: FutureBuilder<List<Account>>(
         future: _future,
         builder: (context, snap) {
-          final list = snap.data ?? const <Account>[];
+          final list = [
+            for (final a in snap.data ?? const <Account>[])
+              if (!_restored.contains(a.id)) a,
+          ];
           return AsyncStateView(
             loading: snap.connectionState != ConnectionState.done,
             error: snap.hasError
@@ -104,15 +107,18 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
                           ),
                           label: a.name,
                           helper: moneyString(context, a.balance),
-                          trailing: AppChip(
-                            label: l.accountRestore,
-                            icon: AppIcons.unarchive,
-                            tone: AppChipTone.primary,
-                            selected: true,
-                            onTap: _busy.contains(a.id)
-                                ? null
-                                : () => _restore(a),
-                          ),
+                          // Only the owner restores (the BE checks too).
+                          trailing: !a.canEdit
+                              ? null
+                              : AppChip(
+                                  label: l.accountRestore,
+                                  icon: AppIcons.unarchive,
+                                  tone: AppChipTone.primary,
+                                  selected: true,
+                                  onTap: _busy.contains(a.id)
+                                      ? null
+                                      : () => _restore(a),
+                                ),
                         ),
                     ],
                   ),

@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../data/notifications_repository.dart';
@@ -43,8 +41,14 @@ class _Body extends StatelessWidget {
         // Save failures only — a failed first load is the ErrorView below.
         listenWhen: (a, b) =>
             a.error != b.error && b.error != null && b.settings != null,
-        listener: (ctx, _) =>
-            showAppSnackBar(ctx, l.notifSettingsSaveFailed, tone: Tone.danger),
+        listener: (ctx, state) => showAppSnackBar(
+          ctx,
+          // A type that can't be muted says so; the switch is already back.
+          state.error?.code == 'TYPE_NOT_MUTABLE'
+              ? state.error!.message
+              : l.notifSettingsSaveFailed,
+          tone: Tone.danger,
+        ),
         builder: (ctx, state) {
           final s = state.settings;
           if (s == null) {
@@ -76,37 +80,47 @@ class _Body extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
+                DetailRow(
+                  label: label,
+                  trailing: AppSwitch(
+                    value: on,
+                    onChanged: (v) =>
+                        cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
                   ),
-                  title: Text(label),
-                  value: on,
-                  onChanged: (v) =>
-                      cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
+                  onTap: () =>
+                      cubit.update(mutedTypes: toggled(muted, t.wire, on)),
                 ),
                 if (autoLabel != null)
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.only(
-                      left: AppSpacing.xxxl,
-                      right: AppSpacing.lg,
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.xl),
+                    child: DetailRow(
+                      label: autoLabel,
+                      trailing: AppSwitch(
+                        value: s.isAuto(t),
+                        onChanged: on
+                            ? (v) => cubit.update(
+                                autoTypes: toggled(auto, t.wire, v),
+                              )
+                            : null,
+                      ),
+                      onTap: on
+                          ? () => cubit.update(
+                              autoTypes: toggled(auto, t.wire, !s.isAuto(t)),
+                            )
+                          : null,
                     ),
-                    dense: true,
-                    title: Text(autoLabel),
-                    value: s.isAuto(t),
-                    onChanged: on
-                        ? (v) =>
-                              cubit.update(autoTypes: toggled(auto, t.wire, v))
-                        : null,
                   ),
                 ?extra,
               ],
             );
           }
 
+          // The cache only feeds the picker; the row's name comes from the
+          // settings reply (`default_account`).
           final accounts = ctx.watch<AccountsCubit>().state.accounts;
-          final receiving = accounts
-              .where((a) => a.id == s.defaultAccountId)
+          final receiving = s.defaultAccount;
+          final selectedAccount = accounts
+              .where((a) => a.id == receiving?.id)
               .firstOrNull;
           final paidAuto =
               !s.isMuted(NotificationType.splitPaid) &&
@@ -158,7 +172,7 @@ class _Body extends StatelessWidget {
                       // The wallet only matters while auto-record is on.
                       locked: !paidAuto,
                       child: DetailRow(
-                        leading: const Icon(AppIcons.bank),
+                        leading: const AppIcon(AppIcons.bank),
                         label: l.notifDefaultAccount,
                         trailing: Text(
                           receiving?.name ?? l.notifDefaultAccountNone,
@@ -168,13 +182,19 @@ class _Body extends StatelessWidget {
                           final r = await showAccountPickerSheet(
                             context: ctx,
                             accounts: accounts,
-                            selected: receiving,
+                            selected: selectedAccount,
                             title: l.notifDefaultAccount,
                             // "None" = record it without a wallet.
                             allowNone: true,
                           );
                           if (r is AccountPickerSelected) {
-                            cubit.update(defaultAccountId: r.account.id);
+                            cubit.update(
+                              defaultAccount: DefaultAccountRef(
+                                id: r.account.id,
+                                name: r.account.name,
+                                iconCode: r.account.iconCode,
+                              ),
+                            );
                           } else if (r is AccountPickerCleared) {
                             cubit.update(clearDefaultAccount: true);
                           }
@@ -204,13 +224,16 @@ class _Body extends StatelessWidget {
                   // Not a notification — I recorded it myself. Lives with
                   // the project types rather than a second "โปรเจกต์"
                   // section.
-                  SwitchListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
+                  DetailRow(
+                    label: l.notifAutoResolveProject,
+                    trailing: AppSwitch(
+                      value: s.autoResolveOwnInProjects,
+                      onChanged: (v) =>
+                          cubit.update(autoResolveOwnInProjects: v),
                     ),
-                    title: Text(l.notifAutoResolveProject),
-                    value: s.autoResolveOwnInProjects,
-                    onChanged: (v) => cubit.update(autoResolveOwnInProjects: v),
+                    onTap: () => cubit.update(
+                      autoResolveOwnInProjects: !s.autoResolveOwnInProjects,
+                    ),
                   ),
                 ],
               ),
@@ -224,7 +247,7 @@ class _Body extends StatelessWidget {
                       icon: AppIcons.lock,
                       tone: AppChipTone.neutral,
                       selected: true,
-                      size: PillSize.chip,
+                      size: ChipSize.chip,
                     ),
                   ),
                 ],

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../tx_list_filters.dart';
 
 /// "ช่วงเวลา" — pick a [TxPeriod] in a sheet (the transactions list's

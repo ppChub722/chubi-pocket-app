@@ -5,7 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../domain/auth_token.dart';
 import '../domain/user.dart';
 
-/// All HTTP traffic for `/auth/*` and `/users/me` lives here.
+/// All HTTP traffic for `/auth/*` and `GET /users/me` lives here.
 ///
 /// This is the **template Phase 1+ modules copy.** Convention:
 /// - Methods accept primitive params or typed input objects, return typed

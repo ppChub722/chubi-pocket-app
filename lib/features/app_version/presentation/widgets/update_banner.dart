@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../cubit/app_version_cubit.dart';
 import '../pages/update_required_page.dart';
+import '../../../../ui/ui.dart';
 
 /// "มีเวอร์ชันใหม่" — a strip over every screen (next to the offline
 /// banner) while a newer build is out but this one still works. Closing
@@ -54,9 +54,9 @@ class UpdateBannerStrip extends StatelessWidget {
           padding: const EdgeInsets.only(left: AppSpacing.md),
           child: Row(
             children: [
-              Icon(
+              AppIcon(
                 Icons.system_update_rounded,
-                size: 18,
+                size: AppIconSize.md,
                 color: scheme.onPrimaryContainer,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -70,10 +70,10 @@ class UpdateBannerStrip extends StatelessWidget {
                 onPressed: onUpdate,
                 child: Text(l.appUpdateAvailableAction),
               ),
-              IconButton(
+              AppIconButton.close(
                 tooltip: l.appUpdateLater,
                 onPressed: onDismiss,
-                icon: Icon(Icons.close, color: scheme.onPrimaryContainer),
+                color: scheme.onPrimaryContainer,
               ),
             ],
           ),

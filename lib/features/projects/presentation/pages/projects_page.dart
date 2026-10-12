@@ -4,12 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
 import '../widgets/project_common.dart';
@@ -81,7 +77,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
               children: [
                 // Clear the floating top bar (ctx is inside the body).
                 SizedBox(height: MediaQuery.paddingOf(ctx).top),
-                AppSearchBar(
+                AppInput.search(
                   hint: l.projectsSearchHint,
                   onChanged: (v) => setState(() => _query = v),
                 ),
@@ -209,9 +205,7 @@ class _ProjectCard extends StatelessWidget {
         l.projectMetaPlanned(moneyString(context, p.plannedAmount!)),
       if (p.type?.isNotEmpty ?? false) p.type!,
     ].join(' · ');
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
+    return AppCard(
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -262,7 +256,7 @@ class _ProjectCard extends StatelessWidget {
                 dot: true,
                 tone: projectStatusTone(p.status),
                 selected: true,
-                size: PillSize.chip,
+                size: ChipSize.chip,
               ),
             ],
           ),

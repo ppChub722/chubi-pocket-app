@@ -4,18 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 import '../../domain/category.dart';
@@ -93,10 +84,10 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   /// category's view in place.
   bool get _isCreate => widget.isCreate && _persisted == null;
 
-  /// The user's fee category (preference `fee_category_id`, spec 15 §7):
-  /// fee drafts from bank slips get it. Starts from the signed-in user,
-  /// refreshed from `GET /users/me` (login answers without preferences).
-  String? _feeCategoryId;
+  /// The one `GET /categories/:id` of this page: counts + the fee flag
+  /// (preference `fee_category_id`, spec 15 §7: fee drafts from bank slips
+  /// get it). Null while creating or until the call lands.
+  CategoryDetail? _detail;
   bool _feeBusy = false;
 
   /// This page's own messenger: its snackbars float above the page's
@@ -145,7 +136,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       }
     }
     onDraftRestored();
-    if (!widget.isCreate) _loadFeeCategory();
+    if (!widget.isCreate) _loadDetail();
   }
 
   /// The cubit's list changed (first load, pull-to-refresh, an edit
@@ -174,16 +165,27 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     resetDraft(_CategoryDraft.fromCategory(fresh));
   }
 
-  Future<void> _loadFeeCategory() async {
-    final auth = context.read<AuthCubit>().state;
-    if (auth is AuthAuthenticated) _feeCategoryId = auth.user.feeCategoryId;
+  /// The page's one read: `GET /categories/:id` (counts, fee flag, path).
+  /// The cubit patches the list row from it; a row the list lacks (a deep
+  /// link) is taken from it directly.
+  Future<void> _loadDetail() async {
+    final cubit = context.read<CategoriesCubit>();
     try {
-      final me = await context.read<UsersRepository>().getMe();
+      final d = await cubit.fetchDetail(widget.editingId!);
       if (!mounted) return;
-      setState(() => _feeCategoryId = me.feeCategoryId);
-      context.read<AuthCubit>().updateUser(me);
-    } on ApiException {
-      // Keep what the signed-in user had; the switch still works.
+      setState(() {
+        _detail = d;
+        _notFound = false;
+      });
+      if (_persisted == null) {
+        _persisted = d;
+        resetDraft(_CategoryDraft.fromCategory(d));
+      }
+    } on ApiException catch (e) {
+      if (mounted && _persisted == null && e.code == 'NOT_FOUND') {
+        setState(() => _notFound = true);
+      }
+      // Otherwise keep the list row; counts fall back to zero.
     }
   }
 
@@ -201,7 +203,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       );
       if (!mounted) return;
       context.read<AuthCubit>().updateUser(me);
-      setState(() => _feeCategoryId = me.feeCategoryId);
+      // Patch the flag locally; no re-read.
+      setState(() => _detail = _detail?.withFee(on));
     } on ApiException {
       if (mounted) {
         _snack(l.categoryFeeSwitchFailed, tone: Tone.danger);
@@ -295,10 +298,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         // Become the saved category right here — edit → view in place, as
         // contacts do. `replace` only fixes the URL: same page key, so no
         // transition and this state is kept.
-        setState(() => _persisted = created);
+        setState(() {
+          _persisted = created;
+          _detail = CategoryDetail.fromCategory(created);
+        });
         commitSaved(_CategoryDraft.fromCategory(created));
         context.replace('/categories/${created.id}');
-        _loadFeeCategory();
         return;
       } else {
         final next = _persisted!.copyWith(
@@ -313,8 +318,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           clearNote: note.isEmpty,
           includeInReport: w.includeInReport,
         );
-        await cubit.update(next);
-        _persisted = cubit.byId(next.id) ?? next;
+        final saved = await cubit.update(next);
+        _persisted = saved;
+        _detail = saved.withFee(_detail?.isFeeCategory ?? saved.isFeeCategory);
       }
     } on CategoryLimitExceeded {
       if (!mounted) return;
@@ -333,32 +339,22 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   /// Always a real delete. The confirm spells out the fallout (fetched
-  /// fresh): children move up, transactions become uncategorised, budgets
+  /// loaded): children move up, transactions become uncategorised, budgets
   /// on this category are deleted with it.
   Future<void> _delete() async {
     final l = AppLocalizations.of(context)!;
     final c = _persisted!;
     final cubit = context.read<CategoriesCubit>();
-    setSaving(true);
-    final ({int transactions, int budgets}) usage;
-    try {
-      usage = await cubit.usage(c.id);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setSaving(false);
-      _snack(e.message, tone: Tone.danger);
-      return;
-    }
-    if (!mounted) return;
-    setSaving(false);
+    // The counts come from the detail loaded on open: no extra call.
+    final txCount = _detail?.transactionCount ?? 0;
+    final budgetCount = _detail?.budgetCount ?? 0;
     final ok = await showConfirmDialog(
       context,
       title: l.categoryDeleteTitle(c.name),
       message: [
         l.categoryDeleteBody,
-        if (usage.transactions > 0)
-          l.categoryDeleteTxImpact(usage.transactions),
-        if (usage.budgets > 0) l.categoryDeleteBudgetImpact(usage.budgets),
+        if (txCount > 0) l.categoryDeleteTxImpact(txCount),
+        if (budgetCount > 0) l.categoryDeleteBudgetImpact(budgetCount),
       ].join('\n'),
       confirmLabel: l.commonDelete,
       destructive: true,
@@ -407,6 +403,13 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 
   String? _parentBreadcrumb(List<Category> all) {
     if (working.parentId == null) return null;
+    // Unchanged parent: the row's own server path.
+    final row = _persisted;
+    if (row != null &&
+        row.parentId == working.parentId &&
+        row.path.isNotEmpty) {
+      return row.path.map((p) => p.name).join(' › ');
+    }
     final parent = all.firstWhere(
       (c) => c.id == working.parentId,
       orElse: _previewCategory,
@@ -575,39 +578,33 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final preview = _previewCategory();
     final breadcrumb = _parentBreadcrumb(all);
     final canDelete = !_isCreate && !(_persisted?.isSystem ?? true);
-    return ListView(
+    return DetailPageBody(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        topInset + AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.huge + bottomInset,
-      ),
-      children: [
-        _Header(
-          category: preview,
-          parentPath: breadcrumb,
+      topInset: topInset + AppSpacing.lg,
+      bottomInset: AppSpacing.huge + bottomInset,
+      hero: _Header(
+        category: preview,
+        editing: editing,
+        isIncome: working.type == CategoryType.income,
+        onEdit: editing ? null : enterEdit,
+        nameField: AppInput.title(
           editing: editing,
-          isIncome: working.type == CategoryType.income,
-          onEdit: editing ? null : enterEdit,
-          nameField: InlineTitleField(
-            editing: editing,
-            controller: _nameController,
-            focusNode: _nameFocus,
-            hint: l.commonName,
-            maxLength: TextLimits.name,
-            onEnterEdit: () => enterEdit(focus: _nameFocus),
-            onChanged: (v) => _onText(_TextField.name, v),
-            validator: (v) => _validateName(v, all),
-          ),
-          onIconTap: _openIconMaker,
-          onIconLongPress: _enterEditThenOpenMaker,
+          controller: _nameController,
+          focusNode: _nameFocus,
+          hint: l.commonName,
+          maxLength: TextLimits.name,
+          onEnterEdit: () => enterEdit(focus: _nameFocus),
+          onChanged: (v) => _onText(_TextField.name, v),
+          validator: (v) => _validateName(v, all),
         ),
-        const SizedBox(height: HeroSpacing.after),
+        onIconTap: _openIconMaker,
+        onIconLongPress: _enterEditThenOpenMaker,
+      ),
+      sections: [
         // 1 — where it sits. Create also picks the type here (fixed once
         // saved, spec §3.4 — the hero's chip shows it after that).
-        SectionCard(
-          first: true,
+        (first) => SectionCard(
+          first: first,
           children: [
             if (_isCreate)
               DetailRow(
@@ -620,35 +617,43 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               label: l.categoryFormParentLabel,
               value: breadcrumb,
               emptyText: l.categoryFormParentNone,
-              onTap: () => _openParentPicker(all),
+              // View mode: enter edit, then open the picker (an empty parent
+              // is the placeholder — tapping it starts adding one).
+              onTap: () {
+                if (!editing) enterEdit();
+                _openParentPicker(all);
+              },
             ),
           ],
         ),
         // 2 — words. The note always shows, empty or not (owner rule), with
         // the long-press hint in view mode.
-        SectionCard(
+        (first) => SectionCard(
+          first: first,
           children: [
             // maxLength caps the input, so no length validator.
             DetailStacked(
               label: l.commonDescription,
-              child: InlineField(
+              child: AppInput.inline(
                 editing: editing,
                 controller: _descriptionController,
                 focusNode: _descriptionFocus,
                 maxLines: 3,
                 maxLength: TextLimits.description,
+                viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
                 onEnterEdit: () => enterEdit(focus: _descriptionFocus),
                 onChanged: (v) => _onText(_TextField.description, v),
               ),
             ),
             DetailStacked(
               label: l.commonNote,
-              child: InlineField(
+              child: AppInput.inline(
                 editing: editing,
                 controller: _noteController,
                 focusNode: _noteFocus,
                 maxLines: 3,
                 maxLength: TextLimits.note,
+                viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
                 onEnterEdit: () => enterEdit(focus: _noteFocus),
                 onChanged: (v) => _onText(_TextField.note, v),
               ),
@@ -656,13 +661,15 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           ],
         ),
         // 3 — การตั้งค่า.
-        SectionCard(
+        (first) => SectionCard(
+          first: first,
           title: l.categorySectionSettings,
+          description: l.categorySettingsSectionDescription,
           children: [
             DetailRow(
               label: l.categoryFormIncludeInReportLabel,
               helper: l.categoryFormIncludeInReportHelper,
-              trailing: Switch(
+              trailing: AppSwitch(
                 value: working.includeInReport,
                 onChanged: (v) =>
                     applyChange(working.copyWith(includeInReport: v)),
@@ -673,29 +680,29 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               DetailRow(
                 label: l.categoryFeeSwitchLabel,
                 helper: l.categoryFeeSwitchHelper,
-                trailing: Switch(
-                  value: _feeCategoryId == _persisted!.id,
+                trailing: AppSwitch(
+                  value: _detail?.isFeeCategory ?? false,
                   onChanged: _feeBusy ? null : _setFeeCategory,
                 ),
               ),
           ],
         ),
-        // การจัดการ — edit mode only, last section (system rows can't be
-        // deleted).
-        if (editing && canDelete)
-          ManageSection(
-            deleteLabel: l.categoryDelete,
-            onDelete: isSaving ? null : _delete,
-          ),
-        if (!_isCreate)
-          DetailMeta(
-            lines: detailMetaLines(
+      ],
+      // การจัดการ — edit mode only, last section (system rows can't be
+      // deleted).
+      manage: editing && canDelete
+          ? ManageSection(
+              deleteLabel: l.categoryDelete,
+              onDelete: isSaving ? null : _delete,
+            )
+          : null,
+      metaLines: _isCreate
+          ? const []
+          : detailMetaLines(
               context,
               createdAt: _persisted?.createdAt,
               updatedAt: _persisted?.updatedAt,
             ),
-          ),
-      ],
     );
   }
 
@@ -721,7 +728,9 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   Widget _typeChoice(AppLocalizations l) {
     Widget pill(CategoryType t, String label) => AppChip(
       label: label,
-      tone: t == CategoryType.income ? AppChipTone.income : AppChipTone.expense,
+      color: t == CategoryType.income
+          ? Theme.of(context).extension<AppColors>()!.income
+          : Theme.of(context).extension<AppColors>()!.expense,
       selected: working.type == t,
       onTap: () => applyChange(working.copyWith(type: t, clearParent: true)),
     );
@@ -742,7 +751,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 //
 //   [− รายจ่าย]                                    ✏️
 //   (icon)  name
-//           parent › path · [ซ่อนจากรายงาน]
+//           (the parent path lives in the หมวดหลัก row, not here)
 //
 // View mode: ✏️ → edit; long-press the icon → edit + maker. Edit mode:
 // tap the icon → maker.
@@ -751,7 +760,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
 class _Header extends StatelessWidget {
   const _Header({
     required this.category,
-    required this.parentPath,
     required this.editing,
     required this.isIncome,
     required this.nameField,
@@ -761,7 +769,6 @@ class _Header extends StatelessWidget {
   });
 
   final Category category;
-  final String? parentPath;
   final bool editing;
   final bool isIncome;
   final Widget nameField;
@@ -775,10 +782,10 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final hasPath = parentPath != null && parentPath!.isNotEmpty;
     final hidden = !category.includeInReport;
     return HeaderCard(
       accent: isIncome ? palette.income : palette.expense,
+      glyph: AppIcons.category,
       onEdit: onEdit,
       // The row keeps its height without ✏️ (edit mode), so nothing below
       // moves.
@@ -786,7 +793,9 @@ class _Header extends StatelessWidget {
         AppChip(
           label: isIncome ? l.categoryTypeIncome : l.categoryTypeExpense,
           icon: isIncome ? AppIcons.income : AppIcons.expense,
-          tone: isIncome ? AppChipTone.income : AppChipTone.expense,
+          color: isIncome
+              ? Theme.of(context).extension<AppColors>()!.income
+              : Theme.of(context).extension<AppColors>()!.expense,
           selected: true,
         ),
         if (hidden)
@@ -812,9 +821,6 @@ class _Header extends StatelessWidget {
         ),
       ),
       title: nameField,
-      subtitle: hasPath
-          ? Text(parentPath!, maxLines: 1, overflow: TextOverflow.ellipsis)
-          : null,
     );
   }
 }

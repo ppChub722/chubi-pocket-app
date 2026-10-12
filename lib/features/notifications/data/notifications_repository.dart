@@ -67,38 +67,46 @@ class NotificationsRepository {
     }
   }
 
-  /// Lightweight badge poll — spec §13.4.8 (in-app polling in 1b).
+  /// Lightweight badge poll — `GET /notifications/unread-count`.
   Future<int> unreadCount() async {
-    final page = await list(read: 'false', perPage: 1);
-    return page.unreadCount;
-  }
-
-  Future<AppNotification> markRead(String id) async {
-    return _post('/notifications/$id/read');
-  }
-
-  Future<AppNotification> markActioned(String id) async {
-    return _post('/notifications/$id/actioned');
-  }
-
-  Future<AppNotification> markDismissed(String id) async {
-    return _post('/notifications/$id/dismiss');
-  }
-
-  Future<int> markReadAll() async {
     try {
-      final res = await _client.dio.post<Map<String, dynamic>>(
-        '/notifications/read-all',
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/notifications/unread-count',
       );
-      return (res.data?['marked_read'] as num?)?.toInt() ?? 0;
+      return (res.data?['unread_count'] as num?)?.toInt() ?? 0;
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  Future<void> delete(String id) async {
+  Future<NotificationActionResult> markRead(String id) =>
+      _post('/notifications/$id/read');
+
+  Future<NotificationActionResult> markActioned(String id) =>
+      _post('/notifications/$id/actioned');
+
+  Future<NotificationActionResult> markDismissed(String id) =>
+      _post('/notifications/$id/dismiss');
+
+  /// Marks everything read; returns the fresh badges.
+  Future<Badges> markReadAll() async {
     try {
-      await _client.dio.delete<dynamic>('/notifications/$id');
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/notifications/read-all',
+      );
+      return Badges.fromJson(res.data!['badges'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// Hard delete; returns the fresh badges.
+  Future<Badges> delete(String id) async {
+    try {
+      final res = await _client.dio.delete<Map<String, dynamic>>(
+        '/notifications/$id',
+      );
+      return Badges.fromJson(res.data!['badges'] as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -143,10 +151,15 @@ class NotificationsRepository {
     }
   }
 
-  Future<AppNotification> _post(String path) async {
+  Future<NotificationActionResult> _post(String path) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(path);
-      return AppNotification.fromJson(res.data!);
+      return NotificationActionResult(
+        notification: AppNotification.fromJson(
+          res.data!['notification'] as Map<String, dynamic>,
+        ),
+        badges: Badges.fromJson(res.data!['badges'] as Map<String, dynamic>),
+      );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

@@ -5,52 +5,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../../shared/widgets/ui.dart';
+import '../../../ui/ui.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../domain/transaction.dart';
-import '../domain/transaction_type.dart';
 import '../data/transactions_repository.dart';
 import 'cubit/transactions_cubit.dart';
 import 'widgets/draft_form.dart';
 
-/// Editing a saved transaction in place on its detail page: the transfer
-/// twin lookup, the checks and the save.
-
-/// A transfer's other row (same group) from the cache, if loaded.
-Transaction? transferSibling(BuildContext context, Transaction t) {
-  final group = t.transferGroupId;
-  if (group == null) return null;
-  return context
-      .read<TransactionsCubit>()
-      .state
-      .transactions
-      .where((x) => x.id != t.id && x.transferGroupId == group)
-      .firstOrNull;
-}
-
-/// A transfer's other row when it isn't cached (opened from a wallet's tab,
-/// a deep link, a filtered list): the transfers of that day, matched by
-/// group — the API has no lookup by group. Null when it can't be found.
-Future<Transaction?> fetchTransferSibling(
-  BuildContext context,
-  Transaction t,
-) async {
-  final group = t.transferGroupId;
-  if (group == null) return null;
-  try {
-    final page = await context.read<TransactionsRepository>().list(
-      type: TransactionType.transfer,
-      from: t.date,
-      to: t.date,
-      perPage: 100,
-    );
-    return page.transactions
-        .where((x) => x.id != t.id && x.transferGroupId == group)
-        .firstOrNull;
-  } on ApiException {
-    return null;
-  }
-}
+/// Editing a saved transaction in place on its detail page: the checks and
+/// the save. (A transfer's other wallet comes from the row's own
+/// `transfer_peer` — no twin lookup.)
 
 /// The rule the server would reject first; null = ready to save.
 /// [splitsEditable]: the split editor is open — then the split must add up
@@ -88,8 +52,6 @@ String? splitErrorMessage(AppLocalizations l, ApiException e) =>
       'SPLIT_CONTACT_NOT_FOUND' ||
       'CONTACT_NOT_FOUND' ||
       'CONTACT_ARCHIVED' => l.txSplitErrorContact,
-      // A saved row linked to a contact can't change who it is.
-      'SPLIT_IDENTITY_LOCKED' => l.txSplitPersonLocked,
       'SPLITS_AUTHOR_ONLY' => l.txSplitAuthorOnly,
       _ => null,
     };
@@ -129,12 +91,14 @@ Future<bool> confirmIncompleteSplits(
   return skip ?? false;
 }
 
-/// Updates [t] with what changed in [c], then reconciles its tags and
-/// reloads the wallets. [initialAccountId] / [initialToAccountId] are the
-/// wallets as first loaded (only a changed wallet is sent).
+/// Updates [t] with what changed in [c] in ONE `PUT /transactions/:id`
+/// (tags ride in it; the split people go through their own PUT first or
+/// last) and patches the wallet balances from the answer.
+/// [initialAccountId] / [initialToAccountId] are the wallets as first
+/// loaded (only a changed wallet is sent).
 ///
-/// Returns a warning when the row saved but its tags didn't; throws
-/// [ApiException] when the save itself failed.
+/// Returns a warning to show instead of "saved" (none today: the tags are
+/// part of the one save); throws [ApiException] when the save failed.
 Future<String?> saveTransactionEdit(
   BuildContext context, {
   required Transaction t,
@@ -142,7 +106,6 @@ Future<String?> saveTransactionEdit(
   required String? initialAccountId,
   required String? initialToAccountId,
 }) async {
-  final l = AppLocalizations.of(context)!;
   final txCubit = context.read<TransactionsCubit>();
   final accounts = context.read<AccountsCubit>();
   final isTransfer = c.isTransfer;
@@ -177,13 +140,14 @@ Future<String?> saveTransactionEdit(
       t.canEditCategory &&
       splitsLoaded &&
       jsonEncode(splits) != jsonEncode(splitsBefore);
-  Future<void> putSplits() async {
-    if (!splitsChanged) return;
-    await repo.updateSplits(t.id, splits);
+  Future<Transaction?> putSplits() async {
+    if (!splitsChanged) return null;
+    return repo.updateSplits(t.id, splits);
   }
 
   final lowering = c.amountValue < t.amount;
   if (lowering) await putSplits();
+  // A transfer's tags live on its OUT row: the page edits that one.
   final result = await txCubit.updateTransaction(
     id: t.id,
     amount: c.amountValue,
@@ -197,27 +161,17 @@ Future<String?> saveTransactionEdit(
     accountId: accountChanged ? accountId : null,
     clearAccount: accountChanged && accountId == null,
     transferToAccountId: toAccountChanged ? c.toAccount?.id : null,
+    // The whole tag set replaces the row's.
+    tagIds: c.tagIds.toList(),
   );
-  if (!lowering) await putSplits();
-  // The cache row picks up the new splits (and split_count).
-  if (splitsChanged) await txCubit.refreshOne(t.id, afterWrite: true);
-  String? warn;
-  // A transfer's tags live on its OUT row.
-  final tagTarget = result.transfer != null
-      ? result.transfer!.rows
-            .firstWhere(
-              (r) => r.signedAmount < 0,
-              orElse: () => result.transfer!.rows.first,
-            )
-            .id
-      : t.id;
-  try {
-    await txCubit.setTags(transactionId: tagTarget, tagIds: c.tagIds.toList());
-  } on ApiException {
-    warn = l.txSavedTagsFailed; // saved — just the tags
+  // The answer carries every wallet the write touched (an old wallet too).
+  accounts.patchBalances(result.accountBalances);
+  if (!lowering && splitsChanged) {
+    final row = await putSplits();
+    // The split PUT's row (people, split_count) goes into the cache: no GET.
+    if (row != null) txCubit.patchRow(row, afterWrite: true);
   }
-  await accounts.load();
-  return warn;
+  return null;
 }
 
 String _ymd(DateTime d) =>

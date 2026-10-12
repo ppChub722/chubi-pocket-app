@@ -7,21 +7,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
-import '../../../../core/constants/app_durations.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/skeleton_box.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
@@ -82,50 +70,64 @@ class AccountDetailPage extends StatefulWidget {
   State<AccountDetailPage> createState() => _AccountDetailPageState();
 }
 
-/// Opened before the wallets list is in (a deep link, a cold tab — QA W1):
-/// loading while it loads, then the row; an archived wallet (not in the
-/// active list) comes from its own fetch. "Not found" only once both say
-/// so.
+/// One call on open — `GET /accounts/:id?include=summary,members` (any
+/// status, archived included) — fills the wallet and its members history.
+/// The wallet itself comes from the cubit's list when it is there (so
+/// balance patches show live), else from that call. "Not found" only when
+/// the call says so; writes patch [_detail] from their responses.
 class _AccountDetailPageState extends State<AccountDetailPage> {
-  Account? _archived;
-
-  /// The archived list was checked (or there was no need).
-  bool _archivedChecked = false;
-  bool _checkingArchived = false;
+  AccountDetail? _detail;
+  ApiException? _error;
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.isCreate) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      final cubit = context.read<AccountsCubit>();
-      await cubit.loadIfNeeded();
-      if (mounted) _checkArchived(cubit.state);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetch();
     });
   }
 
-  /// A loaded active list without this id → look among the archived.
-  Future<void> _checkArchived(AccountsState state) async {
-    if (_archivedChecked || _checkingArchived) return;
-    if (state.status != AccountsStatus.loaded) return;
+  Future<void> _fetch() async {
     final cubit = context.read<AccountsCubit>();
-    if (cubit.byId(widget.accountId!) != null) return;
-    _checkingArchived = true;
-    Account? found;
-    try {
-      for (final a in await cubit.listArchived()) {
-        if (a.id == widget.accountId) found = a;
-      }
-    } on ApiException {
-      // Treated as not found; pull back in for a retry.
-    }
-    if (!mounted) return;
     setState(() {
-      _archived = found;
-      _archivedChecked = true;
-      _checkingArchived = false;
+      _loading = true;
+      _error = null;
     });
+    try {
+      final detail = await cubit.getDetail(widget.accountId!);
+      // Keep the list's row as fresh as this read.
+      cubit.patch(detail.account);
+      if (!mounted) return;
+      setState(() {
+        _detail = detail;
+        _loading = false;
+      });
+    } catch (e, st) {
+      if (!mounted) return;
+      setState(() {
+        _error = ApiException.from(e, st);
+        _loading = false;
+      });
+    }
+  }
+
+  /// A write returned the wallet: keep the page's copy in step (the cubit
+  /// patched its list already).
+  void _onAccount(Account account) {
+    final d = _detail;
+    if (d == null) return;
+    setState(() => _detail = d.copyWith(account: account));
+  }
+
+  /// A members action's response: the wallet + the whole members list.
+  void _onMembers(MembersResult r) {
+    final d = _detail;
+    if (d == null) return;
+    setState(
+      () => _detail = d.copyWith(account: r.account, membersHistory: r.members),
+    );
   }
 
   @override
@@ -134,32 +136,29 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
       return _AccountDetailView(account: null, popOnCreate: widget.popOnCreate);
     }
     final l = AppLocalizations.of(context)!;
-    return BlocConsumer<AccountsCubit, AccountsState>(
-      listener: (context, state) => _checkArchived(state),
+    return BlocBuilder<AccountsCubit, AccountsState>(
       builder: (context, state) {
         final account =
-            context.read<AccountsCubit>().byId(widget.accountId!) ?? _archived;
+            context.read<AccountsCubit>().byId(widget.accountId!) ??
+            _detail?.account;
         if (account != null) {
           return _AccountDetailView(
             account: account,
+            members: _detail?.membersHistory,
             initialTab: widget.initialTab,
+            onAccount: _onAccount,
+            onMembers: _onMembers,
+            onRefresh: _fetch,
           );
         }
-        final loading =
-            state.status == AccountsStatus.initial ||
-            state.status == AccountsStatus.loading ||
-            (state.status == AccountsStatus.loaded && !_archivedChecked);
+        final notFound = _error?.code == 'NOT_FOUND';
         return Scaffold(
           appBar: AppTopBar(title: l.navAccounts, showBack: true),
           extendBodyBehindAppBar: true,
           body: AsyncStateView.fallback(
-            loading: loading,
-            error: state.status == AccountsStatus.error ? state.error : null,
-            onRetry: () {
-              // A retry looks among the archived again too.
-              setState(() => _archivedChecked = false);
-              return context.read<AccountsCubit>().load();
-            },
+            loading: _loading || (_detail == null && _error == null),
+            error: notFound ? null : _error,
+            onRetry: _fetch,
             skeleton: const _DetailSkeleton(),
             notFound: EmptyView(
               icon: AppIcons.empty,
@@ -188,8 +187,12 @@ enum _Field {
 class _AccountDetailView extends StatefulWidget {
   const _AccountDetailView({
     required this.account,
+    this.members,
     this.initialTab = AccountDetailTab.overview,
     this.popOnCreate = false,
+    this.onAccount,
+    this.onMembers,
+    this.onRefresh,
   });
 
   /// See [AccountDetailPage.popOnCreate].
@@ -198,7 +201,20 @@ class _AccountDetailView extends StatefulWidget {
   /// The persisted wallet (fresh from the cubit on every rebuild); null
   /// while creating.
   final Account? account;
+
+  /// The whole membership (`members_history`: active, pending, left); null
+  /// until the page's detail call lands.
+  final List<WalletMember>? members;
   final AccountDetailTab initialTab;
+
+  /// A write returned the wallet — the page keeps its copy in step.
+  final void Function(Account)? onAccount;
+
+  /// A members action returned the wallet + members list.
+  final void Function(MembersResult)? onMembers;
+
+  /// Pull-to-refresh: the page's one detail call again.
+  final Future<void> Function()? onRefresh;
 
   bool get isCreate => account == null;
 
@@ -294,17 +310,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return (c != null && Currencies.codes.contains(c)) ? c : 'THB';
   }
 
-  /// Only the owner edits / archives (the BE checks too). Personal wallets
-  /// are always the caller's own.
-  bool get _isOwner {
-    final a = widget.account;
-    if (a == null || !a.isShared) return true;
-    final auth = context.read<AuthCubit>().state;
-    final uid = auth is AuthAuthenticated ? auth.user.id : null;
-    return a.members.any(
-      (m) => m.userId == uid && m.isActive && m.role == WalletRole.owner,
-    );
-  }
+  /// Only the owner edits / archives (the BE says so: `can_edit`; it checks
+  /// too). A wallet being created is the caller's own.
+  bool get _isOwner => widget.account?.canEdit ?? true;
 
   // ── EditModeMixin hooks ─────────────────────────────────────────────
 
@@ -358,7 +366,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   Account _preview(AppLocalizations l) {
     final w = working;
     final base = widget.account;
-    final opening = AmountField.parse(w.opening) ?? 0;
+    final opening = AmountInput.parse(w.opening) ?? 0;
     String? opt(String s) => s.trim().isEmpty ? null : s.trim();
     return Account(
       id: base?.id ?? 'preview',
@@ -370,10 +378,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       iconCode: w.iconCode,
       description: opt(w.description),
       note: opt(w.note),
-      creditLimit: w.type.isCredit ? AmountField.parse(w.creditLimit) : null,
+      creditLimit: w.type.isCredit ? AmountInput.parse(w.creditLimit) : null,
       members: base?.members ?? const [],
       myReportScope: base?.myReportScope,
       isShared: base?.isShared ?? false,
+      logoUrl: base?.logoUrl,
+      status: base?.status ?? AccountStatus.active,
+      canEdit: base?.canEdit ?? true,
+      myRole: base?.myRole ?? WalletRole.owner,
     );
   }
 
@@ -421,17 +433,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final w = working;
     final isCredit = w.type.isCredit;
     String? opt(String s) => s.trim().isEmpty ? null : s.trim();
-    final creditLimit = isCredit ? AmountField.parse(w.creditLimit) : null;
+    final creditLimit = isCredit ? AmountInput.parse(w.creditLimit) : null;
     final statementDay = isCredit ? int.tryParse(w.statementDay.trim()) : null;
     final dueDay = isCredit ? int.tryParse(w.dueDay.trim()) : null;
-    final minPayment = isCredit ? AmountField.parse(w.minPayment) : null;
+    final minPayment = isCredit ? AmountInput.parse(w.minPayment) : null;
 
     FocusScope.of(context).unfocus();
     setSaving(true);
     Account? created;
     try {
       if (_isCreate) {
-        final opening = AmountField.parse(w.opening) ?? 0;
+        final opening = AmountInput.parse(w.opening) ?? 0;
         // Server assigns the id (toCreateJson omits it) and books a
         // non-zero opening balance as an Opening Balance transaction.
         created = await cubit.add(
@@ -456,7 +468,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         // Not copyWith: it treats null as "keep", so a cleared field would
         // silently survive — the BE's presence-tracked update DTO needs the
         // explicit nulls. Balance only moves through ปรับยอด (spec §2.4).
-        await cubit.update(
+        final updated = await cubit.update(
           Account(
             id: p.id,
             name: w.name.trim(),
@@ -476,6 +488,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             identifiers: w.cleanIdentifiers,
           ),
         );
+        widget.onAccount?.call(updated);
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -512,7 +525,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   Future<void> _archive() async {
     final l = AppLocalizations.of(context)!;
     final a = widget.account!;
-    if (a.members.where((m) => m.isActive).length > 1) {
+    if (a.isShared) {
       showAppSnackBar(context, l.accountArchiveHasMembers, tone: Tone.warning);
       return;
     }
@@ -554,6 +567,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         description: result.description,
         note: result.note,
       );
+      // The cubit patched the wallet + every touched balance already.
+      widget.onAccount?.call(outcome.account);
       // The wallet's own list and the app's list both re-fetch, each
       // keeping its filters (a bare load narrowed the global one to this
       // wallet with no chip saying so).
@@ -564,8 +579,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         l.accountAdjustBalanceSuccess,
         tone: Tone.success,
         actionLabel: l.accountAdjustBalanceViewTransaction,
-        onAction: () =>
-            open('/transactions/${outcome.adjustmentTransactionId}'),
+        onAction: outcome.transactionId == null
+            ? null
+            : () => open('/transactions/${outcome.transactionId}'),
       );
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
@@ -579,7 +595,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final cubit = context.read<AccountsCubit>();
     setState(() => _scopeBusy = true);
     try {
-      await cubit.setReportScope(accountId: a.id, scope: scope);
+      final updated = await cubit.setReportScope(accountId: a.id, scope: scope);
+      widget.onAccount?.call(updated);
       if (mounted) {
         showAppSnackBar(context, l.walletReportScopeSaved, tone: Tone.success);
       }
@@ -592,9 +609,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     }
   }
 
-  Future<void> _refresh() async {
-    await context.read<AccountsCubit>().load();
-  }
+  /// Pull-to-refresh: the page's one detail call again.
+  Future<void> _refresh() async => widget.onRefresh?.call();
 
   // ── Tabs ─────────────────────────────────────────────────────────────
 
@@ -762,15 +778,33 @@ class _AccountDetailViewState extends State<_AccountDetailView>
                             lockedAccount: a,
                           ),
                         ),
-                        AccountDetailTab.members => WalletMembersView(
-                          accountId: a.id,
-                          padding: EdgeInsets.fromLTRB(
-                            AppSpacing.lg,
-                            AppSpacing.md,
-                            AppSpacing.lg,
-                            bottom,
-                          ),
-                        ),
+                        AccountDetailTab.members =>
+                          widget.members == null
+                              ? ListView(
+                                  padding: EdgeInsets.fromLTRB(
+                                    AppSpacing.lg,
+                                    AppSpacing.md,
+                                    AppSpacing.lg,
+                                    bottom,
+                                  ),
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  children: [
+                                    for (var i = 0; i < 3; i++)
+                                      const SkeletonListTile(),
+                                  ],
+                                )
+                              : WalletMembersView(
+                                  account: a,
+                                  members: widget.members!,
+                                  onResult: (r) => widget.onMembers?.call(r),
+                                  onRefresh: _refresh,
+                                  padding: EdgeInsets.fromLTRB(
+                                    AppSpacing.lg,
+                                    AppSpacing.md,
+                                    AppSpacing.lg,
+                                    bottom,
+                                  ),
+                                ),
                       },
                     ),
                   ),
@@ -857,7 +891,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return _HeroHeader(
       account: _preview(l),
       symbol: Currencies.symbolOf(_currency),
-      nameField: InlineTitleField(
+      nameField: AppInput.title(
         editing: editing,
         controller: _nameController,
         focusNode: _nameFocus,
@@ -877,7 +911,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       // View mode shows it only when set — no grey placeholder (owner
       // 2026-10-11); edit mode always has the line.
       descriptionField: editing || hasDescription
-          ? InlineTitleField(
+          ? AppInput.title(
               editing: editing,
               controller: _descriptionController,
               focusNode: _descriptionFocus,
@@ -909,6 +943,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return SectionCard(
       first: first,
       title: l.accountFormTypeLabel,
+      description: l.accountTypeSectionDescription,
       dividers: false,
       children: [
         Padding(
@@ -940,6 +975,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return SectionCard(
       first: first,
       title: l.accountOpeningSectionTitle,
+      description: l.accountOpeningSectionDescription,
       children: [
         DetailStacked(
           label: w.type.isCredit
@@ -948,7 +984,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AmountField(
+              AmountInput(
                 controller: _openingController,
                 currencySymbol: Currencies.symbolOf(_currency),
                 // ± — e.g. an overdrawn account, or an overpaid card.
@@ -980,6 +1016,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return SectionCard(
       first: first,
       title: l.accountCreditSectionTitle,
+      description: l.accountCreditSectionDescription,
       children: rows,
     );
   }
@@ -992,13 +1029,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       children: [
         DetailStacked(
           label: l.commonNote,
-          child: InlineField(
+          child: AppInput.inline(
             editing: isEditing,
             controller: _noteController,
             focusNode: _noteFocus,
             maxLines: 3,
             maxLength: TextLimits.note,
             hint: l.accountFormNoteHelper,
+            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
             onEnterEdit: _enterOn(_noteFocus),
             onChanged: (v) => _onText(_Field.note, v),
           ),
@@ -1015,15 +1053,14 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     Account a, {
     required bool first,
   }) {
-    final members = [
-      for (final m in a.members)
-        if (!m.hasLeft) m,
-    ];
+    // Everyone in the wallet (me included) + the invites still pending.
+    final members = [...a.members, ..._pendingInvites];
     final solo = !_hasMembersTab(a);
     if (solo && !_isOwner) return null;
     return SectionCard(
       first: first,
       title: l.walletMembersTitle,
+      description: l.accountMembersSectionDescription,
       children: [
         if (solo)
           LockedInEdit(
@@ -1032,8 +1069,9 @@ class _AccountDetailViewState extends State<_AccountDetailView>
               label: l.walletInviteFromContacts,
               onTap: () => inviteWalletMember(
                 context,
-                accountId: a.id,
-                members: members,
+                account: a,
+                members: widget.members ?? members,
+                onResult: (r) => widget.onMembers?.call(r),
               ),
             ),
           )
@@ -1055,9 +1093,13 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   /// The สมาชิก tab (and the avatar row) only once there's someone else:
   /// more than one active member, or an invite pending.
-  bool _hasMembersTab(Account a) =>
-      a.members.where((m) => m.isActive).length > 1 ||
-      a.members.any((m) => m.pending && !m.hasLeft);
+  bool _hasMembersTab(Account a) => a.isShared || _pendingInvites.isNotEmpty;
+
+  /// Invites sent and not yet answered (from the members history).
+  List<WalletMember> get _pendingInvites => [
+    for (final m in widget.members ?? const <WalletMember>[])
+      if (m.pending) m,
+  ];
 
   /// The wallet's numbers (spec 15 §5) — what bank slips are matched
   /// against; edited like the splits section (owner 2026-10-11):
@@ -1074,7 +1116,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final section = SectionCard(
       first: first,
       title: l.accountIdentifiersTitle,
-      hint: l.accountIdentifiersHint,
+      description: l.accountIdentifiersHint,
       trailing: editing
           ? AppChip(
               icon: AppIcons.add,
@@ -1087,10 +1129,19 @@ class _AccountDetailViewState extends State<_AccountDetailView>
           : IdentifiersVisibility(show: list.isNotEmpty),
       children: [
         if (list.isEmpty)
-          DetailRow(
-            label: l.accountIdentifiersEmpty,
-            helper: l.accountIdentifiersHelper,
-            onTap: editing ? _addIdentifier : enterEdit,
+          // Tap: enter edit and add the first number.
+          InkWell(
+            onTap: () {
+              if (!editing) enterEdit();
+              _addIdentifier();
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
+              child: DetailPlaceholder(l.accountIdentifiersEmpty),
+            ),
           ),
         for (final (i, id) in list.indexed)
           if (editing)
@@ -1159,17 +1210,17 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       // The limit is in the hero's bar ("เหลือ x จาก y") — not again here.
       final statementDay = int.tryParse(w.statementDay);
       final dueDay = int.tryParse(w.dueDay);
-      final minPayment = AmountField.parse(w.minPayment);
+      final minPayment = AmountInput.parse(w.minPayment);
       return [
         if (statementDay != null)
           DetailRow(
             label: l.accountDetailStatementDate,
-            trailing: Text(dayOfMonthLabel(l, statementDay)),
+            trailing: Text(dayOfMonthLabel(context, statementDay)),
           ),
         if (dueDay != null)
           DetailRow(
             label: l.accountDetailPaymentDue,
-            trailing: Text(dayOfMonthLabel(l, dueDay)),
+            trailing: Text(dayOfMonthLabel(context, dueDay)),
           ),
         if (minPayment != null)
           DetailRow(
@@ -1181,12 +1232,12 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return [
       DetailStacked(
         label: l.accountFormCreditLimitLabel,
-        child: AmountField(
+        child: AmountInput(
           controller: _creditLimitController,
           currencySymbol: symbol,
           onChanged: (v) => _onText(_Field.creditLimit, v),
           validator: (v) {
-            final n = AmountField.parse(v);
+            final n = AmountInput.parse(v);
             if (n == null || n <= 0) return l.accountFormCreditLimitRequired;
             return null;
           },
@@ -1216,7 +1267,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       ),
       DetailStacked(
         label: l.accountFormMinimumPaymentLabel,
-        child: AmountField(
+        child: AmountInput(
           controller: _minPaymentController,
           currencySymbol: symbol,
           onChanged: (v) => _onText(_Field.minPayment, v),
@@ -1242,8 +1293,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
 
   /// ขั้นต่ำ > วงเงิน (both set).
   static bool _minOverLimit(_AccountDraft w) {
-    final limit = AmountField.parse(w.creditLimit);
-    final min = AmountField.parse(w.minPayment);
+    final limit = AmountInput.parse(w.creditLimit);
+    final min = AmountInput.parse(w.minPayment);
     return limit != null && min != null && min > limit;
   }
 
@@ -1259,7 +1310,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   }) {
     final day = int.tryParse(value.trim());
     return AppChip(
-      label: dayOfMonthLabel(l, day),
+      label: dayOfMonthLabel(context, day),
       selected: day != null,
       trailing: AppChipTrailing.dropdown,
       onTap: () async {
@@ -1283,6 +1334,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     return SectionCard(
       first: first,
       title: l.accountReportSectionTitle,
+      description: l.accountReportSectionDescription,
       children: [
         DetailRow(
           locked: isEditing,
@@ -1416,7 +1468,7 @@ class _HeroHeader extends StatelessWidget {
               AppChip(
                 label: accountTypeLabel(context, account.type),
                 icon: account.type.icon,
-                color: account.type.colorOf(context),
+                color: account.colorOf(context),
               ),
               if (account.isShared)
                 AppChip(
@@ -1436,8 +1488,7 @@ class _HeroHeader extends StatelessWidget {
                   onTap: onAdjust,
                 ),
               if (onEdit != null)
-                AppIconButton(
-                  icon: AppIcons.edit,
+                AppIconButton.edit(
                   size: HeroSpacing.controlHeight,
                   tooltip: l.commonEdit,
                   onPressed: onEdit,
@@ -1573,12 +1624,12 @@ class _AccountDraft {
     note: a.note ?? '',
     creditLimit: a.creditLimit == null
         ? ''
-        : AmountField.format(a.creditLimit!),
+        : AmountInput.format(a.creditLimit!),
     statementDay: a.statementDate?.toString() ?? '',
     dueDay: a.paymentDueDate?.toString() ?? '',
     minPayment: a.minimumPayment == null
         ? ''
-        : AmountField.format(a.minimumPayment!),
+        : AmountInput.format(a.minimumPayment!),
     identifiers: a.identifiers,
   );
 

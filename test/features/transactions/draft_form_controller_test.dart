@@ -1,5 +1,6 @@
 import 'package:chubi_pocket/features/categories/domain/category.dart';
 import 'package:chubi_pocket/features/categories/domain/category_type.dart';
+import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_form.dart';
@@ -60,7 +61,7 @@ void main() {
       splits: [
         TxSplit(
           debtId: 'd1',
-          personName: 'มิว',
+          person: EmbeddedPerson(name: 'มิว'),
           amount: 150,
           settledAmount: 50,
         ),

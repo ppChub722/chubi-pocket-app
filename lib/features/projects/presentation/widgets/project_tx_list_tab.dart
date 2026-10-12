@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 import 'project_common.dart';
 import 'project_tx_tiles.dart';
@@ -55,7 +53,7 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
         p.description,
         p.note,
         ...p.tags,
-        v.member(p.transactionMemberId).displayName,
+        v.memberOf(p).displayName,
       ].any((s) => s?.toLowerCase().contains(q) ?? false);
     }).toList();
     list.sort(
@@ -64,9 +62,9 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
         _Sort.amount => b.parent.amount.compareTo(a.parent.amount),
         _Sort.member =>
           v
-              .member(a.parent.transactionMemberId)
+              .memberOf(a.parent)
               .displayName
-              .compareTo(v.member(b.parent.transactionMemberId).displayName),
+              .compareTo(v.memberOf(b.parent).displayName),
         _Sort.tag => (a.parent.tags.firstOrNull ?? '').compareTo(
           b.parent.tags.firstOrNull ?? '',
         ),
@@ -108,7 +106,7 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
           bottom: 96 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
-          AppSearchBar(
+          AppInput.search(
             hint: l.projectTxSearchHint,
             onChanged: (v) => setState(() => _query = v),
           ),

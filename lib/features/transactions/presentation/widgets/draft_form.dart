@@ -4,13 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
@@ -28,16 +24,14 @@ import '../../domain/transaction_type.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/widgets/member_pick_card.dart';
 import '../../../projects/presentation/widgets/project_common.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
 import '../../../scheduled_transactions/domain/scheduled_enums.dart';
 import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
+import '../cubit/tx_form_options_cubit.dart';
 import 'account_picker_sheet.dart';
 import 'event_pick.dart';
 import 'pick_chip_rows.dart';
+import 'split_event_section.dart';
 import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 import 'tx_hero_card.dart';
@@ -107,7 +101,7 @@ class DraftFormController extends ChangeNotifier {
 
   void addMemberSplit(String? memberId, {double? amount}) {
     final s = MemberSplitDraft(memberId);
-    if (amount != null) s.amount.text = AmountField.format(amount);
+    if (amount != null) s.amount.text = AmountInput.format(amount);
     s.amount.addListener(notifyListeners);
     memberSplits.add(s);
     notifyListeners();
@@ -149,7 +143,7 @@ class DraftFormController extends ChangeNotifier {
     type = p.type == 'income'
         ? TransactionType.income
         : TransactionType.expense;
-    amount.text = AmountField.format(p.amount);
+    amount.text = AmountInput.format(p.amount);
     date = DateTime.tryParse(p.date) ?? date;
     payerId = p.transactionMemberId;
     description.text = p.description ?? '';
@@ -201,7 +195,7 @@ class DraftFormController extends ChangeNotifier {
   }
 
   bool get isTransfer => type == TransactionType.transfer;
-  double get amountValue => AmountField.parse(amount.text) ?? 0;
+  double get amountValue => AmountInput.parse(amount.text) ?? 0;
 
   /// Anything beyond the basics: tags, splits, project tags / splits.
   bool get hasExtras =>
@@ -341,7 +335,7 @@ class DraftFormController extends ChangeNotifier {
   }) {
     type = d.type ?? TransactionType.expense;
     final a = d.amount;
-    if (a != null && a > 0) amount.text = AmountField.format(a);
+    if (a != null && a > 0) amount.text = AmountInput.format(a);
     description.text = d.description ?? '';
     note.text = d.note ?? '';
     date = DateTime.tryParse(d.date ?? '') ?? date;
@@ -373,7 +367,7 @@ class DraftFormController extends ChangeNotifier {
     Account? toAccount,
   }) {
     type = t.type;
-    amount.text = AmountField.format(t.amount);
+    amount.text = AmountInput.format(t.amount);
     description.text = t.description ?? '';
     note.text = t.note ?? '';
     date = DateTime.tryParse(t.date) ?? date;
@@ -445,7 +439,7 @@ class DraftFormController extends ChangeNotifier {
   }) {
     type = d.type ?? type;
     final a = d.amount;
-    amount.text = a == null ? '' : AmountField.format(a);
+    amount.text = a == null ? '' : AmountInput.format(a);
     description.text = d.description ?? '';
     note.text = d.note ?? '';
     date = DateTime.tryParse(d.date ?? '') ?? date;
@@ -499,8 +493,9 @@ class DraftFormController extends ChangeNotifier {
       owedAmount: owed,
       settledAmount: s.settledAmount,
       cancelled: s.status == 'cancelled',
+      savedPerson: s.person,
     );
-    if (name != null && !d.identityLocked) d.setPerson(name, contact: contact);
+    if (name != null) d.setPerson(name, contact: contact);
     return d;
   }
 
@@ -513,7 +508,7 @@ class DraftFormController extends ChangeNotifier {
     final n = note.text.trim();
     return PendingDraft(
       type: type,
-      amount: AmountField.parse(amount.text),
+      amount: AmountInput.parse(amount.text),
       accountId: account?.id,
       categoryId: isTransfer ? null : category?.id,
       date: _ymd(date),
@@ -555,7 +550,7 @@ class MemberSplitDraft {
   MemberSplitDraft(this.memberId);
   String? memberId;
   final amount = TextEditingController();
-  double get amountValue => AmountField.parse(amount.text) ?? 0;
+  double get amountValue => AmountInput.parse(amount.text) ?? 0;
 }
 
 String _ymd(DateTime d) =>
@@ -605,9 +600,11 @@ class DraftForm extends StatefulWidget {
     this.editing = true,
     this.onEnterEdit,
     this.onEdit,
-    this.trailingRows = const [],
-    this.sectioned = false,
     this.eventPending = false,
+    this.eventSlot,
+    this.splitsReadOnly,
+    this.splitsCollapsible = false,
+    this.splitsInitiallyOpen = true,
     this.event,
     this.schedule,
     this.heroKey,
@@ -651,22 +648,26 @@ class DraftForm extends StatefulWidget {
   /// View mode: the hero's ✏️.
   final VoidCallback? onEdit;
 
-  /// What the page adds after the form's own rows. [sectioned]: whole
-  /// detail sections ([SectionCard]s — the split list, the event row);
-  /// otherwise labelled rows.
-  final List<Widget> trailingRows;
-
-  /// The detail page's layout below the hero (owner 2026-10-10, rules
-  /// #16 / #17): [SectionCard]s — แท็ก (row) + โน้ต (stacked) first, the
-  /// split editor as its own "หารกับ" section, then [trailingRows].
-  /// Off: the quick create's compact rows.
-  final bool sectioned;
-
   /// An event is being picked / changed in this form (quick create with
   /// one chosen, the detail page moving the row into one): the splits go
   /// to the event's board with it — titled "หารในอีเวนต์". An event bill
   /// left where it is keeps "หารกับ", split from my share.
   final bool eventPending;
+
+  /// The อีเวนต์ row of the "แบ่งรายการ" section ([SplitEventSection]) — a
+  /// saved row's / a new transaction's event, held by the page. Null = no
+  /// event row (the drafts' layout keeps the draft's own, [DraftFormController
+  /// .projectId]).
+  final SplitEventSlot? eventSlot;
+
+  /// The "แบ่งยอด" row when the people can't be edited here (view mode, or
+  /// another member's row): a read-only list / the lock note.
+  final Widget? splitsReadOnly;
+
+  /// The section's heading toggles it: pending drafts closed by default, the
+  /// quick create open. The transaction detail never collapses.
+  final bool splitsCollapsible;
+  final bool splitsInitiallyOpen;
 
   final DraftFormController controller;
 
@@ -709,7 +710,12 @@ class _DraftFormState extends State<DraftForm> {
   Future<void> _pickCategory() async {
     final r = await showCategoryPickerSheet(
       context: context,
-      categories: context.read<CategoriesCubit>().state.categories,
+      categories:
+          maybeTxFormOptions(
+            context,
+            watch: false,
+          )?.state.options?.categoryList ??
+          context.read<CategoriesCubit>().state.categories,
       type: _c.type == TransactionType.income
           ? CategoryType.income
           : CategoryType.expense,
@@ -722,7 +728,9 @@ class _DraftFormState extends State<DraftForm> {
 
   Future<void> _pickAccount({bool to = false}) async {
     final l = AppLocalizations.of(context)!;
-    final accounts = context.read<AccountsCubit>().state.accounts;
+    final accounts =
+        maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
+        context.read<AccountsCubit>().state.accounts;
     final r = await showAccountPickerSheet(
       context: context,
       accounts: accounts,
@@ -826,7 +834,10 @@ class _DraftFormState extends State<DraftForm> {
         heroKey: widget.heroKey,
       );
     }
-    final accounts = context.watch<AccountsCubit>().state.accounts;
+    final opts = maybeTxFormOptions(context);
+    final accounts = opts == null
+        ? context.watch<AccountsCubit>().state.accounts
+        : (opts.state.options?.accountList ?? const <Account>[]);
     _c.applyDefaultAccount(widget.defaultAccount ?? accounts.firstOrNull);
     final schedule = widget.schedule;
     if (schedule != null) {
@@ -927,17 +938,16 @@ class _DraftFormState extends State<DraftForm> {
               ] else if (_c.tagIds.isNotEmpty) ...[
                 // View, sectioned or not: under the cards, as chips led by the
                 // tag icon like the edit row — no "แท็ก" row (owner 2026-10-11).
-                SizedBox(
-                  height: widget.sectioned ? HeroSpacing.after : AppSpacing.md,
-                ),
+                SizedBox(height: HeroSpacing.after),
                 longPressable(
                   TxTagStrip(
                     tags: [
                       for (final id in _c.tagIds)
-                        ?(context
-                                .read<TagsCubit>()
-                                .state
-                                .tags
+                        ?((maybeTxFormOptions(
+                                      context,
+                                      watch: false,
+                                    )?.state.options?.tags ??
+                                    context.read<TagsCubit>().state.tags)
                                 .where((t) => t.id == id)
                                 .firstOrNull ??
                             _c.knownTags[id]),
@@ -945,9 +955,7 @@ class _DraftFormState extends State<DraftForm> {
                   ),
                 ),
               ],
-              ...widget.sectioned
-                  ? _sections(l, editing: editing, isTransfer: isTransfer)
-                  : _detailRows(l, editing: editing, isTransfer: isTransfer),
+              ..._sections(l, editing: editing, isTransfer: isTransfer),
             ],
           ],
         );
@@ -1032,7 +1040,7 @@ class _DraftFormState extends State<DraftForm> {
       gap,
       DraftFieldRow(
         label: l.commonNote,
-        child: InlineField(
+        child: AppInput.inline(
           editing: true,
           controller: _c.note,
           focusNode: _noteFocus,
@@ -1043,7 +1051,7 @@ class _DraftFormState extends State<DraftForm> {
       ),
       if (!isTransfer) ...[
         gap,
-        _DraftExtras(controller: _c, eventPending: widget.eventPending),
+        ?_splitEventSection(l, editing: true, first: true),
       ],
     ];
   }
@@ -1074,7 +1082,7 @@ class _DraftFormState extends State<DraftForm> {
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32),
-              icon: const Icon(AppIcons.arrowForward),
+              icon: const AppIcon(AppIcons.arrowForward),
               onPressed: editing ? _c.swapAccounts : null,
             ),
             Expanded(
@@ -1111,6 +1119,103 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
+  /// The one "แบ่งรายการ" section (owner 2026-10-12): the "แบ่งยอด" row (the
+  /// split editor, or [DraftForm.splitsReadOnly]) and the อีเวนต์ row. Null
+  /// when there is nothing to show (a transfer never gets one).
+  Widget? _splitEventSection(
+    AppLocalizations l, {
+    required bool editing,
+    bool first = false,
+  }) {
+    final canEdit = editing && widget.allowSplits;
+    final splits = canEdit
+        ? SplitsSection(
+            embedded: true,
+            // "แบ่งยอด" — the row label; going into an event the people
+            // become the event's (the helper says so).
+            label: l.txSplitRowLabel,
+            helper: widget.eventPending || _c.projectId != null
+                ? l.txSplitInEventHelper
+                // An event bill staying put: my splits sit on my share.
+                : _c.savedInEvent
+                ? l.txSplitFromMyShare
+                : null,
+            totalAmount: _c.splitCap,
+            overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
+            drafts: _c.splits,
+            onChanged: _c.setSplits,
+            me: _c.meAmount,
+            onMeChanged: _c.setMeAmount,
+            meAuto: _c.meAuto,
+            onMeAutoChanged: _c.setMeAuto,
+          )
+        : widget.splitsReadOnly;
+    // The drafts' layout keeps its event on the controller.
+    final slot = widget.chipLayout ? _draftEventSlot() : widget.eventSlot;
+    if (splits == null && slot == null) return null;
+    return SplitEventSection(
+      first: first,
+      splits: splits,
+      event: slot,
+      // The drafts collapse it, closed; quick create, open.
+      collapsible: widget.chipLayout || widget.splitsCollapsible,
+      initiallyOpen: !widget.chipLayout && widget.splitsInitiallyOpen,
+      summary: _splitSummary(l, slot),
+    );
+  }
+
+  /// "แบ่ง 2 คน · ทริป…" — what a closed section says; null = nothing set.
+  String? _splitSummary(AppLocalizations l, SplitEventSlot? slot) {
+    final people = _c.splits
+        .where((s) => s.personName.trim().isNotEmpty || (s.owedAmount ?? 0) > 0)
+        .length;
+    final parts = [if (people > 0) l.draftExtrasSplits(people), ?slot?.name];
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
+
+  /// A draft's event (`project_id`): an existing event only.
+  SplitEventSlot _draftEventSlot() {
+    final id = _c.projectId;
+    final opts = maybeTxFormOptions(context);
+    // Events from the form options when a form provides them, else the
+    // events cache.
+    final known = id == null
+        ? null
+        : opts != null
+        ? opts.state.options?.events.where((e) => e.id == id).firstOrNull?.name
+        : context
+              .watch<ProjectsCubit>()
+              .state
+              .projects
+              .where((p) => p.id == id)
+              .firstOrNull
+              ?.name;
+    final name = id == null
+        ? null
+        : (known ??
+              _c.projectName ??
+              AppLocalizations.of(context)!.quickEventLabel);
+    return SplitEventSlot(
+      name: name,
+      onTap: _pickDraftEvent,
+      onClear: name == null ? null : () => _c.setProject(null),
+    );
+  }
+
+  Future<void> _pickDraftEvent() async {
+    final r = await showEventTargetSheet(
+      context,
+      suggestedName: '',
+      selectedProjectId: _c.projectId,
+      // A draft can only name an event that exists.
+      allowCreate: false,
+    );
+    if (!mounted) return;
+    if (r is ExistingEventTarget) {
+      _c.setProject(r.project.id, name: r.project.name);
+    }
+  }
+
   /// [DraftForm.sectioned] — the detail page below the hero (and, in view
   /// mode, the [TxTagStrip] under it):
   ///
@@ -1138,13 +1243,14 @@ class _DraftFormState extends State<DraftForm> {
           ),
           child: DraftFieldRow(
             label: l.commonNote,
-            child: InlineField(
+            child: AppInput.inline(
               editing: editing,
               controller: _c.note,
               focusNode: _noteFocus,
               maxLines: 5,
               maxLength: TextLimits.note,
               hint: l.txNoteAddHint,
+              viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
               onEnterEdit: enter == null ? null : () => enter(_noteFocus),
             ),
           ),
@@ -1153,98 +1259,7 @@ class _DraftFormState extends State<DraftForm> {
     return [
       const SizedBox(height: HeroSpacing.after),
       if (first.isNotEmpty) SectionCard(first: true, children: first),
-      if (editing && widget.allowSplits && !isTransfer)
-        SplitsSection(
-          // Going into an event with the row: they'll be the event's. Else
-          // expense: they owe me; income: I owe them (spec §12).
-          label: widget.eventPending
-              ? l.txSplitInEvent
-              : _c.type == TransactionType.income
-              ? l.txSplitShareShort
-              : l.txSplitWith,
-          helper: widget.eventPending
-              ? l.txSplitInEventHelper
-              // An event bill staying put: my splits sit on my share.
-              : _c.savedInEvent
-              ? l.txSplitFromMyShare
-              : null,
-          totalAmount: _c.splitCap,
-          overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
-          drafts: _c.splits,
-          onChanged: _c.setSplits,
-          me: _c.meAmount,
-          onMeChanged: _c.setMeAmount,
-          meAuto: _c.meAuto,
-          onMeAutoChanged: _c.setMeAuto,
-          sectioned: true,
-        ),
-      ...widget.trailingRows,
-    ];
-  }
-
-  /// โน้ต · หารกับ · อีเวนต์ under a hairline — always open while editing
-  /// (owner 2026-10-10), labels lined up on the left; view mode shows only
-  /// the ones with something in them.
-  List<Widget> _detailRows(
-    AppLocalizations l, {
-    required bool editing,
-    required bool isTransfer,
-  }) {
-    final enter = widget.onEnterEdit;
-    final note = InlineField(
-      editing: editing,
-      controller: _c.note,
-      focusNode: _noteFocus,
-      maxLines: 5,
-      maxLength: TextLimits.note,
-      hint: l.txNoteAddHint,
-      onEnterEdit: enter == null ? null : () => enter(_noteFocus),
-    );
-    final rows = <Widget>[
-      if (editing)
-        // One line, grows while typing.
-        DraftFieldRow(label: l.commonNote, child: note)
-      else if (_c.note.text.trim().isNotEmpty)
-        // View: label on top, the text full width under it — the wallet
-        // page's note (owner 2026-10-10).
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l.commonNote, style: detailLabelStyle(context)),
-            const SizedBox(height: AppSpacing.xs),
-            note,
-          ],
-        ),
-      // Full width: its own header row carries the label and the pills.
-      if (editing && widget.allowSplits && !isTransfer)
-        SplitsSection(
-          // Expense: they owe me; income: I owe them (spec §12).
-          label: _c.type == TransactionType.income
-              ? l.txSplitShareShort
-              : l.txSplitWith,
-          // An event bill: only my share is mine to split.
-          totalAmount: _c.splitCap,
-          overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
-          drafts: _c.splits,
-          onChanged: _c.setSplits,
-          me: _c.meAmount,
-          onMeChanged: _c.setMeAmount,
-          meAuto: _c.meAuto,
-          onMeAutoChanged: _c.setMeAuto,
-        ),
-      if (!isTransfer && widget.extra != null) widget.extra!,
-      ...widget.trailingRows,
-    ];
-    if (rows.isEmpty) return const [];
-    return [
-      const SizedBox(height: AppSpacing.md),
-      // View mode runs on under the tags, no rule (owner 2026-10-10).
-      if (editing) const Divider(height: 1),
-      for (final r in rows)
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.sm),
-          child: r,
-        ),
+      if (!isTransfer) ?_splitEventSection(l, editing: editing),
     ];
   }
 }
@@ -1265,9 +1280,9 @@ class TxTagStrip extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 5),
-          child: Icon(
+          child: AppIcon(
             AppIcons.tag,
-            size: 18,
+            size: AppIconSize.md,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
@@ -1277,7 +1292,7 @@ class TxTagStrip extends StatelessWidget {
             spacing: AppSpacing.xs,
             runSpacing: AppSpacing.xs,
             children: [
-              for (final t in tags) tagAppChip(context, t, size: PillSize.chip),
+              for (final t in tags) tagAppChip(context, t, size: ChipSize.chip),
             ],
           ),
         ),
@@ -1287,7 +1302,7 @@ class TxTagStrip extends StatelessWidget {
 }
 
 /// A labelled text field under the hero of an event row / scheduled entry
-/// (คำอธิบาย, โน้ต) — label on top, an [InlineField] box below.
+/// (คำอธิบาย, โน้ต) — label on top, an [AppInput.inline] box below.
 class _TextBlock extends StatelessWidget {
   const _TextBlock({
     required this.label,
@@ -1311,7 +1326,7 @@ class _TextBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        InlineField(
+        AppInput.inline(
           editing: true,
           controller: controller,
           maxLength: maxLength,
@@ -1432,143 +1447,6 @@ class _ShareLine extends StatelessWidget {
             ),
           ),
         ),
-      ],
-    );
-  }
-}
-
-/// The drafts' collapsible "หารกับ / อีเวนต์" (owner 2026-10-11): closed it
-/// is one line — the title and a summary of what's set ("หารกับ 2 คน ·
-/// ทริปเชียงใหม่"); open it holds the split editor and the event row, the
-/// same pieces as the quick create. A draft may keep half-filled splits;
-/// confirming needs them balanced.
-class _DraftExtras extends StatefulWidget {
-  const _DraftExtras({required this.controller, required this.eventPending});
-
-  final DraftFormController controller;
-  final bool eventPending;
-
-  @override
-  State<_DraftExtras> createState() => _DraftExtrasState();
-}
-
-class _DraftExtrasState extends State<_DraftExtras> {
-  bool _open = false;
-
-  DraftFormController get _c => widget.controller;
-
-  Future<void> _pickEvent() async {
-    final r = await showEventTargetSheet(
-      context,
-      suggestedName: '',
-      selectedProjectId: _c.projectId,
-      // A draft can only name an event that exists.
-      allowCreate: false,
-    );
-    if (!mounted) return;
-    if (r is ExistingEventTarget) {
-      _c.setProject(r.project.id, name: r.project.name);
-    }
-  }
-
-  /// The event's name: from the loaded events, else the picked one.
-  String? _eventName(BuildContext context) {
-    final id = _c.projectId;
-    if (id == null) return null;
-    final known = context
-        .watch<ProjectsCubit>()
-        .state
-        .projects
-        .where((p) => p.id == id)
-        .firstOrNull;
-    return known?.name ??
-        _c.projectName ??
-        AppLocalizations.of(context)!.quickEventLabel;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final eventName = _eventName(context);
-    final people = _c.splits
-        .where((s) => s.personName.trim().isNotEmpty || (s.owedAmount ?? 0) > 0)
-        .length;
-    final summary = [
-      if (people > 0) l.draftExtrasSplits(people),
-      ?eventName,
-    ].join(' · ');
-    final pending = widget.eventPending || _c.projectId != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        InkWell(
-          onTap: () => setState(() => _open = !_open),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-            child: Row(
-              children: [
-                Icon(AppIcons.split, size: 18, color: scheme.onSurfaceVariant),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  l.draftExtrasTitle,
-                  style: textTheme.labelLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: _open
-                      ? const SizedBox.shrink()
-                      : Text(
-                          summary.isEmpty ? l.draftExtrasNone : summary,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.end,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: summary.isEmpty
-                                ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
-                                : null,
-                            fontWeight: summary.isEmpty
-                                ? null
-                                : FontWeight.w600,
-                          ),
-                        ),
-                ),
-                Icon(
-                  _open ? AppIcons.collapse : AppIcons.expand,
-                  color: scheme.onSurfaceVariant,
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_open) ...[
-          SplitsSection(
-            label: pending
-                ? l.txSplitInEvent
-                : _c.type == TransactionType.income
-                ? l.txSplitShareShort
-                : l.txSplitWith,
-            helper: pending ? l.txSplitInEventHelper : null,
-            totalAmount: _c.splitCap,
-            overText: _c.eventOthers > 0 ? l.txSplitExceedsShare : null,
-            drafts: _c.splits,
-            onChanged: _c.setSplits,
-            me: _c.meAmount,
-            onMeChanged: _c.setMeAmount,
-            meAuto: _c.meAuto,
-            onMeAutoChanged: _c.setMeAuto,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          EventRow(
-            name: eventName,
-            onTap: _pickEvent,
-            onClear: eventName == null ? null : () => _c.setProject(null),
-          ),
-        ],
       ],
     );
   }

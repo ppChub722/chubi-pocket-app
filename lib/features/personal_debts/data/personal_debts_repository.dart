@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../transactions/domain/refs.dart';
 import '../domain/personal_debt.dart';
 
 class DebtsPage {
@@ -21,8 +22,11 @@ class DebtsPage {
 }
 
 class SettleResult {
-  const SettleResult({required this.debt});
+  const SettleResult({required this.debt, this.accountBalances = const {}});
   final PersonalDebt debt;
+
+  /// {wallet id: balance} after the settle (API v2 `account_balances`).
+  final Map<String, double> accountBalances;
 }
 
 class PersonalDebtsRepository {
@@ -96,7 +100,7 @@ class PersonalDebtsRepository {
   Future<String> applySplitChange(String notificationId) async {
     try {
       final res = await _client.dio.post<Map<String, dynamic>>(
-        '/personal-debts/split-changes//apply',
+        '/personal-debts/split-changes/$notificationId/apply',
       );
       return (res.data?['result'] as String?) ?? 'updated';
     } on DioException catch (e) {
@@ -227,6 +231,7 @@ class PersonalDebtsRepository {
         debt: PersonalDebt.fromJson(
           (res.data!['debt'] as Map).cast<String, dynamic>(),
         ),
+        accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

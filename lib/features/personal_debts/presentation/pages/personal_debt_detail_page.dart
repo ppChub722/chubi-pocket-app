@@ -4,15 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/personal_debt.dart';
@@ -129,7 +124,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     try {
       final updated = await context.read<PersonalDebtsCubit>().update(
         debt.id,
-        amount: AmountField.parse(w.amount),
+        amount: AmountInput.parse(w.amount),
         // '' clears (migration 51).
         description: w.description.trim(),
         note: w.note.trim(),
@@ -312,11 +307,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     final name = debt.counterpartyPersonName;
     return HeaderCard(
       onEdit: isEditing ? null : enterEdit,
-      leading: DebtAvatar(
-        contactId: debt.counterpartyContactId,
-        name: name,
-        size: 52,
-      ),
+      leading: DebtAvatar(name: name, iconCode: debt.person.iconCode, size: 52),
       title: Text(
         debt.isOwedToMe ? l.debtTheyOweYou(name) : l.debtYouOwe(name),
       ),
@@ -376,13 +367,13 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
         if (editing)
           DetailStacked(
             label: l.debtAmount,
-            child: AmountField(
+            child: AmountInput(
               controller: _amountCtrl,
               currencySymbol: symbol,
               onChanged: (v) =>
                   applyTextChange(_Field.amount, working.copyWith(amount: v)),
               validator: (v) {
-                final n = AmountField.parse(v);
+                final n = AmountInput.parse(v);
                 if (n == null || n <= 0) return l.debtAmountRequired;
                 if (n + 0.005 < debt.settledAmount) {
                   return l.debtAmountBelowSettled(
@@ -411,7 +402,11 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
             mainAxisSize: MainAxisSize.min,
             children: [
               if (working.contactId != null) ...[
-                Icon(AppIcons.link, size: 16, color: scheme.primary),
+                AppIcon(
+                  AppIcons.link,
+                  size: AppIconSize.sm,
+                  color: scheme.primary,
+                ),
                 const SizedBox(width: AppSpacing.xs),
               ],
               Flexible(child: Text(working.name)),
@@ -433,12 +428,13 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
         ),
         DetailStacked(
           label: l.commonDescription,
-          child: InlineField(
+          child: AppInput.inline(
             editing: editing,
             controller: _descriptionCtrl,
             focusNode: _descriptionFocus,
             maxLines: 3,
             maxLength: TextLimits.description,
+            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
             onEnterEdit: () => enterEdit(focus: _descriptionFocus),
             onChanged: (v) => applyTextChange(
               _Field.description,
@@ -448,12 +444,13 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
         ),
         DetailStacked(
           label: l.commonNote,
-          child: InlineField(
+          child: AppInput.inline(
             editing: editing,
             controller: _noteCtrl,
             focusNode: _noteFocus,
             maxLines: 3,
             maxLength: TextLimits.note,
+            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
             onEnterEdit: () => enterEdit(focus: _noteFocus),
             onChanged: (v) =>
                 applyTextChange(_Field.note, working.copyWith(note: v)),
@@ -487,7 +484,7 @@ class _DebtDraft {
   });
 
   factory _DebtDraft.from(PersonalDebt d) => _DebtDraft(
-    amount: AmountField.format(d.amount),
+    amount: AmountInput.format(d.amount),
     description: d.description ?? '',
     note: d.note ?? '',
     contactId: d.counterpartyContactId,

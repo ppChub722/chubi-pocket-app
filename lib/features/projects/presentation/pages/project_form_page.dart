@@ -4,17 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../cubit/projects_cubit.dart';
 
 /// `/projects/new` — create a project (edit happens in place on the detail
@@ -76,7 +68,7 @@ class _ProjectFormPageState extends State<ProjectFormPage>
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final w = working;
     String? opt(String s) => s.trim().isEmpty ? null : s.trim();
-    final planned = AmountField.parse(w.planned);
+    final planned = AmountInput.parse(w.planned);
     final cubit = context.read<ProjectsCubit>();
     FocusScope.of(context).unfocus();
     setSaving(true);
@@ -142,7 +134,7 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
-                      child: AppTextField(
+                      child: AppInput(
                         controller: _ctrl[_Field.name]!,
                         label: l.commonName,
                         hint: l.projectNameLabel,
@@ -157,7 +149,7 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-                AppTextField(
+                AppInput(
                   controller: _ctrl[_Field.type]!,
                   label: l.projectTypeLabel,
                   hint: l.projectTypeHint,
@@ -166,7 +158,7 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                   onChanged: (v) => onText(_Field.type, v),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                AppTextField(
+                AppInput(
                   controller: _ctrl[_Field.description]!,
                   label: l.commonDescription,
                   maxLines: 3,
@@ -174,7 +166,7 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                   onChanged: (v) => onText(_Field.description, v),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                AppTextField(
+                AppInput(
                   controller: _ctrl[_Field.note]!,
                   label: l.commonNote,
                   prefixIcon: AppIcons.note,
@@ -183,13 +175,13 @@ class _ProjectFormPageState extends State<ProjectFormPage>
                   onChanged: (v) => onText(_Field.note, v),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                AmountField(
+                AmountInput(
                   controller: _ctrl[_Field.planned]!,
                   label: l.projectFormPlannedLabel,
                   onChanged: (v) => onText(_Field.planned, v),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return null;
-                    final n = AmountField.parse(v);
+                    final n = AmountInput.parse(v);
                     return (n == null || n <= 0)
                         ? l.projectFormPlannedInvalid
                         : null;

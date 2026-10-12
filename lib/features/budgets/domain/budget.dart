@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../shared/icon_maker/icon_code.dart';
 import 'budget_period.dart';
 import 'budget_scope.dart';
 import 'budget_status.dart';
+import '../../../ui/ui.dart';
 
 /// One budget — a per-category spending limit with a recurrence period.
 ///
@@ -212,11 +212,21 @@ class BudgetCategoryRef extends Equatable {
     required this.id,
     required this.name,
     this.iconCode,
+    this.type,
+    this.parentId,
+    this.isSystem = false,
+    this.systemKind,
   });
 
   final String id;
   final String name;
   final IconCode? iconCode;
+
+  // Shared `CategoryRef` keys; all optional.
+  final String? type;
+  final String? parentId;
+  final bool isSystem;
+  final String? systemKind;
 
   factory BudgetCategoryRef.fromJson(Map<String, dynamic> json) {
     return BudgetCategoryRef(
@@ -225,11 +235,23 @@ class BudgetCategoryRef extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      type: json['type'] as String?,
+      parentId: json['parent_id'] as String?,
+      isSystem: json['is_system'] as bool? ?? false,
+      systemKind: json['system_kind'] as String?,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, iconCode];
+  List<Object?> get props => [
+    id,
+    name,
+    iconCode,
+    type,
+    parentId,
+    isSystem,
+    systemKind,
+  ];
 }
 
 class BudgetCurrentPeriod extends Equatable {

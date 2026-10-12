@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/category.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
@@ -203,7 +199,7 @@ class _CategoryPickerState extends State<_CategoryPicker> {
     final rows = <Widget>[
       if (widget.allowNone && query.isEmpty)
         PickerRow(
-          leading: const Icon(AppIcons.noCategory),
+          leading: const AppIcon(AppIcons.noCategory),
           title: widget.noneLabel ?? l.transactionFormCategoryPickerNoneOption,
           selected: widget.selected == null,
           onTap: () => Navigator.of(context).pop(const CategoryPickerCleared()),
@@ -280,7 +276,7 @@ class _CategoryPickerState extends State<_CategoryPicker> {
         // somewhere else" in this app).
         trailing: hasChildren
             ? IconButton(
-                icon: Icon(isExpanded ? AppIcons.collapse : AppIcons.expand),
+                icon: AppIcon(isExpanded ? AppIcons.collapse : AppIcons.expand),
                 onPressed: forced.contains(category.id)
                     ? null
                     : () => setState(() {

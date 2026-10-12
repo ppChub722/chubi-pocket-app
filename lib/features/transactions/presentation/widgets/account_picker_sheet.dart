@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/pages/account_detail_page.dart';
 import '../../../accounts/presentation/widgets/account_card.dart';
@@ -178,13 +175,8 @@ class _NoneTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      color: scheme.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: scheme.outlineVariant),
-      ),
+    return AppCard(
+      style: AppCardStyle.bordered,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -192,7 +184,11 @@ class _NoneTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(AppIcons.noWallet, size: 32, color: scheme.onSurfaceVariant),
+              AppIcon(
+                AppIcons.noWallet,
+                size: AppIconSize.xl,
+                color: scheme.onSurfaceVariant,
+              ),
               const Spacer(),
               Text(
                 label,

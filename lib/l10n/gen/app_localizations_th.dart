@@ -3635,7 +3635,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get scheduledSheetTitleEdit => 'แก้รายการประจำ';
 
   @override
-  String get accountIdentifiersTitle => 'เลขบัญชี · พร้อมเพย์ · บัตร';
+  String get accountIdentifiersTitle => 'เลขอ้างอิง';
 
   @override
   String get accountIdentifiersHelper => 'ใช้จับคู่สลิปธนาคารกับกระเป๋านี้';
@@ -3822,10 +3822,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String txShareOthers(String amount) {
     return 'ของคนอื่น $amount';
   }
-
-  @override
-  String get txSplitPersonLocked =>
-      'ผูกกับผู้ติดต่อแล้ว — จะเปลี่ยนคน ให้ลบแถวนี้แล้วเพิ่มใหม่';
 
   @override
   String get txSplitAuthorOnly => 'เฉพาะคนที่บันทึกรายการนี้แก้การหารได้';
@@ -4053,7 +4049,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get txSplitMe => 'ฉัน';
+  String get txSplitMe => 'ส่วนของฉัน';
 
   @override
   String txSplitLeft(String amount) {
@@ -4083,8 +4079,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get txSplitPersonLockedLinked =>
-      'ลิงก์กับบัญชีแอปของเขาแล้ว — ถ้าจะเปลี่ยนคน ให้ลบแถวนี้แล้วเพิ่มใหม่';
+  String get txSplitNoContact => 'ไม่ผูกผู้ติดต่อ';
+
+  @override
+  String get txSplitNoContactHint => 'ใช้ชื่อเดิม พิมพ์แก้ได้';
 
   @override
   String get accountFormNameExample => 'เช่น บัญชีเงินเดือน';
@@ -4113,7 +4111,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get accountsSummaryCardDebt => 'หนี้บัตร';
 
   @override
-  String get accountReportSectionTitle => 'ในรายงานของฉัน';
+  String get accountReportSectionTitle => 'รายงาน';
 
   @override
   String get accountOpeningSectionTitle => 'ยอดเริ่มต้น';
@@ -4201,4 +4199,98 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get pendingErrProjectReadOnly =>
       'คุณดูอีเวนต์นี้ได้อย่างเดียว เพิ่มรายการไม่ได้';
+
+  @override
+  String get accountReportSectionDescription =>
+      'เลือกว่ากระเป๋านี้นับในรายงานของคุณแค่ไหน';
+
+  @override
+  String get accountMembersSectionDescription => 'คนที่ใช้กระเป๋านี้ร่วมกับคุณ';
+
+  @override
+  String get accountCreditSectionDescription =>
+      'วันตัดรอบ วันครบกำหนด และยอดชำระขั้นต่ำของบัตรนี้';
+
+  @override
+  String get accountOpeningSectionDescription =>
+      'ยอดตั้งต้นของกระเป๋า หลังสร้างแล้วแก้ผ่านปรับยอด';
+
+  @override
+  String get accountTypeSectionDescription =>
+      'ชนิดของกระเป๋า เลือกได้ตอนสร้างและแก้ไข';
+
+  @override
+  String get walletMembersHistoryDescription =>
+      'คนที่เคยอยู่ในกระเป๋านี้แต่ออกไปแล้ว';
+
+  @override
+  String get categorySettingsSectionDescription =>
+      'ตั้งว่าหมวดนี้นับในรายงานและใช้กับค่าธรรมเนียมหรือไม่';
+
+  @override
+  String get contactActionsSectionDescription =>
+      'เชื่อมกับบัญชีผู้ใช้ จับคู่ชื่อในรายการหาร และดูหนี้ของคนนี้';
+
+  @override
+  String get budgetDetailBreakdownDescription =>
+      'ยอดใช้จ่ายแยกตามหมวดย่อยในงวดนี้';
+
+  @override
+  String get scheduledDetailHistoryDescription =>
+      'รายการที่สร้างจากรายการประจำนี้แล้ว';
+
+  @override
+  String get projectMembersDescription => 'คนที่ร่วมอีเวนต์นี้อยู่ตอนนี้';
+
+  @override
+  String get projectMembersPendingDescription => 'เชิญแล้ว กำลังรอให้ตอบรับ';
+
+  @override
+  String get projectMembersLeftDescription => 'คนที่ออกจากอีเวนต์นี้ไปแล้ว';
+
+  @override
+  String get contactFieldNotSet => 'ไม่ระบุ';
+
+  @override
+  String get txSplitSectionTitle => 'แบ่งรายการ';
+
+  @override
+  String get txSplitSectionHint => 'แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์';
+
+  @override
+  String get txSplitRowLabel => 'แบ่งยอด';
+
+  @override
+  String get dayPickerLastShort => 'สิ้นเดือน';
+
+  @override
+  String get profileCurrencyLabel => 'สกุลเงิน';
+
+  @override
+  String get contactNicknameLabel => 'ชื่อเล่น';
+
+  @override
+  String get contactNicknameHint => 'ไม่บังคับ · เช่น แม่';
+
+  @override
+  String get contactShowNicknameLabel => 'แสดงชื่อเล่น';
+
+  @override
+  String get contactShowNicknameHelper => 'เปิด = ใช้ชื่อเล่นแทนชื่อจริงทุกที่';
+
+  @override
+  String get accountsSummarySharedPot => 'กระเป๋าร่วม';
+
+  @override
+  String accountsSummaryOtherCurrency(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'อีก $count กระเป๋าเป็นสกุลอื่น ไม่นับรวม',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notOwnerError => 'เฉพาะเจ้าของกระเป๋าเท่านั้น';
 }

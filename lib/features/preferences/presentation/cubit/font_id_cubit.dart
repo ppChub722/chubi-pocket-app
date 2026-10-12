@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/storage_keys.dart';
-import '../../../../core/fonts/font_registry.dart';
 import 'locale_cubit.dart';
+import '../../../../ui/ui.dart';
 
 /// Holds the active font id (e.g. `Inter`, `IBM Plex Sans Thai`) and persists it.
 ///

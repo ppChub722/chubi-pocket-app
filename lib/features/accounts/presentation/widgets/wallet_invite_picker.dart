@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../contacts/domain/contact.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_linked_mark.dart';
@@ -47,7 +46,7 @@ class _WalletInvitePickerState extends State<_WalletInvitePicker> {
       for (final c in state.contacts)
         if (c.isLinked &&
             !c.isArchived &&
-            !widget.excludeUserIds.contains(c.linkedUserId))
+            !widget.excludeUserIds.contains(c.linkedUser?.id))
           c,
     ];
     final loading =
@@ -69,9 +68,8 @@ class _WalletInvitePickerState extends State<_WalletInvitePicker> {
             : invitable
                   .where(
                     (c) =>
-                        c.effectiveName.toLowerCase().contains(query) ||
-                        (c.effectiveEmail?.toLowerCase().contains(query) ??
-                            false),
+                        c.name.toLowerCase().contains(query) ||
+                        (c.email?.toLowerCase().contains(query) ?? false),
                   )
                   .toList();
         final hint = Padding(
@@ -103,8 +101,8 @@ class _WalletInvitePickerState extends State<_WalletInvitePicker> {
                     PickerRow(
                       // Every one here is linked: "(ม)🔗 name".
                       leading: ContactAvatar(contact: c),
-                      title: c.effectiveName,
-                      subtitle: c.effectiveEmail,
+                      title: c.name,
+                      subtitle: c.email,
                       onTap: () => Navigator.of(context).pop(c),
                     ),
                 ],

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 import 'project_common.dart';
 import 'project_tx_tiles.dart';
@@ -85,8 +83,7 @@ class ProjectDashboardTab extends StatelessWidget {
           96 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
-          Card(
-            margin: EdgeInsets.zero,
+          AppCard(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Column(
@@ -237,9 +234,7 @@ class ProjectDashboardTab extends StatelessWidget {
               actionLabel: l.projectDashSeeAll,
               onAction: onSeeAll,
             ),
-            Card(
-              margin: EdgeInsets.zero,
-              clipBehavior: Clip.antiAlias,
+            AppCard(
               child: Column(
                 children: [
                   for (final t in recent.take(3))

@@ -1,8 +1,8 @@
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/tx_compact_hero.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

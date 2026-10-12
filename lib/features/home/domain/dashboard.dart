@@ -1,8 +1,11 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../shared/icon_maker/icon_code.dart';
+import '../../notifications/domain/notification.dart';
+import '../../pending/domain/pending_transaction.dart';
+import '../../transactions/domain/refs.dart';
 import '../../transactions/domain/transaction.dart';
 import '../../transactions/domain/transaction_type.dart';
+import '../../../ui/ui.dart';
 
 double _d(Object? v) => (v as num?)?.toDouble() ?? 0;
 int _i(Object? v) => (v as num?)?.toInt() ?? 0;
@@ -27,6 +30,9 @@ class Dashboard extends Equatable {
     required this.debts,
     required this.savingGoals,
     required this.recent,
+    this.pending = const PendingBlock(),
+    this.attention = const AttentionBlock(),
+    this.badges = const DashboardBadges(),
   });
 
   /// First day of the selected month.
@@ -50,6 +56,13 @@ class Dashboard extends Equatable {
   final GoalsTile savingGoals;
   final List<Transaction> recent;
 
+  /// Drafts waiting (first 5, resolved) + the total.
+  final PendingBlock pending;
+
+  /// Notifications to answer / read (first 10) + the total.
+  final AttentionBlock attention;
+  final DashboardBadges badges;
+
   factory Dashboard.fromJson(Map<String, dynamic> json) {
     List<Map<String, dynamic>> list(String k) =>
         ((json[k] as List?) ?? const []).cast<Map<String, dynamic>>();
@@ -71,6 +84,9 @@ class Dashboard extends Equatable {
       debts: DebtsTile.fromJson(obj('debts')),
       savingGoals: GoalsTile.fromJson(obj('saving_goals')),
       recent: list('recent').map(Transaction.fromJson).toList(),
+      pending: PendingBlock.fromJson(obj('pending')),
+      attention: AttentionBlock.fromJson(obj('attention')),
+      badges: DashboardBadges.fromJson(obj('badges')),
     );
   }
 
@@ -89,7 +105,66 @@ class Dashboard extends Equatable {
     debts,
     savingGoals,
     recent,
+    pending,
+    attention,
+    badges,
   ];
+}
+
+/// `pending` of the dashboard: [total] drafts, the first few as [items].
+class PendingBlock extends Equatable {
+  const PendingBlock({this.total = 0, this.items = const []});
+
+  final int total;
+  final List<PendingTransaction> items;
+
+  factory PendingBlock.fromJson(Map<String, dynamic> json) => PendingBlock(
+    total: _i(json['total']),
+    items: ((json['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(PendingTransaction.fromJson)
+        .toList(),
+  );
+
+  @override
+  List<Object?> get props => [total, items];
+}
+
+/// `attention` of the dashboard: notifications still unread or awaiting an
+/// answer — [total] can run past the [items] shown.
+class AttentionBlock extends Equatable {
+  const AttentionBlock({this.total = 0, this.items = const []});
+
+  final int total;
+  final List<AppNotification> items;
+
+  factory AttentionBlock.fromJson(Map<String, dynamic> json) => AttentionBlock(
+    total: _i(json['total']),
+    items: ((json['items'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(AppNotification.fromJson)
+        .toList(),
+  );
+
+  @override
+  List<Object?> get props => [total, items];
+}
+
+/// `badges`: the bell and the drafts counts.
+class DashboardBadges extends Equatable {
+  const DashboardBadges({this.unreadNotifications = 0, this.pendingDrafts = 0});
+
+  final int unreadNotifications;
+  final int pendingDrafts;
+
+  factory DashboardBadges.fromJson(Map<String, dynamic> json) =>
+      DashboardBadges(
+        unreadNotifications: _i(json['unread_notifications']),
+        pendingDrafts: _i(json['pending_drafts']),
+      );
+
+  @override
+  List<Object?> get props => [unreadNotifications, pendingDrafts];
 }
 
 class NetWorth extends Equatable {
@@ -142,29 +217,33 @@ class PeriodTotals extends Equatable {
   List<Object?> get props => [income, expense, net, count];
 }
 
-/// One top-level expense category. [categoryId] null = uncategorized.
+/// One top expense category (`top_categories[]`): the category ref (null =
+/// uncategorised), its expense and row count.
 class CategorySlice extends Equatable {
   const CategorySlice({
-    required this.categoryId,
-    required this.name,
-    required this.iconCode,
+    required this.category,
     required this.expense,
+    this.count = 0,
   });
 
-  final String? categoryId;
-  final String name;
-  final IconCode? iconCode;
+  final EmbeddedCategory? category;
   final double expense;
+  final int count;
+
+  String? get categoryId => category?.id;
+  String get name => category?.name ?? '';
+  IconCode? get iconCode => category?.iconCode;
 
   factory CategorySlice.fromJson(Map<String, dynamic> json) => CategorySlice(
-    categoryId: json['category_id'] as String?,
-    name: json['name'] as String? ?? '',
-    iconCode: _icon(json['icon_code']),
+    category: json['category'] is Map<String, dynamic>
+        ? EmbeddedCategory.fromJson(json['category'] as Map<String, dynamic>)
+        : null,
     expense: _d(json['expense']),
+    count: _i(json['count']),
   );
 
   @override
-  List<Object?> get props => [categoryId, name, iconCode, expense];
+  List<Object?> get props => [category, expense, count];
 }
 
 class TrendPoint extends Equatable {

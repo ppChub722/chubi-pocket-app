@@ -1,6 +1,7 @@
 import 'package:chubi_pocket/app/shell/shell_chrome.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/edit_mode/edit_mode_mixin.dart';
+import 'package:chubi_pocket/ui/templates/edit_mode_mixin.dart';
+import 'package:chubi_pocket/ui/domain/l10n/app_ui_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -43,6 +44,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('th'),
+        builder: (context, child) => AppUiConfig(child: child!),
         home: ShellChrome(controller: chrome, child: const _Page()),
       ),
     );

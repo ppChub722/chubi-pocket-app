@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/editable_circle.dart';
 import '../../domain/category.dart';
+import '../../../../ui/ui.dart';
 
 /// Reusable category-row card. Used as form live-preview and inside the
 /// icon-maker sheet preview builder.
@@ -30,13 +25,9 @@ class CategoryPreviewCard extends StatelessWidget {
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent =
         category.iconCode?.accentColorFor(palette) ?? palette.primary;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      color: scheme.surfaceContainer,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: accent, width: 1.5),
-      ),
+    return AppCard(
+      style: AppCardStyle.accent,
+      color: accent,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(

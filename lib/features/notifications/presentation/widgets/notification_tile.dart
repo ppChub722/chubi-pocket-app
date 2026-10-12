@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/notification.dart';
 
 /// One inbox row (§7): sender avatar with a type badge, the sentence, time,
@@ -28,33 +25,25 @@ class NotificationTile extends StatelessWidget {
   final ValueChanged<String> onAccept;
   final ValueChanged<String> onReject;
 
-  /// Whether [n] still shows its answer buttons — a request or one-tap
-  /// action not yet taken (the dashboard's "ต้องจัดการ" lists these).
-  static bool awaitsAnswer(AppNotification n) =>
-      (_isRequestOf(n) || _hasActionOf(n)) && n.actionedAt == null;
+  /// Whether [n] still shows its answer buttons — the BE decides (the
+  /// dashboard's "ต้องจัดการ" lists these).
+  static bool awaitsAnswer(AppNotification n) => n.awaitsAnswer;
 
   /// Requests need an answer (accept / reject, with a confirm on reject).
-  static bool _isRequestOf(AppNotification n) =>
-      n.type == NotificationType.contactLinkRequest ||
-      n.type == NotificationType.accountInvite;
+  bool get _isRequest =>
+      notification.type == NotificationType.contactLinkRequest ||
+      notification.type == NotificationType.accountInvite;
 
-  /// One-tap actions (contract §5) — "skip" just hides the row. Auto-run
-  /// ones arrive already actioned and show "ทำแล้ว".
-  static bool _hasActionOf(AppNotification n) => switch (n.type) {
-    // A split that was removed / changed again since: nothing to do.
+  /// Types that carry an action (request or one-tap, contract §5): once
+  /// taken — or auto-run on arrival — the row says "ทำแล้ว".
+  bool get _hasAction => switch (notification.type) {
     NotificationType.splitCreated ||
-    NotificationType.splitChanged => n.payload['superseded'] != true,
+    NotificationType.splitChanged ||
     NotificationType.splitPaid ||
-    NotificationType.projectTxRecordedForYou => true,
-    // Only when I have a personal copy to update.
-    NotificationType.projectTxChanged =>
-      n.payload['personal_transaction_id'] != null &&
-          n.payload['suggested'] != null,
+    NotificationType.projectTxRecordedForYou ||
+    NotificationType.projectTxChanged => true,
     _ => false,
   };
-
-  bool get _isRequest => _isRequestOf(notification);
-  bool get _hasAction => _hasActionOf(notification);
 
   String _actionLabel(AppLocalizations l) => switch (notification.type) {
     NotificationType.splitCreated => l.notifActionAddDebt,
@@ -71,11 +60,10 @@ class NotificationTile extends StatelessWidget {
     final n = notification;
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final actionable = _isRequest || _hasAction;
-    final pending = actionable && n.actionedAt == null;
-    final accepted = actionable && n.actionedAt != null;
+    final pending = n.awaitsAnswer;
+    final accepted = (_isRequest || _hasAction) && n.isActioned;
     final amount = _amount(context);
-    final actor = n.actorDisplayName ?? l.notificationsSomeone;
+    final actor = n.actor?.displayName ?? l.notificationsSomeone;
 
     return Material(
       color: n.isUnread
@@ -92,8 +80,13 @@ class NotificationTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CornerBadge(
-                badge: Icon(_iconFor(n.type), size: 12),
-                child: UserAvatar(displayName: actor, size: 40),
+                size: 40,
+                icon: _iconFor(n.type),
+                child: UserAvatar(
+                  displayName: actor,
+                  iconCode: n.actor?.iconCode,
+                  size: 40,
+                ),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -130,7 +123,7 @@ class NotificationTile extends StatelessWidget {
                         icon: AppIcons.success,
                         tone: AppChipTone.success,
                         selected: true,
-                        size: PillSize.mini,
+                        size: ChipSize.mini,
                       ),
                     ],
                     if (pending) ...[
@@ -253,7 +246,7 @@ String _splitChangeTitle(
   final p = n.payload;
   final who =
       (p['splitter_display_name'] as String?) ??
-      n.actorDisplayName ??
+      n.actor?.displayName ??
       l.notificationsSomeone;
   final what = (p['description'] as String?)?.trim() ?? '';
   if (p['change'] == 'removed') return l.notifSplitRemovedYou(who, what);

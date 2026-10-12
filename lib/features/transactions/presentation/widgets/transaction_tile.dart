@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../categories/domain/category_tree.dart';
+import '../../../../ui/ui.dart';
 import '../../../categories/presentation/category_label.dart';
-import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
@@ -22,7 +14,7 @@ import '../../domain/transaction_type.dart';
 /// metrics, colours and the 👁 privacy toggle match every money row.
 ///
 /// Leading: the category's icon exactly as on the categories page (L2/L3
-/// inherit their top-level parent's icon code); no category → a type glyph
+/// carry their own icon); no category → a type glyph
 /// tinted expense / income. Title: the description, else the category name
 /// (system ones in the user's language). Subtitle: the context the current
 /// screen doesn't already show — toggle with [showAccount] /
@@ -52,18 +44,12 @@ class TransactionTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
 
-    final categories = context.watch<CategoriesCubit>();
-    final cat = tx.category != null ? categories.byId(tx.category!.id) : null;
+    // Everything comes embedded in the row (API v2): the category's own
+    // icon (L2/L3 are not resolved through their parent) and name.
+    final cat = tx.category;
     final Widget leading = cat != null
-        ? IconDisplay(
-            type: IconType.category,
-            size: 36,
-            iconCode: CategoryTree.resolveIconCode(
-              cat,
-              categories.state.categories,
-            ),
-          )
-        : IconBubble(
+        ? IconDisplay(type: IconType.category, size: 36, iconCode: cat.iconCode)
+        : IconTile(
             icon: _typeIcon(tx.type),
             color: switch (tx.type) {
               TransactionType.expense => palette.expense,
@@ -73,19 +59,21 @@ class TransactionTile extends StatelessWidget {
             size: 36,
           );
 
-    // The record's own title ("what for") first, else its category.
+    // The record's own title ("what for") first, else its category (system
+    // ones in the user's language).
     final categoryName = cat != null
-        ? categoryDisplayName(l, cat)
-        : (tx.category?.name ?? '');
+        ? categoryDisplayName(
+            l,
+            cat.toCategory().copyWith(systemKind: cat.systemKind),
+          )
+        : '';
     final description = tx.description?.trim() ?? '';
     final title = description.isNotEmpty
         ? description
         : (categoryName.isNotEmpty ? categoryName : '—');
 
     // The wallet's own icon inside its mini chip; unknown wallet → no icon.
-    final wallet = tx.account != null
-        ? context.watch<AccountsCubit>().byId(tx.account!.id)
-        : null;
+    final wallet = tx.account;
 
     // The shared row (owner 2026-10-11): title + wallet chip, then
     // `category · #tags`; the date lives in the list's day headers.

@@ -2,15 +2,30 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../domain/category.dart';
 import '../domain/category_type.dart';
 
-/// The name to show for [c]. The BE seeds the eight system categories
-/// (opening balance, adjustment, transfer in / out, debt received / paid)
-/// with English names and keeps `system_kind` off the wire, so they're
-/// recognised by their reserved icon and shown in the user's language.
-/// Every other category shows its own name.
+/// The name to show for [c]. The BE seeds the system categories (opening
+/// balance, adjustment, transfer in / out, debt received / paid) with
+/// English names and tags them with `system_kind`; they're shown in the
+/// user's language. Every other category shows its own name.
 String categoryDisplayName(AppLocalizations l, Category c) =>
     (c.isSystem ? _systemName(l, c) : null) ?? c.name;
 
-String? _systemName(AppLocalizations l, Category c) =>
+String? _systemName(AppLocalizations l, Category c) {
+  final kind = c.systemKind;
+  if (kind == null) return _legacyIconName(l, c);
+  return switch (kind) {
+    'OPENING_IN' || 'OPENING_OUT' => l.categorySystemOpening,
+    'ADJUST_IN' || 'ADJUST_OUT' => l.categorySystemAdjustment,
+    'TRANSFER_IN' => l.categorySystemTransferIn,
+    'TRANSFER_OUT' => l.categorySystemTransferOut,
+    'DEBT_RECEIVED' => l.categorySystemDebtReceived,
+    'DEBT_PAID' => l.categorySystemDebtPaid,
+    _ => null,
+  };
+}
+
+/// Fallback for a Category without `system_kind` (legacy fixtures / hub):
+/// the reserved icon.
+String? _legacyIconName(AppLocalizations l, Category c) =>
     switch (c.iconCode?.icon) {
       'system_opening' => l.categorySystemOpening,
       'system_adjustment' => l.categorySystemAdjustment,

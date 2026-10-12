@@ -3,12 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
-import '../../../../shared/widgets/skeleton_box.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
@@ -20,6 +16,7 @@ import '../../../tags/presentation/widgets/tag_chip.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../cubit/tx_form_options_cubit.dart';
 import '../tx_list_filters.dart';
 
 // The pick rows the transaction form and the transactions filter share
@@ -75,8 +72,15 @@ class CategoryChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final catState = context.watch<CategoriesCubit>().state;
-    final all = catState.categories;
+    // Form options (one call for the whole form) when a form provides them,
+    // else the app-wide cubit.
+    final opts = maybeTxFormOptions(context);
+    final catState = opts == null
+        ? context.watch<CategoriesCubit>().state
+        : null;
+    final all = opts == null
+        ? catState!.categories
+        : (opts.state.options?.categoryList ?? const <Category>[]);
     final txs = context.watch<TransactionsCubit>().state.transactions;
     final usable = {
       for (final c in all)
@@ -119,12 +123,15 @@ class CategoryChipRow extends StatelessWidget {
       rank: rank,
       picked: [if (sel != null && usable.containsKey(sel.id)) sel.id],
     );
-    final loading =
-        all.isEmpty &&
-        (catState.status == CategoriesStatus.initial ||
-            catState.status == CategoriesStatus.loading);
+    final loading = opts == null
+        ? all.isEmpty &&
+              (catState!.status == CategoriesStatus.initial ||
+                  catState.status == CategoriesStatus.loading)
+        : opts.state.isLoading;
     return _EnsureLoaded(
-      load: (c) => c.read<CategoriesCubit>().loadIfNeeded(),
+      load: (c) => opts == null
+          ? c.read<CategoriesCubit>().loadIfNeeded()
+          : opts.loadIfNeeded(),
       child: ChipRow(
         icon: leadingIcon ? AppIcons.category : null,
         moreLabel: pickLabel ?? l.commonMore,
@@ -189,8 +196,11 @@ class TagChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final tagState = context.watch<TagsCubit>().state;
-    final mine = tagState.tags;
+    final opts = maybeTxFormOptions(context);
+    final tagState = opts == null ? context.watch<TagsCubit>().state : null;
+    final mine = opts == null
+        ? tagState!.tags
+        : (opts.state.options?.tags ?? const <Tag>[]);
     final byId = {for (final t in mine) t.id: t};
     final txs = editing
         ? context.watch<TransactionsCubit>().state.transactions
@@ -221,12 +231,15 @@ class TagChipRow extends StatelessWidget {
     final ids = editing
         ? order.ids(ready: mine.isNotEmpty, rank: rank, picked: selected)
         : selected.toList();
-    final loading =
-        mine.isEmpty &&
-        (tagState.status == TagsStatus.initial ||
-            tagState.status == TagsStatus.loading);
+    final loading = opts == null
+        ? mine.isEmpty &&
+              (tagState!.status == TagsStatus.initial ||
+                  tagState.status == TagsStatus.loading)
+        : opts.state.isLoading;
     return _EnsureLoaded(
-      load: (c) => c.read<TagsCubit>().loadIfNeeded(),
+      load: (c) => opts == null
+          ? c.read<TagsCubit>().loadIfNeeded()
+          : opts.loadIfNeeded(),
       child: ChipRow(
         icon: leadingIcon ? AppIcons.tag : null,
         moreLabel: l.commonMore,
@@ -293,8 +306,11 @@ class WalletChipRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accState = context.watch<AccountsCubit>().state;
-    final accounts = accState.accounts;
+    final opts = maybeTxFormOptions(context);
+    final accState = opts == null ? context.watch<AccountsCubit>().state : null;
+    final accounts = opts == null
+        ? accState!.accounts
+        : (opts.state.options?.accountList ?? const <Account>[]);
     final txs = context.watch<TransactionsCubit>().state.transactions;
     final byId = {
       for (final a in accounts)
@@ -321,12 +337,15 @@ class WalletChipRow extends StatelessWidget {
       rank: rank,
       picked: [if (sel != null && byId.containsKey(sel)) sel],
     );
-    final loading =
-        accounts.isEmpty &&
-        (accState.status == AccountsStatus.initial ||
-            accState.status == AccountsStatus.loading);
+    final loading = opts == null
+        ? accounts.isEmpty &&
+              (accState!.status == AccountsStatus.initial ||
+                  accState.status == AccountsStatus.loading)
+        : opts.state.isLoading;
     return _EnsureLoaded(
-      load: (c) => c.read<AccountsCubit>().loadIfNeeded(),
+      load: (c) => opts == null
+          ? c.read<AccountsCubit>().loadIfNeeded()
+          : opts.loadIfNeeded(),
       child: ChipRow(
         icon: leadingIcon ? AppIcons.wallet : null,
         moreLabel: pickLabel ?? l.commonMore,
@@ -379,7 +398,7 @@ class _EnsureLoadedState extends State<_EnsureLoaded> {
 
 /// Chip-sized shimmer placeholders while a row's list loads — [size] high,
 /// like the chips that replace them.
-List<Widget> _skeletonChips({PillSize size = PillSize.control}) => [
+List<Widget> _skeletonChips({ChipSize size = ChipSize.control}) => [
   for (final w in const [72.0, 56.0, 64.0])
     SkeletonBox(width: w, height: size.height, borderRadius: 999),
 ];

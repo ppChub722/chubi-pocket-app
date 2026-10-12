@@ -4,10 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -107,7 +105,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             dividers: false,
                             title: l.authRegisterSectionAccount,
                             children: [
-                              AppTextField(
+                              AppInput(
                                 controller: _usernameCtrl,
                                 enabled: !isSubmitting,
                                 label: l.authRegisterUsernameLabel,
@@ -133,7 +131,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 },
                               ),
                               const SizedBox(height: AppSpacing.md),
-                              AppTextField(
+                              AppInput(
                                 controller: _passwordCtrl,
                                 enabled: !isSubmitting,
                                 label: l.authRegisterPasswordLabel,
@@ -155,7 +153,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 },
                               ),
                               const SizedBox(height: AppSpacing.md),
-                              AppTextField(
+                              AppInput(
                                 controller: _confirmCtrl,
                                 enabled: !isSubmitting,
                                 label: l.authRegisterConfirmLabel,
@@ -172,7 +170,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             dividers: false,
                             title: l.authRegisterSectionProfile,
                             children: [
-                              AppTextField(
+                              AppInput(
                                 controller: _displayNameCtrl,
                                 enabled: !isSubmitting,
                                 label: l.authRegisterDisplayNameLabel,
@@ -189,7 +187,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 },
                               ),
                               const SizedBox(height: AppSpacing.md),
-                              AppTextField(
+                              AppInput(
                                 controller: _emailCtrl,
                                 enabled: !isSubmitting,
                                 label: l.authRegisterEmailLabel,

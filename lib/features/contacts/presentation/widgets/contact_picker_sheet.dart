@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../../core/network/api_exception.dart';
 import '../cubit/contacts_cubit.dart';
 import '../pages/contact_detail_page.dart';
@@ -41,6 +40,7 @@ Future<ContactPickResult?> showContactPickerSheet(
   bool allowFreeText = true,
   bool allowCreate = false,
   String? title,
+  String? unlinkAs,
 }) {
   context.read<ContactsCubit>().loadIfNeeded();
   return showAppSheetCustom<ContactPickResult>(
@@ -50,6 +50,7 @@ Future<ContactPickResult?> showContactPickerSheet(
       selectedContactId: selectedContactId,
       allowFreeText: allowFreeText,
       allowCreate: allowCreate,
+      unlinkAs: unlinkAs,
     ),
   );
 }
@@ -60,8 +61,12 @@ class _ContactPicker extends StatefulWidget {
     required this.selectedContactId,
     required this.allowFreeText,
     required this.allowCreate,
+    this.unlinkAs,
   });
 
+  /// Set: a "ไม่ผูกผู้ติดต่อ" row on top answering [ContactNameTyped] with this
+  /// name — the row becomes a typed name, the current one kept.
+  final String? unlinkAs;
   final String title;
   final String? selectedContactId;
   final bool allowFreeText;
@@ -85,7 +90,7 @@ class _ContactPickerState extends State<_ContactPicker> {
     // Description (who they are) wins over email — as on the contacts list.
     final description = c.description?.trim() ?? '';
     if (description.isNotEmpty) return description;
-    final email = c.effectiveEmail ?? '';
+    final email = c.email ?? '';
     return email.isEmpty ? null : email;
   }
 
@@ -153,20 +158,45 @@ class _ContactPickerState extends State<_ContactPicker> {
             : all
                   .where(
                     (c) =>
-                        c.effectiveName.toLowerCase().contains(lower) ||
+                        c.name.toLowerCase().contains(lower) ||
+                        c.displayName.toLowerCase().contains(lower) ||
+                        (c.nickname?.toLowerCase().contains(lower) ?? false) ||
                         (c.description?.toLowerCase().contains(lower) ??
                             false) ||
-                        (c.effectiveEmail?.toLowerCase().contains(lower) ??
-                            false) ||
+                        (c.email?.toLowerCase().contains(lower) ?? false) ||
                         (c.phone?.contains(lower) ?? false),
                   )
                   .toList();
-        final exact = all.any((c) => c.effectiveName.toLowerCase() == lower);
+        final exact = all.any((c) => c.name.toLowerCase() == lower);
         final offerName = widget.allowFreeText && typed.isNotEmpty && !exact;
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (widget.unlinkAs != null)
+              PickerRow(
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox.square(
+                      dimension: 36,
+                      child: Center(
+                        child: PersonMark(
+                          name: widget.unlinkAs!,
+                          level: PersonLevel.name,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: PersonMark.linkSlotWidth(36)),
+                  ],
+                ),
+                title: l.txSplitNoContact,
+                subtitle: l.txSplitNoContactHint,
+                selected: widget.selectedContactId == null,
+                onTap: () =>
+                    Navigator.pop(context, ContactNameTyped(widget.unlinkAs!)),
+              ),
             // Someone not in the book: their name as it is, or saved as a
             // contact first.
             if (offerName) ...[
@@ -215,7 +245,7 @@ class _ContactPickerState extends State<_ContactPicker> {
             for (final c in hits)
               PickerRow(
                 leading: ContactAvatar(contact: c, size: 36),
-                title: c.effectiveName,
+                title: c.name,
                 subtitle: _subtitleOf(c),
                 selected: c.id == widget.selectedContactId,
                 onTap: () => Navigator.pop(context, ContactPicked(c)),

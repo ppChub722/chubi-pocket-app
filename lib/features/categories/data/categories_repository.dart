@@ -52,43 +52,44 @@ class CategoriesRepository {
     }
   }
 
+  /// `GET /v1/categories/:id` — the detail page's one call: counts, parent
+  /// name and the fee flag.
+  Future<CategoryDetail> get(String id) async {
+    try {
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/categories/$id',
+      );
+      return CategoryDetail.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   /// `PUT /v1/categories/:id`. Sends the full editable surface; server
   /// distinguishes "clear" (explicit null) from "leave alone" (field
   /// missing) per [Category.toUpdateJson]'s presence convention.
-  Future<Category> update(Category category) async {
+  Future<CategoryDetail> update(Category category) async {
     try {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/categories/${category.id}',
         data: category.toUpdateJson(),
       );
-      return Category.fromJson(res.data!);
+      return CategoryDetail.fromJson(res.data!);
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
   /// `DELETE /v1/categories/:id` — always a real delete. Children move up
-  /// a level, transactions using it become uncategorised, its budgets are
-  /// deleted too.
-  Future<void> delete(String id) async {
+  /// a level (returned as `reparented`), transactions using it become
+  /// uncategorised, its budgets are deleted too.
+  Future<List<Category>> delete(String id) async {
     try {
-      await _client.dio.delete<Map<String, dynamic>>('/categories/$id');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  /// What a delete would touch, from `GET /v1/categories/:id`.
-  Future<({int transactions, int budgets})> usage(String id) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
+      final res = await _client.dio.delete<Map<String, dynamic>>(
         '/categories/$id',
       );
-      final d = res.data!;
-      return (
-        transactions: (d['transaction_count'] as num?)?.toInt() ?? 0,
-        budgets: (d['budget_count'] as num?)?.toInt() ?? 0,
-      );
+      final data = (res.data?['reparented'] as List?) ?? const [];
+      return data.cast<Map<String, dynamic>>().map(Category.fromJson).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

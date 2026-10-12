@@ -1,8 +1,7 @@
 import 'package:equatable/equatable.dart';
+import '../../../ui/ui.dart';
 
-import '../../../shared/icon_maker/icon_code.dart';
-
-/// A membership role on a wallet (spec §14/3.1 `account_members.role`).
+/// A membership role on a wallet (`account_members.role`).
 enum WalletRole { owner, member }
 
 extension WalletRoleWire on WalletRole {
@@ -40,54 +39,74 @@ extension WalletReportScopeWire on WalletReportScope {
   }
 }
 
-/// One `account_members` row (spec §14/3.1, API §14 pinned contract).
-///
-/// The pinned `GET /v1/accounts` embed carries active members only
-/// (`id / user_id / display_name / icon_code / role / joined_at`).
-/// The member-management screen additionally reads the full membership
-/// history (`left_at` set on leave — rows are append-only) and the
-/// pending state of a not-yet-accepted invite (project-invite pattern).
+/// A membership row's state: invited and not yet answered, in the wallet,
+/// or gone (rows are append-only).
+enum WalletMemberStatus { pending, active, left }
+
+extension WalletMemberStatusWire on WalletMemberStatus {
+  static WalletMemberStatus parse(String? s) => switch (s) {
+    'pending' => WalletMemberStatus.pending,
+    'left' => WalletMemberStatus.left,
+    _ => WalletMemberStatus.active,
+  };
+}
+
+/// One wallet member — `AccountMember` (the active embed on an Account:
+/// no status / left_at) or `AccountMemberHistory` (the members tab: also
+/// pending invites and past members). `name` is resolved by the BE and
+/// `is_me` marks the caller's own row.
 class WalletMember extends Equatable {
   const WalletMember({
     required this.id,
     required this.userId,
-    required this.displayName,
+    String? name,
+    // Source-compat alias of [name] (hub gallery sample data).
+    String? displayName,
     required this.role,
     this.iconCode,
+    this.status = WalletMemberStatus.active,
     this.joinedAt,
     this.leftAt,
-    this.pending = false,
-  });
+    this.isMe = false,
+  }) : name = name ?? displayName ?? '';
 
   final String id;
   final String userId;
-  final String displayName;
+  final String name;
   final WalletRole role;
   final IconCode? iconCode;
+  final WalletMemberStatus status;
 
   /// ISO timestamp strings straight off the wire; rendered date-only.
   final String? joinedAt;
   final String? leftAt;
 
-  /// Invite sent, not yet accepted (notification-pattern invite).
-  final bool pending;
+  /// The caller's own row.
+  final bool isMe;
 
-  bool get isActive => leftAt == null && !pending;
-  bool get hasLeft => leftAt != null;
+  /// Alias of [name].
+  String get displayName => name;
+
+  /// Invite sent, not yet accepted.
+  bool get pending => status == WalletMemberStatus.pending;
+  bool get isActive => status == WalletMemberStatus.active;
+  bool get hasLeft => status == WalletMemberStatus.left;
   bool get isOwner => role == WalletRole.owner;
 
   factory WalletMember.fromJson(Map<String, dynamic> json) {
     return WalletMember(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      displayName: json['display_name'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       role: WalletRoleWire.parse(json['role'] as String?),
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      // The active embed has no status: it is active by definition.
+      status: WalletMemberStatusWire.parse(json['status'] as String?),
       joinedAt: json['joined_at'] as String?,
       leftAt: json['left_at'] as String?,
-      pending: json['status'] == 'pending',
+      isMe: (json['is_me'] as bool?) ?? false,
     );
   }
 
@@ -95,11 +114,12 @@ class WalletMember extends Equatable {
   List<Object?> get props => [
     id,
     userId,
-    displayName,
+    name,
     role,
     iconCode,
+    status,
     joinedAt,
     leftAt,
-    pending,
+    isMe,
   ];
 }

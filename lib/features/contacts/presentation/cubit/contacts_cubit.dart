@@ -4,8 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/contacts_repository.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
 import '../../domain/contact.dart';
+import '../../../../ui/ui.dart';
 
 enum ContactsStatus { initial, loading, loaded, error }
 
@@ -76,8 +76,12 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
   /// Loads once (or again after a failure) — pickers call it. A list left
   /// on archived only (the contacts page's filter) widens to all, so the
   /// active ones are there to pick.
-  Future<void> loadIfNeeded() async {
-    if (state.statusFilter == 'archived') return load(statusFilter: 'all');
+  ///
+  /// [keepFilter]: the contacts page itself — leave its status filter alone.
+  Future<void> loadIfNeeded({bool keepFilter = false}) async {
+    if (!keepFilter && state.statusFilter == 'archived') {
+      return load(statusFilter: 'all');
+    }
     if (state.status == ContactsStatus.initial ||
         state.status == ContactsStatus.error) {
       return load();
@@ -86,6 +90,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
 
   Future<Contact> create({
     required String displayName,
+    String? nickname,
+    bool? showNickname,
     String? email,
     String? phone,
     String? description,
@@ -94,6 +100,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
   }) async {
     final res = await _repo.create(
       displayName: displayName,
+      nickname: nickname,
+      showNickname: showNickname,
       email: email,
       phone: phone,
       description: description,
@@ -110,6 +118,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
   Future<Contact> update(
     String id, {
     String? displayName,
+    String? nickname,
+    bool? showNickname,
     String? email,
     String? phone,
     String? description,
@@ -119,6 +129,8 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     final updated = await _repo.update(
       id,
       displayName: displayName,
+      nickname: nickname,
+      showNickname: showNickname,
       email: email,
       phone: phone,
       description: description,
@@ -129,44 +141,89 @@ class ContactsCubit extends Cubit<ContactsState> with Clearable {
     return updated;
   }
 
-  Future<void> archive(String id) async {
+  // Every write returns the contact from the response (the page patches its
+  // own copy from it) and patches the list — no re-GET.
+
+  Future<Contact> archive(String id) async {
     final updated = await _repo.archive(id);
     _replace(updated);
+    return updated;
   }
 
-  Future<void> restore(String id) async {
+  Future<Contact> restore(String id) async {
     final updated = await _repo.restore(id);
     _replace(updated);
+    return updated;
   }
 
-  Future<void> unlink(String id) async {
+  Future<Contact> unlink(String id) async {
     final updated = await _repo.unlink(id);
     _replace(updated);
+    return updated;
   }
 
-  Future<void> requestLink(String id) async {
-    await _repo.requestLink(id);
+  Future<Contact> requestLink(String id) async {
+    final updated = await _repo.requestLink(id);
+    _replace(updated);
+    return updated;
   }
 
-  /// `GET /contacts/unlinked-names` — every (person_name, count) pair from
-  /// the caller's personal_debts where contact_id is still NULL. Backs the
-  /// "Wire split names" surface on contact detail.
+  /// `GET /contacts/unlinked-names` — create-sheet suggestions only.
   Future<List<UnlinkedName>> unlinkedNames() => _repo.unlinkedNames();
 
   /// `POST /contacts/:id/absorb` — wires every personal_debts row whose
-  /// counterparty_person_name (case-insensitive exact) is in [names] to the
-  /// given contact. Returns the count rewritten. Caller refreshes the
-  /// contact + unlinked-names list afterwards.
-  Future<int> absorb(String contactId, List<String> names) =>
-      _repo.absorb(contactId, names);
+  /// typed name (case-insensitive exact) is in [names] to the contact.
+  /// Returns the contact + the count wired.
+  Future<AbsorbResult> absorb(String contactId, List<String> names) async {
+    final res = await _repo.absorb(contactId, names);
+    _replace(res.contact);
+    return res;
+  }
 
-  Future<void> delete(String id) async {
-    await _repo.delete(id);
+  /// Post-accept "create a contact for the sender" — patches the list.
+  Future<LinkRequestResult> createLinkedFromRequest(
+    String notificationId, {
+    String? phone,
+    String? description,
+    String? note,
+  }) async {
+    final res = await _repo.createLinkedContactFromLinkRequest(
+      notificationId,
+      phone: phone,
+      description: description,
+      note: note,
+    );
+    if (res.contact != null) _replace(res.contact!);
+    return res;
+  }
+
+  /// Post-accept "link my existing contact" — patches the list.
+  Future<LinkRequestResult> linkExistingFromRequest(
+    String notificationId,
+    String contactId, {
+    String? phone,
+    String? description,
+    String? note,
+  }) async {
+    final res = await _repo.linkExistingContactFromLinkRequest(
+      notificationId,
+      contactId,
+      phone: phone,
+      description: description,
+      note: note,
+    );
+    if (res.contact != null) _replace(res.contact!);
+    return res;
+  }
+
+  Future<DeleteContactResult> delete(String id) async {
+    final res = await _repo.delete(id);
     emit(
       state.copyWith(
         contacts: state.contacts.where((c) => c.id != id).toList(),
       ),
     );
+    return res;
   }
 
   /// Does [c] belong in the list under its status filter?

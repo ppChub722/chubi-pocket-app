@@ -6,7 +6,8 @@ import '../../../../core/bloc/clearable_cubit.dart';
 import '../../data/notifications_repository.dart';
 
 /// App-wide unread-count cubit. Powers the bell badge in the top app bar.
-/// Polls every 30s while authenticated; spec §13.4.8 (in-app polling in 1b).
+/// Polls `GET /notifications/unread-count` every 30s while authenticated;
+/// spec §13.4.8 (in-app polling in 1b).
 class UnreadBadgeCubit extends Cubit<int> with Clearable {
   UnreadBadgeCubit({
     required NotificationsRepository repository,
@@ -44,10 +45,9 @@ class UnreadBadgeCubit extends Cubit<int> with Clearable {
   /// One-shot refresh (e.g. after the user opens the inbox).
   Future<void> refresh() => _tick();
 
-  /// Surgical decrement after the user marks one as read locally.
-  void decrementBy(int n) {
-    final next = (state - n).clamp(0, 1 << 31);
-    if (next != state) emit(next);
+  /// Patch from a count a write / list reply already carried (no poll).
+  void setCount(int n) {
+    if (!isClosed && n != state) emit(n);
   }
 
   Future<void> _tick() async {

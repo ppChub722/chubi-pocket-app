@@ -4,10 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 import '../widgets/contact_linked_mark.dart';
@@ -21,7 +19,8 @@ import '../widgets/contacts_list_skeleton.dart';
 ///   (avatar) name · description · email               🔗
 ///   … dashed "+ เพิ่มผู้ติดต่อ" at the end
 ///
-/// Search is client-side over name / description / email / phone. Status
+/// Search filters the loaded list instantly while typing (thin-FE exception:
+/// a server `search` would be one call per keystroke). Status
 /// (ใช้งาน / เก็บถาวร / ทั้งหมด) loads from the server — archived ones
 /// live here, dimmed, not on a page of their own. การผูก (ทั้งหมด /
 /// ผูกแล้ว / ยังไม่ผูก) filters client-side on top of it. Sort is
@@ -47,7 +46,9 @@ class _ContactsPageState extends State<ContactsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<ContactsCubit>().load();
+      if (mounted) {
+        context.read<ContactsCubit>().loadIfNeeded(keepFilter: true);
+      }
     });
   }
 
@@ -61,13 +62,15 @@ class _ContactsPageState extends State<ContactsPage> {
       };
       return linkOk &&
           (q.isEmpty ||
-              c.effectiveName.toLowerCase().contains(q) ||
+              c.name.toLowerCase().contains(q) ||
+              c.displayName.toLowerCase().contains(q) ||
+              (c.nickname?.toLowerCase().contains(q) ?? false) ||
               (c.description?.toLowerCase().contains(q) ?? false) ||
-              (c.effectiveEmail?.toLowerCase().contains(q) ?? false) ||
+              (c.email?.toLowerCase().contains(q) ?? false) ||
               (c.phone?.contains(q) ?? false));
     }).toList();
     int byName(Contact a, Contact b) =>
-        a.effectiveName.toLowerCase().compareTo(b.effectiveName.toLowerCase());
+        a.name.toLowerCase().compareTo(b.name.toLowerCase());
     return switch (_sort) {
       _ContactSort.recent => hits,
       _ContactSort.nameAsc => [...hits]..sort(byName),
@@ -179,7 +182,7 @@ class _ContactsPageState extends State<ContactsPage> {
                 children: [
                   // Clear the floating top bar; search + filter stay pinned.
                   SizedBox(height: MediaQuery.paddingOf(context).top),
-                  AppSearchBar(
+                  AppInput.search(
                     hint: l.contactsSearchHint,
                     onChanged: (v) => setState(() => _query = v),
                   ),
@@ -261,7 +264,7 @@ class _ContactsPageState extends State<ContactsPage> {
                                     itemCount: shown.length + 1,
                                     separatorBuilder: (_, i) =>
                                         i < shown.length - 1
-                                        ? const RowDivider()
+                                        ? const AppDivider.row()
                                         : const SizedBox.shrink(),
                                     itemBuilder: (context, i) =>
                                         i < shown.length
@@ -292,11 +295,11 @@ class _ContactRow extends StatelessWidget {
     // (owner 2026-10-10; search still matches it).
     final sub = [
       contact.description?.trim() ?? '',
-      contact.effectiveEmail?.trim() ?? '',
+      contact.email?.trim() ?? '',
     ].where((s) => s.isNotEmpty).join(' · ');
     return ListRow(
       leading: ContactAvatar(contact: contact),
-      title: contact.effectiveName,
+      title: contact.name,
       subtitle: sub,
       dimmed: contact.isArchived,
       onTap: () => context.push('/contacts/${contact.id}'),

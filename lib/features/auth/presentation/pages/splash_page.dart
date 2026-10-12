@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
 
 /// Cold-launch screen: `AuthCubit.init()` resolves the stored token while we
@@ -89,12 +88,8 @@ class _SplashPageState extends State<SplashPage> {
                                   ? state.startupError
                                   : null;
                               if (error == null) {
-                                return const SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 3,
-                                  ),
+                                return const AppSpinner(
+                                  size: AppSpinnerSize.large,
                                 );
                               }
                               return ErrorView(

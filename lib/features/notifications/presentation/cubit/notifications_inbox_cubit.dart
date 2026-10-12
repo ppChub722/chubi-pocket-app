@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart' show ValueChanged;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
@@ -63,13 +64,20 @@ class InboxState extends Equatable {
 }
 
 /// Inbox cubit. Owns the page-1-loaded list. Surgical updates on
-/// mark-read/actioned/dismissed/delete.
+/// mark-read/actioned/dismissed/delete/read-all, patched from the write's
+/// reply (no reload).
 class NotificationsInboxCubit extends Cubit<InboxState> {
-  NotificationsInboxCubit({required NotificationsRepository repository})
-    : _repo = repository,
-      super(const InboxState());
+  NotificationsInboxCubit({
+    required NotificationsRepository repository,
+    this.onUnreadChanged,
+  }) : _repo = repository,
+       super(const InboxState());
 
   final NotificationsRepository _repo;
+
+  /// Called with the fresh unread count whenever a load or a write returns
+  /// one — lets the owner patch the app-wide bell badge without a poll.
+  final ValueChanged<int>? onUnreadChanged;
 
   /// Every await here can outlive the page that owns this cubit (the home
   /// tab, the inbox) — a reply landing after close is dropped, not thrown
@@ -77,6 +85,19 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
   @override
   void emit(InboxState state) {
     if (!isClosed) super.emit(state);
+  }
+
+  /// Takes page-1 rows a page already received (the dashboard's attention
+  /// block) instead of loading them: no call.
+  void seed(List<AppNotification> items, {required int unreadCount}) {
+    emit(
+      state.copyWith(
+        notifications: items,
+        unreadCount: unreadCount,
+        status: InboxStatus.loaded,
+        clearError: true,
+      ),
+    );
   }
 
   Future<void> load({bool unreadOnly = false}) async {
@@ -89,6 +110,7 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     );
     try {
       final p = await _repo.list(read: unreadOnly ? 'false' : null);
+      onUnreadChanged?.call(p.unreadCount);
       emit(
         state.copyWith(
           notifications: p.notifications,
@@ -132,38 +154,31 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
     }
   }
 
-  Future<void> markRead(String id) async {
-    try {
-      final updated = await _repo.markRead(id);
-      _replace(updated);
-    } on ApiException catch (e) {
-      emit(state.copyWith(error: e));
-    }
-  }
+  Future<void> markRead(String id) => _write(() => _repo.markRead(id));
 
-  Future<void> markActioned(String id) async {
-    try {
-      final updated = await _repo.markActioned(id);
-      _replace(updated);
-    } on ApiException catch (e) {
-      emit(state.copyWith(error: e));
-    }
-  }
+  Future<void> markActioned(String id) => _write(() => _repo.markActioned(id));
 
-  Future<void> markDismissed(String id) async {
-    try {
-      final updated = await _repo.markDismissed(id);
-      _replace(updated);
-    } on ApiException catch (e) {
-      emit(state.copyWith(error: e));
-    }
-  }
+  Future<void> markDismissed(String id) =>
+      _write(() => _repo.markDismissed(id));
 
   Future<void> markReadAll() async {
     try {
-      await _repo.markReadAll();
-      // Reload — easier than patching every row.
-      await load(unreadOnly: state.filterUnreadOnly);
+      final badges = await _repo.markReadAll();
+      final unreadOnly = state.filterUnreadOnly;
+      final now = DateTime.now().toUtc();
+      // Unread rows are read now: gone from the Unread tab, flipped on All.
+      final next = [
+        for (final n in state.notifications)
+          if (!n.isUnread) n else if (!unreadOnly) n.asRead(now),
+      ];
+      emit(
+        state.copyWith(
+          notifications: next,
+          unreadCount: badges.unreadNotifications,
+          totalPages: unreadOnly ? state.page : state.totalPages,
+        ),
+      );
+      onUnreadChanged?.call(badges.unreadNotifications);
     } on ApiException catch (e) {
       emit(state.copyWith(error: e));
     }
@@ -171,30 +186,35 @@ class NotificationsInboxCubit extends Cubit<InboxState> {
 
   Future<void> delete(String id) async {
     try {
-      await _repo.delete(id);
-      final remaining = state.notifications.where((n) => n.id != id).toList();
-      final wasUnread = state.notifications.any(
-        (n) => n.id == id && n.isUnread,
-      );
+      final badges = await _repo.delete(id);
       emit(
         state.copyWith(
-          notifications: remaining,
-          unreadCount: wasUnread
-              ? (state.unreadCount - 1).clamp(0, 1 << 31)
-              : state.unreadCount,
+          notifications: state.notifications.where((n) => n.id != id).toList(),
+          unreadCount: badges.unreadNotifications,
         ),
       );
+      onUnreadChanged?.call(badges.unreadNotifications);
     } on ApiException catch (e) {
       emit(state.copyWith(error: e));
     }
   }
 
-  void _replace(AppNotification updated) {
-    final next = [
-      for (final n in state.notifications)
-        if (n.id == updated.id) updated else n,
-    ];
-    final unread = next.where((n) => n.isUnread).length;
-    emit(state.copyWith(notifications: next, unreadCount: unread));
+  /// One write: the reply carries the row in its new state + fresh badges.
+  Future<void> _write(Future<NotificationActionResult> Function() call) async {
+    try {
+      final r = await call();
+      emit(
+        state.copyWith(
+          notifications: [
+            for (final n in state.notifications)
+              if (n.id == r.notification.id) r.notification else n,
+          ],
+          unreadCount: r.badges.unreadNotifications,
+        ),
+      );
+      onUnreadChanged?.call(r.badges.unreadNotifications);
+    } on ApiException catch (e) {
+      emit(state.copyWith(error: e));
+    }
   }
 }

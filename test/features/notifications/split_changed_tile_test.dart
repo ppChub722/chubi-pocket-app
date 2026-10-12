@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/notifications/domain/notification.dart';
 import 'package:chubi_pocket/features/notifications/presentation/widgets/notification_tile.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -8,9 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 AppNotification _changed({bool superseded = false, String change = 'amount'}) =>
     AppNotification(
       id: 'n1',
-      recipientUserId: 'me',
       type: NotificationType.splitChanged,
-      actorDisplayName: 'ปอนด์',
+      actor: const NotificationActor(userId: 'u2', displayName: 'ปอนด์'),
+      awaitsAnswer: !superseded,
       createdAt: DateTime(2026, 10, 10, 14, 30),
       payload: {
         'split_id': 's1',

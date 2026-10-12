@@ -1,7 +1,7 @@
 import 'package:chubi_pocket/core/network/api_exception.dart';
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,6 +22,7 @@ Widget _view({
   locale: const Locale('en'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
+  builder: (context, child) => AppUiConfig(child: child!),
   home: Scaffold(
     body: AsyncStateView(
       loading: loading,
@@ -73,6 +74,7 @@ void main() {
     Widget fallback({bool loading = false, ApiException? error}) => MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => AppUiConfig(child: child!),
       home: Scaffold(
         body: AsyncStateView.fallback(
           loading: loading,

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/transaction_type.dart';
 import 'tx_hero_card.dart';
 
@@ -47,6 +42,7 @@ CompactHeroBar txCompactHeroBar(
   final title = text.isNotEmpty ? text : (category ?? typeLabel);
   final showChip = text.isNotEmpty && category != null;
   return CompactHeroBar(
+    style: txHeroStyle(context, type),
     onTap: onTap,
     title: Row(
       children: [
@@ -71,7 +67,7 @@ CompactHeroBar txCompactHeroBar(
               ),
               color: categoryIcon?.accentColorFor(palette) ?? palette.primary,
               selected: true,
-              size: PillSize.chip,
+              size: ChipSize.chip,
               maxWidth: 120,
             ),
           ),

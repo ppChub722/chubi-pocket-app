@@ -59,11 +59,12 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
   }
 
   /// Optimistic: the switch flips at once; a failed save flips it back and
-  /// sets [SettingsState.error] (the page shows "เปลี่ยนกลับแล้ว").
+  /// sets [SettingsState.error] (the page shows "เปลี่ยนกลับแล้ว"; muting a
+  /// non-mutable type comes back as `TYPE_NOT_MUTABLE`).
   Future<void> update({
     Set<String>? mutedTypes,
     Set<String>? autoTypes,
-    String? defaultAccountId,
+    DefaultAccountRef? defaultAccount,
     bool clearDefaultAccount = false,
     bool? autoResolveOwnInProjects,
   }) async {
@@ -74,7 +75,7 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
         settings: before.copyWith(
           mutedTypes: mutedTypes,
           autoTypes: autoTypes,
-          defaultAccountId: defaultAccountId,
+          defaultAccount: defaultAccount,
           clearDefaultAccount: clearDefaultAccount,
           autoResolveOwnInProjects: autoResolveOwnInProjects,
         ),
@@ -86,7 +87,7 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
       final updated = await _repo.updateSettings(
         mutedTypes: mutedTypes,
         autoTypes: autoTypes,
-        defaultAccountId: defaultAccountId,
+        defaultAccountId: defaultAccount?.id,
         clearDefaultAccount: clearDefaultAccount,
         autoResolveOwnInProjects: autoResolveOwnInProjects,
       );

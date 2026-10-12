@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../shared/icon_maker/icon_code.dart';
 import 'scheduled_enums.dart';
+import '../../../ui/ui.dart';
 
 /// One scheduled-transaction template (spec §11/§2).
 ///
@@ -252,33 +252,95 @@ class ScheduledTransaction extends Equatable {
 }
 
 class ScheduledAccountRef extends Equatable {
-  const ScheduledAccountRef({required this.id, required this.name});
+  const ScheduledAccountRef({
+    required this.id,
+    required this.name,
+    this.iconCode,
+    this.logoUrl,
+    this.type,
+    this.group,
+    this.currency,
+    this.archived = false,
+  });
   final String id;
   final String name;
 
+  // Shared `AccountRef` keys; all optional.
+  final IconCode? iconCode;
+  final String? logoUrl;
+  final String? type;
+  final String? group;
+  final String? currency;
+  final bool archived;
+
   factory ScheduledAccountRef.fromJson(Map<String, dynamic> json) {
+    final icon = json['icon_code'];
     return ScheduledAccountRef(
       id: json['id'] as String,
       name: json['name'] as String,
+      iconCode: icon is Map<String, dynamic> ? IconCode.fromJson(icon) : null,
+      logoUrl: json['logo_url'] as String?,
+      type: json['type'] as String?,
+      group: json['group'] as String?,
+      currency: json['currency'] as String?,
+      archived: json['archived'] as bool? ?? false,
     );
   }
 
   @override
-  List<Object?> get props => [id, name];
+  List<Object?> get props => [
+    id,
+    name,
+    iconCode,
+    logoUrl,
+    type,
+    group,
+    currency,
+    archived,
+  ];
 }
 
 class ScheduledCategoryRef extends Equatable {
-  const ScheduledCategoryRef({required this.id, required this.name});
+  const ScheduledCategoryRef({
+    required this.id,
+    required this.name,
+    this.type,
+    this.iconCode,
+    this.isSystem = false,
+    this.systemKind,
+    this.parentId,
+  });
   final String id;
   final String name;
 
+  // Shared `CategoryRef` keys; all optional.
+  final String? type;
+  final IconCode? iconCode;
+  final bool isSystem;
+  final String? systemKind;
+  final String? parentId;
+
   factory ScheduledCategoryRef.fromJson(Map<String, dynamic> json) {
+    final icon = json['icon_code'];
     return ScheduledCategoryRef(
       id: json['id'] as String,
       name: json['name'] as String,
+      type: json['type'] as String?,
+      iconCode: icon is Map<String, dynamic> ? IconCode.fromJson(icon) : null,
+      isSystem: json['is_system'] as bool? ?? false,
+      systemKind: json['system_kind'] as String?,
+      parentId: json['parent_id'] as String?,
     );
   }
 
   @override
-  List<Object?> get props => [id, name];
+  List<Object?> get props => [
+    id,
+    name,
+    type,
+    iconCode,
+    isSystem,
+    systemKind,
+    parentId,
+  ];
 }

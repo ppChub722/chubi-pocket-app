@@ -1,5 +1,5 @@
-import '../../../shared/icon_maker/icon_code.dart';
 import 'category.dart';
+import '../../../ui/ui.dart';
 
 /// Helpers for navigating the category tree built from a flat list of
 /// [Category] rows linked by `parent_id`.

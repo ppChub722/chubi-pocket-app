@@ -28,6 +28,13 @@ String walletErrorMessage(AppLocalizations l, ApiException e) {
       return l.walletErrorInvalidIdentifier;
     case 'USER_ALREADY_MEMBER':
       return l.walletErrorAlreadyMember;
+    // adjust-balance to the balance it already has.
+    case 'NO_OP':
+      return l.accountAdjustBalanceNoChange;
+    case 'NOT_OWNER':
+      return l.notOwnerError;
+    // BALANCE_NOT_EDITABLE (400) has no localized copy yet — the BE's own
+    // message shows.
     // The contact invite (POST /accounts/:id/members {contact_id}).
     case 'CONTACT_NOT_FOUND':
       return l.walletErrorContactNotFound;

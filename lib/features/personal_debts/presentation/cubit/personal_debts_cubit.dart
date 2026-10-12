@@ -136,7 +136,7 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
     emit(state.copyWith(debts: state.debts.where((d) => d.id != id).toList()));
   }
 
-  Future<PersonalDebt> settle(
+  Future<SettleResult> settle(
     String id, {
     String? accountId,
     double? amount,
@@ -153,7 +153,7 @@ class PersonalDebtsCubit extends Cubit<PersonalDebtsState> with Clearable {
       note: note,
     );
     _replace(res.debt);
-    return res.debt;
+    return res;
   }
 
   void _replace(PersonalDebt d) {

@@ -6,11 +6,13 @@ import '../domain/account.dart';
 import '../domain/payment_provider.dart';
 import '../domain/wallet_member.dart';
 
-/// Thin Dio wrapper around `/v1/accounts` (spec §03/§2.1–§2.7) plus the
-/// shared-wallet member surface (spec §14, API §14 pinned contracts).
+/// Thin Dio wrapper around `/v1/accounts` (API v2) plus the shared-wallet
+/// member surface (spec §14).
 ///
 /// Pure data layer — translates [DioException] into [ApiException] and
-/// parses JSON into [Account]. State + caching live in [AccountsCubit].
+/// parses JSON into the wallet models. State + caching live in
+/// [AccountsCubit]. Every write returns its final state (the wallet, the
+/// members list or the touched balances) so callers patch, never refetch.
 class AccountsRepository {
   AccountsRepository({required ApiClient client}) : _client = client;
 
@@ -38,26 +40,44 @@ class AccountsRepository {
     }();
   }
 
-  /// `GET /v1/accounts`. Default returns active accounts; pass
-  /// `status: 'all'` to include archived/closed for the user's history view.
-  Future<List<Account>> list({String status = 'active', String? type}) async {
+  Future<T> _guard<T>(Future<T> Function() call) async {
     try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/accounts',
-        queryParameters: <String, dynamic>{'status': status, 'type': ?type},
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(Account.fromJson).toList();
+      return await call();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
   }
 
-  /// `PATCH /v1/accounts/reorder` (contract §3) — [ids] in the caller's
-  /// new order. The order is per member: it never moves a shared wallet
-  /// for anyone else. Returns the active list in the new order.
-  Future<List<Account>> reorder(List<String> ids) async {
-    try {
+  /// `GET /v1/accounts` — the wallets, `totals` and `archived_count` in one
+  /// call. Default returns active wallets; `status: 'archived'` the archived
+  /// ones.
+  Future<AccountList> list({String status = 'active', String? type}) {
+    return _guard(() async {
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/accounts',
+        queryParameters: <String, dynamic>{'status': status, 'type': ?type},
+      );
+      return AccountList.fromJson(res.data!);
+    });
+  }
+
+  /// `GET /v1/accounts/:id?include=summary,members` — one call renders the
+  /// wallet page; works for any status, archived included.
+  Future<AccountDetail> getDetail(String id) {
+    return _guard(() async {
+      final res = await _client.dio.get<Map<String, dynamic>>(
+        '/accounts/$id',
+        queryParameters: const {'include': 'summary,members'},
+      );
+      return AccountDetail.fromJson(res.data!);
+    });
+  }
+
+  /// `PATCH /v1/accounts/reorder` — [ids] in the caller's new order. The
+  /// order is per member: it never moves a shared wallet for anyone else.
+  /// Returns the list in the new order.
+  Future<AccountList> reorder(List<String> ids) {
+    return _guard(() async {
       final res = await _client.dio.patch<Map<String, dynamic>>(
         '/accounts/reorder',
         data: {
@@ -67,80 +87,71 @@ class AccountsRepository {
           ],
         },
       );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(Account.fromJson).toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+      return AccountList.fromJson(res.data!);
+    });
   }
 
   /// `POST /v1/accounts`. Server creates the row + (when [Account.balance]
   /// is non-zero) an Opening Balance transaction in the same DB tx, so the
-  /// returned `balance` already reflects the opening transaction.
-  Future<Account> create(Account draft) async {
-    try {
+  /// returned `balance` already reflects the opening transaction. No
+  /// `currency` is sent: the wallet takes the user's own.
+  Future<Account> create(Account draft) {
+    return _guard(() async {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts',
         data: draft.toCreateJson(),
       );
       return Account.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+    });
   }
 
-  /// `PUT /v1/accounts/:id`. Sends the full editable surface; server
-  /// distinguishes "clear" (explicit null) from "leave alone" (field
-  /// missing) for `description` and `note` per [Account.toUpdateJson].
-  Future<Account> update(Account account) async {
-    try {
+  /// `PUT /v1/accounts/:id` (owner). Sends the editable surface (no
+  /// currency / status / balance); explicit nulls clear `description` and
+  /// `note` per [Account.toUpdateJson].
+  Future<Account> update(Account account) {
+    return _guard(() async {
       final res = await _client.dio.put<Map<String, dynamic>>(
         '/accounts/${account.id}',
         data: account.toUpdateJson(),
       );
       return Account.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+    });
   }
 
-  /// `DELETE /v1/accounts/:id` — soft delete (status → archived) per
-  /// spec §3.10. Hard delete is not offered.
-  Future<void> archive(String id) async {
-    try {
-      await _client.dio.delete<Map<String, dynamic>>('/accounts/$id');
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  /// Un-archive — `PUT /v1/accounts/:id` with `status: active`.
-  Future<Account> restore(String id) async {
-    try {
-      final res = await _client.dio.put<Map<String, dynamic>>(
+  /// `DELETE /v1/accounts/:id` — soft delete (status → archived); returns
+  /// the archived wallet. `409 ACCOUNT_HAS_MEMBERS` while others are in it.
+  Future<Account> archive(String id) {
+    return _guard(() async {
+      final res = await _client.dio.delete<Map<String, dynamic>>(
         '/accounts/$id',
-        data: const {'status': 'active'},
       );
       return Account.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+    });
   }
 
-  /// `POST /v1/accounts/:id/adjust-balance` — spec §2.5. Server creates
-  /// an Adjustment transaction whose delta brings the account's cached
-  /// balance to [newBalance]. Returns both the updated account and the
-  /// id of the synthetic Adjustment transaction so the UI can offer a
-  /// "View" action that navigates to it. [description] / [note] land on
-  /// that transaction (absent = none).
-  Future<AdjustBalanceOutcome> adjustBalance({
+  /// `POST /v1/accounts/:id/restore` — un-archive (owner); returns the
+  /// wallet, active again.
+  Future<Account> restore(String id) {
+    return _guard(() async {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/accounts/$id/restore',
+      );
+      return Account.fromJson(res.data!);
+    });
+  }
+
+  /// `POST /v1/accounts/:id/adjust-balance` — any member. The server books
+  /// an Adjustment transaction whose delta brings the balance to
+  /// [newBalance]; returns the wallet, that row's id and the touched
+  /// balances. `400 NO_OP` when the balance already equals [newBalance].
+  Future<AdjustBalanceResult> adjustBalance({
     required String id,
     required double newBalance,
     String? description,
     String? note,
     String? date,
-  }) async {
-    try {
+  }) {
+    return _guard(() async {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts/$id/adjust-balance',
         data: <String, dynamic>{
@@ -150,151 +161,115 @@ class AccountsRepository {
           'date': ?date,
         },
       );
-      return AdjustBalanceOutcome(
-        account: Account.fromJson(res.data!['account'] as Map<String, dynamic>),
-        adjustmentTransactionId:
-            res.data!['adjustment_transaction_id'] as String,
+      return AdjustBalanceResult.fromJson(res.data!);
+    });
+  }
+
+  /// `POST /v1/accounts/:id/identifiers` — remember one slip number
+  /// (owner); an identical one is not added twice. Returns the wallet.
+  Future<Account> addIdentifier(String id, Map<String, dynamic> identifier) {
+    return _guard(() async {
+      final res = await _client.dio.post<Map<String, dynamic>>(
+        '/accounts/$id/identifiers',
+        data: identifier,
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+      return Account.fromJson(res.data!);
+    });
   }
 
   // ─── Shared wallets (spec §14 / API §14) ────────────────────────────
 
-  /// Full membership list for the wallet, including pending invites and
-  /// past members (`left_at` set — history is append-only). Mirrors the
-  /// projects `GET /members` pattern; the pinned §14 contract only fixes
-  /// the active-member embed on `GET /v1/accounts`, so this endpoint's
-  /// row shape follows `account_members` (§14/3.1).
-  Future<List<WalletMember>> listMembers(String accountId) async {
-    try {
-      final res = await _client.dio.get<Map<String, dynamic>>(
-        '/accounts/$accountId/members',
-      );
-      final data = (res.data!['data'] as List).cast<Map<String, dynamic>>();
-      return data.map(WalletMember.fromJson).toList();
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
-  }
-
-  /// `POST /v1/accounts/:id/members` → 201 pending member (the invitee
-  /// gets the account_invite notification). Body: exactly one of
-  /// `{"contact_id"}` (one of my contacts with `linked_user_id` set — the
-  /// app's only path since 2026-10-11) or `{"email"}`.
-  /// Errors: `400 VALIDATION_ERROR`, `404 CONTACT_NOT_FOUND`,
-  /// `409 CONTACT_ARCHIVED`, `422 CONTACT_NOT_LINKED`,
-  /// `409 USER_ALREADY_MEMBER` (member, pending, or yourself),
-  /// `404 USER_NOT_FOUND` (email only), `403 NOT_MEMBER`. The conversion
-  /// warning is gated client-side — callers must confirm before the FIRST
-  /// invite on a personal wallet.
-  Future<WalletMember> inviteMember({
+  /// `POST /v1/accounts/:id/members` (owner) — the invitee gets the
+  /// account_invite notification. Body: exactly one of `{"contact_id"}` (one
+  /// of my contacts linked to an app user) or `{"email"}`. Returns the
+  /// wallet + the whole members list.
+  /// Errors: `400 VALIDATION_ERROR`, `404 CONTACT_NOT_FOUND` /
+  /// `USER_NOT_FOUND`, `409 CONTACT_ARCHIVED` / `USER_ALREADY_MEMBER`,
+  /// `422 CONTACT_NOT_LINKED`, `403 NOT_OWNER`. The conversion warning is
+  /// gated client-side — callers must confirm before the FIRST invite on a
+  /// personal wallet.
+  Future<MembersResult> inviteMember({
     required String accountId,
     String? contactId,
     String? email,
-  }) async {
+  }) {
     assert(
       (contactId == null) != (email == null),
       'send exactly one of contactId / email',
     );
-    try {
+    return _guard(() async {
       final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts/$accountId/members',
         data: <String, dynamic>{'contact_id': ?contactId, 'email': ?email},
       );
-      return WalletMember.fromJson(res.data!);
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+      return MembersResult.fromJson(res.data!);
+    });
   }
 
-  /// `DELETE /v1/accounts/:id/members/:member_id` — leave (self) or
-  /// remove (owner). Sets `left_at`; rows untouched, the ex-member's
-  /// rows lock read-only for them. Owner leaving with other members
-  /// present → `409 OWNER_MUST_TRANSFER`.
-  Future<void> removeMember({
+  /// `DELETE /v1/accounts/:id/members/:member_id` — leave (self), remove
+  /// someone or cancel an invite (owner). Returns the wallet + the members
+  /// list; leaving yourself returns `{account: null, members: []}`.
+  /// `400 OWNER_MUST_TRANSFER` (the owner cannot leave), `403 NOT_OWNER`.
+  Future<MembersResult> removeMember({
     required String accountId,
     required String memberId,
-  }) async {
-    try {
-      await _client.dio.delete<dynamic>(
+  }) {
+    return _guard(() async {
+      final res = await _client.dio.delete<Map<String, dynamic>>(
         '/accounts/$accountId/members/$memberId',
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+      return MembersResult.fromJson(res.data!);
+    });
   }
 
-  /// `POST /v1/accounts/:id/transfer-ownership` — owner only, target
-  /// must be an active member. Required before an owner leaves a
-  /// still-shared wallet.
-  Future<void> transferOwnership({
+  /// `POST /v1/accounts/:id/transfer-ownership` — owner only, target must
+  /// be an active member. Returns the wallet + the members list.
+  Future<MembersResult> transferOwnership({
     required String accountId,
     required String newOwnerUserId,
-  }) async {
-    try {
-      await _client.dio.post<dynamic>(
+  }) {
+    return _guard(() async {
+      final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts/$accountId/transfer-ownership',
         data: <String, dynamic>{'new_owner_user_id': newOwnerUserId},
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+      return MembersResult.fromJson(res.data!);
+    });
   }
 
   /// `PUT /v1/accounts/:id/report-scope` — the caller's own membership
-  /// only. Ex-members may set `none|own` (`400 SCOPE_NOT_ALLOWED` for
-  /// `all`).
-  Future<void> setReportScope({
+  /// only. Returns the wallet. `403 SCOPE_NOT_ALLOWED` when the owner
+  /// limits what members can choose.
+  Future<Account> setReportScope({
     required String accountId,
     required WalletReportScope scope,
-  }) async {
-    try {
-      await _client.dio.put<dynamic>(
+  }) {
+    return _guard(() async {
+      final res = await _client.dio.put<Map<String, dynamic>>(
         '/accounts/$accountId/report-scope',
         data: <String, dynamic>{'report_scope': scope.wire},
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+      return Account.fromJson(res.data!);
+    });
   }
 
-  /// Accept a wallet invite from its notification. Mirrors the project
-  /// link-request endpoints (`POST /v1/projects/link-requests/:id/accept`)
-  /// per spec §14/8.1 "notification pattern, same as project member
-  /// invites".
-  Future<void> acceptInvite(String notificationId) async {
-    try {
-      await _client.dio.post<dynamic>(
+  /// Accept a wallet invite from its notification. Returns the wallet that
+  /// was joined (the notification + badges in the body are not parsed here).
+  Future<Account> acceptInvite(String notificationId) {
+    return _guard(() async {
+      final res = await _client.dio.post<Map<String, dynamic>>(
         '/accounts/invites/$notificationId/accept',
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+      return Account.fromJson(res.data!['account'] as Map<String, dynamic>);
+    });
   }
 
   /// Reject a wallet invite from its notification (silent to the sender).
-  Future<void> rejectInvite(String notificationId) async {
-    try {
+  Future<void> rejectInvite(String notificationId) {
+    return _guard(() async {
       await _client.dio.post<dynamic>(
         '/accounts/invites/$notificationId/reject',
       );
-    } on DioException catch (e) {
-      throw ApiException.fromDioException(e);
-    }
+    });
   }
-}
-
-/// Result of [AccountsRepository.adjustBalance]. Spec §03/§2.5: the
-/// server creates a synthetic Adjustment transaction whose delta
-/// brings the cached balance to the requested value — both the
-/// updated account and that transaction's id come back.
-class AdjustBalanceOutcome {
-  const AdjustBalanceOutcome({
-    required this.account,
-    required this.adjustmentTransactionId,
-  });
-  final Account account;
-  final String adjustmentTransactionId;
 }

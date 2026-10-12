@@ -6,15 +6,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
+import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
-import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../data/transactions_repository.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
@@ -51,6 +48,8 @@ class TransactionsListPage extends StatefulWidget {
     this.initialCategoryId,
     this.initialUncategorized = false,
     this.initialMonth,
+    this.initialCategoryName,
+    this.initialCategoryType,
     this.title,
     this.embedded = false,
     this.lockedAccount,
@@ -66,6 +65,14 @@ class TransactionsListPage extends StatefulWidget {
   final Account? lockedAccount;
 
   final String? initialCategoryId;
+
+  /// The drill-down category's name and type, when the caller knows them
+  /// (the list itself is the only call this page makes). Without a name the
+  /// chip takes it from the first row of that category.
+  // The dashboard drill-down route passes both (the slice's label and
+  // expense), so the chip never waits on the categories cache.
+  final String? initialCategoryName;
+  final CategoryType? initialCategoryType;
   final bool initialUncategorized;
 
   /// Any day in the month to show; null = the current month.
@@ -107,22 +114,25 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       if (locked != null) f = f.copyWith(wallet: TxOneWallet(locked));
       final catId = widget.initialCategoryId;
       if (catId != null) {
-        final c = context.read<CategoriesCubit>().byId(catId);
-        if (c != null) {
-          f = f.copyWith(
-            category: c,
-            type: c.type == CategoryType.income
-                ? TransactionType.income
-                : TransactionType.expense,
-          );
-        }
+        final t = widget.initialCategoryType;
+        f = f.copyWith(
+          category: Category(
+            id: catId,
+            name: widget.initialCategoryName ?? '',
+            type: t ?? CategoryType.expense,
+          ),
+          type: switch (t) {
+            null => null,
+            CategoryType.income => TransactionType.income,
+            _ => TransactionType.expense,
+          },
+        );
       }
       if (widget.initialUncategorized) {
         f = f.copyWith(uncategorized: true, type: TransactionType.expense);
       }
       final m = widget.initialMonth;
       if (m != null) f = f.copyWith(period: TxPeriod.month(m));
-      context.read<TagsCubit>().loadIfNeeded();
       setState(() => _f = _base = f);
       _refetch();
     });
@@ -203,6 +213,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       context,
       current: _f,
       base: _base,
+      repository: context.read<TransactionsRepository>(),
       walletLocked: widget.lockedAccount != null,
     );
     if (f != null && mounted) _apply(f);
@@ -221,8 +232,22 @@ class _TransactionsListPageState extends State<TransactionsListPage>
 
   // ── Active filter chips ─────────────────────────────────────────────
 
+  /// The filtered category's name: the one we were given, else the first
+  /// loaded row of that category (no category lookup — rows embed it).
+  String _categoryName(TransactionsState state) {
+    final c = _f.category!;
+    if (c.name.isNotEmpty) return c.name;
+    for (final t in state.transactions) {
+      if (t.category?.id == c.id) return t.category!.name;
+    }
+    return '…';
+  }
+
   /// One removable chip per filter that differs from how the page opened.
-  List<({String label, TxFilters without})> _activeChips(AppLocalizations l) {
+  List<({String label, TxFilters without})> _activeChips(
+    AppLocalizations l,
+    TransactionsState state,
+  ) {
     final base = _base;
     return [
       if (_f.type != base.type)
@@ -242,7 +267,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         ),
       if (_f.category != null && _f.category!.id != base.category?.id)
         (
-          label: _f.category!.name,
+          label: _categoryName(state),
           without: _f.copyWith(
             category: base.category,
             clearCategory: base.category == null,
@@ -268,20 +293,19 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final locked = widget.lockedAccount;
-    final chips = _activeChips(l);
-
     final content = BlocBuilder<TransactionsCubit, TransactionsState>(
       builder: (context, state) {
         final loading =
             state.status == TransactionsStatus.initial ||
             (state.status == TransactionsStatus.loading &&
                 state.transactions.isEmpty);
+        final chips = _activeChips(l, state);
         final header = <Widget>[
           const SizedBox(height: AppSpacing.sm),
           Center(child: _periodPill()),
           if (state.totals case final t?) _TotalsCard(totals: t),
           // Search, the whole width (owner 2026-10-10).
-          AppSearchBar(
+          AppInput.search(
             key: const ValueKey('tx-search'),
             controller: _search,
             onChanged: _onSearch,
@@ -555,8 +579,7 @@ class _TotalsCard extends StatelessWidget {
         AppSpacing.lg,
         AppSpacing.xs,
       ),
-      child: Card(
-        margin: EdgeInsets.zero,
+      child: AppCard(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: SummaryStats(

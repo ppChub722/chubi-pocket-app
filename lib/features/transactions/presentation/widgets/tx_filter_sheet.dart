@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../../ui/ui.dart';
+import '../../../accounts/domain/account.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
-import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../tags/presentation/cubit/tags_cubit.dart';
-import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
+import '../../../categories/presentation/category_label.dart';
+import '../../../tags/domain/tag.dart';
+import '../../../tags/presentation/widgets/tag_chip.dart';
+import '../../data/transactions_repository.dart';
+import '../../domain/form_options.dart';
 import '../../domain/transaction_type.dart';
 import '../tx_list_filters.dart';
-import 'pick_chip_rows.dart';
 import 'tx_hero_card.dart';
 
 /// The transactions list's filters, in a side sheet from the right (owner
-/// 2026-10-10), built from the form's own pieces:
+/// 2026-10-10), built from the form's options (one call when it opens):
 /// - ประเภท: [AppChip]s tinted in each type's colour, ทั้งหมด in primary;
-/// - กระเป๋า · หมวด · แท็ก: the form's chip rows ([WalletChipRow],
-///   [CategoryChipRow], [TagChipRow]), each led by "ทั้งหมด" (= no filter);
+/// - กระเป๋า · หมวด · แท็ก: chip rows, each led by "ทั้งหมด" (= no filter);
 ///   wallet / category pick one (tap again → ทั้งหมด), tags several;
 ///   เพิ่มเติม opens the full list (with ไม่มีกระเป๋า / ไม่ระบุหมวด);
 /// then [ล้าง] [ใช้ตัวกรอง]. The period and the sort live on the page
@@ -34,11 +31,16 @@ Future<TxFilters?> showTxFilterSheet(
   BuildContext context, {
   required TxFilters current,
   required TxFilters base,
+  required TransactionsRepository repository,
   bool walletLocked = false,
 }) => showSideSheet<TxFilters>(
   context,
-  builder: (_) =>
-      _TxFilterSheet(initial: current, base: base, walletLocked: walletLocked),
+  builder: (_) => _TxFilterSheet(
+    initial: current,
+    base: base,
+    repository: repository,
+    walletLocked: walletLocked,
+  ),
 );
 
 /// The category choice: ทั้งหมด (null, false) · ไม่ระบุหมวด (null, true) ·
@@ -48,12 +50,10 @@ Future<({Category? category, bool uncategorized})?> pickCategoryFilter(
   required TransactionType? type,
   required Category? selected,
   required bool uncategorized,
+  required List<Category> categories,
 }) async {
   final l = AppLocalizations.of(context)!;
-  final pool = context
-      .read<CategoriesCubit>()
-      .state
-      .categories
+  final pool = categories
       .where((c) => !c.isSystem && categoryFitsType(c, type))
       .toList();
   int order(Category a, Category b) => a.sortOrder.compareTo(b.sortOrder);
@@ -72,7 +72,7 @@ Future<({Category? category, bool uncategorized})?> pickCategoryFilter(
       SheetOption(
         value: '-',
         label: l.homeUncategorized,
-        leading: const Icon(AppIcons.noCategory),
+        leading: const AppIcon(AppIcons.noCategory),
       ),
       for (final root in roots) ...[
         SheetOption(
@@ -94,9 +94,9 @@ Future<({Category? category, bool uncategorized})?> pickCategoryFilter(
 Future<TxWalletFilter?> pickWalletFilter(
   BuildContext context, {
   required TxWalletFilter selected,
+  required List<Account> accounts,
 }) async {
   final l = AppLocalizations.of(context)!;
-  final accounts = context.read<AccountsCubit>().state.accounts;
   final picked = await showOptionSheet<String>(
     context,
     title: l.transactionsFilterAccount,
@@ -110,10 +110,10 @@ Future<TxWalletFilter?> pickWalletFilter(
       SheetOption(
         value: '-',
         label: l.transactionFormAccountNone,
-        leading: const Icon(AppIcons.noWallet),
+        leading: const AppIcon(AppIcons.noWallet),
       ),
       for (final a in accounts)
-        SheetOption(value: a.id, label: a.name, leading: Icon(a.type.icon)),
+        SheetOption(value: a.id, label: a.name, leading: AppIcon(a.type.icon)),
     ],
   );
   return switch (picked) {
@@ -149,11 +149,13 @@ class _TxFilterSheet extends StatefulWidget {
   const _TxFilterSheet({
     required this.initial,
     required this.base,
+    required this.repository,
     required this.walletLocked,
   });
 
   final TxFilters initial;
   final TxFilters base;
+  final TransactionsRepository repository;
   final bool walletLocked;
 
   @override
@@ -163,16 +165,44 @@ class _TxFilterSheet extends StatefulWidget {
 class _TxFilterSheetState extends State<_TxFilterSheet> {
   late TxFilters _f = widget.initial;
 
+  /// The pick rows' data (ONE call, only now the sheet is open). Null while
+  /// loading — the rows show skeleton chips.
+  TxFormOptions? _options;
+
   /// Each chip section wraps onto at most this many lines, then ends with
   /// "เพิ่มเติม" (owner 2026-10-11) — given enough chips to fill them.
   static const _chipLines = 4;
   static const _chipMax = 40;
 
-  /// The chip rows' orders, fixed while the sheet is open (categories: one
-  /// per type filter) — see [ChipOrder].
-  final _categoryOrders = <TransactionType?, ChipOrder>{};
-  final _walletOrder = ChipOrder();
-  final _tagOrder = ChipOrder();
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    TxFormOptions? o;
+    try {
+      o = await widget.repository.formOptions();
+    } catch (_) {
+      // The rows stay empty; the type chips and apply still work.
+      o = const TxFormOptions();
+    }
+    if (!mounted) return;
+    setState(() {
+      _options = o;
+      // A drill-down opened with just the category id: take its name here.
+      final c = _f.category;
+      if (c != null && c.name.isEmpty) {
+        for (final x in o!.categoryList) {
+          if (x.id == c.id) {
+            _f = _f.copyWith(category: x);
+            break;
+          }
+        }
+      }
+    });
+  }
 
   void _set(TxFilters f) => setState(() => _f = f);
 
@@ -189,45 +219,60 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
     ),
   );
 
-  void _toggleTag(String id) {
-    final on = _f.tags.any((t) => t.id == id);
-    final tag = context.read<TagsCubit>().state.tags.where((t) => t.id == id);
+  void _toggleTag(Tag tag) {
+    final on = _f.tags.any((t) => t.id == tag.id);
     _set(
       _f.copyWith(
         tags: on
             ? [
                 for (final t in _f.tags)
-                  if (t.id != id) t,
+                  if (t.id != tag.id) t,
               ]
-            : [..._f.tags, ...tag],
+            : [..._f.tags, tag],
       ),
     );
   }
 
-  Future<void> _moreTags() async {
+  Future<void> _moreTags(List<Tag> tags) async {
     final l = AppLocalizations.of(context)!;
-    final tagsCubit = context.read<TagsCubit>();
-    final ids = await showTagPickerSheet(
+    final id = await showOptionSheet<String>(
       context,
-      selected: {for (final t in _f.tags) t.id},
       title: l.transactionsFilterTag,
-      allowCreate: false,
+      searchable: tags.length > 8,
+      options: [
+        for (final t in tags)
+          SheetOption(
+            value: t.id,
+            label: t.name,
+            leading: AppIcon(
+              IconRegistry.get(t.iconCode?.icon, fallback: AppIcons.tag),
+            ),
+          ),
+      ],
     );
-    if (ids == null || !mounted) return;
-    _set(
-      _f.copyWith(
-        tags: [
-          for (final t in tagsCubit.state.tags)
-            if (ids.contains(t.id)) t,
-        ],
-      ),
-    );
+    if (id == null || !mounted) return;
+    final tag = tags.firstWhere((t) => t.id == id);
+    if (!_f.tags.any((t) => t.id == id)) _toggleTag(tag);
   }
+
+  static List<Widget> _skeletonChips() => [
+    for (final w in const [72.0, 56.0, 64.0])
+      SkeletonBox(width: w, height: ChipSize.control.height, borderRadius: 999),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final wallet = _f.wallet;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final o = _options;
+    final accounts = o?.accountList ?? const <Account>[];
+    final cats = [
+      for (final c in o?.categoryList ?? const <Category>[])
+        if (!c.isSystem && categoryFitsType(c, _f.type)) c,
+    ];
+    final tags = [...?o?.tags]
+      ..sort((a, b) => b.usageCount.compareTo(a.usageCount));
     // "ทั้งหมด" leads each pick row — selected = no filter there.
     AppChip all({required bool selected, required VoidCallback onTap}) =>
         AppChip(
@@ -277,30 +322,46 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
             SideSheetSection(
               title: l.transactionsFilterAccount,
               icon: AppIcons.wallet,
-              child: WalletChipRow(
-                leadingIcon: false,
+              child: ChipRow(
                 maxLines: _chipLines,
-                max: _chipMax,
-                selectedId: wallet is TxOneWallet ? wallet.account.id : null,
-                order: _walletOrder,
-                onPick: (a) => _set(
-                  _f.copyWith(
-                    wallet: wallet is TxOneWallet && wallet.account.id == a.id
-                        ? const TxAnyWallet()
-                        : TxOneWallet(a),
-                  ),
-                ),
-                onMore: () async {
-                  final w = await pickWalletFilter(context, selected: wallet);
-                  if (w != null && mounted) _set(_f.copyWith(wallet: w));
-                },
-                leading: [
+                moreLabel: l.commonMore,
+                onMore: o == null
+                    ? null
+                    : () async {
+                        final w = await pickWalletFilter(
+                          context,
+                          selected: wallet,
+                          accounts: accounts,
+                        );
+                        if (w != null && mounted) _set(_f.copyWith(wallet: w));
+                      },
+                chips: [
                   all(
                     selected: wallet is TxAnyWallet,
                     onTap: () => _set(_f.copyWith(wallet: const TxAnyWallet())),
                   ),
-                ],
-                trailing: [
+                  if (o == null) ..._skeletonChips(),
+                  for (final a in accounts.take(_chipMax))
+                    AppChip(
+                      label: a.name,
+                      icon: IconRegistry.get(
+                        a.iconCode?.icon,
+                        fallback: a.type.icon,
+                      ),
+                      color:
+                          a.iconCode?.accentColorFor(palette) ??
+                          palette.primary,
+                      selected:
+                          wallet is TxOneWallet && wallet.account.id == a.id,
+                      onTap: () => _set(
+                        _f.copyWith(
+                          wallet:
+                              wallet is TxOneWallet && wallet.account.id == a.id
+                              ? const TxAnyWallet()
+                              : TxOneWallet(a),
+                        ),
+                      ),
+                    ),
                   if (wallet is TxNoWallet)
                     AppChip(
                       label: l.transactionFormAccountNone,
@@ -312,36 +373,47 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
                 ],
               ),
             ),
-          // The form's row: one category (with its sub-categories), or
-          // "ไม่ระบุหมวด" from เพิ่มเติม; only the type filter's categories.
+          // One category (with its sub-categories), or "ไม่ระบุหมวด" from
+          // เพิ่มเติม; only the type filter's categories.
           SideSheetSection(
             title: l.transactionsFilterCategory,
             icon: AppIcons.category,
-            child: CategoryChipRow(
-              leadingIcon: false,
+            child: ChipRow(
               maxLines: _chipLines,
-              max: _chipMax,
-              type: _f.type,
-              selected: _f.category,
-              order: _categoryOrders.putIfAbsent(_f.type, ChipOrder.new),
-              onPick: (c) => _setCategory(_f.category?.id == c.id ? null : c),
-              onMore: () async {
-                final r = await pickCategoryFilter(
-                  context,
-                  type: _f.type,
-                  selected: _f.category,
-                  uncategorized: _f.uncategorized,
-                );
-                if (r == null || !mounted) return;
-                _setCategory(r.category, uncategorized: r.uncategorized);
-              },
-              leading: [
+              moreLabel: l.commonMore,
+              onMore: o == null
+                  ? null
+                  : () async {
+                      final r = await pickCategoryFilter(
+                        context,
+                        type: _f.type,
+                        selected: _f.category,
+                        uncategorized: _f.uncategorized,
+                        categories: o.categoryList,
+                      );
+                      if (r == null || !mounted) return;
+                      _setCategory(r.category, uncategorized: r.uncategorized);
+                    },
+              chips: [
                 all(
                   selected: _f.category == null && !_f.uncategorized,
                   onTap: () => _setCategory(null),
                 ),
-              ],
-              trailing: [
+                if (o == null) ..._skeletonChips(),
+                for (final c in cats.take(_chipMax))
+                  AppChip(
+                    label: categoryDisplayName(l, c),
+                    // The category's own icon (sub-categories too).
+                    icon: IconRegistry.get(
+                      c.iconCode?.icon,
+                      fallback: AppIcons.category,
+                    ),
+                    color:
+                        c.iconCode?.accentColorFor(palette) ?? palette.primary,
+                    selected: c.id == _f.category?.id,
+                    onTap: () =>
+                        _setCategory(_f.category?.id == c.id ? null : c),
+                  ),
                 if (_f.uncategorized)
                   AppChip(
                     label: l.homeUncategorized,
@@ -352,23 +424,27 @@ class _TxFilterSheetState extends State<_TxFilterSheet> {
               ],
             ),
           ),
-          // The form's row, several at once.
+          // Several tags at once.
           SideSheetSection(
             title: l.transactionsFilterTag,
             icon: AppIcons.tag,
-            child: TagChipRow(
-              leadingIcon: false,
+            child: ChipRow(
               maxLines: _chipLines,
-              shown: _chipMax,
-              selected: {for (final t in _f.tags) t.id},
-              order: _tagOrder,
-              onToggle: _toggleTag,
-              onMore: _moreTags,
-              leading: [
+              moreLabel: l.commonMore,
+              onMore: o == null ? null : () => _moreTags(tags),
+              chips: [
                 all(
                   selected: _f.tags.isEmpty,
                   onTap: () => _set(_f.copyWith(tags: const [])),
                 ),
+                if (o == null) ..._skeletonChips(),
+                for (final t in tags.take(_chipMax))
+                  tagAppChip(
+                    context,
+                    t,
+                    selected: _f.tags.any((x) => x.id == t.id),
+                    onTap: () => _toggleTag(t),
+                  ),
               ],
             ),
           ),

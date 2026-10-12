@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
 
@@ -59,7 +56,7 @@ class AuthOrDivider extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Expanded(child: Divider(color: scheme.outlineVariant)),
+        const Expanded(child: AppDivider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Text(
@@ -69,7 +66,7 @@ class AuthOrDivider extends StatelessWidget {
             ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
-        Expanded(child: Divider(color: scheme.outlineVariant)),
+        const Expanded(child: AppDivider()),
       ],
     );
   }
@@ -129,15 +126,12 @@ class GoogleSignInButton extends StatelessWidget {
                 label: l.authComingSoon,
                 tone: AppChipTone.info,
                 selected: true,
-                size: PillSize.mini,
+                size: ChipSize.mini,
               ),
             ],
             if (loading) ...[
               const SizedBox(width: AppSpacing.sm),
-              const SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              const AppSpinner(size: AppSpinnerSize.small),
             ],
           ],
         ),

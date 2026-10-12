@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/budget.dart';
 import '../../domain/budget_period.dart';
 
@@ -65,9 +60,7 @@ class BudgetCard extends StatelessWidget {
       if (category.isNotEmpty && category != budget.name) category,
       budgetPeriodLabel(l, budget.period),
     ].join(' · ');
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
+    return AppCard(
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -109,7 +102,7 @@ class BudgetCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (over) Icon(AppIcons.warning, color: scheme.error),
+                  if (over) AppIcon(AppIcons.warning, color: scheme.error),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,14 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/shell_chrome.dart';
 import '../../../../app/shell/tab_root_scaffold.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/skeleton_box.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 import '../../domain/account_type.dart';
 import '../cubit/accounts_cubit.dart';
@@ -45,7 +42,6 @@ class AccountsPage extends StatefulWidget {
 const double _cardExtent = 156;
 
 class _AccountsPageState extends State<AccountsPage> {
-  int _archivedCount = 0;
   _WalletSort _sort = _WalletSort.custom;
 
   /// Non-null while reordering — the kit's flat reorder mode.
@@ -79,23 +75,19 @@ class _AccountsPageState extends State<AccountsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<AccountsCubit>().loadIfNeeded();
-      _loadArchivedCount();
+      final cubit = context.read<AccountsCubit>();
+      // One call: the wallets, the totals and the archived count. A write
+      // elsewhere only patched rows — re-read once now if the totals lag.
+      cubit.loadIfNeeded().then((_) => cubit.refreshIfStale());
     });
   }
 
-  Future<void> _loadArchivedCount() async {
-    try {
-      final list = await context.read<AccountsCubit>().listArchived();
-      if (mounted) setState(() => _archivedCount = list.length);
-    } on ApiException {
-      // Optional link — keep the last count.
-    }
-  }
+  Future<void> _refresh() => context.read<AccountsCubit>().load();
 
-  Future<void> _refresh() async {
-    await context.read<AccountsCubit>().load();
-    await _loadArchivedCount();
+  /// Pushed pages patch the cubit; the totals catch up on return.
+  Future<void> _open(Future<Object?> Function() push) async {
+    await push();
+    if (mounted) unawaited(context.read<AccountsCubit>().refreshIfStale());
   }
 
   // ── Sort ────────────────────────────────────────────────────────────
@@ -229,7 +221,7 @@ class _AccountsPageState extends State<AccountsPage> {
               ),
               builder: (context) {
                 if (_reordering) return _reorderView(context, accounts);
-                return _gridView(context, accounts, cols);
+                return _gridView(context, state, cols);
               },
             );
           },
@@ -250,9 +242,7 @@ class _AccountsPageState extends State<AccountsPage> {
       ),
       child: Row(
         children: [
-          AppIconButton(
-            icon: AppIcons.edit,
-            size: 36,
+          AppIconButton.edit(
             tooltip: l.accountsReorder,
             onPressed: _canReorder(accounts)
                 ? () => _enterReorder(accounts)
@@ -279,7 +269,8 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  Widget _gridView(BuildContext context, List<Account> accounts, int cols) {
+  Widget _gridView(BuildContext context, AccountsState state, int cols) {
+    final accounts = state.accounts;
     final l = AppLocalizations.of(context)!;
     final list = _sorted(accounts);
     return PullToRefresh(
@@ -291,7 +282,7 @@ class _AccountsPageState extends State<AccountsPage> {
           SliverToBoxAdapter(
             child: SizedBox(height: MediaQuery.paddingOf(context).top),
           ),
-          SliverToBoxAdapter(child: _WalletsSummary(accounts: accounts)),
+          SliverToBoxAdapter(child: _WalletsSummary(state: state)),
           SliverToBoxAdapter(child: _toolbar(l, accounts)),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -306,7 +297,7 @@ class _AccountsPageState extends State<AccountsPage> {
                 if (i == list.length) {
                   return AddTile(
                     label: l.accountsAddNew,
-                    onTap: () => context.push('/accounts/new'),
+                    onTap: () => _open(() => context.push('/accounts/new')),
                   );
                 }
                 final a = list[i];
@@ -317,24 +308,21 @@ class _AccountsPageState extends State<AccountsPage> {
                   child: AccountCard(
                     account: a,
                     horizontal: false,
-                    onTap: () => context.push('/accounts/${a.id}'),
+                    onTap: () => _open(() => context.push('/accounts/${a.id}')),
                   ),
                 );
               }, childCount: list.length + 1),
             ),
           ),
-          if (_archivedCount > 0)
+          if (state.archivedCount > 0)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.md),
                 child: DetailRow(
-                  leading: const Icon(AppIcons.archive),
-                  label: l.accountsArchivedLink(_archivedCount),
+                  leading: const AppIcon(AppIcons.archive),
+                  label: l.accountsArchivedLink(state.archivedCount),
                   showChevron: true,
-                  onTap: () async {
-                    await context.push('/accounts/archived');
-                    if (mounted) _loadArchivedCount();
-                  },
+                  onTap: () => _open(() => context.push('/accounts/archived')),
                 ),
               ),
             ),
@@ -418,18 +406,18 @@ class _AccountsPageState extends State<AccountsPage> {
   }
 }
 
-/// Wallet-tab dashboard (owner 2026-10-11). "Mine" figures only — the
-/// shared pot is never summed into them (spec §14); no number twice:
+/// Wallet-tab dashboard (owner 2026-10-11), drawn from the BE's `totals`
+/// (no client sums); no number twice:
 ///
 ///   ยอดสุทธิ · n กระเป๋า (ร่วม m)                          👁
 ///   ฿ net                     (what I have − what I owe)
 ///   ▓▓▓▓▒▒░░  cash 60% · bank 30% · …   (what the money on hand is)
 ///   เงินที่มี ฿x              (only with debt — else it equals net)
 ///   ใช้วงเงิน n% · เหลือ ฿y   (cards with a limit; liability colour)
-///   หนี้บัตร ฿a · กองกลาง ฿b  (each only when non-zero)
+///   หนี้บัตร ฿a               (only when non-zero)
 class _WalletsSummary extends StatelessWidget {
-  const _WalletsSummary({required this.accounts});
-  final List<Account> accounts;
+  const _WalletsSummary({required this.state});
+  final AccountsState state;
 
   /// A type's segment / legend colour: its group's theme token
   /// ([AccountType.colorOf] — have = cool, owe = warm, owner 2026-10-11),
@@ -453,32 +441,22 @@ class _WalletsSummary extends StatelessWidget {
     final liability = palette.walletLiability;
     final muted = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
-    var debt = 0.0;
-    var shared = 0.0;
-    var sharedCount = 0;
-    var creditUsed = 0.0;
-    var creditLimit = 0.0;
-    final byType = <AccountType, double>{};
-    for (final a in accounts) {
-      if (a.isShared) {
-        sharedCount++;
-        shared += a.balance;
-        continue;
-      }
-      debt += a.debt;
-      if (a.asset > 0) byType[a.type] = (byType[a.type] ?? 0) + a.asset;
-      final limit = a.creditLimit;
-      if (a.type.isCredit && limit != null && limit > 0) {
-        creditLimit += limit;
-        creditUsed += a.creditUsed.clamp(0, limit);
-      }
-    }
-    final assets = byType.values.fold(0.0, (s, v) => s + v);
-    final net = assets - debt;
-    final parts = byType.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final totals = state.totals;
+    final sharedCount = totals.sharedCount;
+    // Liabilities / credit used are positive numbers owed.
+    final debt = totals.liabilities;
+    final assets = totals.assets;
+    final net = totals.net;
+    final creditUsed = totals.creditUsed;
+    final creditLimit = totals.creditLimit;
+    // The money on hand by type: the positive balances only.
+    final parts = [
+      for (final t in totals.byType)
+        if (t.balance > 0) t,
+    ]..sort((a, b) => b.balance.compareTo(a.balance));
+    final partsTotal = parts.fold(0.0, (s, t) => s + t.balance);
 
-    // "หนี้บัตร ฿a · กองกลาง ฿b" — each part only when non-zero.
+    // "หนี้บัตร ฿a · กระเป๋าร่วม ฿b" — each only when it applies.
     final bottom = <InlineSpan>[
       if (debt > 0) ...[
         TextSpan(text: '${l.accountsSummaryCardDebt} '),
@@ -487,18 +465,19 @@ class _WalletsSummary extends StatelessWidget {
           style: TextStyle(color: liability, fontWeight: FontWeight.w600),
         ),
       ],
-      if (shared != 0) ...[
-        if (debt > 0) const TextSpan(text: ' · '),
-        TextSpan(text: '${l.accountsTotalShared} '),
+      if (sharedCount > 0) ...[
+        if (debt > 0) const TextSpan(text: '  ·  '),
+        TextSpan(text: '${l.accountsSummarySharedPot} '),
         TextSpan(
-          text: moneyString(context, shared),
+          text: moneyString(context, totals.sharedBalance),
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ],
     ];
 
-    return TintedCard(
-      tint: scheme.primary,
+    return AppCard(
+      style: AppCardStyle.tinted,
+      color: scheme.primary,
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
@@ -520,7 +499,7 @@ class _WalletsSummary extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '${l.accountsSummaryNet} · '
-                    '${l.accountsSummaryWalletCount(accounts.length)}'
+                    '${l.accountsSummaryWalletCount(state.accounts.length)}'
                     '${sharedCount > 0 ? ' ${l.accountsSummarySharedCount(sharedCount)}' : ''}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -541,7 +520,7 @@ class _WalletsSummary extends StatelessWidget {
                 ),
               ),
             ),
-            if (assets > 0) ...[
+            if (partsTotal > 0) ...[
               const SizedBox(height: AppSpacing.md),
               Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.sm),
@@ -555,11 +534,11 @@ class _WalletsSummary extends StatelessWidget {
                       children: [
                         for (final p in parts)
                           Expanded(
-                            flex: (p.value / assets * 1000).round().clamp(
+                            flex: (p.balance / partsTotal * 1000).round().clamp(
                               1,
                               1000,
                             ),
-                            child: ColoredBox(color: _colorOf(context, p.key)),
+                            child: ColoredBox(color: _colorOf(context, p.type)),
                           ),
                       ],
                     ),
@@ -579,14 +558,14 @@ class _WalletsSummary extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: _colorOf(context, p.key),
+                            color: _colorOf(context, p.type),
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
-                          '${accountTypeLabel(context, p.key)} '
-                          '${(p.value / assets * 100).round()}%',
+                          '${accountTypeLabel(context, p.type)} '
+                          '${(p.balance / partsTotal * 100).round()}%',
                           style: textTheme.labelSmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -621,7 +600,7 @@ class _WalletsSummary extends StatelessWidget {
                     (creditUsed / creditLimit * 100).round(),
                     moneyString(context, creditLimit - creditUsed),
                   ),
-                  value: creditUsed / creditLimit,
+                  value: (creditUsed / creditLimit).clamp(0.0, 1.0),
                   color: liability,
                 ),
               ),
@@ -629,6 +608,13 @@ class _WalletsSummary extends StatelessWidget {
             if (bottom.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.sm),
               Text.rich(TextSpan(children: bottom), style: muted),
+            ],
+            if (totals.otherCurrencyCount > 0) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                l.accountsSummaryOtherCurrency(totals.otherCurrencyCount),
+                style: muted,
+              ),
             ],
           ],
         ),

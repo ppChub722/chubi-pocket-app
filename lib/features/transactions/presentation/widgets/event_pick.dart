@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/module_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
+import '../../domain/refs.dart';
+import '../cubit/tx_form_options_cubit.dart';
 
 export '../tx_rules.dart' show txCanJoinEvent, typeCanJoinEvent;
 
@@ -108,14 +106,14 @@ class EventRow extends StatelessWidget {
     final n = name;
     return DetailRow(
       label: l.quickEventLabel,
-      leading: locked ? const Icon(AppIcons.lock) : null,
+      leading: locked ? const AppIcon(AppIcons.lock) : null,
       onTap: onTap,
       showChevron: onTap != null && (n == null || onClear == null),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (n != null) ...[
-            Icon(AppIcons.project, size: 18, color: accent),
+            AppIcon(AppIcons.project, size: AppIconSize.md, color: accent),
             const SizedBox(width: AppSpacing.xs),
           ],
           Flexible(
@@ -130,10 +128,10 @@ class EventRow extends StatelessWidget {
             ),
           ),
           if (n != null && onClear != null)
-            IconButton(
+            AppIconButton.clear(
               tooltip: l.quickEventRemove,
-              icon: const Icon(AppIcons.clear, size: 18),
-              visualDensity: VisualDensity.compact,
+              iconSize: AppIconSize.md,
+              dense: true,
               onPressed: onClear,
             ),
         ],
@@ -173,16 +171,29 @@ Future<EventTarget?> showEventTargetSheet(
   String? selectedProjectId,
   bool useRootNavigator = true,
   bool allowCreate = true,
-}) => showAppSheetCustom<EventTarget>(
-  context,
-  useRootNavigator: useRootNavigator,
-  builder: (_) => _EventTargetSheet(
-    suggestedName: suggestedName,
-    currentProjectId: currentProjectId,
-    selectedProjectId: selectedProjectId,
-    allowCreate: allowCreate,
-  ),
-);
+}) {
+  // A form that holds the form options (quick create) lends its events: the
+  // sheet's route sits outside the form's tree, so pass the cubit along.
+  final options = maybeTxFormOptions(context, watch: false);
+  return showAppSheetCustom<EventTarget>(
+    context,
+    useRootNavigator: useRootNavigator,
+    builder: (_) {
+      final sheet = _EventTargetSheet(
+        suggestedName: suggestedName,
+        currentProjectId: currentProjectId,
+        selectedProjectId: selectedProjectId,
+        allowCreate: allowCreate,
+      );
+      return options == null
+          ? sheet
+          : BlocProvider<TxFormOptionsCubit>.value(
+              value: options,
+              child: sheet,
+            );
+    },
+  );
+}
 
 class _EventTargetSheet extends StatefulWidget {
   const _EventTargetSheet({
@@ -212,7 +223,14 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
     super.initState();
     _name.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<ProjectsCubit>().load();
+      if (!mounted) return;
+      // The form options carry the events: no extra call.
+      final opts = maybeTxFormOptions(context, watch: false);
+      if (opts != null) {
+        opts.loadIfNeeded();
+      } else {
+        context.read<ProjectsCubit>().loadIfNeeded();
+      }
     });
   }
 
@@ -243,11 +261,35 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final state = context.watch<ProjectsCubit>().state;
-    final active = state.projects
+    final opts = maybeTxFormOptions(context);
+    final state = opts == null ? context.watch<ProjectsCubit>().state : null;
+    // From the form options an event is just id + name + icon: no member
+    // count / dates, so no subtitle.
+    final projects = opts == null
+        ? state!.projects
+        : [
+            for (final e in opts.state.options?.events ?? const <EventRef>[])
+              Project(
+                id: e.id,
+                ownerUserId: '',
+                name: e.name,
+                status: ProjectStatusWire.parse(e.status),
+                iconCode: e.iconCode,
+              ),
+          ];
+    final active = projects
         .where((p) => p.isActive && p.id != widget.currentProjectId)
         .toList();
-    final loading = state.status == ProjectsStatus.loading && active.isEmpty;
+    final loading = opts == null
+        ? state!.status == ProjectsStatus.loading && active.isEmpty
+        : opts.state.isLoading;
+    final loadError = opts == null
+        ? (state!.status == ProjectsStatus.error && active.isEmpty
+              ? state.error
+              : null)
+        : (opts.state.status == TxFormOptionsStatus.error && active.isEmpty
+              ? opts.state.error
+              : null);
     // Nothing to pick from → open on the create section (when there is one).
     final creating =
         widget.allowCreate && (_creating || (!loading && active.isEmpty));
@@ -256,10 +298,8 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
       title: l.quickAddToEvent,
       searchable: active.length > 8,
       loading: loading,
-      error: state.status == ProjectsStatus.error && active.isEmpty
-          ? state.error
-          : null,
-      onRetry: context.read<ProjectsCubit>().load,
+      error: loadError,
+      onRetry: opts == null ? context.read<ProjectsCubit>().load : opts.load,
       footer: creating
           ? Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -294,7 +334,7 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
                 children: [
                   for (final p in shown)
                     PickerRow(
-                      leading: const Icon(AppIcons.project),
+                      leading: const AppIcon(AppIcons.project),
                       title: p.name,
                       subtitle: _subtitle(l, p),
                       selected: p.id == widget.selectedProjectId,
@@ -325,7 +365,7 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          AppTextField(
+                          AppInput(
                             controller: _name,
                             hint: l.quickEventNameLabel,
                             autofocus: _creating,
@@ -348,9 +388,9 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
+                              AppIcon(
                                 AppIcons.info,
-                                size: 16,
+                                size: AppIconSize.sm,
                                 color: scheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: AppSpacing.xs),

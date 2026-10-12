@@ -4,15 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../domain/personal_debt.dart';
@@ -117,7 +111,7 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
         direction: w.direction,
         counterpartyPersonName: w.name.trim(),
         counterpartyContactId: w.contactId,
-        amount: AmountField.parse(w.amount)!,
+        amount: AmountInput.parse(w.amount)!,
         currency: w.currency,
         description: opt(w.description),
         note: opt(w.note),
@@ -180,7 +174,7 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
                   ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                AmountField(
+                AmountInput(
                   controller: _amountCtrl,
                   autofocus: true,
                   currencySymbol: Currencies.symbolOf(w.currency),
@@ -192,28 +186,33 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
                     working.copyWith(amount: v),
                   ),
                   validator: (v) {
-                    final n = AmountField.parse(v);
+                    final n = AmountInput.parse(v);
                     return (n == null || n <= 0) ? l.debtAmountRequired : null;
                   },
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                PickerTile(
+                DetailRow.pick(
                   label: l.debtCounterparty,
                   value: w.name.isEmpty ? null : w.name,
-                  placeholder: l.debtCounterpartyPlaceholder,
+                  emptyText: l.debtCounterpartyPlaceholder,
                   leading: Icon(
                     w.contactId != null ? AppIcons.link : AppIcons.contact,
                   ),
-                  errorText: _counterpartyError,
                   onTap: _pickCounterparty,
+                  horizontalInset: 0,
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                CurrencyTile(
-                  value: w.currency,
-                  onChanged: (c) => applyChange(w.copyWith(currency: c)),
-                ),
+                if (_counterpartyError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text(
+                      _counterpartyError!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: AppSpacing.md),
-                AppTextField(
+                AppInput(
                   controller: _descriptionCtrl,
                   label: l.commonDescription,
                   maxLength: TextLimits.description,
@@ -223,7 +222,7 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                AppTextField(
+                AppInput(
                   controller: _noteCtrl,
                   label: l.commonNote,
                   prefixIcon: AppIcons.note,

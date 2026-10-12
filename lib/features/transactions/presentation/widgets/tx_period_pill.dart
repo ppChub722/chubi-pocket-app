@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../tx_list_filters.dart';
 import 'period_sheet.dart';
 
@@ -26,7 +26,7 @@ class TxPeriodPill extends StatelessWidget {
     final p = period;
     final prev = p.step(-1);
     final next = p.canStepForward(DateTime.now()) ? p.step(1) : null;
-    return PeriodPill(
+    return StepperPill(
       label: p.label(context),
       prevTooltip: l.txPeriodPrev,
       nextTooltip: l.txPeriodNext,

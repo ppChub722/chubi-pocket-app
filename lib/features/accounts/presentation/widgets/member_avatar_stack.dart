@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/widgets/user_avatar.dart';
 import '../../domain/wallet_member.dart';
+import '../../../../ui/ui.dart';
 
 /// An overlapping avatar stack for wallet members — max [maxVisible]
 /// avatars, then a "+N" overflow bubble (spec B2). Reuses [UserAvatar]
@@ -38,14 +38,14 @@ class MemberAvatarStack extends StatelessWidget {
             Positioned(
               left: i * step,
               child: Tooltip(
-                message: visible[i].displayName,
+                message: visible[i].name,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: scheme.surface, width: 1),
                   ),
                   child: UserAvatar(
-                    displayName: visible[i].displayName,
+                    displayName: visible[i].name,
                     iconCode: visible[i].iconCode,
                     size: size,
                   ),
@@ -55,18 +55,7 @@ class MemberAvatarStack extends StatelessWidget {
           if (overflow > 0)
             Positioned(
               left: visible.length * step,
-              child: CircleAvatar(
-                radius: size / 2,
-                backgroundColor: scheme.surfaceContainerHighest,
-                child: Text(
-                  '+$overflow',
-                  style: TextStyle(
-                    fontSize: size * 0.42,
-                    fontWeight: FontWeight.w600,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
+              child: AppAvatar.label('+$overflow', size: size),
             ),
         ],
       ),

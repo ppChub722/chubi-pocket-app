@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,33 +10,30 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
+import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
-import '../../../categories/domain/category_tree.dart';
+import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../contacts/domain/contact.dart';
-import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../personal_debts/presentation/cubit/personal_debts_cubit.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
 import '../../../pending/domain/pending_transaction.dart';
+import '../../domain/refs.dart';
 import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../cubit/tx_form_options_cubit.dart';
 import '../transaction_edit.dart';
 import '../tx_rules.dart';
 import '../save_failure.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/event_pick.dart';
+import '../widgets/split_event_section.dart';
 import '../widgets/tx_compact_hero.dart';
 
 /// `/transactions/:id` (§9) — the quick-create form's own layout, in the
@@ -59,27 +56,38 @@ class TransactionDetailPage extends StatefulWidget {
 }
 
 class _TransactionDetailPageState extends State<TransactionDetailPage> {
-  /// Fetching just this row — it isn't in the global cache.
-  bool _fetchingOne = false;
+  /// The open's one GET /transactions/:id is in flight.
+  bool _fetching = true;
+
+  /// Why it failed. A 404 is "not found"; anything else is an error view
+  /// with a retry (a cached row still shows either way).
+  ApiException? _error;
 
   @override
   void initState() {
     super.initState();
-    // Deep links: make sure the cache is there.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      final cubit = context.read<TransactionsCubit>();
-      await cubit.loadIfNeeded();
-      // Opened from a list on its own cubit (a wallet's รายการ tab) or
-      // beyond the loaded pages → fetch the row itself.
-      if (!mounted || cubit.byId(widget.transactionId) != null) return;
-      setState(() => _fetchingOne = true);
-      try {
-        await cubit.refreshOne(widget.transactionId);
-      } on ApiException {
-        // Falls through to the not-found view.
-      }
-      if (mounted) setState(() => _fetchingOne = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
+  }
+
+  /// The one call on open: the full row (split people included). A row
+  /// already in the cache shows at once and is refreshed underneath. A plain
+  /// read — it never re-fetches the list.
+  Future<void> _fetch() async {
+    if (!mounted) return;
+    setState(() {
+      _fetching = true;
+      _error = null;
+    });
+    ApiException? error;
+    try {
+      await context.read<TransactionsCubit>().refreshOne(widget.transactionId);
+    } on ApiException catch (e) {
+      error = e;
+    }
+    if (!mounted) return;
+    setState(() {
+      _fetching = false;
+      _error = error;
     });
   }
 
@@ -90,17 +98,14 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
       builder: (context, state) {
         final tx = context.read<TransactionsCubit>().byId(widget.transactionId);
         if (tx != null) return _Loaded(tx: tx);
+        final missing = _error?.statusCode == 404;
         return Scaffold(
           appBar: AppTopBar(title: l.navTransactions, showBack: true),
           extendBodyBehindAppBar: true,
           body: AsyncStateView.fallback(
-            loading:
-                _fetchingOne ||
-                state.status == TransactionsStatus.loading ||
-                state.status == TransactionsStatus.initial,
-            error: state.error,
-            // Not loaded (it failed) → loadIfNeeded refetches.
-            onRetry: context.read<TransactionsCubit>().loadIfNeeded,
+            loading: _fetching,
+            error: missing ? null : _error,
+            onRetry: _fetch,
             skeleton: const LoadingView(),
             notFound: EmptyView(
               icon: AppIcons.empty,
@@ -133,8 +138,6 @@ class _LoadedState extends State<_Loaded>
   /// the one made for that transfer.
   late Transaction _edited;
 
-  /// A transfer's other row fetched because it wasn't cached.
-  Transaction? _fetchedTwin;
   String? _initialAccountId;
   String? _initialToAccountId;
 
@@ -219,16 +222,11 @@ class _LoadedState extends State<_Loaded>
     _prefill();
     initDraft(_c.toDraft());
     _c.addListener(_onFormChanged);
-    _fetchTwinIfMissing();
-    _fetchSplitsIfMissing();
-    // The split people's looks (typed / contact / linked 🔗) need them.
-    if (widget.tx.splitCount > 0 || widget.tx.splits.isNotEmpty) {
-      unawaited(context.read<ContactsCubit>().loadIfNeeded());
-    }
   }
 
   /// List rows carry only `split_count`; the people (the split list) come
-  /// with GET /:id. On open, and again before editing if that failed.
+  /// with GET /:id — which the page made on open. Only when that failed (a
+  /// cached list row opened offline) is it tried again, before editing.
   /// refreshOne is a plain read — it doesn't re-fetch the list, which would
   /// put a row without splits back. Never retried from didUpdateWidget
   /// (refresh → didUpdateWidget → fetch would loop).
@@ -266,20 +264,6 @@ class _LoadedState extends State<_Loaded>
     }
   }
 
-  /// Opened from a wallet's tab, a deep link or a filtered list, the
-  /// transfer's other row may not be cached — without it the form shows no
-  /// destination wallet and saving fails.
-  Future<void> _fetchTwinIfMissing() async {
-    final tx = widget.tx;
-    if (tx.transferGroupId == null || transferSibling(context, tx) != null) {
-      return;
-    }
-    final twin = await fetchTransferSibling(context, tx);
-    if (!mounted || twin == null) return;
-    _fetchedTwin = twin;
-    if (!isEditing) _reload();
-  }
-
   @override
   void didUpdateWidget(_Loaded old) {
     super.didUpdateWidget(old);
@@ -294,24 +278,72 @@ class _LoadedState extends State<_Loaded>
     super.dispose();
   }
 
+  /// The row the form edits and the transfer's other wallet, both from the
+  /// row itself (`transfer_peer` carries the twin's id and wallet): an
+  /// incoming transfer is edited as its outgoing twin, so the wallets read
+  /// [จาก] → [ไป] and the save is the one made for that transfer.
+  ({Transaction edited, AccountRef? other}) _transferView(Transaction tx) {
+    final peer = tx.transferPeer;
+    final mine = tx.account;
+    if (tx.type != TransactionType.transfer || peer == null) {
+      return (edited: tx, other: null);
+    }
+    if (tx.isTransferIn && mine != null) {
+      return (
+        edited: tx.copyWith(
+          id: peer.id,
+          accountId: peer.account.id,
+          account: peer.account,
+          transferPeer: TransferPeer(id: tx.id, isOut: false, account: mine),
+        ),
+        other: mine,
+      );
+    }
+    return (edited: tx, other: peer.account);
+  }
+
+  /// Wallets / categories the form may select: the form options or the
+  /// app's caches (the pickers' own pools) plus what the row embeds, so the
+  /// row's own wallet and category are always found.
+  List<Account> _accountPool(Iterable<AccountRef?> embedded) {
+    final base =
+        maybeTxFormOptions(context, watch: false)?.state.options?.accountList ??
+        context.read<AccountsCubit>().state.accounts;
+    final ids = {for (final a in base) a.id};
+    return [
+      ...base,
+      for (final a in embedded)
+        if (a != null && ids.add(a.id)) a.toAccount(),
+    ];
+  }
+
+  List<Category> _categoryPool(EmbeddedCategory? embedded) {
+    final base =
+        maybeTxFormOptions(
+          context,
+          watch: false,
+        )?.state.options?.categoryList ??
+        context.read<CategoriesCubit>().state.categories;
+    return [
+      ...base,
+      if (embedded != null && !base.any((c) => c.id == embedded.id))
+        embedded.toCategory(),
+    ];
+  }
+
   void _prefill() {
     final tx = widget.tx;
-    final twin = tx.transferGroupId == null
-        ? null
-        : transferSibling(context, tx) ?? _fetchedTwin;
-    final edited = tx.isTransferIn && twin != null ? twin : tx;
-    final other = identical(edited, tx) ? twin : tx;
+    final view = _transferView(tx);
+    final edited = view.edited;
     _edited = edited;
     _restoring = true;
     _c.tagIds.clear();
     _c.knownTags.clear();
     _c.prefillTransaction(
       edited,
-      accounts: context.read<AccountsCubit>().state.accounts,
-      categories: context.read<CategoriesCubit>().state.categories,
-      toAccount: other?.accountId == null
-          ? null
-          : context.read<AccountsCubit>().byId(other!.accountId!),
+      accounts: _accountPool([edited.account, view.other]),
+      categories: _categoryPool(edited.category),
+      toAccount: view.other?.toAccount(),
     );
     _restoring = false;
     _splitsPrefilled = edited.splitCount == 0 || edited.splits.isNotEmpty;
@@ -329,10 +361,11 @@ class _LoadedState extends State<_Loaded>
   @override
   void onDraftRestored() {
     _restoring = true;
+    final view = _transferView(widget.tx);
     _c.restoreTransaction(
       working,
-      accounts: context.read<AccountsCubit>().state.accounts,
-      categories: context.read<CategoriesCubit>().state.categories,
+      accounts: _accountPool([view.edited.account, view.other]),
+      categories: _categoryPool(view.edited.category),
     );
     _restoring = false;
   }
@@ -456,27 +489,25 @@ class _LoadedState extends State<_Loaded>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final tx = widget.tx;
-    final cat = tx.categoryId == null
-        ? null
-        : context.watch<CategoriesCubit>().byId(tx.categoryId!);
     // Opening balance / adjustment rows are bookkeeping — read-only.
     // Transfers carry a system category too but have their own cascade.
+    // (The row's embedded category says it: is_system / system_kind.)
     final isSystemRow =
-        tx.type != TransactionType.transfer && (cat?.isSystem ?? false);
+        tx.type != TransactionType.transfer &&
+        ((tx.category?.isSystem ?? false) || tx.isRepayment);
     final canEdit = !isSystemRow && !tx.isLocked;
     // A debt repayment (system Debt Paid / Received): not editable, but
     // deletable — its amount comes off the debt's repaid (BE v2).
     final isRepayment =
         isSystemRow &&
         !tx.isLocked &&
-        (cat?.iconCode?.icon == 'system_debt_paid' ||
-            cat?.iconCode?.icon == 'system_debt_received');
+        (tx.isRepayment || (tx.category?.isDebtRepayment ?? false));
     // The row's author edits its splits in place (expense / income only);
     // anyone else sees them read-only, with the way to the debts.
     // Only once the form holds the real people — see [_splitsPrefilled].
     // Who may is one rule ([txCanEditSplits]: the BE's flag, else ours).
     final canEditSplits =
-        canEdit && txCanEditSplits(_edited, category: cat) && _splitsPrefilled;
+        canEdit && txCanEditSplits(_edited) && _splitsPrefilled;
     _splitsEditable = canEditSplits;
     final editing = isEditing;
 
@@ -495,20 +526,17 @@ class _LoadedState extends State<_Loaded>
         updated.difference(created).inSeconds.abs() >= 60;
     void openProject() => openPage(context, '/projects/${tx.projectId}');
     // The one rule for the event card ([txCanJoinEvent]).
-    final canJoinEvent = canEdit && txCanJoinEvent(_edited, category: cat);
+    final canJoinEvent = canEdit && txCanJoinEvent(_edited);
 
     // After the note (owner 2026-10-10). View: who it's split with, each
     // with where they stand, then the event card. Edit: what a saved row
     // can't change, read-only; the event card as a picker.
     // The sections after the form's own (owner 2026-10-10, rules #16 / #17
     // — the wallet / category detail kit): หารกับ, then อีเวนต์.
-    final splitTitle = tx.type == TransactionType.income
-        ? l.txSplitShareShort
-        : l.txSplitWith;
     final eventName = tx.projectId == null
         ? null
         : tx.project?.name ?? l.txDetailSourceProject;
-    // View: a long-press on the หารกับ section enters edit mode, like the
+    // View: a long-press on the แบ่งรายการ section enters edit mode, like the
     // note (owner 2026-10-11). Taps (a person → their debts) still go through.
     Widget splitsLongPressable(Widget section) => canEdit
         ? GestureDetector(
@@ -517,73 +545,75 @@ class _LoadedState extends State<_Loaded>
             child: section,
           )
         : section;
-    final trailingRows = editing
-        ? <Widget>[
-            // Can't edit these people here (another member's row, or the
-            // people didn't load): say so; nothing in splits pushes a page.
-            if (hasSplits && !canEditSplits)
-              SectionCard(
-                title: splitTitle,
-                children: [
-                  DetailRow(
-                    leading: const Icon(AppIcons.lock),
-                    label: splitCount > 0
-                        ? l.txDetailSplitEditElsewhere(splitCount)
-                        : l.txSplitEditOnDebts,
-                  ),
-                ],
-              ),
-            // Joins / moves / leaves on บันทึก (with the rest of the edit).
-            if (canJoinEvent)
-              SectionCard(
-                children: [
-                  EventRow(
-                    name: _eventName(l, tx),
-                    onTap: _pickEvent,
-                    onClear: _eventName(l, tx) == null ? null : _clearEvent,
-                  ),
-                ],
-              )
-            else if (eventName != null)
-              SectionCard(children: [EventRow(name: eventName, locked: true)]),
-          ]
-        : <Widget>[
-            if (tx.splits.isNotEmpty)
-              splitsLongPressable(
-                SectionCard(
-                  title: splitTitle,
-                  children: [
-                    for (final s in tx.splits)
-                      _SplitRow(split: s, onOpen: () => _openSplits(s)),
-                  ],
-                ),
-              )
-            else if (hasSplits)
-              // Another member's row on a shared wallet: the BE keeps the
-              // people to their author — say where to look, never a bare
-              // count; tapping goes nowhere (owner 2026-10-10).
-              splitsLongPressable(
-                SectionCard(
-                  title: splitTitle,
-                  children: [DetailRow(label: l.txSplitSeeDebts)],
-                ),
-              ),
-            // Tapping opens the event — the one link here, like a split
-            // person → their debts (owner 2026-10-10).
-            if (eventName != null)
-              SectionCard(
-                children: [EventRow(name: eventName, onTap: openProject)],
-              ),
-          ];
+    // The "แบ่งยอด" row label, as the อีเวนต์ row's.
+    Widget splitsBlock(List<Widget> rows) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Text(l.txSplitRowLabel, style: detailLabelStyle(context)),
+        ),
+        ...rows,
+      ],
+    );
+    // The one "แบ่งรายการ" section's two rows (never collapsible here):
+    // [splitsReadOnly] where the people can't be edited (view mode, or not
+    // mine to edit) and [eventSlot].
+    final Widget? splitsReadOnly;
+    final SplitEventSlot? eventSlot;
+    if (editing) {
+      // Can't edit these people here (another member's row, or the people
+      // didn't load): say so; nothing in splits pushes a page.
+      splitsReadOnly = hasSplits && !canEditSplits
+          ? DetailRow(
+              leading: const AppIcon(AppIcons.lock),
+              label: l.txSplitRowLabel,
+              helper: splitCount > 0
+                  ? l.txDetailSplitEditElsewhere(splitCount)
+                  : l.txSplitEditOnDebts,
+            )
+          : null;
+      // Joins / moves / leaves on บันทึก (with the rest of the edit).
+      eventSlot = canJoinEvent
+          ? SplitEventSlot(
+              name: _eventName(l, tx),
+              onTap: _pickEvent,
+              onClear: _eventName(l, tx) == null ? null : _clearEvent,
+            )
+          : eventName != null
+          ? SplitEventSlot(name: eventName, locked: true)
+          : null;
+    } else {
+      splitsReadOnly = tx.splits.isNotEmpty
+          ? splitsLongPressable(
+              splitsBlock([
+                for (final s in tx.splits)
+                  _SplitRow(split: s, onOpen: () => _openSplits(s)),
+              ]),
+            )
+          : hasSplits
+          // Another member's row on a shared wallet: the BE keeps the
+          // people to their author — say where to look, never a bare
+          // count; tapping goes nowhere (owner 2026-10-10).
+          ? splitsLongPressable(
+              splitsBlock([DetailRow(label: l.txSplitSeeDebts)]),
+            )
+          : null;
+      // Tapping opens the event — the one link here, like a split person →
+      // their debts (owner 2026-10-10).
+      eventSlot = eventName != null
+          ? SplitEventSlot(name: eventName, onTap: openProject)
+          : null;
+    }
 
     // The very bottom: small muted record info, one item per line (owner
     // 2026-10-10).
     final metaLines = <String>[
       if (tx.createdBy != null)
         l.txDetailMetaRecordedBy(tx.createdBy!.displayName),
-      if (tx.accountBalanceAfter != null)
-        '${l.txDetailBalanceAfter} '
-            '${moneyString(context, tx.accountBalanceAfter!)}',
       if (created != null) '${l.txDetailCreatedAt} ${stamp(created)}',
       if (edited) '${l.txDetailUpdatedAt} ${stamp(updated)}',
     ];
@@ -661,8 +691,8 @@ class _LoadedState extends State<_Loaded>
                         onEnterEdit: canEdit
                             ? (f) => _enterEdit(focus: f)
                             : null,
-                        trailingRows: trailingRows,
-                        sectioned: true,
+                        splitsReadOnly: splitsReadOnly,
+                        eventSlot: eventSlot,
                         // Moving into an event: the splits go with it (titled so).
                         eventPending:
                             _eventChange is NewEventTarget ||
@@ -709,17 +739,16 @@ class _LoadedState extends State<_Loaded>
   /// edit: what's being typed). Tap → back to the hero.
   CompactHeroBar _compactBar(BuildContext context) {
     final category = _c.isTransfer ? null : _c.category;
-    final all = context.read<CategoriesCubit>().state.categories;
     return txCompactHeroBar(
       context,
       type: _c.type,
       description: _c.description.text,
       amount: _c.amountValue,
-      // Shown by its L1's colours, as everywhere.
+      // A sub-category carries its own icon (the API embeds it).
       categoryName: category?.name ?? _c.foreignCategoryName,
-      categoryIcon: category == null
-          ? null
-          : CategoryTree.resolveIconCode(category, all),
+      categoryIcon:
+          category?.iconCode ??
+          (category == null ? null : widget.tx.category?.iconCode),
       onTap: _scrollToTop,
     );
   }
@@ -778,10 +807,11 @@ class _LoadedState extends State<_Loaded>
     final back = ShellBackScope.maybeOf(context);
     setSaving(true);
     try {
-      await txCubit.remove(tx.id);
-      // A transfer moves two balances — a full reload keeps it simple.
-      await accountsCubit.load();
-      // A repayment gone lowers its debt's repaid amount.
+      final result = await txCubit.remove(tx.id);
+      // The answer carries the wallets' new balances (both of a transfer).
+      accountsCubit.patchBalances(result.accountBalances);
+      // A repayment gone lowers its debt's repaid amount (the debts list is
+      // its own cache).
       if (repayment) unawaited(debtsCubit.load());
       showAppSnackBarOn(messenger, l.txDeleted, tone: Tone.success);
       // Opened alone in its tab (from another tab) there's nothing to pop
@@ -817,16 +847,17 @@ class _LockNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return AppCard(
+      style: AppCardStyle.bordered,
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(AppIcons.lock, size: 18, color: scheme.onSurfaceVariant),
+          AppIcon(
+            AppIcons.lock,
+            size: AppIconSize.md,
+            color: scheme.onSurfaceVariant,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(text, style: Theme.of(context).textTheme.bodySmall),
@@ -856,12 +887,8 @@ class _SplitRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final palette = Theme.of(context).extension<AppColors>()!;
     final s = split;
-    // The person's contact, once the contacts are loaded (their look).
-    final contact = context.select<ContactsCubit, Contact?>(
-      (c) => s.contactId == null
-          ? null
-          : c.state.contacts.where((x) => x.id == s.contactId).firstOrNull,
-    );
+    // The person's look comes embedded in the split — no contacts cache.
+    final person = s.person;
     String money(double v) => moneyString(context, v);
     // Where it stands, from my side of it.
     final status = switch (s.status) {
@@ -909,10 +936,10 @@ class _SplitRow extends StatelessWidget {
                         name: s.personName,
                         level: s.contactId == null
                             ? PersonLevel.name
-                            : (contact?.isLinked ?? false)
+                            : person.linked
                             ? PersonLevel.linked
                             : PersonLevel.contact,
-                        iconCode: contact?.effectiveIconCode,
+                        iconCode: person.iconCode,
                         size: 32,
                         reserveLinkSlot: true,
                       ),

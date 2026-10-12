@@ -1,5 +1,5 @@
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/reorder/reorder.dart';
+import 'package:chubi_pocket/ui/organisms/reorder/reorder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

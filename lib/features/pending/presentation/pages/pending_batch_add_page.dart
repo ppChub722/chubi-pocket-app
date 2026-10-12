@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../transactions/presentation/save_failure.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
@@ -100,7 +97,8 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
       if (submit) {
         final r = await pending.submit([for (final p in created) p.id]);
         if (r.submitted.isNotEmpty) {
-          await Future.wait([accounts.load(), TransactionsCubit.bookChanged()]);
+          accounts.patchBalances(r.accountBalances);
+          await TransactionsCubit.bookChanged();
         }
         msg = l.pendingResult(r.submitted.length, r.failed.length);
         if (r.failed.isNotEmpty) tone = Tone.warning;
@@ -223,24 +221,18 @@ class _RowCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (onRemove != null)
             Align(
               alignment: Alignment.centerRight,
-              child: IconButton(
+              child: AppIconButton.close(
                 tooltip: l.pendingRemoveRow,
-                icon: const Icon(AppIcons.close, size: 24),
+                iconSize: AppIconSize.lg,
                 color: scheme.onSurfaceVariant,
-                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                 onPressed: onRemove,
               ),
             ),

@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_registry.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
 import 'tag_chip.dart';
@@ -103,7 +98,7 @@ class _NewTagNameSheetState extends State<_NewTagNameSheet> {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: AppTextField(
+        child: AppInput(
           controller: _text,
           autofocus: true,
           maxLength: widget.maxLength,

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-/// What the server says about app builds — `GET /app/version` `data`, and
+/// What the server says about app builds — `GET /app/version` (bare body), and
 /// the `details` of a 426 `APP_OUTDATED` (same fields, BE contract v1).
 class AppVersionInfo {
   const AppVersionInfo({

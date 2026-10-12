@@ -4,18 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
@@ -137,7 +128,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     commitTextSession();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final w = working;
-    final planned = AmountField.parse(w.planned);
+    final planned = AmountInput.parse(w.planned);
     final hadPlan = original.planned.trim().isNotEmpty;
     FocusScope.of(context).unfocus();
     setSaving(true);
@@ -399,7 +390,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   Widget _header(AppLocalizations l, ProjectView v) {
     final editing = isEditing;
     final project = v.project;
+    final palette = Theme.of(context).extension<AppColors>()!;
     return HeaderCard(
+      accent: working.iconCode?.accentColorFor(palette) ?? palette.primary,
+      glyph: AppIcons.project,
       onEdit: v.isOwner && !editing ? enterEdit : null,
       leading: EditableCircle(
         size: 48,
@@ -410,7 +404,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           iconCode: working.iconCode,
         ),
       ),
-      title: InlineTitleField(
+      title: AppInput.title(
         editing: editing,
         controller: _ctrl[_Field.name]!,
         focusNode: _focus[_Field.name],
@@ -447,14 +441,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: AppSpacing.sm),
-                AmountField(
+                AmountInput(
                   controller: _ctrl[_Field.planned]!,
                   label: l.projectFormPlannedLabel,
                   currencySymbol: v.symbol,
                   onChanged: (t) => _onText(_Field.planned, t),
                   validator: (t) {
                     if (t == null || t.trim().isEmpty) return null;
-                    final n = AmountField.parse(t);
+                    final n = AmountInput.parse(t);
                     return (n == null || n <= 0)
                         ? l.projectFormPlannedInvalid
                         : null;
@@ -485,12 +479,13 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       if (!editing && !always && value.trim().isEmpty) return null;
       return DetailStacked(
         label: label,
-        child: InlineField(
+        child: AppInput.inline(
           editing: editing,
           controller: _ctrl[f]!,
           focusNode: _focus[f],
           maxLines: 3,
           maxLength: max,
+          viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
           onEnterEdit: v.isOwner ? () => enterEdit(focus: _focus[f]) : null,
           onChanged: (t) => _onText(f, t),
         ),
@@ -528,7 +523,8 @@ class _LockBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return AppCard(
+      style: AppCardStyle.bordered,
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
@@ -539,13 +535,13 @@ class _LockBanner extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
       child: Row(
         children: [
-          Icon(AppIcons.lock, size: 18, color: scheme.onSurfaceVariant),
+          AppIcon(
+            AppIcons.lock,
+            size: AppIconSize.md,
+            color: scheme.onSurfaceVariant,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -576,7 +572,7 @@ class _InfoDraft {
     note: p.note ?? '',
     planned: p.plannedAmount == null
         ? ''
-        : AmountField.format(p.plannedAmount!),
+        : AmountInput.format(p.plannedAmount!),
     iconCode: p.iconCode,
   );
 

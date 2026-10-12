@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-
-import '../../../shared/icon_maker/icon_code.dart';
+import '../../../ui/ui.dart';
 
 class Tag extends Equatable {
   const Tag({

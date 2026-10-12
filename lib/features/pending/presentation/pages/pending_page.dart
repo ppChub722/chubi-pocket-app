@@ -7,17 +7,11 @@ import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/shell_chrome.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../categories/domain/category_tree.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
@@ -55,6 +49,8 @@ class _PendingPageState extends State<PendingPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<PendingCubit>().load();
+      // Rows draw from each draft's `resolved`; these lists are only for the
+      // edit sheet a row opens.
       context.read<AccountsCubit>().loadIfNeeded();
       context.read<CategoriesCubit>().loadIfNeeded();
       context.read<TagsCubit>().loadIfNeeded();
@@ -78,7 +74,8 @@ class _PendingPageState extends State<PendingPage> {
     try {
       final r = await pending.submit(ids);
       if (r.submitted.isNotEmpty) {
-        await Future.wait([accounts.load(), TransactionsCubit.bookChanged()]);
+        accounts.patchBalances(r.accountBalances);
+        await TransactionsCubit.bookChanged();
       }
       if (!mounted) return;
       setState(() {
@@ -120,15 +117,11 @@ class _PendingPageState extends State<PendingPage> {
       destructive: true,
     );
     if (!ok || !mounted) return;
-    final cubit = context.read<PendingCubit>();
-    for (final id in ids) {
-      try {
-        await cubit.discard(id);
-        if (mounted) setState(() => _selected.remove(id));
-      } on ApiException catch (e) {
-        if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
-        return;
-      }
+    try {
+      await context.read<PendingCubit>().discardMany(ids);
+      if (mounted) setState(() => _selected.removeAll(ids));
+    } on ApiException catch (e) {
+      if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
     }
   }
 
@@ -438,28 +431,20 @@ class _PendingCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
     final d = item.draft;
-    final accounts = context.watch<AccountsCubit>().state.accounts;
-    final catCubit = context.watch<CategoriesCubit>();
-    final tags = context.watch<TagsCubit>().state.tags;
-
-    final category = catCubit.state.categories
-        .where((c) => c.id == d.categoryId)
-        .firstOrNull;
-    final wallet = accounts.where((a) => a.id == d.accountId).firstOrNull;
-    final toWallet = accounts
-        .where((a) => a.id == d.transferToAccountId)
-        .firstOrNull;
+    // Everything below comes from the draft's own `resolved` — no joins.
+    final r = item.resolved;
+    final category = r.category;
+    final wallet = r.account;
+    final toWallet = r.transferToAccount;
     // The draft's own title ("what for") first, else its category.
     final description = d.description?.trim() ?? '';
     final categoryName = category == null
         ? null
-        : categoryDisplayName(l, category);
+        : categoryDisplayName(l, category.toCategory());
     final title = description.isNotEmpty
         ? description
         : categoryName ?? l.pendingUntitled;
-    final rowTags = [
-      for (final id in d.tagIds) ?tags.where((t) => t.id == id).firstOrNull,
-    ];
+    final rowTags = r.tags;
     final warn = item.lastError != null
         ? pendingErrorText(l, item.lastError!)
         : d.type == null
@@ -472,16 +457,14 @@ class _PendingCard extends StatelessWidget {
       TransactionType.income => MoneyTone.income,
       _ => MoneyTone.plain,
     };
+    // A sub-category carries its own icon, so no parent lookup.
     final Widget leading = category != null
         ? IconDisplay(
             type: IconType.category,
             size: 36,
-            iconCode: CategoryTree.resolveIconCode(
-              category,
-              catCubit.state.categories,
-            ),
+            iconCode: category.iconCode,
           )
-        : IconBubble(
+        : IconTile(
             icon: switch (d.type) {
               TransactionType.income => AppIcons.income,
               TransactionType.transfer => AppIcons.transfer,
@@ -517,7 +500,7 @@ class _PendingCard extends StatelessWidget {
         label: _sourceLabel(l, item.source),
         tone: item.source.isManual ? AppChipTone.info : AppChipTone.primary,
         selected: true,
-        size: PillSize.mini,
+        size: ChipSize.mini,
       ),
       category: description.isNotEmpty ? categoryName : null,
       extra: d.type == TransactionType.transfer

@@ -1,8 +1,7 @@
-import 'package:chubi_pocket/core/constants/app_icons.dart';
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/dashed_rect_border.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/atoms/dashed_rect_border.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,7 +17,7 @@ void main() {
   );
 
   /// Every content combination the app's chips need, at [size].
-  List<Widget> variants(PillSize size, {VoidCallback? onRemove}) => [
+  List<Widget> variants(ChipSize size, {VoidCallback? onRemove}) => [
     AppChip(label: 'ทั้งหมด', size: size),
     AppChip(label: 'ทั้งหมด', size: size, selected: true),
     AppChip(label: 'อาหาร', icon: AppIcons.category, size: size),
@@ -56,7 +55,7 @@ void main() {
     AppChip(label: 'ปิด', enabled: false, size: size),
   ];
 
-  for (final size in PillSize.values) {
+  for (final size in ChipSize.values) {
     testWidgets('every variant is ${size.height} high at ${size.name}', (
       t,
     ) async {
@@ -89,8 +88,8 @@ void main() {
       const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppChip(label: 'on', tone: AppChipTone.expense, selected: true),
-          AppChip(label: 'off', tone: AppChipTone.expense),
+          AppChip(label: 'on', tone: AppChipTone.danger, selected: true),
+          AppChip(label: 'off', tone: AppChipTone.danger),
         ],
       ),
     );
@@ -166,7 +165,7 @@ void main() {
     var taps = 0;
     await pump(
       t,
-      AppChip(label: 'ปรับยอด', size: PillSize.chip, onTap: () => taps++),
+      AppChip(label: 'ปรับยอด', size: ChipSize.chip, onTap: () => taps++),
     );
     final box = t.getRect(find.byType(AppChip));
     // 28 high: 6 above / below still count; 12 above does not.
@@ -175,11 +174,11 @@ void main() {
     await t.tapAt(box.topCenter - const Offset(0, 12));
     expect(taps, 1);
     // The layout is untouched.
-    expect(box.height, PillSize.chip.height);
+    expect(box.height, ChipSize.chip.height);
   });
 
   testWidgets('a display chip has no extended target', (t) async {
-    await pump(t, const AppChip(label: 'ใช้งาน', size: PillSize.mini));
+    await pump(t, const AppChip(label: 'ใช้งาน', size: ChipSize.mini));
     expect(find.byType(InkWell), findsOneWidget);
     expect(t.widget<InkWell>(find.byType(InkWell)).onTap, isNull);
   });
@@ -198,7 +197,7 @@ void main() {
 
   testWidgets('dashed draws a dashed outline, same height', (t) async {
     await pump(t, const AppChip(label: 'เลือกกระเป๋า', dashed: true));
-    expect(t.getSize(find.byType(AppChip)).height, PillSize.control.height);
+    expect(t.getSize(find.byType(AppChip)).height, ChipSize.control.height);
     expect(find.byType(DashedRectBorder), findsOneWidget);
   });
 

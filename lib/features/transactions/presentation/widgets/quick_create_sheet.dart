@@ -6,13 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/wallet_errors.dart';
@@ -28,12 +26,15 @@ import '../../../scheduled_transactions/domain/scheduled_transaction.dart';
 import '../../../scheduled_transactions/presentation/cubit/scheduled_transactions_cubit.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../data/transactions_repository.dart';
+import '../../domain/form_options.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
+import '../cubit/tx_form_options_cubit.dart';
 import '../save_failure.dart';
 import '../transaction_edit.dart';
 import 'draft_form.dart';
 import 'event_pick.dart';
+import 'split_event_section.dart';
 import 'tx_summary_title.dart';
 
 /// The `+` quick create (owner design 2026-10-08). A near-full-height sheet
@@ -99,15 +100,34 @@ Future<bool> showQuickCreateSheet(
   );
   assert(projectRow == null || project != null);
   assert(scheduledEntry == null || scheduled);
-  final accounts = context.read<AccountsCubit>().loadIfNeeded();
-  final categories = context.read<CategoriesCubit>().loadIfNeeded();
-  context.read<TagsCubit>().loadIfNeeded();
-  // Prefilling resolves wallet / category ids against the caches — wait
-  // for them, or a cold start would open with both empty.
-  if (draft != null || scheduledEntry != null) {
-    await Future.wait([accounts, categories]);
+  // A new transaction AND a draft edit read their pickers from ONE call
+  // (form options, one per open: fresh balances). Scheduled and event rows
+  // still use the app-wide caches.
+  final fromOptions = project == null && !scheduled;
+  TxFormOptionsCubit? options;
+  if (fromOptions) {
+    options = TxFormOptionsCubit(context.read<TransactionsRepository>());
+    // A draft prefills from the options at once: wait for them (a failure
+    // falls back to the draft's own resolved refs, the sheet shows retry).
+    if (draft != null) {
+      await options.load();
+    } else {
+      unawaited(options.load());
+    }
+  } else {
+    final accounts = context.read<AccountsCubit>().loadIfNeeded();
+    final categories = context.read<CategoriesCubit>().loadIfNeeded();
+    context.read<TagsCubit>().loadIfNeeded();
+    // Prefilling resolves wallet / category ids against the caches — wait
+    // for them, or a cold start would open with both empty.
+    if (scheduledEntry != null) {
+      await Future.wait([accounts, categories]);
+    }
   }
-  if (!context.mounted) return false;
+  if (!context.mounted) {
+    unawaited(options?.close());
+    return false;
+  }
   final prefs = await SharedPreferences.getInstance();
   if (!context.mounted) return false;
   final saved = await showModalBottomSheet<bool>(
@@ -121,17 +141,25 @@ Future<bool> showQuickCreateSheet(
     // the sheet drags itself instead (see _onDragEnd); ✕, the barrier and
     // back all go through PopScope.
     enableDrag: false,
-    builder: (_) => _QuickCreateSheet(
-      prefs: prefs,
-      draft: draft,
-      project: project,
-      projectRow: projectRow,
-      scheduled: scheduled,
-      scheduledEntry: scheduledEntry,
-      account: account,
-      initialType: type,
-    ),
+    builder: (sheetContext) {
+      final sheet = _QuickCreateSheet(
+        prefs: prefs,
+        draft: draft,
+        project: project,
+        projectRow: projectRow,
+        scheduled: scheduled,
+        scheduledEntry: scheduledEntry,
+        account: account,
+        initialType: type,
+      );
+      if (options == null) return sheet;
+      return BlocProvider<TxFormOptionsCubit>.value(
+        value: options,
+        child: sheet,
+      );
+    },
   );
+  unawaited(options?.close());
   return saved ?? false;
 }
 
@@ -404,11 +432,31 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     if (_isScheduled) _initScheduled();
     final p = widget.draft;
     if (p != null) {
-      _c.prefill(
-        p.draft,
-        accounts: context.read<AccountsCubit>().state.accounts,
-        categories: context.read<CategoriesCubit>().state.categories,
-      );
+      // The pickers' options (one call), plus what the draft itself carries
+      // resolved, so an archived wallet / category still shows.
+      final options = maybeTxFormOptions(context, watch: false)?.state.options;
+      final accounts = [
+        ...?options?.accountList,
+        if (options == null) ...context.read<AccountsCubit>().state.accounts,
+      ];
+      final categories = [
+        ...?options?.categoryList,
+        if (options == null)
+          ...context.read<CategoriesCubit>().state.categories,
+      ];
+      final ra = p.resolved.account;
+      if (ra != null && !accounts.any((a) => a.id == ra.id)) {
+        accounts.add(ra.toAccount());
+      }
+      final rto = p.resolved.transferToAccount;
+      if (rto != null && !accounts.any((a) => a.id == rto.id)) {
+        accounts.add(rto.toAccount());
+      }
+      final rc = p.resolved.category;
+      if (rc != null && !categories.any((c) => c.id == rc.id)) {
+        categories.add(rc.toCategory());
+      }
+      _c.prefill(p.draft, accounts: accounts, categories: categories);
       _draftBaseline = _c.toDraft(keepIncomplete: true);
     }
     // Typing / picking rebuilds the sheet (summary bar, close guard). A
@@ -478,7 +526,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         _toast(pendingErrorText(l, failed));
         return;
       }
-      await Future.wait([accounts.load(), TransactionsCubit.bookChanged()]);
+      accounts.patchBalances(result.accountBalances);
+      await TransactionsCubit.bookChanged();
       await _remember();
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.quickSaved, tone: Tone.success);
@@ -528,13 +577,16 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   /// Wallet default: the one used last, else the first — re-evaluated until
   /// the user picks one, so a cold cache doesn't leave it empty.
-  Account? _defaultAccount(List<Account> accounts) {
+  Account? _defaultAccount(List<Account> accounts, {TxFormOptions? options}) {
     final preset = widget.account;
     if (preset != null) {
       // The cached row when there is one (fresher balance).
       return accounts.where((a) => a.id == preset.id).firstOrNull ?? preset;
     }
     if (accounts.isEmpty) return null;
+    // The server's default wallet (form options) — no local "last used".
+    final fromServer = options?.defaultAccount;
+    if (fromServer != null) return fromServer;
     final last = widget.prefs.getString(StorageKeys.lastAccountId);
     return accounts.where((a) => a.id == last).firstOrNull ?? accounts.first;
   }
@@ -685,22 +737,22 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     String? warn;
     try {
       if (event == null) {
-        try {
-          await txCubit.add(
-            type: type,
-            accountId: account?.id,
-            amount: amount,
-            date: _ymd(_c.date),
-            categoryId: _c.isTransfer ? null : _c.category?.id,
-            description: description,
-            note: note,
-            transferToAccountId: _c.isTransfer ? _c.toAccount?.id : null,
-            tagIds: tagIds,
-            splits: splits.isEmpty ? null : splits,
-          );
-        } on TagsAttachFailed {
-          warn = l.txSavedTagsFailed; // saved — just the tags
-        }
+        // ONE call (API v2): tags + splits ride in the create body, and the
+        // answer carries the wallets' new balances — patched in place, no
+        // GET /accounts after a save.
+        final saved = await txCubit.add(
+          type: type,
+          accountId: account?.id,
+          amount: amount,
+          date: _ymd(_c.date),
+          categoryId: _c.isTransfer ? null : _c.category?.id,
+          description: description,
+          note: note,
+          transferToAccountId: _c.isTransfer ? _c.toAccount?.id : null,
+          tagIds: tagIds,
+          splits: splits.isEmpty ? null : splits,
+        );
+        accounts.patchBalances(saved.accountBalances);
       } else {
         final body = <String, dynamic>{
           'type': type.toJson(),
@@ -727,7 +779,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         final txId = result.transactionId;
         if (txId != null && tagIds.isNotEmpty) {
           try {
-            await txRepo.attachTags(transactionId: txId, tagIds: tagIds);
+            await txRepo.setTags(txId, tagIds);
           } on ApiException {
             warn = l.txSavedTagsFailed;
           }
@@ -735,8 +787,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         await TransactionsCubit.bookChanged();
         // The events list picks up a new event / bill — in place, no page.
         unawaited(projectsCubit.load());
+        // The answer carries the new bill's wallet balance: patched in place.
+        accounts.patchBalances(result.accountBalances);
       }
-      await accounts.load();
       await _remember();
       // Stay where the user is: close + snackbar, never a tab switch or a
       // page push — an event bill too (owner 2026-10-10).
@@ -863,7 +916,16 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final accounts = context.watch<AccountsCubit>().state.accounts;
+    // A new plain transaction reads wallets from the form options (one
+    // call); the other modes from the app-wide cache.
+    final opts = maybeTxFormOptions(context);
+    final optState = opts?.state;
+    final options = optState?.options;
+    final accounts = opts == null
+        ? context.watch<AccountsCubit>().state.accounts
+        : (options?.accountList ?? const <Account>[]);
+    // Options not here yet: saving now would drop the wallet and category.
+    final waiting = opts != null && options == null;
     final insets = MediaQuery.viewInsetsOf(context).bottom;
     // The keyboard came up (or grew): bring the focused field back into
     // view, clear of it and of the pinned buttons.
@@ -967,15 +1029,14 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                                 ),
                               ),
                               if (_editingDraft)
-                                IconButton(
+                                AppIconButton.flat(
+                                  icon: AppIcons.delete,
                                   tooltip: l.commonDelete,
-                                  icon: const Icon(AppIcons.delete),
                                   color: scheme.error,
                                   onPressed: _saving ? null : _discardDraft,
                                 ),
-                              IconButton(
+                              AppIconButton.close(
                                 tooltip: l.commonClose,
-                                icon: const Icon(AppIcons.close),
                                 onPressed: () =>
                                     Navigator.of(context).maybePop(),
                               ),
@@ -996,50 +1057,60 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                         AppSpacing.xxl,
                       ),
                       children: [
-                        DraftForm(
-                          heroKey: _heroKey,
-                          // The pending drafts layout: chip rows, collapsible
-                          // หารกับ / อีเวนต์.
-                          chipLayout: _editingDraft,
-                          controller: _c,
-                          defaultAccount: _defaultAccount(accounts),
-                          // A saved project row keeps its type.
-                          typeLocked: _editingRow,
-                          event: _isEvent
-                              ? DraftEvent(
-                                  members: widget.project!.currentMembers,
-                                  symbol: widget.project!.symbol,
-                                  pastDescriptions: _pastDescriptions,
-                                  tags: _eventTags,
-                                )
-                              : null,
-                          schedule: _isScheduled
-                              ? DraftSchedule(editing: _editingScheduled)
-                              : null,
-                          // The detail page's layout below the hero (owner
-                          // 2026-10-10): โน้ต / หารกับ / อีเวนต์ sections.
-                          sectioned: true,
-                          eventPending: _activeEvent != null,
-                          // Drafts don't go to events (submit is a plain
-                          // create) — the row only exists when creating, for
-                          // a type that can join one ([typeCanJoinEvent]).
-                          trailingRows: [
-                            if (!_editingDraft &&
-                                !_isEvent &&
-                                !_isScheduled &&
-                                typeCanJoinEvent(_c.type))
-                              SectionCard(
-                                children: [
-                                  EventRow(
+                        if (waiting &&
+                            optState!.status == TxFormOptionsStatus.error)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.xl),
+                            child: ErrorView(
+                              error: optState.error!,
+                              onRetry: opts.load,
+                            ),
+                          )
+                        else
+                          DraftForm(
+                            heroKey: _heroKey,
+                            // The pending drafts layout: chip rows, collapsible
+                            // หารกับ / อีเวนต์.
+                            chipLayout: _editingDraft,
+                            controller: _c,
+                            defaultAccount: _defaultAccount(
+                              accounts,
+                              options: options,
+                            ),
+                            // A saved project row keeps its type.
+                            typeLocked: _editingRow,
+                            event: _isEvent
+                                ? DraftEvent(
+                                    members: widget.project!.currentMembers,
+                                    symbol: widget.project!.symbol,
+                                    pastDescriptions: _pastDescriptions,
+                                    tags: _eventTags,
+                                  )
+                                : null,
+                            schedule: _isScheduled
+                                ? DraftSchedule(editing: _editingScheduled)
+                                : null,
+                            eventPending: _activeEvent != null,
+                            // The one "แบ่งรายการ" section, open (the heading
+                            // collapses it). Drafts keep their own event; here
+                            // the อีเวนต์ row only exists when creating, for a
+                            // type that can join one ([typeCanJoinEvent]).
+                            splitsCollapsible:
+                                !_editingDraft && !_isEvent && !_isScheduled,
+                            eventSlot:
+                                !_editingDraft &&
+                                    !_isEvent &&
+                                    !_isScheduled &&
+                                    typeCanJoinEvent(_c.type)
+                                ? SplitEventSlot(
                                     name: eventTargetName(l, _event),
                                     onTap: _pickEvent,
-                                    onClear: () =>
-                                        setState(() => _event = null),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
+                                    onClear: _event == null
+                                        ? null
+                                        : () => setState(() => _event = null),
+                                  )
+                                : null,
+                          ),
                       ],
                     ),
                   ),
@@ -1069,7 +1140,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                               expand: true,
                               // A draft can't go to an event.
                               onPressed:
-                                  _saving || _activeEvent != null || _isEmpty
+                                  _saving ||
+                                      _activeEvent != null ||
+                                      _isEmpty ||
+                                      waiting
                                   ? null
                                   : _saveDraft,
                             ),
@@ -1083,7 +1157,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                                   : l.quickSave,
                               expand: true,
                               loading: _saving,
-                              onPressed: _isEmpty
+                              onPressed: _isEmpty || waiting
                                   ? null
                                   : (_editingDraft ? _submitDraft : _save),
                             ),

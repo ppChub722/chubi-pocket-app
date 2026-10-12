@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
@@ -49,7 +45,7 @@ class ProjectTxIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final isExpense = tx.type == 'expense';
-    return IconBubble(
+    return IconTile(
       icon: isExpense ? AppIcons.expense : AppIcons.income,
       color: isExpense ? palette.expense : palette.income,
       size: size,
@@ -77,7 +73,7 @@ class ProjectTxTreeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final parent = tree.parent;
-    final payer = view.member(parent.transactionMemberId);
+    final payer = view.memberOf(parent);
     final myId = view.me?.id;
     final marked = myId != null && parent.isMarkedBy(myId);
     final scheme = Theme.of(context).colorScheme;
@@ -98,9 +94,11 @@ class ProjectTxTreeTile extends StatelessWidget {
                         ? _actions(context, parent, isParent: true)
                         : _tick(context, parent, isParent: true),
               child: CornerBadge(
-                badge: marked
-                    ? const Icon(AppIcons.check, size: 12)
-                    : const SizedBox.shrink(),
+                size: 36,
+                icon: AppIcons.check,
+                show: marked,
+                // The tick marks the row — state, not decoration.
+                essential: true,
                 child: ProjectTxIcon(tx: parent),
               ),
             ),
@@ -130,7 +128,7 @@ class ProjectTxTreeTile extends StatelessWidget {
         for (final c in tree.children)
           _ChildRow(
             child: c,
-            debtor: view.member(c.transactionMemberId),
+            debtor: view.memberOf(c),
             creditor: payer,
             marked: myId != null && c.isMarkedBy(myId),
             locked: view.rowsLocked,
@@ -178,8 +176,8 @@ class ProjectTxTreeTile extends StatelessWidget {
     final counterparty = isParent
         ? null
         : tx.transactionMemberId == my
-        ? view.member(tree.parent.transactionMemberId)
-        : view.member(tx.transactionMemberId);
+        ? view.memberOf(tree.parent)
+        : view.memberOf(tx);
     final ok = await showAppSheet<bool>(
       context,
       title: AppLocalizations.of(context)!.projectTxResolve,
@@ -236,7 +234,7 @@ class ProjectTxTreeTile extends StatelessWidget {
         leading: ProjectTxIcon(tx: tx),
         title: tx.description ?? tx.tags.firstOrNull ?? '—',
         subtitle: [
-          view.member(tx.transactionMemberId).displayName,
+          view.memberOf(tx).displayName,
           projectTxDateLabel(context, tx.date),
           if (tx.note?.isNotEmpty ?? false) tx.note!,
         ].join(' · '),
@@ -504,7 +502,7 @@ class _ResolveSheetState extends State<_ResolveSheet> {
     setState(() => _saving = true);
     try {
       if (_mode == _Mode.asTransaction) {
-        await context.read<TransactionsRepository>().create(
+        final res = await context.read<TransactionsRepository>().create(
           type: _txType,
           accountId: _account!.id,
           amount: _amount,
@@ -515,7 +513,8 @@ class _ResolveSheetState extends State<_ResolveSheet> {
           categoryId: _category?.id,
           sourceProjectTransactionId: widget.tx.id,
         );
-        await Future.wait([TransactionsCubit.bookChanged(), accounts.load()]);
+        accounts.patchBalances(res.accountBalances);
+        await TransactionsCubit.bookChanged();
       } else {
         await context.read<PersonalDebtsRepository>().create(
           direction: _iAmDebtor ? DebtDirection.iOwe : DebtDirection.owedToMe,
@@ -566,19 +565,19 @@ class _ResolveSheetState extends State<_ResolveSheet> {
             trailing: MoneyText(_amount, symbol: symbol),
           ),
           if (widget.isParent && widget.childrenTotal > 0)
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _shareOnly,
-              onChanged: (v) => setState(() => _shareOnly = v),
-              title: Text(l.projectResolveShareOnly),
-              subtitle: Text(
-                l.projectResolveShareHint(
-                  moneyString(context, widget.tx.amount, symbol: symbol),
-                  moneyString(
-                    context,
-                    widget.tx.amount - widget.childrenTotal,
-                    symbol: symbol,
-                  ),
+            DetailRow(
+              label: l.projectResolveShareOnly,
+              trailing: AppSwitch(
+                value: _shareOnly,
+                onChanged: (v) => setState(() => _shareOnly = v),
+              ),
+              onTap: () => setState(() => _shareOnly = !_shareOnly),
+              helper: l.projectResolveShareHint(
+                moneyString(context, widget.tx.amount, symbol: symbol),
+                moneyString(
+                  context,
+                  widget.tx.amount - widget.childrenTotal,
+                  symbol: symbol,
                 ),
               ),
             ),
@@ -588,7 +587,7 @@ class _ResolveSheetState extends State<_ResolveSheet> {
               label: l.debtSettleAccount,
               value: _account?.name,
               emptyText: l.quickEventNone,
-              leading: const Icon(AppIcons.bank),
+              leading: const AppIcon(AppIcons.bank),
               onTap: _pickAccount,
             ),
             if (_accountError != null)
@@ -605,12 +604,12 @@ class _ResolveSheetState extends State<_ResolveSheet> {
               label: l.projectResolveCategory,
               value: _category?.name,
               emptyText: l.projectResolveCategoryNone,
-              leading: const Icon(AppIcons.category),
+              leading: const AppIcon(AppIcons.category),
               onTap: _pickCategory,
             ),
           ] else
             DetailRow(
-              leading: const Icon(AppIcons.debt),
+              leading: const AppIcon(AppIcons.debt),
               label: _iAmDebtor ? l.debtYouOwe(name) : l.debtTheyOweYou(name),
               helper: l.projectResolveDebtHint,
             ),

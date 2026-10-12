@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/shell/tab_nav.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../../shared/widgets/ui.dart';
+import '../../../ui/ui.dart';
 import '../../accounts/data/accounts_repository.dart';
 import '../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../accounts/presentation/wallet_errors.dart';
@@ -39,7 +39,7 @@ abstract final class NotificationActions {
   /// Row-body tap.
   static Future<void> tap(BuildContext ctx, AppNotification n) async {
     if (n.type == NotificationType.contactLinkRequest) {
-      if (n.actionedAt == null) {
+      if (!n.isActioned) {
         // Pending row body tap is a no-op — Accept / Reject live as
         // explicit inline buttons on the tile, so accidental row taps
         // don't accept the link unintentionally.
@@ -49,7 +49,7 @@ abstract final class NotificationActions {
       return;
     }
     if (n.type == NotificationType.accountInvite) {
-      if (n.actionedAt == null) return; // buttons are the action
+      if (!n.isActioned) return; // buttons are the action
       // Accepted wallet invite → jump to the wallet.
       final accountId = n.payload['account_id'] as String?;
       if (accountId != null && accountId.isNotEmpty) {
@@ -357,7 +357,7 @@ Future<void> _onTapActionedLinkRequest(
 String? _senderUserIdOf(AppNotification n) {
   final fromPayload = n.payload['sender_user_id'];
   if (fromPayload is String && fromPayload.isNotEmpty) return fromPayload;
-  return n.actorUserId;
+  return n.actor?.userId;
 }
 
 T? _firstWhere<T>(Iterable<T> xs, bool Function(T) test) {

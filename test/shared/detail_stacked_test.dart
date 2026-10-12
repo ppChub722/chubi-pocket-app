@@ -1,5 +1,5 @@
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,7 +23,7 @@ void main() {
         t,
         DetailStacked(
           label: 'LABEL',
-          child: InlineField(editing: editing, controller: c),
+          child: AppInput.inline(editing: editing, controller: c),
         ),
       );
       final label = t.getTopLeft(find.text('LABEL')).dx;
@@ -35,8 +35,8 @@ void main() {
   testWidgets('outside DetailStacked: the inner padding stays', (t) async {
     final c = TextEditingController(text: 'x');
     addTearDown(c.dispose);
-    await pump(t, InlineField(editing: true, controller: c));
-    final box = t.getTopLeft(find.byType(InlineField)).dx;
+    await pump(t, AppInput.inline(editing: true, controller: c));
+    final box = t.getTopLeft(find.byType(AppInput)).dx;
     final text = t.getTopLeft(find.byType(EditableText)).dx;
     expect(text - box, moreOrLessEquals(16, epsilon: 0.5));
   });

@@ -4,12 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../domain/personal_debt.dart';
@@ -52,9 +49,9 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
     final debts = context.read<PersonalDebtsCubit>();
     setState(() => _linking = true);
     try {
-      final n = await context.read<ContactsCubit>().absorb(contact.id, [
+      final n = (await context.read<ContactsCubit>().absorb(contact.id, [
         widget.name,
-      ]);
+      ])).absorbedCount;
       await debts.load();
       if (!mounted) return;
       showAppSnackBar(
@@ -115,6 +112,7 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
               contactId: widget.contactId,
               displayName: widget.name,
               debts: mine,
+              person: mine.firstOrNull?.person,
             );
             final open = mine.where((d) => d.isOpen).toList();
             final closed = mine.where((d) => !d.isOpen).toList();
@@ -146,13 +144,8 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
                       children: [
                         DetailRow(
                           leading: _linking
-                              ? const SizedBox.square(
-                                  dimension: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(AppIcons.link),
+                              ? const AppSpinner(size: AppSpinnerSize.medium)
+                              : const AppIcon(AppIcons.link),
                           label: l.debtsPersonLinkContact,
                           helper: l.debtsPersonLinkContactHint,
                           showChevron: true,
@@ -172,11 +165,11 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
                             tilePadding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.lg,
                             ),
-                            leading: const Icon(AppIcons.history),
+                            leading: const AppIcon(AppIcons.history),
                             title: Text(l.debtsPersonHistory(closed.length)),
                             children: [
                               for (final (i, d) in closed.indexed) ...[
-                                if (i > 0) const RowDivider(),
+                                if (i > 0) const AppDivider.row(),
                                 DebtTile(debt: d),
                               ],
                             ],
@@ -207,8 +200,8 @@ class _Header extends StatelessWidget {
     final even = p.net.abs() < 0.005;
     return HeaderCard(
       leading: DebtAvatar(
-        contactId: p.contactId,
         name: p.displayName,
+        iconCode: p.person?.iconCode,
         size: 52,
       ),
       title: Text(p.displayName),

@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../storage/secure_token_storage.dart';
 import 'http_logger_interceptor.dart';
+import 'network_recorder.dart';
 
 /// API base URL — picks the right host depending on build flags/platform.
 ///
@@ -63,6 +64,9 @@ class ApiClient {
     // path.
     _dio.interceptors.add(_authInterceptor());
     _dio.interceptors.add(HttpLoggerInterceptor());
+    // After the logger (so the request id header is set): feeds the dev hub's
+    // Network page. Keeps only a ring buffer of call metadata, no bodies.
+    _dio.interceptors.add(NetworkRecorderInterceptor());
     _dio.interceptors.add(_unauthorizedNotifier());
     _dio.interceptors.add(_outdatedNotifier());
   }

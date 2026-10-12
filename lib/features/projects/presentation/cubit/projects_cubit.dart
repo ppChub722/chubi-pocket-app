@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
+import '../../../../ui/ui.dart';
 
 enum ProjectsStatus { initial, loading, loaded, error }
 
@@ -52,6 +52,17 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
 
   @override
   void clear() => emit(const ProjectsState());
+
+  /// Loads only when there is nothing usable cached: never loaded, failed, or
+  /// narrowed to another status (the event picker lists the ACTIVE ones). The
+  /// picker calls this on every open — it must not cost a GET /projects each
+  /// time; creating an event refreshes the list itself.
+  Future<void> loadIfNeeded() async {
+    final usable =
+        state.status == ProjectsStatus.loaded && state.statusFilter == 'active';
+    if (usable || state.status == ProjectsStatus.loading) return;
+    await load();
+  }
 
   Future<void> load({String? statusFilter}) async {
     emit(

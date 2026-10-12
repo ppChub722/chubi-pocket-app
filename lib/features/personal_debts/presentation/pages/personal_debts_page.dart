@@ -4,13 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_radius.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../domain/personal_debt.dart';
 import '../cubit/personal_debts_cubit.dart';
@@ -112,7 +107,7 @@ class _PersonalDebtsPageState extends State<PersonalDebtsPage> {
                       onSelect: (d) =>
                           setState(() => _dir = _dir == d ? null : d),
                     ),
-                    AppSearchBar(
+                    AppInput.search(
                       hint: l.debtsSearchHint,
                       onChanged: (v) => setState(() => _query = v),
                     ),
@@ -151,7 +146,7 @@ class _PersonalDebtsPageState extends State<PersonalDebtsPage> {
                       )
                     else
                       for (final (i, p) in shown.indexed) ...[
-                        if (i > 0) const RowDivider(),
+                        if (i > 0) const AppDivider.row(),
                         _PersonRow(person: p, onTap: () => _openPerson(p)),
                       ],
                     // Add lives at the end of the list (no top-bar actions).
@@ -237,7 +232,7 @@ class _Summary extends StatelessWidget {
       );
     }
 
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
         AppSpacing.sm,
@@ -303,7 +298,7 @@ class _PersonRow extends StatelessWidget {
     final even = p.net.abs() < 0.005;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      leading: DebtAvatar(contactId: p.contactId, name: p.displayName),
+      leading: DebtAvatar(name: p.displayName, iconCode: p.person?.iconCode),
       title: Row(
         children: [
           Flexible(
@@ -315,7 +310,11 @@ class _PersonRow extends StatelessWidget {
           ),
           if (p.contactId != null) ...[
             const SizedBox(width: AppSpacing.xs),
-            Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
+            AppIcon(
+              AppIcons.link,
+              size: AppIconSize.sm,
+              color: scheme.onSurfaceVariant,
+            ),
           ],
         ],
       ),

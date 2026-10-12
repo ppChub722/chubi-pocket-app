@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
 import '../../domain/scheduled_enums.dart';
 import '../../domain/scheduled_transaction.dart';
 
@@ -32,9 +27,8 @@ class ScheduledCard extends StatelessWidget {
         : null;
     final desc = entry.description?.trim();
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      color: scheme.surfaceContainer,
+    return AppCard(
+      style: AppCardStyle.bordered,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -70,7 +64,7 @@ class ScheduledCard extends StatelessWidget {
                               : l.scheduledVariantRecurring,
                           tone: AppChipTone.neutral,
                           selected: true,
-                          size: PillSize.chip,
+                          size: ChipSize.chip,
                         ),
                       ],
                     ),
@@ -88,9 +82,9 @@ class ScheduledCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(
+                        AppIcon(
                           AppIcons.date,
-                          size: 14,
+                          size: AppIconSize.sm,
                           color: scheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: AppSpacing.xs),

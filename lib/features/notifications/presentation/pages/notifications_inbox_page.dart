@@ -4,10 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../data/notifications_repository.dart';
 import '../cubit/notifications_inbox_cubit.dart';
@@ -33,6 +31,8 @@ class NotificationsInboxPage extends StatelessWidget {
     return BlocProvider(
       create: (ctx) => NotificationsInboxCubit(
         repository: ctx.read<NotificationsRepository>(),
+        // Loads and writes already return the count: patch the bell, no poll.
+        onUnreadChanged: ctx.read<UnreadBadgeCubit>().setCount,
       )..load(),
       child: const _InboxScaffold(),
     );
@@ -92,10 +92,8 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                 ),
                 Expanded(
                   child: BlocConsumer<NotificationsInboxCubit, InboxState>(
-                    listenWhen: (a, b) =>
-                        a.unreadCount != b.unreadCount || a.error != b.error,
+                    listenWhen: (a, b) => a.error != b.error,
                     listener: (ctx, state) {
-                      ctx.read<UnreadBadgeCubit>().refresh();
                       // Row actions (accept / mark read …) fail without leaving
                       // `loaded`; load failures are AsyncStateView's.
                       if (state.error != null &&
@@ -111,7 +109,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                       // Dismissed rows are hidden for good; actioned requests
                       // stay so the post-accept flow is still reachable.
                       final visible = state.notifications
-                          .where((n) => n.dismissedAt == null)
+                          .where((n) => !n.isDismissed)
                           .toList();
                       return AsyncStateView(
                         loading:
@@ -135,7 +133,10 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                           // Settings stay reachable with an empty inbox.
                           cta: TextButton.icon(
                             onPressed: openSettings,
-                            icon: const Icon(AppIcons.settings, size: 18),
+                            icon: const AppIcon(
+                              AppIcons.settings,
+                              size: AppIconSize.md,
+                            ),
                             label: Text(l.notifSettingsTitle),
                           ),
                         ),
@@ -153,9 +154,9 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                                     onPressed: () => ctx
                                         .read<NotificationsInboxCubit>()
                                         .markReadAll(),
-                                    icon: const Icon(
+                                    icon: const AppIcon(
                                       AppIcons.markAllRead,
-                                      size: 18,
+                                      size: AppIconSize.md,
                                     ),
                                     label: Text(l.notificationsMarkAllRead),
                                   ),
@@ -185,7 +186,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                                   color: Theme.of(
                                     ctx,
                                   ).colorScheme.surfaceContainerHighest,
-                                  child: const Icon(AppIcons.hidden),
+                                  child: const AppIcon(AppIcons.hidden),
                                 ),
                                 onDismissed: (_) {
                                   ctx
@@ -215,7 +216,7 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
                           // Notification settings close the list.
                           rows.add(
                             DetailRow(
-                              leading: const Icon(AppIcons.settings),
+                              leading: const AppIcon(AppIcons.settings),
                               label: l.notifSettingsTitle,
                               showChevron: true,
                               onTap: openSettings,

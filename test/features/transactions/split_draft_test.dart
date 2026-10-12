@@ -5,16 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 /// sends a new person only when it changed and isn't locked — and only a
 /// contact linked to an app user locks it.
 void main() {
-  SplitDraft saved({
-    String name = 'ลี',
-    String? contact,
-    bool appLinked = false,
-  }) => SplitDraft(
+  SplitDraft saved({String name = 'ลี', String? contact}) => SplitDraft(
     debtId: 'd1',
     personName: name,
     contactId: contact,
     owedAmount: 100,
-    savedContactLinked: appLinked,
   );
 
   test('a new row: name, contact, amount — no debt_id', () {
@@ -34,7 +29,6 @@ void main() {
 
   test('saved + unlinked, renamed: sends the new name', () {
     final d = saved()..setPerson('ลีลา');
-    expect(d.identityLocked, isFalse);
     expect(d.toUpdateJson(), {
       'debt_id': 'd1',
       'owed_amount': 100,
@@ -59,20 +53,30 @@ void main() {
     expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 100});
   });
 
-  test('saved plain contact: not locked', () {
-    expect(saved(contact: 'c1').identityLocked, isFalse);
+  test(
+    'saved contact swapped for another: contact_id + name (the BE swaps)',
+    () {
+      final d = saved(contact: 'c1')..setPerson('ต้น', contact: 'c2');
+      expect(d.toUpdateJson(), {
+        'debt_id': 'd1',
+        'owed_amount': 100,
+        'contact_id': 'c2',
+        'person_name': 'ต้น',
+      });
+    },
+  );
+
+  test('saved contact back to a typed name: contact_id null, name kept', () {
+    final d = saved(contact: 'c1')..setPerson('ลี');
+    final json = d.toUpdateJson();
+    expect(json.containsKey('contact_id'), isTrue);
+    expect(json['contact_id'], isNull);
+    expect(json['person_name'], 'ลี');
   });
 
-  test('saved + app-linked contact: identity locked, never sent', () {
-    final d = saved(contact: 'c1', appLinked: true);
-    expect(d.identityLocked, isTrue);
-    expect(d.isWired, isTrue);
-    expect(d.toUpdateJson(), {'debt_id': 'd1', 'owed_amount': 100});
-  });
-
-  test('an unsaved row is never locked, whoever it is', () {
+  test('an unsaved row: wired or not by its contact', () {
     final d = SplitDraft()..setPerson('ลี', contact: 'c1');
-    expect(d.identityLocked, isFalse);
+    expect(d.isWired, isTrue);
     d.setPerson('ลีลา');
     expect(d.isWired, isFalse);
   });

@@ -1,12 +1,12 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:chubi_pocket/core/constants/app_icons.dart';
-import 'package:chubi_pocket/core/theme/themes/sweet_theme.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/contacts/domain/contact.dart';
 import 'package:chubi_pocket/features/contacts/presentation/cubit/contacts_cubit.dart';
+import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/shared/widgets/ui.dart';
+import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,16 +22,16 @@ class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 void main() {
   const plain = Contact(
     id: 'c-plain',
-    userId: 'me',
+    name: 'บี',
     displayName: 'บี',
     status: ContactStatus.active,
   );
   const linked = Contact(
     id: 'c-linked',
-    userId: 'me',
+    name: 'ต้น',
     displayName: 'ต้น',
     status: ContactStatus.active,
-    linkedUserId: 'u2',
+    linkedUser: LinkedUser(id: 'u2', displayName: 'ต้น'),
   );
 
   late List<SplitDraft> drafts;
@@ -107,6 +107,11 @@ void main() {
         debtId: 'd3',
         personName: 'ต้น',
         contactId: 'c-linked',
+        savedPerson: const EmbeddedPerson(
+          name: 'ต้น',
+          contactId: 'c-linked',
+          linked: true,
+        ),
         owedAmount: 20,
       ),
     ];
@@ -116,7 +121,7 @@ void main() {
     t,
   ) async {
     await pump(t);
-    expect(find.text('ฉัน'), findsOneWidget);
+    expect(find.text('ส่วนของฉัน'), findsOneWidget);
     expect(find.textContaining('ยังไม่ได้แบ่ง'), findsOneWidget);
   });
 
@@ -130,17 +135,15 @@ void main() {
     expect(find.text('แบ่งครบแล้ว'), findsOneWidget);
   });
 
-  testWidgets('only the app-linked saved row is locked', (t) async {
+  testWidgets('no row is locked: typed, plain and linked can all change', (
+    t,
+  ) async {
     await pump(t);
-    expect(drafts[0].identityLocked, isFalse); // typed name
-    expect(drafts[1].identityLocked, isFalse); // plain contact
-    expect(drafts[2].identityLocked, isTrue); // linked to an app user
-    // One 🔒, on ต้น's row (a tap-to-read hint around it).
-    expect(find.byIcon(AppIcons.lock), findsOneWidget);
-    expect(
-      find.ancestor(of: find.text('ต้น'), matching: find.byType(Tooltip)),
-      findsOneWidget,
-    );
+    expect(find.byIcon(AppIcons.lock), findsNothing);
+    // The contacts' names are tappable (→ the picker); the typed one is an
+    // input.
+    expect(find.text('บี'), findsWidgets);
+    expect(find.text('ต้น'), findsWidgets);
   });
 
   testWidgets('three looks: 👤 · avatar · avatar + 🔗', (t) async {

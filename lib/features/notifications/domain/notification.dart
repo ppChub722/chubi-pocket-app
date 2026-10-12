@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../ui/ui.dart';
+
 /// Notification trigger types — mirror of [`design/spec/13-notifications.md
 /// §2`](../../../../../chubi-pocket-docs/design/spec/13-notifications.md).
 /// Phase 1b ships 7 of these. `personal_debt_cancelled` is deferred to
@@ -39,17 +41,77 @@ enum NotificationType {
   }
 }
 
+/// Who triggered a notification (API `UserRef`).
+class NotificationActor extends Equatable {
+  const NotificationActor({
+    required this.userId,
+    required this.displayName,
+    this.iconCode,
+  });
+
+  final String userId;
+  final String displayName;
+  final IconCode? iconCode;
+
+  factory NotificationActor.fromJson(Map<String, dynamic> json) {
+    return NotificationActor(
+      userId: json['user_id'] as String,
+      displayName: json['display_name'] as String,
+      iconCode: json['icon_code'] is Map
+          ? IconCode.fromJson(
+              (json['icon_code'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [userId, displayName, iconCode];
+}
+
+/// Computed by the BE (actioned > dismissed > read > unread).
+enum NotificationState {
+  unread,
+  read,
+  actioned,
+  dismissed;
+
+  static NotificationState fromWire(String? s) => values.firstWhere(
+    (v) => v.name == s,
+    orElse: () => NotificationState.unread,
+  );
+}
+
+/// App-wide counters returned by every notification write (API `Badges`).
+class Badges extends Equatable {
+  const Badges({
+    required this.unreadNotifications,
+    required this.pendingDrafts,
+  });
+
+  final int unreadNotifications;
+  final int pendingDrafts;
+
+  factory Badges.fromJson(Map<String, dynamic> json) => Badges(
+    unreadNotifications: (json['unread_notifications'] as num?)?.toInt() ?? 0,
+    pendingDrafts: (json['pending_drafts'] as num?)?.toInt() ?? 0,
+  );
+
+  @override
+  List<Object?> get props => [unreadNotifications, pendingDrafts];
+}
+
 /// One inbox row; payload is kept as a raw map — type-specific tiles read
-/// the fields they care about. Audit columns aren't surfaced.
+/// the fields they care about (names inside are resolved by the BE).
 class AppNotification extends Equatable {
   const AppNotification({
     required this.id,
-    required this.recipientUserId,
     required this.type,
     required this.payload,
     required this.createdAt,
-    this.actorUserId,
-    this.actorDisplayName,
+    this.state = NotificationState.unread,
+    this.awaitsAnswer = false,
+    this.actor,
     this.deepLink,
     this.readAt,
     this.actionedAt,
@@ -57,15 +119,11 @@ class AppNotification extends Equatable {
   });
 
   final String id;
-  final String recipientUserId;
   final NotificationType type;
 
   /// Set when the action originated from a user (almost always). NULL for
   /// pure system events.
-  final String? actorUserId;
-
-  /// Hydrated by the BE list response — saves a separate users-cache lookup.
-  final String? actorDisplayName;
+  final NotificationActor? actor;
 
   /// Trigger-specific shape. See spec §13.2.
   final Map<String, dynamic> payload;
@@ -74,24 +132,35 @@ class AppNotification extends Equatable {
   /// deep-link handler routes via `go_router` when present.
   final String? deepLink;
 
+  final NotificationState state;
+
+  /// The BE's call: the row still waits for the user (a request or a
+  /// one-tap action not yet taken) and shows its answer buttons.
+  final bool awaitsAnswer;
+
   final DateTime? readAt;
   final DateTime? actionedAt;
   final DateTime? dismissedAt;
 
   final DateTime createdAt;
 
-  bool get isUnread => readAt == null;
-  bool get isTerminal => actionedAt != null || dismissedAt != null;
+  bool get isUnread => state == NotificationState.unread;
+  bool get isActioned => state == NotificationState.actioned;
+  bool get isDismissed => state == NotificationState.dismissed;
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     return AppNotification(
       id: json['id'] as String,
-      recipientUserId: json['recipient_user_id'] as String,
       type: NotificationType.fromWire(json['type'] as String),
-      actorUserId: json['actor_user_id'] as String?,
-      actorDisplayName: json['actor_display_name'] as String?,
+      actor: json['actor'] is Map
+          ? NotificationActor.fromJson(
+              (json['actor'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       payload: (json['payload'] as Map?)?.cast<String, dynamic>() ?? const {},
       deepLink: json['deep_link'] as String?,
+      state: NotificationState.fromWire(json['state'] as String?),
+      awaitsAnswer: json['awaits_answer'] as bool? ?? false,
       readAt: _parseDate(json['read_at']),
       actionedAt: _parseDate(json['actioned_at']),
       dismissedAt: _parseDate(json['dismissed_at']),
@@ -99,40 +168,47 @@ class AppNotification extends Equatable {
     );
   }
 
-  AppNotification copyWith({
-    DateTime? readAt,
-    DateTime? actionedAt,
-    DateTime? dismissedAt,
-  }) {
-    return AppNotification(
-      id: id,
-      recipientUserId: recipientUserId,
-      type: type,
-      actorUserId: actorUserId,
-      actorDisplayName: actorDisplayName,
-      payload: payload,
-      deepLink: deepLink,
-      readAt: readAt ?? this.readAt,
-      actionedAt: actionedAt ?? this.actionedAt,
-      dismissedAt: dismissedAt ?? this.dismissedAt,
-      createdAt: createdAt,
-    );
-  }
+  /// Local flip for bulk "mark all read" (the BE has already done it).
+  AppNotification asRead(DateTime at) => AppNotification(
+    id: id,
+    type: type,
+    payload: payload,
+    createdAt: createdAt,
+    state: NotificationState.read,
+    awaitsAnswer: awaitsAnswer,
+    actor: actor,
+    deepLink: deepLink,
+    readAt: at,
+    actionedAt: actionedAt,
+    dismissedAt: dismissedAt,
+  );
 
   @override
   List<Object?> get props => [
     id,
-    recipientUserId,
     type,
-    actorUserId,
-    actorDisplayName,
+    actor,
     payload,
     deepLink,
+    state,
+    awaitsAnswer,
     readAt,
     actionedAt,
     dismissedAt,
     createdAt,
   ];
+}
+
+/// A write's reply (read / actioned / dismiss): the row in its new state +
+/// the fresh badges.
+class NotificationActionResult {
+  const NotificationActionResult({
+    required this.notification,
+    required this.badges,
+  });
+
+  final AppNotification notification;
+  final Badges badges;
 }
 
 DateTime? _parseDate(Object? raw) {
@@ -142,27 +218,52 @@ DateTime? _parseDate(Object? raw) {
   return null;
 }
 
-/// Per-user notification preferences. One row per user; auto-seeded on
-/// registration. See spec §13.1.
+/// The wallet the "record receipt" auto-action writes into (API
+/// `AccountRef`, trimmed to what the settings row shows).
+class DefaultAccountRef extends Equatable {
+  const DefaultAccountRef({
+    required this.id,
+    required this.name,
+    this.iconCode,
+  });
+
+  final String id;
+  final String name;
+  final IconCode? iconCode;
+
+  factory DefaultAccountRef.fromJson(Map<String, dynamic> json) {
+    return DefaultAccountRef(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      iconCode: json['icon_code'] is Map
+          ? IconCode.fromJson(
+              (json['icon_code'] as Map).cast<String, dynamic>(),
+            )
+          : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, name, iconCode];
+}
+
 /// Per-user notification switches (contract §5). For each type the
 /// recipient picks: receive it (not in [mutedTypes]) and run its action
 /// automatically on arrival ([autoTypes]). A muted type ignores its auto
 /// choice — kept, and back in force once it's unmuted.
 class NotificationSettings extends Equatable {
   const NotificationSettings({
-    required this.userId,
     this.mutedTypes = const {},
     this.autoTypes = const {},
-    this.defaultAccountId,
+    this.defaultAccount,
     this.autoResolveOwnInProjects = false,
   });
 
-  final String userId;
   final Set<String> mutedTypes;
   final Set<String> autoTypes;
 
   /// Wallet the "record receipt" auto-action uses; null = no wallet.
-  final String? defaultAccountId;
+  final DefaultAccountRef? defaultAccount;
 
   /// Rows I record myself in a project → my personal copy too.
   final bool autoResolveOwnInProjects;
@@ -175,10 +276,13 @@ class NotificationSettings extends Equatable {
       ...((json[k] as List?) ?? const []).cast<String>(),
     };
     return NotificationSettings(
-      userId: json['user_id'] as String,
       mutedTypes: set('muted_types'),
       autoTypes: set('auto_types'),
-      defaultAccountId: json['default_account_id'] as String?,
+      defaultAccount: json['default_account'] is Map
+          ? DefaultAccountRef.fromJson(
+              (json['default_account'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       autoResolveOwnInProjects:
           json['auto_resolve_own_in_projects'] as bool? ?? false,
     );
@@ -187,17 +291,16 @@ class NotificationSettings extends Equatable {
   NotificationSettings copyWith({
     Set<String>? mutedTypes,
     Set<String>? autoTypes,
-    String? defaultAccountId,
+    DefaultAccountRef? defaultAccount,
     bool clearDefaultAccount = false,
     bool? autoResolveOwnInProjects,
   }) {
     return NotificationSettings(
-      userId: userId,
       mutedTypes: mutedTypes ?? this.mutedTypes,
       autoTypes: autoTypes ?? this.autoTypes,
-      defaultAccountId: clearDefaultAccount
+      defaultAccount: clearDefaultAccount
           ? null
-          : (defaultAccountId ?? this.defaultAccountId),
+          : (defaultAccount ?? this.defaultAccount),
       autoResolveOwnInProjects:
           autoResolveOwnInProjects ?? this.autoResolveOwnInProjects,
     );
@@ -205,10 +308,9 @@ class NotificationSettings extends Equatable {
 
   @override
   List<Object?> get props => [
-    userId,
     mutedTypes,
     autoTypes,
-    defaultAccountId,
+    defaultAccount,
     autoResolveOwnInProjects,
   ];
 }

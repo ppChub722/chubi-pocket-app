@@ -174,7 +174,7 @@ class _EventTags extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(AppIcons.tag, size: 16),
+            const AppIcon(AppIcons.tag, size: AppIconSize.sm),
             const SizedBox(width: AppSpacing.xs),
             Text(
               l.projectTxTags,
@@ -252,7 +252,7 @@ class _MemberSplits extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(AppIcons.split, size: 16),
+            const AppIcon(AppIcons.split, size: AppIconSize.sm),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(l.projectTxSplits, style: textTheme.labelLarge),
@@ -276,13 +276,15 @@ class _MemberSplits extends StatelessWidget {
                   child: Builder(
                     builder: (context) {
                       final m = others.where((x) => x.id == s.memberId);
-                      return PickerTile(
+                      return DetailRow.pick(
                         label: l.projectTxSplitMember,
                         value: m.firstOrNull?.displayName,
+                        emptyText: l.quickEventNone,
                         leading: m.isEmpty
-                            ? const Icon(AppIcons.member)
+                            ? const AppIcon(AppIcons.member)
                             : ProjectMemberAvatar(member: m.first, size: 24),
                         onTap: () => pickMember(s),
+                        horizontalInset: 0,
                       );
                     },
                   ),
@@ -290,26 +292,21 @@ class _MemberSplits extends StatelessWidget {
                 const SizedBox(width: AppSpacing.sm),
                 SizedBox(
                   width: 112,
-                  child: TextField(
+                  child: AppInput(
                     controller: s.amount,
                     textAlign: TextAlign.right,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
                     inputFormatters: [ThousandsInputFormatter()],
-                    decoration: InputDecoration(
-                      hintText: '0',
-                      prefixText: '$symbol ',
-                      isDense: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                    ),
+                    look: AppInputLook.outlined,
+                    hint: '0',
+                    prefixText: '$symbol ',
                   ),
                 ),
-                IconButton(
+                AppIconButton.clear(
                   tooltip: l.commonDelete,
-                  icon: const Icon(AppIcons.clear, size: 18),
+                  iconSize: AppIconSize.md,
                   onPressed: () => c.removeMemberSplit(s),
                 ),
               ],
@@ -395,7 +392,7 @@ class _DescriptionPickerState extends State<_DescriptionPicker> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: AppTextField(
+            child: AppInput(
               controller: _text,
               autofocus: true,
               hint: l.projectTxDescriptionHint,
@@ -425,7 +422,7 @@ class _DescriptionPickerState extends State<_DescriptionPicker> {
             SectionHeader(title: l.projectTxDescriptionPast),
             for (final d in matches)
               DetailRow(
-                leading: const Icon(AppIcons.history),
+                leading: const AppIcon(AppIcons.history),
                 label: d,
                 onTap: () => Navigator.pop(context, d),
               ),

@@ -12,7 +12,7 @@ Transaction _tx({
   List<Map<String, dynamic>> splits = const [],
 }) => Transaction.fromJson({
   'id': 't1',
-  'account_id': 'a1',
+  'account': {'id': 'a1', 'name': 'A'},
   'type': type,
   'amount': 300,
   'date': '2026-10-10',
@@ -78,11 +78,11 @@ void main() {
       // my_share 150; the cap is 200 (forgiven splits don't count).
       final t = Transaction.fromJson({
         'id': 't1',
-        'account_id': 'a1',
+        'account': {'id': 'a1', 'name': 'A'},
         'type': 'expense',
         'amount': 300,
         'date': '2026-10-10',
-        'project_id': 'p1',
+        'project': {'id': 'p1', 'name': 'E'},
         'my_share': 150,
         'split_count': 2,
         'splits': [

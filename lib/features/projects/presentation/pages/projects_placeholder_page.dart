@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_icons.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/widgets/empty_view.dart';
+import '../../../../ui/ui.dart';
 
 /// Phase 0 placeholder for the Projects tab.
 ///

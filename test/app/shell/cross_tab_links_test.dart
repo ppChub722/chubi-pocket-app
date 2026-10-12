@@ -125,6 +125,9 @@ Iterable<File> _dartFiles() => Directory('lib')
     .where((f) {
       final p = f.path.replaceAll(r'\', '/');
       return !p.startsWith('lib/dev/') && // dev screens, outside the shell
+          !p.startsWith(
+            'lib/hub/',
+          ) && // the app hub (/dev/…), outside the shell
           !p.startsWith('lib/l10n/') &&
           !p.endsWith('lib/core/router/app_router.dart') &&
           !p.endsWith('lib/app/shell/tab_nav.dart'); // openPage itself

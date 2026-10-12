@@ -3,20 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/currencies.dart';
-import '../../../../core/constants/text_limits.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/edit_mode/edit_mode_mixin.dart';
-import '../../../../shared/icon_maker/icon_code.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_maker_sheet.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
@@ -244,7 +234,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           SavingGoal(
             id: 'draft',
             name: w.name.trim(),
-            targetAmount: AmountField.parse(w.target)!,
+            targetAmount: AmountInput.parse(w.target)!,
             linkedAccountId: w.accountId!,
             // 0 = omitted on the wire → the server suggests one.
             allocationPct: allocation,
@@ -262,7 +252,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           SavingGoal(
             id: g.id,
             name: w.name.trim(),
-            targetAmount: AmountField.parse(w.target)!,
+            targetAmount: AmountInput.parse(w.target)!,
             linkedAccountId: g.linkedAccountId,
             allocationPct: allocation > 0 ? allocation : g.allocationPct,
             currency: g.currency,
@@ -422,37 +412,33 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             builder: (context) => PullToRefresh(
               enabled: !widget.isCreate,
               onRefresh: context.read<SavingGoalsCubit>().load,
-              child: ListView(
+              child: DetailPageBody(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                  AppSpacing.lg,
-                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                ),
-                children: [
-                  _header(l, goal),
-                  const SizedBox(height: AppSpacing.lg),
-                  _fields(l, goal),
-                  if (goal != null) _stats(l, goal),
-                  // Archive · delete — edit only, always last (the top bar
-                  // carries no page actions).
-                  if (editing && goal != null)
-                    ManageSection(
-                      archiveLabel: l.savingGoalDetailArchive,
-                      onArchive: isSaving ? null : () => _archive(goal),
-                      deleteLabel: l.savingGoalDeleteThis,
-                      onDelete: isSaving ? null : () => _delete(goal),
-                    ),
-                  if (goal != null)
-                    DetailMeta(
-                      lines: detailMetaLines(
+                topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                bottomInset:
+                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                hero: _header(l, goal),
+                sections: [
+                  (first) => _fields(l, goal, first),
+                  (first) => goal == null ? null : _stats(l, goal, first),
+                ],
+                // Archive · delete — edit only, always last (the top bar
+                // carries no page actions).
+                manage: editing && goal != null
+                    ? ManageSection(
+                        archiveLabel: l.savingGoalDetailArchive,
+                        onArchive: isSaving ? null : () => _archive(goal),
+                        deleteLabel: l.savingGoalDeleteThis,
+                        onDelete: isSaving ? null : () => _delete(goal),
+                      )
+                    : null,
+                metaLines: goal == null
+                    ? const []
+                    : detailMetaLines(
                         context,
                         createdAt: goal.createdAt,
                         updatedAt: goal.updatedAt,
                       ),
-                    ),
-                ],
               ),
             ),
           ),
@@ -480,6 +466,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final symbol = _symbol(goal);
     return HeaderCard(
       accent: accent,
+      glyph: AppIcons.savingGoal,
       onEdit: editing ? null : enterEdit,
       topRow: [
         if (goal != null && goal.isCompleted)
@@ -504,7 +491,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           ),
         ),
       ),
-      title: InlineTitleField(
+      title: AppInput.title(
         editing: editing,
         controller: _nameCtrl,
         focusNode: _nameFocus,
@@ -562,12 +549,12 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           label: l.savingGoalFormLinkedAccountLabel,
           value: name,
           emptyText: l.quickEventNone,
-          leading: account == null
+          leading: (account?.iconCode ?? goal?.linkedAccount?.iconCode) == null
               ? null
               : IconDisplay(
                   type: IconType.account,
                   size: 24,
-                  iconCode: account.iconCode,
+                  iconCode: account?.iconCode ?? goal?.linkedAccount?.iconCode,
                 ),
           locked: goal != null && isEditing,
           onTap: goal == null ? () => _pickWallet(state.accounts) : null,
@@ -597,24 +584,24 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  Widget _fields(AppLocalizations l, SavingGoal? goal) {
+  Widget _fields(AppLocalizations l, SavingGoal? goal, bool first) {
     final editing = isEditing;
     final symbol = _symbol(goal);
     final deadline = working.deadline;
     final locale = Localizations.localeOf(context).toLanguageTag();
     return SectionCard(
-      first: true,
+      first: first,
       children: [
         _walletRow(l, goal),
         if (editing)
           DetailStacked(
             label: l.savingGoalFormTargetLabel,
-            child: AmountField(
+            child: AmountInput(
               controller: _targetCtrl,
               currencySymbol: symbol,
               onChanged: (v) => _onText(_Field.target, v),
               validator: (v) {
-                final n = AmountField.parse(v);
+                final n = AmountInput.parse(v);
                 return (n == null || n <= 0)
                     ? l.savingGoalFormTargetInvalid
                     : null;
@@ -634,7 +621,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                   children: [
                     SizedBox(
                       width: 96,
-                      child: InlineField(
+                      child: AppInput.inline(
                         editing: true,
                         controller: _allocationCtrl,
                         maxLength: 6,
@@ -664,17 +651,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         ),
         // Live in view mode too: picking a date enters edit mode.
         DetailRow(
-          leading: const Icon(AppIcons.date),
+          leading: const AppIcon(AppIcons.date),
           label: l.savingGoalFormDeadlineLabel,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                child: Text(
-                  deadline == null
-                      ? l.savingGoalFormDeadlinePlaceholder
-                      : DateFormatter.medium(deadline, locale: locale),
-                ),
+                child: deadline == null
+                    ? DetailPlaceholder(l.savingGoalFormDeadlinePlaceholder)
+                    : Text(DateFormatter.medium(deadline, locale: locale)),
               ),
               if (editing && deadline != null) ...[
                 const SizedBox(width: AppSpacing.xs),
@@ -689,28 +674,34 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             ],
           ),
           showChevron: true,
-          onTap: _pickDeadline,
+          onTap: () {
+            // Empty in view mode: tapping starts adding it (edit + picker).
+            if (!isEditing) enterEdit();
+            _pickDeadline();
+          },
         ),
         DetailStacked(
           label: l.commonDescription,
-          child: InlineField(
+          child: AppInput.inline(
             editing: editing,
             controller: _descriptionCtrl,
             focusNode: _descriptionFocus,
             maxLines: 3,
             maxLength: TextLimits.description,
+            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
             onEnterEdit: () => enterEdit(focus: _descriptionFocus),
             onChanged: (v) => _onText(_Field.description, v),
           ),
         ),
         DetailStacked(
           label: l.commonNote,
-          child: InlineField(
+          child: AppInput.inline(
             editing: editing,
             controller: _noteCtrl,
             focusNode: _noteFocus,
             maxLines: 3,
             maxLength: TextLimits.note,
+            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
             onEnterEdit: () => enterEdit(focus: _noteFocus),
             onChanged: (v) => _onText(_Field.note, v),
           ),
@@ -720,9 +711,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   }
 
   /// Server-computed numbers — read-only, 🔒 while editing.
-  Widget _stats(AppLocalizations l, SavingGoal g) {
+  Widget _stats(AppLocalizations l, SavingGoal g, bool first) {
     final symbol = Currencies.symbolOf(g.currency);
     return SectionCard(
+      first: first,
       children: [
         DetailRow(
           locked: isEditing,
@@ -764,7 +756,7 @@ class _GoalDraft {
 
   factory _GoalDraft.from(SavingGoal g) => _GoalDraft(
     name: g.name,
-    target: AmountField.format(g.targetAmount),
+    target: AmountInput.format(g.targetAmount),
     allocation: _pct(g.allocationPct),
     deadline: g.deadline == null ? null : DateTime.tryParse(g.deadline!),
     iconCode: g.iconCode,

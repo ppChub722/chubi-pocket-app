@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-
-import '../../../shared/icon_maker/icon_code.dart';
+import '../../../ui/ui.dart';
 
 /// Authenticated user — the subset of fields surfaced in the Phase 0 UI.
 class User extends Equatable {
@@ -17,6 +16,8 @@ class User extends Equatable {
   final String id;
   final String username;
   final String displayName;
+
+  /// Read-only and locked: lives on the profile only.
   final String currency;
   final String? email;
   final IconCode? iconCode;
@@ -45,7 +46,6 @@ class User extends Equatable {
 
   User copyWith({
     String? displayName,
-    String? currency,
     String? email,
     IconCode? iconCode,
     bool clearEmail = false,
@@ -57,7 +57,7 @@ class User extends Equatable {
       id: id,
       username: username,
       displayName: displayName ?? this.displayName,
-      currency: currency ?? this.currency,
+      currency: currency,
       email: clearEmail ? null : (email ?? this.email),
       iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
       feeCategoryId: clearFeeCategory

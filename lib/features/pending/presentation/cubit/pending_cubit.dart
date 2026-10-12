@@ -13,14 +13,23 @@ class PendingState extends Equatable {
     this.items = const [],
     this.status = PendingStatus.initial,
     this.error,
+    this.knownTotal,
   });
 
   final List<PendingTransaction> items;
+
+  /// The drafts total told by the dashboard before the list itself is
+  /// loaded (the top-bar badge needs the number, not the rows). Dropped by
+  /// any other emit — the loaded list is the truth.
   final PendingStatus status;
   final ApiException? error;
   String? get errorMessage => error?.message;
 
-  int get count => items.length;
+  final int? knownTotal;
+
+  int get count => knownTotal != null && knownTotal! > items.length
+      ? knownTotal!
+      : items.length;
 
   PendingState copyWith({
     List<PendingTransaction>? items,
@@ -33,7 +42,7 @@ class PendingState extends Equatable {
   );
 
   @override
-  List<Object?> get props => [items, status, error];
+  List<Object?> get props => [items, status, error, knownTotal];
 }
 
 /// App-scoped drafts cache — the top-bar badge, the dashboard block and the
@@ -50,6 +59,15 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
 
   Future<void> loadIfNeeded() async {
     if (state.status == PendingStatus.initial) await load();
+  }
+
+  /// The dashboard's drafts total, for the badge, without loading the list.
+  /// Ignored once the list is loaded.
+  void setKnownTotal(int total) {
+    if (state.status != PendingStatus.initial || state.knownTotal == total) {
+      return;
+    }
+    emit(PendingState(knownTotal: total));
   }
 
   Future<void> load() async {
@@ -84,31 +102,39 @@ class PendingCubit extends Cubit<PendingState> with Clearable {
   }
 
   Future<void> discard(String id) async {
-    await _repo.delete(id);
-    emit(state.copyWith(items: state.items.where((p) => p.id != id).toList()));
+    final r = await _repo.delete(id);
+    _drop({id, ...r.discarded, ...r.skipped});
   }
 
+  /// One call for [ids]; they leave the list.
+  Future<void> discardMany(List<String> ids) async {
+    final r = await _repo.discard(ids);
+    _drop({...r.discarded, ...r.skipped});
+  }
+
+  void _drop(Set<String> ids) => emit(
+    state.copyWith(
+      items: state.items.where((p) => !ids.contains(p.id)).toList(),
+    ),
+  );
+
   /// Submits [ids]; the ones that went through leave the list, the failed
-  /// ones stay with their reason.
+  /// ones are replaced by the server's copy (with its reason; dropped when
+  /// the server no longer has it). The caller patches wallets from
+  /// `accountBalances` and calls `TransactionsCubit.bookChanged()`.
   Future<PendingSubmitResult> submit(List<String> ids) async {
     final result = await _repo.submit(ids);
     final done = result.submitted.toSet();
+    final gone = {
+      for (final id in result.failed.keys)
+        if (!result.failedDrafts.containsKey(id)) id,
+    };
     emit(
       state.copyWith(
         items: [
           for (final p in state.items)
-            if (!done.contains(p.id))
-              result.failed[p.id] == null
-                  ? p
-                  : PendingTransaction(
-                      id: p.id,
-                      source: p.source,
-                      kind: p.kind,
-                      draft: p.draft,
-                      createdAt: p.createdAt,
-                      sourceRef: p.sourceRef,
-                      lastError: result.failed[p.id],
-                    ),
+            if (!done.contains(p.id) && !gone.contains(p.id))
+              result.failedDrafts[p.id] ?? p,
         ],
       ),
     );

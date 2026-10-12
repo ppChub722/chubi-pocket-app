@@ -102,7 +102,7 @@ class ScheduleFields extends ChangeNotifier {
 
   String? totalAmountError(AppLocalizations l) {
     if (!isInstallment) return null;
-    final n = AmountField.parse(totalAmount.text);
+    final n = AmountInput.parse(totalAmount.text);
     return n == null || n <= 0 ? l.scheduledFormAmountInvalid : null;
   }
 
@@ -154,7 +154,7 @@ extension DraftScheduledX on DraftFormController {
     type = e.type == ScheduledTransactionType.income
         ? TransactionType.income
         : TransactionType.expense;
-    amount.text = AmountField.format(e.amount);
+    amount.text = AmountInput.format(e.amount);
     description.text = e.description ?? '';
     note.text = e.note ?? '';
     accountTouched = true;
@@ -168,10 +168,10 @@ extension DraftScheduledX on DraftFormController {
     if (e.isInstallment) {
       s.variant = e.isLoan ? ScheduleVariant.loan : ScheduleVariant.installment;
       if (e.totalAmount != null) {
-        s.totalAmount.text = AmountField.format(e.totalAmount!);
+        s.totalAmount.text = AmountInput.format(e.totalAmount!);
       }
       if (e.downPayment != null && e.downPayment! > 0) {
-        s.downPayment.text = AmountField.format(e.downPayment!);
+        s.downPayment.text = AmountInput.format(e.downPayment!);
       }
       s.totalInstallments.text = e.totalInstallments?.toString() ?? '';
       s.remainingInstallments.text = e.remainingInstallments?.toString() ?? '';
@@ -257,9 +257,9 @@ extension DraftScheduledX on DraftFormController {
       description: d.isEmpty ? null : d,
       note: n.isEmpty ? null : n,
       iconCode: s.iconCode,
-      totalAmount: installment ? AmountField.parse(s.totalAmount.text) : null,
+      totalAmount: installment ? AmountInput.parse(s.totalAmount.text) : null,
       downPayment: installment
-          ? AmountField.parse(s.downPayment.text) ?? 0
+          ? AmountInput.parse(s.downPayment.text) ?? 0
           : null,
       totalInstallments: installment
           ? int.tryParse(s.totalInstallments.text.trim())
@@ -506,7 +506,7 @@ class _ScheduledForm extends StatelessWidget {
                   bottom: AppSpacing.sm,
                 ),
               ),
-              AppTextField(
+              AppInput(
                 controller: s.totalAmount,
                 label: l.scheduledFormTotalAmountLabel,
                 helper: s.isLoan
@@ -518,7 +518,7 @@ class _ScheduledForm extends StatelessWidget {
                 errorText: err ? s.totalAmountError(l) : null,
               ),
               const SizedBox(height: AppSpacing.sm),
-              AppTextField(
+              AppInput(
                 controller: s.downPayment,
                 label: l.scheduledFormDownPaymentLabel,
                 prefixIcon: AppIcons.cash,
@@ -530,7 +530,7 @@ class _ScheduledForm extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: AppTextField(
+                    child: AppInput(
                       controller: s.totalInstallments,
                       label: l.scheduledFormTotalInstallmentsLabel,
                       keyboardType: TextInputType.number,
@@ -542,7 +542,7 @@ class _ScheduledForm extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
-                    child: AppTextField(
+                    child: AppInput(
                       controller: s.remainingInstallments,
                       label: l.scheduledFormRemainingInstallmentsLabel,
                       keyboardType: TextInputType.number,
@@ -555,7 +555,7 @@ class _ScheduledForm extends StatelessWidget {
               ),
               if (s.isLoan) ...[
                 const SizedBox(height: AppSpacing.sm),
-                AppTextField(
+                AppInput(
                   controller: s.interestRate,
                   label: l.scheduledFormInterestRateLabel,
                   keyboardType: money,

@@ -2,8 +2,9 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../shared/icon_maker/icon_code.dart';
+import '../../transactions/domain/refs.dart';
 import '../domain/project.dart';
+import '../../../ui/ui.dart';
 
 /// `POST /v1/projects/quick` response envelope (API §10 "Quick create"):
 /// the created project (same shape as `POST /v1/projects`) plus
@@ -14,6 +15,7 @@ class QuickCreateResult {
     required this.project,
     required this.linkedCount,
     this.transactionId,
+    this.accountBalances = const {},
   });
 
   final Project project;
@@ -22,6 +24,9 @@ class QuickCreateResult {
   /// The new bill the call created (null from an older server) — used to
   /// attach tags after the fact.
   final String? transactionId;
+
+  /// {account id: balance after the write} (API v2 `account_balances`).
+  final Map<String, double> accountBalances;
 }
 
 /// Thin Dio wrapper around `/v1/projects` (API §10).
@@ -161,6 +166,7 @@ class ProjectsRepository {
         project: Project.fromJson(res.data!),
         linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
         transactionId: res.data!['transaction_id'] as String?,
+        accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
@@ -191,6 +197,7 @@ class ProjectsRepository {
         project: Project.fromJson(res.data!),
         linkedCount: (res.data!['linked_count'] as num?)?.toInt() ?? 0,
         transactionId: res.data!['transaction_id'] as String?,
+        accountBalances: WalletBalance.mapOf(res.data!['account_balances']),
       );
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);

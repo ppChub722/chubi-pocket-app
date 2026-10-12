@@ -6,14 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
-import '../../../../core/constants/app_icons.dart';
-import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../shared/icon_maker/icon_display.dart';
-import '../../../../shared/icon_maker/icon_type.dart';
-import '../../../../shared/widgets/ui.dart';
+import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../domain/scheduled_enums.dart';
@@ -208,37 +203,35 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
       body: Builder(
         builder: (context) => PullToRefresh(
           onRefresh: _refresh,
-          child: ListView(
+          child: DetailPageBody(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              MediaQuery.paddingOf(context).top + AppSpacing.md,
-              AppSpacing.lg,
-              96 + MediaQuery.paddingOf(context).bottom,
+            topInset: MediaQuery.paddingOf(context).top + AppSpacing.md,
+            bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
+            hero: _Hero(
+              entry: entry,
+              onStatusTap: canChange ? _changeStatus : null,
+              onEdit: _edit,
             ),
-            children: [
-              _Hero(
-                entry: entry,
-                onStatusTap: canChange ? _changeStatus : null,
-                onEdit: _edit,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _StatsCard(entry: entry, onEdit: _edit),
-              if (entry.canGenerateNow)
-                _GenerateNowCard(entry: entry, onGenerated: _refreshHistory),
-              _HistorySection(future: _historyFuture),
-              ManageSection(
-                deleteLabel: l.scheduledDeleteThis,
-                onDelete: _delete,
-              ),
-              DetailMeta(
-                lines: detailMetaLines(
-                  context,
-                  createdAt: entry.createdAt,
-                  updatedAt: entry.updatedAt,
-                ),
-              ),
+            sections: [
+              (first) => _StatsCard(entry: entry, onEdit: _edit, first: first),
+              (first) => entry.canGenerateNow
+                  ? _GenerateNowCard(
+                      entry: entry,
+                      onGenerated: _refreshHistory,
+                      first: first,
+                    )
+                  : null,
+              (first) => _HistorySection(future: _historyFuture, first: first),
             ],
+            manage: ManageSection(
+              deleteLabel: l.scheduledDeleteThis,
+              onDelete: _delete,
+            ),
+            metaLines: detailMetaLines(
+              context,
+              createdAt: entry.createdAt,
+              updatedAt: entry.updatedAt,
+            ),
           ),
         ),
       ),
@@ -281,6 +274,7 @@ class _Hero extends StatelessWidget {
         : l.scheduledVariantRecurring;
     return HeaderCard(
       accent: accent,
+      glyph: AppIcons.scheduled,
       onEdit: onEdit,
       leading: IconDisplay(
         type: IconType.category,
@@ -330,28 +324,37 @@ class _ToneIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Icon(icon, size: 22, color: tone.color(context));
+      AppIcon(icon, size: AppIconSize.lg, color: tone.color(context));
 }
 
 class _StatsCard extends StatelessWidget {
-  const _StatsCard({required this.entry, required this.onEdit});
+  const _StatsCard({
+    required this.entry,
+    required this.onEdit,
+    required this.first,
+  });
   final ScheduledTransaction entry;
   final VoidCallback onEdit;
+  final bool first;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final rows = <Widget>[
-      _StatRow(
-        icon: AppIcons.wallet,
+      // Empty → tapping opens the same edit sheet as ✏️ (no in-place edit).
+      DetailRow.pick(
+        leading: const AppIcon(AppIcons.wallet),
         label: l.scheduledDetailAccount,
-        value: entry.account?.name ?? '—',
+        value: entry.account?.name,
+        emptyText: l.quickEventNone,
+        onTap: entry.account == null ? onEdit : null,
       ),
       DetailRow.pick(
-        leading: const Icon(AppIcons.category),
+        leading: const AppIcon(AppIcons.category),
         label: l.scheduledDetailCategory,
         value: entry.category?.name,
         emptyText: l.quickEventNone,
+        onTap: entry.category == null ? onEdit : null,
       ),
       _StatRow(
         icon: AppIcons.scheduled,
@@ -393,7 +396,7 @@ class _StatsCard extends StatelessWidget {
       _TextRow(label: l.commonNote, value: entry.note, onLongPress: onEdit),
     ];
     // Detail-page rows (SectionCard / DetailRow), hairlines between.
-    return SectionCard(first: true, children: rows);
+    return SectionCard(first: first, children: rows);
   }
 
   static bool _has(String? v) => v != null && v.trim().isNotEmpty;
@@ -426,7 +429,7 @@ class _StatRow extends StatelessWidget {
   /// A [DetailRow] — the shared detail-page row.
   @override
   Widget build(BuildContext context) =>
-      DetailRow(leading: Icon(icon), label: label, trailing: Text(value));
+      DetailRow(leading: AppIcon(icon), label: label, trailing: Text(value));
 }
 
 /// Description / note — a [DetailStacked], so long text wraps full-width.
@@ -448,12 +451,7 @@ class _TextRow extends StatelessWidget {
       child: DetailStacked(
         label: label,
         child: empty
-            ? Text(
-                l.commonLongPressToEdit,
-                style: style?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              )
+            ? DetailPlaceholder(l.commonLongPressToEdit)
             : Text(value!, style: style),
       ),
     );
@@ -461,9 +459,14 @@ class _TextRow extends StatelessWidget {
 }
 
 class _GenerateNowCard extends StatefulWidget {
-  const _GenerateNowCard({required this.entry, required this.onGenerated});
+  const _GenerateNowCard({
+    required this.entry,
+    required this.onGenerated,
+    required this.first,
+  });
   final ScheduledTransaction entry;
   final VoidCallback onGenerated;
+  final bool first;
 
   @override
   State<_GenerateNowCard> createState() => _GenerateNowCardState();
@@ -476,11 +479,12 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return SectionCard(
+      first: widget.first,
       // One block — the row and its button belong together.
       dividers: false,
       children: [
         DetailRow(
-          leading: const Icon(AppIcons.add),
+          leading: const AppIcon(AppIcons.add),
           label: l.scheduledGenerateNowTitle,
           helper: l.scheduledGenerateNowBody,
         ),
@@ -515,7 +519,15 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
       final result = await cubit.generateNow(widget.entry.id);
       // The generated transaction moved a wallet — refresh balances (the
       // dashboard reloads off this too).
-      if (mounted) unawaited(context.read<AccountsCubit>().load());
+      // (home marks the dashboard stale off the AccountsCubit emit.)
+      if (mounted) {
+        final accounts = context.read<AccountsCubit>();
+        if (result.accountBalances.isEmpty) {
+          unawaited(accounts.load());
+        } else {
+          accounts.patchBalances(result.accountBalances);
+        }
+      }
       widget.onGenerated();
       if (!mounted) return;
       showAppSnackBarOn(
@@ -535,8 +547,9 @@ class _GenerateNowCardState extends State<_GenerateNowCard> {
 }
 
 class _HistorySection extends StatelessWidget {
-  const _HistorySection({required this.future});
+  const _HistorySection({required this.future, required this.first});
   final Future<ScheduledHistory> future;
+  final bool first;
 
   @override
   Widget build(BuildContext context) {
@@ -581,7 +594,7 @@ class _HistorySection extends StatelessWidget {
             row(
               Text(
                 ErrorView.titleFor(
-                  l,
+                  context,
                   ApiException.from(snap.error!, snap.stackTrace),
                 ),
                 style: TextStyle(color: scheme.error),
@@ -589,16 +602,7 @@ class _HistorySection extends StatelessWidget {
             ),
           ];
         } else if (snap.data!.entries.isEmpty) {
-          rows = [
-            row(
-              Text(
-                l.scheduledDetailHistoryEmpty,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ];
+          rows = [row(DetailPlaceholder(l.scheduledDetailHistoryEmpty))];
         } else {
           final h = snap.data!;
           rows = [
@@ -607,9 +611,9 @@ class _HistorySection extends StatelessWidget {
                 onTap: () => openPage(context, '/transactions/${e.id}'),
                 Row(
                   children: [
-                    Icon(
+                    AppIcon(
                       AppIcons.transactions,
-                      size: 20,
+                      size: AppIconSize.md,
                       color: scheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -647,7 +651,9 @@ class _HistorySection extends StatelessWidget {
           ];
         }
         return SectionCard(
+          first: first,
           title: l.scheduledDetailHistoryTitle,
+          description: l.scheduledDetailHistoryDescription,
           children: rows,
         );
       },

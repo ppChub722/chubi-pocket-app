@@ -1,6 +1,6 @@
-import '../../../shared/widgets/reorder/reorder_outline.dart';
 import 'category.dart';
 import 'category_type.dart';
+import '../../../ui/ui.dart';
 
 /// Categories ⇄ the reorder kit's outline ([ReorderOutline]).
 ///

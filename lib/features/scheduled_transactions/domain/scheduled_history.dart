@@ -74,6 +74,7 @@ class GenerateNowResult extends Equatable {
     required this.nextBillingDate,
     required this.status,
     this.remainingInstallments,
+    this.accountBalances = const {},
   });
 
   final String generatedTransactionId;
@@ -82,6 +83,22 @@ class GenerateNowResult extends Equatable {
   final String nextBillingDate;
   final ScheduledStatus status;
   final int? remainingInstallments;
+
+  /// Post-write balances of the wallets the generated transaction touched,
+  /// by account id (`account_balances`); empty when absent.
+  final Map<String, double> accountBalances;
+
+  static Map<String, double> _balances(Object? raw) {
+    final out = <String, double>{};
+    if (raw is List) {
+      for (final e in raw) {
+        if (e is Map && e['account_id'] is String && e['balance'] is num) {
+          out[e['account_id'] as String] = (e['balance'] as num).toDouble();
+        }
+      }
+    }
+    return out;
+  }
 
   factory GenerateNowResult.fromJson(Map<String, dynamic> json) {
     final tx = json['generated_transaction'] as Map<String, dynamic>;
@@ -93,6 +110,7 @@ class GenerateNowResult extends Equatable {
       nextBillingDate: updated['next_billing_date'] as String,
       status: ScheduledStatus.fromJson(updated['status'] as String),
       remainingInstallments: updated['remaining_installments'] as int?,
+      accountBalances: _balances(json['account_balances']),
     );
   }
 
@@ -104,5 +122,6 @@ class GenerateNowResult extends Equatable {
     nextBillingDate,
     status,
     remainingInstallments,
+    accountBalances,
   ];
 }

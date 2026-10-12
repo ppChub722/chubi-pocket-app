@@ -1,5 +1,5 @@
 import 'package:chubi_pocket/app/shell/fade_branch_container.dart';
-import 'package:chubi_pocket/core/theme/app_page_transitions.dart';
+import 'package:chubi_pocket/ui/tokens/app/theme/app_page_transitions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

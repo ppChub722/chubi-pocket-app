@@ -1,91 +1,112 @@
 import 'package:equatable/equatable.dart';
-
-import '../../../shared/icon_maker/icon_code.dart';
+import '../../../ui/ui.dart';
 
 enum ContactStatus { active, archived }
 
+/// `LinkedUser` — the app account a contact is linked to (live profile).
+class LinkedUser extends Equatable {
+  const LinkedUser({
+    required this.id,
+    required this.displayName,
+    this.email,
+    this.iconCode,
+  });
+
+  final String id;
+  final String displayName;
+  final String? email;
+  final IconCode? iconCode;
+
+  factory LinkedUser.fromJson(Map<String, dynamic> json) => LinkedUser(
+    id: json['id'] as String,
+    displayName: json['display_name'] as String,
+    email: json['email'] as String?,
+    iconCode: json['icon_code'] != null
+        ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
+        : null,
+  );
+
+  @override
+  List<Object?> get props => [id, displayName, email, iconCode];
+}
+
+/// `Contact` (API v2). [name], [email] and [iconCode] are RESOLVED by the BE
+/// (nickname → linked profile → own); the client never re-resolves them.
 class Contact extends Equatable {
   const Contact({
     required this.id,
-    required this.userId,
+    required this.name,
     required this.displayName,
     required this.status,
+    this.nickname,
+    this.showNickname = true,
     this.email,
     this.phone,
     this.description,
     this.note,
     this.iconCode,
-    this.linkedUserId,
-    this.linkedUserIconCode,
-    this.linkedUserDisplayName,
-    this.linkedUserEmail,
+    this.linkedUser,
     this.lastUsedAt,
     this.createdAt,
     this.updatedAt,
   });
 
   final String id;
-  final String userId;
 
-  /// B's local copy of the contact's name. Always present. For linked
-  /// contacts, prefer [effectiveDisplayName] for display — that
-  /// projects the linked user's live name; the contact's own
-  /// [displayName] is a snapshot fallback for after unlink.
+  /// Resolved name: the nickname when set and [showNickname], else the linked
+  /// user's live profile name, else [displayName].
+  final String name;
+
+  /// My own label for them. Null when unset.
+  final String? nickname;
+
+  /// Use [nickname] as [name]; only matters when a nickname is set.
+  final bool showNickname;
+
+  /// The contact's own stored name (what the edit field edits).
   final String displayName;
 
-  /// Same fallback story as [displayName]: stored on the contact row,
-  /// used directly when unlinked, but [effectiveEmail] should be used
-  /// for display so linked contacts mirror the user's current email.
+  /// Resolved: the linked user's email when linked, else the contact's own.
   final String? email;
   final String? phone;
   final String? description;
   final String? note;
+
+  /// Resolved: the linked user's icon when linked, else the contact's own.
   final IconCode? iconCode;
-  final String? linkedUserId;
-
-  /// Snapshot of the linked user's profile icon at read time (server-projected
-  /// from `users.icon_code` when `linked_user_id` is set). Null when the
-  /// contact isn't linked or the linked user hasn't set one.
-  final IconCode? linkedUserIconCode;
-
-  /// Live-projected from `users.display_name` when linked. Null when not
-  /// linked. Driven by post-1c policy: linked-contact display fields
-  /// source from the user record so they stay current automatically.
-  final String? linkedUserDisplayName;
-
-  /// Live-projected from `users.email` when linked. Same rule as
-  /// [linkedUserDisplayName].
-  final String? linkedUserEmail;
-
+  final LinkedUser? linkedUser;
   final ContactStatus status;
   final DateTime? lastUsedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  bool get isLinked => linkedUserId != null;
+  bool get isLinked => linkedUser != null;
   bool get isArchived => status == ContactStatus.archived;
 
-  /// Backwards-compatible alias kept for older call sites that just want
-  /// "the name to render". Prefer [effectiveDisplayName] going forward —
-  /// it makes the "linked wins, fall back to local snapshot" rule
-  /// explicit at the call site.
-  String get effectiveName => effectiveDisplayName;
-
-  /// Display rule: when linked, use the linked user's current
-  /// `display_name`; otherwise use the contact's own stored copy.
-  String get effectiveDisplayName => linkedUserDisplayName ?? displayName;
-
-  /// Same rule as [effectiveDisplayName] for email.
-  String? get effectiveEmail => linkedUserEmail ?? email;
-
-  /// Display precedence per spec §4.4: linked user's icon wins over the
-  /// contact's own icon. (avatar_url was dropped in migration 33.)
-  IconCode? get effectiveIconCode => linkedUserIconCode ?? iconCode;
+  // ── Deprecated source-compat getters (other features still read these) ──
+  @Deprecated('Use name')
+  String get effectiveName => name;
+  @Deprecated('Use name')
+  String get effectiveDisplayName => name;
+  @Deprecated('Use email')
+  String? get effectiveEmail => email;
+  @Deprecated('Use iconCode')
+  IconCode? get effectiveIconCode => iconCode;
+  @Deprecated('Use linkedUser?.id')
+  String? get linkedUserId => linkedUser?.id;
+  @Deprecated('Use linkedUser?.displayName')
+  String? get linkedUserDisplayName => linkedUser?.displayName;
+  @Deprecated('Use linkedUser?.email')
+  String? get linkedUserEmail => linkedUser?.email;
+  @Deprecated('Use linkedUser?.iconCode')
+  IconCode? get linkedUserIconCode => linkedUser?.iconCode;
 
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
+      name: json['name'] as String,
+      nickname: json['nickname'] as String?,
+      showNickname: json['show_nickname'] as bool? ?? true,
       displayName: json['display_name'] as String,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
@@ -94,14 +115,9 @@ class Contact extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
-      linkedUserId: json['linked_user_id'] as String?,
-      linkedUserIconCode: json['linked_user_icon_code'] != null
-          ? IconCode.fromJson(
-              json['linked_user_icon_code'] as Map<String, dynamic>,
-            )
+      linkedUser: json['linked_user'] != null
+          ? LinkedUser.fromJson(json['linked_user'] as Map<String, dynamic>)
           : null,
-      linkedUserDisplayName: json['linked_user_display_name'] as String?,
-      linkedUserEmail: json['linked_user_email'] as String?,
       status: (json['status'] as String?) == 'archived'
           ? ContactStatus.archived
           : ContactStatus.active,
@@ -113,65 +129,19 @@ class Contact extends Equatable {
     );
   }
 
-  Contact copyWith({
-    String? displayName,
-    String? email,
-    String? phone,
-    String? description,
-    String? note,
-    IconCode? iconCode,
-    String? linkedUserId,
-    IconCode? linkedUserIconCode,
-    String? linkedUserDisplayName,
-    String? linkedUserEmail,
-    ContactStatus? status,
-    DateTime? lastUsedAt,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    bool clearLinkedUserId = false,
-  }) {
-    return Contact(
-      id: id,
-      userId: userId,
-      displayName: displayName ?? this.displayName,
-      email: email ?? this.email,
-      phone: phone ?? this.phone,
-      description: description ?? this.description,
-      note: note ?? this.note,
-      iconCode: iconCode ?? this.iconCode,
-      linkedUserId: clearLinkedUserId
-          ? null
-          : (linkedUserId ?? this.linkedUserId),
-      linkedUserIconCode: clearLinkedUserId
-          ? null
-          : (linkedUserIconCode ?? this.linkedUserIconCode),
-      linkedUserDisplayName: clearLinkedUserId
-          ? null
-          : (linkedUserDisplayName ?? this.linkedUserDisplayName),
-      linkedUserEmail: clearLinkedUserId
-          ? null
-          : (linkedUserEmail ?? this.linkedUserEmail),
-      status: status ?? this.status,
-      lastUsedAt: lastUsedAt ?? this.lastUsedAt,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
   @override
   List<Object?> get props => [
     id,
-    userId,
+    name,
+    nickname,
+    showNickname,
     displayName,
     email,
     phone,
     description,
     note,
     iconCode,
-    linkedUserId,
-    linkedUserIconCode,
-    linkedUserDisplayName,
-    linkedUserEmail,
+    linkedUser,
     status,
     lastUsedAt,
     createdAt,
@@ -195,21 +165,74 @@ class UnlinkedName extends Equatable {
   List<Object?> get props => [name, count];
 }
 
+/// `ContactDetail` — a [Contact] plus the unlinked split names
+/// (`?include=unlinked_names`).
+class ContactDetail extends Equatable {
+  const ContactDetail({required this.contact, this.unlinkedNames = const []});
+
+  final Contact contact;
+  final List<UnlinkedName> unlinkedNames;
+
+  factory ContactDetail.fromJson(Map<String, dynamic> json) => ContactDetail(
+    contact: Contact.fromJson(json),
+    unlinkedNames: ((json['unlinked_names'] as List?) ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(UnlinkedName.fromJson)
+        .toList(),
+  );
+
+  @override
+  List<Object?> get props => [contact, unlinkedNames];
+}
+
+/// `{contact, absorbed_count}` — absorb and create.
+class AbsorbResult extends Equatable {
+  const AbsorbResult({required this.contact, required this.absorbedCount});
+  final Contact contact;
+  final int absorbedCount;
+
+  factory AbsorbResult.fromJson(Map<String, dynamic> json) => AbsorbResult(
+    contact: Contact.fromJson(json['contact'] as Map<String, dynamic>),
+    absorbedCount: (json['absorbed_count'] as num?)?.toInt() ?? 0,
+  );
+
+  @override
+  List<Object?> get props => [contact, absorbedCount];
+}
+
+/// `{id, splits_restored}`.
+class DeleteContactResult extends Equatable {
+  const DeleteContactResult({required this.id, required this.splitsRestored});
+  final String id;
+  final int splitsRestored;
+
+  factory DeleteContactResult.fromJson(Map<String, dynamic> json) =>
+      DeleteContactResult(
+        id: json['id'] as String,
+        splitsRestored: (json['splits_restored'] as num?)?.toInt() ?? 0,
+      );
+
+  @override
+  List<Object?> get props => [id, splitsRestored];
+}
+
 /// Public-profile slice the BE returns for the inbox tap-flow prefill.
-/// Backed by `GET /v1/contacts/link-requests/:id/sender-profile` —
-/// gated to the request's recipient while the request is still pending.
+/// Backed by `GET /v1/contacts/link-requests/:id/sender-profile`.
+/// [contactId] = the caller's contact that already links to this sender.
 class SenderProfile extends Equatable {
   const SenderProfile({
     required this.id,
     required this.displayName,
     this.email,
     this.iconCode,
+    this.contactId,
   });
 
   final String id;
   final String displayName;
   final String? email;
   final IconCode? iconCode;
+  final String? contactId;
 
   factory SenderProfile.fromJson(Map<String, dynamic> json) {
     return SenderProfile(
@@ -219,9 +242,10 @@ class SenderProfile extends Equatable {
       iconCode: json['icon_code'] != null
           ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
           : null,
+      contactId: json['contact_id'] as String?,
     );
   }
 
   @override
-  List<Object?> get props => [id, displayName, email, iconCode];
+  List<Object?> get props => [id, displayName, email, iconCode, contactId];
 }

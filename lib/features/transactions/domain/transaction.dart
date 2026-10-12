@@ -1,8 +1,9 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../shared/icon_maker/icon_code.dart';
 import '../../tags/domain/tag.dart';
+import 'refs.dart';
 import 'transaction_type.dart';
+import '../../../ui/ui.dart';
 
 /// Denormalized author of a shared-wallet row — API §14 pinned
 /// `created_by` shape: `{ user_id, display_name, icon_code }`. Present
@@ -31,45 +32,6 @@ class TransactionAuthor extends Equatable {
 
   @override
   List<Object?> get props => [userId, displayName, iconCode];
-}
-
-/// Read-only rendering of another member's category — API §14 pinned
-/// `category_render` shape: `{ name, icon_code }`. Categories always
-/// belong to the row's author (spec §14/2.1); other members see this
-/// denormalized snapshot instead of resolving `category_id` against
-/// their own set.
-class CategoryRender extends Equatable {
-  const CategoryRender({required this.name, this.iconCode});
-
-  final String name;
-  final IconCode? iconCode;
-
-  factory CategoryRender.fromJson(Map<String, dynamic> json) {
-    return CategoryRender(
-      name: json['name'] as String? ?? '',
-      iconCode: json['icon_code'] != null
-          ? IconCode.fromJson(json['icon_code'] as Map<String, dynamic>)
-          : null,
-    );
-  }
-
-  @override
-  List<Object?> get props => [name, iconCode];
-}
-
-/// Lightweight ref returned by the BE for embedded `account` /
-/// `category` pairs (spec §3.2). Avoids a JOIN in the client.
-class EmbeddedRef extends Equatable {
-  const EmbeddedRef({required this.id, required this.name});
-  final String id;
-  final String name;
-
-  factory EmbeddedRef.fromJson(Map<String, dynamic> json) {
-    return EmbeddedRef(id: json['id'] as String, name: json['name'] as String);
-  }
-
-  @override
-  List<Object?> get props => [id, name];
 }
 
 /// Tag ref enriched with color + icon so the FE can render chips
@@ -122,12 +84,7 @@ class Transaction extends Equatable {
     this.note,
     this.projectId,
     this.transferGroupId,
-    this.hasSplits = false,
-    this.isRecurring = false,
-    this.isResolve = false,
-    this.accountBalanceAfter,
     this.createdBy,
-    this.categoryRender,
     this.isLocked = false,
     this.canEditCategory = true,
     this.createdAt,
@@ -136,6 +93,9 @@ class Transaction extends Equatable {
     this.splits = const [],
     this.project,
     this.sourcePersonalDebtId,
+    this.isRepayment = false,
+    this.transferPeer,
+    this.currency,
     this.myShare,
     this.canSplit,
     this.canEditSplits,
@@ -157,11 +117,12 @@ class Transaction extends Equatable {
   /// auto-assigned system category for [TransactionType.transfer].
   final String? categoryId;
 
-  /// `{id, name}` embedded ref from the BE response. Saves a separate
-  /// lookup against the categories cache; mostly populated, but `null`
-  /// when the category is uncategorized or has been hard-deleted.
-  final EmbeddedRef? account;
-  final EmbeddedRef? category;
+  /// Full embedded refs (API v2): the wallet / category with their own icon,
+  /// type and system kind, so no lookup against the accounts / categories
+  /// caches. `account` is null on a no-wallet row, `category` on an
+  /// uncategorised one. On a shared-wallet row `category` is the author's.
+  final AccountRef? account;
+  final EmbeddedCategory? category;
 
   /// Tags attached to this transaction. Ordered by name (BE-side), and
   /// always present (empty list, never null) — the BE serializes the
@@ -180,27 +141,28 @@ class Transaction extends Equatable {
   /// Set on both rows of a transfer. Used to identify pair members.
   final String? transferGroupId;
 
-  /// Spec §3.2 derived booleans — read-only signals from the BE.
-  final bool hasSplits;
-  final bool isRecurring;
-  final bool isResolve;
+  /// Debt repayment row (replaces `is_resolve`): can't join an event, can't be
+  /// moved to another category.
+  final bool isRepayment;
 
-  /// Set on `POST /v1/transactions` response only — spec §3.1. Lets
-  /// the FE update the account row's cached balance surgically without
-  /// a follow-up GET. `null` on list responses.
-  final double? accountBalanceAfter;
+  /// The other side of a transfer row (null on every other row); its
+  /// `isOut` is for THIS row.
+  final TransferPeer? transferPeer;
+
+  /// Row currency (3 letters).
+  final String? currency;
+
+  bool get hasSplits => splitCount > 0;
 
   /// Shared-wallet row surface (API §14 pinned contract). All absent on
   /// personal-wallet rows:
   /// - [createdBy] — the row's author (any member may have logged it).
-  /// - [categoryRender] — read-only rendering of the author's category.
   /// - [isLocked] — true for the caller's own rows after they left the
   ///   wallet (spec §14/2.3): read-only for them, full form disabled.
   /// - [canEditCategory] — false when the row belongs to another member
   ///   (spec §14/2.2: only the author edits `category_id`). Defaults to
   ///   true when the field is absent (personal rows).
   final TransactionAuthor? createdBy;
-  final CategoryRender? categoryRender;
   final bool isLocked;
   final bool canEditCategory;
 
@@ -216,10 +178,9 @@ class Transaction extends Equatable {
   final List<TxSplit> splits;
 
   /// `{id, name}` of [projectId]'s project — the detail page's event card.
-  final EmbeddedRef? project;
+  final EventRef? project;
 
-  /// Set on a debt repayment (the debt it pays back) — such a row can't
-  /// join an event.
+  /// Set on a debt repayment (the debt it pays back).
   final String? sourcePersonalDebtId;
 
   /// My part of an expense / income — what reports count (the total minus
@@ -237,18 +198,14 @@ class Transaction extends Equatable {
   final bool? canJoinEvent;
 
   bool get isTransferOut =>
-      type == TransactionType.transfer && _isTransferOutCategory;
+      type == TransactionType.transfer && _isTransferOutRow;
   bool get isTransferIn =>
-      type == TransactionType.transfer && !_isTransferOutCategory;
+      type == TransactionType.transfer && !_isTransferOutRow;
 
-  /// Heuristic: BE assigns the OUT category to the source-side row.
-  /// Without the system_kind on the wire we fall back to the embedded
-  /// category name. Acceptable Phase 1a — system categories can be
-  /// renamed (spec §4.14) but the seed defaults to "Transfer Out".
-  bool get _isTransferOutCategory {
-    final name = category?.name.toLowerCase() ?? '';
-    return name.contains('transfer out') || name.contains('out');
-  }
+  /// The peer's direction when the BE sent it (API v2), else the row's
+  /// system category kind.
+  bool get _isTransferOutRow =>
+      transferPeer?.isOut ?? (category?.isTransferOut ?? false);
 
   /// Signed effect on the row's account balance. Positive = credit.
   double get signedAmount {
@@ -266,36 +223,32 @@ class Transaction extends Equatable {
               .map(EmbeddedTag.fromJson)
               .toList()
         : <EmbeddedTag>[];
+    final account = json['account'] is Map<String, dynamic>
+        ? AccountRef.fromJson(json['account'] as Map<String, dynamic>)
+        : null;
+    final category = json['category'] is Map<String, dynamic>
+        ? EmbeddedCategory.fromJson(json['category'] as Map<String, dynamic>)
+        : null;
+    final project = json['project'] is Map<String, dynamic>
+        ? EventRef.fromJson(json['project'] as Map<String, dynamic>)
+        : null;
     return Transaction(
       id: json['id'] as String,
-      accountId: json['account_id'] as String?,
+      accountId: account?.id,
       type: TransactionType.fromJson(json['type'] as String),
       amount: (json['amount'] as num).toDouble(),
       date: json['date'] as String,
-      categoryId: json['category_id'] as String?,
-      account: json['account'] is Map<String, dynamic>
-          ? EmbeddedRef.fromJson(json['account'] as Map<String, dynamic>)
-          : null,
-      category: json['category'] is Map<String, dynamic>
-          ? EmbeddedRef.fromJson(json['category'] as Map<String, dynamic>)
-          : null,
+      categoryId: category?.id,
+      account: account,
+      category: category,
       tags: tags,
       description: json['description'] as String?,
       note: json['note'] as String?,
-      projectId: json['project_id'] as String?,
+      projectId: project?.id,
       transferGroupId: json['transfer_group_id'] as String?,
-      hasSplits: (json['has_splits'] as bool?) ?? false,
-      isRecurring: (json['is_recurring'] as bool?) ?? false,
-      isResolve: (json['is_resolve'] as bool?) ?? false,
-      accountBalanceAfter: (json['account_balance_after'] as num?)?.toDouble(),
       createdBy: json['created_by'] is Map<String, dynamic>
           ? TransactionAuthor.fromJson(
               json['created_by'] as Map<String, dynamic>,
-            )
-          : null,
-      categoryRender: json['category_render'] is Map<String, dynamic>
-          ? CategoryRender.fromJson(
-              json['category_render'] as Map<String, dynamic>,
             )
           : null,
       isLocked: (json['is_locked'] as bool?) ?? false,
@@ -313,10 +266,13 @@ class Transaction extends Equatable {
                 .map(TxSplit.fromJson)
                 .toList()
           : const [],
-      project: json['project'] is Map<String, dynamic>
-          ? EmbeddedRef.fromJson(json['project'] as Map<String, dynamic>)
-          : null,
+      project: project,
       sourcePersonalDebtId: json['source_personal_debt_id'] as String?,
+      isRepayment: (json['is_repayment'] as bool?) ?? false,
+      transferPeer: json['transfer_peer'] is Map<String, dynamic>
+          ? TransferPeer.fromJson(json['transfer_peer'] as Map<String, dynamic>)
+          : null,
+      currency: json['currency'] as String?,
       myShare: (json['my_share'] as num?)?.toDouble(),
       canSplit: json['can_split'] as bool?,
       canEditSplits: json['can_edit_splits'] as bool?,
@@ -331,27 +287,25 @@ class Transaction extends Equatable {
     double? amount,
     String? date,
     String? categoryId,
-    EmbeddedRef? account,
-    EmbeddedRef? category,
+    AccountRef? account,
+    EmbeddedCategory? category,
     List<EmbeddedTag>? tags,
     String? description,
     String? note,
     String? projectId,
     String? transferGroupId,
-    bool? hasSplits,
-    bool? isRecurring,
-    bool? isResolve,
-    double? accountBalanceAfter,
     TransactionAuthor? createdBy,
-    CategoryRender? categoryRender,
     bool? isLocked,
     bool? canEditCategory,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? splitCount,
     List<TxSplit>? splits,
-    EmbeddedRef? project,
+    EventRef? project,
     String? sourcePersonalDebtId,
+    bool? isRepayment,
+    TransferPeer? transferPeer,
+    String? currency,
     double? myShare,
     bool? canSplit,
     bool? canEditSplits,
@@ -371,12 +325,7 @@ class Transaction extends Equatable {
       note: note ?? this.note,
       projectId: projectId ?? this.projectId,
       transferGroupId: transferGroupId ?? this.transferGroupId,
-      hasSplits: hasSplits ?? this.hasSplits,
-      isRecurring: isRecurring ?? this.isRecurring,
-      isResolve: isResolve ?? this.isResolve,
-      accountBalanceAfter: accountBalanceAfter ?? this.accountBalanceAfter,
       createdBy: createdBy ?? this.createdBy,
-      categoryRender: categoryRender ?? this.categoryRender,
       isLocked: isLocked ?? this.isLocked,
       canEditCategory: canEditCategory ?? this.canEditCategory,
       createdAt: createdAt ?? this.createdAt,
@@ -385,6 +334,9 @@ class Transaction extends Equatable {
       splits: splits ?? this.splits,
       project: project ?? this.project,
       sourcePersonalDebtId: sourcePersonalDebtId ?? this.sourcePersonalDebtId,
+      isRepayment: isRepayment ?? this.isRepayment,
+      transferPeer: transferPeer ?? this.transferPeer,
+      currency: currency ?? this.currency,
       myShare: myShare ?? this.myShare,
       canSplit: canSplit ?? this.canSplit,
       canEditSplits: canEditSplits ?? this.canEditSplits,
@@ -407,12 +359,7 @@ class Transaction extends Equatable {
     note,
     projectId,
     transferGroupId,
-    hasSplits,
-    isRecurring,
-    isResolve,
-    accountBalanceAfter,
     createdBy,
-    categoryRender,
     isLocked,
     canEditCategory,
     createdAt,
@@ -421,6 +368,9 @@ class Transaction extends Equatable {
     splits,
     project,
     sourcePersonalDebtId,
+    isRepayment,
+    transferPeer,
+    currency,
     myShare,
     canSplit,
     canEditSplits,
@@ -428,66 +378,73 @@ class Transaction extends Equatable {
   ];
 }
 
-/// Polymorphic shape of `POST /v1/transactions` and the transfer branch
-/// of `PUT /v1/transactions/:id`. Either [single] is set (expense /
-/// income) or [transfer] is set (transfer pair) — never both.
-class TransactionMutationResult {
-  const TransactionMutationResult.single(Transaction tx)
-    : single = tx,
-      transfer = null;
-  const TransactionMutationResult.transfer(TransferResult result)
-    : single = null,
-      transfer = result;
+/// `POST` / `PUT /transactions` result (API v2): the written rows (a transfer
+/// = both, OUT first) and the wallets' balances after the write, for
+/// `AccountsCubit.patchBalances`.
+class TransactionWriteResult {
+  const TransactionWriteResult({
+    required this.rows,
+    this.accountBalances = const {},
+  });
 
-  final Transaction? single;
-  final TransferResult? transfer;
+  /// One row (expense / income); balances unknown.
+  TransactionWriteResult.single(Transaction tx)
+    : rows = [tx],
+      accountBalances = const {};
 
-  /// Convenience: every row affected by the mutation. Single = 1 row;
-  /// transfer = 2 rows. Used by the cubit's surgical-update path.
-  List<Transaction> get rows {
-    if (single != null) return [single!];
-    return transfer!.rows;
-  }
-
-  factory TransactionMutationResult.fromJson(Map<String, dynamic> json) {
-    if (json['transfer_group_id'] != null && json['rows'] is List) {
-      return TransactionMutationResult.transfer(TransferResult.fromJson(json));
-    }
-    return TransactionMutationResult.single(Transaction.fromJson(json));
-  }
-}
-
-/// `{ transfer_group_id, rows: [out_row, in_row] }` shape.
-class TransferResult {
-  const TransferResult({required this.transferGroupId, required this.rows});
-
-  final String transferGroupId;
   final List<Transaction> rows;
 
-  factory TransferResult.fromJson(Map<String, dynamic> json) {
-    final raw = (json['rows'] as List).cast<Map<String, dynamic>>();
-    return TransferResult(
-      transferGroupId: json['transfer_group_id'] as String,
-      rows: raw.map(Transaction.fromJson).toList(),
-    );
-  }
+  /// {account id: balance after the write}.
+  final Map<String, double> accountBalances;
+
+  bool get isTransfer => rows.length > 1;
+
+  /// The only row, or the OUT row of a transfer (the BE sends it first).
+  Transaction get primary => rows.first;
+
+  factory TransactionWriteResult.fromJson(Map<String, dynamic> json) =>
+      TransactionWriteResult(
+        rows: (json['rows'] as List)
+            .cast<Map<String, dynamic>>()
+            .map(Transaction.fromJson)
+            .toList(),
+        accountBalances: WalletBalance.mapOf(json['account_balances']),
+      );
 }
 
-/// One debt row a transaction's split made (GET /transactions/:id).
+typedef TransactionMutationResult = TransactionWriteResult;
+
+/// `DELETE /transactions/:id` result: the id and the wallets' balances.
+class DeleteTransactionResult {
+  const DeleteTransactionResult({
+    required this.id,
+    this.accountBalances = const {},
+  });
+
+  final String id;
+  final Map<String, double> accountBalances;
+
+  factory DeleteTransactionResult.fromJson(Map<String, dynamic> json) =>
+      DeleteTransactionResult(
+        id: json['id'] as String,
+        accountBalances: WalletBalance.mapOf(json['account_balances']),
+      );
+}
+
+/// One debt row a transaction's split made (GET /transactions/:id). The
+/// person comes embedded with its live name and icon ([EmbeddedPerson]).
 class TxSplit extends Equatable {
   const TxSplit({
     required this.debtId,
-    required this.personName,
+    required this.person,
     required this.amount,
-    this.contactId,
     this.settledAmount = 0,
     this.status = 'open',
     this.owedToMe = true,
   });
 
   final String debtId;
-  final String personName;
-  final String? contactId;
+  final EmbeddedPerson person;
   final double amount;
   final double settledAmount;
 
@@ -497,6 +454,9 @@ class TxSplit extends Equatable {
   /// owed_to_me (they pay me back) vs i_owe (I pay them).
   final bool owedToMe;
 
+  String get personName => person.name;
+  String? get contactId => person.contactId;
+
   /// amount − repaid. Negative = overpaid (repayments don't limit edits,
   /// owner 2026-10-10).
   double get outstanding => amount - settledAmount;
@@ -505,8 +465,12 @@ class TxSplit extends Equatable {
 
   factory TxSplit.fromJson(Map<String, dynamic> json) => TxSplit(
     debtId: json['debt_id'] as String,
-    personName: (json['person_name'] as String?) ?? '',
-    contactId: json['contact_id'] as String?,
+    person: json['person'] is Map<String, dynamic>
+        ? EmbeddedPerson.fromJson(json['person'] as Map<String, dynamic>)
+        : EmbeddedPerson(
+            name: (json['person_name'] as String?) ?? '',
+            contactId: json['contact_id'] as String?,
+          ),
     amount: (json['amount'] as num?)?.toDouble() ?? 0,
     settledAmount: (json['settled_amount'] as num?)?.toDouble() ?? 0,
     status: (json['status'] as String?) ?? 'open',
@@ -516,8 +480,7 @@ class TxSplit extends Equatable {
   @override
   List<Object?> get props => [
     debtId,
-    personName,
-    contactId,
+    person,
     amount,
     settledAmount,
     status,
