@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
@@ -10,7 +11,6 @@ import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
-import '../widgets/change_password_section.dart';
 
 /// `/settings/profile` — the profile detail page, on the same template as the
 /// contact page: hero (avatar · name · @username, tinted with the avatar's
@@ -204,6 +204,16 @@ class _EditProfilePageState extends State<EditProfilePage>
                         locked: true,
                         trailing: Text('@${_user.username}'),
                       ),
+                      // Right under the username; its own page (navigating away
+                      // mid-edit would drop the edits, so inert while editing).
+                      DetailRow(
+                        leading: const AppIcon(AppIcons.lock),
+                        label: l.settingsChangePassword,
+                        showChevron: true,
+                        onTap: editing
+                            ? null
+                            : () => context.push('/settings/password'),
+                      ),
                       // The same field as the contact page's email row
                       // (DetailTextField): one row "not set" when empty.
                       DetailTextField(
@@ -252,10 +262,6 @@ class _EditProfilePageState extends State<EditProfilePage>
                       ),
                     ],
                   ),
-                  // Closed by default; hidden while the profile is being edited so
-                  // there are never two save flows at once.
-                  (first) =>
-                      editing ? null : const ProfileChangePasswordSection(),
                 ],
                 metaLines: detailMetaLines(
                   context,

@@ -235,7 +235,7 @@ final List<HubPage> hubPages = [
     title: 'Chip',
     summary: 'The one chip: three sizes, every state, trailing and tone.',
     usedBy: '47 files',
-    covers: ['AppChip', 'AppChipTone', 'AppChipTrailing'],
+    covers: ['AppChip', 'AppChipTone', 'AppChipTrailing', 'ChipSizeScope'],
     builder: buildChipPage,
   ),
   const HubPage(
@@ -365,6 +365,7 @@ final List<HubPage> hubPages = [
       'SelectionToolbar',
       'SelectionAction',
       'ActionBar',
+      'TopScrim',
       'ActionBarItem',
       'ChipPath',
       'ChipPathSegment',
@@ -397,6 +398,9 @@ final List<HubPage> hubPages = [
     usedBy: '~80 sites',
     covers: [
       'AppMessage',
+      'ConnectionBanner',
+      'ConnectionBannerState',
+      'ConnectionScope',
       'AppMessageAction',
       'showAppMessage',
       'showAppMessageOn',
@@ -746,7 +750,7 @@ final List<HubPage> hubPages = [
   const HubPage(
     level: HubLevel.domain,
     slug: 'sheets-projects',
-    title: 'Sheets: events · password section',
+    title: 'Sheets: events',
     summary:
         'Resolve a board row into my book (tabs, share only, account / category chips) and invite a member; live with sample data.',
     generic: false,
@@ -763,9 +767,6 @@ final List<HubPage> hubPages = [
       'showAddMemberFormSheet',
       'AddMemberLabels',
       'AddMemberFill',
-      'ChangePasswordSection',
-      'ChangePasswordStrings',
-      'ChangePasswordFailure',
     ],
     builder: buildSheetsProjectsPage,
   ),

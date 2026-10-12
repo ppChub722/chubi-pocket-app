@@ -95,7 +95,7 @@ class AppChip extends StatelessWidget {
     this.trailing = AppChipTrailing.none,
     this.onRemove,
     this.count = 0,
-    this.size = ChipSize.control,
+    ChipSize? size,
     this.enabled = true,
     this.tooltip,
     this.dashed = false,
@@ -104,7 +104,8 @@ class AppChip extends StatelessWidget {
   }) : assert(
          trailing != AppChipTrailing.remove || onRemove != null,
          'AppChipTrailing.remove needs onRemove',
-       );
+       ),
+       _size = size;
 
   final String label;
 
@@ -136,8 +137,9 @@ class AppChip extends StatelessWidget {
   /// For [AppChipTrailing.count].
   final int count;
 
-  /// [ChipSize.control] (default), [ChipSize.chip] or [ChipSize.mini].
-  final ChipSize size;
+  /// [ChipSize.control] (default), [ChipSize.chip] or [ChipSize.mini]; null =
+  /// the enclosing [ChipSizeScope]'s, else control.
+  final ChipSize? _size;
   final bool enabled;
 
   /// A tap-to-read hint (why it's locked, what ✕ drops).
@@ -158,6 +160,7 @@ class AppChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = _size ?? ChipSizeScope.of(context) ?? ChipSize.control;
     final scheme = Theme.of(context).colorScheme;
     final tint = color ?? (tone ?? AppChipTone.primary).resolve(context);
     final fg = selected ? tint : scheme.onSurfaceVariant;
@@ -370,4 +373,19 @@ class _RenderExpandedHit extends RenderProxyBox {
     }
     return false;
   }
+}
+
+/// Sets the size of every [AppChip] below it that doesn't pass its own [size]
+/// (a list toolbar's chip row is [ChipSize.chip], one size down from the
+/// search capsule it sits under).
+class ChipSizeScope extends InheritedWidget {
+  const ChipSizeScope({required this.size, required super.child, super.key});
+
+  final ChipSize size;
+
+  static ChipSize? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ChipSizeScope>()?.size;
+
+  @override
+  bool updateShouldNotify(ChipSizeScope old) => size != old.size;
 }

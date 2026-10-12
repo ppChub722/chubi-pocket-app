@@ -1,8 +1,6 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/network/connectivity_cubit.dart';
+import '../../core/network/connection_cubit.dart';
 import '../../features/app_version/presentation/widgets/update_banner.dart';
 import '../../features/auth/presentation/widgets/auth_widgets.dart';
 import '../../features/notifications/domain/notification.dart';
@@ -525,26 +523,29 @@ Widget buildOthersPage(BuildContext context) {
             page: 'Login, Register (signing in)',
             child: GoogleSignInButton(onPressed: () {}, loading: true),
           ),
-          HubUse(
-            wide: true,
-            label: 'OfflineBanner — offline (stand-in connectivity)',
-            page: 'App shell (every page)',
-            child: BlocProvider(
-              create: (_) =>
-                  ConnectivityCubit(connectivity: _FakeConnectivity(false)),
-              child: const OfflineBanner(),
+          for (final (label, status) in [
+            (
+              'OfflineBanner — offline: stays until the connection is back, Retry polls now',
+              ConnectionStatus.offline,
             ),
-          ),
-          HubUse(
-            wide: true,
-            label: 'OfflineBanner — online (renders nothing)',
-            page: 'App shell (every page)',
-            child: BlocProvider(
-              create: (_) =>
-                  ConnectivityCubit(connectivity: _FakeConnectivity(true)),
-              child: const OfflineBanner(),
+            (
+              'OfflineBanner — a retry is running',
+              ConnectionStatus.reconnecting,
             ),
-          ),
+            (
+              'OfflineBanner — back online: a short "connected again", then it goes',
+              ConnectionStatus.backOnline,
+            ),
+          ])
+            HubUse(
+              wide: true,
+              label: label,
+              page: 'App shell (every page)',
+              child: OfflineBanner(
+                state: ServerConnectionState(status: status),
+                onRetry: () {},
+              ),
+            ),
           HubUse(
             wide: true,
             label: 'UpdateBannerStrip — a newer build is out',
@@ -710,20 +711,4 @@ Widget buildOthersPage(BuildContext context) {
       ),
     ],
   );
-}
-
-/// A connectivity source with a fixed answer and no change events.
-class _FakeConnectivity implements Connectivity {
-  _FakeConnectivity(this.online);
-
-  final bool online;
-
-  @override
-  Future<List<ConnectivityResult>> checkConnectivity() async => [
-    online ? ConnectivityResult.wifi : ConnectivityResult.none,
-  ];
-
-  @override
-  Stream<List<ConnectivityResult>> get onConnectivityChanged =>
-      const Stream.empty();
 }

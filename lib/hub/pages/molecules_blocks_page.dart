@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
+import '../../ui/tokens/app/theme/themes/sweet_theme.dart';
 import '../hub_kit.dart';
 
 /// `/dev/ui/molecules/blocks` — page building blocks: the select-mode bar, the
@@ -24,6 +25,30 @@ class _BlocksPageState extends State<_BlocksPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        HubDemo(
+          title: 'TopScrim — content fading under the top bar',
+          note:
+              'The top bar is transparent and bodies run behind it, so scrolled '
+              'rows would show under the clock and behind the floating pills. '
+              'TopScrim (the bar\'s flexible space) is the page colour — solid '
+              'over the status-bar inset, fading to transparent over the bar '
+              'height — so the pills still look floating. It ignores pointers '
+              '(rows under the fade stay tappable) and shifts nothing. Dark and '
+              'light, a list and a detail-like page; the list is scrolled.',
+          child: Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.md,
+            children: [
+              for (final (dark, detail) in const [
+                (true, false),
+                (false, false),
+                (true, true),
+                (false, true),
+              ])
+                _ScrimPhone(dark: dark, detail: detail),
+            ],
+          ),
+        ),
         HubDemo(
           title: 'ActionBar',
           note:
@@ -252,6 +277,109 @@ class _BlocksPageState extends State<_BlocksPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A phone-sized mock page: scrolled rows, [TopScrim] over them, fake pills.
+class _ScrimPhone extends StatelessWidget {
+  const _ScrimPhone({required this.dark, required this.detail});
+
+  final bool dark;
+  final bool detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = dark ? sweetTheme.darkColors : sweetTheme.lightColors;
+    final theme = ThemeData(
+      brightness: dark ? Brightness.dark : Brightness.light,
+      colorScheme: colors.toColorScheme(),
+      scaffoldBackgroundColor: colors.background,
+      extensions: [colors],
+    );
+    const inset = 24.0;
+    return Theme(
+      data: theme,
+      child: Builder(
+        builder: (context) {
+          final scheme = Theme.of(context).colorScheme;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${dark ? 'dark' : 'light'} · ${detail ? 'detail' : 'list'}',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                child: SizedBox(
+                  width: 190,
+                  height: 280,
+                  child: ColoredBox(
+                    color: colors.background,
+                    child: Stack(
+                      children: [
+                        // Scrolled: the first rows are already under the bar.
+                        ListView(
+                          physics: const NeverScrollableScrollPhysics(),
+                          controller: ScrollController(initialScrollOffset: 34),
+                          padding: EdgeInsets.zero,
+                          children: [
+                            for (var i = 0; i < 12; i++)
+                              Container(
+                                height: detail ? 52 : 44,
+                                margin: const EdgeInsets.fromLTRB(8, 0, 8, 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                alignment: Alignment.centerLeft,
+                                decoration: BoxDecoration(
+                                  color: scheme.surface,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  detail ? 'ชื่อที่แสดง · row $i' : 'row $i',
+                                ),
+                              ),
+                          ],
+                        ),
+                        const Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: inset + kToolbarHeight,
+                          child: TopScrim(inset: inset),
+                        ),
+                        Positioned(
+                          top: inset + 6,
+                          left: 8,
+                          right: 8,
+                          child: Row(
+                            children: [
+                              AppChip(label: 'Page', size: ChipSize.chip),
+                              const Spacer(),
+                              AppChip(label: '3', size: ChipSize.chip),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          left: 12,
+                          child: Text(
+                            '21:52',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

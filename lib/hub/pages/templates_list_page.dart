@@ -56,10 +56,14 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
         ),
     ];
 
+    // Search + filters / sort as ONE block (ListToolbar): the chip row sits
+    // one size below the 40 capsule (chip 28).
     final header = <Widget>[
-      AppInput.search(controller: _search, hint: 'Search', onChanged: (_) {}),
       if (_selecting)
-        FilterBar(
+        ListToolbar(
+          searchController: _search,
+          searchHint: 'Search',
+          onSearchChanged: (_) {},
           chips: [
             SelectAllCount(
               selected: _picked.length,
@@ -76,7 +80,10 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
           trailing: BulkDeleteButton(onPressed: _picked.isEmpty ? null : () {}),
         )
       else
-        FilterBar(
+        ListToolbar(
+          searchController: _search,
+          searchHint: 'Search',
+          onSearchChanged: (_) {},
           chips: const [
             AppChip(
               label: 'Status',

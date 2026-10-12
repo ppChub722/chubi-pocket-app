@@ -104,8 +104,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       });
       resetDraft(_InfoDraft.from(view.project));
       if (enterEdit && view.isOwner) this.enterEdit();
-    } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e);
+    } catch (e, st) {
+      // ANY failure (a parse error too) lands in the error + retry view.
+      if (mounted) setState(() => _error = ApiException.from(e, st));
     }
   }
 

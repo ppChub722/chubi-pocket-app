@@ -97,10 +97,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       });
       resetDraft(_ContactDraft.from(c));
       if (enterEdit) this.enterEdit();
-    } on ApiException catch (e) {
+    } catch (e, st) {
       if (!mounted) return;
       setState(() {
-        _error = e;
+        _error = ApiException.from(e, st);
         _loading = false;
       });
     }

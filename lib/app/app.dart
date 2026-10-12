@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'shell/keyboard_insets_guard.dart';
 import '../core/network/api_client.dart';
 import '../core/network/connectivity_cubit.dart';
+import '../core/network/connection_cubit.dart';
 import '../core/network/network_recorder.dart';
 import '../core/router/app_router.dart';
 import '../core/storage/secure_token_storage.dart';
@@ -190,6 +191,14 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
         providers: [
           BlocProvider<AuthCubit>.value(value: _authCubit),
           BlocProvider<ConnectivityCubit>(create: (_) => ConnectivityCubit()),
+          // Server reachability (offline mode): learned from every API call, polls
+          // /health while down, tells the kit via ConnectionScope.
+          BlocProvider<ConnectionCubit>(
+            create: (ctx) => ConnectionCubit(
+              client: _apiClient,
+              deviceOnline: ctx.read<ConnectivityCubit>().stream,
+            ),
+          ),
           BlocProvider<AppVersionCubit>.value(value: _versionCubit),
           BlocProvider<ThemeIdCubit>(create: (_) => ThemeIdCubit(widget.prefs)),
           BlocProvider<ThemeModeCubit>(
@@ -317,12 +326,31 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                     // with it open is dropped here, for every page and
                     // sheet below.
                     child: KeyboardInsetsGuard(
-                      child: Column(
-                        children: [
-                          const OfflineBanner(),
-                          const UpdateBanner(),
-                          Expanded(child: child ?? const SizedBox.shrink()),
-                        ],
+                      child: BlocBuilder<ConnectionCubit, ServerConnectionState>(
+                        builder: (context, conn) => ConnectionScope(
+                          offline: conn.isOffline,
+                          reconnects: conn.reconnects,
+                          child: Column(
+                            children: [
+                              OfflineBanner(
+                                state: conn,
+                                onRetry: context
+                                    .read<ConnectionCubit>()
+                                    .retryNow,
+                              ),
+                              const UpdateBanner(),
+                              Expanded(
+                                // The banner took the status-bar inset: pages
+                                // below must not add it again.
+                                child: MediaQuery.removePadding(
+                                  context: context,
+                                  removeTop: OfflineBanner.visible(conn),
+                                  child: child ?? const SizedBox.shrink(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

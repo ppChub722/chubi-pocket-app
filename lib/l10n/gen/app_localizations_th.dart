@@ -4305,4 +4305,16 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get profileEmailCannotClear => 'อีเมลที่ตั้งแล้วลบออกไม่ได้';
+
+  @override
+  String get connectionOffline => 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ · กำลังลองใหม่…';
+
+  @override
+  String get connectionReconnecting => 'กำลังเชื่อมต่อ…';
+
+  @override
+  String get connectionBack => 'เชื่อมต่อได้แล้ว';
+
+  @override
+  String get connectionRetry => 'ลองใหม่';
 }

@@ -29,15 +29,31 @@ class FilterBar extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (var i = 0; i < chips.length; i++) ...[
-                    if (i > 0) const SizedBox(width: AppSpacing.sm),
-                    chips[i],
+            // The chips scroll sideways; the right edge fades so a chip that
+            // runs off the viewport reads as scrolling, not as a clipped chip.
+            child: ShaderMask(
+              blendMode: BlendMode.dstIn,
+              shaderCallback: (r) {
+                final fade = r.width <= 24 ? 0.0 : 20 / r.width;
+                return LinearGradient(
+                  colors: const [
+                    Colors.white,
+                    Colors.white,
+                    Colors.transparent,
                   ],
-                ],
+                  stops: [0, 1 - fade, 1],
+                ).createShader(r);
+              },
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (var i = 0; i < chips.length; i++) ...[
+                      if (i > 0) const SizedBox(width: AppSpacing.sm),
+                      chips[i],
+                    ],
+                  ],
+                ),
               ),
             ),
           ),

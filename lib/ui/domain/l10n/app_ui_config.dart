@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_exception.dart';
@@ -70,8 +72,11 @@ class _AppErrors extends UiErrors {
   @override
   UiErrorInfo describe(Object error) {
     final e = error is ApiException ? error : null;
+    // A TimeoutException comes from the templates' "still loading" safety net.
     final network =
-        e != null && (e.code == 'NETWORK_ERROR' || e.code == 'NETWORK_TIMEOUT');
+        error is TimeoutException ||
+        (e != null &&
+            (e.code == 'NETWORK_ERROR' || e.code == 'NETWORK_TIMEOUT'));
     final server = e != null && (e.statusCode ?? 0) >= 500;
     if (network) {
       return UiErrorInfo(

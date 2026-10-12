@@ -7,10 +7,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// The list toolbar (contacts, categories, tags, projects, transactions all
-/// use it): the search capsule PAINTS 40 high, the chips are 40, and the gap
+/// use it): the search capsule PAINTS 40 high, the chips are 28 (one size down), and the gap
 /// between them is 8 — so the owner's "search looks short" can't come back.
 void main() {
-  testWidgets('ListToolbar: search 40 high, chips 40, gap 8', (t) async {
+  testWidgets('ListToolbar: search 40 high, chips 28, gap 8', (t) async {
     final key = GlobalKey();
     final theme = ThemeData(extensions: [sweetTheme.lightColors]);
     final fill = theme.colorScheme.surfaceContainerHighest;
@@ -41,7 +41,7 @@ void main() {
     final search = t.getRect(find.byType(TextField));
     final chip = t.getRect(find.byType(AppChip).first);
     expect(search.height, 40);
-    expect(chip.height, 40);
+    expect(chip.height, 28);
     expect(chip.top - search.bottom, 8);
 
     // What is really painted: the grey capsule's rows at the centre column.

@@ -35,6 +35,7 @@ class _PageState extends State<_Page> with EditModeMixin<_Page, String> {
 }
 
 void main() {
+  chromeRaceTests();
   late ShellChromeController chrome;
 
   Future<_PageState> pump(WidgetTester t) async {
@@ -150,5 +151,43 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     expect(s.working, 'a');
     expect(s.isEditing, isFalse);
+  });
+}
+
+/// Save / cancel and an immediate back: the page leaves edit mode and is
+/// popped before the deferred "show the nav" runs — the nav must still come
+/// back (it used to stay hidden on the tab root).
+void chromeRaceTests() {
+  testWidgets('edit → leave edit and pop in the same frame → nav shown', (
+    t,
+  ) async {
+    final chrome = ShellChromeController();
+    final nav = GlobalKey<NavigatorState>();
+    await t.pumpWidget(
+      MaterialApp(
+        navigatorKey: nav,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('th'),
+        builder: (context, child) => AppUiConfig(child: child!),
+        home: ShellChrome(controller: chrome, child: const Text('tab root')),
+      ),
+    );
+    nav.currentState!.push(
+      MaterialPageRoute<void>(
+        builder: (_) => ShellChrome(controller: chrome, child: const _Page()),
+      ),
+    );
+    await t.pumpAndSettle();
+    final s = t.state<_PageState>(find.byType(_Page));
+    s.enterEdit();
+    await t.pumpAndSettle();
+    expect(chrome.hidden, isTrue);
+
+    s.commitSaved('b'); // leaves edit mode → deferred show…
+    nav.currentState!.pop(); // …but the page is gone before it runs
+    await t.pumpAndSettle();
+    expect(find.text('tab root'), findsOneWidget);
+    expect(chrome.hidden, isFalse);
   });
 }

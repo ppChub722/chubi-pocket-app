@@ -62,6 +62,7 @@ class ApiClient {
     // way out — we don't want the raw token in any log line). The
     // unauthorized notifier sits last so 401 is observed on the inbound
     // path.
+    _dio.interceptors.add(_pageLoadTimeouts());
     _dio.interceptors.add(_authInterceptor());
     _dio.interceptors.add(HttpLoggerInterceptor());
     // After the logger (so the request id header is set): feeds the dev hub's
@@ -69,6 +70,7 @@ class ApiClient {
     _dio.interceptors.add(NetworkRecorderInterceptor());
     _dio.interceptors.add(_unauthorizedNotifier());
     _dio.interceptors.add(_outdatedNotifier());
+    _dio.interceptors.add(_reachability());
   }
 
   final Dio _dio;
@@ -77,6 +79,14 @@ class ApiClient {
       StreamController<void>.broadcast();
   final StreamController<Map<String, dynamic>?> _outdatedController =
       StreamController<Map<String, dynamic>?>.broadcast();
+
+  /// Reachability, learned from every call: [onUnreachable] fires on a
+  /// network-level failure (refused, DNS, timeout) — never on an HTTP status;
+  /// [onReachable] on any answer from the server, 4xx / 5xx included.
+  final StreamController<void> _unreachableController =
+      StreamController<void>.broadcast();
+  final StreamController<void> _reachableController =
+      StreamController<void>.broadcast();
 
   /// This app's build number (resolved once) — sent as `X-App-Build`.
   final Future<String?> _appBuild;
@@ -95,6 +105,9 @@ class ApiClient {
   /// this build. The version gate subscribes and blocks at once.
   Stream<Map<String, dynamic>?> get onOutdated => _outdatedController.stream;
 
+  Stream<void> get onUnreachable => _unreachableController.stream;
+  Stream<void> get onReachable => _reachableController.stream;
+
   static Future<String?> _platformBuild() async {
     try {
       return (await PackageInfo.fromPlatform()).buildNumber;
@@ -102,6 +115,29 @@ class ApiClient {
       return null; // no build header — the server lets it through
     }
   }
+
+  /// Page loads fail FAST (owner 2026-10-12): a GET gives up connecting after
+  /// [pageLoadConnectTimeout] and waiting for the answer after
+  /// [pageLoadReceiveTimeout], so a dead server reaches the error + retry view in
+  /// seconds, not 25. Writes keep the longer defaults (a save must not be
+  /// abandoned half-way). A request that really needs longer sets its own
+  /// `Options(receiveTimeout: …)`.
+  static const Duration pageLoadConnectTimeout = Duration(seconds: 5);
+  static const Duration pageLoadReceiveTimeout = Duration(seconds: 10);
+
+  Interceptor _pageLoadTimeouts() => InterceptorsWrapper(
+    onRequest: (options, handler) {
+      if (options.method.toUpperCase() == 'GET') {
+        if (_dio.options.connectTimeout == options.connectTimeout) {
+          options.connectTimeout = pageLoadConnectTimeout;
+        }
+        if (_dio.options.receiveTimeout == options.receiveTimeout) {
+          options.receiveTimeout = pageLoadReceiveTimeout;
+        }
+      }
+      handler.next(options);
+    },
+  );
 
   Interceptor _authInterceptor() => InterceptorsWrapper(
     onRequest: (options, handler) async {
@@ -128,6 +164,29 @@ class ApiClient {
     },
   );
 
+  Interceptor _reachability() => InterceptorsWrapper(
+    onResponse: (response, handler) {
+      _reachableController.add(null);
+      handler.next(response);
+    },
+    onError: (e, handler) {
+      if (e.response != null) {
+        _reachableController.add(null);
+      } else if (isNetworkFailure(e)) {
+        _unreachableController.add(null);
+      }
+      handler.next(e);
+    },
+  );
+
+  /// A failure at the network level (no answer at all) — the offline signal.
+  static bool isNetworkFailure(DioException e) =>
+      e.type == DioExceptionType.connectionError ||
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.sendTimeout ||
+      e.type == DioExceptionType.receiveTimeout ||
+      (e.type == DioExceptionType.unknown && e.error is! FormatException);
+
   Interceptor _outdatedNotifier() => InterceptorsWrapper(
     onError: (e, handler) {
       final data = e.response?.data;
@@ -147,6 +206,8 @@ class ApiClient {
   Future<void> dispose() async {
     await _unauthorizedController.close();
     await _outdatedController.close();
+    await _unreachableController.close();
+    await _reachableController.close();
     _dio.close(force: true);
   }
 }

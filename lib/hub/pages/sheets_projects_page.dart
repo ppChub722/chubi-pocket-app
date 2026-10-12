@@ -119,32 +119,6 @@ class _SheetsProjectsPageState extends State<_SheetsProjectsPage> {
             variant: AppButtonVariant.outlined,
             onPressed: _addMember,
           ),
-          const SizedBox(height: AppSpacing.lg),
-          const AppText('Profile › Change password (a collapsible section)'),
-          const SizedBox(height: AppSpacing.sm),
-          ChangePasswordSection(
-            strings: const ChangePasswordStrings(
-              title: 'Change password',
-              primaryLabel: 'Change password',
-              currentLabel: 'Current password',
-              newLabel: 'New password',
-              newHelper: 'At least 8 characters',
-              confirmLabel: 'Confirm new password',
-              requiredError: 'Required',
-              tooShort: 'At least 8 characters',
-              tooLong: 'Too long',
-              mustDiffer: 'Must differ from the current one',
-              mismatch: 'Does not match',
-              success: 'Password updated',
-            ),
-            // Demo: "wrong1234" as the current password shows the field error.
-            onSubmit: (current, next) async {
-              await Future<void>.delayed(const Duration(milliseconds: 400));
-              return current == 'wrong1234'
-                  ? const ChangePasswordFailure(currentError: 'Wrong password')
-                  : null;
-            },
-          ),
         ],
       ),
     );

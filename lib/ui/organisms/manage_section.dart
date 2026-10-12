@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/connection_scope.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 import '../molecules/danger_row.dart';
@@ -39,6 +40,8 @@ class ManageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Offline: archive / delete can't reach the server — disabled.
+    final offline = ConnectionScope.isOffline(context);
     return Padding(
       padding: EdgeInsets.only(top: first ? 0 : AppSpacing.lg),
       child: Column(
@@ -49,7 +52,7 @@ class ManageSection extends StatelessWidget {
               label: archiveLabel!,
               caution: true,
               padding: EdgeInsets.zero,
-              onTap: onArchive,
+              onTap: offline ? null : onArchive,
             ),
           if (deleteLabel != null)
             DangerRow(
@@ -58,7 +61,7 @@ class ManageSection extends StatelessWidget {
               padding: EdgeInsets.only(
                 top: archiveLabel != null ? AppSpacing.sm : 0,
               ),
-              onTap: onDelete,
+              onTap: offline ? null : onDelete,
             ),
         ],
       ),

@@ -96,6 +96,9 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
+  /// The scrim behind the bar (see [build]) — for tests.
+  static const scrimKey = ValueKey('app-top-bar-scrim');
+
   static const _leftTag = 'app-top-bar-left';
   static const _chipsTag = 'app-top-bar-chips';
 
@@ -111,7 +114,10 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       parentEnabled: !editing,
       onBack: onBack ?? () => _defaultBack(context),
     );
+    // The SCRIM behind the bar — see [TopScrim].
+    final inset = MediaQuery.paddingOf(context).top;
     return AppBar(
+      flexibleSpace: TopScrim(key: scrimKey, inset: inset),
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,

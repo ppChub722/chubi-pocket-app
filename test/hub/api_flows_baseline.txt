@@ -1,3 +1,4 @@
 GET /accounts/{}/summary
+GET /health
 GET /transactions/summary
 POST /scheduled-transactions/{}/{}

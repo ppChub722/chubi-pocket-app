@@ -1608,5 +1608,9 @@
   "accountsSummaryOtherCurrency": "{count, plural, one{1 wallet in another currency is not counted} other{{count} wallets in another currency are not counted}}",
   "notOwnerError": "Only the wallet owner can do this",
   "profileTitle": "Profile",
-  "profileEmailCannotClear": "Once set, the email can't be removed"
+  "profileEmailCannotClear": "Once set, the email can't be removed",
+  "connectionOffline": "Can't reach the server · trying again…",
+  "connectionReconnecting": "Reconnecting…",
+  "connectionBack": "Connected again",
+  "connectionRetry": "Retry"
 }

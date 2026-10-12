@@ -1404,5 +1404,9 @@
   "accountsSummaryOtherCurrency": "{count, plural, other{อีก {count} กระเป๋าเป็นสกุลอื่น ไม่นับรวม}}",
   "notOwnerError": "เฉพาะเจ้าของกระเป๋าเท่านั้น",
   "profileTitle": "โปรไฟล์",
-  "profileEmailCannotClear": "อีเมลที่ตั้งแล้วลบออกไม่ได้"
+  "profileEmailCannotClear": "อีเมลที่ตั้งแล้วลบออกไม่ได้",
+  "connectionOffline": "เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ · กำลังลองใหม่…",
+  "connectionReconnecting": "กำลังเชื่อมต่อ…",
+  "connectionBack": "เชื่อมต่อได้แล้ว",
+  "connectionRetry": "ลองใหม่"
 }

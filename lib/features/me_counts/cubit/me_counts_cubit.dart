@@ -30,8 +30,12 @@ class MeCountsCubit extends Cubit<MeCountsState> {
     try {
       final c = await _repo.fetch();
       if (!isClosed) emit(MeCountsState(counts: c));
-    } on ApiException catch (e) {
-      if (!isClosed) emit(MeCountsState(counts: state.counts, error: e));
+    } catch (e, st) {
+      if (!isClosed) {
+        emit(
+          MeCountsState(counts: state.counts, error: ApiException.from(e, st)),
+        );
+      }
     }
   }
 }

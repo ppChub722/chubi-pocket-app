@@ -132,7 +132,8 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   @override
   void dispose() {
     _debounce?.cancel();
-    if (_chromeHiddenFor ?? false) _shellChrome?.show();
+    // Always release: this page can never keep the shell hidden past its life.
+    _shellChrome?.show(owner: this);
     super.dispose();
   }
 
@@ -348,13 +349,13 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!_editing) {
-        _shellChrome?.show();
+        _shellChrome?.show(owner: this);
         return;
       }
       // A page that opens in edit mode (create) hides the nav only once it
       // has slid in — see [whenRouteSettled].
       whenRouteSettled(route, () {
-        if (mounted && _editing) _shellChrome?.hide();
+        if (mounted && _editing) _shellChrome?.hide(owner: this);
       });
     });
   }

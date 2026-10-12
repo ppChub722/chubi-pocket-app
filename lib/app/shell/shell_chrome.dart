@@ -11,22 +11,32 @@ import 'package:flutter/widgets.dart';
 /// on entry and [ShellChromeController.show] on exit. While hidden, the
 /// shell renders no bottom nav and no FAB, so the page's own
 /// `bottomNavigationBar` is the only bar on screen (no stacking).
+///
+/// COUNTED by owner: every page that hides the chrome passes itself as the
+/// [owner] and releases that same owner on dispose, so the nav is hidden
+/// exactly while at least ONE owner holds it. Overlapping pages (an edit page
+/// opening another) and quick back presses can no longer leave it stuck
+/// hidden on a tab root, or show it under a page that still wants it hidden.
+/// Calls without an [owner] share one anonymous owner (a page toggling its own
+/// in-place mode).
 class ShellChromeController extends ChangeNotifier {
-  bool _hidden = false;
+  static const Object _anonymous = Object();
 
-  /// True while a page has asked the shell to drop its bottom nav.
-  bool get hidden => _hidden;
+  final Set<Object> _owners = {};
 
-  void hide() {
-    if (_hidden) return;
-    _hidden = true;
-    _notify();
+  /// True while any page has asked the shell to drop its bottom nav.
+  bool get hidden => _owners.isNotEmpty;
+
+  void hide({Object? owner}) {
+    final was = hidden;
+    _owners.add(owner ?? _anonymous);
+    if (!was) _notify();
   }
 
-  void show() {
-    if (!_hidden) return;
-    _hidden = false;
-    _notify();
+  void show({Object? owner}) {
+    final was = hidden;
+    _owners.remove(owner ?? _anonymous);
+    if (was && !hidden) _notify();
   }
 
   /// Pages call [hide]/[show] from `dispose` too, which runs while the tree
@@ -105,14 +115,14 @@ class _ShellChromeHiderState extends State<ShellChromeHider> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       whenRouteSettled(route, () {
-        if (mounted) controller.hide();
+        if (mounted) controller.hide(owner: this);
       });
     });
   }
 
   @override
   void dispose() {
-    _controller?.show();
+    _controller?.show(owner: this);
     super.dispose();
   }
 

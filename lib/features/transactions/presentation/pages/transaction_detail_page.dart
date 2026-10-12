@@ -81,8 +81,8 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
     ApiException? error;
     try {
       await context.read<TransactionsCubit>().refreshOne(widget.transactionId);
-    } on ApiException catch (e) {
-      error = e;
+    } catch (e, st) {
+      error = ApiException.from(e, st);
     }
     if (!mounted) return;
     setState(() {

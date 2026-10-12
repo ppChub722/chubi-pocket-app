@@ -6,6 +6,7 @@ import '../tokens/tone.dart';
 import '../molecules/error_view.dart';
 import '../molecules/app_snackbar.dart';
 import 'pull_to_refresh.dart';
+import '../atoms/connection_scope.dart';
 import 'page_skeletons.dart';
 
 /// One rule for every async-loaded screen (design-sheet §8.5) — pages only
@@ -45,6 +46,7 @@ class AsyncStateView extends StatefulWidget {
     this.empty,
     this.skeleton,
     this.snackOnRefreshError = true,
+    this.slowAfter = defaultSlowAfter,
   });
 
   /// A detail page's body while its item isn't in the cache (when it is,
@@ -57,6 +59,7 @@ class AsyncStateView extends StatefulWidget {
     required this.onRetry,
     required Widget notFound,
     this.skeleton,
+    this.slowAfter = defaultSlowAfter,
   }) : isEmpty = true,
        empty = notFound,
        builder = _none,
@@ -93,6 +96,15 @@ class AsyncStateView extends StatefulWidget {
   /// Off when [builder] shows a failed refresh itself (home's banner).
   final bool snackOnRefreshError;
 
+  /// How long the FIRST load may sit on the skeleton before the page offers
+  /// "retry" (a [TimeoutException] error view) — the safety net for a load that
+  /// never resolves or whose failure the page didn't catch. The load keeps
+  /// running: if it finishes, the content appears. Null = never.
+  final Duration? slowAfter;
+
+  /// Matches the 5 s connect / 10 s receive timeouts of page-load GETs plus slack.
+  static const Duration defaultSlowAfter = Duration(seconds: 8);
+
   @override
   State<AsyncStateView> createState() => _AsyncStateViewState();
 }
@@ -104,9 +116,50 @@ class _AsyncStateViewState extends State<AsyncStateView> {
   /// load.
   bool _settled = false;
 
+  Timer? _slowTimer;
+
+  /// The first load has outlasted [AsyncStateView.slowAfter].
+  bool _slow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncSlowTimer();
+  }
+
+  @override
+  void dispose() {
+    _slowTimer?.cancel();
+    super.dispose();
+  }
+
+  bool get _firstLoading => widget.loading && widget.isEmpty && !_settled;
+
+  void _syncSlowTimer() {
+    final after = widget.slowAfter;
+    if (!_firstLoading || after == null) {
+      _slowTimer?.cancel();
+      _slowTimer = null;
+      _slow = false;
+      return;
+    }
+    _slowTimer ??= Timer(after, () {
+      if (mounted) setState(() => _slow = true);
+    });
+  }
+
+  void _retry() {
+    _slowTimer?.cancel();
+    _slowTimer = null;
+    setState(() => _slow = false);
+    widget.onRetry();
+    _syncSlowTimer();
+  }
+
   @override
   void didUpdateWidget(AsyncStateView old) {
     super.didUpdateWidget(old);
+    _syncSlowTimer();
     final e = widget.error;
     if (!widget.snackOnRefreshError ||
         e == null ||
@@ -132,6 +185,19 @@ class _AsyncStateViewState extends State<AsyncStateView> {
     // change — never swaps the content for the skeleton.
     if (!w.loading || !w.isEmpty) _settled = true;
     if (!w.isEmpty) return w.builder(context);
+    // Offline (the app knows the server is unreachable): a page with no data shows
+    // the full-page error + retry AT ONCE — no skeleton wait. Pages with data stay.
+    if (w.loading && !_settled && ConnectionScope.isOffline(context)) {
+      return _pullable(
+        ErrorView(error: TimeoutException('offline'), onRetry: _retry),
+      );
+    }
+    if (w.loading && !_settled && _slow) {
+      // Still on the first load after [slowAfter]: offer retry (the load goes on).
+      return _pullable(
+        ErrorView(error: TimeoutException('still loading'), onRetry: _retry),
+      );
+    }
     if (w.loading && !_settled) {
       return w.skeleton ??
           (w._detail

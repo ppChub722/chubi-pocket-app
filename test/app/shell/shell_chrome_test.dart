@@ -25,6 +25,7 @@ class _PageState extends State<_Page> {
 }
 
 void main() {
+  chromeRaceTests();
   testWidgets('fires once the page has slid in, not during', (t) async {
     final nav = GlobalKey<NavigatorState>();
     await t.pumpWidget(
@@ -61,5 +62,103 @@ void main() {
     var fired = 0;
     whenRouteSettled(null, () => fired++);
     expect(fired, 1);
+  });
+}
+
+/// The shell nav must NEVER stay hidden on a tab root — whatever the order of
+/// pushes and pops (owner 2026-10-12: back pressed quickly from an edit page
+/// left the bottom bar hidden).
+void chromeRaceTests() {
+  test('counted by owner: hidden while ANY owner holds it', () {
+    final c = ShellChromeController();
+    final a = Object();
+    final b = Object();
+    c.hide(owner: a);
+    c.hide(owner: b);
+    expect(c.hidden, isTrue);
+    c.show(owner: a);
+    expect(c.hidden, isTrue, reason: 'b still holds it');
+    c.show(owner: b);
+    expect(c.hidden, isFalse);
+    c.show(owner: b); // releasing twice is harmless
+    expect(c.hidden, isFalse);
+  });
+
+  Future<GlobalKey<NavigatorState>> pumpShell(
+    WidgetTester t,
+    ShellChromeController c,
+  ) async {
+    final nav = GlobalKey<NavigatorState>();
+    await t.pumpWidget(
+      ShellChrome(
+        controller: c,
+        child: MaterialApp(navigatorKey: nav, home: const Text('tab root')),
+      ),
+    );
+    return nav;
+  }
+
+  Route<void> editRoute() => MaterialPageRoute<void>(
+    builder: (_) => const ShellChromeHider(child: Scaffold(body: Text('edit'))),
+  );
+
+  testWidgets('push then pop at once → shown', (t) async {
+    final c = ShellChromeController();
+    final nav = await pumpShell(t, c);
+    nav.currentState!.push(editRoute());
+    nav.currentState!.pop();
+    await t.pumpAndSettle();
+    expect(c.hidden, isFalse);
+  });
+
+  testWidgets('pop during the push animation → shown', (t) async {
+    final c = ShellChromeController();
+    final nav = await pumpShell(t, c);
+    nav.currentState!.push(editRoute());
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 120));
+    nav.currentState!.pop();
+    await t.pumpAndSettle();
+    expect(c.hidden, isFalse);
+  });
+
+  testWidgets('settled, hidden, then pop → shown', (t) async {
+    final c = ShellChromeController();
+    final nav = await pumpShell(t, c);
+    nav.currentState!.push(editRoute());
+    await t.pumpAndSettle();
+    expect(c.hidden, isTrue);
+    nav.currentState!.pop();
+    await t.pumpAndSettle();
+    expect(c.hidden, isFalse);
+  });
+
+  testWidgets('an edit page opening another, popped in any order → shown', (
+    t,
+  ) async {
+    final c = ShellChromeController();
+    final nav = await pumpShell(t, c);
+    nav.currentState!.push(editRoute());
+    await t.pumpAndSettle();
+    nav.currentState!.push(editRoute());
+    await t.pumpAndSettle();
+    nav.currentState!.pop();
+    await t.pumpAndSettle();
+    expect(c.hidden, isTrue, reason: 'the first edit page is still on');
+    nav.currentState!.pop();
+    await t.pumpAndSettle();
+    expect(c.hidden, isFalse);
+  });
+
+  testWidgets('double back during the animation → shown', (t) async {
+    final c = ShellChromeController();
+    final nav = await pumpShell(t, c);
+    nav.currentState!.push(editRoute());
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 80));
+    nav.currentState!.popUntil((r) => r.isFirst);
+    nav.currentState!.popUntil((r) => r.isFirst);
+    await t.pumpAndSettle();
+    expect(c.hidden, isFalse);
   });
 }

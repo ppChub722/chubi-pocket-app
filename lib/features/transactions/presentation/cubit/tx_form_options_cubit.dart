@@ -56,13 +56,13 @@ class TxFormOptionsCubit extends Cubit<TxFormOptionsState> {
           options: options,
         ),
       );
-    } on ApiException catch (e) {
+    } catch (e, st) {
       if (isClosed) return;
       emit(
         TxFormOptionsState(
           status: TxFormOptionsStatus.error,
           options: state.options,
-          error: e,
+          error: ApiException.from(e, st),
         ),
       );
     }

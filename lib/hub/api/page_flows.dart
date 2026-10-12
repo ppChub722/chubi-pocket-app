@@ -74,6 +74,20 @@ class PageFlow {
 /// cached afterwards) — the Network page of the Debug section measures the
 /// rest in the real app.
 const List<PageFlow> pageFlows = [
+  // ── App shell ────────────────────────────────────────────────────────────
+  PageFlow(
+    'connection',
+    'The offline banner: while the server is unreachable the app polls /health every few seconds (backoff 3 → 10 s) until it answers.',
+    [
+      FlowStep.action('Server unreachable (a network-level failure)', [
+        FlowCall.unspecified(
+          'GET',
+          '/health',
+          note: 'Liveness poll while offline; any answer = back online.',
+        ),
+      ]),
+    ],
+  ),
   // ── Reached pages ──────────────────────────────────────────────────────────
   PageFlow(
     'home',
@@ -133,17 +147,12 @@ const List<PageFlow> pageFlows = [
         today:
             '3 calls on first open (GET /accounts, /categories, /tags), then cached',
       ),
-      FlowStep.action(
-        'Button "บันทึก"',
-        [
-          FlowCall(
-            'createTransaction',
-            note:
-                'creates tx + tags + splits; returns the row + wallet balances',
-          ),
-        ],
-        today: '3 calls (create, reload wallets, reload the book)',
-      ),
+      FlowStep.action('Button "บันทึก"', [
+        FlowCall(
+          'createTransaction',
+          note: 'creates tx + tags + splits; returns the row + wallet balances',
+        ),
+      ], today: '3 calls (create, reload wallets, reload the book)'),
       FlowStep.action('Button "บันทึกร่าง"', [
         FlowCall('createPending', note: 'saves a draft'),
       ]),

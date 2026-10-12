@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../atoms/connection_scope.dart';
 import '../tokens/app_durations.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app/app_colors.dart';
@@ -60,6 +61,23 @@ class _PullToRefreshState extends State<PullToRefresh>
     vsync: this,
     duration: AppDurations.fast,
   );
+
+  /// The reconnect count last seen — a change means the connection came back.
+  int? _reconnects;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final now = ConnectionScope.reconnectsOf(context);
+    final before = _reconnects;
+    _reconnects = now;
+    if (before != null && now != before && widget.enabled) {
+      // Back online: re-open the page — the same load a pull would run.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.enabled) widget.onRefresh();
+      });
+    }
+  }
 
   @override
   void dispose() {

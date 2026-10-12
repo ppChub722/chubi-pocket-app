@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/connection_scope.dart';
 import '../atoms/app_button.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
@@ -116,7 +117,11 @@ class FormSheet extends StatelessWidget {
                       : AppButtonVariant.primary,
                   size: AppButtonSize.large,
                   expand: true,
-                  onPressed: saving ? null : onPrimary,
+                  // Offline: a save can't reach the server — disabled (the banner says why); the
+                  // typed input stays.
+                  onPressed: saving || ConnectionScope.isOffline(context)
+                      ? null
+                      : onPrimary,
                 ),
               ),
             ],

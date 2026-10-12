@@ -53,10 +53,10 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         _members = results[1] as List<ProjectMember>;
         _loading = false;
       });
-    } on ApiException catch (e) {
+    } catch (e, st) {
       if (mounted) {
         setState(() {
-          _error = e;
+          _error = ApiException.from(e, st);
           _loading = false;
         });
       }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/app_chip.dart';
 import '../atoms/app_input.dart';
 import '../molecules/filter_bar.dart';
 import '../tokens/app_spacing.dart';
+import '../tokens/chip_size.dart';
 
 /// The list pages' toolbar block (owner 2026-10-12): the search capsule and
 /// the filters / sort row under it are ONE block — the gap between them is
@@ -50,15 +52,20 @@ class ListToolbar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             ),
           if (hasSearch && hasFilters) const SizedBox(height: gap),
+          // The chip row sits one size below the search capsule (chip 28 under
+          // the 40 capsule), for every list page.
           if (hasFilters)
-            FilterBar(
-              chips: chips,
-              trailing: trailing,
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                0,
-                AppSpacing.lg,
-                0,
+            ChipSizeScope(
+              size: ChipSize.chip,
+              child: FilterBar(
+                chips: chips,
+                trailing: trailing,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  0,
+                ),
               ),
             ),
         ],

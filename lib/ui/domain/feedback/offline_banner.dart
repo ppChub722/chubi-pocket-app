@@ -1,66 +1,63 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../../../core/network/connectivity_cubit.dart';
+import '../../../core/network/connection_cubit.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../molecules/connection_banner.dart';
+import '../../tokens/app_spacing.dart';
 
-/// Top-of-screen banner shown when the device has no network. Auto-dismisses
-/// when connectivity returns. Wired globally via [MaterialApp.router]'s
-/// `builder:` so every page picks it up.
-///
-/// Per design-sheet §8.5: 48 dp tall, surface-container background, slides in
-/// from top in 200 ms.
+/// The server-connection banner at the top of every page (owner 2026-10-12,
+/// offline mode): the kit's [ConnectionBanner] with the app's words. Nothing
+/// while online; "can't reach the server · trying again…" + Retry while the
+/// server is unreachable (it stays until the connection is back, never
+/// auto-dismisses); a short "connected again" when it returns. Slides in /
+/// out; the status-bar inset moves into it while shown. Wired globally via
+/// `MaterialApp.router`'s `builder:` from `ConnectionCubit`.
 class OfflineBanner extends StatelessWidget {
-  const OfflineBanner({super.key});
+  const OfflineBanner({required this.state, this.onRetry, super.key});
+
+  final ServerConnectionState state;
+
+  /// Retry now (the banner's button).
+  final VoidCallback? onRetry;
+
+  /// Whether the banner takes space (the page below drops its own top inset).
+  static bool visible(ServerConnectionState s) =>
+      s.status != ConnectionStatus.online;
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ConnectivityCubit, bool>(
-      builder: (context, isOnline) {
-        return AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          alignment: Alignment.bottomCenter,
-          child: isOnline ? const SizedBox.shrink() : const _Banner(),
-        );
-      },
-    );
-  }
-}
-
-class _Banner extends StatelessWidget {
-  const _Banner();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final l = AppLocalizations.of(context);
-    return Material(
-      color: scheme.surfaceContainer,
-      child: SafeArea(
-        bottom: false,
-        child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          alignment: Alignment.centerLeft,
-          child: Row(
-            children: [
-              Icon(AppIcons.offline, size: 16, color: scheme.onSurface),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  // l can be null very briefly during the first frame before
-                  // localizations resolve; fall back to the English string.
-                  l?.offlineBanner ?? "You're offline",
-                  style: TextStyle(color: scheme.onSurface),
+    final l = AppLocalizations.of(context)!;
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      alignment: Alignment.bottomCenter,
+      child: !visible(state)
+          ? const SizedBox(width: double.infinity)
+          : SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                ),
+                child: ConnectionBanner(
+                  state: switch (state.status) {
+                    ConnectionStatus.reconnecting =>
+                      ConnectionBannerState.reconnecting,
+                    ConnectionStatus.backOnline =>
+                      ConnectionBannerState.backOnline,
+                    _ => ConnectionBannerState.offline,
+                  },
+                  offlineText: l.connectionOffline,
+                  reconnectingText: l.connectionReconnecting,
+                  backText: l.connectionBack,
+                  retryLabel: l.connectionRetry,
+                  onRetry: onRetry,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

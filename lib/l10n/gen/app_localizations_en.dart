@@ -4412,4 +4412,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileEmailCannotClear => 'Once set, the email can\'t be removed';
+
+  @override
+  String get connectionOffline => 'Can\'t reach the server · trying again…';
+
+  @override
+  String get connectionReconnecting => 'Reconnecting…';
+
+  @override
+  String get connectionBack => 'Connected again';
+
+  @override
+  String get connectionRetry => 'Retry';
 }

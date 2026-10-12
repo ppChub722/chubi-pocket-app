@@ -92,9 +92,9 @@ class ListToolbarSkeleton extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Row(
               children: [
-                SkeletonBox(width: 96, height: 40, borderRadius: 20),
+                SkeletonBox(width: 96, height: 28, borderRadius: 14),
                 Spacer(),
-                SkeletonBox(width: 110, height: 40, borderRadius: 20),
+                SkeletonBox(width: 110, height: 28, borderRadius: 14),
               ],
             ),
           ),

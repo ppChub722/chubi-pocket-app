@@ -1,0 +1,144 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:chubi_pocket/core/network/api_exception.dart';
+import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:chubi_pocket/features/contacts/data/contacts_repository.dart';
+import 'package:chubi_pocket/features/contacts/domain/contact.dart';
+import 'package:chubi_pocket/features/contacts/presentation/cubit/contacts_cubit.dart';
+import 'package:chubi_pocket/features/contacts/presentation/pages/contact_detail_page.dart';
+import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
+import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
+import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
+import 'package:chubi_pocket/ui/ui.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _Auth extends MockCubit<AuthState> implements AuthCubit {}
+
+class _Pending extends MockCubit<PendingState> implements PendingCubit {}
+
+class _Unread extends MockCubit<int> implements UnreadBadgeCubit {}
+
+class _Contacts extends MockCubit<ContactsState> implements ContactsCubit {}
+
+/// `get` runs the REAL model parsing on [body], or fails like the network does.
+class _Repo extends Fake implements ContactsRepository {
+  Map<String, dynamic>? body;
+  bool networkDown = false;
+  int calls = 0;
+
+  @override
+  Future<ContactDetail> get(String id) async {
+    calls++;
+    if (networkDown) {
+      throw const ApiException(code: 'NETWORK_ERROR', message: 'no connection');
+    }
+    return ContactDetail.fromJson(body!);
+  }
+}
+
+/// A contact as the BE sends it (linked user, resolved name / icon, unlinked
+/// split names).
+Map<String, dynamic> _prodContact() => {
+  'id': 'c1',
+  'name': 'Lee Cooper',
+  'nickname': 'Coop',
+  'show_nickname': true,
+  'display_name': 'Lee Cooper',
+  'email': 'lee@example.com',
+  'phone': null,
+  'description': 'Flatmate',
+  'note': null,
+  'icon_code': null,
+  'linked_user': {
+    'id': 'u9',
+    'display_name': 'Lee',
+    'username': 'lee',
+    'email': 'lee@example.com',
+    'icon_code': null,
+  },
+  'status': 'active',
+  'last_used_at': '2026-10-10T08:00:00Z',
+  'created_at': '2026-10-01T08:00:00Z',
+  'updated_at': '2026-10-11T08:00:00Z',
+  'unlinked_names': [
+    {'name': 'Cooper', 'count': 2},
+  ],
+};
+
+void main() {
+  late _Repo repo;
+
+  setUp(() => repo = _Repo()..body = _prodContact());
+
+  Future<void> pump(WidgetTester t) async {
+    final auth = _Auth();
+    final pending = _Pending();
+    final unread = _Unread();
+    final contacts = _Contacts();
+    when(() => auth.state).thenReturn(const AuthUnauthenticated());
+    when(() => pending.state).thenReturn(const PendingState());
+    when(() => unread.state).thenReturn(0);
+    when(() => contacts.state).thenReturn(const ContactsState());
+    await t.pumpWidget(
+      RepositoryProvider<ContactsRepository>.value(
+        value: repo,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: auth),
+            BlocProvider<PendingCubit>.value(value: pending),
+            BlocProvider<UnreadBadgeCubit>.value(value: unread),
+            BlocProvider<ContactsCubit>.value(value: contacts),
+          ],
+          child: MaterialApp(
+            theme: ThemeData(
+              extensions: [
+                ThemeRegistry.byId(
+                  ThemeRegistry.defaultThemeId,
+                ).colorsFor(Brightness.light),
+              ],
+            ),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en'),
+            builder: (context, child) => AppUiConfig(child: child!),
+            home: const ContactDetailPage(id: 'c1'),
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+  }
+
+  testWidgets('prod-shaped JSON renders the contact', (t) async {
+    await pump(t);
+    expect(find.byType(ErrorView), findsNothing);
+    expect(find.byType(DetailPageSkeleton), findsNothing);
+    expect(find.text('Lee Cooper'), findsWidgets);
+  });
+
+  testWidgets('network down → error + retry; retry loads the contact', (
+    t,
+  ) async {
+    repo.networkDown = true;
+    await pump(t);
+    expect(find.byType(ErrorView), findsOneWidget);
+    repo.networkDown = false;
+    await t.tap(find.text('Retry'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+    expect(find.byType(ErrorView), findsNothing);
+    expect(find.text('Lee Cooper'), findsWidgets);
+    expect(repo.calls, 2);
+  });
+
+  testWidgets('a malformed body (parse TypeError) → error + retry, not an '
+      'endless skeleton', (t) async {
+    repo.body = {'id': 'c1'}; // `name` / `display_name` missing
+    await pump(t);
+    expect(find.byType(ErrorView), findsOneWidget);
+    expect(find.byType(DetailPageSkeleton), findsNothing);
+  });
+}

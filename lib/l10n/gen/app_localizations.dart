@@ -7704,6 +7704,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Once set, the email can\'t be removed'**
   String get profileEmailCannotClear;
+
+  /// No description provided for @connectionOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server · trying again…'**
+  String get connectionOffline;
+
+  /// No description provided for @connectionReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting…'**
+  String get connectionReconnecting;
+
+  /// No description provided for @connectionBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected again'**
+  String get connectionBack;
+
+  /// No description provided for @connectionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get connectionRetry;
 }
 
 class _AppLocalizationsDelegate

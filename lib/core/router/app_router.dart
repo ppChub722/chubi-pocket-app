@@ -53,6 +53,7 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/settings/presentation/pages/change_password_page.dart';
 import '../../features/settings/presentation/pages/edit_profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 
@@ -377,6 +378,12 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
           path: 'profile',
           name: 'settings-profile',
           builder: (context, state) => const EditProfilePage(),
+        ),
+        GoRoute(
+          path: 'password',
+          name: 'settings-password',
+          builder: (context, state) =>
+              const ShellChromeHider(child: ChangePasswordPage()),
         ),
         // Same page as /notifications/settings, kept in this tab's stack
         // so settings doesn't jump to the inbox tab.
