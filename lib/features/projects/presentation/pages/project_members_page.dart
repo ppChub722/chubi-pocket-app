@@ -83,7 +83,7 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
     final action = await showActionSheet<String>(
       context,
       header: ActionSheetHeader(
-        leading: ProjectMemberAvatar(member: m, size: 40),
+        leading: memberAvatar(m, size: 40),
         title: m.displayName,
         subtitle: m.isLinked ? l.projectMemberLinked : l.projectMemberAdHoc,
       ),
@@ -189,124 +189,93 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final p = _project;
-    Widget body;
-    // Builders below: the floating bar's height is only in the body's
-    // MediaQuery, not this State's context.
-    if (_loading) {
-      body = Builder(
-        builder: (context) => Padding(
-          padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-          child: const LoadingView(),
+    final readOnly = p?.status == ProjectStatus.archived;
+    final groups = <(String, String, List<ProjectMember>)>[
+      (
+        l.projectMembersTitle,
+        l.projectMembersDescription,
+        _members.where((m) => m.status == MemberStatus.active).toList(),
+      ),
+      (
+        l.projectMembersPending,
+        l.projectMembersPendingDescription,
+        _members.where((m) => m.status == MemberStatus.pending).toList(),
+      ),
+      (
+        l.projectMembersLeft,
+        l.projectMembersLeftDescription,
+        _members.where((m) => m.status == MemberStatus.left).toList(),
+      ),
+    ].where((g) => g.$3.isNotEmpty).toList();
+    final amMember = _members.any((m) => m.userId == _uid);
+    // Builder: the floating bar's height is only in the body's MediaQuery,
+    // not this State's context.
+    final body = Builder(
+      builder: (context) => ListPageBody(
+        loading: _loading,
+        error: p == null ? _error : null,
+        isEmpty: false,
+        onRetry: _load,
+        empty: EmptyView(
+          icon: AppIcons.member,
+          title: l.projectMembersTitle,
+          message: '',
         ),
-      );
-    } else if (_error != null && p == null) {
-      body = ErrorView(error: _error!, onRetry: _load);
-    } else {
-      final readOnly = p!.status == ProjectStatus.archived;
-      final groups = <(String, String, List<ProjectMember>)>[
-        (
-          l.projectMembersTitle,
-          l.projectMembersDescription,
-          _members.where((m) => m.status == MemberStatus.active).toList(),
-        ),
-        (
-          l.projectMembersPending,
-          l.projectMembersPendingDescription,
-          _members.where((m) => m.status == MemberStatus.pending).toList(),
-        ),
-        (
-          l.projectMembersLeft,
-          l.projectMembersLeftDescription,
-          _members.where((m) => m.status == MemberStatus.left).toList(),
-        ),
-      ];
-      final amMember = _members.any((m) => m.userId == _uid);
-      body = Builder(
-        builder: (context) => PullToRefresh(
-          onRefresh: _load,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.only(
-              top: MediaQuery.paddingOf(context).top,
-              bottom: 96 + MediaQuery.paddingOf(context).bottom,
+        topInset: 0,
+        children: [
+          for (final (i, (title, description, list)) in groups.indexed)
+            SectionCard(
+              first: i == 0,
+              title: '$title · ${list.length}',
+              description: description,
+              children: [
+                for (final m in list)
+                  ListRow(
+                    dimmed: m.status != MemberStatus.active,
+                    leading: memberAvatar(m, size: 40),
+                    title: m.displayName,
+                    subtitle: m.isLinked
+                        ? l.projectMemberLinked
+                        : l.projectMemberAdHoc,
+                    trailing: AppChip(
+                      label: m.isOwner
+                          ? l.projectRoleOwner
+                          : m.role == MemberRole.viewer
+                          ? l.projectRoleViewer
+                          : l.projectRoleMember,
+                      tone: m.isOwner
+                          ? AppChipTone.primary
+                          : AppChipTone.neutral,
+                      selected: true,
+                      size: ChipSize.chip,
+                    ),
+                    // Owner manages everyone but themself.
+                    onTap: _isOwner && readOnly == false && !m.isOwner
+                        ? () => _memberActions(m)
+                        : null,
+                  ),
+              ],
             ),
-            children: [
-              for (final (title, description, list) in groups)
-                if (list.isNotEmpty) ...[
-                  SectionHeader(title: title, count: list.length),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      0,
-                      AppSpacing.lg,
-                      AppSpacing.xs,
-                    ),
-                    child: Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  for (final m in list)
-                    Opacity(
-                      opacity: m.status == MemberStatus.active ? 1 : 0.6,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                        ),
-                        leading: ProjectMemberAvatar(member: m, size: 40),
-                        title: Text(m.displayName),
-                        subtitle: Text(
-                          m.isLinked
-                              ? l.projectMemberLinked
-                              : l.projectMemberAdHoc,
-                        ),
-                        trailing: AppChip(
-                          label: m.isOwner
-                              ? l.projectRoleOwner
-                              : m.role == MemberRole.viewer
-                              ? l.projectRoleViewer
-                              : l.projectRoleMember,
-                          tone: m.isOwner
-                              ? AppChipTone.primary
-                              : AppChipTone.neutral,
-                          selected: true,
-                          size: ChipSize.chip,
-                        ),
-                        // Owner manages everyone but themself.
-                        onTap: _isOwner && !readOnly && !m.isOwner
-                            ? () => _memberActions(m)
-                            : null,
-                      ),
-                    ),
-                ],
-              if (_isOwner && !readOnly)
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: AddTile(
-                    label: l.projectMembersInvite,
-                    variant: AddTileVariant.row,
-                    icon: AppIcons.inviteMember,
-                    onTap: _invite,
-                  ),
-                ),
-              if (!_isOwner && amMember)
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: AppButton(
-                    label: l.projectLeave,
-                    icon: AppIcons.logout,
-                    variant: AppButtonVariant.destructive,
-                    expand: true,
-                    onPressed: _leave,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
+          if (_isOwner && readOnly == false)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.lg),
+              child: AddTile(
+                label: l.projectMembersInvite,
+                variant: AddTileVariant.row,
+                icon: AppIcons.inviteMember,
+                onTap: _invite,
+              ),
+            ),
+          if (!_isOwner && amMember)
+            DangerRow(
+              icon: AppIcons.logout,
+              label: l.projectLeave,
+              onTap: _leave,
+              padding: const EdgeInsets.only(top: AppSpacing.lg),
+            ),
+        ],
+      ),
+    );
     return Scaffold(
       appBar: AppTopBar(
         title: l.projectMembersTitle,

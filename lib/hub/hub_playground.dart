@@ -28,8 +28,15 @@ class HubPlayground extends StatefulWidget {
     required this.builder,
     this.title = 'Playground',
     this.note,
+    this.hug,
     super.key,
   });
+
+  /// Non-null = the live instance HUGS its content (a pill, a button, a chip)
+  /// and is placed at this alignment; null = it fills the frame's width (a
+  /// card, a banner, an input). The frame is a stretched column: without this
+  /// a pill would be forced to the full width.
+  final Alignment? hug;
 
   final String title;
   final String? note;
@@ -56,63 +63,103 @@ class _HubPlaygroundState extends State<HubPlayground> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    // Collapsible, CLOSED by default (owner 2026-10-12): the real examples
+    // lead the page ("In the app"); the controls are for fully custom tweaks.
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: false,
+            maintainState: true,
+            tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            childrenPadding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
+            expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+            leading: const Icon(Icons.tune),
+            title: Text('Customize · ${widget.title}', style: text.titleSmall),
+            subtitle: Text(
+              'Live instance + controls, for fully custom tweaks',
+              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
             children: [
-              Expanded(child: Text(widget.title, style: text.titleMedium)),
-              AppChip(
-                icon: AppIcons.reset,
-                label: 'Reset',
-                size: ChipSize.control,
-                onTap: () => setState(() => _v = _initial()),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(widget.title, style: text.titleMedium),
+                      ),
+                      AppChip(
+                        icon: AppIcons.reset,
+                        label: 'Reset',
+                        size: ChipSize.control,
+                        onTap: () => setState(() => _v = _initial()),
+                      ),
+                    ],
+                  ),
+                  if (widget.note != null) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      widget.note!,
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.md),
+                  // The live instance.
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
+                    child: widget.hug == null
+                        ? widget.builder(context, PlayValues._(_v))
+                        : Align(
+                            alignment: widget.hug!,
+                            child: widget.builder(context, PlayValues._(_v)),
+                          ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  // The controls.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Column(
+                      children: [
+                        for (final c in widget.controls)
+                          _ControlRow(
+                            control: c,
+                            value: _v[c.name],
+                            onChanged: (x) => _set(c.name, x),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          if (widget.note != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              widget.note!,
-              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.md),
-          // The live instance.
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: scheme.outlineVariant),
-            ),
-            child: widget.builder(context, PlayValues._(_v)),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // The controls.
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Column(
-              children: [
-                for (final c in widget.controls)
-                  _ControlRow(
-                    control: c,
-                    value: _v[c.name],
-                    onChanged: (x) => _set(c.name, x),
-                  ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -247,11 +294,7 @@ class _ControlRowState extends State<_ControlRow> {
         );
       case PlayText():
         _text ??= TextEditingController(text: widget.value as String);
-        control = AppInput(
-          controller: _text,
-          look: AppInputLook.outlined,
-          onChanged: widget.onChanged,
-        );
+        control = AppInput(controller: _text, onChanged: widget.onChanged);
       case PlayNum():
         final v = widget.value as double;
         final steps = (c.max - c.min) / c.step;
@@ -321,8 +364,21 @@ class _ControlRowState extends State<_ControlRow> {
 
 /// "In the app" — the real presets, each labelled with the page that uses it.
 class HubInApp extends StatelessWidget {
-  const HubInApp({required this.uses, this.note, super.key});
+  const HubInApp({
+    required this.uses,
+    this.note,
+    this.columns = 1,
+    this.title = 'In the app',
+    super.key,
+  });
 
+  /// The heading (default "In the app").
+  final String title;
+
+  /// Examples per row (1 by default — safe for wide pieces; pass 2–3 for
+  /// small variants so they sit SIDE BY SIDE; a [HubUse.wide] one takes a whole
+  /// row).
+  final int columns;
   final List<HubUse> uses;
   final String? note;
 
@@ -335,27 +391,46 @@ class HubInApp extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('In the app', style: text.titleMedium),
+          Text(title, style: text.titleMedium),
           if (note != null)
             Text(
               note!,
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           const SizedBox(height: AppSpacing.md),
-          for (final u in uses) ...[
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.xs,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(u.label, style: text.labelLarge),
-                AppChip(label: u.page, size: ChipSize.mini),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            u.child,
-            const SizedBox(height: AppSpacing.lg),
-          ],
+          // Many real examples SIDE BY SIDE (owner 2026-10-12), so the
+          // differences read at a glance: [columns] per row, each labelled
+          // with what differs and the page that uses it.
+          LayoutBuilder(
+            builder: (context, c) {
+              const gap = AppSpacing.md;
+              final cols = columns.clamp(1, 4);
+              final w = (c.maxWidth - gap * (cols - 1)) / cols;
+              return Wrap(
+                spacing: gap,
+                runSpacing: AppSpacing.lg,
+                children: [
+                  for (final u in uses)
+                    SizedBox(
+                      width: u.wide ? c.maxWidth : w,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(u.label, style: text.labelLarge),
+                          const SizedBox(height: AppSpacing.xxs),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: AppChip(label: u.page, size: ChipSize.mini),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          u.child,
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -364,7 +439,15 @@ class HubInApp extends StatelessWidget {
 
 /// One real preset: what it is, the page that uses it, and the widget.
 class HubUse {
-  const HubUse({required this.label, required this.page, required this.child});
+  const HubUse({
+    required this.label,
+    required this.page,
+    required this.child,
+    this.wide = false,
+  });
+
+  /// Takes a whole row (a full-width banner, a form).
+  final bool wide;
   final String label;
   final String page;
   final Widget child;

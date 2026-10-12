@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
@@ -103,7 +102,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     applyChange(switch (r) {
       ContactPicked(:final contact) => working.copyWith(
         contactId: contact.id,
-        name: contact.effectiveName,
+        name: contact.name,
       ),
       ContactNameTyped(:final name) => working.copyWith(
         clearContact: true,
@@ -210,15 +209,9 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
         extendBodyBehindAppBar: true,
         body: _error != null
             ? ErrorView(error: _error!, onRetry: _fetch)
-            // The generic skeleton is a padded list — clear the bar.
-            : Builder(
-                builder: (context) => Padding(
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.paddingOf(context).top,
-                  ),
-                  child: const LoadingView(),
-                ),
-              ),
+            // The template's detail skeleton (hero · box · section), it clears
+            // the floating bar itself.
+            : const DetailPageSkeleton(),
       );
     }
 
@@ -238,20 +231,17 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
           // Builder: its context sees the floating bar's height.
           child: Builder(
             // Not while editing: a reload rebases the draft.
-            builder: (context) => PullToRefresh(
-              enabled: !isEditing,
+            builder: (context) => DetailPageBody(
               onRefresh: () => Future.wait([
                 context.read<PersonalDebtsCubit>().load(),
                 _fetch(),
               ]),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                  AppSpacing.lg,
+              physics: const AlwaysScrollableScrollPhysics(),
+              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+              bottomInset:
                   AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                ),
+              hero: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   LockedInEdit(locked: isEditing, child: _header(l, debt)),
                   // Overpaid: nothing left to receive / pay this way (BE
@@ -266,31 +256,22 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
                       onPressed: () => _settle(debt),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.lg),
-                  _rows(l, debt),
-                  if (debt.isOpen) ...[
-                    const SizedBox(height: AppSpacing.xl),
-                    LockedInEdit(
-                      locked: isEditing,
-                      child: Center(
-                        child: AppButton(
-                          label: l.debtCancel,
-                          variant: AppButtonVariant.text,
-                          loading: _busy,
-                          onPressed: () => _cancelDebt(debt),
-                        ),
-                      ),
-                    ),
-                  ],
-                  // Delete lives at the bottom in edit mode (no top-bar actions).
-                  if (isEditing)
-                    DangerRow(
-                      icon: AppIcons.delete,
-                      label: l.debtDeleteThis,
-                      onTap: isSaving ? null : () => _delete(debt),
-                    ),
                 ],
               ),
+              sections: [(first) => _rows(l, debt, first)],
+              // Cancel (the archive analogue, amber) + delete — edit mode
+              // only, always last (the top bar carries no page actions).
+              manage: isEditing
+                  ? ManageSection(
+                      archiveLabel: debt.isOpen ? l.debtCancel : null,
+                      onArchive: _busy || isSaving
+                          ? null
+                          : () => _cancelDebt(debt),
+                      deleteLabel: l.debtDeleteThis,
+                      onDelete: isSaving ? null : () => _delete(debt),
+                    )
+                  : null,
+              metaLines: detailMetaLines(context, createdAt: debt.createdAt),
             ),
           ),
         ),
@@ -307,9 +288,30 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     final name = debt.counterpartyPersonName;
     return HeaderCard(
       onEdit: isEditing ? null : enterEdit,
-      leading: DebtAvatar(name: name, iconCode: debt.person.iconCode, size: 52),
+      leading: PersonMark(
+        name: name,
+        level: debt.counterpartyContactId == null
+            ? PersonLevel.name
+            : PersonLevel.linked,
+        iconCode: debt.person.iconCode,
+        size: 52,
+      ),
       title: Text(
         debt.isOwedToMe ? l.debtTheyOweYou(name) : l.debtYouOwe(name),
+      ),
+      // The description lives in the hero (owner 2026-10-12): muted under
+      // the name, edited in place.
+      description: HeroDescription(
+        controller: _descriptionCtrl,
+        editing: isEditing,
+        focusNode: _descriptionFocus,
+        hint: l.commonDescription,
+        maxLength: TextLimits.description,
+        onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+        onChanged: (v) => applyTextChange(
+          _Field.description,
+          working.copyWith(description: v),
+        ),
       ),
       subtitle: Align(
         alignment: Alignment.centerLeft,
@@ -352,7 +354,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
     );
   }
 
-  Widget _rows(AppLocalizations l, PersonalDebt debt) {
+  Widget _rows(AppLocalizations l, PersonalDebt debt, bool first) {
     final editing = isEditing;
     final symbol = Currencies.symbolOf(debt.currency);
     final scheme = Theme.of(context).colorScheme;
@@ -362,7 +364,7 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
         ? (l.debtSourceTransaction, '/transactions/${debt.sourceTransactionId}')
         : (l.debtSourceManual, null);
     return SectionCard(
-      first: true,
+      first: first,
       children: [
         if (editing)
           DetailStacked(
@@ -427,22 +429,6 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
           ),
         ),
         DetailStacked(
-          label: l.commonDescription,
-          child: AppInput.inline(
-            editing: editing,
-            controller: _descriptionCtrl,
-            focusNode: _descriptionFocus,
-            maxLines: 3,
-            maxLength: TextLimits.description,
-            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-            onChanged: (v) => applyTextChange(
-              _Field.description,
-              working.copyWith(description: v),
-            ),
-          ),
-        ),
-        DetailStacked(
           label: l.commonNote,
           child: AppInput.inline(
             editing: editing,
@@ -456,19 +442,6 @@ class _PersonalDebtDetailPageState extends State<PersonalDebtDetailPage>
                 applyTextChange(_Field.note, working.copyWith(note: v)),
           ),
         ),
-        if (debt.createdAt != null)
-          LockedInEdit(
-            locked: editing,
-            child: DetailRow(
-              label: l.debtCreatedAt,
-              trailing: Text(
-                DateFormatter.medium(
-                  debt.createdAt!,
-                  locale: Localizations.localeOf(context).toLanguageTag(),
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }

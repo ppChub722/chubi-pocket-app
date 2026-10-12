@@ -24,7 +24,7 @@ import '../atoms/dashed_rect_border.dart';
 ///   `CrossAxisAlignment.stretch` — both cards take the taller one's
 ///   height and centre their content. [dense] tightens the insets.
 /// - [errorText] → error border + message under the card.
-/// - [fixedHeight] (PROPOSAL, owner 2026-10-12 — hub only until adopted):
+/// - ONE height per variant, whatever the state (owner 2026-10-12):
 ///   ONE height per variant, whatever the state: picking never adds a line
 ///   or moves the layout. With [reserveSubtitle] it is the 3-line variant
 ///   (label / value / subtitle, the third line kept when empty), without it
@@ -43,14 +43,10 @@ class PickCard extends StatelessWidget {
     this.errorText,
     this.watermark,
     this.dense = false,
-    this.fixedHeight = false,
     this.reserveSubtitle = false,
     this.trailing,
     super.key,
   });
-
-  /// One height whatever the state (see the class doc). Off = today's card.
-  final bool fixedHeight;
 
   /// With [fixedHeight]: keep the third (subtitle) line even when there is
   /// nothing to put on it, so the card is as tall empty as it is picked.
@@ -133,13 +129,11 @@ class PickCard extends StatelessWidget {
                     Text(
                       // The 2-line variant has no subtitle line: the error
                       // takes the label's place.
-                      fixedHeight && hasError && !reserveSubtitle
-                          ? errorText!
-                          : label,
+                      hasError && !reserveSubtitle ? errorText! : label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.labelSmall?.copyWith(
-                        color: fixedHeight && hasError && !reserveSubtitle
+                        color: hasError && !reserveSubtitle
                             ? scheme.error
                             : scheme.onSurfaceVariant,
                       ),
@@ -149,12 +143,10 @@ class PickCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       // The same line height empty and picked (no jump).
-                      strutStyle: fixedHeight
-                          ? StrutStyle.fromTextStyle(
-                              textTheme.titleMedium!,
-                              forceStrutHeight: true,
-                            )
-                          : null,
+                      strutStyle: StrutStyle.fromTextStyle(
+                        textTheme.titleMedium!,
+                        forceStrutHeight: true,
+                      ),
                       style: empty
                           ? textTheme.titleSmall?.copyWith(
                               color: scheme.onSurfaceVariant,
@@ -163,9 +155,8 @@ class PickCard extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                     ),
-                    if ((fixedHeight && reserveSubtitle) ||
-                        (!empty && subtitle != null))
-                      if (fixedHeight && hasError)
+                    if (reserveSubtitle || (!empty && subtitle != null))
+                      if (hasError)
                         Text(
                           errorText!,
                           maxLines: 1,
@@ -204,26 +195,7 @@ class PickCard extends StatelessWidget {
           )
         : card;
 
-    if (!hasError || fixedHeight) return framed;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        framed,
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md,
-            0,
-          ),
-          child: Text(
-            errorText!,
-            style: textTheme.bodySmall?.copyWith(color: scheme.error),
-          ),
-        ),
-      ],
-    );
+    return framed;
   }
 }
 

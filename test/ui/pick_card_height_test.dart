@@ -25,7 +25,6 @@ void main() {
     value: value,
     subtitle: subtitle,
     errorText: error,
-    fixedHeight: true,
     reserveSubtitle: true,
     leading: const PickCardEmptyIcon(AppIcons.wallet),
     onTap: () {},
@@ -33,7 +32,6 @@ void main() {
 
   PickCard two({String? value, String? error}) => PickCard(
     label: 'Payer',
-    fixedHeight: true,
     placeholder: 'Choose a member',
     value: value,
     errorText: error,

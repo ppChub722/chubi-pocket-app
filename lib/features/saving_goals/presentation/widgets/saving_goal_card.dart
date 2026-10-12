@@ -22,89 +22,66 @@ class SavingGoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = goal.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final accent = goal.iconCode.tintFor(palette);
     final wallet = goal.linkedAccount?.name;
     final desc = goal.description?.trim() ?? '';
-    final secondary = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     return AppCard(
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: onIconTap,
-                    child: IconDisplay(
-                      type: IconType.account,
-                      size: 44,
-                      iconCode: goal.iconCode,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          goal.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (desc.isNotEmpty)
-                          Text(
-                            desc,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: secondary,
-                          ),
-                        if (wallet != null)
-                          Text(
-                            wallet,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: secondary,
-                          ),
-                      ],
-                    ),
-                  ),
-                  AppBadge(label: '${goal.allocationPct.toStringAsFixed(0)}%'),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              ProgressRow(
-                value: goal.progressPct / 100,
-                color: accent,
-                label: l.savingGoalProgressLine(
-                  moneyString(context, goal.currentAmount),
-                  moneyString(context, goal.targetAmount),
+              GestureDetector(
+                onTap: onIconTap,
+                child: IconDisplay(
+                  type: IconType.account,
+                  size: 44,
+                  iconCode: goal.iconCode,
                 ),
-                trailing: '${goal.progressPct.toStringAsFixed(0)}%',
               ),
-              if (goal.isCompleted) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: AppChip(
-                    label: l.savingGoalCompletedLabel,
-                    icon: AppIcons.success,
-                    tone: AppChipTone.success,
-                    selected: true,
-                    size: ChipSize.chip,
-                  ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(goal.name, role: AppTextRole.title, maxLines: 1),
+                    if (desc.isNotEmpty)
+                      AppText(desc, role: AppTextRole.caption, maxLines: 1),
+                    if (wallet != null)
+                      AppText(wallet, role: AppTextRole.caption, maxLines: 1),
+                  ],
                 ),
-              ],
+              ),
+              AppBadge(label: '${goal.allocationPct.toStringAsFixed(0)}%'),
             ],
           ),
-        ),
+          const SizedBox(height: AppSpacing.md),
+          ProgressRow(
+            value: goal.progressPct / 100,
+            color: accent,
+            label: l.savingGoalProgressLine(
+              moneyString(context, goal.currentAmount),
+              moneyString(context, goal.targetAmount),
+            ),
+            trailing: '${goal.progressPct.toStringAsFixed(0)}%',
+          ),
+          if (goal.isCompleted) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: AppChip(
+                label: l.savingGoalCompletedLabel,
+                icon: AppIcons.success,
+                tone: AppChipTone.success,
+                selected: true,
+                size: ChipSize.chip,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

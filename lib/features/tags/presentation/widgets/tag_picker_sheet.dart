@@ -6,12 +6,14 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
-import 'tag_chip.dart';
 
-/// Pick tags, on the kit [PickerSheet] — search, several at once (chips),
-/// and "＋ แท็กใหม่" without leaving (the name is what's in the search box,
-/// or asked for). No tags and no creating (the filter): an empty line.
-/// Resolves the new selection on ตกลง, null when dismissed.
+/// Pick tags — a THIN WRAPPER over the presentational organism
+/// `showTagPicker` (lib/ui/domain/pickers): feeds it the [TagsCubit] list
+/// (live) + l10n strings, and creates tags through the cubit. Search,
+/// several at once (chips), and "＋ แท็กใหม่" without leaving (the name is
+/// what's in the search box, or asked for). No tags and no creating (the
+/// filter): an empty line. Resolves the new selection on ตกลง, null when
+/// dismissed.
 ///
 /// Reusable: the quick-create form's "⋯ เพิ่มเติม", and later the
 /// transactions list's tag filter ([allowCreate] false there).
@@ -20,16 +22,50 @@ Future<Set<String>?> showTagPickerSheet(
   required Set<String> selected,
   String? title,
   bool allowCreate = true,
-}) {
-  context.read<TagsCubit>().loadIfNeeded();
-  return showAppSheetCustom<Set<String>>(
-    context,
-    builder: (_) => _TagPicker(
-      selected: selected,
-      title: title ?? AppLocalizations.of(context)!.transactionFormTagsLabel,
-      allowCreate: allowCreate,
-    ),
+}) async {
+  final cubit = context.read<TagsCubit>()..loadIfNeeded();
+  final l = AppLocalizations.of(context)!;
+
+  TagPickerData dataOf(TagsState s) => TagPickerData(
+    items: [
+      for (final t in s.tags)
+        TagPickerItem(
+          id: t.id,
+          name: t.name.isEmpty ? l.tagFormNameLabel : t.name,
+          iconCode: t.iconCode,
+        ),
+    ],
+    loading: s.status == TagsStatus.loading && s.tags.isEmpty,
+    error: s.status == TagsStatus.error && s.tags.isEmpty ? s.error : null,
   );
+
+  // The sheet follows the cubit while it is open.
+  final data = ValueNotifier(dataOf(cubit.state));
+  final sub = cubit.stream.listen((s) => data.value = dataOf(s));
+  try {
+    return await showTagPicker(
+      context,
+      data: data,
+      labels: TagPickerLabels(
+        title: title ?? l.transactionFormTagsLabel,
+        searchHint: l.tagPickerSearchHint,
+        ok: l.commonOk,
+        addTag: l.projectTxAddTag,
+        createNamed: l.tagPickerCreateNamed,
+        empty: l.tagPickerEmpty,
+        noMatch: l.tagPickerNoMatch,
+        nameSave: l.commonSave,
+        nameHint: l.projectTxTagHint,
+      ),
+      selected: selected,
+      onCreate: allowCreate
+          ? (name) async => (await createOrFindTag(context, name))?.id
+          : null,
+      onRetry: cubit.load,
+    );
+  } finally {
+    await sub.cancel();
+  }
 }
 
 /// Creates a tag named [name] — or, when one by that name exists (any
@@ -57,186 +93,13 @@ Future<Tag?> createOrFindTag(BuildContext context, String name) async {
 Future<String?> askNewTagName(
   BuildContext context, {
   int maxLength = TextLimits.tagName,
-}) async {
-  final name = await showAppSheetCustom<String>(
+}) {
+  final l = AppLocalizations.of(context)!;
+  return showNewTagNameSheet(
     context,
-    builder: (_) => _NewTagNameSheet(maxLength: maxLength),
+    title: l.projectTxAddTag,
+    saveLabel: l.commonSave,
+    hint: l.projectTxTagHint,
+    maxLength: maxLength,
   );
-  final n = name?.trim() ?? '';
-  return n.isEmpty ? null : n;
-}
-
-/// The name sheet owns its controller: the sheet's future resolves on pop,
-/// while the field is still on screen animating out — a controller the
-/// caller disposed right then crashed (owner bug 2026-10-10).
-class _NewTagNameSheet extends StatefulWidget {
-  const _NewTagNameSheet({required this.maxLength});
-  final int maxLength;
-
-  @override
-  State<_NewTagNameSheet> createState() => _NewTagNameSheetState();
-}
-
-class _NewTagNameSheetState extends State<_NewTagNameSheet> {
-  final _text = TextEditingController();
-
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return AppSheetScaffold(
-      title: l.projectTxAddTag,
-      footer: AppButton(
-        label: l.commonSave,
-        expand: true,
-        onPressed: () => Navigator.pop(context, _text.text),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: AppInput(
-          controller: _text,
-          autofocus: true,
-          maxLength: widget.maxLength,
-          hint: l.projectTxTagHint,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (v) => Navigator.pop(context, v),
-        ),
-      ),
-    );
-  }
-}
-
-class _TagPicker extends StatefulWidget {
-  const _TagPicker({
-    required this.selected,
-    required this.title,
-    required this.allowCreate,
-  });
-
-  final Set<String> selected;
-  final String title;
-  final bool allowCreate;
-
-  @override
-  State<_TagPicker> createState() => _TagPickerState();
-}
-
-class _TagPickerState extends State<_TagPicker> {
-  late final Set<String> _picked = {...widget.selected};
-  final _search = TextEditingController();
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
-
-  Future<void> _create() async {
-    final typed = _search.text.trim();
-    final name = typed.isNotEmpty ? typed : await askNewTagName(context);
-    if (name == null || !mounted) return;
-    final tag = await createOrFindTag(context, name);
-    if (tag == null || !mounted) return;
-    setState(() => _picked.add(tag.id));
-    _search.clear();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final state = context.watch<TagsCubit>().state;
-    return PickerSheet(
-      title: widget.title,
-      searchable: true,
-      searchHint: l.tagPickerSearchHint,
-      searchController: _search,
-      loading: state.status == TagsStatus.loading && state.tags.isEmpty,
-      error: state.status == TagsStatus.error && state.tags.isEmpty
-          ? state.error
-          : null,
-      onRetry: context.read<TagsCubit>().load,
-      footer: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.md,
-        ),
-        child: AppButton(
-          label: l.commonOk,
-          expand: true,
-          onPressed: () => Navigator.pop(context, _picked),
-        ),
-      ),
-      builder: (context, q) {
-        final scheme = Theme.of(context).colorScheme;
-        final tags = state.tags
-            .where((t) => q.isEmpty || t.name.toLowerCase().contains(q))
-            .toList();
-        final exact = state.tags.any((t) => t.name.toLowerCase() == q);
-        final typed = _search.text.trim();
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (tags.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.xs,
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                ),
-                child: Wrap(
-                  spacing: AppSpacing.xs,
-                  runSpacing: AppSpacing.xs,
-                  children: [
-                    for (final t in tags)
-                      AppChip(
-                        label: t.name,
-                        icon: IconRegistry.get(
-                          t.iconCode?.icon,
-                          fallback: AppIcons.tag,
-                        ),
-                        color: tagColor(
-                          t.iconCode,
-                          Theme.of(context).extension<AppColors>()!,
-                        ),
-                        selected: _picked.contains(t.id),
-                        onTap: () => setState(() {
-                          if (!_picked.remove(t.id)) _picked.add(t.id);
-                        }),
-                      ),
-                  ],
-                ),
-              )
-            // Nothing to pick and nothing to make here (the filter).
-            else if (!widget.allowCreate)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Text(
-                  q.isEmpty ? l.tagPickerEmpty : l.tagPickerNoMatch,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            // Typed a name that isn't there → make it, right here.
-            if (widget.allowCreate && !exact)
-              PickerCreateRow(
-                label: typed.isEmpty
-                    ? l.projectTxAddTag
-                    : l.tagPickerCreateNamed(typed),
-                onTap: _create,
-              ),
-          ],
-        );
-      },
-    );
-  }
 }

@@ -25,14 +25,20 @@ class _ProjectFormPageState extends State<ProjectFormPage>
   final _formKey = GlobalKey<FormState>();
   final _ctrl = {for (final f in _Field.values) f: TextEditingController()};
 
+  final _nameFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
     initDraft(const _NewProject(), editing: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _nameFocus.requestFocus();
+    });
   }
 
   @override
   void dispose() {
+    _nameFocus.dispose();
     for (final c in _ctrl.values) {
       c.dispose();
     }
@@ -100,6 +106,7 @@ class _ProjectFormPageState extends State<ProjectFormPage>
     final l = AppLocalizations.of(context)!;
     void onText(_Field f, String v) =>
         applyTextChange(f, working.withText(f, v));
+    final palette = Theme.of(context).extension<AppColors>()!;
     return editScope(
       Scaffold(
         appBar: AppTopBar(
@@ -113,84 +120,96 @@ class _ProjectFormPageState extends State<ProjectFormPage>
           key: _formKey,
           // Builder: the bar height is only in the body's MediaQuery.
           child: Builder(
-            builder: (context) => ListView(
-              padding: const EdgeInsets.all(AppSpacing.lg).add(
-                EdgeInsets.only(
-                  top: MediaQuery.paddingOf(context).top,
-                  bottom: MediaQuery.paddingOf(context).bottom,
+            builder: (context) => DetailPageBody(
+              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+              bottomInset:
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+              hero: HeaderCard(
+                accent: working.iconCode.tintFor(palette),
+                glyph: AppIcons.project,
+                leading: EditableCircle(
+                  size: 48,
+                  onTap: _pickIcon,
+                  child: IconDisplay(
+                    type: IconType.project,
+                    size: 48,
+                    iconCode: working.iconCode,
+                  ),
+                ),
+                title: HeroNameInput(
+                  editing: true,
+                  controller: _ctrl[_Field.name]!,
+                  focusNode: _nameFocus,
+                  hint: l.commonName,
+                  maxLength: TextLimits.name,
+                  onChanged: (v) => onText(_Field.name, v),
+                  validator: (v) => (v?.trim().isEmpty ?? true)
+                      ? l.projectNameRequired
+                      : null,
+                ),
+                description: HeroDescription(
+                  controller: _ctrl[_Field.description]!,
+                  editing: true,
+                  hint: l.commonDescription,
+                  maxLength: TextLimits.description,
+                  onChanged: (v) => onText(_Field.description, v),
                 ),
               ),
-              children: [
-                Row(
+              sections: [
+                (first) => SectionCard(
+                  first: first,
                   children: [
-                    EditableCircle(
-                      size: 56,
-                      onTap: _pickIcon,
-                      child: IconDisplay(
-                        type: IconType.project,
-                        size: 56,
-                        iconCode: working.iconCode,
+                    DetailStacked(
+                      label: l.projectTypeLabel,
+                      child: AppInput.inline(
+                        editing: true,
+                        controller: _ctrl[_Field.type]!,
+                        hint: l.projectTypeHint,
+                        // No TextLimits constant for a project type.
+                        maxLength: 50,
+                        onChanged: (v) => onText(_Field.type, v),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: AppInput(
-                        controller: _ctrl[_Field.name]!,
-                        label: l.commonName,
-                        hint: l.projectNameLabel,
-                        autofocus: true,
-                        maxLength: TextLimits.name,
-                        onChanged: (v) => onText(_Field.name, v),
-                        validator: (v) => (v?.trim().isEmpty ?? true)
-                            ? l.projectNameRequired
-                            : null,
+                    DetailStacked(
+                      label: l.commonNote,
+                      child: AppInput.inline(
+                        editing: true,
+                        controller: _ctrl[_Field.note]!,
+                        maxLines: 3,
+                        maxLength: TextLimits.note,
+                        onChanged: (v) => onText(_Field.note, v),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.md),
-                AppInput(
-                  controller: _ctrl[_Field.type]!,
-                  label: l.projectTypeLabel,
-                  hint: l.projectTypeHint,
-                  prefixIcon: AppIcons.project,
-                  maxLength: 50,
-                  onChanged: (v) => onText(_Field.type, v),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppInput(
-                  controller: _ctrl[_Field.description]!,
-                  label: l.commonDescription,
-                  maxLines: 3,
-                  maxLength: TextLimits.description,
-                  onChanged: (v) => onText(_Field.description, v),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppInput(
-                  controller: _ctrl[_Field.note]!,
-                  label: l.commonNote,
-                  prefixIcon: AppIcons.note,
-                  maxLines: 3,
-                  maxLength: TextLimits.note,
-                  onChanged: (v) => onText(_Field.note, v),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AmountInput(
-                  controller: _ctrl[_Field.planned]!,
-                  label: l.projectFormPlannedLabel,
-                  onChanged: (v) => onText(_Field.planned, v),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return null;
-                    final n = AmountInput.parse(v);
-                    return (n == null || n <= 0)
-                        ? l.projectFormPlannedInvalid
-                        : null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  l.projectFormPlannedHelper,
-                  style: Theme.of(context).textTheme.bodySmall,
+                (first) => SectionCard(
+                  first: first,
+                  children: [
+                    DetailStacked(
+                      label: l.projectFormPlannedLabel,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AmountInput(
+                            controller: _ctrl[_Field.planned]!,
+                            onChanged: (v) => onText(_Field.planned, v),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return null;
+                              final n = AmountInput.parse(v);
+                              return (n == null || n <= 0)
+                                  ? l.projectFormPlannedInvalid
+                                  : null;
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          AppText(
+                            l.projectFormPlannedHelper,
+                            role: AppTextRole.caption,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

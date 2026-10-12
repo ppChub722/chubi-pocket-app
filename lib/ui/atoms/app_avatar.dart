@@ -32,6 +32,18 @@ class AppAvatar extends StatelessWidget {
        _color = color,
        _text = null;
 
+  /// The first letter of [name] on a solid brand [color] (a bank's colour),
+  /// the letter in white or black — whichever reads on that colour.
+  const AppAvatar.brand({
+    required this.name,
+    required Color color,
+    this.size = 40,
+    super.key,
+  }) : _mode = _Mode.brand,
+       _glyph = null,
+       _color = color,
+       _text = null;
+
   /// A glyph on a neutral disc.
   const AppAvatar.icon(IconData glyph, {this.size = 40, super.key})
     : name = '',
@@ -112,6 +124,24 @@ class AppAvatar extends StatelessWidget {
             ),
           ),
         );
+      case _Mode.brand:
+        final onColor =
+            ThemeData.estimateBrightnessForColor(_color!) == Brightness.dark
+            ? Colors.white
+            : Colors.black87;
+        return _disc(
+          _color,
+          Text(
+            name.trim().isEmpty
+                ? '?'
+                : name.trim().characters.first.toUpperCase(),
+            style: TextStyle(
+              fontSize: AvatarMetrics.initials(size),
+              color: onColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        );
       case _Mode.glyph:
         return _disc(
           scheme.surfaceContainerHighest,
@@ -175,4 +205,4 @@ class AppAvatar extends StatelessWidget {
   }
 }
 
-enum _Mode { initials, tinted, glyph, label }
+enum _Mode { initials, tinted, brand, glyph, label }

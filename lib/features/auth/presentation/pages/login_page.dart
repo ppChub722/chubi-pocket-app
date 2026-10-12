@@ -45,88 +45,78 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, state) {
           final isSubmitting = state is AuthLoading;
           final failure = state is AuthFailure ? state : null;
-          return SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.xl,
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: AutofillGroup(
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const AuthBrandHeader(),
-                          const SizedBox(height: AppSpacing.xl),
-                          if (failure != null) ...[
-                            MessageBanner(
-                              message: _messageFor(l, failure),
-                              onClose: () => context
-                                  .read<AuthCubit>()
-                                  .acknowledgeFailure(),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
-                          AppInput(
-                            controller: _identifierCtrl,
-                            enabled: !isSubmitting,
-                            label: l.authLoginIdentifierLabel,
-                            prefixIcon: AppIcons.profile,
-                            keyboardType: TextInputType.emailAddress,
-                            autofillHints: const [
-                              AutofillHints.username,
-                              AutofillHints.email,
-                            ],
-                            textInputAction: TextInputAction.next,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? l.commonRequired
-                                : null,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          AppInput(
-                            controller: _passwordCtrl,
-                            enabled: !isSubmitting,
-                            label: l.authLoginPasswordLabel,
-                            prefixIcon: AppIcons.lock,
-                            obscurable: true,
-                            autofillHints: const [AutofillHints.password],
-                            textInputAction: TextInputAction.done,
-                            onSubmitted: (_) => _submit(),
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? l.commonRequired
-                                : null,
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
-                          AppButton(
-                            label: l.authLoginSubmit,
-                            onPressed: isSubmitting ? null : _submit,
-                            loading: isSubmitting,
-                            size: AppButtonSize.large,
-                            expand: true,
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-                          const AuthOrDivider(),
-                          const SizedBox(height: AppSpacing.lg),
-                          // TODO(google-sign-in): wire once POST /auth/google
-                          // exists (contract §12).
-                          const GoogleSignInButton(),
-                          const SizedBox(height: AppSpacing.lg),
-                          TextButton(
-                            onPressed: isSubmitting
-                                ? null
-                                : () => context.push('/auth/register'),
-                            child: Text(l.authLoginGoToRegister),
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
-                          const AuthPrefsBar(),
-                        ],
+          return CenteredFormBody(
+            child: AutofillGroup(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const AuthBrandHeader(),
+                    const SizedBox(height: AppSpacing.xl),
+                    if (failure != null) ...[
+                      AppMessage(
+                        tone: Tone.danger,
+                        message: _messageFor(l, failure),
+                        onClose: () =>
+                            context.read<AuthCubit>().acknowledgeFailure(),
                       ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                    AppInput(
+                      controller: _identifierCtrl,
+                      enabled: !isSubmitting,
+                      label: l.authLoginIdentifierLabel,
+                      prefixIcon: AppIcons.profile,
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [
+                        AutofillHints.username,
+                        AutofillHints.email,
+                      ],
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? l.commonRequired
+                          : null,
                     ),
-                  ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppInput(
+                      controller: _passwordCtrl,
+                      enabled: !isSubmitting,
+                      label: l.authLoginPasswordLabel,
+                      prefixIcon: AppIcons.lock,
+                      obscurable: true,
+                      autofillHints: const [AutofillHints.password],
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? l.commonRequired : null,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    AppButton(
+                      label: l.authLoginSubmit,
+                      onPressed: isSubmitting ? null : _submit,
+                      loading: isSubmitting,
+                      size: AppButtonSize.large,
+                      expand: true,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    const AuthOrDivider(),
+                    const SizedBox(height: AppSpacing.lg),
+                    // TODO(google-sign-in): wire once POST /auth/google
+                    // exists (contract §12).
+                    const GoogleSignInButton(),
+                    const SizedBox(height: AppSpacing.lg),
+                    AppButton(
+                      label: l.authLoginGoToRegister,
+                      variant: AppButtonVariant.text,
+                      expand: true,
+                      onPressed: isSubmitting
+                          ? null
+                          : () => context.push('/auth/register'),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    const AuthPrefsBar(),
+                  ],
                 ),
               ),
             ),

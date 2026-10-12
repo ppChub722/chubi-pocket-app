@@ -15,20 +15,22 @@ class BankPick {
 /// กสิกร · ไทยพาณิชย์ · กรุงเทพ · กรุงไทย · กรุงศรี (BOT codes).
 const _majorBankCodes = ['004', '014', '002', '006', '025'];
 
-/// "ธนาคาร" — the banks among [providers] on the kit [PickerSheet]: the
-/// major banks first, then the rest by name; each row leads with its
-/// [BankMark]. Searchable over the Thai / English name, short name and
-/// code. [allowNone] adds "ไม่ระบุ" on top. The current one
-/// ([selectedCode]) is highlighted, no ✓.
-Future<BankPick?> showBankPicker(
-  BuildContext context, {
-  required List<PaymentProvider> providers,
-  String? selectedCode,
-  bool allowNone = true,
-  String? title,
-}) {
-  final l = AppLocalizations.of(context)!;
-  final lang = Localizations.localeOf(context).languageCode;
+/// A provider as the kit's plain bank row, named in [lang].
+BankPickerItem bankPickerItemOf(PaymentProvider p, String lang) =>
+    BankPickerItem(
+      code: p.code,
+      name: p.name(lang),
+      nameTh: p.nameTh,
+      nameEn: p.nameEn,
+      shortName: p.shortName,
+    );
+
+/// The banks among [providers], the major ones first then by name, as the kit's
+/// plain rows.
+List<BankPickerItem> rankedBankItems(
+  List<PaymentProvider> providers,
+  String lang,
+) {
   int rank(PaymentProvider p) {
     final i = _majorBankCodes.indexOf(p.code);
     return i < 0 ? _majorBankCodes.length : i;
@@ -39,124 +41,52 @@ Future<BankPick?> showBankPicker(
       final r = rank(a).compareTo(rank(b));
       return r != 0 ? r : a.name(lang).compareTo(b.name(lang));
     });
-  return showAppSheetCustom<BankPick>(
+  return [for (final b in banks) bankPickerItemOf(b, lang)];
+}
+
+/// "ธนาคาร" — the banks among [providers] on the kit bank sheet
+/// ([showBankSelectSheet]): the major banks first, then the rest by name.
+/// [allowNone] adds "ไม่ระบุ" on top. The current one ([selectedCode]) is
+/// highlighted, no ✓. This wrapper ranks + maps the models and l10n.
+Future<BankPick?> showBankPicker(
+  BuildContext context, {
+  required List<PaymentProvider> providers,
+  String? selectedCode,
+  bool allowNone = true,
+  String? title,
+}) async {
+  final l = AppLocalizations.of(context)!;
+  final lang = Localizations.localeOf(context).languageCode;
+  final choice = await showBankSelectSheet(
     context,
-    builder: (_) => PickerSheet(
+    banks: rankedBankItems(providers, lang),
+    selectedCode: selectedCode,
+    allowNone: allowNone,
+    strings: BankPickerStrings(
       title: title ?? l.identifierBankLabel,
-      searchable: true,
-      builder: (context, query) {
-        bool hit(PaymentProvider p) =>
-            p.nameTh.toLowerCase().contains(query) ||
-            p.nameEn.toLowerCase().contains(query) ||
-            (p.shortName?.toLowerCase().contains(query) ?? false) ||
-            p.code.contains(query);
-        final shown = query.isEmpty ? banks : banks.where(hit).toList();
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (allowNone && query.isEmpty)
-              PickerRow(
-                leading: const AppIcon(AppIcons.bank),
-                title: l.identifierBankNone,
-                selected: selectedCode == null,
-                onTap: () => Navigator.pop(context, const BankPick(null)),
-              ),
-            for (final b in shown)
-              PickerRow(
-                leading: BankMark(provider: b),
-                title: b.name(lang),
-                subtitle: [?b.shortName, b.code].join(' · '),
-                selected: b.code == selectedCode,
-                onTap: () => Navigator.pop(context, BankPick(b)),
-              ),
-            const SizedBox(height: AppSpacing.md),
-          ],
-        );
-      },
+      noneLabel: l.identifierBankNone,
     ),
+  );
+  if (choice == null) return null;
+  return BankPick(
+    choice.code == null
+        ? null
+        : providers.firstWhere((p) => p.code == choice.code),
   );
 }
 
-/// A bank's mark: a circle in the bank's colour with its short code
-/// ("KBANK", "SCB"). The colour comes from a built-in table of Thai banks
-/// (BOT code); unknown banks get a stable colour from their code.
-/// `payment_providers` has no logo yet — when it does, the logo goes here.
+/// A bank's mark: the kit's [BankBrandMark] for a [PaymentProvider].
 class BankMark extends StatelessWidget {
   const BankMark({required this.provider, this.size = 36, super.key});
 
   final PaymentProvider provider;
   final double size;
 
-  /// Brand colours by BOT bank code.
-  static const _brand = <String, Color>{
-    '002': Color(0xFF1E4598), // BBL
-    '004': Color(0xFF138F2D), // KBANK
-    '006': Color(0xFF1BA5E1), // KTB
-    '011': Color(0xFF0050F0), // TTB
-    '014': Color(0xFF4E2E7F), // SCB
-    '022': Color(0xFF7E2F36), // CIMB
-    '024': Color(0xFF0B3979), // UOB
-    '025': Color(0xFFFEC43B), // BAY
-    '030': Color(0xFFEB198D), // GSB
-    '033': Color(0xFFF57D23), // GHB
-    '034': Color(0xFF4B9B2E), // BAAC
-    '067': Color(0xFF12549F), // TISCO
-    '069': Color(0xFF199CC5), // KKP
-    '073': Color(0xFF6D6E71), // LH Bank
-  };
-
-  static const _fallback = <Color>[
-    Color(0xFF5C6BC0),
-    Color(0xFF26A69A),
-    Color(0xFFEF6C00),
-    Color(0xFF8D6E63),
-    Color(0xFF7E57C2),
-    Color(0xFF00897B),
-  ];
-
-  Color get _color =>
-      _brand[provider.code] ??
-      _fallback[provider.code.codeUnits.fold(0, (a, b) => a + b) %
-          _fallback.length];
-
-  /// The short name, else the English name's initials ("Bangkok Bank" →
-  /// "BB").
-  String get _code {
-    final s = provider.shortName?.trim() ?? '';
-    if (s.isNotEmpty) return s;
-    final initials = provider.nameEn
-        .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
-        .map((w) => w[0].toUpperCase())
-        .join();
-    return initials.isEmpty ? provider.code : initials;
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final color = _color;
-    final onColor = color.computeLuminance() > 0.5
-        ? Colors.black87
-        : Colors.white;
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      padding: EdgeInsets.all(size * 0.14),
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      child: FittedBox(
-        child: Text(
-          _code,
-          maxLines: 1,
-          style: TextStyle(
-            color: onColor,
-            fontWeight: FontWeight.w800,
-            fontSize: size * 0.32,
-            letterSpacing: -0.2,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => BankBrandMark(
+    code: provider.code,
+    shortName: provider.shortName,
+    nameEn: provider.nameEn,
+    size: size,
+  );
 }

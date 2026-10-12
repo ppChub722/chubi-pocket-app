@@ -11,7 +11,6 @@ import '../../features/accounts/presentation/widgets/identifier_widgets.dart';
 import '../../features/accounts/presentation/widgets/member_avatar_stack.dart';
 import '../../features/accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/domain/people-accounts` — the three looks of a person, member
@@ -36,30 +35,15 @@ Widget buildPeopleAccountsPage(BuildContext context) {
   ];
 
   const members = [
-    WalletMember(
-      id: '1',
-      userId: 'u1',
-      displayName: 'ppOnd',
-      role: WalletRole.owner,
-    ),
+    WalletMember(id: '1', userId: 'u1', name: 'ppOnd', role: WalletRole.owner),
     WalletMember(
       id: '2',
       userId: 'u2',
-      displayName: 'Aom Chan',
+      name: 'Aom Chan',
       role: WalletRole.member,
     ),
-    WalletMember(
-      id: '3',
-      userId: 'u3',
-      displayName: 'Bee',
-      role: WalletRole.member,
-    ),
-    WalletMember(
-      id: '4',
-      userId: 'u4',
-      displayName: 'Cat',
-      role: WalletRole.member,
-    ),
+    WalletMember(id: '3', userId: 'u3', name: 'Bee', role: WalletRole.member),
+    WalletMember(id: '4', userId: 'u4', name: 'Cat', role: WalletRole.member),
   ];
 
   const bank = Account(
@@ -139,9 +123,498 @@ Widget buildPeopleAccountsPage(BuildContext context) {
   Widget gridCard(Account a) =>
       SizedBox(width: 168, child: AccountCard(account: a, horizontal: false));
 
+  Widget mark(String name, PersonLevel level, [double? size]) => size == null
+      ? PersonMark(name: name, level: level)
+      : PersonMark(name: name, level: level, size: size);
+
+  Widget idRow(
+    AccountIdentifier id, {
+    List<PaymentProvider>? provs,
+    bool hidden = false,
+    VoidCallback? onDelete,
+  }) => AppCard(
+    padding: EdgeInsets.zero,
+    child: IdentifierRow(
+      identifier: id,
+      providers: provs ?? providers,
+      hidden: hidden,
+      onDelete: onDelete,
+    ),
+  );
+
+  final text = Theme.of(context).textTheme;
+
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      HubInApp(
+        columns: 2,
+        note:
+            'Real people and wallet pieces from sample models (no cubit), '
+            'many variants side by side. Wide ones take a whole row.',
+        uses: [
+          // ── PersonMark: levels, sizes, slot, chips ──
+          HubUse(
+            label: 'PersonMark · name — a typed name',
+            page: 'Transaction detail splits',
+            child: mark('ลี', PersonLevel.name),
+          ),
+          HubUse(
+            label: 'PersonMark · contact — own avatar',
+            page: 'Contact picker, Contact detail',
+            child: mark('บี', PersonLevel.contact),
+          ),
+          HubUse(
+            label: 'PersonMark · linked — avatar + link badge',
+            page: 'Contact picker, Contact detail',
+            child: mark('ต้น', PersonLevel.linked),
+          ),
+          HubUse(
+            label: 'size 20 — in a chip',
+            page: 'Chips (payer, split)',
+            child: mark('ต้น', PersonLevel.linked),
+          ),
+          HubUse(
+            label: 'size 36 — picker row',
+            page: 'Contact picker sheet',
+            child: mark('ต้น', PersonLevel.linked, 36),
+          ),
+          HubUse(
+            label: 'size 40 — list row',
+            page: 'Splits section',
+            child: mark('ต้น', PersonLevel.linked, 40),
+          ),
+          HubUse(
+            label: 'size 52 — header',
+            page: 'Contact detail header',
+            child: mark('ต้น', PersonLevel.linked, 52),
+          ),
+          HubUse(
+            label: 'PersonLinkBadge — 16 (fixed) and 24',
+            page: 'Next to a linked avatar',
+            child: const Wrap(
+              spacing: AppSpacing.sm,
+              children: [PersonLinkBadge(), PersonLinkBadge(size: 24)],
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label:
+                'reserveLinkSlot — unlinked marks keep the badge space so '
+                'every name starts at the same x',
+            page: 'Contact picker sheet, Splits section',
+            child: const AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListRow(
+                    leading: PersonMark(
+                      name: 'มาตาก',
+                      level: PersonLevel.linked,
+                      size: 40,
+                      reserveLinkSlot: true,
+                    ),
+                    title: 'มาตาก',
+                    subtitle: 'linked',
+                  ),
+                  AppDivider.row(),
+                  ListRow(
+                    leading: PersonMark(
+                      name: 'บี',
+                      level: PersonLevel.contact,
+                      size: 40,
+                      reserveLinkSlot: true,
+                    ),
+                    title: 'บี',
+                    subtitle: 'contact — slot kept empty',
+                  ),
+                  AppDivider.row(),
+                  ListRow(
+                    leading: PersonMark(
+                      name: 'ลี',
+                      level: PersonLevel.name,
+                      size: 40,
+                      reserveLinkSlot: true,
+                    ),
+                    title: 'ลี',
+                    subtitle: 'typed name — slot kept empty',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'PersonMark in a chip — name · contact · linked',
+            page: 'Split / payer chips',
+            child: const Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                AppChip(
+                  label: 'ลี',
+                  leading: PersonMark(name: 'ลี', level: PersonLevel.name),
+                ),
+                AppChip(
+                  label: 'บี',
+                  leading: PersonMark(name: 'บี', level: PersonLevel.contact),
+                ),
+                AppChip(
+                  label: 'ต้น',
+                  leading: PersonMark(name: 'ต้น', level: PersonLevel.linked),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Member strips and stacks ──
+          HubUse(
+            wide: true,
+            label: 'MemberStrip — with the dashed invite circle',
+            page: 'Project dashboard tab',
+            child: MemberStrip(members: people, onInvite: () {}),
+          ),
+          const HubUse(
+            wide: true,
+            label: 'MemberStrip — no invite, avatarSize 36',
+            page: 'Project dashboard tab (viewer)',
+            child: MemberStrip(members: people, avatarSize: 36),
+          ),
+          const HubUse(
+            label: 'AvatarStack — 3 of 5, size 32 (+N bubble)',
+            page: 'Account detail, Account cards',
+            child: AvatarStack(people: people, maxVisible: 3, size: 32),
+          ),
+          const HubUse(
+            label: 'AvatarStack — all fit',
+            page: 'Account detail',
+            child: AvatarStack(people: people, maxVisible: 5),
+          ),
+          const HubUse(
+            label: 'MemberAvatarStack — 3 of 4, size 20',
+            page: 'Account cards',
+            child: MemberAvatarStack(members: members),
+          ),
+          HubUse(
+            label: 'MemberAvatarStack — 2 members, size 28',
+            page: 'Account detail',
+            child: MemberAvatarStack(members: [...members.take(2)], size: 28),
+          ),
+          const HubUse(
+            label: 'UserAvatar — 28',
+            page: 'Edit profile page',
+            child: UserAvatar(displayName: 'Aom Chan', size: 28),
+          ),
+          const HubUse(
+            label: 'UserAvatar — 40',
+            page: 'Edit profile page',
+            child: UserAvatar(displayName: 'Aom Chan'),
+          ),
+          const HubUse(
+            label: 'UserAvatar — with its own icon',
+            page: 'Edit profile page',
+            child: UserAvatar(
+              displayName: 'Bee',
+              iconCode: IconCode(icon: 'favorite', iconColors: ['#EF4444']),
+            ),
+          ),
+          const HubUse(
+            wide: true,
+            label: 'UserProfilePreview — the compact profile row',
+            page: 'Edit profile page',
+            child: UserProfilePreview(displayName: 'Aom Chan'),
+          ),
+
+          // ── Wallet cards ──
+          HubUse(
+            label: 'AccountCard grid — bank, own icon colour',
+            page: 'Accounts page, Account picker sheet',
+            child: gridCard(bank),
+          ),
+          HubUse(
+            label: 'AccountCard grid — cash, no icon set',
+            page: 'Accounts page',
+            child: gridCard(cash),
+          ),
+          HubUse(
+            label: 'AccountCard grid — credit card: owed + used-credit bar',
+            page: 'Accounts page',
+            child: gridCard(card),
+          ),
+          HubUse(
+            label: 'AccountCard grid — overpaid: no bar',
+            page: 'Accounts page',
+            child: gridCard(overpaid),
+          ),
+          HubUse(
+            label: 'Hidden balance — symbol + bullets (privacy off)',
+            page: 'Accounts page (privacy mode)',
+            child: SizedBox(
+              width: 168,
+              child: AccountCardSurface(
+                account: bank,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const AccountIconCircle(account: bank, size: 40),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(bank.name, style: text.titleMedium),
+                      const AppText('฿••••', role: AppTextRole.money),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'Shared wallet — link badge + the OTHER members',
+            page: 'Accounts page, Account detail',
+            child: SizedBox(
+              width: 168,
+              child: AccountCardSurface(
+                account: shared,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AccountIconCircle(account: shared, size: 40),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(shared.name, style: text.titleMedium),
+                      const SizedBox(height: AppSpacing.xs),
+                      MemberAvatarStack(members: members.skip(1).toList()),
+                      const SizedBox(height: AppSpacing.xs),
+                      MoneyText(
+                        shared.balance,
+                        style: text.titleMedium?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'AccountCard horizontal — bank with description',
+            page: 'Accounts page (reorder), Account picker sheet',
+            child: AccountCard(account: bank, horizontal: true),
+          ),
+          HubUse(
+            wide: true,
+            label: 'AccountCard horizontal — cash with an italic note',
+            page: 'Accounts page (reorder)',
+            child: AccountCard(account: cash, horizontal: true),
+          ),
+          HubUse(
+            wide: true,
+            label: 'AccountCard horizontal — credit card with the credit bar',
+            page: 'Accounts page (reorder)',
+            child: AccountCard(account: card, horizontal: true),
+          ),
+
+          // ── Wallet icon, pick card ──
+          HubUse(
+            label: 'AccountIconCircle — personal 44',
+            page: 'Account detail',
+            child: const AccountIconCircle(account: bank, size: 44),
+          ),
+          HubUse(
+            label: 'AccountIconCircle — shared 44 (badge)',
+            page: 'Account detail',
+            child: AccountIconCircle(account: shared, size: 44),
+          ),
+          HubUse(
+            label: 'AccountIconCircle — editable (pencil badge)',
+            page: 'Account detail (edit), Wallet compact hero',
+            child: AccountIconCircle(account: card, size: 44, onTap: () {}),
+          ),
+          HubUse(
+            label: 'SharedWalletIconBadge — around any icon, 32',
+            page: 'Wallet compact hero',
+            child: SharedWalletIconBadge(
+              size: 32,
+              child: IconTile(
+                icon: AppIcons.cash,
+                color: scheme.primary,
+                size: 32,
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'WalletPickCard — picked, personal',
+            page: 'Transaction / debt / scheduled draft forms',
+            child: WalletPickCard(
+              account: bank,
+              label: 'Wallet',
+              placeholder: 'Choose a wallet',
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'WalletPickCard — picked, shared (badge)',
+            page: 'Transaction / debt / scheduled draft forms',
+            child: WalletPickCard(
+              account: shared,
+              label: 'Wallet · shared',
+              placeholder: 'Choose a wallet',
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'WalletPickCard — empty (dashed)',
+            page: 'Transaction / debt / scheduled draft forms',
+            child: WalletPickCard(
+              account: null,
+              label: 'Wallet · empty',
+              placeholder: 'Choose a wallet',
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'WalletPickCard — empty + errorText (required pick)',
+            page: 'Transaction draft form (save pressed)',
+            child: WalletPickCard(
+              account: null,
+              label: 'Wallet · error',
+              placeholder: 'Choose a wallet',
+              errorText: 'Required',
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            label: 'WalletPickCard dense — From',
+            page: 'Transfer form (two on a row)',
+            child: WalletPickCard(
+              account: cash,
+              label: 'From',
+              placeholder: 'Choose',
+              dense: true,
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            label: 'WalletPickCard dense — To',
+            page: 'Transfer form (two on a row)',
+            child: WalletPickCard(
+              account: card,
+              label: 'To',
+              placeholder: 'Choose',
+              dense: true,
+              onTap: () {},
+            ),
+          ),
+
+          // ── Banks and numbers ──
+          for (final p in providers)
+            HubUse(
+              label: 'BankMark — ${p.label('en')}',
+              page: p.shortName == null
+                  ? 'Unknown bank: colour from its code'
+                  : 'Bank picker sheet, Account detail numbers',
+              child: BankMark(provider: p),
+            ),
+          const HubUse(
+            label: 'BankMark — size 24',
+            page: 'Account detail numbers',
+            child: BankMark(provider: _kbank, size: 24),
+          ),
+          HubUse(
+            wide: true,
+            label: 'IdentifierRow — bank account (bank mark + number)',
+            page: 'Account detail (wallet numbers)',
+            child: idRow(
+              const AccountIdentifier(
+                kind: IdentifierKind.bankAccount,
+                value: '1234527806',
+                bankCode: '004',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'IdentifierRow — PromptPay (kind icon)',
+            page: 'Account detail (wallet numbers)',
+            child: idRow(
+              const AccountIdentifier(
+                kind: IdentifierKind.promptPay,
+                value: '0812345678',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'IdentifierRow — card (bank mark)',
+            page: 'Account detail (wallet numbers)',
+            child: idRow(
+              const AccountIdentifier(
+                kind: IdentifierKind.card,
+                value: 'xxxxxxxxxxxx2780',
+                bankCode: '014',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'IdentifierRow — other (kind icon)',
+            page: 'Account detail (wallet numbers)',
+            child: idRow(
+              const AccountIdentifier(
+                kind: IdentifierKind.other,
+                value: '99887766',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'IdentifierRow — hidden number',
+            page: 'Account detail (privacy)',
+            child: idRow(
+              const AccountIdentifier(
+                kind: IdentifierKind.bankAccount,
+                value: '1234527806',
+                bankCode: '014',
+              ),
+              hidden: true,
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'IdentifierRow — with delete',
+            page: 'Account detail (edit)',
+            child: idRow(
+              const AccountIdentifier(
+                kind: IdentifierKind.promptPay,
+                value: '0812345678',
+              ),
+              onDelete: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'IdentifierRow — unknown bank code',
+            page: 'Account detail (provider list missing the bank)',
+            child: idRow(
+              const AccountIdentifier(
+                kind: IdentifierKind.bankAccount,
+                value: '5550001234',
+                bankCode: '777',
+              ),
+              provs: const [],
+            ),
+          ),
+        ],
+      ),
       HubPlayground(
         title: 'PersonMark',
         note:
@@ -309,526 +782,6 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               ),
             ),
           ],
-        ),
-      ),
-      HubDemo(
-        title: 'PersonMark — three levels',
-        note:
-            'Used in: Contact detail, Contact picker, Transaction detail splits. '
-            'Who a person is to me: a typed name (generic person), a contact '
-            '(own avatar), a contact linked to an app user (avatar + link '
-            'badge).',
-        child: const HubRow(
-          cells: [
-            HubCell(
-              caption: 'name',
-              child: PersonMark(name: 'ลี', level: PersonLevel.name),
-            ),
-            HubCell(
-              caption: 'contact',
-              child: PersonMark(name: 'บี', level: PersonLevel.contact),
-            ),
-            HubCell(
-              caption: 'linked',
-              child: PersonMark(name: 'ต้น', level: PersonLevel.linked),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'PersonMark — sizes',
-        note:
-            'Used in: Contact picker (36/40), Contact detail header (52), chips (20). '
-            'The link badge keeps one fixed size (16) whatever the avatar '
-            'beside it. The gap is 2 under 32 and 4 from 32 up.',
-        child: const HubRow(
-          cells: [
-            HubCell(
-              caption: '20 (chip)',
-              child: PersonMark(name: 'ต้น', level: PersonLevel.linked),
-            ),
-            HubCell(
-              caption: '36 (picker)',
-              child: PersonMark(
-                name: 'ต้น',
-                level: PersonLevel.linked,
-                size: 36,
-              ),
-            ),
-            HubCell(
-              caption: '40 (list)',
-              child: PersonMark(
-                name: 'ต้น',
-                level: PersonLevel.linked,
-                size: 40,
-              ),
-            ),
-            HubCell(
-              caption: '52 (header)',
-              child: PersonMark(
-                name: 'ต้น',
-                level: PersonLevel.linked,
-                size: 52,
-              ),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'PersonMark — reserveLinkSlot',
-        note:
-            'Used in: Contact picker sheet, Splits section. '
-            'In a list, unlinked marks keep the badge\'s space empty so every '
-            'name starts at the same x. Off for a mark standing alone.',
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ListRow(
-                leading: PersonMark(
-                  name: 'มาตาก',
-                  level: PersonLevel.linked,
-                  size: 40,
-                  reserveLinkSlot: true,
-                ),
-                title: 'มาตาก',
-                subtitle: 'linked',
-              ),
-              AppDivider.row(),
-              ListRow(
-                leading: PersonMark(
-                  name: 'บี',
-                  level: PersonLevel.contact,
-                  size: 40,
-                  reserveLinkSlot: true,
-                ),
-                title: 'บี',
-                subtitle: 'contact — slot kept empty',
-              ),
-              AppDivider.row(),
-              ListRow(
-                leading: PersonMark(
-                  name: 'ลี',
-                  level: PersonLevel.name,
-                  size: 40,
-                  reserveLinkSlot: true,
-                ),
-                title: 'ลี',
-                subtitle: 'typed name — slot kept empty',
-              ),
-            ],
-          ),
-        ),
-      ),
-      HubDemo(
-        title: 'PersonMark in a chip · PersonLinkBadge',
-        child: Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            const AppChip(
-              label: 'ลี',
-              leading: PersonMark(name: 'ลี', level: PersonLevel.name),
-            ),
-            const AppChip(
-              label: 'บี',
-              leading: PersonMark(name: 'บี', level: PersonLevel.contact),
-            ),
-            const AppChip(
-              label: 'ต้น',
-              leading: PersonMark(name: 'ต้น', level: PersonLevel.linked),
-            ),
-            const PersonLinkBadge(),
-            const PersonLinkBadge(size: 24),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'MemberStrip',
-        note:
-            'Used in: Project dashboard tab. '
-            'Horizontal member row: avatar and name, a crown on the owner, a '
-            'caption under the name, faded pending members, and a dashed '
-            'invite circle at the end when onInvite is set.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            MemberStrip(members: people, onInvite: () {}),
-            const SizedBox(height: AppSpacing.md),
-            const Text('Without invite, avatarSize 36'),
-            const SizedBox(height: AppSpacing.xs),
-            const MemberStrip(members: people, avatarSize: 36),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'AvatarStack · MemberAvatarStack',
-        note:
-            'Used in: Account detail, Account cards. '
-            'Overlapping avatars with a "+N" overflow bubble. AvatarStack takes '
-            'PersonRef; MemberAvatarStack (wallet feature) takes WalletMember.',
-        child: HubRow(
-          cells: [
-            const HubCell(
-              caption: 'AvatarStack 3 of 5 · 32',
-              child: AvatarStack(people: people, maxVisible: 3, size: 32),
-            ),
-            const HubCell(
-              caption: 'AvatarStack all fit',
-              child: AvatarStack(people: people, maxVisible: 5),
-            ),
-            const HubCell(
-              caption: 'MemberAvatarStack 3 of 4 · 20',
-              child: MemberAvatarStack(members: members),
-            ),
-            HubCell(
-              caption: 'MemberAvatarStack 2 · 28',
-              child: MemberAvatarStack(members: [...members.take(2)], size: 28),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'UserAvatar · UserProfilePreview',
-        note:
-            'Used in: Edit profile page. '
-            'A user\'s avatar in context: alone, inside a stack, and as the '
-            'compact preview row used on profile screens.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const HubRow(
-              cells: [
-                HubCell(
-                  caption: '28',
-                  child: UserAvatar(displayName: 'Aom Chan', size: 28),
-                ),
-                HubCell(
-                  caption: '40',
-                  child: UserAvatar(displayName: 'Aom Chan'),
-                ),
-                HubCell(
-                  caption: 'with icon',
-                  child: UserAvatar(
-                    displayName: 'Bee',
-                    iconCode: IconCode(
-                      icon: 'favorite',
-                      iconColors: ['#EF4444'],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            const UserProfilePreview(displayName: 'Aom Chan'),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'AccountCard — vertical (grid)',
-        note:
-            'Used in: Accounts page, Account picker sheet. '
-            'The wallet-card look: accent wash, type glyph in the corner. '
-            'Balance colour: a credit-type wallet shows what you owe in the '
-            'liability colour; others use the wallet\'s own icon colour. A '
-            'credit card also shows its used-credit bar; an overpaid card '
-            'shows none.',
-        child: Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
-          children: [
-            gridCard(bank),
-            gridCard(cash),
-            gridCard(card),
-            gridCard(overpaid),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'AccountCard — horizontal (list row)',
-        note:
-            'Used in: Accounts page (reorder), Account picker sheet. '
-            'The reorder-list / icon-maker form. Description (else the type '
-            'name), optional italic note, credit bar.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final a in [bank, cash, card])
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: AccountCard(account: a, horizontal: true),
-              ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'Account card — hidden balance',
-        note:
-            'Used in: Accounts page (privacy mode, currently off). '
-            'kMoneyPrivacyEnabled is a const false right now, so the card '
-            'never hides its balance. The hidden look is the symbol plus '
-            'four bullets, drawn here as a static copy of the card surface.',
-        child: SizedBox(
-          width: 168,
-          child: AccountCardSurface(
-            account: bank,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AccountIconCircle(account: bank, size: 40),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    bank.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const AppText('฿••••', role: AppTextRole.money),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      HubDemo(
-        title: 'Shared wallet — AccountCardSurface + member stack',
-        note:
-            'Used in: Accounts page, Account detail. '
-            'A shared wallet adds the link badge on its icon and the stack of '
-            'the OTHER members. AccountCard itself reads the signed-in user '
-            'to drop "self", which needs a running cubit, so the parts are '
-            'composed here by hand.',
-        child: SizedBox(
-          width: 220,
-          child: AccountCardSurface(
-            account: shared,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AccountIconCircle(account: shared, size: 40),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    shared.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  MemberAvatarStack(members: members.skip(1).toList()),
-                  const SizedBox(height: AppSpacing.xs),
-                  MoneyText(
-                    shared.balance,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      HubDemo(
-        title: 'AccountIconCircle · SharedWalletIconBadge',
-        note:
-            'Used in: Account detail, Wallet compact hero. '
-            'The wallet icon (pencil badge while onTap is set) with the shared '
-            'badge when the wallet is shared. Constant footprint either way.',
-        child: HubRow(
-          cells: [
-            const HubCell(
-              caption: 'personal 44',
-              child: AccountIconCircle(account: bank, size: 44),
-            ),
-            HubCell(
-              caption: 'shared 44',
-              child: AccountIconCircle(account: shared, size: 44),
-            ),
-            HubCell(
-              caption: 'editable 44',
-              child: AccountIconCircle(account: card, size: 44, onTap: () {}),
-            ),
-            HubCell(
-              caption: 'SharedWalletIconBadge 32',
-              child: SharedWalletIconBadge(
-                size: 32,
-                child: IconTile(
-                  icon: AppIcons.cash,
-                  color: scheme.primary,
-                  size: 32,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'WalletPickCard',
-        note:
-            'Used in: Transaction / debt / scheduled draft forms. '
-            'A wallet as a PickCard: wash, icon (+ shared badge), balance in '
-            'its accent colour. Nothing picked shows the dashed empty card; '
-            'dense fits two cards on a row; errorText marks a required pick.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            WalletPickCard(
-              account: bank,
-              label: 'Wallet',
-              placeholder: 'Choose a wallet',
-              onTap: () {},
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            WalletPickCard(
-              account: shared,
-              label: 'Wallet · shared',
-              placeholder: 'Choose a wallet',
-              onTap: () {},
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            WalletPickCard(
-              account: null,
-              label: 'Wallet · empty',
-              placeholder: 'Choose a wallet',
-              onTap: () {},
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            WalletPickCard(
-              account: null,
-              label: 'Wallet · error',
-              placeholder: 'Choose a wallet',
-              errorText: 'Required',
-              onTap: () {},
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: WalletPickCard(
-                    account: cash,
-                    label: 'From',
-                    placeholder: 'Choose',
-                    dense: true,
-                    onTap: () {},
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: WalletPickCard(
-                    account: card,
-                    label: 'To',
-                    placeholder: 'Choose',
-                    dense: true,
-                    onTap: () {},
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'BankMark',
-        note:
-            'Used in: Bank picker sheet, Account detail numbers. '
-            'A circle in the bank\'s colour with its short code. Unknown banks '
-            'get a stable colour from their code and the English name\'s '
-            'initials.',
-        child: HubRow(
-          cells: [
-            for (final p in providers)
-              HubCell(
-                caption: p.label('en'),
-                child: BankMark(provider: p),
-              ),
-            const HubCell(
-              caption: 'size 24',
-              child: BankMark(provider: _kbank, size: 24),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'IdentifierRow — kinds',
-        note:
-            'Used in: Account detail (wallet numbers). '
-            'A wallet number, read-only: kind (+ bank) on the left, the '
-            'number on the right. Bank account and card show the bank mark; '
-            'PromptPay and other show the kind icon.',
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              IdentifierRow(
-                identifier: const AccountIdentifier(
-                  kind: IdentifierKind.bankAccount,
-                  value: '1234527806',
-                  bankCode: '004',
-                ),
-                providers: providers,
-              ),
-              IdentifierRow(
-                identifier: const AccountIdentifier(
-                  kind: IdentifierKind.promptPay,
-                  value: '0812345678',
-                ),
-                providers: providers,
-              ),
-              IdentifierRow(
-                identifier: const AccountIdentifier(
-                  kind: IdentifierKind.card,
-                  value: 'xxxxxxxxxxxx2780',
-                  bankCode: '014',
-                ),
-                providers: providers,
-              ),
-              IdentifierRow(
-                identifier: const AccountIdentifier(
-                  kind: IdentifierKind.other,
-                  value: '99887766',
-                ),
-                providers: providers,
-              ),
-            ],
-          ),
-        ),
-      ),
-      HubDemo(
-        title: 'IdentifierRow — hidden · with delete · unknown bank',
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              IdentifierRow(
-                identifier: const AccountIdentifier(
-                  kind: IdentifierKind.bankAccount,
-                  value: '1234527806',
-                  bankCode: '014',
-                ),
-                providers: providers,
-                hidden: true,
-              ),
-              IdentifierRow(
-                identifier: const AccountIdentifier(
-                  kind: IdentifierKind.promptPay,
-                  value: '0812345678',
-                ),
-                providers: providers,
-                onDelete: () {},
-              ),
-              IdentifierRow(
-                identifier: const AccountIdentifier(
-                  kind: IdentifierKind.bankAccount,
-                  value: '5550001234',
-                  bankCode: '777',
-                ),
-                providers: const [],
-              ),
-            ],
-          ),
         ),
       ),
     ],

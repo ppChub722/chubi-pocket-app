@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -10,39 +8,12 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
-import '../../../transactions/domain/transaction_type.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
-import '../../../transactions/presentation/widgets/tx_hero_card.dart';
 import '../../domain/personal_debt.dart';
 import '../cubit/personal_debts_cubit.dart';
-
-/// Avatar for a debt counterparty — the icon comes embedded in the BE's
-/// `person` (no contacts cache).
-class DebtAvatar extends StatelessWidget {
-  const DebtAvatar({
-    required this.name,
-    this.iconCode,
-    this.size = 40,
-    super.key,
-  });
-
-  final String name;
-  final IconCode? iconCode;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return UserAvatar(
-      displayName: name.isEmpty ? '?' : name,
-      iconCode: iconCode,
-      size: size,
-    );
-  }
-}
 
 /// "ค้างอยู่ / คืนครบแล้ว / ยกเลิก".
 AppChip debtStatusChip(
@@ -198,231 +169,89 @@ Future<bool> showSettleDebtSheet(
 }) async {
   final l = AppLocalizations.of(context)!;
   final accounts = context.read<AccountsCubit>();
+  final debts = context.read<PersonalDebtsCubit>();
   if (accounts.state.accounts.isEmpty) await accounts.load();
   final prefs = await SharedPreferences.getInstance();
   if (!context.mounted) return false;
   final name = debt.counterpartyPersonName;
-  final ok = await showAppSheet<bool>(
-    context,
-    title: debt.isOwedToMe
-        ? l.debtSettleTitleReceive(name)
-        : l.debtSettleTitlePay(name),
-    builder: (_) => _SettleSheet(debt: debt, amount: amount, prefs: prefs),
-  );
-  return ok ?? false;
-}
-
-class _SettleSheet extends StatefulWidget {
-  const _SettleSheet({required this.debt, required this.prefs, this.amount});
-  final PersonalDebt debt;
-  final SharedPreferences prefs;
-  final double? amount;
-
-  @override
-  State<_SettleSheet> createState() => _SettleSheetState();
-}
-
-class _SettleSheetState extends State<_SettleSheet> {
-  late final _amount = TextEditingController(
-    text: AmountInput.format(
-      // An overpaid debt has a negative outstanding — never an upper bound
-      // below 0 (clamp would throw).
-      (widget.amount ?? widget.debt.outstanding).clamp(
-        0,
-        math.max(0, widget.debt.outstanding),
-      ),
-    ),
-  );
-
-  final _description = TextEditingController();
-  final _note = TextEditingController();
-
-  /// null = no wallet (a floating transaction).
-  Account? _account;
-  DateTime _date = DateTime.now();
-  bool _saving = false;
-
-  /// Set by a failed confirm, shown under the amount.
-  String? _amountError;
-
-  @override
-  void initState() {
-    super.initState();
-    final accounts = context.read<AccountsCubit>().state.accounts;
-    final last = widget.prefs.getString(StorageKeys.lastAccountId);
-    _account =
-        accounts.where((a) => a.id == last).firstOrNull ?? accounts.firstOrNull;
-  }
-
-  @override
-  void dispose() {
-    _amount.dispose();
-    _description.dispose();
-    _note.dispose();
-    super.dispose();
-  }
-
-  String _ymd(DateTime d) =>
+  final symbol = Currencies.symbolOf(debt.currency);
+  final locale = Localizations.localeOf(context).languageCode;
+  final all = accounts.state.accounts;
+  final last = prefs.getString(StorageKeys.lastAccountId);
+  String ymd(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  Future<void> _pickAccount() async {
-    final l = AppLocalizations.of(context)!;
-    final r = await showAccountPickerSheet(
-      context: context,
-      accounts: context.read<AccountsCubit>().state.accounts,
-      selected: _account,
-      title: l.debtSettleAccount,
-      allowNone: true,
-    );
-    if (r is AccountPickerSelected) setState(() => _account = r.account);
-    if (r is AccountPickerCleared) setState(() => _account = null);
-  }
-
-  Future<void> _pickDate() async {
-    final d = await showDatePicker(
-      context: context,
-      initialDate: _date,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (d != null) setState(() => _date = d);
-  }
-
-  /// Amount within (0, outstanding]; null = fine.
-  String? _amountProblem(AppLocalizations l, String symbol) {
-    final n = AmountInput.parse(_amount.text);
-    final out = widget.debt.outstanding;
-    if (n == null || n <= 0) return l.debtAmountRequired;
-    if (n > out + 0.005) {
-      return l.debtSettleOver(moneyString(context, out, symbol: symbol));
-    }
-    return null;
-  }
-
-  Future<void> _confirm() async {
-    final l = AppLocalizations.of(context)!;
-    final problem = _amountProblem(
-      l,
-      Currencies.symbolOf(widget.debt.currency),
-    );
-    setState(() => _amountError = problem);
-    if (problem != null) return;
-    final debts = context.read<PersonalDebtsCubit>();
-    final accounts = context.read<AccountsCubit>();
-    String? opt(TextEditingController c) =>
-        c.text.trim().isEmpty ? null : c.text.trim();
-    setState(() => _saving = true);
-    try {
-      final settled = await debts.settle(
-        widget.debt.id,
-        accountId: _account?.id,
-        amount: AmountInput.parse(_amount.text),
-        date: _ymd(_date),
-        // Left blank → the server uses the debt's description.
-        description: opt(_description),
-        note: opt(_note),
-      );
-      final account = _account;
-      if (account != null) {
-        await widget.prefs.setString(StorageKeys.lastAccountId, account.id);
+  final result = await showSettleSheet(
+    context,
+    data: SettleSheetData(
+      isReceive: debt.isOwedToMe,
+      outstanding: debt.outstanding,
+      symbol: symbol,
+      description: debt.description,
+      initialAmount: amount,
+    ),
+    labels: SettleSheetLabels(
+      title: debt.isOwedToMe
+          ? l.debtSettleTitleReceive(name)
+          : l.debtSettleTitlePay(name),
+      confirm: l.debtSettleConfirm,
+      amountLabel: l.debtOutstanding,
+      amountRequired: l.debtAmountRequired,
+      amountOver: l.debtSettleOver,
+      all: l.debtSettleAll,
+      half: l.debtSettleHalf,
+      noteLabel: l.commonNote,
+      descriptionHint: l.txHeroTitleHint,
+      formatDate: (d) => DateFormatter.friendly(
+        d,
+        today: l.commonToday,
+        yesterday: l.commonYesterday,
+        locale: locale,
+      ),
+    ),
+    // The wallet starts at the last one used, like quick create.
+    initialAccount:
+        all.where((a) => a.id == last).firstOrNull ?? all.firstOrNull,
+    walletField: (ctx, selected, onChanged) => WalletPickCard(
+      account: selected,
+      label: l.debtSettleAccount,
+      placeholder: l.transactionFormAccountNone,
+      onTap: () async {
+        final r = await showAccountPickerSheet(
+          context: ctx,
+          accounts: accounts.state.accounts,
+          selected: selected,
+          title: l.debtSettleAccount,
+          allowNone: true,
+        );
+        if (r is AccountPickerSelected) onChanged(r.account);
+        if (r is AccountPickerCleared) onChanged(null);
+      },
+    ),
+    onConfirm: (r) async {
+      try {
+        final settled = await debts.settle(
+          debt.id,
+          accountId: r.account?.id,
+          amount: r.amount,
+          date: ymd(r.date),
+          // Left blank → the server uses the debt's description.
+          description: r.description,
+          note: r.note,
+        );
+        final account = r.account;
+        if (account != null) {
+          await prefs.setString(StorageKeys.lastAccountId, account.id);
+        }
+        // A transaction was recorded: the wallets' new balances come with the
+        // answer; the tx lists re-fetch.
+        accounts.patchBalances(settled.accountBalances);
+        await TransactionsCubit.bookChanged();
+        return null;
+      } on ApiException catch (e) {
+        return e.code == 'DEBT_OVERPAID' ? l.debtOverpaidCantSettle : e.message;
       }
-      // A transaction was recorded: the wallets' new balances come with the
-      // answer; the tx lists re-fetch.
-      accounts.patchBalances(settled.accountBalances);
-      await TransactionsCubit.bookChanged();
-      if (mounted) Navigator.of(context).pop(true);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showAppSnackBar(
-        context,
-        e.code == 'DEBT_OVERPAID'
-            ? AppLocalizations.of(context)!.debtOverpaidCantSettle
-            : e.message,
-        tone: Tone.danger,
-      );
-    }
-  }
-
-  void _fill(double amount) {
-    _amount.text = AmountInput.format(amount);
-    setState(() => _amountError = null);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final debt = widget.debt;
-    final symbol = Currencies.symbolOf(debt.currency);
-    final out = debt.outstanding;
-    return Padding(
-      // No keyboard inset here — AppSheetScaffold (showAppSheet) adds it.
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TxHeroCard(
-            // Money in for a debt owed to me, out for one I owe.
-            type: debt.isOwedToMe
-                ? TransactionType.income
-                : TransactionType.expense,
-            amount: _amount,
-            amountLabel: l.debtOutstanding,
-            amountError: _amountError,
-            title: _description,
-            // Left blank, the new row takes the debt's own description.
-            titleHint: debt.description ?? l.txHeroTitleHint,
-            dateLabel: DateFormatter.friendly(
-              _date,
-              today: l.commonToday,
-              yesterday: l.commonYesterday,
-              locale: Localizations.localeOf(context).languageCode,
-            ),
-            onPickDate: _pickDate,
-            symbol: symbol,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.xs,
-            children: [
-              AppChip(label: l.debtSettleAll, onTap: () => _fill(out)),
-              AppChip(
-                label: l.debtSettleHalf,
-                onTap: () => _fill((out / 2 * 100).roundToDouble() / 100),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          WalletPickCard(
-            account: _account,
-            label: l.debtSettleAccount,
-            placeholder: l.transactionFormAccountNone,
-            onTap: _pickAccount,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AppInput(
-            controller: _note,
-            label: l.commonNote,
-            prefixIcon: AppIcons.note,
-            maxLines: 3,
-            maxLength: TextLimits.note,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AppButton(
-            label: l.debtSettleConfirm,
-            icon: AppIcons.settle,
-            expand: true,
-            loading: _saving,
-            onPressed: _confirm,
-          ),
-        ],
-      ),
-    );
-  }
+    },
+  );
+  return result != null;
 }

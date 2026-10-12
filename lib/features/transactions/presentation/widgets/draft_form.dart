@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/date_formatter.dart';
@@ -13,6 +12,7 @@ import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../categories/presentation/category_label.dart';
 import '../../../categories/presentation/widgets/category_pick_card.dart';
 import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../../pending/domain/pending_transaction.dart';
@@ -34,7 +34,6 @@ import 'pick_chip_rows.dart';
 import 'split_event_section.dart';
 import 'splits_section.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
-import 'tx_hero_card.dart';
 
 part 'draft_form_event.dart';
 part 'draft_form_scheduled.dart';
@@ -609,6 +608,9 @@ class DraftForm extends StatefulWidget {
     this.schedule,
     this.heroKey,
     this.chipLayout = false,
+    this.cardsInHero = false,
+    this.chipRows = false,
+    this.missing = const {},
     super.key,
   });
 
@@ -618,6 +620,22 @@ class DraftForm extends StatefulWidget {
   /// picker — then tags, the inline note, and a collapsible "หารกับ /
   /// อีเวนต์" section (an event is an existing one, `project_id`).
   final bool chipLayout;
+
+  /// The transaction detail's layout (owner 2026-10-12): the big wallet ·
+  /// category pick cards sit INSIDE the hero card (its footer), no category
+  /// chip row below; the tag row stays outside the hero. Off = the cards
+  /// under the hero (quick create, on hold).
+  final bool cardsInHero;
+
+  /// The EntryCard layout (owner 2026-10-12) WITHOUT the pending drafts'
+  /// collapsible section behaviour: quick create. [chipLayout] implies it.
+  /// The card holds type · date, description · amount, the wallet chip row
+  /// and the category chip row; the tags row, the note and the splits sit
+  /// below it.
+  final bool chipRows;
+
+  /// Rows of the [EntryCard] a draft still lacks (danger outline).
+  final Set<EntryField> missing;
 
   /// Put on the [TxHeroCard] — the quick create watches where it scrolled
   /// to (its title row shows the amount once the card is out of view).
@@ -758,18 +776,77 @@ class _DraftFormState extends State<DraftForm> {
   }
 
   Future<void> _pickDate() async {
-    final d = await showDatePicker(
-      context: context,
-      initialDate: _c.date,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+    final r = await showAppDatePicker(
+      context,
+      initial: _c.date,
+      first: DateTime(2000),
+      last: DateTime.now().add(const Duration(days: 365)),
     );
-    if (d != null) _c.setDate(d);
+    if (r is AppDatePicked) _c.setDate(r.date);
   }
 
-  /// A wallet card: the picker in edit mode, not tappable in view mode.
-  /// One that isn't in this user's list (someone else's, on a shared
-  /// wallet) still shows its name, just not tappable.
+  /// The tags: the edit chip row, or the view strip (none when empty).
+  /// [longPress] wraps the view strip (a long-press enters edit mode).
+  List<Widget> _tagsBlock({
+    required bool editing,
+    Widget Function(Widget child)? longPress,
+  }) {
+    if (editing) {
+      return [
+        TagChipRow(
+          selected: _c.tagIds,
+          onToggle: _c.toggleTag,
+          onMore: _moreTags,
+          known: _c.knownTags,
+          order: _tagOrder,
+        ),
+      ];
+    }
+    if (_c.tagIds.isEmpty) return const [];
+    final strip = TxTagStrip(
+      tags: [
+        for (final id in _c.tagIds)
+          ?((maybeTxFormOptions(context, watch: false)?.state.options?.tags ??
+                      context.read<TagsCubit>().state.tags)
+                  .where((t) => t.id == id)
+                  .firstOrNull ??
+              _c.knownTags[id]),
+      ],
+    );
+    return [longPress == null ? strip : longPress(strip)];
+  }
+
+  /// The description's stand-in on the detail hero: the category's name
+  /// (localised for system ones), else the type's label.
+  String _titlePlaceholder(AppLocalizations l) {
+    final c = _c.isTransfer ? null : _c.category;
+    if (c != null) return categoryDisplayName(l, c);
+    final foreign = _c.isTransfer ? null : _c.foreignCategoryName;
+    if (foreign != null && foreign.isNotEmpty) return foreign;
+    return switch (_c.type) {
+      TransactionType.expense => l.transactionTypeExpense,
+      TransactionType.income => l.transactionTypeIncome,
+      TransactionType.transfer => l.transactionTypeTransfer,
+    };
+  }
+
+  /// A card's tap: the picker in edit / create mode; in view mode it enters
+  /// edit mode first, then opens the picker (the placeholder rule). Null =
+  /// not tappable (read-only, or no way into edit mode).
+  VoidCallback? _heroTap(VoidCallback pick, {bool locked = false}) {
+    if (locked || widget.readOnly) return null;
+    if (widget.editing) return pick;
+    final enter = widget.onEnterEdit;
+    if (enter == null) return null;
+    return () {
+      enter(null);
+      pick();
+    };
+  }
+
+  /// A wallet card: the picker in edit mode; in view mode a tap enters edit
+  /// and opens it. One that isn't in this user's list (someone else's, on a
+  /// shared wallet) still shows its name, just not tappable.
   Widget _walletCard({
     required Account? account,
     required String label,
@@ -791,7 +868,7 @@ class _DraftFormState extends State<DraftForm> {
       label: label,
       placeholder: placeholder,
       dense: true,
-      onTap: widget.editing ? onPick : null,
+      onTap: _heroTap(onPick),
     );
   }
 
@@ -812,9 +889,7 @@ class _DraftFormState extends State<DraftForm> {
       label: l.transactionFormCategoryLabel,
       placeholder: l.transactionFormCategoryNone,
       dense: true,
-      onTap: widget.editing && widget.categoryLockedHint == null
-          ? _pickCategory
-          : null,
+      onTap: _heroTap(_pickCategory, locked: widget.categoryLockedHint != null),
     );
   }
 
@@ -861,50 +936,80 @@ class _DraftFormState extends State<DraftForm> {
       listenable: _c,
       builder: (context, _) {
         final isTransfer = _c.isTransfer;
+        final entryLayout = widget.chipLayout || widget.chipRows;
         final categoryHint = widget.categoryLockedHint;
         final form = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            TxHeroCard(
-              key: widget.heroKey,
-              type: _c.type,
-              onTypeChanged: widget.typeLocked ? null : _c.setType,
-              amount: _c.amount,
-              title: _c.description,
-              dateLabel: _dayLabel(context, _c.date),
-              onPickDate: _pickDate,
-              editing: editing,
-              autofocus: widget.autofocus && !widget.readOnly,
-              compact: widget.compact,
-              amountFocus: _amountFocus,
-              titleFocus: _descriptionFocus,
-              onEdit: widget.onEdit,
-              onLongPressField: enterEdit,
-              inline: true,
-              // "ส่วนของคุณ" under the total — while editing only where
-              // splits can be edited; in view whenever the people loaded.
-              amountNote: !isTransfer && (!editing || widget.allowSplits)
-                  ? _ShareLine.of(_c)
-                  : null,
-            ),
-            if (widget.chipLayout)
+            if (entryLayout)
+              EntryCard(
+                key: widget.heroKey,
+                type: _c.type,
+                onTypeChanged: widget.typeLocked ? null : _c.setType,
+                amount: _c.amount,
+                title: _c.description,
+                dateLabel: _dayLabel(context, _c.date),
+                onPickDate: _pickDate,
+                autofocus: widget.autofocus && !widget.readOnly,
+                compact: widget.compact,
+                amountFocus: _amountFocus,
+                titleFocus: _descriptionFocus,
+                amountNote: !isTransfer && (!editing || widget.allowSplits)
+                    ? _ShareLine.of(_c)
+                    : null,
+                missing: widget.missing,
+                walletRow: _entryWalletRow(l, isTransfer: isTransfer),
+                toWalletRow: isTransfer ? _entryToWalletRow(l) : null,
+                categoryRow: isTransfer ? null : _entryCategoryRow(l),
+              )
+            else
+              TxHeroCard(
+                key: widget.heroKey,
+                type: _c.type,
+                onTypeChanged: widget.typeLocked ? null : _c.setType,
+                amount: _c.amount,
+                title: _c.description,
+                // The detail hero: no description → the category's name (else
+                // the type) stands in, italic and muted.
+                titlePlaceholder: widget.cardsInHero
+                    ? _titlePlaceholder(l)
+                    : null,
+                dateLabel: _dayLabel(context, _c.date),
+                onPickDate: _pickDate,
+                editing: editing,
+                autofocus: widget.autofocus && !widget.readOnly,
+                compact: widget.compact,
+                amountFocus: _amountFocus,
+                titleFocus: _descriptionFocus,
+                onEdit: widget.onEdit,
+                onLongPressField: enterEdit,
+                inline: true,
+                // "ส่วนของคุณ" under the total — while editing only where
+                // splits can be edited; in view whenever the people loaded.
+                amountNote: !isTransfer && (!editing || widget.allowSplits)
+                    ? _ShareLine.of(_c)
+                    : null,
+                footer: widget.cardsInHero
+                    ? _cardsRow(l, isTransfer: isTransfer)
+                    : null,
+              ),
+            if (entryLayout)
               ..._chipBody(l, isTransfer: isTransfer)
             else ...[
-              // Category · wallet cards under the hero, view and edit alike
-              // (owner 2026-10-11: out of the hero card, so the detail matches
-              // the edit page). 16 from the hero (HeroSpacing.after). View
-              // mode: nothing opens, a long-press enters edit.
+              // Category · wallet cards: inside the hero on the detail page
+              // (cardsInHero), else under it (quick create). 16 from the hero.
               const SizedBox(height: HeroSpacing.after),
-              longPressable(_cardsRow(l, isTransfer: isTransfer)),
+              if (!widget.cardsInHero)
+                longPressable(_cardsRow(l, isTransfer: isTransfer)),
               if (editing) ...[
-                if (editing && !isTransfer && categoryHint != null)
+                if (!isTransfer && categoryHint != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
                       AppSpacing.md,
-                      AppSpacing.xs,
-                      AppSpacing.md,
                       0,
+                      AppSpacing.md,
+                      AppSpacing.sm,
                     ),
                     child: Text(
                       categoryHint,
@@ -913,9 +1018,11 @@ class _DraftFormState extends State<DraftForm> {
                       ),
                     ),
                   ),
-                // One tap on a recent category picks it (owner 2026-10-10).
-                if (editing && !isTransfer && categoryHint == null) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                // One tap on a recent category picks it (owner 2026-10-10);
+                // not on the detail page (its category sits in the hero).
+                if (!widget.cardsInHero &&
+                    !isTransfer &&
+                    categoryHint == null) ...[
                   CategoryChipRow(
                     type: _c.type,
                     selected: _c.category,
@@ -923,37 +1030,14 @@ class _DraftFormState extends State<DraftForm> {
                     onMore: _pickCategory,
                     order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
                 ],
-                // Editing, sectioned or not: [🏷 chips…] right under the
-                // category chips (owner 2026-10-11 — not a "แท็ก" row in the
-                // sections). View mode keeps the section row.
-                const SizedBox(height: AppSpacing.sm),
-                TagChipRow(
-                  selected: _c.tagIds,
-                  onToggle: _c.toggleTag,
-                  onMore: _moreTags,
-                  known: _c.knownTags,
-                  order: _tagOrder,
-                ),
-              ] else if (_c.tagIds.isNotEmpty) ...[
-                // View, sectioned or not: under the cards, as chips led by the
-                // tag icon like the edit row — no "แท็ก" row (owner 2026-10-11).
-                SizedBox(height: HeroSpacing.after),
-                longPressable(
-                  TxTagStrip(
-                    tags: [
-                      for (final id in _c.tagIds)
-                        ?((maybeTxFormOptions(
-                                      context,
-                                      watch: false,
-                                    )?.state.options?.tags ??
-                                    context.read<TagsCubit>().state.tags)
-                                .where((t) => t.id == id)
-                                .firstOrNull ??
-                            _c.knownTags[id]),
-                    ],
-                  ),
-                ),
+                // Editing: [🏷 chips…] (not a "แท็ก" row in the sections).
+                // View mode keeps the tag strip below. (The detail page
+                // puts the tags after the note instead, see [_sections].)
+                if (!widget.cardsInHero) ..._tagsBlock(editing: true),
+              ] else if (!widget.cardsInHero && _c.tagIds.isNotEmpty) ...[
+                ..._tagsBlock(editing: false, longPress: longPressable),
               ],
               ..._sections(l, editing: editing, isTransfer: isTransfer),
             ],
@@ -965,71 +1049,49 @@ class _DraftFormState extends State<DraftForm> {
     );
   }
 
-  /// [DraftForm.chipLayout] below the hero:
+  /// The wallet chip row of the entry card: a dashed "เลือกกระเป๋า" chip
+  /// first, then the wallets most used. A transfer's is the source.
+  Widget _entryWalletRow(AppLocalizations l, {required bool isTransfer}) =>
+      WalletChipRow(
+        selectedId: _c.account?.id,
+        onPick: isTransfer
+            ? _c.setAccount
+            // Tapping the picked wallet again leaves it out (a wallet is
+            // optional here).
+            : (a) => _c.setAccount(_c.account?.id == a.id ? null : a),
+        onMore: _pickAccount,
+        order: _walletOrder,
+        pickLabel: isTransfer ? l.draftPickWalletFrom : l.quickPickWallet,
+        excludeId: isTransfer ? _c.toAccount?.id : null,
+      );
+
+  Widget _entryToWalletRow(AppLocalizations l) => WalletChipRow(
+    selectedId: _c.toAccount?.id,
+    onPick: _c.setToAccount,
+    onMore: () => _pickAccount(to: true),
+    order: _toWalletOrder,
+    pickLabel: l.draftPickWalletTo,
+    excludeId: _c.account?.id,
+  );
+
+  Widget _entryCategoryRow(AppLocalizations l) => CategoryChipRow(
+    type: _c.type,
+    selected: _c.category,
+    onPick: _c.setCategory,
+    onMore: _pickCategory,
+    order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
+    pickLabel: l.draftPickCategory,
+  );
+
+  /// The entry layout below the card (wallet · category are IN the card):
   ///
-  ///   [💳] [＋ เลือกกระเป๋า] [กสิกร] [เงินสด]      (a transfer: จาก / ไป rows)
-  ///   [🏷] [＋ เลือกหมวด] [อาหาร] [เดินทาง]         (not for a transfer)
   ///   [🏷] [#a] [#b] [⋯]
   ///   โน้ต  [ … ]
-  ///   หารกับ / อีเวนต์  (summary)                ⌄   (collapsed, not a transfer)
+  ///   หารกับ / อีเวนต์  (summary)                ⌄   (not a transfer)
   List<Widget> _chipBody(AppLocalizations l, {required bool isTransfer}) {
     const gap = SizedBox(height: AppSpacing.sm);
-    Widget walletRow({
-      required Account? selected,
-      required ValueChanged<Account> onPick,
-      required VoidCallback onMore,
-      required ChipOrder order,
-      required String label,
-      String? excludeId,
-    }) => WalletChipRow(
-      selectedId: selected?.id,
-      onPick: onPick,
-      onMore: onMore,
-      order: order,
-      pickLabel: label,
-      excludeId: excludeId,
-    );
     return [
       const SizedBox(height: HeroSpacing.after),
-      if (isTransfer) ...[
-        walletRow(
-          selected: _c.account,
-          onPick: _c.setAccount,
-          onMore: _pickAccount,
-          order: _walletOrder,
-          label: l.draftPickWalletFrom,
-          excludeId: _c.toAccount?.id,
-        ),
-        gap,
-        walletRow(
-          selected: _c.toAccount,
-          onPick: _c.setToAccount,
-          onMore: () => _pickAccount(to: true),
-          order: _toWalletOrder,
-          label: l.draftPickWalletTo,
-          excludeId: _c.account?.id,
-        ),
-      ] else ...[
-        walletRow(
-          selected: _c.account,
-          // Tapping the picked wallet again leaves it out (a wallet is
-          // optional here).
-          onPick: (a) => _c.setAccount(_c.account?.id == a.id ? null : a),
-          onMore: _pickAccount,
-          order: _walletOrder,
-          label: l.quickPickWallet,
-        ),
-        gap,
-        CategoryChipRow(
-          type: _c.type,
-          selected: _c.category,
-          onPick: _c.setCategory,
-          onMore: _pickCategory,
-          order: _categoryOrders.putIfAbsent(_c.type, ChipOrder.new),
-          pickLabel: l.draftPickCategory,
-        ),
-      ],
-      gap,
       TagChipRow(
         selected: _c.tagIds,
         onToggle: _c.toggleTag,
@@ -1056,9 +1118,7 @@ class _DraftFormState extends State<DraftForm> {
     ];
   }
 
-  /// Category + wallet cards, one row — a transfer [จาก] → [ไป]. Editing:
-  /// under the hero, tapping opens the pickers; view mode: inside the hero
-  /// (its footer), tapping opens the category's / wallet's page.
+  /// Category + wallet cards, one row — a transfer [จาก] → [ไป].
   Widget _cardsRow(AppLocalizations l, {required bool isTransfer}) {
     final editing = widget.editing;
     if (isTransfer) {
@@ -1077,12 +1137,10 @@ class _DraftFormState extends State<DraftForm> {
                 foreignName: _c.foreignAccountName,
               ),
             ),
-            IconButton(
+            AppIconButton.flat(
               tooltip: editing ? l.quickSwap : null,
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32),
-              icon: const AppIcon(AppIcons.arrowForward),
+              dense: true,
+              icon: AppIcons.arrowForward,
               onPressed: editing ? _c.swapAccounts : null,
             ),
             Expanded(
@@ -1234,30 +1292,45 @@ class _DraftFormState extends State<DraftForm> {
     final enter = widget.onEnterEdit;
     final first = <Widget>[
       if (editing || enter != null || _c.note.text.trim().isNotEmpty)
-        // "โน้ต" left, the input right (owner 2026-10-11, like the pending
-        // add page); a long note wraps inside the right column.
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
-          ),
-          child: DraftFieldRow(
-            label: l.commonNote,
-            child: AppInput.inline(
-              editing: editing,
-              controller: _c.note,
-              focusNode: _noteFocus,
-              maxLines: 5,
-              maxLength: TextLimits.note,
-              hint: l.txNoteAddHint,
-              viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-              onEnterEdit: enter == null ? null : () => enter(_noteFocus),
-            ),
+        // The detail standard's note: label above, the value below with the
+        // editable-text indent rule (plain indented text in view, the frame
+        // only while editing).
+        DetailStacked(
+          label: l.commonNote,
+          child: AppInput.inline(
+            editing: editing,
+            controller: _c.note,
+            focusNode: _noteFocus,
+            maxLines: 5,
+            maxLength: TextLimits.note,
+            hint: l.txNoteAddHint,
+            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
+            onEnterEdit: enter == null ? null : () => enter(_noteFocus),
           ),
         ),
     ];
+    // The detail page's order (owner 2026-10-12): hero → groups without a
+    // heading (the note, then the tags) → headed sections (แบ่งรายการ).
+    final enterEdit = widget.onEnterEdit;
+    final tags = widget.cardsInHero
+        ? _tagsBlock(
+            editing: editing,
+            longPress: (child) => editing || enterEdit == null
+                ? child
+                : GestureDetector(
+                    onLongPress: () => enterEdit(null),
+                    child: child,
+                  ),
+          )
+        : const <Widget>[];
     return [
-      const SizedBox(height: HeroSpacing.after),
+      // The tags sit DIRECTLY under the card (owner 2026-10-12), then the
+      // note, then the headed sections.
+      // (The 16 px under the hero card is already in the legacy branch.)
+      if (tags.isNotEmpty) ...[
+        ...tags,
+        const SizedBox(height: HeroSpacing.after),
+      ],
       if (first.isNotEmpty) SectionCard(first: true, children: first),
       if (!isTransfer) ?_splitEventSection(l, editing: editing),
     ];
@@ -1316,21 +1389,18 @@ class _TextBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    // A headless group: plain on the page, the kit's label-on-top row.
+    return SectionCard(
+      first: true,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+        DetailStacked(
+          label: label,
+          child: AppInput.inline(
+            editing: true,
+            controller: controller,
+            maxLength: maxLength,
+            maxLines: 4,
           ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        AppInput.inline(
-          editing: true,
-          controller: controller,
-          maxLength: maxLength,
-          maxLines: 4,
         ),
       ],
     );

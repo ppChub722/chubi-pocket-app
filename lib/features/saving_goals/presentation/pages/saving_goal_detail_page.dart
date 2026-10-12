@@ -9,6 +9,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/wallet_value_chip.dart';
 import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../domain/saving_goal.dart';
 import '../../domain/saving_goal_status.dart';
@@ -197,14 +198,20 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final now = DateTime.now();
     final current = working.deadline;
     final first = current != null && current.isBefore(now) ? current : now;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: current ?? now.add(const Duration(days: 90)),
-      firstDate: first,
-      lastDate: DateTime(now.year + 20),
+    final picked = await showAppDatePicker(
+      context,
+      initial: current ?? now.add(const Duration(days: 90)),
+      first: first,
+      last: DateTime(now.year + 20),
+      clearable: current != null,
     );
     if (!mounted || picked == null) return;
-    applyChange(working.copyWith(deadline: picked));
+    switch (picked) {
+      case AppDatePicked(:final date):
+        applyChange(working.copyWith(deadline: date));
+      case AppDateCleared():
+        applyChange(working.copyWith(clearDeadline: true));
+    }
   }
 
   Account? _accountById(String? id) =>
@@ -371,13 +378,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             state.status == SavingGoalsStatus.loading,
         error: state.error,
         onRetry: context.read<SavingGoalsCubit>().load,
-        // The generic skeleton is a padded list — clear the bar.
-        skeleton: Builder(
-          builder: (context) => Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-            child: const LoadingView(),
-          ),
-        ),
         notFound: EmptyView(
           icon: AppIcons.empty,
           title: l.savingGoalDetailNotFound,
@@ -409,37 +409,37 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           key: _formKey,
           // Builder: its context sees the floating bar's height.
           child: Builder(
-            builder: (context) => PullToRefresh(
-              enabled: !widget.isCreate,
-              onRefresh: context.read<SavingGoalsCubit>().load,
-              child: DetailPageBody(
-                physics: const AlwaysScrollableScrollPhysics(),
-                topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                bottomInset:
-                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                hero: _header(l, goal),
-                sections: [
-                  (first) => _fields(l, goal, first),
-                  (first) => goal == null ? null : _stats(l, goal, first),
-                ],
-                // Archive · delete — edit only, always last (the top bar
-                // carries no page actions).
-                manage: editing && goal != null
-                    ? ManageSection(
-                        archiveLabel: l.savingGoalDetailArchive,
-                        onArchive: isSaving ? null : () => _archive(goal),
-                        deleteLabel: l.savingGoalDeleteThis,
-                        onDelete: isSaving ? null : () => _delete(goal),
-                      )
-                    : null,
-                metaLines: goal == null
-                    ? const []
-                    : detailMetaLines(
-                        context,
-                        createdAt: goal.createdAt,
-                        updatedAt: goal.updatedAt,
-                      ),
-              ),
+            builder: (context) => DetailPageBody(
+              onRefresh: widget.isCreate
+                  ? null
+                  : () => context.read<SavingGoalsCubit>().load(),
+              physics: const AlwaysScrollableScrollPhysics(),
+              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+              bottomInset:
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+              hero: _header(l, goal),
+              sections: [
+                (first) => _fields(l, goal, first),
+                (first) => goal == null ? null : _stats(l, goal, first),
+                (first) => _texts(l, first),
+              ],
+              // Archive · delete — edit only, always last (the top bar
+              // carries no page actions).
+              manage: editing && goal != null
+                  ? ManageSection(
+                      archiveLabel: l.savingGoalDetailArchive,
+                      onArchive: isSaving ? null : () => _archive(goal),
+                      deleteLabel: l.savingGoalDeleteThis,
+                      onDelete: isSaving ? null : () => _delete(goal),
+                    )
+                  : null,
+              metaLines: goal == null
+                  ? const []
+                  : detailMetaLines(
+                      context,
+                      createdAt: goal.createdAt,
+                      updatedAt: goal.updatedAt,
+                    ),
             ),
           ),
         ),
@@ -461,8 +461,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   Widget _header(AppLocalizations l, SavingGoal? goal) {
     final editing = isEditing;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
-    final accent = working.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final accent = working.iconCode.tintFor(palette);
     final symbol = _symbol(goal);
     return HeaderCard(
       accent: accent,
@@ -479,19 +478,17 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
       ],
       // EditableCircle keeps its footprint with or without onTap, so the
       // name never shifts between modes.
-      leading: GestureDetector(
+      leading: EditableCircle(
+        size: 52,
+        onTap: editing ? _openIconMaker : null,
         onLongPress: editing ? null : _enterEditThenOpenMaker,
-        child: EditableCircle(
+        child: IconDisplay(
+          type: IconType.account,
           size: 52,
-          onTap: editing ? _openIconMaker : null,
-          child: IconDisplay(
-            type: IconType.account,
-            size: 52,
-            iconCode: working.iconCode,
-          ),
+          iconCode: working.iconCode,
         ),
       ),
-      title: AppInput.title(
+      title: HeroNameInput(
         editing: editing,
         controller: _nameCtrl,
         focusNode: _nameFocus,
@@ -503,6 +500,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             ? l.savingGoalFormNameRequired
             : null,
       ),
+      description: HeroDescription(
+        controller: _descriptionCtrl,
+        editing: editing,
+        hint: l.commonDescription,
+        maxLength: TextLimits.description,
+        focusNode: _descriptionFocus,
+        onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+        onChanged: (v) => _onText(_Field.description, v),
+      ),
       footer: goal == null
           ? null
           : Column(
@@ -511,16 +517,16 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 MoneyText(
                   goal.currentAmount,
                   symbol: symbol,
-                  style: textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: accent,
-                  ),
+                  style: AppTypography.of(
+                    context,
+                    AppTextRole.display,
+                  )?.copyWith(color: accent),
                 ),
-                Text(
+                AppText(
                   l.savingGoalDetailOfTarget(
                     moneyString(context, goal.targetAmount, symbol: symbol),
                   ),
-                  style: textTheme.bodySmall,
+                  role: AppTextRole.caption,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 ProgressRow(
@@ -545,17 +551,13 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         // Not among the active wallets (archived / still loading) — the
         // goal's embedded ref still names it.
         final name = account?.name ?? goal?.linkedAccount?.name;
+        final iconCode = account?.iconCode ?? goal?.linkedAccount?.iconCode;
         final row = DetailRow.pick(
           label: l.savingGoalFormLinkedAccountLabel,
-          value: name,
-          emptyText: l.quickEventNone,
-          leading: (account?.iconCode ?? goal?.linkedAccount?.iconCode) == null
+          valueChip: name == null
               ? null
-              : IconDisplay(
-                  type: IconType.account,
-                  size: 24,
-                  iconCode: account?.iconCode ?? goal?.linkedAccount?.iconCode,
-                ),
+              : walletValueChip(context, name: name, iconCode: iconCode),
+          emptyText: l.quickEventNone,
           locked: goal != null && isEditing,
           onTap: goal == null ? () => _pickWallet(state.accounts) : null,
         );
@@ -571,11 +573,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 AppSpacing.lg,
                 AppSpacing.sm,
               ),
-              child: Text(
-                l.savingGoalFormAccountRequired,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+              child: AppMessage(
+                message: l.savingGoalFormAccountRequired,
+                tone: Tone.danger,
               ),
             ),
           ],
@@ -616,63 +616,32 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         DetailRow(
           label: l.savingGoalFormAllocationLabel,
           trailing: editing
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 96,
-                      child: AppInput.inline(
-                        editing: true,
-                        controller: _allocationCtrl,
-                        maxLength: 6,
-                        // Blank on create = the server suggests a share.
-                        hint: widget.isCreate
-                            ? l.savingGoalAllocationAuto
-                            : null,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        onChanged: (v) => _onText(_Field.allocation, v),
-                        validator: (v) {
-                          final t = v?.trim() ?? '';
-                          if (t.isEmpty) return null; // optional
-                          final n = double.tryParse(t);
-                          return (n == null || n <= 0 || n > 100)
-                              ? l.savingGoalFormAllocationInvalid
-                              : null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    const Text('%'),
-                  ],
+              ? AppInput(
+                  type: AppInputType.percent,
+                  decimals: 2,
+                  dense: true,
+                  controller: _allocationCtrl,
+                  maxLength: 6,
+                  // Blank on create = the server suggests a share.
+                  hint: widget.isCreate ? l.savingGoalAllocationAuto : null,
+                  onChanged: (v) => _onText(_Field.allocation, v),
+                  validator: (v) {
+                    final t = v?.trim() ?? '';
+                    if (t.isEmpty) return null; // optional
+                    final n = double.tryParse(t);
+                    return (n == null || n <= 0 || n > 100)
+                        ? l.savingGoalFormAllocationInvalid
+                        : null;
+                  },
                 )
-              : Text('${working.allocation}%'),
+              : AppText('${working.allocation}%'),
         ),
         // Live in view mode too: picking a date enters edit mode.
         DetailRow(
-          leading: const AppIcon(AppIcons.date),
           label: l.savingGoalFormDeadlineLabel,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: deadline == null
-                    ? DetailPlaceholder(l.savingGoalFormDeadlinePlaceholder)
-                    : Text(DateFormatter.medium(deadline, locale: locale)),
-              ),
-              if (editing && deadline != null) ...[
-                const SizedBox(width: AppSpacing.xs),
-                AppIconButton(
-                  icon: AppIcons.clear,
-                  size: 32,
-                  tooltip: l.commonClear,
-                  onPressed: () =>
-                      applyChange(working.copyWith(clearDeadline: true)),
-                ),
-              ],
-            ],
-          ),
+          trailing: deadline == null
+              ? DetailPlaceholder(l.savingGoalFormDeadlinePlaceholder)
+              : AppText(DateFormatter.medium(deadline, locale: locale)),
           showChevron: true,
           onTap: () {
             // Empty in view mode: tapping starts adding it (edit + picker).
@@ -680,19 +649,17 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
             _pickDeadline();
           },
         ),
-        DetailStacked(
-          label: l.commonDescription,
-          child: AppInput.inline(
-            editing: editing,
-            controller: _descriptionCtrl,
-            focusNode: _descriptionFocus,
-            maxLines: 3,
-            maxLength: TextLimits.description,
-            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-            onChanged: (v) => _onText(_Field.description, v),
-          ),
-        ),
+      ],
+    );
+  }
+
+  /// Note — stacked (label above); the template merges this into the top
+  /// box after the rows and stats. (The description lives in the hero.)
+  Widget _texts(AppLocalizations l, bool first) {
+    final editing = isEditing;
+    return SectionCard(
+      first: first,
+      children: [
         DetailStacked(
           label: l.commonNote,
           child: AppInput.inline(
@@ -725,7 +692,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           DetailRow(
             locked: isEditing,
             label: l.savingGoalDetailDaysRemaining,
-            trailing: Text(l.savingGoalDetailDaysValue(g.daysRemaining!)),
+            trailing: AppText(l.savingGoalDetailDaysValue(g.daysRemaining!)),
           ),
         if (g.requiredMonthly != null)
           DetailRow(

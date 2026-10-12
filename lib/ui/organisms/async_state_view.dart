@@ -6,7 +6,7 @@ import '../tokens/tone.dart';
 import '../molecules/error_view.dart';
 import '../molecules/app_snackbar.dart';
 import 'pull_to_refresh.dart';
-import '../atoms/skeletons.dart';
+import 'page_skeletons.dart';
 
 /// One rule for every async-loaded screen (design-sheet §8.5) — pages only
 /// say what "empty" looks like for them:
@@ -63,6 +63,9 @@ class AsyncStateView extends StatefulWidget {
        snackOnRefreshError = false;
 
   static Widget _none(BuildContext _) => const SizedBox.shrink();
+
+  /// Built by [AsyncStateView.fallback] (a detail page).
+  bool get _detail => identical(builder, _none);
 
   /// A load is in flight (or hasn't started yet on first open).
   final bool loading;
@@ -124,13 +127,16 @@ class _AsyncStateViewState extends State<AsyncStateView> {
   @override
   Widget build(BuildContext context) {
     final w = widget;
-    if (!w.loading) _settled = true;
+    // The skeleton is for the FIRST load only (owner 2026-10-12): once a load has
+    // finished OR data has been on screen, a reload — a pull to refresh, a filter
+    // change — never swaps the content for the skeleton.
+    if (!w.loading || !w.isEmpty) _settled = true;
     if (!w.isEmpty) return w.builder(context);
     if (w.loading && !_settled) {
       return w.skeleton ??
-          ListView(
-            children: [for (var i = 0; i < 6; i++) const SkeletonListTile()],
-          );
+          (w._detail
+              ? const DetailPageSkeleton()
+              : const ListPageSkeleton(rows: 6));
     }
     if (w.error != null) {
       return _pullable(ErrorView(error: w.error!, onRetry: w.onRetry));

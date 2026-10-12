@@ -37,7 +37,6 @@ class _FeedbackPage extends StatefulWidget {
 }
 
 class _FeedbackPageState extends State<_FeedbackPage> {
-  final _closable = <Tone>{...Tone.values};
   double _progress = 0.6;
   String _result = 'No dialog answered yet';
 
@@ -83,129 +82,66 @@ class _FeedbackPageState extends State<_FeedbackPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HubPlayground(
-          title: 'MessageBanner',
-          controls: [
-            PlayChoice<Tone>('tone', [
-              for (final t in Tone.values) (t.name, t),
-            ], initial: Tone.danger),
-            const PlayText(
-              'message',
-              initialValue: 'Something needs attention',
-            ),
-            const PlayBool('onClose'),
-          ],
-          builder: (context, v) => MessageBanner(
-            message: v<String>('message'),
-            tone: v<Tone>('tone'),
-            onClose: v<bool>('onClose') ? () {} : null,
-          ),
-        ),
-        HubPlayground(
-          title: 'AppMessage (proposal)',
-          controls: [
-            PlayChoice<Tone>('tone', [
-              ('info', Tone.info),
-              ('success', Tone.success),
-              ('warning', Tone.warning),
-              ('danger', Tone.danger),
-            ]),
-            const PlayText('message', initialValue: 'Wallet deleted'),
-            const PlayNum('actions', min: 0, max: 2, step: 1, initialValue: 1),
-            const PlayBool('onClose'),
-            const PlayBool('floating'),
-          ],
-          builder: (context, v) => AppMessage(
-            message: v<String>('message'),
-            tone: v<Tone>('tone'),
-            floating: v<bool>('floating'),
-            onClose: v<bool>('onClose') ? () {} : null,
-            actions: [
-              for (var i = 0; i < v<double>('actions').round(); i++)
-                AppMessageAction(
-                  label: i == 0 ? 'Undo' : 'Dismiss',
-                  onPressed: () {},
-                ),
-            ],
-          ),
-        ),
         const HubSubheading(
           'In the app',
           note: 'The real presets and where they are used.',
         ),
         HubDemo(
-          title: 'AppMessage — one design for banner + snackbar (PROPOSAL)',
+          title: 'AppMessage — icon override',
           note:
-              'Owner 2026-10-12: the snackbar and the banner share ONE body — '
-              'same tone colours, icon set, radius, padding and type; only '
-              'placement and lifetime differ. Banner: inline, stays until '
-              'resolved or closed, 1–2 actions. Snackbar: floats at the '
-              'bottom, auto-dismisses, at most 1 action. Just happened → '
-              'snackbar; still true → banner. Current is the real widget, '
-              'Proposed the new one; the app is unchanged until the owner OKs.',
+              'icon: replaces the tone\'s icon (a lock on a "locked" banner); the '
+              'colour stays the tone\'s.',
+          child: const AppMessage(
+            message: 'This wallet is shared — only its owner can change it',
+            tone: Tone.warning,
+            icon: AppIcons.lock,
+          ),
+        ),
+        HubDemo(
+          title: 'AppMessage — banner and snackbar, one design',
+          note:
+              'The snackbar and the banner share ONE body — the same tone '
+              'colours, icon set, radius, padding and type; only placement and '
+              'lifetime differ. Banner: inline, stays until resolved or closed, '
+              '1–2 actions. Snackbar: floats at the bottom, auto-dismisses, at '
+              'most 1 action. Just happened → snackbar; still true → banner. '
+              'Banners: login errors, "no connection", the update banner. '
+              'Snackbars: every save / delete / undo, error + Retry.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Banners — every tone',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: AppSpacing.xs),
               for (final t in [
                 Tone.info,
                 Tone.success,
                 Tone.warning,
                 Tone.danger,
               ]) ...[
-                _pair(
-                  MessageBanner(message: 'Tone ${t.name}, text only', tone: t),
-                  AppMessage(message: 'Tone ${t.name}, text only', tone: t),
-                ),
+                AppMessage(message: 'Tone ${t.name}, text only', tone: t),
+                const SizedBox(height: AppSpacing.sm),
               ],
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Banner — with ✕, 1 action, 2 actions',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              _pair(
-                MessageBanner(
-                  message: 'No connection — changes are kept on this device',
-                  tone: Tone.warning,
-                  onClose: () {},
-                ),
-                AppMessage(
-                  message: 'No connection — changes are kept on this device',
-                  tone: Tone.warning,
-                  onClose: () {},
-                ),
-              ),
-              _pair(
-                const _None('Today: no actions in a banner.'),
-                AppMessage(
-                  message: 'Could not load wallets',
-                  tone: Tone.danger,
-                  actions: [AppMessageAction(label: 'Retry', onPressed: () {})],
-                ),
-              ),
-              _pair(
-                const _None('Today: no actions in a banner.'),
-                AppMessage(
-                  message:
-                      'Update available — a new version is ready to install',
-                  tone: Tone.info,
-                  onClose: () {},
-                  actions: [
-                    AppMessageAction(label: 'Later', onPressed: () {}),
-                    AppMessageAction(label: 'Update', onPressed: () {}),
-                  ],
-                ),
+              AppMessage(
+                message: 'No connection — changes are kept on this device',
+                tone: Tone.warning,
+                onClose: () {},
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Snackbar — floating at the bottom',
-                style: Theme.of(context).textTheme.labelLarge,
+              AppMessage(
+                message: 'Could not load wallets',
+                tone: Tone.danger,
+                actions: [AppMessageAction(label: 'Retry', onPressed: () {})],
               ),
+              const SizedBox(height: AppSpacing.sm),
+              AppMessage(
+                message: 'Update available — a new version is ready to install',
+                tone: Tone.info,
+                onClose: () {},
+                actions: [
+                  AppMessageAction(label: 'Later', onPressed: () {}),
+                  AppMessageAction(label: 'Update', onPressed: () {}),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Snackbar', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: AppSpacing.xs),
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
@@ -218,10 +154,6 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Proposed (the same body, floating = a soft shadow)',
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
                     AppMessage(
                       message: 'Wallet deleted',
                       tone: Tone.success,
@@ -235,7 +167,6 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                       message: 'Could not save — check your connection',
                       tone: Tone.danger,
                       floating: true,
-                      actions: [],
                     ),
                   ],
                 ),
@@ -246,7 +177,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                 runSpacing: AppSpacing.sm,
                 children: [
                   AppButton(
-                    label: 'Current snackbar',
+                    label: 'Show: success + Undo',
                     variant: AppButtonVariant.outlined,
                     onPressed: () => showAppSnackBar(
                       context,
@@ -257,19 +188,9 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                     ),
                   ),
                   AppButton(
-                    label: 'Proposed snackbar',
-                    onPressed: () => showAppMessage(
-                      context,
-                      'Wallet deleted',
-                      tone: Tone.success,
-                      actionLabel: 'Undo',
-                      onAction: () {},
-                    ),
-                  ),
-                  AppButton(
-                    label: 'Proposed · error + Retry',
+                    label: 'Show: error + Retry',
                     variant: AppButtonVariant.tonal,
-                    onPressed: () => showAppMessage(
+                    onPressed: () => showAppSnackBar(
                       context,
                       'Could not save',
                       tone: Tone.danger,
@@ -279,36 +200,6 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-        HubDemo(
-          title: 'MessageBanner',
-          note:
-              'Inline state the user must read before trying again. Tone '
-              'tints it; onClose adds a close button (tap it to dismiss).',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final t in Tone.values) ...[
-                if (_closable.contains(t)) ...[
-                  MessageBanner(
-                    message: 'Tone ${t.name}, with onClose',
-                    tone: t,
-                    onClose: () => setState(() => _closable.remove(t)),
-                  ),
-                  gap,
-                ],
-                MessageBanner(message: 'Tone ${t.name}, no onClose', tone: t),
-                gap,
-              ],
-              if (_closable.length < Tone.values.length)
-                AppButton(
-                  label: 'Restore dismissed',
-                  variant: AppButtonVariant.outlined,
-                  onPressed: () =>
-                      setState(() => _closable.addAll(Tone.values)),
-                ),
             ],
           ),
         ),
@@ -593,41 +484,36 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             ],
           ),
         ),
+
+        HubPlayground(
+          title: 'AppMessage',
+          controls: [
+            PlayChoice<Tone>('tone', [
+              ('info', Tone.info),
+              ('success', Tone.success),
+              ('warning', Tone.warning),
+              ('danger', Tone.danger),
+            ]),
+            const PlayText('message', initialValue: 'Wallet deleted'),
+            const PlayNum('actions', min: 0, max: 2, step: 1, initialValue: 1),
+            const PlayBool('onClose'),
+            const PlayBool('floating'),
+          ],
+          builder: (context, v) => AppMessage(
+            message: v<String>('message'),
+            tone: v<Tone>('tone'),
+            floating: v<bool>('floating'),
+            onClose: v<bool>('onClose') ? () {} : null,
+            actions: [
+              for (var i = 0; i < v<double>('actions').round(); i++)
+                AppMessageAction(
+                  label: i == 0 ? 'Undo' : 'Dismiss',
+                  onPressed: () {},
+                ),
+            ],
+          ),
+        ),
       ],
     );
   }
-}
-
-/// Current | Proposed, one under the other.
-Widget _pair(Widget current, Widget proposed) => Padding(
-  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const Text('Current', style: TextStyle(fontSize: 11)),
-      const SizedBox(height: 2),
-      current,
-      const SizedBox(height: AppSpacing.xs),
-      const Text(
-        'Proposed',
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-      ),
-      const SizedBox(height: 2),
-      proposed,
-    ],
-  ),
-);
-
-class _None extends StatelessWidget {
-  const _None(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: TextStyle(
-      fontStyle: FontStyle.italic,
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    ),
-  );
 }

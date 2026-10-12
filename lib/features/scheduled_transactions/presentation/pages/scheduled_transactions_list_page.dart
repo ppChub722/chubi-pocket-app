@@ -42,49 +42,34 @@ class _ScheduledTransactionsListPageState
       body: TabSwitchBody(
         child:
             BlocBuilder<ScheduledTransactionsCubit, ScheduledTransactionsState>(
-              builder: (context, state) => AsyncStateView(
+              builder: (context, state) => ListPageBody(
+                // Only the FIRST load shows the skeleton: a reload keeps the
+                // rows (a skeleton would kill a pull-to-refresh).
                 loading:
-                    state.status == ScheduledTransactionsStatus.initial ||
-                    state.status == ScheduledTransactionsStatus.loading,
-                error: state.error,
+                    (state.status == ScheduledTransactionsStatus.initial ||
+                        state.status == ScheduledTransactionsStatus.loading) &&
+                    state.entries.isEmpty,
+                error: state.entries.isEmpty ? state.error : null,
                 isEmpty: state.entries.isEmpty,
                 onRetry: context.read<ScheduledTransactionsCubit>().load,
-                skeleton: ListView(
-                  children: [
-                    for (var i = 0; i < 4; i++) const SkeletonListTile(),
-                  ],
-                ),
+                topInset: AppSpacing.md,
                 empty: EmptyView(
                   icon: AppIcons.scheduled,
                   title: l.scheduledEmptyTitle,
                   message: l.scheduledEmptyMessage,
                   cta: AddTile(label: l.scheduledAddNew, onTap: _add),
                 ),
-                builder: (context) => PullToRefresh(
-                  onRefresh: () =>
-                      context.read<ScheduledTransactionsCubit>().load(),
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    // Top: clear the transparent top bar.
-                    padding: EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      MediaQuery.paddingOf(context).top + AppSpacing.md,
-                      AppSpacing.lg,
-                      96 + MediaQuery.paddingOf(context).bottom,
+                children: [
+                  for (final e in state.entries) ...[
+                    ScheduledCard(
+                      entry: e,
+                      onTap: () =>
+                          context.push('/scheduled-transactions/${e.id}'),
                     ),
-                    children: [
-                      for (final e in state.entries) ...[
-                        ScheduledCard(
-                          entry: e,
-                          onTap: () =>
-                              context.push('/scheduled-transactions/${e.id}'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
-                      AddTile(label: l.scheduledAddNew, onTap: _add),
-                    ],
-                  ),
-                ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  AddTile(label: l.scheduledAddNew, onTap: _add),
+                ],
               ),
             ),
       ),

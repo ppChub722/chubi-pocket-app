@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/transaction_type.dart';
-import 'tx_hero_card.dart';
 
 /// The transaction's [CompactHeroBar] (owner 2026-10-11) — the detail page
 /// pins it under the top bar once the hero has scrolled away, view and
@@ -48,14 +47,29 @@ CompactHeroBar txCompactHeroBar(
       children: [
         // The description gives way first, then the chip.
         Flexible(
-          child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            // No description: the category / type stands in, italic + muted.
+            style: text.isNotEmpty
+                ? null
+                : theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontStyle: FontStyle.italic,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+          ),
         ),
         if (showChip) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: Text(
               '·',
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           Flexible(
@@ -65,7 +79,7 @@ CompactHeroBar txCompactHeroBar(
                 categoryIcon?.icon,
                 fallback: AppIcons.category,
               ),
-              color: categoryIcon?.accentColorFor(palette) ?? palette.primary,
+              color: categoryIcon.tintFor(palette),
               selected: true,
               size: ChipSize.chip,
               maxWidth: 120,

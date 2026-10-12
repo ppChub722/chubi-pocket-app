@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../tokens/app/app_icons.dart';
-import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
+import 'app_message.dart';
 
 /// Shows a floating snackbar, replacing any current one (so rapid actions
 /// don't queue a backlog). [tone] adds a leading status icon.
@@ -40,47 +39,22 @@ void showAppSnackBar(
   );
 }
 
-IconData? _iconOf(Tone tone) => switch (tone) {
-  Tone.success => AppIcons.success,
-  Tone.danger => AppIcons.error,
-  Tone.warning => AppIcons.warning,
-  Tone.info => AppIcons.info,
-  _ => null,
-};
-
 /// [showAppSnackBar] on a messenger captured up front — for calls after an
-/// `await` / pop, when the original context may already be gone.
+/// `await` / pop, when the original context may already be gone. Now the one
+/// message design ([AppMessage]); kept as the app-wide entry point.
 void showAppSnackBarOn(
   ScaffoldMessengerState messenger,
   String message, {
   Tone tone = Tone.neutral,
   String? actionLabel,
   VoidCallback? onAction,
-}) {
-  final icon = _iconOf(tone);
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            if (icon != null) ...[
-              // Resolved inside the snackbar (under the app theme) so a
-              // captured messenger works without a live caller context.
-              Builder(
-                builder: (ctx) => Icon(icon, size: 20, color: tone.color(ctx)),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
-            Expanded(child: Text(message)),
-          ],
-        ),
-        action: actionLabel != null && onAction != null
-            ? SnackBarAction(label: actionLabel, onPressed: onAction)
-            : null,
-      ),
-    );
-}
+}) => showAppMessageOn(
+  messenger,
+  message,
+  tone: tone,
+  actionLabel: actionLabel,
+  onAction: onAction,
+);
 
 /// The snackbar's look as an overlay entry, at the top of the screen (clear
 /// of a sheet's pinned buttons and the keyboard), above the sheet that
@@ -161,11 +135,6 @@ class _SheetToastState extends State<_SheetToast> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final snack = theme.snackBarTheme;
-    final scheme = theme.colorScheme;
-    final icon = _iconOf(widget.tone);
-    final fg = snack.contentTextStyle?.color ?? scheme.onInverseSurface;
     final animate = !MediaQuery.disableAnimationsOf(context);
     return Positioned(
       left: AppSpacing.lg,
@@ -178,47 +147,23 @@ class _SheetToastState extends State<_SheetToast> {
         child: AnimatedOpacity(
           opacity: _visible ? 1 : 0,
           duration: animate ? const Duration(milliseconds: 200) : Duration.zero,
-          child: Semantics(
-            liveRegion: true,
-            child: Material(
-              color: snack.backgroundColor ?? scheme.inverseSurface,
-              elevation: 6,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                onTap: _hide,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: Row(
-                    children: [
-                      if (icon != null) ...[
-                        Icon(icon, size: 20, color: widget.tone.color(context)),
-                        const SizedBox(width: AppSpacing.sm),
-                      ],
-                      Expanded(
-                        child: Text(
-                          widget.message,
-                          style:
-                              (snack.contentTextStyle ??
-                                      theme.textTheme.bodyMedium)
-                                  ?.copyWith(color: fg),
-                        ),
+          child: GestureDetector(
+            onTap: _hide,
+            child: AppMessage(
+              message: widget.message,
+              tone: widget.tone,
+              floating: true,
+              actions: widget.actionLabel != null && widget.onAction != null
+                  ? [
+                      AppMessageAction(
+                        label: widget.actionLabel!,
+                        onPressed: () {
+                          _hide();
+                          widget.onAction!();
+                        },
                       ),
-                      if (widget.actionLabel != null && widget.onAction != null)
-                        TextButton(
-                          onPressed: () {
-                            _hide();
-                            widget.onAction!();
-                          },
-                          child: Text(widget.actionLabel!),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
+                    ]
+                  : const [],
             ),
           ),
         ),

@@ -87,4 +87,44 @@ void main() {
     expect(slide.duration, Duration.zero);
     expect(fade.duration, Duration.zero);
   });
+
+  _heroStyleTests();
+}
+
+void _heroStyleTests() {
+  testWidgets(
+    'the scope keeps the hero style: tinted surface, not a flat pill',
+    (t) async {
+      final heroKey = GlobalKey();
+      const tint = Color(0xFF2E7D32);
+      const style = HeroStyle.tinted(color: tint, glyph: Icons.wallet);
+      await t.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CompactHeroScope(
+              heroKey: heroKey,
+              top: 0,
+              bar: const CompactHeroBar(style: style, title: Text('compact')),
+              child: ListView(
+                children: [
+                  SizedBox(
+                    key: heroKey,
+                    height: 200,
+                    child: const Text('hero'),
+                  ),
+                  for (var i = 0; i < 30; i++)
+                    SizedBox(height: 60, child: Text('row $i')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      final bar = t.widget<CompactHeroBar>(find.byType(CompactHeroBar));
+      expect(bar.style, style);
+      final surface = t.widget<HeroSurface>(find.byType(HeroSurface));
+      expect(surface.style, style);
+      expect(surface.style.tinted, isTrue);
+    },
+  );
 }

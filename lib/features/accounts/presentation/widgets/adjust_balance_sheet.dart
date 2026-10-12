@@ -4,183 +4,42 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
 
-/// "ปรับยอด" bottom sheet (spec §2.5): current balance → the new balance →
-/// live difference → optional description + note → a banner that the
-/// difference is booked as an "ปรับยอด" transaction dated today. Resolves
-/// the new balance + description + note (null when blank), or null on
-/// cancel; the caller makes the API call
-/// (`POST /v1/accounts/:id/adjust-balance`).
-///
-/// Credit wallets (card / pay-later) keep debt as a negative balance, so
-/// their field asks for the outstanding amount and the result is negated.
-/// The field takes a sign (± chip) for every type — an overdrawn account or
-/// an overpaid card is a real balance.
+/// "ปรับยอด" bottom sheet (spec §2.5). The sheet itself is the kit's
+/// [showAdjustBalanceFormSheet]; this wrapper maps the [Account] + l10n into
+/// its plain params. Resolves the new balance + description + note (null
+/// when blank), or null on cancel; the caller makes the API call
+/// (`POST /v1/accounts/:id/adjust-balance`). The difference is booked as an
+/// "ปรับยอด" transaction dated today.
 Future<AdjustBalanceInput?> showAdjustBalanceSheet(
   BuildContext context,
   Account account,
 ) {
-  return showAppSheetCustom<AdjustBalanceInput>(
+  final l = AppLocalizations.of(context)!;
+  final palette = Theme.of(context).extension<AppColors>()!;
+  final scheme = Theme.of(context).colorScheme;
+  final credit = account.isLiability;
+  return showAdjustBalanceFormSheet(
     context,
-    builder: (_) => _AdjustBalanceSheet(account: account),
+    name: account.name,
+    balance: account.balance,
+    symbol: Currencies.symbolOf(account.currency),
+    tint: account.iconCode.tintFor(palette, fallback: scheme.primary),
+    isCredit: credit,
+    strings: AdjustBalanceStrings(
+      title: l.accountAdjustBalanceTitle,
+      primaryLabel: l.accountDetailAdjustBalance,
+      currentLabel: l.accountAdjustBalanceCurrentLabel,
+      newLabel: credit
+          ? l.accountAdjustBalanceNewDebtLabel
+          : l.accountAdjustBalanceNewLabel,
+      diffLabel: l.accountAdjustBalanceDiffLabel,
+      descriptionLabel: l.commonDescription,
+      noteLabel: l.commonNote,
+      noChange: l.accountAdjustBalanceNoChange,
+      willCreate: l.accountAdjustBalanceWillCreate,
+    ),
   );
 }
 
 /// What the ปรับยอด sheet resolves to.
-typedef AdjustBalanceInput = ({
-  double balance,
-  String? description,
-  String? note,
-});
-
-class _AdjustBalanceSheet extends StatefulWidget {
-  const _AdjustBalanceSheet({required this.account});
-  final Account account;
-
-  @override
-  State<_AdjustBalanceSheet> createState() => _AdjustBalanceSheetState();
-}
-
-class _AdjustBalanceSheetState extends State<_AdjustBalanceSheet> {
-  late final TextEditingController _controller;
-  final _description = TextEditingController();
-  final _note = TextEditingController();
-
-  bool get _isCredit => widget.account.isLiability;
-
-  @override
-  void initState() {
-    super.initState();
-    final b = widget.account.balance;
-    // Credit → the field shows the debt (positive while owing).
-    final shown = _isCredit ? -b : b;
-    _controller = TextEditingController(text: AmountInput.format(shown));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _description.dispose();
-    _note.dispose();
-    super.dispose();
-  }
-
-  static String? _opt(TextEditingController c) {
-    final v = c.text.trim();
-    return v.isEmpty ? null : v;
-  }
-
-  /// The balance the field describes; null while it doesn't parse.
-  double? get _newBalance {
-    final v = AmountInput.parse(_controller.text);
-    if (v == null) return null;
-    return _isCredit ? -v : v;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final textTheme = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final a = widget.account;
-    final symbol = Currencies.symbolOf(a.currency);
-    final accent = a.iconCode?.accentColorFor(palette) ?? palette.primary;
-    final next = _newBalance;
-    // Rounded to satang so float noise never reads as a change.
-    final diff = next == null
-        ? 0.0
-        : ((next - a.balance) * 100).roundToDouble() / 100;
-    final canAdjust = next != null && diff != 0;
-    final diffText =
-        '${diff > 0 ? '+' : '−'}${moneyString(context, diff.abs(), symbol: symbol)}';
-
-    return FormSheet(
-      title: l.accountAdjustBalanceTitle,
-      primaryLabel: l.accountDetailAdjustBalance,
-      onPrimary: canAdjust
-          ? () => Navigator.of(context).pop((
-              balance: next,
-              description: _opt(_description),
-              note: _opt(_note),
-            ))
-          : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l.accountAdjustBalanceCurrentLabel,
-                  style: detailLabelStyle(context),
-                ),
-              ),
-              MoneyText(
-                a.balance,
-                symbol: symbol,
-                style: textTheme.titleMedium?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AmountInput(
-            controller: _controller,
-            label: _isCredit
-                ? l.accountAdjustBalanceNewDebtLabel
-                : l.accountAdjustBalanceNewLabel,
-            currencySymbol: symbol,
-            autofocus: true,
-            allowNegative: true,
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l.accountAdjustBalanceDiffLabel,
-                  style: textTheme.bodyLarge,
-                ),
-              ),
-              MoneyText(
-                diff,
-                symbol: symbol,
-                tone: MoneyTone.signed,
-                hideable: false,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          AppInput(
-            controller: _description,
-            label: l.commonDescription,
-            prefixIcon: AppIcons.font,
-            maxLength: TextLimits.description,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppInput(
-            controller: _note,
-            label: l.commonNote,
-            prefixIcon: AppIcons.note,
-            maxLength: TextLimits.note,
-            maxLines: 3,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          MessageBanner(
-            tone: canAdjust ? Tone.info : Tone.neutral,
-            message: canAdjust
-                ? l.accountAdjustBalanceWillCreate(diffText)
-                : l.accountAdjustBalanceNoChange,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ),
-    );
-  }
-}
+typedef AdjustBalanceInput = AdjustBalanceSheetResult;

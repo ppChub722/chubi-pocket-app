@@ -9,6 +9,9 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
+import '../../../users/presentation/refresh_me.dart';
+import '../../../auth/presentation/widgets/auth_widgets.dart'
+    show kLanguageNames;
 import '../../../preferences/presentation/cubit/font_id_cubit.dart';
 import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_id_cubit.dart';
@@ -32,34 +35,31 @@ class SettingsPage extends StatelessWidget {
           builder: (context, state) {
             final user = _userOf(state);
             if (user == null) return const SizedBox.shrink();
-            return ListView(
+            final inset = MediaQuery.paddingOf(context);
+            return DetailPageBody(
+              onRefresh: () => refreshMe(context),
               // Clear the floating top bar.
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-              ),
-              children: [
-                HeaderCard(
-                  leading: UserAvatar(
-                    displayName: user.displayName,
-                    iconCode: user.iconCode,
-                    size: 52,
-                  ),
-                  title: Text(user.displayName),
-                  subtitle: Text(
-                    [
-                      '@${user.username}',
-                      if (user.email?.isNotEmpty ?? false) user.email!,
-                    ].join(' · '),
-                  ),
-                  trailing: const AppIcon(AppIcons.chevronRight),
-                  onTap: () => context.push('/settings/profile'),
+              topInset: inset.top + AppSpacing.sm,
+              bottomInset: AppSpacing.huge + inset.bottom,
+              hero: HeaderCard(
+                leading: UserAvatar(
+                  displayName: user.displayName,
+                  iconCode: user.iconCode,
+                  size: 52,
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                SectionCard(
-                  first: true,
+                title: Text(user.displayName),
+                subtitle: Text(
+                  [
+                    '@${user.username}',
+                    if (user.email?.isNotEmpty ?? false) user.email!,
+                  ].join(' · '),
+                ),
+                trailing: const AppIcon(AppIcons.chevronRight),
+                onTap: () => context.push('/settings/profile'),
+              ),
+              sections: [
+                (first) => SectionCard(
+                  first: first,
                   title: l.settingsSectionAccount,
                   children: [
                     DetailRow(
@@ -78,7 +78,8 @@ class SettingsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                SectionCard(
+                (first) => SectionCard(
+                  first: first,
                   title: l.settingsNotifications,
                   children: [
                     DetailRow(
@@ -90,7 +91,8 @@ class SettingsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                SectionCard(
+                (first) => SectionCard(
+                  first: first,
                   title: l.settingsSectionPreferences,
                   children: const [
                     _ThemeCards(),
@@ -99,19 +101,17 @@ class SettingsPage extends StatelessWidget {
                     _FontRow(),
                   ],
                 ),
-                SectionCard(
+                (first) => SectionCard(
+                  first: first,
                   title: l.settingsSectionAbout,
                   children: const [_VersionRow()],
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                AppButton(
-                  label: l.settingsLogout,
-                  icon: AppIcons.logout,
-                  variant: AppButtonVariant.destructive,
-                  expand: true,
-                  onPressed: () => _confirmLogout(context),
-                ),
               ],
+              manage: DangerRow(
+                icon: AppIcons.logout,
+                label: l.settingsLogout,
+                onTap: () => _confirmLogout(context),
+              ),
             );
           },
         ),
@@ -154,60 +154,50 @@ class _ThemeCards extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final selected = context.watch<ThemeIdCubit>().state;
-    return Padding(
-      // Inset like the other rows (DetailRow / DetailStacked).
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return DetailStacked(
+      label: l.settingsTheme,
+      child: Row(
         children: [
-          Text(l.settingsTheme, style: detailLabelStyle(context)),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              for (final t in ThemeRegistry.all) ...[
-                Expanded(
-                  child: SelectableFrame(
-                    selected: t.id == selected,
-                    radius: AppRadius.md,
-                    child: AppCard(
-                      style: AppCardStyle.bordered,
-                      onTap: () => context.read<ThemeIdCubit>().set(t.id),
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          for (final t in ThemeRegistry.all) ...[
+            Expanded(
+              child: SelectableFrame(
+                selected: t.id == selected,
+                radius: AppRadius.md,
+                child: AppCard(
+                  style: AppCardStyle.bordered,
+                  onTap: () => context.read<ThemeIdCubit>().set(t.id),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              for (final c in t.previewSwatch.take(4))
-                                Container(
-                                  width: 18,
-                                  height: 18,
-                                  margin: const EdgeInsets.only(right: 4),
-                                  decoration: BoxDecoration(
-                                    color: c,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            _name(l, t),
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
+                          for (final c in t.previewSwatch.take(4))
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                right: AppSpacing.xs,
+                              ),
+                              child: Icon(
+                                Icons.circle,
+                                size: AppSpacing.lg,
+                                color: c,
+                              ),
+                            ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        _name(l, t),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
                   ),
                 ),
-                if (t != ThemeRegistry.all.last)
-                  const SizedBox(width: AppSpacing.sm),
-              ],
-            ],
-          ),
+              ),
+            ),
+            if (t != ThemeRegistry.all.last)
+              const SizedBox(width: AppSpacing.sm),
+          ],
         ],
       ),
     );
@@ -221,26 +211,14 @@ class _ThemeModeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final mode = context.watch<ThemeModeCubit>().state;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l.settingsAppearance, style: detailLabelStyle(context)),
-          const SizedBox(height: AppSpacing.sm),
-          ThemeModeChips(
-            selected: mode,
-            onChanged: (m) => context.read<ThemeModeCubit>().set(m),
-            lightLabel: l.modeLight,
-            darkLabel: l.modeDark,
-            systemLabel: l.modeSystem,
-          ),
-        ],
+    return DetailStacked(
+      label: l.settingsAppearance,
+      child: ThemeModeChips(
+        selected: mode,
+        onChanged: (m) => context.read<ThemeModeCubit>().set(m),
+        lightLabel: l.modeLight,
+        darkLabel: l.modeDark,
+        systemLabel: l.modeSystem,
       ),
     );
   }
@@ -249,31 +227,24 @@ class _ThemeModeRow extends StatelessWidget {
 class _LanguageRow extends StatelessWidget {
   const _LanguageRow();
 
-  static const _names = {'th': 'ไทย', 'en': 'English'};
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final code = context.watch<LocaleCubit>().state.languageCode;
-    return DetailRow(
-      leading: const AppIcon(AppIcons.language),
-      label: l.settingsLanguage,
-      trailing: Text(_names[code] ?? code),
-      showChevron: true,
-      onTap: () async {
-        final picked = await showOptionSheet<String>(
-          context,
-          title: l.settingsLanguage,
-          selected: code,
-          options: [
-            for (final e in _names.entries)
-              SheetOption(value: e.key, label: e.value),
-          ],
-        );
-        if (picked != null && context.mounted) {
-          context.read<LocaleCubit>().set(Locale(picked));
-        }
-      },
+    return OptionMenuAnchor<String>(
+      selected: code,
+      onSelected: (picked) => context.read<LocaleCubit>().set(Locale(picked)),
+      options: [
+        for (final e in kLanguageNames.entries)
+          SheetOption(value: e.key, label: e.value),
+      ],
+      builder: (context, toggle) => DetailRow(
+        leading: const AppIcon(AppIcons.language),
+        label: l.settingsLanguage,
+        trailing: Text(kLanguageNames[code] ?? code),
+        showChevron: true,
+        onTap: toggle,
+      ),
     );
   }
 }
@@ -309,7 +280,10 @@ class _FontRow extends StatelessWidget {
                       value: f.id,
                       label: f.family,
                       subtitle: l.settingsFontSample,
-                      labelStyle: TextStyle(fontFamily: f.family),
+                      // The preview must show the font itself.
+                      labelStyle: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(fontFamily: f.family),
                     ),
                 ],
               );

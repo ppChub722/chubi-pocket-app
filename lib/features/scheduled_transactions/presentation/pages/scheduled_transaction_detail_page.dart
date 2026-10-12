@@ -10,6 +10,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/wallet_value_chip.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../domain/scheduled_enums.dart';
 import '../../domain/scheduled_history.dart';
@@ -56,7 +57,6 @@ class _ScheduledTransactionDetailPageState
             loading: state.status == ScheduledTransactionsStatus.loading,
             error: state.error,
             onRetry: context.read<ScheduledTransactionsCubit>().load,
-            skeleton: const LoadingView(),
             notFound: EmptyView(
               icon: AppIcons.empty,
               title: l.scheduledDetailNotFound,
@@ -93,48 +93,25 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
   /// Pull to refresh: the entry (via the list) and its history.
   Future<void> _refresh() async {
     _refreshHistory();
+    // Never throw out of the callback: the cubit emits its own error state and
+    // the history section shows its own error.
     await Future.wait([
-      context.read<ScheduledTransactionsCubit>().load(),
-      _historyFuture,
+      context.read<ScheduledTransactionsCubit>().load().catchError((_) {}),
+      _historyFuture.then<void>((_) {}, onError: (_) {}),
     ]);
   }
 
-  Future<void> _changeStatus() async {
+  /// Applies a status option picked in the hero's popover.
+  Future<void> _changeStatus(_StatusAction action) async {
     final l = AppLocalizations.of(context)!;
     final e = widget.entry;
-    // Each option leads with its action icon, tinted with the tone of the
-    // status it moves to — the same tones as the pill.
-    final action = await showOptionSheet<_StatusAction>(
-      context,
-      title: l.scheduledStatusChangeTitle,
-      options: [
-        if (e.canPause)
-          SheetOption(
-            value: _StatusAction.pause,
-            label: l.scheduledDetailPause,
-            leading: const _ToneIcon(AppIcons.pause, Tone.warning),
-          ),
-        if (e.canResume)
-          SheetOption(
-            value: _StatusAction.resume,
-            label: l.scheduledDetailResume,
-            leading: const _ToneIcon(AppIcons.resume, Tone.success),
-          ),
-        if (e.canCancel)
-          SheetOption(
-            value: _StatusAction.cancel,
-            label: l.scheduledDetailCancel,
-            leading: const _ToneIcon(AppIcons.stop, Tone.danger),
-          ),
-      ],
-    );
-    if (action == null || !mounted) return;
+    if (!mounted) return;
     final cubit = context.read<ScheduledTransactionsCubit>();
     switch (action) {
       case _StatusAction.pause:
-        await _run(() => cubit.pause(e.id));
+        if (e.canPause) await _run(() => cubit.pause(e.id));
       case _StatusAction.resume:
-        await _run(() => cubit.resume(e.id));
+        if (e.canResume) await _run(() => cubit.resume(e.id));
       case _StatusAction.cancel:
         final ok = await showConfirmDialog(
           context,
@@ -201,37 +178,35 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
       extendBodyBehindAppBar: true,
       // Builder: the body's context sees the bar height in padding.top.
       body: Builder(
-        builder: (context) => PullToRefresh(
+        builder: (context) => DetailPageBody(
           onRefresh: _refresh,
-          child: DetailPageBody(
-            physics: const AlwaysScrollableScrollPhysics(),
-            topInset: MediaQuery.paddingOf(context).top + AppSpacing.md,
-            bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
-            hero: _Hero(
-              entry: entry,
-              onStatusTap: canChange ? _changeStatus : null,
-              onEdit: _edit,
-            ),
-            sections: [
-              (first) => _StatsCard(entry: entry, onEdit: _edit, first: first),
-              (first) => entry.canGenerateNow
-                  ? _GenerateNowCard(
-                      entry: entry,
-                      onGenerated: _refreshHistory,
-                      first: first,
-                    )
-                  : null,
-              (first) => _HistorySection(future: _historyFuture, first: first),
-            ],
-            manage: ManageSection(
-              deleteLabel: l.scheduledDeleteThis,
-              onDelete: _delete,
-            ),
-            metaLines: detailMetaLines(
-              context,
-              createdAt: entry.createdAt,
-              updatedAt: entry.updatedAt,
-            ),
+          physics: const AlwaysScrollableScrollPhysics(),
+          topInset: MediaQuery.paddingOf(context).top + AppSpacing.md,
+          bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
+          hero: _Hero(
+            entry: entry,
+            onStatusSelected: canChange ? _changeStatus : null,
+            onEdit: _edit,
+          ),
+          sections: [
+            (first) => _StatsCard(entry: entry, onEdit: _edit, first: first),
+            (first) => entry.canGenerateNow
+                ? _GenerateNowCard(
+                    entry: entry,
+                    onGenerated: _refreshHistory,
+                    first: first,
+                  )
+                : null,
+            (first) => _HistorySection(future: _historyFuture, first: first),
+          ],
+          manage: ManageSection(
+            deleteLabel: l.scheduledDeleteThis,
+            onDelete: _delete,
+          ),
+          metaLines: detailMetaLines(
+            context,
+            createdAt: entry.createdAt,
+            updatedAt: entry.updatedAt,
           ),
         ),
       ),
@@ -239,21 +214,49 @@ class _LoadedScaffoldState extends State<_LoadedScaffold> {
   }
 }
 
-class _Hero extends StatelessWidget {
+class _Hero extends StatefulWidget {
   const _Hero({
     required this.entry,
-    required this.onStatusTap,
+    required this.onStatusSelected,
     required this.onEdit,
   });
   final ScheduledTransaction entry;
-  final VoidCallback? onStatusTap;
+
+  /// Null = the status can't be changed (the chip is display only).
+  final ValueChanged<_StatusAction>? onStatusSelected;
   final VoidCallback onEdit;
 
   @override
+  State<_Hero> createState() => _HeroState();
+}
+
+class _HeroState extends State<_Hero> {
+  // Read-only view of the description for HeroDescription.
+  late final _descriptionCtrl = TextEditingController(
+    text: widget.entry.description ?? '',
+  );
+
+  @override
+  void didUpdateWidget(_Hero old) {
+    super.didUpdateWidget(old);
+    final v = widget.entry.description ?? '';
+    if (_descriptionCtrl.text != v) _descriptionCtrl.text = v;
+  }
+
+  @override
+  void dispose() {
+    _descriptionCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final entry = widget.entry;
+    final onStatusSelected = widget.onStatusSelected;
+    final onEdit = widget.onEdit;
     final l = AppLocalizations.of(context)!;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = entry.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final accent = entry.iconCode.tintFor(palette);
     final isIncome = entry.type == ScheduledTransactionType.income;
     final (tone, label) = switch (entry.status) {
       ScheduledStatus.active => (AppChipTone.success, l.scheduledStatusActive),
@@ -282,16 +285,53 @@ class _Hero extends StatelessWidget {
         iconCode: entry.iconCode,
       ),
       title: Text(entry.name),
+      description: HeroDescription(
+        controller: _descriptionCtrl,
+        editing: false,
+        hint: l.commonDescription,
+        onEnterEdit: onEdit,
+      ),
       topRow: [
-        AppChip(
-          label: label,
-          dot: true,
-          tone: tone,
-          selected: true,
-          trailing: onStatusTap != null
-              ? AppChipTrailing.dropdown
-              : AppChipTrailing.none,
-          onTap: onStatusTap,
+        // The status chip anchors a popover: the current status is
+        // highlighted (choosing it again does nothing); the others show
+        // only while their transition is allowed.
+        OptionMenuAnchor<_StatusAction>(
+          selected: switch (entry.status) {
+            ScheduledStatus.active => _StatusAction.resume,
+            ScheduledStatus.paused => _StatusAction.pause,
+            _ => null,
+          },
+          options: [
+            if (entry.canPause || entry.status == ScheduledStatus.paused)
+              SheetOption(
+                value: _StatusAction.pause,
+                label: l.scheduledDetailPause,
+                leading: const _ToneIcon(AppIcons.pause, Tone.warning),
+              ),
+            if (entry.canResume || entry.status == ScheduledStatus.active)
+              SheetOption(
+                value: _StatusAction.resume,
+                label: l.scheduledDetailResume,
+                leading: const _ToneIcon(AppIcons.resume, Tone.success),
+              ),
+            if (entry.canCancel)
+              SheetOption(
+                value: _StatusAction.cancel,
+                label: l.scheduledDetailCancel,
+                leading: const _ToneIcon(AppIcons.stop, Tone.danger),
+              ),
+          ],
+          onSelected: (a) => onStatusSelected?.call(a),
+          builder: (context, toggle) => AppChip(
+            label: label,
+            dot: true,
+            tone: tone,
+            selected: true,
+            trailing: onStatusSelected != null
+                ? AppChipTrailing.dropdown
+                : AppChipTrailing.none,
+            onTap: onStatusSelected != null ? toggle : null,
+          ),
         ),
         AppChip(label: variant, tone: AppChipTone.neutral, selected: true),
       ],
@@ -301,13 +341,11 @@ class _Hero extends StatelessWidget {
           MoneyText(
             entry.amount,
             tone: isIncome ? MoneyTone.income : MoneyTone.plain,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+            style: AppTypography.of(context, AppTextRole.display),
           ),
-          Text(
+          AppText(
             l.scheduledDetailNextDue(entry.nextBillingDate),
-            style: Theme.of(context).textTheme.bodySmall,
+            role: AppTextRole.caption,
           ),
         ],
       ),
@@ -345,14 +383,37 @@ class _StatsCard extends StatelessWidget {
       DetailRow.pick(
         leading: const AppIcon(AppIcons.wallet),
         label: l.scheduledDetailAccount,
-        value: entry.account?.name,
+        valueChip: entry.account == null
+            ? null
+            : walletValueChip(
+                context,
+                name: entry.account!.name,
+                iconCode: entry.account!.iconCode,
+              ),
         emptyText: l.quickEventNone,
         onTap: entry.account == null ? onEdit : null,
       ),
       DetailRow.pick(
         leading: const AppIcon(AppIcons.category),
         label: l.scheduledDetailCategory,
-        value: entry.category?.name,
+        // The embedded ref only (no category list here): one chip with the
+        // category's own icon + colour.
+        valueChip: entry.category == null
+            ? null
+            : ChipPath(
+                segments: [
+                  ChipPathSegment(
+                    label: entry.category!.name,
+                    icon: IconRegistry.get(
+                      entry.category!.iconCode?.icon,
+                      fallback: AppIcons.category,
+                    ),
+                    color: entry.category!.iconCode.tintFor(
+                      Theme.of(context).extension<AppColors>()!,
+                    ),
+                  ),
+                ],
+              ),
         emptyText: l.quickEventNone,
         onTap: entry.category == null ? onEdit : null,
       ),
@@ -390,16 +451,13 @@ class _StatsCard extends StatelessWidget {
             value: '${entry.interestRate!.toStringAsFixed(2)}%',
           ),
       ],
-      // Long text: label on top, value full-width below.
-      if (_has(entry.description))
-        _TextRow(label: l.commonDescription, value: entry.description),
+      // Long text: label on top, value full-width below. (The description
+      // lives in the hero.)
       _TextRow(label: l.commonNote, value: entry.note, onLongPress: onEdit),
     ];
     // Detail-page rows (SectionCard / DetailRow), hairlines between.
     return SectionCard(first: first, children: rows);
   }
-
-  static bool _has(String? v) => v != null && v.trim().isNotEmpty;
 
   String _cycleLabel(AppLocalizations l, BillingCycle c) {
     switch (c) {
@@ -429,7 +487,7 @@ class _StatRow extends StatelessWidget {
   /// A [DetailRow] — the shared detail-page row.
   @override
   Widget build(BuildContext context) =>
-      DetailRow(leading: AppIcon(icon), label: label, trailing: Text(value));
+      DetailRow(leading: AppIcon(icon), label: label, trailing: AppText(value));
 }
 
 /// Description / note — a [DetailStacked], so long text wraps full-width.
@@ -444,16 +502,12 @@ class _TextRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final empty = value == null || value!.trim().isEmpty;
     final l = AppLocalizations.of(context)!;
-    final style = Theme.of(context).textTheme.bodyLarge;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    return DetailStacked(
+      label: label,
       onLongPress: onLongPress,
-      child: DetailStacked(
-        label: label,
-        child: empty
-            ? DetailPlaceholder(l.commonLongPressToEdit)
-            : Text(value!, style: style),
-      ),
+      child: empty
+          ? DetailPlaceholder(l.commonLongPressToEdit)
+          : AppText(value!),
     );
   }
 }
@@ -555,19 +609,15 @@ class _HistorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     // Each history entry is its own row, so the section draws the
     // hairlines between them (and above the total).
-    Widget row(Widget child, {VoidCallback? onTap}) {
-      final padded = Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        child: child,
-      );
-      return onTap == null ? padded : InkWell(onTap: onTap, child: padded);
-    }
+    Widget row(Widget child) => Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
+      child: child,
+    );
 
     return FutureBuilder<ScheduledHistory>(
       future: future,
@@ -592,12 +642,12 @@ class _HistorySection extends StatelessWidget {
         } else if (snap.hasError) {
           rows = [
             row(
-              Text(
-                ErrorView.titleFor(
+              AppMessage(
+                tone: Tone.danger,
+                message: ErrorView.titleFor(
                   context,
                   ApiException.from(snap.error!, snap.stackTrace),
                 ),
-                style: TextStyle(color: scheme.error),
               ),
             ),
           ];
@@ -607,43 +657,36 @@ class _HistorySection extends StatelessWidget {
           final h = snap.data!;
           rows = [
             for (final e in h.entries)
-              row(
-                onTap: () => openPage(context, '/transactions/${e.id}'),
-                Row(
-                  children: [
-                    AppIcon(
-                      AppIcons.transactions,
-                      size: AppIconSize.md,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(child: Text(e.date, style: textTheme.bodyMedium)),
-                    Text(
-                      moneyString(context, e.amount),
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              ListRow(
+                title: e.date,
+                leading: AppIcon(
+                  AppIcons.transactions,
+                  size: AppIconSize.md,
+                  color: scheme.onSurfaceVariant,
                 ),
+                trailing: MoneyText(
+                  e.amount,
+                  style: AppTypography.of(
+                    context,
+                    AppTextRole.body,
+                  )?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                onTap: () => openPage(context, '/transactions/${e.id}'),
               ),
             if (h.totalGenerated > 0)
               row(
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    AppText(
                       l.scheduledDetailHistoryTotal(h.totalGenerated),
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                      role: AppTextRole.caption,
                     ),
-                    Text(
+                    AppText(
                       moneyString(context, h.totalAmountGenerated),
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      role: AppTextRole.caption,
+                      color: scheme.onSurface,
+                      weight: FontWeight.w600,
                     ),
                   ],
                 ),

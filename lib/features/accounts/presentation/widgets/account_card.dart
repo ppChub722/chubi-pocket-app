@@ -64,7 +64,10 @@ HeroStyle accountHeroStyle(
 }) {
   final palette = Theme.of(context).extension<AppColors>()!;
   return HeroStyle.tinted(
-    color: account.iconCode?.accentColorFor(palette) ?? palette.primary,
+    color: account.iconCode.tintFor(
+      palette,
+      fallback: account.colorOf(context),
+    ),
     glyph: showGlyph ? account.type.icon : null,
     strongBorder: false,
   );
@@ -109,51 +112,44 @@ class _HorizontalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = account.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final accent = account.iconCode.tintFor(palette);
     final desc = account.description?.trim();
     final note = account.note?.trim();
     final hasDesc = desc != null && desc.isNotEmpty;
     final hasNote = note != null && note.isNotEmpty;
     return Row(
       children: [
-        AccountIconCircle(account: account, size: 44, onTap: onIconTap),
+        AccountIconCircle(
+          account: account,
+          size: AvatarMetrics.sizeLarge,
+          onTap: onIconTap,
+        ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                account.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 2),
-              Text(
+              AppText(account.name, role: AppTextRole.title, maxLines: 1),
+              const SizedBox(height: AppSpacing.xxs),
+              AppText(
                 hasDesc ? desc : accountTypeLabel(context, account.type),
+                role: AppTextRole.caption,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
               if (hasNote) ...[
-                const SizedBox(height: 2),
-                Text(
+                const SizedBox(height: AppSpacing.xxs),
+                AppText(
                   note,
+                  role: AppTextRole.caption,
+                  italic: true,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontStyle: FontStyle.italic,
-                  ),
                 ),
               ],
               if (account.isShared) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 OtherMembersStack(account: account),
               ],
             ],
@@ -166,25 +162,22 @@ class _HorizontalLayout extends StatelessWidget {
           children: [
             MoneyText(
               accountDisplayBalance(account),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: accountBalanceColor(context, account),
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTypography.of(
+                context,
+                AppTextRole.money,
+              )?.copyWith(color: accountBalanceColor(context, account)),
             ),
             if (account.creditUtilization != null) ...[
-              const SizedBox(height: 4),
-              _UtilizationBar(
-                fraction: account.creditUtilization!,
-                color: accent,
+              const SizedBox(height: AppSpacing.xs),
+              SizedBox(
                 width: 100,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                AppLocalizations.of(context)!.accountCreditUsedPercent(
-                  (account.creditUtilization! * 100).round(),
-                ),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+                child: ProgressRow(
+                  value: account.creditUtilization!,
+                  color: accent,
+                  height: 4,
+                  label: AppLocalizations.of(context)!.accountCreditUsedPercent(
+                    (account.creditUtilization! * 100).round(),
+                  ),
                 ),
               ),
             ],
@@ -202,10 +195,8 @@ class _VerticalLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = account.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final accent = account.iconCode.tintFor(palette);
     final desc = account.description?.trim();
     final utilization = account.creditUtilization;
     return Column(
@@ -215,51 +206,53 @@ class _VerticalLayout extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AccountIconCircle(account: account, size: 40, onTap: onIconTap),
+            AccountIconCircle(
+              account: account,
+              size: AvatarMetrics.sizeMedium,
+              onTap: onIconTap,
+            ),
             const Spacer(),
             if (account.isShared) OtherMembersStack(account: account),
           ],
         ),
         const Spacer(),
-        Text(
+        AppText(
           account.name,
+          role: AppTextRole.title,
+          weight: FontWeight.w700,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
-        Text(
+        AppText(
           desc != null && desc.isNotEmpty
               ? desc
               : accountTypeLabel(context, account.type),
+          role: AppTextRole.caption,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: AppSpacing.xs),
         MoneyText(
           accountDisplayBalance(account),
-          style: textTheme.titleMedium?.copyWith(
-            color: accountBalanceColor(context, account),
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTypography.of(
+            context,
+            AppTextRole.money,
+          )?.copyWith(color: accountBalanceColor(context, account)),
         ),
         if (utilization != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
+          // Bar beside its percent (one line, keeps the card's height).
           Row(
             children: [
               Expanded(
-                child: _UtilizationBar(
-                  fraction: utilization,
+                child: ProgressRow(
+                  value: utilization,
                   color: accent,
-                  width: double.infinity,
+                  height: 4,
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              Text(
+              AppText(
                 '${(utilization * 100).round()}%',
-                style: textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+                role: AppTextRole.caption,
               ),
             ],
           ),
@@ -277,12 +270,16 @@ class AccountIconCircle extends StatelessWidget {
     required this.account,
     required this.size,
     this.onTap,
+    this.onLongPress,
     super.key,
   });
 
   final Account account;
   final double size;
   final VoidCallback? onTap;
+
+  /// View mode: enter edit (long-press); works without [onTap], no pencil.
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -293,9 +290,14 @@ class AccountIconCircle extends StatelessWidget {
     );
     // Only an EDITABLE icon is an EditableCircle (never below 40, with the
     // pencil); a plain one — the compact bar's 28 — is just the icon.
-    final icon = onTap == null
+    final icon = onTap == null && onLongPress == null
         ? SizedBox(width: size, height: size, child: display)
-        : EditableCircle(size: size, onTap: onTap, child: display);
+        : EditableCircle(
+            size: size,
+            onTap: onTap,
+            onLongPress: onLongPress,
+            child: display,
+          );
     if (!account.isShared) return icon;
     return SharedWalletIconBadge(size: size, child: icon);
   }
@@ -347,44 +349,13 @@ class OtherMembersStack extends StatelessWidget {
   }
 }
 
-class _UtilizationBar extends StatelessWidget {
-  const _UtilizationBar({
-    required this.fraction,
-    required this.color,
-    required this.width,
-  });
-
-  final double fraction;
-  final Color color;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(2),
-      child: SizedBox(
-        width: width,
-        height: 4,
-        child: LinearProgressIndicator(
-          value: fraction,
-          minHeight: 4,
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest,
-          valueColor: AlwaysStoppedAnimation<Color>(color),
-        ),
-      ),
-    );
-  }
-}
-
 /// A wallet's balance text colour (owner 2026-10-11): what you owe — a
 /// credit-type wallet — in the liability token; otherwise the wallet's own
 /// icon colour (the card wash keeps that colour either way).
 Color accountBalanceColor(BuildContext context, Account account) {
   if (account.isLiability) return account.colorOf(context);
   final palette = Theme.of(context).extension<AppColors>()!;
-  return account.iconCode?.accentColorFor(palette) ?? palette.primary;
+  return account.iconCode.tintFor(palette);
 }
 
 /// The balance to show: a zero is a plain 0 — `-0.0` (a new card) would

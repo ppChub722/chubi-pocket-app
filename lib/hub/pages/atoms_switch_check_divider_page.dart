@@ -12,7 +12,215 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const HubSubheading('Playgrounds'),
+      HubInApp(
+        columns: 2,
+        note:
+            'Every real combination side by side, each with the page that '
+            'uses it.',
+        uses: [
+          HubUse(
+            label: 'AppSwitch — trailing of a DetailRow, the row toggles it',
+            page: 'Detail / edit pages (include in reports, active, …)',
+            wide: true,
+            child: HubStateful<bool>(
+              initial: true,
+              builder: (context, on, set) => Column(
+                children: [
+                  DetailRow(
+                    label: 'Include in my reports',
+                    helper: 'Counts in totals and charts',
+                    trailing: AppSwitch(value: on, onChanged: set),
+                    onTap: () => set(!on),
+                  ),
+                  const AppDivider.row(),
+                  const DetailRow(
+                    label: 'Disabled',
+                    trailing: AppSwitch(value: false, onChanged: null),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'AppSwitch — on / off',
+            page: 'Notification settings',
+            child: HubStateful<bool>(
+              initial: true,
+              builder: (context, on, set) => Wrap(
+                spacing: AppSpacing.lg,
+                children: [
+                  AppSwitch(value: on, onChanged: set),
+                  AppSwitch(value: !on, onChanged: (x) => set(!x)),
+                ],
+              ),
+            ),
+          ),
+          const HubUse(
+            label: 'AppSwitch — disabled (on / off)',
+            page: 'Locked settings',
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              children: [
+                AppSwitch(value: true, onChanged: null),
+                AppSwitch(value: false, onChanged: null),
+              ],
+            ),
+          ),
+          HubUse(
+            label: 'SelectCheck — on / off / partial',
+            page: 'Pending, Tags, project transactions (select mode)',
+            child: HubStateful<bool?>(
+              initial: true,
+              builder: (context, on, set) => Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SelectCheck(value: on, onTap: () => set(!(on ?? false))),
+                  SelectCheck(value: false, onTap: () {}),
+                  SelectCheck(value: null, onTap: () {}),
+                ],
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'SelectAllCount — none / some / all / empty',
+            page: 'Select-mode bars',
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              runSpacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SelectAllCount(selected: 0, total: 5, onTap: () {}),
+                SelectAllCount(selected: 2, total: 5, onTap: () {}),
+                SelectAllCount(selected: 5, total: 5, onTap: () {}),
+                SelectAllCount(selected: 0, total: 0, onTap: () {}),
+              ],
+            ),
+          ),
+          const HubUse(
+            label: 'AppDivider.row — between rows of a section',
+            page: 'Detail sections, settings',
+            child: Column(
+              children: [Text('row'), AppDivider.row(), Text('row')],
+            ),
+          ),
+          const HubUse(
+            label: 'AppDivider — full width / taller gap',
+            page: 'Sheets, lists',
+            child: Column(
+              children: [
+                Text('above'),
+                AppDivider(),
+                Text('between'),
+                AppDivider(height: 24),
+                Text('below'),
+              ],
+            ),
+          ),
+          HubUse(
+            label: 'AddTile — card (an empty list\'s CTA)',
+            page: 'Accounts, Budgets, Categories, Contacts',
+            child: AddTile(label: 'Add new', onTap: () {}),
+          ),
+          HubUse(
+            label: 'AddTile — row (below a list)',
+            page: 'Home, Pending, Wallet members',
+            child: AddTile(
+              label: 'Add row',
+              variant: AddTileVariant.row,
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            label: 'AddTile — circle',
+            page: 'Icon / avatar pickers',
+            child: left(
+              AddTile(
+                label: 'circle',
+                variant: AddTileVariant.circle,
+                onTap: () {},
+              ),
+            ),
+          ),
+          const HubUse(
+            label: 'AddTile — disabled (saving)',
+            page: 'Tags (while saving)',
+            child: AddTile(label: 'Add new', onTap: null),
+          ),
+          const HubUse(
+            label: 'AppSpinner — small / medium / large',
+            page: 'Login button, Debt person page, Splash',
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                AppSpinner(size: AppSpinnerSize.small),
+                AppSpinner(),
+                AppSpinner(size: AppSpinnerSize.large),
+              ],
+            ),
+          ),
+          const HubUse(
+            label: 'AppSpinner — determinate',
+            page: 'Uploads, imports',
+            child: Wrap(
+              spacing: AppSpacing.lg,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [AppSpinner(value: 0.25), AppSpinner(value: 0.75)],
+            ),
+          ),
+          const HubUse(
+            label: 'Skeletons — first load of a list / card',
+            page: 'Accounts, Account detail, lists',
+            wide: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SkeletonListTile(),
+                SkeletonBox(height: 64, borderRadius: AppRadius.lg),
+                SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    SkeletonCircle(size: 32),
+                    SizedBox(width: AppSpacing.md),
+                    Expanded(child: SkeletonLine(width: 160)),
+                  ],
+                ),
+                SizedBox(height: AppSpacing.sm),
+                SkeletonText(style: _bodyLarge, width: 200),
+              ],
+            ),
+          ),
+          HubUse(
+            label: 'AppIcon — inherited colour / primary',
+            page: 'Rows, chips, empty states (72 usages)',
+            child: Wrap(
+              spacing: AppSpacing.md,
+              children: [
+                const AppIcon(AppIcons.wallet, size: AppIconSize.lg),
+                AppIcon(
+                  AppIcons.wallet,
+                  size: AppIconSize.lg,
+                  color: scheme.primary,
+                ),
+              ],
+            ),
+          ),
+          HubUse(
+            label: 'AppIcon — error, small',
+            page: 'Validation, overdue rows',
+            child: left(
+              AppIcon(
+                AppIcons.wallet,
+                size: AppIconSize.sm,
+                color: scheme.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.xl),
       HubPlayground(
         title: 'AppSwitch',
         note: 'The one on / off switch. enabled off = onChanged null (greyed).',
@@ -222,125 +430,8 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
           ),
         ),
       ),
-      const HubSubheading('In the app'),
-      HubInApp(
-        note: 'The real combinations, each with the page that uses it.',
-        uses: [
-          HubUse(
-            label: 'AppSwitch — trailing of a DetailRow, the row toggles it',
-            page: 'Detail / edit pages (include in reports, active, …)',
-            child: HubStateful<bool>(
-              initial: true,
-              builder: (context, on, set) => Column(
-                children: [
-                  DetailRow(
-                    label: 'Include in my reports',
-                    helper: 'Counts in totals and charts',
-                    trailing: AppSwitch(value: on, onChanged: set),
-                    onTap: () => set(!on),
-                  ),
-                  const AppDivider.row(),
-                  const DetailRow(
-                    label: 'Disabled',
-                    trailing: AppSwitch(value: false, onChanged: null),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          HubUse(
-            label: 'SelectCheck + SelectAllCount — multi-select',
-            page: 'Pending, Tags (select mode)',
-            child: HubStateful<bool?>(
-              initial: true,
-              builder: (context, on, set) => Wrap(
-                spacing: AppSpacing.lg,
-                runSpacing: AppSpacing.sm,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SelectCheck(value: on, onTap: () => set(!(on ?? false))),
-                  SelectCheck(value: false, onTap: () {}),
-                  SelectAllCount(selected: 2, total: 5, onTap: () {}),
-                ],
-              ),
-            ),
-          ),
-          HubUse(
-            label: 'AppDivider.row — between rows of a section',
-            page: 'Detail sections, settings',
-            child: const Column(
-              children: [Text('row'), AppDivider.row(), Text('row')],
-            ),
-          ),
-          HubUse(
-            label: 'AddTile — card (an empty list\'s CTA)',
-            page: 'Accounts, Budgets, Categories, Contacts',
-            child: AddTile(label: 'Add new', onTap: () {}),
-          ),
-          HubUse(
-            label: 'AddTile — row (below a list)',
-            page: 'Home, Pending, Wallet members',
-            child: AddTile(
-              label: 'Add row',
-              variant: AddTileVariant.row,
-              onTap: () {},
-            ),
-          ),
-          HubUse(
-            label: 'AddTile — circle',
-            page: 'Icon / avatar pickers',
-            child: left(
-              AddTile(
-                label: 'circle',
-                variant: AddTileVariant.circle,
-                onTap: () {},
-              ),
-            ),
-          ),
-          const HubUse(
-            label: 'AppSpinner — small in a button, medium in a row',
-            page: 'Login button, Debt person page, Splash',
-            child: Wrap(
-              spacing: AppSpacing.lg,
-              children: [
-                AppSpinner(size: AppSpinnerSize.small),
-                AppSpinner(),
-                AppSpinner(size: AppSpinnerSize.large),
-              ],
-            ),
-          ),
-          const HubUse(
-            label: 'Skeletons — first load of a list / card',
-            page: 'Accounts, Account detail, lists',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SkeletonListTile(),
-                SkeletonBox(height: 64, borderRadius: AppRadius.lg),
-                SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    SkeletonCircle(size: 32),
-                    SizedBox(width: AppSpacing.md),
-                    Expanded(child: SkeletonLine(width: 160)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          HubUse(
-            label: 'AppIcon — at an AppIconSize step',
-            page: 'Rows, chips, empty states (72 usages)',
-            child: left(
-              AppIcon(
-                AppIcons.wallet,
-                size: AppIconSize.lg,
-                color: scheme.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
     ],
   );
 }
+
+TextStyle? _bodyLarge(TextTheme t) => t.bodyLarge;

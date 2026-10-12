@@ -84,7 +84,7 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
     applyChange(switch (r) {
       ContactPicked(:final contact) => working.copyWith(
         contactId: contact.id,
-        name: contact.effectiveName,
+        name: contact.name,
       ),
       ContactNameTyped(:final name) => working.copyWith(
         clearContact: true,
@@ -191,45 +191,54 @@ class _PersonalDebtFormPageState extends State<PersonalDebtFormPage>
                   },
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                DetailRow.pick(
-                  label: l.debtCounterparty,
-                  value: w.name.isEmpty ? null : w.name,
-                  emptyText: l.debtCounterpartyPlaceholder,
-                  leading: Icon(
-                    w.contactId != null ? AppIcons.link : AppIcons.contact,
-                  ),
-                  onTap: _pickCounterparty,
-                  horizontalInset: 0,
-                ),
-                if (_counterpartyError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xs),
-                    child: Text(
-                      _counterpartyError!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                // Headless group: sits plain on the page background.
+                SectionCard(
+                  first: true,
+                  children: [
+                    DetailRow.pick(
+                      label: l.debtCounterparty,
+                      value: w.name.isEmpty ? null : w.name,
+                      emptyText: l.debtCounterpartyPlaceholder,
+                      leading: Icon(
+                        w.contactId != null ? AppIcons.link : AppIcons.contact,
+                      ),
+                      onTap: _pickCounterparty,
+                      horizontalInset: 0,
+                    ),
+                    if (_counterpartyError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: Text(
+                          _counterpartyError!,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                        ),
+                      ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppInput(
+                      controller: _descriptionCtrl,
+                      label: l.commonDescription,
+                      maxLength: TextLimits.description,
+                      onChanged: (v) => applyTextChange(
+                        _Field.description,
+                        working.copyWith(description: v),
                       ),
                     ),
-                  ),
-                const SizedBox(height: AppSpacing.md),
-                AppInput(
-                  controller: _descriptionCtrl,
-                  label: l.commonDescription,
-                  maxLength: TextLimits.description,
-                  onChanged: (v) => applyTextChange(
-                    _Field.description,
-                    working.copyWith(description: v),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppInput(
-                  controller: _noteCtrl,
-                  label: l.commonNote,
-                  prefixIcon: AppIcons.note,
-                  maxLines: 3,
-                  maxLength: TextLimits.note,
-                  onChanged: (v) =>
-                      applyTextChange(_Field.note, working.copyWith(note: v)),
+                    const SizedBox(height: AppSpacing.sm),
+                    AppInput(
+                      controller: _noteCtrl,
+                      label: l.commonNote,
+                      prefixIcon: AppIcons.note,
+                      maxLines: 3,
+                      maxLength: TextLimits.note,
+                      onChanged: (v) => applyTextChange(
+                        _Field.note,
+                        working.copyWith(note: v),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

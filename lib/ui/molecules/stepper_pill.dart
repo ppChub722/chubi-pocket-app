@@ -25,6 +25,9 @@ enum StepperUnit { week, month, year }
 ///   given.
 ///
 /// One look for all: the ‹ › are plain icons, dimmed when they cannot step.
+///
+/// It HUGS its content (a min-size row); a parent that forces its width (a
+/// stretched Column) stretches it — centre it (`Center` / a loose `Align`).
 class StepperPill extends StatelessWidget {
   const StepperPill({
     required this.label,

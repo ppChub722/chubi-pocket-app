@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import '../../atoms/app_avatar.dart';
 import '../../tokens/app/app_colors.dart';
 import 'color_token.dart';
 
@@ -130,4 +131,30 @@ class IconCode extends Equatable {
     borderColors,
     shape,
   ];
+}
+
+/// THE tint of every hero / tinted card (owner 2026-10-12), on a possibly-missing
+/// icon: the icon's main colour slot — first `bgColors`, else first `iconColors`
+/// (a gradient / multi-colour icon uses its FIRST stop, never a blend). No custom
+/// icon → the initials avatar's colour when [avatarName] is given (an entity
+/// drawn as initials), else [fallback] (the semantic colour), else primary.
+/// Cards clamp their border / glyph to ≥ 3:1 contrast; text stays onSurface.
+/// `entity.iconCode.tintFor(palette, fallback: …)`.
+extension IconCodeTint on IconCode? {
+  Color tintFor(AppColors palette, {Color? fallback, String? avatarName}) {
+    final code = this;
+    if (code != null) {
+      if (code.bgColors.isNotEmpty) {
+        return resolveColor(code.bgColors.first, palette);
+      }
+      if (code.iconColors.isNotEmpty) {
+        return resolveColor(code.iconColors.first, palette);
+      }
+    }
+    // No custom icon: an entity drawn as an initials avatar keeps the avatar's
+    // own (name-hashed) colour, so hero and avatar always match.
+    final name = avatarName?.trim() ?? '';
+    if (name.isNotEmpty) return AppAvatar.colorFor(name);
+    return fallback ?? palette.primary;
+  }
 }

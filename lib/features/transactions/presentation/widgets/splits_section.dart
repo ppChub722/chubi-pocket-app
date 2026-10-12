@@ -170,7 +170,6 @@ class SplitsSection extends StatefulWidget {
     this.meAuto = false,
     this.onMeAutoChanged,
     this.overText,
-    this.sectioned = false,
     this.embedded = false,
     this.helper,
     super.key,
@@ -201,14 +200,10 @@ class SplitsSection extends StatefulWidget {
   /// The over-the-limit line without ฉัน; default "ยอดหารรวมเกินยอดรายการ".
   final String? overText;
 
-  /// The detail page: a [SectionCard] of its own — [label] and the pills
-  /// in its title row, one inset row per person with hairlines between.
-  final bool sectioned;
-
   /// Inside the one "แบ่งรายการ" section ([SplitEventSection]): no card of
   /// its own — a row-label line ([label], "แบ่งยอด") with เพิ่มคน and (only
-  /// with at least one person) หารเท่ากัน, then the people. Implies the
-  /// inset of [sectioned].
+  /// with at least one person) หารเท่ากัน, then the people, inset like
+  /// the detail rows around them.
   final bool embedded;
 
   final List<SplitDraft> drafts;
@@ -244,12 +239,12 @@ class _SplitsSectionState extends State<SplitsSection> {
     switch (r) {
       case ContactPicked(:final contact):
         d.setPerson(
-          contact.effectiveName,
+          contact.name,
           contact: contact.id,
           look: EmbeddedPerson(
-            name: contact.effectiveName,
+            name: contact.name,
             contactId: contact.id,
-            iconCode: contact.effectiveIconCode,
+            iconCode: contact.iconCode,
             linked: contact.isLinked,
           ),
         );
@@ -300,7 +295,7 @@ class _SplitsSectionState extends State<SplitsSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
-    final sectioned = widget.sectioned || widget.embedded;
+    final sectioned = widget.embedded;
     final pills = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -423,23 +418,6 @@ class _SplitsSectionState extends State<SplitsSection> {
         ],
       );
     }
-    if (sectioned) {
-      // The helper sits under the title, before the people (no hairline
-      // between the two: one Column).
-      return SectionCard(
-        title: widget.label,
-        trailing: pills,
-        children: [
-          if (helper != null || rows.isNotEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [?helper, ?rows.firstOrNull],
-            ),
-          ...rows.skip(1),
-          ?closing,
-        ],
-      );
-    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -506,70 +484,6 @@ TextStyle? _fieldStyle(BuildContext context) =>
       fontFeatures: const [FontFeature.tabularFigures()],
     );
 
-/// A [SplitRow.height]-high box with an underline (primary while [focus] has it):
-/// the whole box takes the tap and focuses [focus], not just the text.
-class _UnderlineBox extends StatefulWidget {
-  const _UnderlineBox({
-    required this.focus,
-    required this.child,
-    this.alignment = AlignmentDirectional.centerStart,
-  });
-  final FocusNode focus;
-  final AlignmentGeometry alignment;
-  final Widget child;
-
-  @override
-  State<_UnderlineBox> createState() => _UnderlineBoxState();
-}
-
-class _UnderlineBoxState extends State<_UnderlineBox> {
-  @override
-  void initState() {
-    super.initState();
-    widget.focus.addListener(_onFocus);
-  }
-
-  @override
-  void didUpdateWidget(covariant _UnderlineBox old) {
-    super.didUpdateWidget(old);
-    if (old.focus != widget.focus) {
-      old.focus.removeListener(_onFocus);
-      widget.focus.addListener(_onFocus);
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.focus.removeListener(_onFocus);
-    super.dispose();
-  }
-
-  void _onFocus() => setState(() {});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final focused = widget.focus.hasFocus;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: widget.focus.requestFocus,
-      child: Container(
-        height: SplitRow.height,
-        alignment: widget.alignment,
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: focused ? scheme.primary : scheme.outlineVariant,
-              width: focused ? 2 : 1,
-            ),
-          ),
-        ),
-        child: widget.child,
-      ),
-    );
-  }
-}
-
 /// The amount field of a split row — thousands formatting, the ฿ stuck to
 /// the digits like the hero's amount, the whole box a tap target; synced
 /// from outside ("หารเท่ากัน") without clobbering what's typed.
@@ -608,40 +522,21 @@ class _AmountBoxState extends State<_AmountBox> {
 
   @override
   Widget build(BuildContext context) {
-    final style = _fieldStyle(context);
+    // The in-card underline field: the symbol hugs the digits, thousands
+    // formatting and right alignment come from the amount type.
     return SizedBox(
       // Room for "฿96,248.33".
       width: 104,
-      child: _UnderlineBox(
-        focus: _focus,
-        alignment: AlignmentDirectional.centerEnd,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text('฿', style: style),
-            Flexible(
-              // As wide as what's typed, so ฿ hugs the digits.
-              child: IntrinsicWidth(
-                child: AppInput(
-                  controller: _amount,
-                  focusNode: _focus,
-                  textAlign: TextAlign.end,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [ThousandsInputFormatter()],
-                  style: style,
-                  look: AppInputLook.bare,
-                  hint: '0',
-                  minWidth: 12,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (v) => widget.onChanged(AmountInput.parse(v)),
-                ),
-              ),
-            ),
-          ],
+      height: SplitRow.height,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: AppInput.card(
+          controller: _amount,
+          focusNode: _focus,
+          type: AppInputType.amount,
+          style: _fieldStyle(context),
+          hint: '0',
+          onChanged: (v) => widget.onChanged(AmountInput.parse(v)),
         ),
       ),
     );

@@ -208,57 +208,43 @@ class _IdentifierEditRowState extends State<IdentifierEditRow> {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final id = widget.identifier;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xs,
-        AppSpacing.xs,
-        AppSpacing.xs,
+    // A kit row: [kind chip] [number field] [close].
+    return ListRow(
+      leading: AppChip(
+        label: _kindLine(context, id, widget.providers),
+        leading: _mark(context, id, widget.providers, size: 18),
+        trailing: AppChipTrailing.dropdown,
+        onTap: _pickKind,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: AppChip(
-              label: _kindLine(context, id, widget.providers),
-              leading: _mark(context, id, widget.providers, size: 18),
-              trailing: AppChipTrailing.dropdown,
-              onTap: _pickKind,
-            ),
+      body: AppInput(
+        controller: _number,
+        autofocus: widget.autofocus,
+        dense: true,
+        // No `type: reference`: it is digits-only, but a number may hold
+        // `x` (hidden digits) and the "other" kind is alphanumeric.
+        keyboardType: id.kind == IdentifierKind.other
+            ? TextInputType.visiblePassword
+            : TextInputType.number,
+        inputFormatters: [IdentifierInputFormatter(id.kind)],
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+        hint: _hint(l, id.kind),
+        validator: (v) => _validate(v, l),
+        onChanged: (v) => widget.onChanged(
+          AccountIdentifier(
+            kind: id.kind,
+            value: AccountIdentifier.normalize(v),
+            bankCode: id.bankCode,
           ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: AppInput(
-              controller: _number,
-              autofocus: widget.autofocus,
-              keyboardType: id.kind == IdentifierKind.other
-                  ? TextInputType.visiblePassword
-                  : TextInputType.number,
-              inputFormatters: [IdentifierInputFormatter(id.kind)],
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-              look: AppInputLook.underline,
-              hint: _hint(l, id.kind),
-              validator: (v) => _validate(v, l),
-              onChanged: (v) => widget.onChanged(
-                AccountIdentifier(
-                  kind: id.kind,
-                  value: AccountIdentifier.normalize(v),
-                  bankCode: id.bankCode,
-                ),
-              ),
-            ),
-          ),
-          AppIconButton.close(
-            tooltip: l.identifierDelete,
-            iconSize: AppIconSize.md,
-            dense: true,
-            color: scheme.onSurfaceVariant,
-            onPressed: widget.onRemove,
-          ),
-        ],
+        ),
+      ),
+      trailing: AppIconButton.close(
+        tooltip: l.identifierDelete,
+        iconSize: AppIconSize.md,
+        dense: true,
+        color: scheme.onSurfaceVariant,
+        onPressed: widget.onRemove,
       ),
     );
   }
@@ -318,98 +304,42 @@ class IdentifierInputFormatter extends TextInputFormatter {
   }
 }
 
-/// The edit row's chip sheet (kit [PickerSheet]): the kind — เลขบัญชี /
-/// พร้อมเพย์ / บัตร / อื่น ๆ, the current one highlighted (no ✓) — and,
-/// for an account or a card, its bank (the bank picker). Returns the
+/// The edit row's chip sheet — the kit's [showIdentifierKindSelectSheet]; this
+/// wrapper maps the kinds / banks / l10n in and the result back. Returns the
 /// identifier with the new kind / bank, or null when dismissed.
 Future<AccountIdentifier?> showIdentifierKindSheet(
   BuildContext context, {
   required AccountIdentifier identifier,
   required List<PaymentProvider> providers,
-}) {
-  return showAppSheetCustom<AccountIdentifier>(
+}) async {
+  final l = AppLocalizations.of(context)!;
+  final lang = Localizations.localeOf(context).languageCode;
+  final choice = await showIdentifierKindSelectSheet(
     context,
-    builder: (_) => _KindSheet(identifier: identifier, providers: providers),
-  );
-}
-
-class _KindSheet extends StatelessWidget {
-  const _KindSheet({required this.identifier, required this.providers});
-
-  final AccountIdentifier identifier;
-  final List<PaymentProvider> providers;
-
-  Future<void> _pickBank(BuildContext context, IdentifierKind kind) async {
-    final l = AppLocalizations.of(context)!;
-    final pick = await showBankPicker(
-      context,
-      providers: providers,
-      selectedCode: identifier.bankCode,
-      title: l.identifierBankLabel,
-    );
-    if (!context.mounted) return;
-    Navigator.of(context).pop(
-      AccountIdentifier(
-        kind: kind,
-        value: identifier.value,
-        // Dismissed: the bank stays as it was.
-        bankCode: pick == null ? identifier.bankCode : pick.bank?.code,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final lang = Localizations.localeOf(context).languageCode;
-    final current = identifier.kind;
-    final bank = _bankOf(identifier, providers);
-    return PickerSheet(
+    kinds: [
+      for (final k in IdentifierKind.values)
+        IdentifierKindOption(
+          id: k.name,
+          label: identifierKindLabel(l, k),
+          icon: identifierKindIcon(k),
+          hasBank: identifierHasBank(k),
+        ),
+    ],
+    currentKindId: identifier.kind.name,
+    currentBankCode: identifier.bankCode,
+    banks: rankedBankItems(providers, lang),
+    strings: IdentifierKindStrings(
       title: l.identifierKindLabel,
-      builder: (context, _) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final k in IdentifierKind.values)
-            PickerRow(
-              leading: AppIcon(identifierKindIcon(k)),
-              title: identifierKindLabel(l, k),
-              selected: k == current,
-              onTap: () {
-                // Account / card: on to its bank; the others are done.
-                if (identifierHasBank(k) && k != current) {
-                  _pickBank(context, k);
-                  return;
-                }
-                Navigator.of(context).pop(
-                  AccountIdentifier(
-                    kind: k,
-                    value: identifier.value,
-                    bankCode: identifierHasBank(k) ? identifier.bankCode : null,
-                  ),
-                );
-              },
-            ),
-          if (identifierHasBank(current)) ...[
-            const AppDivider(),
-            PickerRow(
-              leading: bank == null
-                  ? const AppIcon(AppIcons.bank)
-                  : BankMark(provider: bank, size: 24),
-              title: l.identifierBankLabel,
-              subtitle: bank?.name(lang) ?? l.identifierBankNone,
-              trailing: const Padding(
-                padding: EdgeInsets.only(right: AppSpacing.md),
-                child: AppIcon(AppIcons.chevronRight),
-              ),
-              onTap: () => _pickBank(context, current),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ),
-    );
-  }
+      bankLabel: l.identifierBankLabel,
+      bankNoneLabel: l.identifierBankNone,
+    ),
+  );
+  if (choice == null) return null;
+  return AccountIdentifier(
+    kind: IdentifierKind.values.firstWhere((k) => k.name == choice.kindId),
+    value: identifier.value,
+    bankCode: choice.bankCode,
+  );
 }
 
 /// The numbers section's title-row action ([SectionCard.trailing]): the

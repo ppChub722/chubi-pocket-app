@@ -5,7 +5,6 @@ import '../../../../ui/ui.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../domain/transaction_type.dart';
-import 'tx_hero_card.dart';
 
 /// "฿1,250  อาหาร" — the amount in the type's colour, then the category:
 /// what a transaction form's title says once its hero card's amount has

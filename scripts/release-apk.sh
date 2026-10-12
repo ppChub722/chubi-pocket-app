@@ -5,6 +5,8 @@
 #   ./scripts/release-apk.sh                 # notes = last commit subject
 #   ./scripts/release-apk.sh -m "notes"
 #   ./scripts/release-apk.sh --allow-dirty   # test build with uncommitted work
+#   ./scripts/release-apk.sh --dir <path>    # build that checkout (a worktree of a
+#                                            # release tag) instead of this repo
 #
 # Run from Git Bash (any cwd). Builds what is in the working tree, so it
 # refuses uncommitted changes unless --allow-dirty: a release APK must equal
@@ -18,7 +20,6 @@ FIREBASE_APP="1:1059791337506:android:426c08daa2b6a91d5a327b"
 TESTER_GROUPS="firsttester"
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$APP_DIR"
 
 notes=""
 allow_dirty=false
@@ -26,11 +27,13 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -m|--notes) notes="${2:-}"; shift ;;
     --allow-dirty) allow_dirty=true ;;
-    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    --dir) APP_DIR="$(cd "${2:?--dir needs a path}" && pwd)"; shift ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift
 done
+cd "$APP_DIR"
 
 # The pinned SDK (FVM); the `flutter` on PATH is too old for this project.
 FLUTTER="$HOME/fvm/versions/3.47.3/bin/flutter"

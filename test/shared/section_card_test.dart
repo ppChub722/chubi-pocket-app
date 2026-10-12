@@ -14,41 +14,101 @@ void main() {
     ),
   );
 
-  testWidgets('a hairline between rows, none before or after', (t) async {
+  testWidgets('rows are 2 px apart (no hairlines); only first / last round', (
+    t,
+  ) async {
     await pump(
       t,
       const SectionCard(
         first: true,
+        title: 'T',
         children: [Text('a'), Text('b'), Text('c')],
       ),
     );
-    expect(find.byType(AppDivider), findsNWidgets(2));
-    expect(find.byType(SectionBand), findsNothing);
+    expect(find.byType(AppDivider), findsNothing);
+    final a = t.getRect(
+      find.ancestor(of: find.text('a'), matching: find.byType(ClipRRect)).first,
+    );
+    final b = t.getRect(
+      find.ancestor(of: find.text('b'), matching: find.byType(ClipRRect)).first,
+    );
+    expect(b.top - a.bottom, 2);
+    final clips = t.widgetList<ClipRRect>(find.byType(ClipRRect)).toList();
+    final radii = [
+      for (final c in clips) (c.borderRadius as BorderRadius).topLeft.x,
+    ];
+    expect(radii.first, greaterThan(0));
+    expect(radii[1], 0);
+    expect(
+      (clips.last.borderRadius as BorderRadius).bottomLeft.x,
+      greaterThan(0),
+    );
   });
 
-  testWidgets('dividers: false — no hairlines', (t) async {
+  testWidgets('dividers: false — the rows touch', (t) async {
     await pump(
       t,
       const SectionCard(
         first: true,
+        title: 'T',
         dividers: false,
         children: [Text('a'), Text('b')],
       ),
     );
-    expect(find.byType(AppDivider), findsNothing);
+    final a = t.getRect(
+      find.ancestor(of: find.text('a'), matching: find.byType(ClipRRect)).first,
+    );
+    final b = t.getRect(
+      find.ancestor(of: find.text('b'), matching: find.byType(ClipRRect)).first,
+    );
+    expect(b.top, a.bottom);
   });
 
-  testWidgets('not first — a band above, reaching the screen edges', (t) async {
-    await pump(t, const SectionCard(title: 'หัวข้อ', children: [Text('a')]));
-    expect(find.byType(SectionBand), findsOneWidget);
-    final band = t.getRect(
-      find.descendant(
-        of: find.byType(SectionBand),
-        matching: find.byType(ColoredBox),
+  testWidgets('heading and description sit ABOVE the container', (t) async {
+    await pump(
+      t,
+      const SectionCard(
+        first: true,
+        title: 'หัวข้อ',
+        description: 'คำอธิบาย',
+        children: [Text('a')],
       ),
     );
-    expect(band.left, 0);
-    expect(band.right, t.view.physicalSize.width / t.view.devicePixelRatio);
+    final box = t.getRect(
+      find.ancestor(of: find.text('a'), matching: find.byType(ClipRRect)).first,
+    );
+    expect(t.getRect(find.text('หัวข้อ')).bottom, lessThanOrEqualTo(box.top));
+    expect(t.getRect(find.text('คำอธิบาย')).bottom, lessThanOrEqualTo(box.top));
+    expect(
+      t.getRect(find.text('หัวข้อ')).bottom,
+      lessThanOrEqualTo(t.getRect(find.text('คำอธิบาย')).top + 1),
+    );
+  });
+
+  testWidgets('not first — a gap above; first — none', (t) async {
+    await pump(t, const SectionCard(children: [Text('a')]));
+    final notFirst = t.getRect(find.text('a')).top;
+    await pump(t, const SectionCard(first: true, children: [Text('a')]));
+    expect(notFirst - t.getRect(find.text('a')).top, 16);
+  });
+
+  testWidgets('one row with an icon: every row reserves the icon slot', (
+    t,
+  ) async {
+    await pump(
+      t,
+      const SectionCard(
+        first: true,
+        children: [
+          DetailRow(icon: Icons.wallet, label: 'with icon'),
+          DetailRow(label: 'without icon'),
+        ],
+      ),
+    );
+    expect(
+      t.getRect(find.text('without icon')).left,
+      t.getRect(find.text('with icon')).left,
+    );
   });
 
   testWidgets('trailing sits on the title row', (t) async {

@@ -135,13 +135,34 @@ class CategoryChipRow extends StatelessWidget {
       child: ChipRow(
         icon: leadingIcon ? AppIcons.category : null,
         moreLabel: pickLabel ?? l.commonMore,
-        moreFirst: pickLabel != null,
-        onMore: onMore,
+        // The entry layout (pickLabel): the FIRST slot is the pick chip —
+        // dashed while nothing is picked, the picked category (highlighted,
+        // tap = the full picker) once there is one; the quick options after
+        // it never repeat it. Else "เพิ่มเติม" ends the row.
+        onMore: pickLabel != null ? null : onMore,
         maxLines: maxLines,
         chips: [
+          if (pickLabel != null)
+            sel != null
+                ? categoryAppChip(
+                    context,
+                    sel,
+                    all: all,
+                    selected: true,
+                    onTap: onMore,
+                  )
+                : AppChip(
+                    label: pickLabel!,
+                    icon: AppIcons.add,
+                    dashed: true,
+                    onTap: onMore,
+                  ),
           ...leading,
           if (loading) ..._skeletonChips(),
-          for (final c in [for (final id in ids) ?usable[id]])
+          for (final c in [
+            for (final id in ids)
+              if (pickLabel == null || id != sel?.id) ?usable[id],
+          ])
             categoryAppChip(
               context,
               c,
@@ -349,17 +370,34 @@ class WalletChipRow extends StatelessWidget {
       child: ChipRow(
         icon: leadingIcon ? AppIcons.wallet : null,
         moreLabel: pickLabel ?? l.commonMore,
-        moreFirst: pickLabel != null,
-        onMore: onMore,
+        // See [CategoryChipRow]: the entry layout's first slot is the pick
+        // chip (dashed) or the picked wallet.
+        onMore: pickLabel != null ? null : onMore,
         maxLines: maxLines,
         chips: [
+          if (pickLabel != null)
+            byId[sel] != null
+                ? _walletChip(
+                    byId[sel]!,
+                    palette,
+                    selected: true,
+                    onTap: onMore,
+                  )
+                : AppChip(
+                    label: pickLabel!,
+                    icon: AppIcons.add,
+                    dashed: true,
+                    onTap: onMore,
+                  ),
           ...leading,
           if (loading) ..._skeletonChips(),
-          for (final a in [for (final id in ids) ?byId[id]])
-            AppChip(
-              label: a.name,
-              icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
-              color: a.iconCode?.accentColorFor(palette) ?? palette.primary,
+          for (final a in [
+            for (final id in ids)
+              if (pickLabel == null || id != sel) ?byId[id],
+          ])
+            _walletChip(
+              a,
+              palette,
               selected: a.id == sel,
               onTap: () => onPick(a),
             ),
@@ -412,3 +450,17 @@ List<String> _topUp(List<String> first, List<String> rest, int max) {
   }
   return out;
 }
+
+/// A wallet as a chip: its icon, name and colour.
+AppChip _walletChip(
+  Account a,
+  AppColors palette, {
+  required bool selected,
+  required VoidCallback? onTap,
+}) => AppChip(
+  label: a.name,
+  icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
+  color: a.iconCode.tintFor(palette),
+  selected: selected,
+  onTap: onTap,
+);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../molecules/detail_rows.dart';
+
 import '../atoms/app_icon_button.dart';
 import '../atoms/app_divider.dart';
 
@@ -171,7 +173,7 @@ class SideSheetScaffold extends StatelessWidget {
 }
 
 /// A titled block inside a side sheet's body ("ประเภท", "กระเป๋า", …),
-/// [icon] in front of the title — so the rows under it start flush left.
+/// [icon] in front of the title; rendered through [SectionCard].
 class SideSheetSection extends StatelessWidget {
   const SideSheetSection({
     required this.title,
@@ -194,29 +196,16 @@ class SideSheetSection extends StatelessWidget {
         AppSpacing.lg,
         0,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 18, color: scheme.primary),
-                const SizedBox(width: AppSpacing.sm),
-              ],
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          child,
-        ],
+      // The grouped section look: green heading above, the content in the
+      // filled rounded container.
+      child: SectionCard(
+        first: true,
+        title: title,
+        leading: icon == null
+            ? null
+            : Icon(icon, size: 18, color: scheme.primary),
+        dividers: false,
+        children: [child],
       ),
     );
   }

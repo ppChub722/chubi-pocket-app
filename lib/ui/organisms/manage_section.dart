@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
-import '../atoms/ui_config.dart';
 import '../molecules/danger_row.dart';
-import '../molecules/detail_rows.dart';
 
-/// การจัดการ — the last section of a detail page, EDIT MODE ONLY (owner
-/// 2026-10-11): เก็บถาวร in amber, ลบ in red, the same shape. Pass only
-/// what the entity has — archive only where it supports archive.
+/// The archive / delete buttons of a detail page, EDIT MODE ONLY, at the bottom
+/// before the record info (owner 2026-10-12: NOT a section — no heading, no
+/// grouped box, just the buttons): เก็บถาวร in amber, ลบ in red, the same
+/// shape. Pass only what the entity has — archive only where it supports it.
 ///
 /// ```dart
 /// if (editing)
@@ -40,41 +39,29 @@ class ManageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      first: first,
-      title: UiConfig.stringsOf(context).manageTitle,
-      dividers: false,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.xs,
-            AppSpacing.lg,
-            AppSpacing.md,
-          ),
-          child: Column(
-            children: [
-              if (archiveLabel != null)
-                DangerRow(
-                  icon: AppIcons.archive,
-                  label: archiveLabel!,
-                  caution: true,
-                  padding: EdgeInsets.zero,
-                  onTap: onArchive,
-                ),
-              if (deleteLabel != null)
-                DangerRow(
-                  icon: AppIcons.delete,
-                  label: deleteLabel!,
-                  padding: EdgeInsets.only(
-                    top: archiveLabel != null ? AppSpacing.sm : 0,
-                  ),
-                  onTap: onDelete,
-                ),
-            ],
-          ),
-        ),
-      ],
+    return Padding(
+      padding: EdgeInsets.only(top: first ? 0 : AppSpacing.lg),
+      child: Column(
+        children: [
+          if (archiveLabel != null)
+            DangerRow(
+              icon: AppIcons.archive,
+              label: archiveLabel!,
+              caution: true,
+              padding: EdgeInsets.zero,
+              onTap: onArchive,
+            ),
+          if (deleteLabel != null)
+            DangerRow(
+              icon: AppIcons.delete,
+              label: deleteLabel!,
+              padding: EdgeInsets.only(
+                top: archiveLabel != null ? AppSpacing.sm : 0,
+              ),
+              onTap: onDelete,
+            ),
+        ],
+      ),
     );
   }
 }

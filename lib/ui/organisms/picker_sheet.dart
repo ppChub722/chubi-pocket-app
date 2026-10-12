@@ -144,7 +144,6 @@ class _PickerSheetState extends State<PickerSheet> {
                 controller: widget.searchController,
                 autofocus: widget.searchAutofocus,
                 hint: widget.searchHint ?? strings.search,
-                look: AppInputLook.pill,
                 padding: EdgeInsets.zero,
                 onChanged: (v) => setState(() => _query = v),
               ),
@@ -179,6 +178,7 @@ class PickerRow extends StatelessWidget {
     this.leading,
     this.subtitle,
     this.trailing,
+    this.chevron = false,
     this.indent = 0,
     this.selected = false,
     this.titleStyle,
@@ -192,6 +192,10 @@ class PickerRow extends StatelessWidget {
 
   /// After the text (a tree's ▾ / ▴, a count).
   final Widget? trailing;
+
+  /// A › at the end (the row opens something further: a bank row). Ignored
+  /// when [trailing] is set.
+  final bool chevron;
   final double indent;
   final String? subtitle;
   final Widget? leading;
@@ -222,7 +226,7 @@ class PickerRow extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(
               AppSpacing.lg + indent,
               AppSpacing.xs,
-              trailing == null ? AppSpacing.lg : AppSpacing.xs,
+              trailing == null && !chevron ? AppSpacing.lg : AppSpacing.xs,
               AppSpacing.xs,
             ),
             child: Row(
@@ -267,7 +271,10 @@ class PickerRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                ?trailing,
+                if (trailing != null)
+                  trailing!
+                else if (chevron)
+                  Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
               ],
             ),
           ),
@@ -288,12 +295,14 @@ class PickerCreateRow extends StatelessWidget {
   const PickerCreateRow({required this.label, required this.onTap, super.key});
 
   final String label;
-  final VoidCallback onTap;
+
+  /// Null = disabled (dimmed, ignores taps) — e.g. while saving.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
+    final row = InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -317,5 +326,6 @@ class PickerCreateRow extends StatelessWidget {
         ),
       ),
     );
+    return onTap == null ? Opacity(opacity: 0.38, child: row) : row;
   }
 }

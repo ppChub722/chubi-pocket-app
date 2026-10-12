@@ -9,7 +9,6 @@ import '../../../../ui/ui.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
 import '../widgets/contact_linked_mark.dart';
-import '../widgets/contacts_list_skeleton.dart';
 
 /// `/contacts` (owner 2026-10-10) — the library list look shared with
 /// categories and tags:
@@ -38,6 +37,7 @@ enum _ContactSort { recent, nameAsc, nameDesc }
 enum _LinkFilter { all, linked, unlinked }
 
 class _ContactsPageState extends State<ContactsPage> {
+  final _searchController = TextEditingController();
   String _query = '';
   _ContactSort _sort = _ContactSort.recent;
   _LinkFilter _link = _LinkFilter.all;
@@ -50,6 +50,12 @@ class _ContactsPageState extends State<ContactsPage> {
         context.read<ContactsCubit>().loadIfNeeded(keepFilter: true);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   List<Contact> _filter(List<Contact> all) {
@@ -86,27 +92,26 @@ class _ContactsPageState extends State<ContactsPage> {
 
   void _add() => context.push('/contacts/new');
 
-  /// End-of-list add (the top bar carries no page actions).
-  Widget _addTile(AppLocalizations l) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.md,
-      AppSpacing.lg,
-      0,
-    ),
-    child: AddTile(label: l.contactsAddNew, onTap: _add),
-  );
-
   String _linkLabel(AppLocalizations l, _LinkFilter f) => switch (f) {
     _LinkFilter.all => l.contactsFilterAll,
     _LinkFilter.linked => l.contactLinked,
     _LinkFilter.unlinked => l.contactsLinkUnlinked,
   };
 
-  /// Nothing to show under the current search / status / การผูก — the same
-  /// [EmptyView] look as the first-run empty state, scrollable so
-  /// pull-to-refresh still fires.
-  Widget _noResults(AppLocalizations l, String statusFilter) {
+  /// What an empty list says under the current search / status / การผูก —
+  /// the first-run state, or a no-match variant.
+  EmptyView _empty(AppLocalizations l, ContactsState state) {
+    final statusFilter = state.statusFilter;
+    // A filter (เก็บถาวร / ทั้งหมด) with no rows is a no-match, not "add
+    // your first contact".
+    if (state.contacts.isEmpty && statusFilter == 'active') {
+      return EmptyView(
+        icon: AppIcons.contact,
+        title: l.contactsEmptyTitle,
+        message: l.contactsEmptyMessage,
+        cta: AddTile(label: l.contactsAddNew, onTap: _add),
+      );
+    }
     final searching = _query.trim().isNotEmpty;
     final linkFiltered = _link != _LinkFilter.all;
     final archived = !searching && !linkFiltered && statusFilter == 'archived';
@@ -134,20 +139,11 @@ class _ContactsPageState extends State<ContactsPage> {
     // A new contact is active and unlinked — only offer it where it would
     // show up.
     final canAdd = statusFilter != 'archived' && _link != _LinkFilter.linked;
-    return LayoutBuilder(
-      builder: (context, box) => SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 96),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: box.maxHeight - 96),
-          child: EmptyView(
-            icon: icon,
-            title: title,
-            message: message,
-            cta: canAdd ? AddTile(label: l.contactsAddNew, onTap: _add) : null,
-          ),
-        ),
-      ),
+    return EmptyView(
+      icon: icon,
+      title: title,
+      message: message,
+      cta: canAdd ? AddTile(label: l.contactsAddNew, onTap: _add) : null,
     );
   }
 
@@ -164,119 +160,96 @@ class _ContactsPageState extends State<ContactsPage> {
       extendBodyBehindAppBar: true,
       body: TabSwitchBody(
         child: BlocBuilder<ContactsCubit, ContactsState>(
-          builder: (ctx, state) => AsyncStateView(
-            loading:
-                state.status == ContactsStatus.initial ||
-                state.status == ContactsStatus.loading,
-            error: state.error,
-            isEmpty: state.contacts.isEmpty,
-            onRetry: ctx.read<ContactsCubit>().load,
-            skeleton: Padding(
-              padding: EdgeInsets.only(top: MediaQuery.paddingOf(ctx).top),
-              child: const LoadingView(skeleton: ContactsListSkeleton()),
-            ),
-            // Empty lives under the search/filter bar (below).
-            builder: (context) {
-              final shown = _filter(state.contacts);
-              return Column(
-                children: [
-                  // Clear the floating top bar; search + filter stay pinned.
-                  SizedBox(height: MediaQuery.paddingOf(context).top),
-                  AppInput.search(
-                    hint: l.contactsSearchHint,
-                    onChanged: (v) => setState(() => _query = v),
+          builder: (ctx, state) {
+            final shown = _filter(state.contacts);
+            return ListPageBody(
+              // Only the FIRST load shows the skeleton: a reload keeps the
+              // rows (a skeleton would kill a pull-to-refresh).
+              loading:
+                  (state.status == ContactsStatus.initial ||
+                      state.status == ContactsStatus.loading) &&
+                  state.contacts.isEmpty,
+              error: state.contacts.isEmpty ? state.error : null,
+              isEmpty: shown.isEmpty,
+              onRetry: ctx.read<ContactsCubit>().load,
+              empty: _empty(l, state),
+              // Rows run edge to edge; the header items pad themselves.
+              sidePadding: 0,
+              topInset: 0,
+              header: [
+                // Search + filters left, the sort right — as on the
+                // transactions list. Add is the dashed tile at the end.
+                ListToolbar(
+                  searchController: _searchController,
+                  searchHint: l.contactsSearchHint,
+                  onSearchChanged: (v) => setState(() => _query = v),
+                  trailing: OptionMenuAnchor<_ContactSort>(
+                    selected: _sort,
+                    onSelected: (v) => setState(() => _sort = v),
+                    options: [
+                      for (final s in _ContactSort.values)
+                        SheetOption(value: s, label: _sortLabel(l, s)),
+                    ],
+                    builder: (context, toggle) => AppChip(
+                      label: _sortLabel(l, _sort),
+                      icon: AppIcons.sort,
+                      trailing: AppChipTrailing.dropdown,
+                      onTap: toggle,
+                    ),
                   ),
-                  // Filters left, the sort right — as on the transactions
-                  // list. Add is the dashed tile at the end of the list.
-                  FilterBar(
-                    trailing: OptionMenuAnchor<_ContactSort>(
-                      selected: _sort,
-                      onSelected: (v) => setState(() => _sort = v),
+                  chips: [
+                    OptionMenuAnchor<String>(
+                      selected: state.statusFilter,
+                      onSelected: (v) =>
+                          ctx.read<ContactsCubit>().load(statusFilter: v),
                       options: [
-                        for (final s in _ContactSort.values)
-                          SheetOption(value: s, label: _sortLabel(l, s)),
+                        for (final e in statusLabels.entries)
+                          SheetOption(value: e.key, label: e.value),
                       ],
                       builder: (context, toggle) => AppChip(
-                        label: _sortLabel(l, _sort),
-                        icon: AppIcons.sort,
+                        label:
+                            '${l.contactsStatusLabel}: ${statusLabels[state.statusFilter]}',
+                        selected: state.statusFilter != 'active',
                         trailing: AppChipTrailing.dropdown,
                         onTap: toggle,
                       ),
                     ),
-                    chips: [
-                      OptionMenuAnchor<String>(
-                        selected: state.statusFilter,
-                        onSelected: (v) =>
-                            ctx.read<ContactsCubit>().load(statusFilter: v),
-                        options: [
-                          for (final e in statusLabels.entries)
-                            SheetOption(value: e.key, label: e.value),
-                        ],
-                        builder: (context, toggle) => AppChip(
-                          label:
-                              '${l.contactsStatusLabel}: ${statusLabels[state.statusFilter]}',
-                          selected: state.statusFilter != 'active',
-                          trailing: AppChipTrailing.dropdown,
-                          onTap: toggle,
-                        ),
+                    OptionMenuAnchor<_LinkFilter>(
+                      selected: _link,
+                      onSelected: (v) => setState(() => _link = v),
+                      options: [
+                        for (final f in _LinkFilter.values)
+                          SheetOption(value: f, label: _linkLabel(l, f)),
+                      ],
+                      builder: (context, toggle) => AppChip(
+                        label:
+                            '${l.contactsLinkLabel}: ${_linkLabel(l, _link)}',
+                        selected: _link != _LinkFilter.all,
+                        trailing: AppChipTrailing.dropdown,
+                        onTap: toggle,
                       ),
-                      OptionMenuAnchor<_LinkFilter>(
-                        selected: _link,
-                        onSelected: (v) => setState(() => _link = v),
-                        options: [
-                          for (final f in _LinkFilter.values)
-                            SheetOption(value: f, label: _linkLabel(l, f)),
-                        ],
-                        builder: (context, toggle) => AppChip(
-                          label:
-                              '${l.contactsLinkLabel}: ${_linkLabel(l, _link)}',
-                          selected: _link != _LinkFilter.all,
-                          trailing: AppChipTrailing.dropdown,
-                          onTap: toggle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Expanded(
-                    // A filter (เก็บถาวร / ทั้งหมด) with no rows is a no-match,
-                    // not "add your first contact".
-                    child:
-                        state.contacts.isEmpty && state.statusFilter == 'active'
-                        ? EmptyView(
-                            icon: AppIcons.contact,
-                            title: l.contactsEmptyTitle,
-                            message: l.contactsEmptyMessage,
-                            cta: AddTile(label: l.contactsAddNew, onTap: _add),
-                          )
-                        : PullToRefresh(
-                            onRefresh: () => ctx.read<ContactsCubit>().load(),
-                            child: shown.isEmpty
-                                ? _noResults(l, state.statusFilter)
-                                : ListView.separated(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
-                                    padding: EdgeInsets.only(
-                                      bottom:
-                                          96 +
-                                          MediaQuery.paddingOf(context).bottom,
-                                    ),
-                                    // + the dashed add tile at the end.
-                                    itemCount: shown.length + 1,
-                                    separatorBuilder: (_, i) =>
-                                        i < shown.length - 1
-                                        ? const AppDivider.row()
-                                        : const SizedBox.shrink(),
-                                    itemBuilder: (context, i) =>
-                                        i < shown.length
-                                        ? _ContactRow(contact: shown[i])
-                                        : _addTile(l),
-                                  ),
-                          ),
-                  ),
+                    ),
+                  ],
+                ),
+              ],
+              children: [
+                for (var i = 0; i < shown.length; i++) ...[
+                  _ContactRow(contact: shown[i]),
+                  if (i < shown.length - 1) const AppDivider.row(),
                 ],
-              );
-            },
-          ),
+                // The dashed add tile at the end.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                    AppSpacing.lg,
+                    0,
+                  ),
+                  child: AddTile(label: l.contactsAddNew, onTap: _add),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

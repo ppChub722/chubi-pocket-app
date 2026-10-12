@@ -115,7 +115,6 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final n = _filled.length;
     // A save in flight dims the page and blocks input.
     return SavingOverlay(
@@ -141,12 +140,7 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                 AppSpacing.lg,
                 AppSpacing.sm,
               ),
-              child: Text(
-                l.pendingBatchHint,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-              ),
+              child: AppText(l.pendingBatchHint, role: AppTextRole.caption),
             ),
             Expanded(
               child: ListView(
@@ -187,11 +181,12 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
                     loading: _saving,
                     onPressed: n == 0 ? null : () => _save(submit: false),
                   ),
-                  TextButton(
+                  AppButton(
+                    label: l.pendingSubmitAllNow(n),
+                    variant: AppButtonVariant.text,
                     onPressed: _saving || n == 0
                         ? null
                         : () => _save(submit: true),
-                    child: Text(l.pendingSubmitAllNow(n)),
                   ),
                 ],
               ),
@@ -241,6 +236,15 @@ class _RowCard extends StatelessWidget {
             compact: true,
             autofocus: autofocus,
             chipLayout: true,
+            // A row with an amount but no wallet / category is an incomplete
+            // draft: outline what's still missing.
+            missing: {
+              if (controller.amountValue > 0) ...[
+                if (controller.account == null) EntryField.wallet,
+                if (!controller.isTransfer && controller.category == null)
+                  EntryField.category,
+              ],
+            },
           ),
         ],
       ),

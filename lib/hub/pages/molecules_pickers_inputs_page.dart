@@ -101,30 +101,12 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
     _SelectSpec('Disabled + picked · columns', 3, false, 2, 4),
   ];
 
-  Widget _selectPair(_SelectSpec spec) {
-    Widget group(SelectCardStyle style) => SelectCardGroup<int>(
-      style: style,
-      selected: spec.selected,
-      columns: spec.columns,
-      onChanged: spec.enabled ? (_) {} : null,
-      options: _toneOptions.sublist(spec.from, spec.from + spec.count),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text('Current'),
-        const SizedBox(height: 4),
-        group(SelectCardStyle.tinted),
-        const SizedBox(height: AppSpacing.sm),
-        Text(
-          'Proposed',
-          style: TextStyle(color: Theme.of(context).colorScheme.primary),
-        ),
-        const SizedBox(height: 4),
-        group(SelectCardStyle.gradient),
-      ],
-    );
-  }
+  Widget _selectPair(_SelectSpec spec) => SelectCardGroup<int>(
+    selected: spec.selected,
+    columns: spec.columns,
+    onChanged: spec.enabled ? (_) {} : null,
+    options: _toneOptions.sublist(spec.from, spec.from + spec.count),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -132,118 +114,6 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HubPlayground(
-          title: 'PickCard',
-          note:
-              'Every option PickCard has. fixedHeight / reserveSubtitle are the '
-              'proposal (one height per variant).',
-          controls: [
-            const PlayBool('picked', initialValue: true),
-            PlayChoice<Color?>('accent', [
-              ('none', null),
-              ('teal', Colors.teal),
-              ('red', Colors.red),
-              ('indigo', Colors.indigo),
-            ]),
-            const PlayBool('subtitle', initialValue: true),
-            const PlayBool('watermark'),
-            const PlayBool('dense'),
-            const PlayBool('fixedHeight'),
-            const PlayBool('reserveSubtitle'),
-            const PlayText('errorText'),
-          ],
-          builder: (context, v) => PickCard(
-            label: 'Wallet',
-            placeholder: 'Choose a wallet',
-            leading: const PickCardEmptyIcon(AppIcons.wallet),
-            value: v<bool>('picked') ? 'Savings' : null,
-            accent: v<Color?>('accent'),
-            subtitle: v<bool>('subtitle') ? const Text('Balance 12,400') : null,
-            watermark: v<bool>('watermark') ? AppIcons.wallet : null,
-            dense: v<bool>('dense'),
-            fixedHeight: v<bool>('fixedHeight'),
-            reserveSubtitle: v<bool>('reserveSubtitle'),
-            errorText: v<String>('errorText').isEmpty
-                ? null
-                : v<String>('errorText'),
-            onTap: () {},
-          ),
-        ),
-        HubPlayground(
-          title: 'SelectCardGroup',
-          note: 'style gradient is the proposal; read-only = onChanged null.',
-          controls: [
-            PlayChoice<SelectCardStyle>('style', [
-              for (final s in SelectCardStyle.values) (s.name, s),
-            ]),
-            PlayChoice<int>('selected', [
-              ('expense', 0),
-              ('income', 1),
-              ('transfer', 2),
-              ('primary', 3),
-            ]),
-            PlayChoice<int?>('columns', [('row', null), ('2', 2), ('3', 3)]),
-            const PlayBool('readOnly'),
-          ],
-          builder: (context, v) => SelectCardGroup<int>(
-            style: v<SelectCardStyle>('style'),
-            selected: v<int>('selected'),
-            columns: v<int?>('columns'),
-            onChanged: v<bool>('readOnly') ? null : (_) {},
-            options: _toneOptions,
-          ),
-        ),
-        HubPlayground(
-          title: 'StepperPill',
-          note:
-              'The period presets (tap the arrows; month also taps open the picker).',
-          controls: [
-            PlayChoice<StepperUnit>('unit', [
-              for (final u in StepperUnit.values) (u.name, u),
-            ]),
-            const PlayBool('bounded'),
-          ],
-          builder: (context, v) => HubStateful<DateTime>(
-            initial: DateTime(2026, 10, 14),
-            builder: (context, value, set) => StepperPill.period(
-              unit: v<StepperUnit>('unit'),
-              value: value,
-              first: v<bool>('bounded') ? DateTime(2026, 8) : null,
-              last: v<bool>('bounded') ? DateTime(2026, 12) : null,
-              onChanged: set,
-            ),
-          ),
-        ),
-        HubPlayground(
-          title: 'AmountInput',
-          controls: [
-            const PlayText('label', initialValue: 'Amount'),
-            const PlayBool('quickFills'),
-            const PlayBool('allowNegative'),
-            const PlayBool('enabled', initialValue: true),
-            PlayChoice<Color?>('accent', [
-              ('none', null),
-              ('expense', Colors.red),
-              ('income', Colors.green),
-            ]),
-          ],
-          builder: (context, v) => HubWithController(
-            initial: '1,250',
-            builder: (context, c) => AmountInput(
-              controller: c,
-              label: v<String>('label').isEmpty ? null : v<String>('label'),
-              enabled: v<bool>('enabled'),
-              allowNegative: v<bool>('allowNegative'),
-              accent: v<Color?>('accent'),
-              quickFills: v<bool>('quickFills')
-                  ? const [
-                      AmountQuickFill(label: '+100', amount: 100),
-                      AmountQuickFill(label: '+500', amount: 500),
-                    ]
-                  : const [],
-            ),
-          ),
-        ),
         const HubSubheading(
           'In the app',
           note: 'The real presets and where they are used.',
@@ -268,7 +138,6 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 label: 'Wallet',
                 placeholder: 'Choose a wallet',
                 leading: PickCardEmptyIcon(AppIcons.wallet),
-                fixedHeight: true,
                 reserveSubtitle: true,
                 onTap: null,
               ),
@@ -279,7 +148,6 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 accent: Colors.teal,
                 leading: const PickCardEmptyIcon(AppIcons.wallet),
                 subtitle: const Text('Balance 12,400'),
-                fixedHeight: true,
                 reserveSubtitle: true,
                 onTap: () {},
               ),
@@ -289,7 +157,6 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 placeholder: 'Choose a wallet',
                 leading: PickCardEmptyIcon(AppIcons.wallet),
                 errorText: 'Pick a wallet first',
-                fixedHeight: true,
                 reserveSubtitle: true,
                 onTap: null,
               ),
@@ -301,7 +168,6 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               const SizedBox(height: AppSpacing.xs),
               const PickCard(
                 label: 'Payer',
-                fixedHeight: true,
                 placeholder: 'Choose a member',
                 leading: PickCardEmptyIcon(AppIcons.contact),
                 onTap: null,
@@ -309,7 +175,6 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               const SizedBox(height: AppSpacing.sm),
               const PickCard(
                 label: 'Payer',
-                fixedHeight: true,
                 value: 'Aom',
                 leading: PickCardEmptyIcon(AppIcons.contact),
                 onTap: null,
@@ -317,7 +182,6 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               const SizedBox(height: AppSpacing.sm),
               const PickCard(
                 label: 'Payer',
-                fixedHeight: true,
                 placeholder: 'Choose a member',
                 leading: PickCardEmptyIcon(AppIcons.contact),
                 errorText: 'Pick who paid',
@@ -327,7 +191,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
-          title: 'PickCard — today (interactive)',
+          title: 'PickCard — interactive',
           note:
               'A form slot that opens a picker. Nothing picked: dashed '
               'outline with a muted empty icon. Picked: solid card, tinted '
@@ -379,14 +243,17 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
-          title: 'SelectCardGroup — selected: Current vs Proposed gradient',
+          title: 'SelectCardGroup — every tone and layout (selected look)',
           note:
-              'PROPOSAL (owner 2026-10-12): the selected card becomes a clear '
-              'gradient in the option\'s tone (wallet card / hero family), '
-              'on-colour text and icon, no glow border; picked but read-only = '
-              'a muted version. Unselected is unchanged. Tones: expense red, '
-              'income green, transfer neutral, primary — both layouts. Use the '
-              'toolbar to check light / dark and every theme.',
+              'ONE selected look (owner 2026-10-12): a 2-px border in the '
+              "option's tone + a faint wash of it (a gradient, top-left to "
+              'bottom-right, like the tinted hero / card surface, no watermark), '
+              'label and icon in the tone (darkened in light mode until they '
+              'read). Picked but read-only = the same, dimmed. Used by: wallet '
+              'type (account detail), debt direction (debt form), schedule '
+              'variant and billing cycle (scheduled form). Expense red, income '
+              'green, transfer neutral, primary — row and columns. Use the '
+              'toolbar for light / dark and every theme.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -400,7 +267,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           ),
         ),
         HubDemo(
-          title: 'SelectCardGroup — today (interactive)',
+          title: 'SelectCardGroup — interactive',
           note:
               'Pick one of a few. Default: one row, icon beside text. '
               'columns: stacked cards, icon above, wrapping into rows.',
@@ -771,6 +638,114 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 role: AppTextRole.caption,
               ),
             ],
+          ),
+        ),
+
+        HubPlayground(
+          title: 'PickCard',
+          note:
+              'Every option PickCard has. reserveSubtitle keeps one height '
+              'per variant when only some options show a subtitle.',
+          controls: [
+            const PlayBool('picked', initialValue: true),
+            PlayChoice<Color?>('accent', [
+              ('none', null),
+              ('teal', Colors.teal),
+              ('red', Colors.red),
+              ('indigo', Colors.indigo),
+            ]),
+            const PlayBool('subtitle', initialValue: true),
+            const PlayBool('watermark'),
+            const PlayBool('dense'),
+            const PlayBool('reserveSubtitle'),
+            const PlayText('errorText'),
+          ],
+          builder: (context, v) => PickCard(
+            label: 'Wallet',
+            placeholder: 'Choose a wallet',
+            leading: const PickCardEmptyIcon(AppIcons.wallet),
+            value: v<bool>('picked') ? 'Savings' : null,
+            accent: v<Color?>('accent'),
+            subtitle: v<bool>('subtitle') ? const Text('Balance 12,400') : null,
+            watermark: v<bool>('watermark') ? AppIcons.wallet : null,
+            dense: v<bool>('dense'),
+            reserveSubtitle: v<bool>('reserveSubtitle'),
+            errorText: v<String>('errorText').isEmpty
+                ? null
+                : v<String>('errorText'),
+            onTap: () {},
+          ),
+        ),
+        HubPlayground(
+          title: 'SelectCardGroup',
+          note: 'One selected look; read-only = onChanged null.',
+          controls: [
+            PlayChoice<int>('selected', [
+              ('expense', 0),
+              ('income', 1),
+              ('transfer', 2),
+              ('primary', 3),
+            ]),
+            PlayChoice<int?>('columns', [('row', null), ('2', 2), ('3', 3)]),
+            const PlayBool('readOnly'),
+          ],
+          builder: (context, v) => SelectCardGroup<int>(
+            selected: v<int>('selected'),
+            columns: v<int?>('columns'),
+            onChanged: v<bool>('readOnly') ? null : (_) {},
+            options: _toneOptions,
+          ),
+        ),
+        HubPlayground(
+          title: 'StepperPill',
+          hug: Alignment.center,
+          note:
+              'The period presets (tap the arrows; month also taps open the picker).',
+          controls: [
+            PlayChoice<StepperUnit>('unit', [
+              for (final u in StepperUnit.values) (u.name, u),
+            ]),
+            const PlayBool('bounded'),
+          ],
+          builder: (context, v) => HubStateful<DateTime>(
+            initial: DateTime(2026, 10, 14),
+            builder: (context, value, set) => StepperPill.period(
+              unit: v<StepperUnit>('unit'),
+              value: value,
+              first: v<bool>('bounded') ? DateTime(2026, 8) : null,
+              last: v<bool>('bounded') ? DateTime(2026, 12) : null,
+              onChanged: set,
+            ),
+          ),
+        ),
+        HubPlayground(
+          title: 'AmountInput',
+          controls: [
+            const PlayText('label', initialValue: 'Amount'),
+            const PlayBool('quickFills'),
+            const PlayBool('allowNegative'),
+            const PlayBool('enabled', initialValue: true),
+            PlayChoice<Color?>('accent', [
+              ('none', null),
+              ('expense', Colors.red),
+              ('income', Colors.green),
+            ]),
+          ],
+          builder: (context, v) => HubWithController(
+            initial: '1,250',
+            builder: (context, c) => AmountInput(
+              controller: c,
+              label: v<String>('label').isEmpty ? null : v<String>('label'),
+              enabled: v<bool>('enabled'),
+              allowNegative: v<bool>('allowNegative'),
+              accent: v<Color?>('accent'),
+              quickFills: v<bool>('quickFills')
+                  ? const [
+                      AmountQuickFill(label: '+100', amount: 100),
+                      AmountQuickFill(label: '+500', amount: 500),
+                    ]
+                  : const [],
+            ),
           ),
         ),
       ],

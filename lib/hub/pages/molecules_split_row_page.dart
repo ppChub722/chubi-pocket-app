@@ -32,76 +32,6 @@ class _SplitRowPageState extends State<_SplitRowPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HubPlayground(
-          title: 'SplitRow',
-          note:
-              'The name cell by who it is, the avatar level, the trailing '
-              'action.',
-          controls: [
-            PlayChoice<int>('name', [
-              ('my share', 0),
-              ('typed', 1),
-              ('contact', 2),
-              ('linked', 3),
-            ]),
-            const PlayBool('autoOn'),
-            PlayChoice<int>('trailing', [('action', 0), ('none', 1)]),
-          ],
-          builder: (context, v) {
-            final kind = v<int>('name');
-            final trailing = v<int>('trailing') == 1
-                ? null
-                : kind == 0
-                ? SplitRowAction(
-                    icon: AppIcons.auto,
-                    tooltip: 'Auto',
-                    selected: v<bool>('autoOn'),
-                    onTap: () {},
-                  )
-                : SplitRowAction(
-                    icon: AppIcons.close,
-                    tooltip: 'Remove',
-                    onTap: () {},
-                  );
-            final avatar = kind == 0
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const AppAvatar(name: 'Me', size: SplitRow.avatarSize),
-                      SizedBox(
-                        width: PersonMark.linkSlotWidth(SplitRow.avatarSize),
-                      ),
-                    ],
-                  )
-                : PersonMark(
-                    name: 'Mali',
-                    level: switch (kind) {
-                      1 => PersonLevel.name,
-                      2 => PersonLevel.contact,
-                      _ => PersonLevel.linked,
-                    },
-                    size: SplitRow.avatarSize,
-                    reserveLinkSlot: kind != 3,
-                  );
-            return HubWithController(
-              initial: 'Mali',
-              builder: (context, c) => SplitRow(
-                avatar: avatar,
-                name: switch (kind) {
-                  0 => const SplitRowName.muted('My share'),
-                  1 => SplitRowName.input(
-                    controller: c,
-                    focusNode: _typedFocus,
-                    hint: 'Name',
-                  ),
-                  _ => const SplitRowName.picked('Mali'),
-                },
-                amount: const _DemoAmount('฿150.00'),
-                trailing: trailing,
-              ),
-            );
-          },
-        ),
         const HubSubheading(
           'In the app',
           note: 'Every level side by side, as the split editor shows them.',
@@ -189,6 +119,77 @@ class _SplitRowPageState extends State<_SplitRowPage> {
               ),
             ],
           ),
+        ),
+
+        HubPlayground(
+          title: 'SplitRow',
+          note:
+              'The name cell by who it is, the avatar level, the trailing '
+              'action.',
+          controls: [
+            PlayChoice<int>('name', [
+              ('my share', 0),
+              ('typed', 1),
+              ('contact', 2),
+              ('linked', 3),
+            ]),
+            const PlayBool('autoOn'),
+            PlayChoice<int>('trailing', [('action', 0), ('none', 1)]),
+          ],
+          builder: (context, v) {
+            final kind = v<int>('name');
+            final trailing = v<int>('trailing') == 1
+                ? null
+                : kind == 0
+                ? SplitRowAction(
+                    icon: AppIcons.auto,
+                    tooltip: 'Auto',
+                    selected: v<bool>('autoOn'),
+                    onTap: () {},
+                  )
+                : SplitRowAction(
+                    icon: AppIcons.close,
+                    tooltip: 'Remove',
+                    onTap: () {},
+                  );
+            final avatar = kind == 0
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const AppAvatar(name: 'Me', size: SplitRow.avatarSize),
+                      SizedBox(
+                        width: PersonMark.linkSlotWidth(SplitRow.avatarSize),
+                      ),
+                    ],
+                  )
+                : PersonMark(
+                    name: 'Mali',
+                    level: switch (kind) {
+                      1 => PersonLevel.name,
+                      2 => PersonLevel.contact,
+                      _ => PersonLevel.linked,
+                    },
+                    size: SplitRow.avatarSize,
+                    reserveLinkSlot: kind != 3,
+                  );
+            return HubWithController(
+              initial: 'Mali',
+              builder: (context, c) => SplitRow(
+                avatar: avatar,
+                name: switch (kind) {
+                  0 => const SplitRowName.muted('My share'),
+                  1 => SplitRowName.input(
+                    controller: c,
+                    focusNode: _typedFocus,
+                    hint: 'Name',
+                  ),
+                  _ => const SplitRowName.picked('Mali'),
+                },
+                amount: const _DemoAmount('฿150.00'),
+                trailing: trailing,
+              ),
+            );
+          },
         ),
       ],
     );

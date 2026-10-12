@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'pages/atoms_chip_page.dart';
 import 'pages/atoms_input_button_page.dart';
+import 'pages/atoms_input_page.dart';
 import 'pages/tokens_basics_page.dart';
 import 'pages/tokens_colors_type_icons_page.dart';
 import 'pages/molecules_feedback_page.dart';
+import 'pages/organisms_collapsible_section_page.dart';
 import 'pages/organisms_sheets_page.dart';
 import 'pages/organisms_states_page.dart';
 import 'pages/molecules_pickers_inputs_page.dart';
+import 'pages/molecules_blocks_page.dart';
 import 'pages/molecules_split_row_page.dart';
 import 'debug/env_page.dart';
 import 'debug/imports_lab_page.dart';
@@ -19,6 +22,7 @@ import 'pages/templates_form_sheet_page.dart';
 import 'pages/domain_money_page.dart';
 import 'pages/templates_transaction_detail_page.dart';
 import 'pages/domain_transactions_page.dart';
+import 'pages/sheets_transactions_page.dart';
 import 'pages/atoms_badge_avatar_page.dart';
 import 'pages/atoms_card_page.dart';
 import 'pages/atoms_switch_check_divider_page.dart';
@@ -29,7 +33,12 @@ import 'pages/organisms_section_hero_page.dart';
 import 'pages/templates_detail_page.dart';
 import 'pages/domain_others_page.dart';
 import 'pages/domain_people_accounts_page.dart';
+import 'pages/templates_dashboard_page.dart';
 import 'pages/templates_list_page.dart';
+import 'pages/sheets_projects_page.dart';
+import 'pages/sheets_accounts_page.dart';
+import 'pages/sheets_pickers_page.dart';
+import 'pages/sheets_people_page.dart';
 
 /// The app hub — the single source of truth for the UI (owner 2026-10-12).
 /// Every piece the app is built from has a page here; every UI change lands
@@ -213,6 +222,7 @@ final List<HubPage> hubPages = [
       'AppButtonSize',
       'AppIconButton',
       'AppAvatarButton',
+      'CountBadge',
       'IconChipActivity',
       'BulkDeleteButton',
     ],
@@ -253,7 +263,7 @@ final List<HubPage> hubPages = [
     summary:
         'One text input: field, inline, title, search; looks filled, outlined, underline, pill, bare.',
     usedBy: '~95 sites',
-    covers: ['AppInput', 'AppInputLook', 'DetailStackedValue'],
+    covers: ['AppInput', 'AppInputType', 'AppInputLabelPlacement'],
     builder: buildInputPage,
   ),
   const HubPage(
@@ -275,6 +285,7 @@ final List<HubPage> hubPages = [
       'SkeletonBox',
       'SkeletonLine',
       'SkeletonCircle',
+      'SkeletonText',
       'SkeletonListTile',
     ],
     builder: buildSwitchCheckDividerPage,
@@ -301,9 +312,6 @@ final List<HubPage> hubPages = [
       'DetailStacked',
       'DetailAddRow',
       'SectionCard',
-      'SectionBand',
-      'SectionStyle',
-      'SectionStyleScope',
       'DetailGroupScope',
       'SectionHeader',
       'ListRow',
@@ -323,7 +331,6 @@ final List<HubPage> hubPages = [
       'PickCardEmptyIcon',
       'SelectCardGroup',
       'SelectCardOption',
-      'SelectCardStyle',
       'StepperPill',
       'StepperUnit',
       'MonthPickerGrid',
@@ -335,10 +342,34 @@ final List<HubPage> hubPages = [
       'AmountInput',
       'AmountQuickFill',
       'ThousandsInputFormatter',
+      'RangeInputFormatter',
       'ThemeModeChips',
       'ChatDial',
     ],
     builder: buildPickersInputsPage,
+  ),
+  const HubPage(
+    level: HubLevel.molecules,
+    slug: 'blocks',
+    title: 'Page blocks',
+    summary: 'Select-mode bar, tile grid, pinned tab bar, centred form body.',
+    usedBy: 'tags, pending, More, event detail, auth',
+    covers: [
+      'SelectionToolbar',
+      'SelectionAction',
+      'ActionBar',
+      'ActionBarItem',
+      'ChipPath',
+      'ChipPathSegment',
+      'CardGrid',
+      'TileCard',
+      'PinnedTabBarDelegate',
+      'SegmentedBar',
+      'BarSegment',
+      'LegendDot',
+      'CenteredFormBody',
+    ],
+    builder: buildBlocksPage,
   ),
   const HubPage(
     level: HubLevel.molecules,
@@ -355,13 +386,13 @@ final List<HubPage> hubPages = [
     slug: 'feedback',
     title: 'Feedback',
     summary:
-        'Banner and snackbar (one AppMessage design proposed), dialogs, progress row, empty / error / loading views, the UI config.',
+        'Banner and snackbar (one AppMessage design), dialogs, progress row, empty / error / loading views, the UI config.',
     usedBy: '~80 sites',
     covers: [
-      'MessageBanner',
       'AppMessage',
       'AppMessageAction',
       'showAppMessage',
+      'showAppMessageOn',
       'ProgressRow',
       'showAppSnackBar',
       'showAppSnackBarOn',
@@ -419,7 +450,7 @@ final List<HubPage> hubPages = [
     slug: 'section-hero',
     title: 'Section & hero',
     summary:
-        'Hero card (tinted), manage section, record info, locked rows, summary stats.',
+        'Hero card (tinted), archive / delete buttons, record info, locked rows, summary stats.',
     usedBy: '32 files',
     covers: [
       'HeaderCard',
@@ -428,6 +459,10 @@ final List<HubPage> hubPages = [
       'LockedInEdit',
       'SummaryStats',
       'SummaryStat',
+      'IconCodeTint',
+      'HeroDescription',
+      'HeroNameInput',
+      'EditModeScope',
     ],
     builder: buildSectionHeroPage,
   ),
@@ -435,7 +470,8 @@ final List<HubPage> hubPages = [
     level: HubLevel.organisms,
     slug: 'sheets',
     title: 'Sheets',
-    summary: 'App sheet, picker sheet, option sheet, action sheet, side sheet.',
+    summary:
+        'App sheet, picker sheet, option sheet, action sheet, side sheet, the date picker.',
     usedBy: '~40 files',
     covers: [
       'AppSheetScaffold',
@@ -452,8 +488,31 @@ final List<HubPage> hubPages = [
       'SideSheetScaffold',
       'SideSheetSection',
       'showSideSheet',
+      'showAppDatePicker',
+      'AppDatePickerSheet',
+      'showAppDateRangePicker',
+      'showPeriodPickerSheet',
+      'PeriodPickerSheet',
+      'PeriodPick',
+      'PeriodUnit',
+      'PeriodPickerLabels',
+      'AppDateRangePickerSheet',
+      'AppDateRangePreset',
+      'AppDateResult',
+      'AppDatePicked',
+      'AppDateCleared',
     ],
     builder: buildSheetsPage,
+  ),
+  const HubPage(
+    level: HubLevel.organisms,
+    slug: 'collapsible-section',
+    title: 'Collapsible section',
+    summary:
+        'A section whose heading toggles it: title, hint while open, summary while closed, a mark and an action.',
+    usedBy: 'split block, debt history',
+    covers: ['CollapsibleSection'],
+    builder: buildCollapsibleSectionPage,
   ),
   const HubPage(
     level: HubLevel.organisms,
@@ -498,8 +557,27 @@ final List<HubPage> hubPages = [
         'View ⇄ edit page skeleton with every slot and the owner’s detail rules.',
     usedBy:
         '7 detail pages (wallet, category, contact, event, budget, goal, scheduled)',
-    covers: ['DetailPageBody', 'DetailPlaceholder'],
+    covers: [
+      'DetailPageBody',
+      'DetailPlaceholder',
+      'DetailPageSkeleton',
+      'DashboardPageSkeleton',
+      'DetailRowSkeleton',
+      'HeroSkeleton',
+      'SectionSkeleton',
+      'TagsStripSkeleton',
+    ],
     builder: buildDetailPageTemplate,
+  ),
+  const HubPage(
+    level: HubLevel.templates,
+    slug: 'dashboard',
+    title: 'Dashboard',
+    summary:
+        'Dashboard — home overview: period, KPIs, attention, charts, tiles, lists.',
+    usedBy: '1 page (Home) + the Chubi Home example',
+    covers: ['DashboardPageBody'],
+    builder: buildDashboardTemplate,
   ),
   const HubPage(
     level: HubLevel.templates,
@@ -508,7 +586,15 @@ final List<HubPage> hubPages = [
     summary:
         'Search, filters, grouped list, select + bulk delete, reorder, empty / error / loading.',
     usedBy: '~10 pages',
-    covers: ['ListPageBody'],
+    covers: [
+      'ListPageBody',
+      'TabbedListPageBody',
+      'ListToolbar',
+      'ListPageSkeleton',
+      'ListRowSkeleton',
+      'DayHeaderSkeleton',
+      'ListToolbarSkeleton',
+    ],
     builder: buildListPageTemplate,
   ),
   const HubPage(
@@ -551,12 +637,64 @@ final List<HubPage> hubPages = [
   ),
   const HubPage(
     level: HubLevel.domain,
+    slug: 'sheets-transactions',
+    title: 'Transaction sheets',
+    summary:
+        'Quick create frame, filter, event target, wallet picker, description picker, settle: each a presentational organism + a thin feature wrapper.',
+    generic: false,
+    usedBy: '6 sheets',
+    covers: [
+      'AccountPick',
+      'AccountPickNone',
+      'AccountPickWallet',
+      'AccountPickerLabels',
+      'AccountPickerSheet',
+      'DescriptionPickerLabels',
+      'DescriptionPickerSheet',
+      'EventPickExisting',
+      'EventPickNew',
+      'EventPickRemove',
+      'EventTargetItem',
+      'EventTargetPick',
+      'EventTargetSheet',
+      'EventTargetSheetLabels',
+      'QuickCreateSheetShell',
+      'SettleResult',
+      'SettleSheet',
+      'SettleSheetData',
+      'SettleSheetLabels',
+      'SettleWalletField',
+      'TxFilterOption',
+      'TxFilterOptions',
+      'TxFilterSelection',
+      'TxFilterSheet',
+      'TxFilterSheetLabels',
+      'WalletPickItem',
+      'showAccountPickSheet',
+      'showDescriptionPickerSheet',
+      'showEventTargetPickSheet',
+      'showSettleSheet',
+      'showTxFilterSideSheet',
+    ],
+    builder: buildSheetsTransactionsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
     slug: 'transactions',
     title: 'Transactions',
     summary: 'Tx row, hero, draft form + chip layout, pickers, quick create.',
     generic: false,
     usedBy: '~20 files',
-    covers: ['TxRow'],
+    covers: [
+      'TxRow',
+      'TxHeroCard',
+      'txHeroStyle',
+      'txTypeChip',
+      'txTypeColor',
+      'EntryCard',
+      'EntryCardSkeleton',
+      'EntryField',
+    ],
     builder: buildTransactionsPage,
   ),
   const HubPage(
@@ -580,13 +718,121 @@ final List<HubPage> hubPages = [
   ),
   const HubPage(
     level: HubLevel.domain,
+    slug: 'sheets-projects',
+    title: 'Sheets: events',
+    summary:
+        'Resolve a board row into my book (tabs, share only, account / category chips) and invite a member; live with sample data.',
+    generic: false,
+    usedBy: '2 sheets',
+    covers: [
+      'EventResolveSheet',
+      'EventResolveMode',
+      'showEventResolveSheet',
+      'EventResolveLabels',
+      'EventResolveResult',
+      'ResolvePickValue',
+      'ResolvePickResult',
+      'AddMemberSheet',
+      'showAddMemberFormSheet',
+      'AddMemberLabels',
+      'AddMemberFill',
+    ],
+    builder: buildSheetsProjectsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'sheets-accounts',
+    title: 'Wallet sheets',
+    summary:
+        'Adjust balance, bank picker, identifier kind and wallet invite sheets as presentational organisms (plain params in, plain result out).',
+    generic: false,
+    usedBy: 'Wallet detail, wallet edit, wallet members',
+    covers: [
+      'showAdjustBalanceFormSheet',
+      'AdjustBalanceSheet',
+      'AdjustBalanceStrings',
+      'AdjustBalanceSheetResult',
+      'showBankSelectSheet',
+      'BankPickerItem',
+      'BankPickerChoice',
+      'BankPickerStrings',
+      'BankBrandMark',
+      'showIdentifierKindSelectSheet',
+      'IdentifierKindOption',
+      'IdentifierKindChoice',
+      'IdentifierKindStrings',
+      'showWalletInviteSelectSheet',
+      'WalletInviteSheet',
+      'WalletInviteCandidate',
+      'WalletInviteStrings',
+    ],
+    builder: buildSheetsAccountsPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'pickers',
+    title: 'Category & tag pickers',
+    summary: 'Category-tree and tag picker sheets (presentational organisms).',
+    generic: false,
+    usedBy: 'quick-create, category parent, tx filters',
+    covers: [
+      'showCategoryPicker',
+      'CategoryPickerSheet',
+      'CategoryPickerRow',
+      'CategoryPickerLabels',
+      'CategoryPickerChoice',
+      'CategoryPickerNone',
+      'CategoryPickerPicked',
+      'showTagPicker',
+      'TagPickerSheet',
+      'TagPickerItem',
+      'TagPickerData',
+      'TagPickerLabels',
+      'showNewTagNameSheet',
+    ],
+    builder: buildSheetsPickersPage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
+    slug: 'sheets-people',
+    title: 'People sheets',
+    summary:
+        'Contact picker and wire-names sheets: rows and words in, result out.',
+    generic: false,
+    usedBy: 'Split editor, contact detail',
+    covers: [
+      'ContactPickerSheet',
+      'showContactPicker',
+      'ContactPickerRow',
+      'ContactPickerLabels',
+      'ContactPickerSheetData',
+      'ContactPickerOutcome',
+      'ContactPickerRowPicked',
+      'ContactPickerNameTyped',
+      'WireNamesSheet',
+      'showWireNamesSheet',
+      'WireNameRow',
+      'WireNamesLabels',
+    ],
+    builder: buildSheetsPeoplePage,
+  ),
+  const HubPage(
+    level: HubLevel.domain,
     slug: 'others',
     title: 'Others',
     summary:
         'Debt tile, notification tile, project tiles, brand logo, auth header.',
     generic: false,
     usedBy: '~10 files',
-    covers: ['BrandLogo', 'OfflineBanner'],
+    covers: [
+      'BrandLogo',
+      'BankBrand',
+      'OfflineBanner',
+      'ProjectMemberAvatar',
+      'ProjectMemberPickCard',
+      'NotificationTileView',
+      'NotificationRejectConfirm',
+    ],
     builder: buildOthersPage,
   ),
   // ── API (read from GET /api/v1/openapi.json)

@@ -332,23 +332,18 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       return Scaffold(
         appBar: AppTopBar(title: l.moreContacts, showBack: true),
         extendBodyBehindAppBar: true,
-        body: _loading
-            // The generic skeleton is a padded list — clear the bar.
-            ? Builder(
-                builder: (context) => Padding(
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.paddingOf(context).top,
-                  ),
-                  child: const LoadingView(),
-                ),
-              )
-            : _error != null
-            ? ErrorView(error: _error!, onRetry: _load)
-            : EmptyView(
-                icon: AppIcons.contact,
-                title: l.contactNotFound,
-                message: '',
-              ),
+        // Skeleton → error + retry → not found (AsyncStateView); the template
+        // skeleton clears the transparent top bar itself.
+        body: AsyncStateView.fallback(
+          loading: _loading,
+          error: _error,
+          onRetry: _load,
+          notFound: EmptyView(
+            icon: AppIcons.contact,
+            title: l.contactNotFound,
+            message: '',
+          ),
+        ),
       );
     }
 
@@ -370,40 +365,38 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             key: _formKey,
             // Builder: its context sees the floating bar's height.
             child: Builder(
-              // Not while editing: a reload resets the draft.
-              builder: (context) => PullToRefresh(
-                enabled: !_isCreate && !isEditing,
-                onRefresh: _load,
-                child: DetailPageBody(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                  bottomInset:
-                      AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                  hero: _header(l),
-                  sections: [
-                    (first) => _fields(l, first: first),
-                    (first) => _isCreate ? null : _actions(l, first: first),
-                  ],
-                  // Archive (amber) · delete (red) live at the bottom in edit
-                  // mode (no top-bar actions); archive flips to restore.
-                  manage: isEditing && !_isCreate
-                      ? ManageSection(
-                          archiveLabel: _contact!.isArchived
-                              ? l.contactRestore
-                              : l.contactArchive,
-                          onArchive: isSaving ? null : _toggleArchive,
-                          deleteLabel: l.contactDeleteThis,
-                          onDelete: isSaving ? null : _delete,
-                        )
-                      : null,
-                  metaLines: _isCreate
-                      ? const []
-                      : detailMetaLines(
-                          context,
-                          createdAt: _contact!.createdAt,
-                          updatedAt: _contact!.updatedAt,
-                        ),
-                ),
+              // Pull = the page's one load call; the body turns it off while
+              // editing (a reload resets the draft) and in create.
+              builder: (context) => DetailPageBody(
+                onRefresh: _isCreate ? null : _load,
+                physics: const AlwaysScrollableScrollPhysics(),
+                topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+                bottomInset:
+                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                hero: _header(l),
+                sections: [
+                  (first) => _fields(l, first: first),
+                  (first) => _isCreate ? null : _actions(l, first: first),
+                ],
+                // Archive (amber) · delete (red) live at the bottom in edit
+                // mode (no top-bar actions); archive flips to restore.
+                manage: isEditing && !_isCreate
+                    ? ManageSection(
+                        archiveLabel: _contact!.isArchived
+                            ? l.contactRestore
+                            : l.contactArchive,
+                        onArchive: isSaving ? null : _toggleArchive,
+                        deleteLabel: l.contactDeleteThis,
+                        onDelete: isSaving ? null : _delete,
+                      )
+                    : null,
+                metaLines: _isCreate
+                    ? const []
+                    : detailMetaLines(
+                        context,
+                        createdAt: _contact!.createdAt,
+                        updatedAt: _contact!.updatedAt,
+                      ),
               ),
             ),
           ),
@@ -417,18 +410,19 @@ class _ContactDetailPageState extends State<ContactDetailPage>
     final editing = isEditing;
     final c = _contact;
     final iconEditable = editing && !_linked;
+    final palette = Theme.of(context).extension<AppColors>()!;
     return HeaderCard(
       glyph: AppIcons.contact,
+      // The contact's own icon colour (the linked user's while linked).
+      accent: (_linked ? c!.iconCode : working.iconCode).tintFor(
+        palette,
+        avatarName: c != null && !editing ? c.name : working.name,
+      ),
       onEdit: editing ? null : enterEdit,
-      // Status chips in the top row (rule 2); ✏️ sits at its right.
+      // Status chips in the top row (rule 2) — except "linked", which sits in
+      // the subtitle under the name (contact exception, owner 2026-10-12). With
+      // no chip the row collapses: ✏️ level with the name.
       topRow: [
-        if (c != null && c.isLinked)
-          AppChip(
-            label: l.contactLinked,
-            icon: AppIcons.link,
-            tone: AppChipTone.success,
-            selected: true,
-          ),
         if (c != null && c.isArchived)
           AppChip(
             label: l.contactArchivedBadge,
@@ -442,7 +436,9 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GestureDetector(
+          EditableCircle(
+            size: 52,
+            onTap: iconEditable ? _openIconMaker : null,
             onLongPress: editing || _linked
                 ? null
                 : () {
@@ -451,16 +447,12 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                       (_) => _openIconMaker(),
                     );
                   },
-            child: EditableCircle(
+            // Linked: the account's icon wins (and isn't editable here).
+            child: PersonMark(
+              name: c != null && !editing ? c.name : working.name,
+              level: PersonLevel.contact,
+              iconCode: _linked ? c!.iconCode : working.iconCode,
               size: 52,
-              onTap: iconEditable ? _openIconMaker : null,
-              // Linked: the account's icon wins (and isn't editable here).
-              child: PersonMark(
-                name: c != null && !editing ? c.name : working.name,
-                level: PersonLevel.contact,
-                iconCode: _linked ? c!.iconCode : working.iconCode,
-                size: 52,
-              ),
             ),
           ),
           if (_linked) ...[
@@ -470,7 +462,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         ],
       ),
       // Edit: the stored name. View (and linked): the resolved name.
-      title: AppInput.title(
+      title: HeroNameInput(
         key: ValueKey(editing && !_linked),
         editing: editing && !_linked,
         controller: editing && !_linked ? _ctrl[_Field.name]! : _viewName,
@@ -488,7 +480,31 @@ class _ContactDetailPageState extends State<ContactDetailPage>
           return null;
         },
       ),
-      subtitle: Text(l.moreContacts),
+      // The contact's own description (not the linked account's), so it stays
+      // editable when linked.
+      description: HeroDescription(
+        controller: _ctrl[_Field.description]!,
+        editing: editing,
+        hint: l.contactDescriptionHint,
+        maxLength: TextLimits.description,
+        focusNode: _focus[_Field.description],
+        onEnterEdit: () => enterEdit(focus: _focus[_Field.description]),
+        onChanged: (v) => _onText(_Field.description, v),
+      ),
+      // Linked: the chip under the name (replaces the old "Contact" line);
+      // unlinked: no subtitle.
+      subtitle: c != null && c.isLinked
+          ? Align(
+              alignment: Alignment.centerLeft,
+              child: AppChip(
+                label: l.contactLinked,
+                icon: AppIcons.link,
+                tone: AppChipTone.success,
+                selected: true,
+                size: ChipSize.chip,
+              ),
+            )
+          : null,
     );
   }
 
@@ -576,15 +592,6 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                 : (v) => applyChange(working.copyWith(showNickname: v)),
           ),
         ),
-        // Description is the contact's own (not the linked account's), so
-        // it stays editable when linked. maxLength caps it — no validator.
-        field(
-          _Field.description,
-          l.commonDescription,
-          hint: l.contactDescriptionHint,
-          maxLines: 3,
-          maxLength: TextLimits.description,
-        ),
         // Linked: the email follows the linked account — a 🔒 row (rule
         // 10), with the "why" under it while editing.
         if (_linked)
@@ -594,7 +601,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             helper: editing ? l.contactLinkedLockedHint : null,
             trailing: _ctrl[_Field.email]!.text.isEmpty
                 ? DetailPlaceholder(l.contactFieldNotSet)
-                : Text(_ctrl[_Field.email]!.text),
+                : AppText(_ctrl[_Field.email]!.text),
           )
         else
           email,
@@ -643,9 +650,10 @@ class _ContactDetailPageState extends State<ContactDetailPage>
             leading: const AppIcon(AppIcons.link),
             label: l.contactLinkTitle,
             helper: l.contactLinkLinked,
-            trailing: TextButton(
+            trailing: AppButton(
+              label: l.contactUnlink,
+              variant: AppButtonVariant.text,
               onPressed: _unlink,
-              child: Text(l.contactUnlink),
             ),
           )
         else
@@ -693,10 +701,32 @@ class _WireNamesRow extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     final l = AppLocalizations.of(context)!;
-    final wired = await showAppSheet<(AbsorbResult, Set<String>)>(
+    final wired = await showWireNamesSheet<(AbsorbResult, Set<String>)>(
       context,
-      title: l.contactWireSheetTitle(contact.name),
-      builder: (_) => _WireNamesSheet(contact: contact, names: names),
+      labels: WireNamesLabels(
+        title: l.contactWireSheetTitle(contact.name),
+        body: l.contactWireSheetBody,
+        searchHint: l.contactWireSearch,
+        saveLabel: l.contactWireSave,
+      ),
+      rows: [
+        for (final n in names)
+          WireNameRow(name: n.name, subtitle: l.contactWireCount(n.count)),
+      ],
+      onSave: (picked) async {
+        try {
+          final res = await context.read<ContactsCubit>().absorb(
+            contact.id,
+            picked.toList(),
+          );
+          return (res, picked);
+        } on ApiException catch (e) {
+          if (context.mounted) {
+            showAppSnackBar(context, e.message, tone: Tone.danger);
+          }
+          return null;
+        }
+      },
     );
     if (!context.mounted || wired == null) return;
     final (res, picked) = wired;
@@ -723,97 +753,6 @@ class _WireNamesRow extends StatelessWidget {
       onTap: has ? () => _open(context) : null,
     );
   }
-}
-
-class _WireNamesSheet extends StatefulWidget {
-  const _WireNamesSheet({required this.contact, required this.names});
-
-  final Contact contact;
-  final List<UnlinkedName> names;
-
-  @override
-  State<_WireNamesSheet> createState() => _WireNamesSheetState();
-}
-
-class _WireNamesSheetState extends State<_WireNamesSheet> {
-  final Set<String> _picked = {};
-  String _query = '';
-  bool _saving = false;
-
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    try {
-      final res = await context.read<ContactsCubit>().absorb(
-        widget.contact.id,
-        _picked.toList(),
-      );
-      if (mounted) Navigator.of(context).pop((res, _picked.toSet()));
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final q = _query.trim().toLowerCase();
-    final shown = q.isEmpty
-        ? widget.names
-        : widget.names.where((n) => n.name.toLowerCase().contains(q)).toList();
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * 0.6,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Text(
-              l.contactWireSheetBody,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ),
-          AppInput.search(
-            hint: l.contactWireSearch,
-            onChanged: (v) => setState(() => _query = v),
-          ),
-          Expanded(
-            child: ListView(
-              children: [
-                for (final n in shown)
-                  ListTile(
-                    leading: SelectCheck(
-                      value: _picked.contains(n.name),
-                      onTap: _saving ? null : () => _toggle(n.name),
-                    ),
-                    title: Text(n.name),
-                    subtitle: Text(l.contactWireCount(n.count)),
-                    onTap: _saving ? null : () => _toggle(n.name),
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: AppButton(
-              label: l.contactWireSave(_picked.length),
-              expand: true,
-              loading: _saving,
-              onPressed: _picked.isEmpty ? null : _save,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _toggle(String name) => setState(
-    () => _picked.contains(name) ? _picked.remove(name) : _picked.add(name),
-  );
 }
 
 // ────────────────────────────────────────────────────────────────────

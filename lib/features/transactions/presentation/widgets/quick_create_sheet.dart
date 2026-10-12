@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -209,7 +208,6 @@ class _QuickCreateSheet extends StatefulWidget {
 
 class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   final _c = DraftFormController();
-  final _scroll = ScrollController();
 
   EventTarget? _event;
 
@@ -217,15 +215,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   EventTarget? get _activeEvent => typeCanJoinEvent(_c.type) ? _event : null;
   bool _saving = false;
 
-  /// How far the sheet is dragged down by its handle / title row.
-  double _drag = 0;
-  bool _dragging = false;
-
-  /// A new transaction only: the hero's amount is scrolled out of view →
-  /// the title row shows the amount + category instead of the title.
-  bool _collapsed = false;
+  /// The hero card key: the shell watches it to swap the title row for the
+  /// amount · category summary once the amount scrolls away.
   final _heroKey = GlobalKey();
-  final _listKey = GlobalKey();
 
   bool get _editingDraft => widget.draft != null;
 
@@ -422,10 +414,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      final c = _amountHidden();
-      if (c != _collapsed) setState(() => _collapsed = c);
-    });
     final type = widget.initialType;
     if (type != null) _c.setType(type);
     if (_isEvent) _initEvent();
@@ -571,7 +559,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   @override
   void dispose() {
     _c.dispose();
-    _scroll.dispose();
     super.dispose();
   }
 
@@ -818,104 +805,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// Only a new transaction swaps its title for the amount.
   bool get _summaryTitle => !_editingDraft && !_isEvent && !_isScheduled;
 
-  /// The hero's amount has scrolled up past the list's top edge. The
-  /// amount ends the card's content (inline layout), so its bottom minus
-  /// the card's padding is the line to watch.
-  bool _amountHidden() {
-    if (!_summaryTitle) return false;
-    final hero = _heroKey.currentContext?.findRenderObject();
-    final list = _listKey.currentContext?.findRenderObject();
-    if (hero is! RenderBox || list is! RenderBox) return false;
-    if (!hero.attached || !list.attached) return false;
-    final amountBottom = hero
-        .localToGlobal(Offset(0, hero.size.height - AppSpacing.md))
-        .dy;
-    return amountBottom < list.localToGlobal(Offset.zero).dy;
-  }
-
-  void _scrollToTop() {
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _scroll.jumpTo(0);
-    } else {
-      _scroll.animateTo(
-        0,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-      );
-    }
-  }
-
-  /// The keyboard height last build — growing means it just opened.
-  double _lastInsets = 0;
-
-  /// Scrolls the focused field into the list's view with room under it
-  /// (a split row's amount sat half under the buttons on device).
-  Future<void> _revealFocus() async {
-    final focused = FocusManager.instance.primaryFocus?.context;
-    if (!mounted || focused == null || !_scroll.hasClients) return;
-    // Only fields inside this list.
-    if (Scrollable.maybeOf(focused)?.position != _scroll.position) return;
-    final animate = !MediaQuery.disableAnimationsOf(context);
-    await Scrollable.ensureVisible(
-      focused,
-      alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
-      duration: animate ? const Duration(milliseconds: 180) : Duration.zero,
-    );
-    if (!mounted || !_scroll.hasClients || !focused.mounted) return;
-    // A little more when it ended up at the very bottom, so the whole row
-    // (and what's under it) shows.
-    final field = focused.findRenderObject();
-    final viewport = Scrollable.maybeOf(focused)?.context.findRenderObject();
-    if (field is! RenderBox || viewport is! RenderBox) return;
-    final gap =
-        viewport.localToGlobal(Offset(0, viewport.size.height)).dy -
-        field.localToGlobal(Offset(0, field.size.height)).dy;
-    const room = 56.0;
-    if (gap >= room) return;
-    final p = _scroll.position;
-    final to = (p.pixels + room - gap).clamp(
-      p.minScrollExtent,
-      p.maxScrollExtent,
-    );
-    if (to == p.pixels) return;
-    if (animate) {
-      await _scroll.animateTo(
-        to,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-      );
-    } else {
-      _scroll.jumpTo(to);
-    }
-  }
-
-  // ── Drag to dismiss ───────────────────────────────────────────────
-
-  // The route's own drag would pop straight past PopScope (losing what
-  // was typed), so the sheet drags itself and closes through maybePop —
-  // the same unsaved-changes question as ✕ and back.
-
-  void _onDragUpdate(DragUpdateDetails d) => setState(() {
-    _dragging = true;
-    _drag = math.max(0, _drag + d.delta.dy);
-  });
-
-  void _onDragEnd(DragEndDetails d) {
-    final close = _drag > 120 || (d.primaryVelocity ?? 0) > 700;
-    setState(() {
-      _dragging = false;
-      // Staying (or about to ask) → spring back; leaving → exit from here.
-      if (!close || (_dirty && !_saving)) _drag = 0;
-    });
-    if (close) Navigator.of(context).maybePop();
-  }
-
   // ── Build ─────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     // A new plain transaction reads wallets from the form options (one
     // call); the other modes from the app-wide cache.
     final opts = maybeTxFormOptions(context);
@@ -926,251 +820,97 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         : (options?.accountList ?? const <Account>[]);
     // Options not here yet: saving now would drop the wallet and category.
     final waiting = opts != null && options == null;
-    final insets = MediaQuery.viewInsetsOf(context).bottom;
-    // The keyboard came up (or grew): bring the focused field back into
-    // view, clear of it and of the pinned buttons.
-    if (insets > _lastInsets) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _revealFocus());
-    }
-    _lastInsets = insets;
 
-    return PopScope(
-      canPop: !_dirty || _saving,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _confirmClose();
-      },
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(end: _drag),
-        duration: _dragging ? Duration.zero : const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        builder: (context, dy, sheet) =>
-            Transform.translate(offset: Offset(0, dy), child: sheet),
-        // A save / delete in flight dims the sheet and blocks input.
-        child: SavingOverlay(
-          saving: _saving,
-          child: SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.94,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: insets),
-              child: Column(
-                children: [
-                  // Handle + title row: drag down to close.
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onVerticalDragUpdate: _onDragUpdate,
-                    onVerticalDragEnd: _onDragEnd,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.sm),
-                          child: Container(
-                            width: 36,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: scheme.outlineVariant,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.lg,
-                            AppSpacing.xs,
-                            AppSpacing.xs,
-                            0,
-                          ),
-                          child: Row(
-                            children: [
-                              // The title — or, for a new transaction once the
-                              // hero's amount has scrolled away, amount +
-                              // category (tap: back to the top). Cross-fades
-                              // in place. Scheduled / event / draft keep
-                              // their text titles.
-                              Expanded(
-                                child: AnimatedSwitcher(
-                                  duration:
-                                      MediaQuery.disableAnimationsOf(context)
-                                      ? Duration.zero
-                                      : const Duration(milliseconds: 200),
-                                  layoutBuilder: (current, previous) => Stack(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    children: [...previous, ?current],
-                                  ),
-                                  child: _collapsed && _summaryTitle
-                                      ? TxSummaryTitle(
-                                          key: const ValueKey('summary'),
-                                          type: _c.type,
-                                          amount: _c.amountValue,
-                                          category: _c.isTransfer
-                                              ? null
-                                              : _c.category,
-                                          onTap: _scrollToTop,
-                                        )
-                                      : Text(
-                                          key: const ValueKey('title'),
-                                          _isScheduled
-                                              ? (_editingScheduled
-                                                    ? l.scheduledSheetTitleEdit
-                                                    : l.scheduledSheetTitleNew)
-                                              : _isEvent
-                                              ? (_editingRow
-                                                    ? l.projectTxEditTitle
-                                                    : l.projectTxNewTitle)
-                                              : _editingDraft
-                                              ? l.pendingEditTitle
-                                              : l.transactionFormTitleNew,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                        ),
-                                ),
-                              ),
-                              if (_editingDraft)
-                                AppIconButton.flat(
-                                  icon: AppIcons.delete,
-                                  tooltip: l.commonDelete,
-                                  color: scheme.error,
-                                  onPressed: _saving ? null : _discardDraft,
-                                ),
-                              AppIconButton.close(
-                                tooltip: l.commonClose,
-                                onPressed: () =>
-                                    Navigator.of(context).maybePop(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      key: _listKey,
-                      controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xs,
-                        AppSpacing.lg,
-                        AppSpacing.xxl,
-                      ),
-                      children: [
-                        if (waiting &&
-                            optState!.status == TxFormOptionsStatus.error)
-                          Padding(
-                            padding: const EdgeInsets.only(top: AppSpacing.xl),
-                            child: ErrorView(
-                              error: optState.error!,
-                              onRetry: opts.load,
-                            ),
-                          )
-                        else
-                          DraftForm(
-                            heroKey: _heroKey,
-                            // The pending drafts layout: chip rows, collapsible
-                            // หารกับ / อีเวนต์.
-                            chipLayout: _editingDraft,
-                            controller: _c,
-                            defaultAccount: _defaultAccount(
-                              accounts,
-                              options: options,
-                            ),
-                            // A saved project row keeps its type.
-                            typeLocked: _editingRow,
-                            event: _isEvent
-                                ? DraftEvent(
-                                    members: widget.project!.currentMembers,
-                                    symbol: widget.project!.symbol,
-                                    pastDescriptions: _pastDescriptions,
-                                    tags: _eventTags,
-                                  )
-                                : null,
-                            schedule: _isScheduled
-                                ? DraftSchedule(editing: _editingScheduled)
-                                : null,
-                            eventPending: _activeEvent != null,
-                            // The one "แบ่งรายการ" section, open (the heading
-                            // collapses it). Drafts keep their own event; here
-                            // the อีเวนต์ row only exists when creating, for a
-                            // type that can join one ([typeCanJoinEvent]).
-                            splitsCollapsible:
-                                !_editingDraft && !_isEvent && !_isScheduled,
-                            eventSlot:
-                                !_editingDraft &&
-                                    !_isEvent &&
-                                    !_isScheduled &&
-                                    typeCanJoinEvent(_c.type)
-                                ? SplitEventSlot(
-                                    name: eventTargetName(l, _event),
-                                    onTap: _pickEvent,
-                                    onClear: _event == null
-                                        ? null
-                                        : () => setState(() => _event = null),
-                                  )
-                                : null,
-                          ),
-                      ],
-                    ),
-                  ),
-                  // Pinned above the keyboard: draft (→ รอยืนยัน) · save for real.
-                  // Event / scheduled: one button — drafts are for one-off rows.
-                  // Pinned bars clear the gesture bar themselves — the sheet's
-                  // useSafeArea only covers the top.
-                  if (_isEvent || _isScheduled)
-                    PinnedBar(
-                      child: AppButton(
-                        label: _isScheduled && !_editingScheduled
-                            ? l.scheduledFormSave
-                            : l.transactionFormSave,
-                        expand: true,
-                        loading: _saving,
-                        onPressed: _isScheduled ? _saveScheduled : _saveEvent,
-                      ),
+    return QuickCreateSheetShell(
+      heroKey: _heroKey,
+      title: _isScheduled
+          ? (_editingScheduled
+                ? l.scheduledSheetTitleEdit
+                : l.scheduledSheetTitleNew)
+          : _isEvent
+          ? (_editingRow ? l.projectTxEditTitle : l.projectTxNewTitle)
+          : _editingDraft
+          ? l.pendingEditTitle
+          : l.transactionFormTitleNew,
+      // Only a new transaction swaps its title for the amount · category.
+      summaryBuilder: _summaryTitle
+          ? (scrollToTop) => TxSummaryTitle(
+              type: _c.type,
+              amount: _c.amountValue,
+              category: _c.isTransfer ? null : _c.category,
+              onTap: scrollToTop,
+            )
+          : null,
+      closeTooltip: l.commonClose,
+      deleteTooltip: l.commonDelete,
+      onDelete: _editingDraft ? _discardDraft : null,
+      saving: _saving,
+      dirty: _dirty,
+      onCloseBlocked: _confirmClose,
+      // Event / scheduled: one button — drafts are for one-off rows.
+      saveLabel: _isEvent || _isScheduled
+          ? (_isScheduled && !_editingScheduled
+                ? l.scheduledFormSave
+                : l.transactionFormSave)
+          : (_editingDraft ? l.pendingSubmitThis : l.quickSave),
+      draftLabel: _isEvent || _isScheduled ? null : l.pendingSaveDraft,
+      onSave: _isEvent || _isScheduled
+          ? (_isScheduled ? _saveScheduled : _saveEvent)
+          : (_isEmpty || waiting
+                ? null
+                : (_editingDraft ? _submitDraft : _save)),
+      // A draft can't go to an event.
+      onSaveDraft: _saving || _activeEvent != null || _isEmpty || waiting
+          ? null
+          : _saveDraft,
+      body: waiting && optState!.status == TxFormOptionsStatus.error
+          ? Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xl),
+              child: ErrorView(error: optState.error!, onRetry: opts.load),
+            )
+          : DraftForm(
+              heroKey: _heroKey,
+              // The pending drafts layout: chip rows, collapsible
+              // หารกับ / อีเวนต์.
+              chipLayout: _editingDraft,
+              // The entry card (wallet · category chip rows inside it),
+              // tags outside: new transactions and drafts alike.
+              chipRows: true,
+              controller: _c,
+              defaultAccount: _defaultAccount(accounts, options: options),
+              // A saved project row keeps its type.
+              typeLocked: _editingRow,
+              event: _isEvent
+                  ? DraftEvent(
+                      members: widget.project!.currentMembers,
+                      symbol: widget.project!.symbol,
+                      pastDescriptions: _pastDescriptions,
+                      tags: _eventTags,
                     )
-                  else
-                    PinnedBar(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: AppButton(
-                              label: l.pendingSaveDraft,
-                              variant: AppButtonVariant.outlined,
-                              expand: true,
-                              // A draft can't go to an event.
-                              onPressed:
-                                  _saving ||
-                                      _activeEvent != null ||
-                                      _isEmpty ||
-                                      waiting
-                                  ? null
-                                  : _saveDraft,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            flex: 3,
-                            child: AppButton(
-                              label: _editingDraft
-                                  ? l.pendingSubmitThis
-                                  : l.quickSave,
-                              expand: true,
-                              loading: _saving,
-                              onPressed: _isEmpty || waiting
-                                  ? null
-                                  : (_editingDraft ? _submitDraft : _save),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+                  : null,
+              schedule: _isScheduled
+                  ? DraftSchedule(editing: _editingScheduled)
+                  : null,
+              eventPending: _activeEvent != null,
+              // The one "แบ่งรายการ" section, open (the heading
+              // collapses it). Drafts keep their own event; here
+              // the อีเวนต์ row only exists when creating, for a
+              // type that can join one ([typeCanJoinEvent]).
+              splitsCollapsible: !_editingDraft && !_isEvent && !_isScheduled,
+              eventSlot:
+                  !_editingDraft &&
+                      !_isEvent &&
+                      !_isScheduled &&
+                      typeCanJoinEvent(_c.type)
+                  ? SplitEventSlot(
+                      name: eventTargetName(l, _event),
+                      onTap: _pickEvent,
+                      onClear: _event == null
+                          ? null
+                          : () => setState(() => _event = null),
+                    )
+                  : null,
             ),
-          ),
-        ),
-      ),
     );
   }
 }

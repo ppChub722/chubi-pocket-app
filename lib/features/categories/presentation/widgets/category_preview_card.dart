@@ -21,10 +21,8 @@ class CategoryPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent =
-        category.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final accent = category.iconCode.tintFor(palette);
     return AppCard(
       style: AppCardStyle.accent,
       color: accent,
@@ -47,31 +45,24 @@ class CategoryPreviewCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  AppText(
                     category.name.isEmpty ? l.commonName : category.name,
+                    role: AppTextRole.title,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                   if (parentPath != null && parentPath!.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(
+                    AppText(
                       parentPath!,
+                      role: AppTextRole.caption,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
                     ),
                   ],
                   if (!category.includeInReport) ...[
                     const SizedBox(height: 2),
-                    Text(
+                    AppText(
                       l.categoryHiddenFromReport,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        fontStyle: FontStyle.italic,
-                      ),
+                      role: AppTextRole.caption,
                     ),
                   ],
                 ],

@@ -631,8 +631,20 @@ class _SheetState extends State<_Sheet> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(AppIcons.more),
+          OptionMenuAnchor<String>(
+            options: [
+              SheetOption(
+                value: 'reset',
+                label: l.iconMakerReset,
+                leading: const Icon(AppIcons.reset),
+              ),
+              if (widget.removeLabel != null)
+                SheetOption(
+                  value: 'default',
+                  label: l.iconMakerUseDefault,
+                  leading: const Icon(AppIcons.useDefaultIcon),
+                ),
+            ],
             onSelected: (v) async {
               if (v == 'reset') {
                 final ok = await showConfirmDialog(
@@ -649,25 +661,7 @@ class _SheetState extends State<_Sheet> {
                 ).pop<IconMakerResult>(const IconMakerRemoved());
               }
             },
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'reset',
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(AppIcons.reset),
-                  title: Text(l.iconMakerReset),
-                ),
-              ),
-              if (widget.removeLabel != null)
-                PopupMenuItem(
-                  value: 'default',
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(AppIcons.useDefaultIcon),
-                    title: Text(l.iconMakerUseDefault),
-                  ),
-                ),
-            ],
+            builder: (context, toggle) => AppIconButton.more(onPressed: toggle),
           ),
         ],
       ),
@@ -1155,8 +1149,7 @@ class _SheetState extends State<_Sheet> {
               style: textTheme.bodyMedium?.copyWith(
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
-              look: AppInputLook.outlined,
-              fillColor: scheme.surface,
+              dense: true,
               hint: '#RRGGBB',
               borderColor: _hexInvalid ? scheme.error : scheme.outlineVariant,
               contentPadding: const EdgeInsets.symmetric(

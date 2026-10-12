@@ -19,7 +19,6 @@ import '../../features/transactions/presentation/widgets/event_pick.dart';
 import '../../features/transactions/presentation/widgets/period_summary_card.dart';
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../features/transactions/presentation/widgets/transaction_tile.dart';
-import '../../features/transactions/presentation/widgets/tx_hero_card.dart';
 import '../../ui/ui.dart';
 import '../hub_kit.dart';
 
@@ -243,6 +242,76 @@ class _TransactionsPageState extends State<_TransactionsPage> {
             inline: true,
             onTypeChanged: (t) => setState(() => _type = t),
             onPickDate: () {},
+          ),
+        ),
+        HubDemo(
+          title: 'EntryCard — quick create / pending drafts',
+          note:
+              'ONE card for what you fill in first: type · date, description · '
+              'amount, the wallet chip row and the category chip row (a '
+              'transfer: from / to wallet rows, no category). The tags row sits '
+              'outside, right below. The first chip of a row is the pick chip: dashed '
+              'until something is picked, then the picked item (highlighted, tap = '
+              'the full picker) — never repeated among the quick options. '
+              'Values and callbacks only: the rows are '
+              'slots (built from resolved display data, so a draft can feed '
+              'it). "Missing" rows get a danger outline.',
+          child: Column(
+            children: [
+              EntryCard(
+                type: _type,
+                amount: _amount,
+                title: _title,
+                dateLabel: 'Today',
+                onTypeChanged: (t) => setState(() => _type = t),
+                onPickDate: () {},
+                walletRow: const _DemoChipRow(
+                  icon: AppIcons.wallet,
+                  blank: 'เลือกกระเป๋า',
+                  chips: ['กสิกร', 'เงินสด'],
+                  selected: 0,
+                ),
+                toWalletRow: const _DemoChipRow(
+                  icon: AppIcons.wallet,
+                  blank: 'เลือกกระเป๋าปลายทาง',
+                  chips: ['ออมทรัพย์', 'เงินสด'],
+                  selected: 0,
+                ),
+                categoryRow: const _DemoChipRow(
+                  icon: AppIcons.category,
+                  blank: 'เลือกหมวด',
+                  chips: ['อาหาร', 'เดินทาง', 'ของใช้'],
+                  selected: 0,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              const _DemoChipRow(
+                icon: AppIcons.tag,
+                chips: ['#งาน', '#กิน'],
+                selected: -1,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              EntryCard(
+                type: TransactionType.expense,
+                amount: TextEditingController(),
+                title: TextEditingController(),
+                dateLabel: 'Today',
+                onTypeChanged: (_) {},
+                missing: const {EntryField.wallet, EntryField.category},
+                walletRow: const _DemoChipRow(
+                  icon: AppIcons.wallet,
+                  blank: 'เลือกกระเป๋า',
+                  chips: ['กสิกร', 'เงินสด'],
+                  selected: -1,
+                ),
+                categoryRow: const _DemoChipRow(
+                  icon: AppIcons.category,
+                  blank: 'เลือกหมวด',
+                  chips: ['อาหาร', 'เดินทาง'],
+                  selected: -1,
+                ),
+              ),
+            ],
           ),
         ),
         HubDemo(
@@ -525,6 +594,61 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A static stand-in for the wallet / category / tag chip rows (the real ones
+/// read cubits). With a [blank] pick label the FIRST slot is the pick chip:
+/// dashed while nothing is picked ([selected] -1), else the picked item
+/// (highlighted, tap = the full picker); the other chips never repeat it.
+class _DemoChipRow extends StatelessWidget {
+  const _DemoChipRow({
+    required this.icon,
+    required this.chips,
+    required this.selected,
+    this.blank,
+  });
+
+  final IconData icon;
+  final String? blank;
+  final List<String> chips;
+  final int selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = blank == null
+        ? null
+        : selected >= 0
+        ? AppChip(label: chips[selected], selected: true, onTap: () {})
+        : AppChip(
+            label: blank!,
+            icon: AppIcons.add,
+            dashed: true,
+            onTap: () {},
+          );
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          AppIcon(
+            icon,
+            size: AppIconSize.md,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          if (first != null) ...[first, const SizedBox(width: AppSpacing.xs)],
+          for (final (i, c) in chips.indexed)
+            if (blank == null || i != selected) ...[
+              AppChip(
+                label: c,
+                selected: blank == null && i == selected,
+                onTap: () {},
+              ),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+        ],
+      ),
     );
   }
 }

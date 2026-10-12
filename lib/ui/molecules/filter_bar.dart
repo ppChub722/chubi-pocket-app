@@ -5,7 +5,19 @@ import '../tokens/app_spacing.dart';
 /// Horizontal row of filter chips (+ optional trailing sort chip) that
 /// scrolls sideways when it overflows — the toolbar row under a search bar.
 class FilterBar extends StatelessWidget {
-  const FilterBar({required this.chips, this.trailing, super.key});
+  const FilterBar({
+    required this.chips,
+    this.trailing,
+    this.padding = const EdgeInsets.fromLTRB(
+      AppSpacing.lg,
+      AppSpacing.xs,
+      AppSpacing.md,
+      AppSpacing.xs,
+    ),
+    super.key,
+  });
+
+  final EdgeInsetsGeometry padding;
 
   final List<Widget> chips;
   final Widget? trailing;
@@ -13,12 +25,7 @@ class FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xs,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
+      padding: padding,
       child: Row(
         children: [
           Expanded(

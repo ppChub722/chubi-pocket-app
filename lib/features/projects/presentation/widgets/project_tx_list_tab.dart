@@ -30,10 +30,17 @@ class ProjectTxListTab extends StatefulWidget {
 }
 
 class _ProjectTxListTabState extends State<ProjectTxListTab> {
+  final _search = TextEditingController();
   String _query = '';
   String? _type; // null = all, 'expense', 'income'
   bool _mine = false;
   _Sort _sort = _Sort.time;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   List<ProjectTxTree> _shown() {
     final v = widget.view;
@@ -98,105 +105,104 @@ class _ProjectTxListTabState extends State<ProjectTxListTab> {
       );
     }
 
-    return PullToRefresh(
-      onRefresh: widget.onChanged,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.only(
-          bottom: 96 + MediaQuery.paddingOf(context).bottom,
-        ),
-        children: [
-          AppInput.search(
-            hint: l.projectTxSearchHint,
-            onChanged: (v) => setState(() => _query = v),
-          ),
-          FilterBar(
-            chips: [
-              OptionMenuAnchor<String?>(
-                selected: _type,
-                onSelected: (t) => setState(() => _type = t),
-                options: [
-                  SheetOption(value: null, label: l.projectTxTypeAll),
-                  for (final e in typeLabels.entries)
-                    SheetOption(value: e.key, label: e.value),
-                ],
-                builder: (context, toggle) => AppChip(
-                  label: _type == null
-                      ? l.projectTxTypeLabel
-                      : '${l.projectTxTypeLabel}: ${typeLabels[_type]}',
-                  selected: _type != null,
-                  trailing: AppChipTrailing.dropdown,
-                  onTap: toggle,
-                ),
-              ),
-              AppChip(
-                label: l.projectTxOnlyMine,
-                selected: _mine,
-                onTap: () => setState(() => _mine = !_mine),
-              ),
-            ],
-            trailing: OptionMenuAnchor<_Sort>(
-              selected: _sort,
-              onSelected: (s) => setState(() => _sort = s),
+    // Search + filters pin above the list (the template's header); the rows
+    // carry their own side padding.
+    return ListPageBody(
+      loading: false,
+      error: null,
+      isEmpty: widget.view.trees.isEmpty,
+      onRetry: widget.onChanged,
+      topInset: 0,
+      clearTopBar: false, // the project page pads the bar itself
+      rowDividers: true,
+      sidePadding: 0,
+      header: [
+        ListToolbar(
+          searchController: _search,
+          searchHint: l.projectTxSearchHint,
+          onSearchChanged: (v) => setState(() => _query = v),
+          chips: [
+            OptionMenuAnchor<String?>(
+              selected: _type,
+              onSelected: (t) => setState(() => _type = t),
               options: [
-                SheetOption(value: _Sort.time, label: l.projectTxSortTime),
-                SheetOption(value: _Sort.amount, label: l.projectTxSortAmount),
-                SheetOption(value: _Sort.member, label: l.projectTxSortMember),
-                SheetOption(value: _Sort.tag, label: l.projectTxSortTag),
+                SheetOption(value: null, label: l.projectTxTypeAll),
+                for (final e in typeLabels.entries)
+                  SheetOption(value: e.key, label: e.value),
               ],
               builder: (context, toggle) => AppChip(
-                label: switch (_sort) {
-                  _Sort.time => l.projectTxSortTime,
-                  _Sort.amount => l.projectTxSortAmount,
-                  _Sort.member => l.projectTxSortMember,
-                  _Sort.tag => l.projectTxSortTag,
-                },
-                icon: AppIcons.sort,
+                label: _type == null
+                    ? l.projectTxTypeLabel
+                    : '${l.projectTxTypeLabel}: ${typeLabels[_type]}',
+                selected: _type != null,
                 trailing: AppChipTrailing.dropdown,
                 onTap: toggle,
               ),
             ),
-          ),
-          if (widget.view.trees.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xl),
-              child: EmptyView(
-                icon: AppIcons.empty,
-                title: l.projectTxEmpty,
-                message: '',
-                cta: widget.onAdd == null
-                    ? null
-                    : AddTile(
-                        label: l.projectAddTransaction,
-                        onTap: widget.onAdd,
-                      ),
-              ),
-            )
-          else ...[
-            if (widget.onAdd != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.xs,
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                ),
-                child: AddTile(
-                  label: l.projectAddTransaction,
-                  variant: AddTileVariant.row,
-                  onTap: widget.onAdd,
-                ),
-              ),
-            if (shown.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.xxl),
-                child: Text(l.projectTxNoMatch, textAlign: TextAlign.center),
-              )
-            else
-              ...rows,
+            AppChip(
+              label: l.projectTxOnlyMine,
+              selected: _mine,
+              onTap: () => setState(() => _mine = !_mine),
+            ),
           ],
-        ],
+          trailing: OptionMenuAnchor<_Sort>(
+            selected: _sort,
+            onSelected: (s) => setState(() => _sort = s),
+            options: [
+              SheetOption(value: _Sort.time, label: l.projectTxSortTime),
+              SheetOption(value: _Sort.amount, label: l.projectTxSortAmount),
+              SheetOption(value: _Sort.member, label: l.projectTxSortMember),
+              SheetOption(value: _Sort.tag, label: l.projectTxSortTag),
+            ],
+            builder: (context, toggle) => AppChip(
+              label: switch (_sort) {
+                _Sort.time => l.projectTxSortTime,
+                _Sort.amount => l.projectTxSortAmount,
+                _Sort.member => l.projectTxSortMember,
+                _Sort.tag => l.projectTxSortTag,
+              },
+              icon: AppIcons.sort,
+              trailing: AppChipTrailing.dropdown,
+              onTap: toggle,
+            ),
+          ),
+        ),
+      ],
+      empty: EmptyView(
+        icon: AppIcons.empty,
+        title: l.projectTxEmpty,
+        message: '',
+        cta: widget.onAdd == null
+            ? null
+            : AddTile(label: l.projectAddTransaction, onTap: widget.onAdd),
       ),
+      children: [
+        if (widget.onAdd != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: AddTile(
+              label: l.projectAddTransaction,
+              variant: AddTileVariant.row,
+              onTap: widget.onAdd,
+            ),
+          ),
+        if (shown.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xl),
+            child: EmptyView(
+              icon: AppIcons.empty,
+              title: l.projectTxNoMatch,
+              message: '',
+            ),
+          )
+        else
+          ...rows,
+      ],
     );
   }
 }

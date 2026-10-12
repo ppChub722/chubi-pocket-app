@@ -59,16 +59,14 @@ class WalletMember extends Equatable {
   const WalletMember({
     required this.id,
     required this.userId,
-    String? name,
-    // Source-compat alias of [name] (hub gallery sample data).
-    String? displayName,
+    required this.name,
     required this.role,
     this.iconCode,
     this.status = WalletMemberStatus.active,
     this.joinedAt,
     this.leftAt,
     this.isMe = false,
-  }) : name = name ?? displayName ?? '';
+  });
 
   final String id;
   final String userId;

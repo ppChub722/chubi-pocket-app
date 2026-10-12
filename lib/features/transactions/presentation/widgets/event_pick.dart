@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
@@ -101,7 +100,6 @@ class EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final accent = ModuleColors.of(context).people;
     final n = name;
     return DetailRow(
@@ -117,15 +115,16 @@ class EventRow extends StatelessWidget {
             const SizedBox(width: AppSpacing.xs),
           ],
           Flexible(
-            child: Text(
-              n ?? l.quickEventNone,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: n == null ? scheme.onSurfaceVariant : null,
-                fontWeight: n == null ? null : FontWeight.w600,
-              ),
-            ),
+            child: n == null
+                ? DetailPlaceholder(l.quickEventNone)
+                : Text(
+                    n,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DefaultTextStyle.of(
+                      context,
+                    ).style.copyWith(fontWeight: FontWeight.w600),
+                  ),
           ),
           if (n != null && onClear != null)
             AppIconButton.clear(
@@ -148,7 +147,10 @@ String? eventTargetName(AppLocalizations l, EventTarget? target) =>
       ExistingEventTarget(:final project) => project.name,
     };
 
-/// "เพิ่มเข้าอีเวนต์" (owner 2026-10-10) — on the kit [PickerSheet]:
+/// "เพิ่มเข้าอีเวนต์" (owner 2026-10-10) — the thin wrapper of the kit's
+/// [EventTargetSheet]: it reads the events from the form options (or the
+/// [ProjectsCubit]), maps them + the l10n words to the organism's plain data
+/// and maps its pick back to an [EventTarget].
 ///
 ///   อีเวนต์ที่เปิดอยู่                 (most recently updated first)
 ///   🎉 ทริปเชียงใหม่                    ← highlighted when it's the pick
@@ -179,7 +181,7 @@ Future<EventTarget?> showEventTargetSheet(
     context,
     useRootNavigator: useRootNavigator,
     builder: (_) {
-      final sheet = _EventTargetSheet(
+      final sheet = _EventTargetLoader(
         suggestedName: suggestedName,
         currentProjectId: currentProjectId,
         selectedProjectId: selectedProjectId,
@@ -195,8 +197,9 @@ Future<EventTarget?> showEventTargetSheet(
   );
 }
 
-class _EventTargetSheet extends StatefulWidget {
-  const _EventTargetSheet({
+/// Reads the cubit(s), feeds [EventTargetSheet], maps its pick.
+class _EventTargetLoader extends StatefulWidget {
+  const _EventTargetLoader({
     required this.suggestedName,
     required this.currentProjectId,
     required this.selectedProjectId,
@@ -208,20 +211,13 @@ class _EventTargetSheet extends StatefulWidget {
   final String? selectedProjectId;
 
   @override
-  State<_EventTargetSheet> createState() => _EventTargetSheetState();
+  State<_EventTargetLoader> createState() => _EventTargetLoaderState();
 }
 
-class _EventTargetSheetState extends State<_EventTargetSheet> {
-  late final _name = TextEditingController(text: widget.suggestedName);
-  bool _creating = false;
-
-  /// Show the counter only this close to the limit.
-  static const _counterFrom = TextLimits.name - 20;
-
+class _EventTargetLoaderState extends State<_EventTargetLoader> {
   @override
   void initState() {
     super.initState();
-    _name.addListener(() => setState(() {}));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // The form options carry the events: no extra call.
@@ -232,12 +228,6 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
         context.read<ProjectsCubit>().loadIfNeeded();
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
   }
 
   /// "4 คน · 12 ต.ค. – 15 ต.ค." from what the list already carries.
@@ -260,7 +250,6 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final opts = maybeTxFormOptions(context);
     final state = opts == null ? context.watch<ProjectsCubit>().state : null;
     // From the form options an event is just id + name + icon: no member
@@ -290,139 +279,37 @@ class _EventTargetSheetState extends State<_EventTargetSheet> {
         : (opts.state.status == TxFormOptionsStatus.error && active.isEmpty
               ? opts.state.error
               : null);
-    // Nothing to pick from → open on the create section (when there is one).
-    final creating =
-        widget.allowCreate && (_creating || (!loading && active.isEmpty));
-    final name = _name.text.trim();
-    return PickerSheet(
-      title: l.quickAddToEvent,
-      searchable: active.length > 8,
+    return EventTargetSheet(
+      items: [
+        for (final p in active)
+          EventTargetItem(id: p.id, name: p.name, subtitle: _subtitle(l, p)),
+      ],
+      labels: EventTargetSheetLabels(
+        title: l.quickAddToEvent,
+        openTitle: l.quickEventOpenTitle,
+        newTitle: l.quickEventNew,
+        newRow: l.quickEventNewRow,
+        nameHint: l.quickEventNameLabel,
+        // Nothing is created here — the event is made on บันทึก, with the
+        // split people in it.
+        membersInfo: l.quickEventMembersInfo,
+        remove: l.txEventRemove,
+        createNamed: l.quickEventCreateNamed,
+      ),
+      suggestedName: widget.suggestedName,
+      selectedId: widget.selectedProjectId,
+      hasCurrent: widget.currentProjectId != null,
+      allowCreate: widget.allowCreate,
       loading: loading,
       error: loadError,
       onRetry: opts == null ? context.read<ProjectsCubit>().load : opts.load,
-      footer: creating
-          ? Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.md,
-              ),
-              child: AppButton(
-                label: l.quickEventCreateNamed(name),
-                expand: true,
-                onPressed: name.isEmpty
-                    ? null
-                    : () => Navigator.of(context).pop(NewEventTarget(name)),
-              ),
-            )
-          : null,
-      builder: (context, query) {
-        final shown = query.isEmpty
-            ? active
-            : active
-                  .where((p) => p.name.toLowerCase().contains(query))
-                  .toList();
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (shown.isNotEmpty)
-              SectionCard(
-                first: true,
-                title: l.quickEventOpenTitle,
-                children: [
-                  for (final p in shown)
-                    PickerRow(
-                      leading: const AppIcon(AppIcons.project),
-                      title: p.name,
-                      subtitle: _subtitle(l, p),
-                      selected: p.id == widget.selectedProjectId,
-                      onTap: () =>
-                          Navigator.of(context).pop(ExistingEventTarget(p)),
-                    ),
-                ],
-              ),
-            if (widget.allowCreate)
-              SectionCard(
-                first: shown.isEmpty,
-                title: creating ? l.quickEventNew : null,
-                dividers: false,
-                children: [
-                  if (!creating)
-                    PickerCreateRow(
-                      label: l.quickEventNewRow,
-                      onTap: () => setState(() => _creating = true),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xs,
-                        AppSpacing.lg,
-                        0,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AppInput(
-                            controller: _name,
-                            hint: l.quickEventNameLabel,
-                            autofocus: _creating,
-                            textInputAction: TextInputAction.done,
-                            inputFormatters: [
-                              LengthLimitingTextInputFormatter(TextLimits.name),
-                            ],
-                          ),
-                          // The counter only near the limit.
-                          if (_name.text.length >= _counterFrom)
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                '${_name.text.length}/${TextLimits.name}',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
-                            ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AppIcon(
-                                AppIcons.info,
-                                size: AppIconSize.sm,
-                                color: scheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: AppSpacing.xs),
-                              Expanded(
-                                child: Text(
-                                  // Nothing is created here — the event is made
-                                  // on บันทึก, with the split people in it.
-                                  l.quickEventMembersInfo,
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: scheme.onSurfaceVariant,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            if (widget.currentProjectId != null)
-              DangerRow(
-                icon: AppIcons.clear,
-                label: l.txEventRemove,
-                padding: const EdgeInsets.only(top: AppSpacing.lg),
-                onTap: () => Navigator.of(context).pop(const RemoveFromEvent()),
-              ),
-            const SizedBox(height: AppSpacing.md),
-          ],
-        );
-      },
+      onPicked: (pick) => Navigator.of(context).pop(switch (pick) {
+        EventPickNew(:final name) => NewEventTarget(name),
+        EventPickRemove() => const RemoveFromEvent(),
+        EventPickExisting(:final id) => ExistingEventTarget(
+          active.firstWhere((p) => p.id == id),
+        ),
+      }),
     );
   }
 }

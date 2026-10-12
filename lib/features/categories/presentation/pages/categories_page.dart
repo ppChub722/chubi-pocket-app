@@ -14,7 +14,6 @@ import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../cubit/categories_cubit.dart';
-import '../widgets/categories_list_skeleton.dart';
 
 /// Categories management.
 ///
@@ -281,64 +280,37 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 onBack: _reordering ? _backInReorder : null,
               ),
               body: TabSwitchBody(
-                child: AsyncStateView(
-                  loading:
-                      state.status == CategoriesStatus.initial ||
-                      state.status == CategoriesStatus.loading,
-                  error: state.error,
-                  isEmpty: all.isEmpty,
-                  onRetry: context.read<CategoriesCubit>().load,
-                  skeleton: Builder(
-                    builder: (context) => Padding(
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.paddingOf(context).top,
-                      ),
-                      child: const LoadingView(
-                        skeleton: CategoriesListSkeleton(),
-                      ),
+                // Swipe sideways = the other tab, following the finger (off
+                // while reordering — a sideways drag there picks a level).
+                child: TabbedListPageBody<CategoryType>(
+                  controller: _pages,
+                  selected: _listType,
+                  onChanged: _setListType,
+                  swipeEnabled: !_reordering,
+                  // Search + filters sit under the tab bar and stay put while
+                  // swiping (an empty tab has nothing to search or filter).
+                  headerBelowTabs: true,
+                  header: typeUsers.isEmpty
+                      ? const []
+                      : [_header(l, typeUsers, all)],
+                  tabs: [
+                    AppTab(
+                      value: CategoryType.expense,
+                      label: l.categoryTypeExpense,
                     ),
-                  ),
-                  // Per-type empty lives under the tabs ([_listOrEmpty]).
-                  builder: (context) => Column(
-                    children: [
-                      // Clear the transparent top bar.
-                      SizedBox(height: MediaQuery.paddingOf(context).top),
-                      AppTabBar<CategoryType>(
-                        selected: _listType,
-                        onChanged: _setListType,
-                        pager: _pages,
-                        tabs: [
-                          AppTab(
-                            value: CategoryType.expense,
-                            label: l.categoryTypeExpense,
-                          ),
-                          AppTab(
-                            value: CategoryType.income,
-                            label: l.categoryTypeIncome,
-                          ),
-                        ],
-                      ),
-                      // An empty tab has nothing to search or filter.
-                      if (typeUsers.isNotEmpty) _header(l, typeUsers, all),
-                      Expanded(
-                        // Swipe sideways = the other tab, following the finger
-                        // (off while reordering — a sideways drag there picks
-                        // a level).
-                        child: AppTabPager<CategoryType>(
-                          controller: _pages,
-                          values: _types,
-                          selected: _listType,
-                          onChanged: _setListType,
-                          enabled: !_reordering,
-                          builder: (context, t) {
-                            final rows = t == _listType
-                                ? typeUsers
-                                : users.where((c) => c.type == t).toList();
-                            return _listOrEmpty(l, rows, all, t);
-                          },
-                        ),
-                      ),
-                    ],
+                    AppTab(
+                      value: CategoryType.income,
+                      label: l.categoryTypeIncome,
+                    ),
+                  ],
+                  pageBuilder: (context, t) => _tab(
+                    l,
+                    state,
+                    t == _listType
+                        ? typeUsers
+                        : users.where((c) => c.type == t).toList(),
+                    all,
+                    t,
                   ),
                 ),
               ),
@@ -378,18 +350,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
     List<Category> typeUsers,
     List<Category> all,
   ) {
-    final browse = Column(
-      children: [
-        AppInput.search(
-          controller: _search,
-          hint: l.categoriesSearchHint,
-          onChanged: (v) => setState(() => _query = v),
-        ),
-        _filterRow(l, typeUsers, all),
-      ],
-    );
+    final browse = _filterRow(l, typeUsers, all);
     if (!_reordering) return browse;
-    final scheme = Theme.of(context).colorScheme;
     return Stack(
       children: [
         Visibility(
@@ -404,11 +366,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: AppText(
                 l.categoriesReorderTapHint,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                role: AppTextRole.caption,
               ),
             ),
           ),
@@ -431,7 +391,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
     ];
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
     final icons = {for (final c in codes) ?c?.icon}.toList()..sort();
-    return FilterBar(
+    return ListToolbar(
+      searchController: _search,
+      searchHint: l.categoriesSearchHint,
+      onSearchChanged: (v) => setState(() => _query = v),
       chips: [
         PopoverAnchor(
           builder: (context, toggle) => AppChip(
@@ -514,65 +477,78 @@ class _CategoriesPageState extends State<CategoriesPage> {
     );
   }
 
-  Widget _listOrEmpty(
+  /// One tab: a [ListPageBody] (own loading / error / empty / refresh). The
+  /// search + filters sit pinned under the tab bar when the tab has rows.
+  Widget _tab(
     AppLocalizations l,
+    CategoriesState state,
     List<Category> typeUsers,
     List<Category> all,
     CategoryType type,
   ) {
-    if (typeUsers.isEmpty) {
-      return EmptyView(
-        icon: AppIcons.category,
-        title: l.categoriesEmptyTitle,
-        message: l.categoriesEmptyMessage,
-        cta: _reordering
-            ? null
-            : AddTile(label: l.categoriesAddNew, onTap: () => _add(l, type)),
-      );
-    }
     final visible = _reordering ? null : _visibleIds(typeUsers);
-    if (visible != null && visible.isEmpty) {
-      return EmptyView(
-        icon: AppIcons.search,
-        title: l.categoriesSearchNoMatch,
-        message: '',
-      );
-    }
+    final noMatch = typeUsers.isNotEmpty && visible != null && visible.isEmpty;
     final byId = {for (final c in typeUsers) c.id: c};
-    final body = ReorderListScope(
-      controller: _reorder,
-      scrollController: _scrollControllers[type]!,
-      indentStep: AppSpacing.xxl,
-      indentBase: AppSpacing.lg,
-      dropLabel: (parentId) {
-        final parent = parentId == null ? null : byId[parentId];
-        return parent == null
-            ? l.categoriesReorderTopLevel
-            : l.categoriesReorderUnder(parent.name);
-      },
-      child: _ListBody(
-        users: typeUsers,
-        type: type,
-        reorder: _reorder,
-        visibleIds: visible,
-        collapsedIds: _collapsedIds,
+    return ListPageBody(
+      // Only the FIRST load shows the skeleton: a reload keeps the rows (the
+      // template swaps its body for the skeleton, which kills a pull).
+      loading:
+          (state.status == CategoriesStatus.initial ||
+              state.status == CategoriesStatus.loading) &&
+          typeUsers.isEmpty,
+      error: typeUsers.isEmpty ? state.error : null,
+      isEmpty: typeUsers.isEmpty || noMatch,
+      // No refresh while reordering (the staged order would be replaced).
+      refreshEnabled: !_reordering,
+      onRetry: () => context.read<CategoriesCubit>().load(),
+      empty: noMatch
+          ? EmptyView(
+              icon: AppIcons.search,
+              title: l.categoriesSearchNoMatch,
+              message: '',
+            )
+          : EmptyView(
+              icon: AppIcons.category,
+              title: l.categoriesEmptyTitle,
+              message: l.categoriesEmptyMessage,
+              cta: _reordering
+                  ? null
+                  : AddTile(
+                      label: l.categoriesAddNew,
+                      onTap: () => _add(l, type),
+                    ),
+            ),
+      // Rows are full-bleed (they pad themselves).
+      sidePadding: 0,
+      builder: (context, padding) => ReorderListScope(
+        controller: _reorder,
         scrollController: _scrollControllers[type]!,
-        // Long-press enters the mode (not while searching / filtering —
-        // the tree isn't whole then); it never starts a drag.
-        onLongPress: visible != null || typeUsers.length < 2
-            ? null
-            : (id) => _enterReorder(all, select: id),
-        onToggleCollapse: _toggleCollapse,
-        addLabel: l.categoriesAddNew,
-        onAdd: _reordering ? null : () => _add(l, type),
+        indentStep: AppSpacing.xxl,
+        indentBase: AppSpacing.lg,
+        dropLabel: (parentId) {
+          final parent = parentId == null ? null : byId[parentId];
+          return parent == null
+              ? l.categoriesReorderTopLevel
+              : l.categoriesReorderUnder(parent.name);
+        },
+        child: _ListBody(
+          users: typeUsers,
+          type: type,
+          reorder: _reorder,
+          visibleIds: visible,
+          collapsedIds: _collapsedIds,
+          scrollController: _scrollControllers[type]!,
+          padding: padding,
+          // Long-press enters the mode (not while searching / filtering —
+          // the tree isn't whole then); it never starts a drag.
+          onLongPress: visible != null || typeUsers.length < 2
+              ? null
+              : (id) => _enterReorder(all, select: id),
+          onToggleCollapse: _toggleCollapse,
+          addLabel: l.categoriesAddNew,
+          onAdd: _reordering ? null : () => _add(l, type),
+        ),
       ),
-    );
-    // Kept (off) while reordering: the same widgets above the list in both
-    // modes keep its scroll offset when the mode switches.
-    return PullToRefresh(
-      enabled: !_reordering,
-      onRefresh: () => context.read<CategoriesCubit>().load(),
-      child: body,
     );
   }
 
@@ -599,6 +575,7 @@ class _ListBody extends StatelessWidget {
     required this.visibleIds,
     required this.collapsedIds,
     required this.scrollController,
+    required this.padding,
     required this.onLongPress,
     required this.onToggleCollapse,
     required this.addLabel,
@@ -616,6 +593,9 @@ class _ListBody extends StatelessWidget {
   final Set<String>? visibleIds;
   final Set<String> collapsedIds;
   final ScrollController scrollController;
+
+  /// The template's scroll padding (clearance for the floating bars).
+  final EdgeInsets padding;
   final void Function(String id)? onLongPress;
   final void Function(String id) onToggleCollapse;
 
@@ -632,9 +612,7 @@ class _ListBody extends StatelessWidget {
       key: PageStorageKey('categories-list-${type.name}'),
       controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.only(
-        bottom: AppSpacing.md + MediaQuery.paddingOf(context).bottom,
-      ),
+      padding: padding,
       children: [
         // Hairline-separated, as on the other library lists.
         for (final (i, row) in rows.indexed) ...[
@@ -651,7 +629,6 @@ class _ListBody extends StatelessWidget {
             ),
             child: AddTile(label: addLabel, onTap: onAdd),
           ),
-        const SizedBox(height: 96),
       ],
     );
   }
@@ -782,11 +759,9 @@ class _RowContent extends StatelessWidget {
                     size: ChipSize.chip,
                   ),
                 if (hasChildren)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: AppIcon(
-                      isCollapsed ? AppIcons.expand : AppIcons.collapse,
-                    ),
+                  AppIconButton.flat(
+                    icon: isCollapsed ? AppIcons.expand : AppIcons.collapse,
+                    dense: true,
                     onPressed: onToggleCollapse,
                   ),
               ],

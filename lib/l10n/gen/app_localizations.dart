@@ -248,6 +248,12 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get commonSearch;
 
+  /// No description provided for @uiPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get uiPickDate;
+
   /// No description provided for @commonToday.
   ///
   /// In en, this message translates to:

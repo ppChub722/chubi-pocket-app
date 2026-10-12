@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'app_spacing.dart';
-
 /// The three sizes of the one chip, [AppChip] (owner 2026-10-11) — everything
 /// (icon, text, padding, gap, avatar, count badge) scales with the size:
 ///
@@ -10,9 +8,10 @@ import 'app_spacing.dart';
 ///   label). Display only, never the only tap target.
 /// - [chip] 28 — display chips (status, type, label, tag) inside cards,
 ///   detail sections, member / debt rows and the compact hero bar.
-/// - [control] 32 — anything the user operates (filter / pick / choice /
+/// - [control] 40 — anything the user operates (filter / pick / choice /
 ///   action chips, form chip rows, theme chips, removable filters) and every
-///   chip in a hero's top row, so it lines up with the 32 date chip and ✏️
+///   chip in a hero's top row, so it lines up with the date chip, ✏️, the
+///   search capsule and the top-bar pills: ONE control height, 40
 ///   ([HeroSpacing.controlHeight]). The default.
 enum ChipSize {
   /// Dense list-row chips.
@@ -41,11 +40,14 @@ enum ChipSize {
 
   /// Controls, and every chip in a hero's top row.
   control(
-    height: 32,
-    padding: AppSpacing.md,
-    gap: AppSpacing.xs,
-    icon: 16,
-    dot: 8,
+    height: 40,
+    padding: 14,
+    gap: 6,
+    icon: 18,
+    dot: 9,
+    leading: 28,
+    badgeText: 12,
+    badgePad: 6,
   );
 
   const ChipSize({

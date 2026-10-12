@@ -9,6 +9,7 @@ import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
+import '../../../users/presentation/refresh_me.dart';
 
 /// `/settings/profile` (§7) — opens straight in edit mode: header card
 /// (avatar → icon maker, name inline), username (locked), email. The
@@ -134,46 +135,43 @@ class _EditProfilePageState extends State<EditProfilePage>
           key: _formKey,
           // Builder: the floating bar's height is only visible inside the body.
           child: Builder(
-            builder: (context) => ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                AppSpacing.lg,
-                AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-              ),
-              children: [
-                HeaderCard(
-                  leading: EditableCircle(
+            builder: (context) => DetailPageBody(
+              onRefresh: () => refreshMe(context),
+              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+              bottomInset:
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+              hero: HeaderCard(
+                leading: EditableCircle(
+                  size: 64,
+                  onTap: _pickAvatar,
+                  child: UserAvatar(
+                    displayName: w.name.trim().isEmpty
+                        ? _user.displayName
+                        : w.name,
+                    iconCode: w.iconCode,
                     size: 64,
-                    onTap: _pickAvatar,
-                    child: UserAvatar(
-                      displayName: w.name.trim().isEmpty
-                          ? _user.displayName
-                          : w.name,
-                      iconCode: w.iconCode,
-                      size: 64,
-                    ),
                   ),
-                  title: AppInput.title(
-                    editing: true,
-                    controller: _nameCtrl,
-                    hint: l.editProfileDisplayNameLabel,
-                    onChanged: (v) =>
-                        applyTextChange(_Field.name, working.copyWith(name: v)),
-                    validator: (v) {
-                      final s = v?.trim() ?? '';
-                      if (s.isEmpty) return l.commonRequired;
-                      if (s.length > 100) {
-                        return l.authRegisterDisplayNameTooLong;
-                      }
-                      return null;
-                    },
-                  ),
-                  subtitle: Text('@${_user.username}'),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                SectionCard(
-                  first: true,
+                title: HeroNameInput(
+                  editing: true,
+                  controller: _nameCtrl,
+                  hint: l.editProfileDisplayNameLabel,
+                  onChanged: (v) =>
+                      applyTextChange(_Field.name, working.copyWith(name: v)),
+                  validator: (v) {
+                    final s = v?.trim() ?? '';
+                    if (s.isEmpty) return l.commonRequired;
+                    if (s.length > 100) {
+                      return l.authRegisterDisplayNameTooLong;
+                    }
+                    return null;
+                  },
+                ),
+                subtitle: Text('@${_user.username}'),
+              ),
+              sections: [
+                (first) => SectionCard(
+                  first: first,
                   children: [
                     DetailRow(
                       leading: const AppIcon(AppIcons.lock),

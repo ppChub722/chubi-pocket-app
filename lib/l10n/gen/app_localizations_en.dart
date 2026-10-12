@@ -84,6 +84,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonSearch => 'Search';
 
   @override
+  String get uiPickDate => 'Pick a date';
+
+  @override
   String get commonToday => 'Today';
 
   @override

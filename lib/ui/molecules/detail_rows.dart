@@ -5,45 +5,44 @@ import '../tokens/app_spacing.dart';
 import '../atoms/add_tile.dart';
 import '../atoms/app_icon.dart';
 import '../tokens/app_radius.dart';
-import '../atoms/app_divider.dart';
-import '../atoms/detail_stacked_value.dart';
 import '../atoms/locked_in_edit.dart';
 
-/// Detail-page building blocks (category-detail style): frameless sections
-/// of rows. Label left, value/control right — or label on top for long
-/// values. Owner rules 2026-10-10 (#16 / #17): a hairline **between** rows,
-/// and a tinted band ([SectionBand]) **between** sections.
+/// Detail-page building blocks: GROUPED sections (owner 2026-10-12 — the one
+/// section style). Label left, value/control right — or label on top for long
+/// values.
 ///
 /// ```dart
-/// SectionCard(first: true, children: [
-///   DetailRow(label: 'อีเมล', trailing: Text(email)),
+/// SectionCard(first: true, title: 'ข้อมูล', description: '…', children: [
+///   DetailRow(icon: AppIcons.email, label: 'อีเมล', trailing: Text(email)),
 ///   DetailStacked(label: 'บันทึก', child: AppInput.inline(...)),
 /// ]),
-/// SectionCard(title: 'การจัดการ', locked: editing, children: [...]),
 /// ```
 
-/// One section of a detail page: a [SectionBand] above it (unless [first]),
-/// an optional [title] row, then [children] with a [RowDivider] between
-/// each — pages don't place dividers themselves.
+/// One section of a detail page: the green [title] and its one-line
+/// [description] sit ABOVE a rounded container with a filled surface and no
+/// stroke; the [children] inside are separated by a 2 px gap (the page shows
+/// through) and only the first / last rows carry the outer corners. Sections
+/// are spaced by [AppSpacing.lg] (none above the [first] one). Strokes stay
+/// reserved for editable inputs.
 ///
-/// Sits in a list padded [AppSpacing.lg] at the sides (the detail-page
-/// norm); the band reaches past that to the screen edges.
+/// A group either reserves the leading-icon slot for every [DetailRow] or for
+/// none: if any row has an icon, the rows without one keep the space so the
+/// titles align ([DetailGroupScope]).
+///
+/// Sits in a list padded [AppSpacing.lg] at the sides (the detail-page norm).
 class SectionCard extends StatelessWidget {
   const SectionCard({
     required this.children,
     this.title,
     this.trailing,
+    this.leading,
+    this.onHeaderTap,
     this.description,
     this.first = false,
     this.locked = false,
     this.dividers = true,
-    this.style,
     super.key,
   });
-
-  /// How the section looks — null = the page-wide choice ([SectionStyleScope],
-  /// default [kDefaultSectionStyle]).
-  final SectionStyle? style;
 
   final List<Widget> children;
   final String? title;
@@ -55,88 +54,35 @@ class SectionCard extends StatelessWidget {
   /// A small action at the end of the title row (👁, share, …).
   final Widget? trailing;
 
-  /// The page's first section — no band above it.
+  /// A mark before the title.
+  final Widget? leading;
+
+  /// Makes the heading (title row + description) tappable — a
+  /// [CollapsibleSection]'s toggle.
+  final VoidCallback? onHeaderTap;
+
+  /// The page's first section — no space above it.
   final bool first;
 
   /// An action section in edit mode: dimmed and inert ([LockedInEdit]).
-  /// The band stays as it is.
   final bool locked;
 
-  /// false = no hairlines (one block that isn't a list of rows).
+  /// false = the children touch (one block that isn't a list of rows).
   final bool dividers;
+
+  Widget _tappable(Widget header) => onHeaderTap == null
+      ? header
+      : InkWell(
+          onTap: onHeaderTap,
+          overlayColor: _restingOverlay,
+          child: header,
+        );
 
   @override
   Widget build(BuildContext context) {
-    if ((style ?? SectionStyleScope.of(context)) == SectionStyle.grouped) {
-      return _grouped(context);
-    }
-    final scheme = Theme.of(context).colorScheme;
-    final hasTitleRow = title != null || trailing != null;
-    final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (hasTitleRow)
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0,
-              trailing == null ? AppSpacing.lg : AppSpacing.sm,
-              AppSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title ?? '',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                ?trailing,
-              ],
-            ),
-          ),
-        if (description != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0,
-              AppSpacing.lg,
-              AppSpacing.sm,
-            ),
-            child: Text(
-              description!,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ),
-        for (final (i, row) in children.indexed) ...[
-          if (i > 0 && dividers) const AppDivider.row(),
-          row,
-        ],
-      ],
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (!first) const SectionBand(),
-        LockedInEdit(locked: locked, child: body),
-      ],
-    );
-  }
-
-  /// The grouped look (prototype, owner 2026-10-12): the green heading and its
-  /// description sit ABOVE a rounded container with a filled surface and no
-  /// stroke; the rows inside are separated by a 2 px gap (the page shows
-  /// through), only the first / last rows carry the outer corners. A group
-  /// either reserves the leading-icon slot for every row or for none.
-  Widget _grouped(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final hasTitleRow = title != null || trailing != null;
+    final hasTitleRow = title != null || trailing != null || leading != null;
     final reserve = children.any(
       (c) => c is DetailRow && (c.leading != null || c.icon != null),
     );
@@ -164,82 +110,73 @@ class SectionCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!first) const SizedBox(height: AppSpacing.lg),
-        if (hasTitleRow)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              0,
-              AppSpacing.xs,
-              AppSpacing.xs,
-            ),
-            child: Row(
+        if (hasTitleRow || description != null)
+          _tappable(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: Text(
-                    title ?? '',
-                    style: text.labelLarge?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w600,
+                if (hasTitleRow)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      0,
+                      AppSpacing.xs,
+                      AppSpacing.xs,
+                    ),
+                    child: Row(
+                      children: [
+                        if (leading != null) ...[
+                          leading!,
+                          const SizedBox(width: AppSpacing.sm),
+                        ],
+                        Expanded(
+                          child: Text(
+                            title ?? '',
+                            style: text.labelLarge?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        ?trailing,
+                      ],
                     ),
                   ),
-                ),
-                ?trailing,
+                if (description != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      0,
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                    ),
+                    child: Text(
+                      description!,
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
-        if (description != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              0,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
-            child: Text(
-              description!,
-              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ),
-        LockedInEdit(locked: locked, child: group),
+        if (children.isNotEmpty) LockedInEdit(locked: locked, child: group),
       ],
     );
   }
 }
 
-/// How a [SectionCard] looks.
-enum SectionStyle {
-  /// Today's: rows on the page with hairlines, a tinted band between sections.
-  band,
+/// A row never looks selected at rest: hover / focus / highlight overlays are
+/// transparent (a web hover or a focus kept after a tap tinted the row); only
+/// the press splash shows.
+final WidgetStateProperty<Color?> _restingOverlay =
+    WidgetStateProperty.resolveWith(
+      (states) =>
+          states.contains(WidgetState.pressed) ? null : Colors.transparent,
+    );
 
-  /// The grouped prototype: a filled rounded container under a heading, rows
-  /// separated by a thin gap.
-  grouped,
-}
-
-/// The app-wide default [SectionStyle]. Flipping this one constant changes
-/// every detail page; the hub previews both without touching it.
-const SectionStyle kDefaultSectionStyle = SectionStyle.band;
-
-/// Sets the [SectionStyle] of every [SectionCard] below it (the hub's toggle).
-class SectionStyleScope extends InheritedWidget {
-  const SectionStyleScope({
-    required this.style,
-    required super.child,
-    super.key,
-  });
-
-  final SectionStyle style;
-
-  static SectionStyle of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<SectionStyleScope>()?.style ??
-      kDefaultSectionStyle;
-
-  @override
-  bool updateShouldNotify(SectionStyleScope old) => style != old.style;
-}
-
-/// Tells the [DetailRow]s of a grouped section whether the group has leading
-/// icons: if any row has one, every row reserves the slot so titles align.
+/// Tells the [DetailRow]s of a section whether it has leading icons: if any
+/// row has one, every row reserves the slot so titles align.
 class DetailGroupScope extends InheritedWidget {
   const DetailGroupScope({
     required this.reserveIcon,
@@ -258,40 +195,6 @@ class DetailGroupScope extends InheritedWidget {
   @override
   bool updateShouldNotify(DetailGroupScope old) =>
       reserveIcon != old.reserveIcon;
-}
-
-/// The separator between detail sections (#17): a tinted band, edge to
-/// edge. [SectionCard] puts one above itself; use it directly only where a
-/// page has a section that isn't a [SectionCard].
-///
-/// It breaks out of the page's side inset ([bleed] on each side) so pages
-/// keep their usual padded list.
-class SectionBand extends StatelessWidget {
-  const SectionBand({this.bleed = AppSpacing.lg, super.key});
-
-  /// How far past its box the band reaches on each side — the page's side
-  /// padding.
-  final double bleed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      child: SizedBox(
-        height: AppSpacing.sm,
-        child: LayoutBuilder(
-          builder: (context, box) => OverflowBox(
-            minWidth: box.maxWidth + bleed * 2,
-            maxWidth: box.maxWidth + bleed * 2,
-            child: ColoredBox(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              child: const SizedBox.expand(),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// The "add one more" row at the end of a [SectionCard] (a number, a
@@ -346,12 +249,19 @@ class DetailRow extends StatelessWidget {
   /// A picker row (owner 2026-10-11): `label  value ›`. An empty [value]
   /// keeps the row, with the muted [emptyText] ("ไม่ได้เลือก") — never
   /// hidden. The `›` shows while it can be tapped ([onTap] set).
+  ///
+  /// An ENTITY value (a category, wallet, person, event, tag — owner
+  /// 2026-10-12) is shown as that entity's chip: pass [valueChip] — an
+  /// `AppChip(size: ChipSize.chip, icon:, color:, label:)` (display, no tap) —
+  /// instead of [value]; empty stays the faint [emptyText].
   factory DetailRow.pick({
     required String label,
-    required String? value,
+    String? value,
+    Widget? valueChip,
     required String emptyText,
     VoidCallback? onTap,
     VoidCallback? onLongPress,
+    String? helper,
     Widget? leading,
     IconData? icon,
     bool locked = false,
@@ -360,6 +270,7 @@ class DetailRow extends StatelessWidget {
   }) => DetailRow(
     key: key,
     label: label,
+    helper: helper,
     leading: leading,
     icon: icon,
     locked: locked,
@@ -367,7 +278,7 @@ class DetailRow extends StatelessWidget {
     onTap: onTap,
     onLongPress: onLongPress,
     showChevron: onTap != null,
-    trailing: _PickValue(value: value, emptyText: emptyText),
+    trailing: _PickValue(value: value, chip: valueChip, emptyText: emptyText),
   );
 
   /// View mode: enter edit on this row (long-press).
@@ -459,7 +370,12 @@ class DetailRow extends StatelessWidget {
       ),
     );
     if (onTap == null && onLongPress == null) return row;
-    return InkWell(onTap: onTap, onLongPress: onLongPress, child: row);
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      overlayColor: _restingOverlay,
+      child: row,
+    );
   }
 }
 
@@ -486,13 +402,19 @@ class DetailPlaceholder extends StatelessWidget {
 
 /// [DetailRow.pick]'s value: the text, or the muted [emptyText].
 class _PickValue extends StatelessWidget {
-  const _PickValue({required this.value, required this.emptyText});
+  const _PickValue({
+    required this.value,
+    required this.chip,
+    required this.emptyText,
+  });
 
   final String? value;
+  final Widget? chip;
   final String emptyText;
 
   @override
   Widget build(BuildContext context) {
+    if (chip != null) return chip!;
     final empty = value == null || value!.isEmpty;
     if (empty) return DetailPlaceholder(emptyText);
     return Text(value!, maxLines: 1, overflow: TextOverflow.ellipsis);
@@ -500,18 +422,27 @@ class _PickValue extends StatelessWidget {
 }
 
 /// A row for long values: label on top, value full-width below. The
-/// value's text starts where the label does (owner 2026-10-11): an
-/// [InlineField] in here lets its padding hang out to the left
-/// ([DetailStackedValue]), so view-mode text isn't indented under the label.
+/// value follows the editable-text indent rule (owner 2026-10-12): an
+/// editable value's frame lines up with the label, its text indented by the
+/// frame's padding (in view AND edit, so nothing moves when the frame
+/// appears); a read-only value has no frame and sits flush with the label.
 class DetailStacked extends StatelessWidget {
-  const DetailStacked({required this.label, required this.child, super.key});
+  const DetailStacked({
+    required this.label,
+    required this.child,
+    this.onLongPress,
+    super.key,
+  });
 
   final String label;
   final Widget child;
 
+  /// View mode: enter edit on this block (long-press).
+  final VoidCallback? onLongPress;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final block = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
@@ -521,9 +452,15 @@ class DetailStacked extends StatelessWidget {
         children: [
           Text(label, style: detailLabelStyle(context)),
           const SizedBox(height: AppSpacing.xs),
-          DetailStackedValue(child: child),
+          child,
         ],
       ),
+    );
+    if (onLongPress == null) return block;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onLongPress,
+      child: block,
     );
   }
 }

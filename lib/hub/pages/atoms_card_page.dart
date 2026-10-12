@@ -16,53 +16,8 @@ Widget buildCardPage(BuildContext context) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      HubPlayground(
-        title: 'AppCard',
-        note:
-            'Every option AppCard has. color is the accent border / the tint '
-            'wash (accent and tinted need one); glyph is tinted only.',
-        controls: [
-          PlayChoice<AppCardStyle>('style', [
-            for (final s in AppCardStyle.values) (s.name, s),
-          ]),
-          PlayChoice<Color>('color', [
-            ('primary', scheme.primary),
-            ('tertiary', scheme.tertiary),
-            ('error', scheme.error),
-          ]),
-          const PlayBool('glyph'),
-          const PlayNum(
-            'glyphSize',
-            min: 48,
-            max: 136,
-            step: 8,
-            initialValue: 88,
-          ),
-          const PlayBool('selected'),
-          const PlayBool('onTap'),
-          PlayChoice<Color?>('borderColor', [
-            ('style default', null),
-            ('error', scheme.error),
-          ]),
-          const PlayNum('padding', min: 0, max: 32, step: 4, initialValue: 16),
-        ],
-        builder: (context, v) {
-          final style = v<AppCardStyle>('style');
-          return AppCard(
-            style: style,
-            color: v<Color>('color'),
-            glyph: v<bool>('glyph') ? AppIcons.budget : null,
-            glyphSize: v<double>('glyphSize'),
-            selected: v<bool>('selected'),
-            borderColor: v<Color?>('borderColor'),
-            borderWidth: v<Color?>('borderColor') == null ? null : 1.5,
-            onTap: v<bool>('onTap') ? () {} : null,
-            padding: EdgeInsets.all(v<double>('padding')),
-            child: Text('${style.name} card', style: text.bodyMedium),
-          );
-        },
-      ),
       HubInApp(
+        columns: 2,
         note: 'The real presets, each with the page that uses it.',
         uses: [
           HubUse(
@@ -131,6 +86,53 @@ Widget buildCardPage(BuildContext context) {
             ),
           ),
         ],
+      ),
+
+      HubPlayground(
+        title: 'AppCard',
+        note:
+            'Every option AppCard has. color is the accent border / the tint '
+            'wash (accent and tinted need one); glyph is tinted only.',
+        controls: [
+          PlayChoice<AppCardStyle>('style', [
+            for (final s in AppCardStyle.values) (s.name, s),
+          ]),
+          PlayChoice<Color>('color', [
+            ('primary', scheme.primary),
+            ('tertiary', scheme.tertiary),
+            ('error', scheme.error),
+          ]),
+          const PlayBool('glyph'),
+          const PlayNum(
+            'glyphSize',
+            min: 48,
+            max: 136,
+            step: 8,
+            initialValue: 88,
+          ),
+          const PlayBool('selected'),
+          const PlayBool('onTap'),
+          PlayChoice<Color?>('borderColor', [
+            ('style default', null),
+            ('error', scheme.error),
+          ]),
+          const PlayNum('padding', min: 0, max: 32, step: 4, initialValue: 16),
+        ],
+        builder: (context, v) {
+          final style = v<AppCardStyle>('style');
+          return AppCard(
+            style: style,
+            color: v<Color>('color'),
+            glyph: v<bool>('glyph') ? AppIcons.budget : null,
+            glyphSize: v<double>('glyphSize'),
+            selected: v<bool>('selected'),
+            borderColor: v<Color?>('borderColor'),
+            borderWidth: v<Color?>('borderColor') == null ? null : 1.5,
+            onTap: v<bool>('onTap') ? () {} : null,
+            padding: EdgeInsets.all(v<double>('padding')),
+            child: Text('${style.name} card', style: text.bodyMedium),
+          );
+        },
       ),
     ],
   );

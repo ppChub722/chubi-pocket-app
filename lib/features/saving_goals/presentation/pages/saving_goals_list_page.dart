@@ -37,45 +37,33 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       extendBodyBehindAppBar: true,
       body: TabSwitchBody(
         child: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(
-          builder: (context, state) => AsyncStateView(
+          builder: (context, state) => ListPageBody(
+            // Only the FIRST load shows the skeleton: a reload keeps the rows
+            // (a skeleton would kill a pull-to-refresh).
             loading:
-                state.status == SavingGoalsStatus.initial ||
-                state.status == SavingGoalsStatus.loading,
-            error: state.error,
+                (state.status == SavingGoalsStatus.initial ||
+                    state.status == SavingGoalsStatus.loading) &&
+                state.goals.isEmpty,
+            error: state.goals.isEmpty ? state.error : null,
             isEmpty: state.goals.isEmpty,
             onRetry: context.read<SavingGoalsCubit>().load,
-            skeleton: ListView(
-              children: [for (var i = 0; i < 3; i++) const SkeletonListTile()],
-            ),
+            topInset: AppSpacing.md,
             empty: EmptyView(
               icon: AppIcons.savingGoal,
               title: l.savingGoalsEmptyTitle,
               message: l.savingGoalsEmptyMessage,
               cta: AddTile(label: l.savingGoalsAddNew, onTap: _add),
             ),
-            builder: (context) => PullToRefresh(
-              onRefresh: () => context.read<SavingGoalsCubit>().load(),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                // Top: clear the floating top bar.
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  MediaQuery.paddingOf(context).top + AppSpacing.md,
-                  AppSpacing.lg,
-                  96 + MediaQuery.paddingOf(context).bottom,
+            children: [
+              for (final g in state.goals) ...[
+                SavingGoalCard(
+                  goal: g,
+                  onTap: () => context.push('/saving-goals/${g.id}'),
                 ),
-                children: [
-                  for (final g in state.goals) ...[
-                    SavingGoalCard(
-                      goal: g,
-                      onTap: () => context.push('/saving-goals/${g.id}'),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                  AddTile(label: l.savingGoalsAddNew, onTap: _add),
-                ],
-              ),
-            ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              AddTile(label: l.savingGoalsAddNew, onTap: _add),
+            ],
           ),
         ),
       ),

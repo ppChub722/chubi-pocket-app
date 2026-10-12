@@ -22,6 +22,7 @@ class ProjectsPage extends StatefulWidget {
 }
 
 class _ProjectsPageState extends State<ProjectsPage> {
+  final _search = TextEditingController();
   String _query = '';
   _Sort _sort = _Sort.recent;
 
@@ -31,6 +32,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<ProjectsCubit>().load();
     });
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   List<Project> _shown(List<Project> all) {
@@ -73,15 +80,20 @@ class _ProjectsPageState extends State<ProjectsPage> {
         child: BlocBuilder<ProjectsCubit, ProjectsState>(
           builder: (ctx, state) {
             final shown = _shown(state.projects);
-            return Column(
-              children: [
-                // Clear the floating top bar (ctx is inside the body).
-                SizedBox(height: MediaQuery.paddingOf(ctx).top),
-                AppInput.search(
-                  hint: l.projectsSearchHint,
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-                FilterBar(
+            final firstLoad =
+                state.status == ProjectsStatus.initial ||
+                state.status == ProjectsStatus.loading;
+            final nothingYet =
+                state.projects.isEmpty &&
+                state.statusFilter == 'active' &&
+                _query.trim().isEmpty;
+            final create = AddTile(label: l.projectsCreateNew, onTap: _create);
+            return ListPageBody(
+              header: [
+                ListToolbar(
+                  searchController: _search,
+                  searchHint: l.projectsSearchHint,
+                  onSearchChanged: (v) => setState(() => _query = v),
                   chips: [
                     OptionMenuAnchor<String>(
                       selected: state.statusFilter,
@@ -121,64 +133,33 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: AsyncStateView(
-                    loading:
-                        state.status == ProjectsStatus.initial ||
-                        state.status == ProjectsStatus.loading,
-                    error: state.error,
-                    isEmpty: state.projects.isEmpty,
-                    onRetry: ctx.read<ProjectsCubit>().load,
-                    // No top padding: the bar is already cleared above.
-                    skeleton: ListView(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.paddingOf(ctx).bottom,
-                      ),
-                      children: [
-                        for (var i = 0; i < 5; i++) const SkeletonListTile(),
-                      ],
+              ],
+              loading: firstLoad,
+              error: state.error,
+              isEmpty: shown.isEmpty,
+              onRetry: ctx.read<ProjectsCubit>().load,
+              // Nothing at all → create; filtered / searched to nothing →
+              // the no-match view.
+              empty: nothingYet
+                  ? EmptyView(
+                      icon: AppIcons.project,
+                      title: l.projectsEmptyTitle,
+                      message: l.projectsEmptyMessage,
+                      cta: create,
+                    )
+                  : EmptyView(
+                      icon: AppIcons.project,
+                      title: l.projectsNoMatch,
+                      message: '',
+                      cta: create,
                     ),
-                    // Another status filter with no rows → the list's no-match.
-                    empty: state.statusFilter == 'active'
-                        ? EmptyView(
-                            icon: AppIcons.project,
-                            title: l.projectsEmptyTitle,
-                            message: l.projectsEmptyMessage,
-                            cta: AddTile(
-                              label: l.projectsCreateNew,
-                              onTap: _create,
-                            ),
-                          )
-                        : null,
-                    builder: (context) => PullToRefresh(
-                      onRefresh: () => ctx.read<ProjectsCubit>().load(),
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.xs,
-                          AppSpacing.lg,
-                          96 + MediaQuery.paddingOf(context).bottom,
-                        ),
-                        children: [
-                          if (shown.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(AppSpacing.xl),
-                              child: Text(
-                                l.projectsNoMatch,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          for (final p in shown) ...[
-                            _ProjectCard(project: p, onTap: () => _open(p)),
-                            const SizedBox(height: AppSpacing.sm),
-                          ],
-                          AddTile(label: l.projectsCreateNew, onTap: _create),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              topInset: AppSpacing.xs,
+              children: [
+                for (final p in shown) ...[
+                  _ProjectCard(project: p, onTap: () => _open(p)),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                create,
               ],
             );
           },
@@ -205,61 +186,47 @@ class _ProjectCard extends StatelessWidget {
         l.projectMetaPlanned(moneyString(context, p.plannedAmount!)),
       if (p.type?.isNotEmpty ?? false) p.type!,
     ].join(' · ');
+    final text = Theme.of(context).textTheme;
     return AppCard(
-      child: InkWell(
+      child: ListRow(
+        dimmed: p.isLocked,
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
-              Opacity(
-                opacity: p.isLocked ? 0.6 : 1,
-                child: IconDisplay(
-                  type: IconType.project,
-                  size: 44,
-                  iconCode: p.iconCode,
-                ),
+        leading: IconDisplay(
+          type: IconType.project,
+          size: 44,
+          iconCode: p.iconCode,
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              p.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            if (p.description?.trim().isNotEmpty ?? false)
+              Text(
+                p.description!.trim(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text.bodyMedium,
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      p.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    if (p.description?.trim().isNotEmpty ?? false)
-                      Text(
-                        p.description!.trim(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    const SizedBox(height: 2),
-                    Text(
-                      meta,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              AppChip(
-                label: projectStatusLabel(l, p.status),
-                dot: true,
-                tone: projectStatusTone(p.status),
-                selected: true,
-                size: ChipSize.chip,
-              ),
-            ],
-          ),
+            Text(
+              meta,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+        trailing: AppChip(
+          label: projectStatusLabel(l, p.status),
+          dot: true,
+          tone: projectStatusTone(p.status),
+          selected: true,
+          size: ChipSize.chip,
         ),
       ),
     );

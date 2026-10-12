@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
@@ -281,7 +282,7 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
+    final locale = Localizations.localeOf(context).toLanguageTag();
 
     final canLeave = isSelf && !member.hasLeft && onLeave != null;
     // v1 rule (API §14): the owner may remove anyone but themselves (they
@@ -296,8 +297,9 @@ class _MemberRow extends StatelessWidget {
 
     final dates = <String>[
       if (member.joinedAt != null)
-        l.walletMemberJoined(_dateOnly(member.joinedAt!)),
-      if (member.leftAt != null) l.walletMemberLeft(_dateOnly(member.leftAt!)),
+        l.walletMemberJoined(_dateOnly(member.joinedAt!, locale)),
+      if (member.leftAt != null)
+        l.walletMemberLeft(_dateOnly(member.leftAt!, locale)),
     ];
     final Widget pill = member.pending
         ? AppChip(
@@ -314,7 +316,6 @@ class _MemberRow extends StatelessWidget {
             selected: true,
             size: ChipSize.chip,
           );
-    final destructive = TextStyle(color: scheme.error);
     return DetailRow(
       leading: UserAvatar(
         displayName: member.name,
@@ -344,13 +345,13 @@ class _MemberRow extends StatelessWidget {
                   SheetOption(
                     value: _MemberAction.remove,
                     label: l.walletRemoveMemberAction,
-                    labelStyle: destructive,
+                    destructive: true,
                   ),
                 if (canLeave)
                   SheetOption(
                     value: _MemberAction.leave,
                     label: l.walletLeave,
-                    labelStyle: destructive,
+                    destructive: true,
                   ),
               ],
               builder: (context, toggle) =>
@@ -361,8 +362,10 @@ class _MemberRow extends StatelessWidget {
     );
   }
 
-  static String _dateOnly(String iso) {
+  static String _dateOnly(String iso, String locale) {
     final t = iso.indexOf('T');
-    return t > 0 ? iso.substring(0, t) : iso;
+    final day = t > 0 ? iso.substring(0, t) : iso;
+    final d = DateFormatter.parseDay(day);
+    return d == null ? day : DateFormatter.medium(d, locale: locale);
   }
 }

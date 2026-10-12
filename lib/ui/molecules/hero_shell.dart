@@ -8,7 +8,7 @@ import '../tokens/app_spacing.dart';
 ///
 /// ```
 /// ┌──────────────────────────────── 16 ─┐
-/// │ [pill]·8·[pill]          [date]·8·✏️│  ← one row, controls 32 high
+/// │ [pill]·8·[pill]          [date]·8·✏️│  ← one row, controls 40 high
 /// │                12                   │
 /// │ title / amount row                  │
 /// └─────────────────────────────────────┘
@@ -28,7 +28,7 @@ abstract final class HeroSpacing {
 
   /// Every control in the card's top row is this tall (date chip, ✏️,
   /// type / shared pills — [ChipSize.control]).
-  static const double controlHeight = 32;
+  static const double controlHeight = 40;
 
   /// From the card to the next block on the page.
   static const double after = AppSpacing.lg;

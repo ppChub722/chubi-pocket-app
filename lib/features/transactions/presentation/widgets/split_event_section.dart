@@ -39,7 +39,7 @@ class SplitEventSlot {
 /// create: open by default); closed, the description line gives way to
 /// [summary] ("แบ่ง 2 คน · ทริปเชียงใหม่", or "ไม่ได้ตั้ง"). The transaction
 /// detail is never collapsible — always open, view and edit.
-class SplitEventSection extends StatefulWidget {
+class SplitEventSection extends StatelessWidget {
   const SplitEventSection({
     this.splits,
     this.event,
@@ -60,81 +60,30 @@ class SplitEventSection extends StatefulWidget {
   final bool first;
 
   @override
-  State<SplitEventSection> createState() => _SplitEventSectionState();
-}
-
-class _SplitEventSectionState extends State<SplitEventSection> {
-  late bool _open = !widget.collapsible || widget.initiallyOpen;
-
-  @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final e = widget.event;
-    final open = !widget.collapsible || _open;
-    final summary = widget.summary;
-
-    final header = Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: AppText(
-                  l.txSplitSectionTitle,
-                  role: AppTextRole.section,
-                ),
-              ),
-              if (widget.collapsible)
-                AppIcon(
-                  open ? AppIcons.collapse : AppIcons.expand,
-                  color: scheme.onSurfaceVariant,
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          open || !widget.collapsible
-              ? AppText(l.txSplitSectionHint, role: AppTextRole.caption)
-              : AppText(
-                  summary ?? l.draftExtrasNone,
-                  role: AppTextRole.caption,
-                  color: summary == null
-                      ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
-                      : scheme.onSurface,
-                  weight: summary == null ? null : FontWeight.w600,
-                  maxLines: 1,
-                ),
-        ],
-      ),
-    );
-
+    final e = event;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!widget.first) const SectionBand(),
-        widget.collapsible
-            ? InkWell(
-                onTap: () => setState(() => _open = !_open),
-                child: header,
-              )
-            : header,
-        if (open) ...[
-          ?widget.splits,
-          if (e != null)
-            EventRow(
-              name: e.name,
-              onTap: e.onTap,
-              onClear: e.onClear,
-              locked: e.locked,
-            ),
-        ],
+        if (!first) const SizedBox(height: AppSpacing.lg),
+        CollapsibleSection(
+          title: l.txSplitSectionTitle,
+          hint: l.txSplitSectionHint,
+          summary: summary ?? l.draftExtrasNone,
+          collapsible: collapsible,
+          initiallyOpen: initiallyOpen,
+          children: [
+            ?splits,
+            if (e != null)
+              EventRow(
+                name: e.name,
+                onTap: e.onTap,
+                onClear: e.onClear,
+                locked: e.locked,
+              ),
+          ],
+        ),
       ],
     );
   }

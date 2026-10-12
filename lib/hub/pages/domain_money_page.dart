@@ -139,6 +139,27 @@ class _MoneyPageState extends State<_MoneyPage> {
           ),
         ),
         HubDemo(
+          title: 'MoneyListTile — dimmed',
+          note: 'dimmed: faded (archived / cancelled / settled rows).',
+          child: Column(
+            children: [
+              MoneyListTile(
+                leading: const AppIcon(AppIcons.cash),
+                title: 'Salary',
+                amount: 32000,
+                onTap: () {},
+              ),
+              MoneyListTile(
+                leading: const AppIcon(AppIcons.cash),
+                title: 'Old subscription (cancelled)',
+                amount: -199,
+                dimmed: true,
+                onTap: () {},
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'DateGroupHeader + MoneyListTile',
           note:
               'A grouped list: date header with net total, income / expense '

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
 import '../hub_playground.dart';
 
 /// `/dev/organisms/reorder-charts` — the reorder kit, DonutChart and
-/// PairedBarChart.
+/// PairedBarChart. Real examples first, the playgrounds last.
 Widget buildReorderChartsPage(BuildContext context) =>
     const _ReorderChartsPage();
 
@@ -26,6 +25,7 @@ class _ReorderChartsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = ChartPalette.categorical(context);
     final palette = Theme.of(context).extension<AppColors>()!;
+    final text = Theme.of(context).textTheme;
     List<DonutSegment> segments(int n) => [
       for (var i = 0; i < n; i++)
         DonutSegment(
@@ -33,9 +33,186 @@ class _ReorderChartsPage extends StatelessWidget {
           color: i < colors.length ? colors[i] : ChartPalette.other(context),
         ),
     ];
+    Widget bars(List<BarPair> groups, {int? selected, double height = 96}) =>
+        PairedBarChart(
+          groups: groups,
+          colorA: palette.income,
+          colorB: palette.expense,
+          height: height,
+          selected: selected,
+        );
+    Widget center(String t) => Text(t, style: text.labelLarge);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        HubInApp(
+          columns: 2,
+          note:
+              'DonutChart — the real shapes, side by side. Slice colours come '
+              'from ChartPalette; colour is never the only cue.',
+          uses: [
+            HubUse(
+              label: '5 slices, total in the centre (the 5th is "other")',
+              page: 'Home (expense by category)',
+              child: Center(
+                child: DonutChart(
+                  size: 112,
+                  segments: segments(5),
+                  center: center('Total'),
+                ),
+              ),
+            ),
+            HubUse(
+              label: '3 slices — no folded "other"',
+              page: 'Home (a quiet month)',
+              child: Center(
+                child: DonutChart(
+                  size: 112,
+                  segments: segments(3),
+                  center: center('Total'),
+                ),
+              ),
+            ),
+            HubUse(
+              label: '1 slice — one category fills the ring',
+              page: 'Home (single category)',
+              child: Center(
+                child: DonutChart(
+                  size: 112,
+                  segments: segments(1),
+                  center: center('Total'),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'no data — the empty track',
+              page: 'Home (empty month)',
+              child: Center(
+                child: DonutChart(
+                  size: 112,
+                  segments: const [],
+                  center: center('฿0'),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'thick ring, no centre',
+              page: 'Option (thickness 24)',
+              child: Center(
+                child: DonutChart(
+                  size: 112,
+                  thickness: 24,
+                  segments: segments(4),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'small (80) — a tile',
+              page: 'Option (size 80)',
+              child: Center(
+                child: DonutChart(
+                  size: 80,
+                  thickness: 10,
+                  segments: segments(4),
+                  center: center('4'),
+                ),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'default size, total in the centre, legend beside it',
+              page: 'Home (expense by category)',
+              child: Row(
+                children: [
+                  DonutChart(segments: segments(5), center: center('Total')),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: Text(
+                      'Legend + amounts sit next to it; colour is never the '
+                      'only cue.',
+                      style: text.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'ChartPalette — categorical (4) + the grey "other"',
+              page: 'Every chart',
+              child: Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  for (final c in [...colors, ChartPalette.other(context)])
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: c,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        HubInApp(
+          columns: 2,
+          note:
+              'PairedBarChart — income vs expense per month; selected keeps '
+              'one group at full strength.',
+          uses: [
+            HubUse(
+              wide: true,
+              label: 'tappable months, one selected (onSelect)',
+              page: 'Home (income vs expense by month)',
+              child: _BarsDemo(months: _months),
+            ),
+            HubUse(
+              wide: true,
+              label: 'height 80, last month selected',
+              page: 'Home (compact)',
+              child: bars(_months, selected: 5, height: 80),
+            ),
+            HubUse(
+              label: 'display only, none selected',
+              page: 'Option (selected null)',
+              child: bars(_months.take(3).toList()),
+            ),
+            HubUse(
+              label: 'first group selected',
+              page: 'Option (selected 0)',
+              child: bars(_months.take(3).toList(), selected: 0),
+            ),
+            HubUse(
+              label: 'a single month',
+              page: 'Home (new account)',
+              child: bars([_months.last], selected: 0),
+            ),
+            HubUse(
+              label: 'tall (160)',
+              page: 'Option (height 160)',
+              child: bars(_months.take(3).toList(), selected: 1, height: 160),
+            ),
+          ],
+        ),
+        const HubInApp(
+          note:
+              'The reorder kit (ReorderController). Drag the handle; tap a row '
+              'for the move bar; long-press a collapsed parent while dragging '
+              'to expand it.',
+          uses: [
+            HubUse(
+              wide: true,
+              label: 'a 3-level tree, or a flat list in two sections',
+              page: 'Categories, Accounts (reorder mode)',
+              child: _ReorderDemo(),
+            ),
+          ],
+        ),
         HubPlayground(
           title: 'DonutChart',
           note:
@@ -69,53 +246,6 @@ class _ReorderChartsPage extends StatelessWidget {
             ),
           ),
         ),
-        HubInApp(
-          note: 'The real donut.',
-          uses: [
-            HubUse(
-              label: 'default size, total in the centre, legend beside it',
-              page: 'Home (expense by category)',
-              child: Row(
-                children: [
-                  DonutChart(
-                    segments: segments(5),
-                    center: const Text('Total'),
-                  ),
-                  const SizedBox(width: AppSpacing.lg),
-                  Expanded(
-                    child: Text(
-                      'Legend + amounts sit next to it; colour is never the '
-                      'only cue.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        HubDemo(
-          title: 'ChartPalette',
-          note:
-              'ChartPalette.categorical(context) gives the slice colours by '
-              'position (4, never cycled); ChartPalette.other(context) is the '
-              'grey for the folded "rest" slice. Follows light / dark.',
-          child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              for (final c in [...colors, ChartPalette.other(context)])
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: c,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
-                ),
-            ],
-          ),
-        ),
         HubPlayground(
           title: 'PairedBarChart',
           note:
@@ -143,24 +273,6 @@ class _ReorderChartsPage extends StatelessWidget {
             height: v<double>('height'),
             selected: v<int?>('selected'),
           ),
-        ),
-        HubInApp(
-          note: 'The real bar chart and the reorder kit.',
-          uses: [
-            HubUse(
-              label: 'tappable months, one selected (onSelect)',
-              page: 'Home (income vs expense by month)',
-              child: _BarsDemo(months: _months),
-            ),
-            const HubUse(
-              label:
-                  'ReorderController — a 3-level tree and a flat list in two '
-                  'sections. Drag the handle; tap a row for the move bar; '
-                  'long-press a collapsed parent while dragging to expand it.',
-              page: 'Categories, Accounts (reorder mode)',
-              child: _ReorderDemo(),
-            ),
-          ],
         ),
       ],
     );

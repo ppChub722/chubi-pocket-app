@@ -261,65 +261,154 @@ class _SheetsPageState extends State<_SheetsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HubPlayground(
-          title: 'showAppSheet',
-          note:
-              'The standard bottom sheet: a title, a body that scrolls and an '
-              'optional pinned footer. Set the options, then open it.',
-          controls: [
-            const PlayText('title', initialValue: 'Sheet title'),
-            const PlayBool('footer', initialValue: true),
-            const PlayNum(
-              'bodyLines',
-              min: 1,
-              max: 40,
-              step: 1,
-              initialValue: 3,
-            ),
-          ],
-          builder: (context, v) => Align(
-            alignment: Alignment.centerLeft,
-            child: AppButton(
-              label: 'Open the sheet',
-              onPressed: () => showAppSheet<void>(
-                context,
-                title: v<String>('title').isEmpty ? null : v<String>('title'),
-                builder: (_) => Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (var i = 0; i < v<double>('bodyLines').round(); i++)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: AppSpacing.xs,
-                          ),
-                          child: AppText('A line of the body.'),
-                        ),
-                    ],
-                  ),
-                ),
-                footer: v<bool>('footer')
-                    ? Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        child: Builder(
-                          builder: (ctx) => AppButton(
-                            label: 'Confirm',
-                            expand: true,
-                            onPressed: () => Navigator.of(ctx).pop(),
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-        ),
         const HubSubheading(
           'In the app',
           note: 'The real sheets and where they are used.',
+        ),
+        HubDemo(
+          title: 'showAppDatePicker + AppDatePickerSheet',
+          note:
+              'THE date picker: a bottom sheet with a calendar — tapping a day '
+              'picks it at once — plus "Today" and, when clearable, "Clear". '
+              'Replaces the raw Material date picker. Resolves with '
+              'AppDatePicked(date) / AppDateCleared / null (dismissed). Used by '
+              'the quick-create date, the scheduled next billing, a goal '
+              "deadline (clearable), a debt's payment date.",
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _demoButton('Pick a date', () async {
+                final r = await showAppDatePicker(
+                  context,
+                  initial: DateTime.now(),
+                );
+                _say(r is AppDatePicked ? r.date : r);
+              }),
+              _demoButton('Deadline (clearable, future only)', () async {
+                final now = DateTime.now();
+                final r = await showAppDatePicker(
+                  context,
+                  initial: now.add(const Duration(days: 90)),
+                  first: now,
+                  last: DateTime(now.year + 20),
+                  title: 'Deadline',
+                  clearable: true,
+                );
+                _say(r is AppDatePicked ? r.date : r);
+              }),
+            ],
+          ),
+        ),
+        HubDemo(
+          title:
+              'Sheets are organisms — the pattern (reference: the period sheet)',
+          note:
+              'Every sheet is SPLIT: a PRESENTATIONAL organism in lib/ui '
+              '(layout + inputs; takes data, words and callbacks; imports '
+              'nothing from features / cubits / repos) and a thin feature '
+              'WRAPPER that reads the cubit / repo, maps its model + l10n in, '
+              'and handles the result. Generic ones (no domain model) live in '
+              'lib/ui/organisms, money / people / transaction ones in '
+              'lib/ui/domain/…. Each is listed here with sample data and opens '
+              'live. Reference: PeriodPickerSheet (wrapper: transactions '
+              'period_sheet.dart).',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _demoButton('Period sheet (reference)', () async {
+                final now = DateTime.now();
+                final r = await showPeriodPickerSheet(
+                  context,
+                  current: PeriodPick(PeriodUnit.month, now),
+                  labels: const PeriodPickerLabels(
+                    title: 'Period',
+                    weekHint: 'Any day picks its whole week',
+                    day: 'Day',
+                    week: 'Week',
+                    month: 'Month',
+                    year: 'Year',
+                    all: 'All',
+                    custom: 'Custom',
+                  ),
+                );
+                _say(
+                  r == null ? null : '${r.unit.name} ${r.start} ${r.end ?? ''}',
+                );
+              }),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'showAppDateRangePicker + AppDateRangePickerSheet',
+          note:
+              'THE date RANGE picker, same sheet look as the date picker: tap a '
+              'day to start, another to end (tap again to start over), then '
+              'Save. Optional preset chips above the calendar. Resolves with a '
+              'DateTimeRange / null (dismissed). Used by the transactions '
+              'custom period.',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _demoButton('Pick a range', () async {
+                final r = await showAppDateRangePicker(context);
+                _say(r);
+              }),
+              _demoButton('With presets, up to today', () async {
+                final now = DateTime.now();
+                final today = DateTime(now.year, now.month, now.day);
+                final r = await showAppDateRangePicker(
+                  context,
+                  last: today,
+                  initial: DateTimeRange(
+                    start: today.subtract(const Duration(days: 6)),
+                    end: today,
+                  ),
+                  presets: [
+                    AppDateRangePreset(
+                      'Last 7 days',
+                      DateTimeRange(
+                        start: today.subtract(const Duration(days: 6)),
+                        end: today,
+                      ),
+                    ),
+                    AppDateRangePreset(
+                      'This month',
+                      DateTimeRange(
+                        start: DateTime(today.year, today.month),
+                        end: today,
+                      ),
+                    ),
+                  ],
+                );
+                _say(r);
+              }),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'Picker rows — chevron · destructive · disabled create',
+          note:
+              'PickerRow(chevron: true) opens something further (a bank row); '
+              'SheetOption(destructive: true) shows its label in the error '
+              'colour (remove, leave); PickerCreateRow(onTap: null) is dimmed '
+              '(while saving).',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PickerRow(title: 'Kasikorn Bank', chevron: true, onTap: () {}),
+              PickerRow(
+                title: 'Leave wallet',
+                titleStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                onTap: () {},
+              ),
+              const PickerCreateRow(label: 'New contact', onTap: null),
+            ],
+          ),
         ),
         HubDemo(
           title: 'Last result',
@@ -421,6 +510,63 @@ class _SheetsPageState extends State<_SheetsPage> {
           child: HubCell(
             caption: 'From the right, two sections + footer',
             child: _demoButton('Filters', _sideSheet),
+          ),
+        ),
+
+        HubPlayground(
+          title: 'showAppSheet',
+          note:
+              'The standard bottom sheet: a title, a body that scrolls and an '
+              'optional pinned footer. Set the options, then open it.',
+          controls: [
+            const PlayText('title', initialValue: 'Sheet title'),
+            const PlayBool('footer', initialValue: true),
+            const PlayNum(
+              'bodyLines',
+              min: 1,
+              max: 40,
+              step: 1,
+              initialValue: 3,
+            ),
+          ],
+          builder: (context, v) => Align(
+            alignment: Alignment.centerLeft,
+            child: AppButton(
+              label: 'Open the sheet',
+              onPressed: () => showAppSheet<void>(
+                context,
+                title: v<String>('title').isEmpty ? null : v<String>('title'),
+                builder: (_) => Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < v<double>('bodyLines').round(); i++)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: AppSpacing.xs,
+                          ),
+                          child: AppText('A line of the body.'),
+                        ),
+                    ],
+                  ),
+                ),
+                footer: v<bool>('footer')
+                    ? Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Builder(
+                          builder: (ctx) => AppButton(
+                            label: 'Confirm',
+                            expand: true,
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            ),
           ),
         ),
       ],

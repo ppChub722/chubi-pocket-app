@@ -84,6 +84,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get commonSearch => 'ค้นหา';
 
   @override
+  String get uiPickDate => 'เลือกวันที่';
+
+  @override
   String get commonToday => 'วันนี้';
 
   @override

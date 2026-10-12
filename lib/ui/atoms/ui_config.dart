@@ -24,6 +24,9 @@ class UiStrings {
     this.monthPickerTitle = 'Pick a month',
     this.monthPrev = 'Previous month',
     this.monthNext = 'Next month',
+    this.currencySymbol = '฿',
+    this.pickDate = 'Pick a date',
+    this.today = 'Today',
     this.periodPrev = 'Previous',
     this.periodNext = 'Next',
     this.yearPrev = 'Previous year',
@@ -34,6 +37,8 @@ class UiStrings {
     this.dayLastShort = 'Last',
     this.dayEveryMonth = _dayEveryMonth,
     this.manageTitle = 'Manage',
+    this.fieldName = 'Name',
+    this.fieldDescription = 'Description',
     this.recordCreated = 'Created',
     this.recordUpdated = 'Last edited',
     this.reorderOutdent = 'Move out a level',
@@ -48,6 +53,10 @@ class UiStrings {
   final String undo;
   final String search;
   final String retry;
+
+  /// The small field-name labels of an entity hero in create / edit mode.
+  final String fieldName;
+  final String fieldDescription;
   final String clear;
   final String edit;
 
@@ -63,6 +72,11 @@ class UiStrings {
   final String monthPickerTitle;
   final String monthPrev;
   final String monthNext;
+
+  /// The user's single currency symbol (the amount input's prefix).
+  final String currencySymbol;
+  final String pickDate;
+  final String today;
   final String periodPrev;
   final String periodNext;
   final String yearPrev;

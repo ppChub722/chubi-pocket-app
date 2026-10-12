@@ -3,9 +3,10 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// DetailStacked's value text starts where its label starts (owner
-/// 2026-10-11), in view AND edit mode; an InlineField elsewhere keeps its
-/// inner padding.
+/// The editable-text indent rule (owner 2026-10-12), under a DetailStacked
+/// label: an EDITABLE value's frame starts at the label and its text is
+/// indented by the frame padding — in view AND edit, so nothing moves; a
+/// read-only value (no frame) is flush with the label.
 void main() {
   Future<void> pump(WidgetTester t, Widget child) => t.pumpWidget(
     MaterialApp(
@@ -15,22 +16,48 @@ void main() {
     ),
   );
 
-  for (final editing in [false, true]) {
-    testWidgets('under a DetailStacked label (editing: $editing)', (t) async {
+  testWidgets('editable: the text is indented the same in view and edit', (
+    t,
+  ) async {
+    final xs = <double>[];
+    for (final editing in [false, true]) {
       final c = TextEditingController(text: 'note');
       addTearDown(c.dispose);
       await pump(
         t,
         DetailStacked(
           label: 'LABEL',
-          child: AppInput.inline(editing: editing, controller: c),
+          child: AppInput.inline(
+            editing: editing,
+            controller: c,
+            onEnterEdit: () {},
+          ),
         ),
       );
       final label = t.getTopLeft(find.text('LABEL')).dx;
-      final text = t.getTopLeft(find.byType(EditableText)).dx;
-      expect(text, moreOrLessEquals(label, epsilon: 0.5));
-    });
-  }
+      xs.add(t.getTopLeft(find.byType(EditableText)).dx - label);
+      // The frame's left edge lines up with the label.
+      expect(t.getTopLeft(find.byType(AppInput)).dx, closeTo(label, 0.5));
+    }
+    expect(xs[0], closeTo(xs[1], 0.5), reason: 'nothing moves into edit');
+    expect(xs[0], closeTo(16, 0.5));
+  });
+
+  testWidgets('read-only: no frame, the text is flush with the label', (
+    t,
+  ) async {
+    final c = TextEditingController(text: 'note');
+    addTearDown(c.dispose);
+    await pump(
+      t,
+      DetailStacked(
+        label: 'LABEL',
+        child: AppInput.inline(editing: false, controller: c),
+      ),
+    );
+    final label = t.getTopLeft(find.text('LABEL')).dx;
+    expect(t.getTopLeft(find.byType(EditableText)).dx, closeTo(label, 0.5));
+  });
 
   testWidgets('outside DetailStacked: the inner padding stays', (t) async {
     final c = TextEditingController(text: 'x');

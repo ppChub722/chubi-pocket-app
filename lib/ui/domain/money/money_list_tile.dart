@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../tokens/app_spacing.dart';
+import '../../atoms/list_break.dart';
 import 'money_text.dart';
 
 /// A money row: leading visual, title, subtitle line, signed amount on the
@@ -16,6 +17,7 @@ class MoneyListTile extends StatelessWidget {
     this.tone = MoneyTone.signed,
     this.amountCaption,
     this.onTap,
+    this.dimmed = false,
     this.padding = const EdgeInsets.symmetric(
       horizontal: AppSpacing.lg,
       vertical: AppSpacing.sm,
@@ -38,13 +40,16 @@ class MoneyListTile extends StatelessWidget {
   /// Small text under the amount ("ติดคุณ", "หาร 3").
   final String? amountCaption;
   final VoidCallback? onTap;
+
+  /// Faded (archived / cancelled / settled rows), like [ListRow.dimmed].
+  final bool dimmed;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    return InkWell(
+    final tile = InkWell(
       onTap: onTap,
       child: Padding(
         padding: padding,
@@ -113,11 +118,12 @@ class MoneyListTile extends StatelessWidget {
         ),
       ),
     );
+    return dimmed ? Opacity(opacity: 0.55, child: tile) : tile;
   }
 }
 
 /// Date group header for chronological lists: "วันนี้ · −฿540".
-class DateGroupHeader extends StatelessWidget {
+class DateGroupHeader extends StatelessWidget implements ListBreak {
   const DateGroupHeader({required this.label, this.total, super.key});
 
   final String label;

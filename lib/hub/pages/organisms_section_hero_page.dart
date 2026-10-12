@@ -6,6 +6,9 @@ import '../hub_playground.dart';
 /// `/dev/organisms/section-hero` — HeaderCard, the detail-page sections
 /// (SectionCard / ManageSection / DetailMeta), LockedInEdit and SummaryStats.
 /// (ProgressRow lives on molecules/feedback, IconTile on atoms/badge-avatar.)
+///
+/// Real examples first (every piece, many variants side by side), the
+/// playgrounds last.
 Widget buildSectionHeroPage(BuildContext context) => const _SectionHeroPage();
 
 class _SectionHeroPage extends StatefulWidget {
@@ -65,9 +68,386 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
       selected: true,
     );
 
+    Widget recent({bool locked = false}) => LockedInEdit(
+      locked: locked,
+      child: SectionCard(
+        first: true,
+        title: 'Recent transactions',
+        children: [
+          DetailRow(
+            label: 'Lunch',
+            trailing: MoneyText(120, tone: MoneyTone.expense),
+            onTap: noop,
+          ),
+        ],
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        HubInApp(
+          note:
+              'HeaderCard — the real combinations (full width: the hero is '
+              'always the width of the page).',
+          uses: [
+            HubUse(
+              wide: true,
+              label: 'chips + adjust action + pencil + money footer',
+              page: 'Account detail, Budget detail',
+              child: HeaderCard(
+                accent: palette.expense,
+                topRow: [
+                  AppChip(
+                    label: 'Expense',
+                    icon: AppIcons.expense,
+                    color: palette.expense,
+                    selected: true,
+                  ),
+                  chips(),
+                ],
+                topActions: [
+                  AppChip(
+                    icon: AppIcons.reset,
+                    label: 'Adjust',
+                    tone: AppChipTone.primary,
+                    selected: true,
+                    onTap: noop,
+                  ),
+                ],
+                onEdit: noop,
+                leading: const IconDisplay(type: IconType.category, size: 52),
+                title: const Text('Food'),
+                subtitle: const Text('Food › Main meals'),
+                footer: MoneyText(6200, style: big),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'no chips — the row collapses, pencil level with title',
+              page: 'Contact detail',
+              child: HeaderCard(
+                topRow: const [],
+                onEdit: noop,
+                leading: const UserAvatar(displayName: 'Lee', size: 52),
+                title: const Text('Lee'),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'onTap — the whole card is tappable',
+              page: 'Debt person page',
+              child: HeaderCard(
+                onTap: noop,
+                leading: const IconDisplay(type: IconType.account, size: 44),
+                title: const Text('Primary (default), tappable'),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'success accent + goal-reached chip + progress footer',
+              page: 'Saving goal detail',
+              child: HeaderCard(
+                accent: palette.success,
+                topRow: const [
+                  AppChip(
+                    label: 'Goal reached',
+                    icon: AppIcons.success,
+                    tone: AppChipTone.success,
+                    selected: true,
+                  ),
+                ],
+                onEdit: noop,
+                leading: const IconDisplay(type: IconType.account, size: 44),
+                title: const Text('Japan trip'),
+                footer: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    MoneyText(
+                      30000,
+                      style: big?.copyWith(color: palette.success),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ProgressRow(
+                      value: 1,
+                      color: palette.success,
+                      trailing: '100%',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'error accent + trailing status pill',
+              page: 'Scheduled transaction detail (overdue)',
+              child: HeaderCard(
+                accent: scheme.error,
+                leading: const IconDisplay(type: IconType.account, size: 44),
+                title: const Text('Overdue'),
+                subtitle: const Text('accent: scheme.error'),
+                trailing: const AppChip(
+                  label: 'Late',
+                  tone: AppChipTone.danger,
+                  selected: true,
+                ),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'watermark glyph + income accent',
+              page: 'Category detail',
+              child: HeaderCard(
+                accent: palette.income,
+                glyph: AppIcons.category,
+                topRow: [
+                  AppChip(
+                    label: 'Income',
+                    icon: AppIcons.income,
+                    color: palette.income,
+                    selected: true,
+                  ),
+                ],
+                onEdit: noop,
+                leading: const IconDisplay(type: IconType.category, size: 52),
+                title: const Text('Salary'),
+                subtitle: const Text('Category'),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label:
+                  'Name · description (muted, max 2 lines, ellipsis) · status chip '
+                  '— the description is hidden when empty',
+              page: 'Every detail page (HeaderCard.description)',
+              child: HeaderCard(
+                accent: palette.primary,
+                glyph: AppIcons.contact,
+                leading: const IconDisplay(type: IconType.category, size: 44),
+                title: const Text('Lee'),
+                description: HeroDescription(
+                  controller: TextEditingController(
+                    text:
+                        'Flatmate in Bangkok; shares the electricity bill and '
+                        'the internet, pays on the 5th of each month.',
+                  ),
+                  editing: false,
+                  hint: 'Description',
+                ),
+                subtitle: const AppChip(
+                  label: 'Linked',
+                  tone: AppChipTone.success,
+                  selected: true,
+                  size: ChipSize.chip,
+                ),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'HeroStyle.plain — no wash, no watermark',
+              page: 'An option (HeaderCard.heroStyle)',
+              child: const HeaderCard(
+                heroStyle: HeroStyle.plain(),
+                leading: IconDisplay(type: IconType.account, size: 44),
+                title: Text('Plain hero'),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'HeroStyle.tinted, soft border',
+              page: 'Transaction detail, Account detail',
+              child: HeaderCard(
+                heroStyle: HeroStyle.tinted(
+                  color: palette.expense,
+                  glyph: AppIcons.budget,
+                  strongBorder: false,
+                ),
+                accent: palette.expense,
+                leading: const IconDisplay(type: IconType.category, size: 44),
+                title: const Text('Soft border'),
+              ),
+            ),
+            for (final (label, code) in [
+              (
+                'Tint = the icon\x27s first background colour (a gradient uses its first stop)',
+                const IconCode(bgColors: ['#7E57C2', '#26A69A']),
+              ),
+              (
+                'A pale icon colour: the border and glyph are clamped to 3:1',
+                const IconCode(bgColors: ['#FFF59D']),
+              ),
+              (
+                'No custom icon: the entity\x27s semantic fallback (here the type colour)',
+                null,
+              ),
+            ])
+              HubUse(
+                wide: true,
+                label: label,
+                page: 'Every hero / tinted card — IconCode.tintFor',
+                child: HeaderCard(
+                  accent: code.tintFor(palette, fallback: palette.income),
+                  glyph: AppIcons.category,
+                  leading: const IconDisplay(type: IconType.category, size: 44),
+                  title: const Text('Tinted by the icon'),
+                ),
+              ),
+          ],
+        ),
+        HubInApp(
+          columns: 2,
+          note:
+              'ManageSection — just the archive / delete buttons (no heading, no box), edit mode only, at the bottom before the record info.',
+          uses: [
+            HubUse(
+              label: 'archive + delete',
+              page: 'Budget, Saving goal, Account, Project detail',
+              child: ManageSection(
+                first: true,
+                archiveLabel: 'Archive',
+                onArchive: noop,
+                deleteLabel: 'Delete',
+                onDelete: noop,
+              ),
+            ),
+            HubUse(
+              label: 'delete only (no archive)',
+              page: 'Contact, Category detail',
+              child: ManageSection(
+                first: true,
+                deleteLabel: 'Delete',
+                onDelete: noop,
+              ),
+            ),
+            HubUse(
+              label: 'disabled while saving — callbacks null',
+              page: 'Every detail page while saving',
+              child: const ManageSection(
+                first: true,
+                archiveLabel: 'Archive',
+                deleteLabel: 'Delete',
+              ),
+            ),
+            HubUse(
+              label: 'not first — gap above',
+              page: 'Under other sections',
+              child: ManageSection(
+                archiveLabel: 'Archive',
+                onArchive: noop,
+                deleteLabel: 'Delete',
+                onDelete: noop,
+              ),
+            ),
+          ],
+        ),
+        HubInApp(
+          columns: 2,
+          note:
+              'LockedInEdit — wraps whatever is not being edited. Unlocked vs '
+              'locked side by side.',
+          uses: [
+            HubUse(
+              label: 'unlocked — view mode',
+              page: 'Account, Budget, Project detail',
+              child: recent(),
+            ),
+            HubUse(
+              label: 'locked — the hero is in edit',
+              page: 'Account, Budget, Project detail',
+              child: recent(locked: true),
+            ),
+          ],
+        ),
+        HubInApp(
+          columns: 2,
+          note: 'DetailMeta — muted record info at the very bottom.',
+          uses: [
+            const HubUse(
+              label: 'saved + edited',
+              page: 'Every detail page',
+              child: DetailMeta(
+                lines: [
+                  'Saved 10 Oct 2026 14:05',
+                  'Last edited 11 Oct 2026 09:12',
+                ],
+              ),
+            ),
+            const HubUse(
+              label: 'never edited — one line',
+              page: 'Every detail page (fresh record)',
+              child: DetailMeta(lines: ['Saved 10 Oct 2026 14:05']),
+            ),
+            const HubUse(
+              label: 'with the author',
+              page: 'Shared wallet, Project detail',
+              child: DetailMeta(
+                lines: [
+                  'Saved by Mint',
+                  'Saved 10 Oct 2026 14:05',
+                  'Last edited 11 Oct 2026 09:12',
+                ],
+              ),
+            ),
+            const HubUse(
+              label: 'no lines — renders nothing',
+              page: 'Edit mode of a new record',
+              child: DetailMeta(lines: []),
+            ),
+          ],
+        ),
+        HubInApp(
+          note: 'SummaryStats — labelled amounts in a row.',
+          uses: [
+            const HubUse(
+              wide: true,
+              label: 'normal, 3 stats — in a card',
+              page: 'Home, Account summary, Project totals',
+              child: AppCard(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: SummaryStats(stats: _stats),
+                ),
+              ),
+            ),
+            HubUse(
+              wide: true,
+              label: 'normal, 2 stats — in a card',
+              page: 'Event summary, Budget period',
+              child: AppCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: SummaryStats(stats: _stats.take(2).toList()),
+                ),
+              ),
+            ),
+            const HubUse(
+              wide: true,
+              label: 'compact — one-line strip, 3 stats',
+              page: 'Transactions list (filtered)',
+              child: SummaryStats(stats: _stats, compact: true),
+            ),
+            HubUse(
+              wide: true,
+              label: 'compact — 2 stats',
+              page: 'Debts list, Event transactions',
+              child: SummaryStats(
+                stats: _stats.take(2).toList(),
+                compact: true,
+              ),
+            ),
+          ],
+        ),
+        HubInApp(
+          note: 'The detail page — sections composed (view ⇄ edit).',
+          uses: [
+            HubUse(
+              wide: true,
+              label: 'hero + sections + manage + meta',
+              page: 'All detail pages',
+              child: _samplePage(context, big),
+            ),
+          ],
+        ),
         HubPlayground(
           title: 'HeaderCard',
           note:
@@ -166,114 +546,6 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
             );
           },
         ),
-        HubInApp(
-          note: 'The real HeaderCard combinations.',
-          uses: [
-            HubUse(
-              label: 'chips + adjust action + pencil + money footer',
-              page: 'Account detail, Budget detail',
-              child: HeaderCard(
-                accent: palette.expense,
-                topRow: [
-                  AppChip(
-                    label: 'Expense',
-                    icon: AppIcons.expense,
-                    color: palette.expense,
-                    selected: true,
-                  ),
-                  chips(),
-                ],
-                topActions: [
-                  AppChip(
-                    icon: AppIcons.reset,
-                    label: 'Adjust',
-                    tone: AppChipTone.primary,
-                    selected: true,
-                    onTap: noop,
-                  ),
-                ],
-                onEdit: noop,
-                leading: const IconDisplay(type: IconType.category, size: 52),
-                title: const Text('Food'),
-                subtitle: const Text('Food › Main meals'),
-                footer: MoneyText(6200, style: big),
-              ),
-            ),
-            HubUse(
-              label: 'no chips — the row collapses, pencil level with title',
-              page: 'Contact detail',
-              child: HeaderCard(
-                topRow: const [],
-                onEdit: noop,
-                leading: const UserAvatar(displayName: 'Lee', size: 52),
-                title: const Text('Lee'),
-                subtitle: const Text('Contact'),
-              ),
-            ),
-            HubUse(
-              label: 'onTap — the whole card is tappable',
-              page: 'Debt person page',
-              child: HeaderCard(
-                onTap: noop,
-                leading: const IconDisplay(type: IconType.account, size: 44),
-                title: const Text('Primary (default), tappable'),
-              ),
-            ),
-            HubUse(
-              label: 'success accent + goal-reached chip + progress footer',
-              page: 'Saving goal detail',
-              child: HeaderCard(
-                accent: palette.success,
-                topRow: const [
-                  AppChip(
-                    label: 'Goal reached',
-                    icon: AppIcons.success,
-                    tone: AppChipTone.success,
-                    selected: true,
-                  ),
-                ],
-                onEdit: noop,
-                leading: const IconDisplay(type: IconType.account, size: 44),
-                title: const Text('Japan trip'),
-                footer: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    MoneyText(
-                      30000,
-                      style: big?.copyWith(color: palette.success),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ProgressRow(
-                      value: 1,
-                      color: palette.success,
-                      trailing: '100%',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'error accent + trailing status pill',
-              page: 'Scheduled transaction detail (overdue)',
-              child: HeaderCard(
-                accent: scheme.error,
-                leading: const IconDisplay(type: IconType.account, size: 44),
-                title: const Text('Overdue'),
-                subtitle: const Text('accent: scheme.error'),
-                trailing: const AppChip(
-                  label: 'Late',
-                  tone: AppChipTone.danger,
-                  selected: true,
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'detail page — sections composed',
-              page: 'All detail pages',
-              child: _samplePage(context, big),
-            ),
-          ],
-        ),
         HubPlayground(
           title: 'ManageSection',
           note:
@@ -299,40 +571,6 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               onDelete: disabled ? null : noop,
             );
           },
-        ),
-        HubInApp(
-          note: 'The real ManageSection combinations.',
-          uses: [
-            HubUse(
-              label: 'archive + delete',
-              page: 'Budget, Saving goal, Account, Project detail',
-              child: ManageSection(
-                first: true,
-                archiveLabel: 'Archive',
-                onArchive: noop,
-                deleteLabel: 'Delete',
-                onDelete: noop,
-              ),
-            ),
-            HubUse(
-              label: 'delete only (entity has no archive)',
-              page: 'Contact, Category detail',
-              child: ManageSection(
-                first: true,
-                deleteLabel: 'Delete',
-                onDelete: noop,
-              ),
-            ),
-            HubUse(
-              label: 'disabled while saving — callbacks null',
-              page: 'Every detail page while saving',
-              child: const ManageSection(
-                first: true,
-                archiveLabel: 'Archive',
-                deleteLabel: 'Delete',
-              ),
-            ),
-          ],
         ),
         HubPlayground(
           title: 'DetailMeta',
@@ -398,28 +636,6 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
             ),
           ),
         ),
-        HubInApp(
-          note: 'LockedInEdit wraps whatever is not being edited.',
-          uses: [
-            HubUse(
-              label: 'locked — transactions list while the hero is in edit',
-              page: 'Account, Budget, Project detail',
-              child: LockedInEdit(
-                locked: true,
-                child: SectionCard(
-                  first: true,
-                  title: 'Recent transactions',
-                  children: [
-                    DetailRow(
-                      label: 'Lunch',
-                      trailing: MoneyText(120, tone: MoneyTone.expense),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
         HubPlayground(
           title: 'SummaryStats',
           note:
@@ -434,26 +650,6 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
             stats: _stats.take(v<double>('count').round()).toList(),
             compact: v<bool>('compact'),
           ),
-        ),
-        HubInApp(
-          note: 'The real SummaryStats uses.',
-          uses: [
-            HubUse(
-              label: 'normal — in a card',
-              page: 'Home, Account summary, Project totals',
-              child: const AppCard(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: SummaryStats(stats: _stats),
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'compact — one-line strip',
-              page: 'Transactions list (filtered)',
-              child: const SummaryStats(stats: _stats, compact: true),
-            ),
-          ],
         ),
       ],
     );

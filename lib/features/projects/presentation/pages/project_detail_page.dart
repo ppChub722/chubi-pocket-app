@@ -51,6 +51,12 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
   ApiException? _error;
   _Tab _tab = _Tab.dashboard;
 
+  /// The hero (the compact bar watches it), the page's outer scroll and the
+  /// tab pager.
+  final _heroKey = GlobalKey();
+  final _outerScroll = ScrollController();
+  final _pages = PageController();
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +72,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     for (final f in _focus.values) {
       f.dispose();
     }
+    _outerScroll.dispose();
+    _pages.dispose();
     super.dispose();
   }
 
@@ -194,19 +202,10 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   // ── Status / members / rows ─────────────────────────────────────────
 
-  Future<void> _changeStatus() async {
+  Future<void> _changeStatus(ProjectStatus next) async {
     final l = AppLocalizations.of(context)!;
     final current = _view!.project.status;
-    final next = await showOptionSheet<ProjectStatus>(
-      context,
-      title: l.projectStatusChangeTitle,
-      selected: current,
-      options: [
-        for (final s in ProjectStatus.values)
-          SheetOption(value: s, label: projectStatusLabel(l, s)),
-      ],
-    );
-    if (next == null || next == current || !mounted) return;
+    if (next == current || !mounted) return;
     final locks =
         next == ProjectStatus.cancelled || next == ProjectStatus.archived;
     if (locks) {
@@ -253,6 +252,19 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
   // ── Build ───────────────────────────────────────────────────────────
 
+  void _goTab(_Tab t) => setState(() => _tab = t);
+
+  void _scrollToHero() {
+    if (!_outerScroll.hasClients) return;
+    _outerScroll.animateTo(
+      0,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : AppDurations.chrome,
+      curve: AppDurations.chromeCurve,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -261,16 +273,22 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       return Scaffold(
         appBar: AppTopBar(title: l.navProjects, showBack: true),
         extendBodyBehindAppBar: true,
-        body: _error != null
-            ? ErrorView(error: _error!, onRetry: _load)
-            : Builder(
-                builder: (context) => Padding(
-                  padding: EdgeInsets.only(
-                    top: MediaQuery.paddingOf(context).top,
-                  ),
-                  child: const LoadingView(),
-                ),
+        // Builder: the bar height is only in the body's MediaQuery.
+        body: Builder(
+          builder: (context) => Padding(
+            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+            child: AsyncStateView.fallback(
+              loading: _error == null,
+              error: _error,
+              onRetry: _load,
+              notFound: EmptyView(
+                icon: AppIcons.empty,
+                title: l.navProjects,
+                message: '',
               ),
+            ),
+          ),
+        ),
       );
     }
     final p = v.project;
@@ -281,6 +299,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       if (p.isResolveReady)
         AppTab(value: _Tab.resolve, label: l.projectTabResolve),
     ];
+    final values = [for (final t in tabs) t.value];
+    // Edit mode lives on แดชบอร์ด (the tabs are locked while editing).
+    if (isEditing || !values.contains(_tab)) _tab = _Tab.dashboard;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final style = HeroStyle.tinted(
+      color: working.iconCode.tintFor(palette),
+      glyph: AppIcons.project,
+    );
     return editScope(
       Scaffold(
         appBar: AppTopBar(
@@ -296,67 +322,119 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           key: _formKey,
           // Builder: the bar height is only in the body's MediaQuery.
           child: Builder(
-            builder: (context) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header (+ edit fields + delete) scrolls on its own and only
-                // takes the room it needs — when space runs short (keyboard
-                // up in edit mode on a small phone) it scrolls instead of
-                // overflowing; the tabs get the rest.
-                Flexible(
-                  flex: isEditing ? 3 : 1,
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      MediaQuery.paddingOf(context).top + AppSpacing.sm,
-                      AppSpacing.lg,
-                      0,
+            builder: (context) {
+              final scheme = Theme.of(context).colorScheme;
+              final texts = _texts(l, v);
+              // The hero (+ info) scrolls away; the tab bar pins right under
+              // the top bar; each tab scrolls inside. Once the hero is gone
+              // the compact bar floats under the tabs (tap: back to it).
+              return Padding(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.paddingOf(context).top,
+                ),
+                child: CompactHeroScope(
+                  heroKey: _heroKey,
+                  top: isEditing ? 0 : PinnedTabBarDelegate.height,
+                  bar: CompactHeroBar(
+                    style: style,
+                    leading: IconDisplay(
+                      type: IconType.project,
+                      size: 28,
+                      iconCode: p.iconCode,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _header(l, v),
-                        ?_texts(l, v),
-                        // Delete sits under the edit-mode info (the tabs below
-                        // are locked while editing, so this is the page's last
-                        // live row).
-                        if (isEditing) ...[
-                          ManageSection(
-                            deleteLabel: l.projectDeleteThis,
-                            onDelete: isSaving ? null : _delete,
+                    title: Text(p.name),
+                    trailing: AppChip(
+                      label: projectStatusLabel(l, p.status),
+                      dot: true,
+                      tone: projectStatusTone(p.status),
+                      selected: true,
+                      size: ChipSize.chip,
+                    ),
+                    onTap: _scrollToHero,
+                  ),
+                  child: NestedScrollView(
+                    controller: _outerScroll,
+                    headerSliverBuilder: (context, _) => [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.lg,
+                            AppSpacing.lg,
+                            0,
                           ),
-                          DetailMeta(
-                            lines: detailMetaLines(
-                              context,
-                              createdAt: p.createdAt,
-                              updatedAt: p.updatedAt,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              KeyedSubtree(
+                                key: _heroKey,
+                                child: _header(l, v, style),
+                              ),
+                              if (texts != null) ...[
+                                const SizedBox(height: HeroSpacing.after),
+                                texts,
+                              ],
+                              if (lock != null && !isEditing) ...[
+                                const SizedBox(height: AppSpacing.lg),
+                                AppMessage(
+                                  message: lock,
+                                  tone: Tone.neutral,
+                                  icon: AppIcons.lock,
+                                ),
+                              ],
+                              // Delete sits under the edit-mode info (the
+                              // tabs below are locked while editing, so this
+                              // is the page's last live row).
+                              if (isEditing) ...[
+                                ManageSection(
+                                  deleteLabel: l.projectDeleteThis,
+                                  onDelete: isSaving ? null : _delete,
+                                ),
+                                DetailMeta(
+                                  lines: detailMetaLines(
+                                    context,
+                                    createdAt: p.createdAt,
+                                    updatedAt: p.updatedAt,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (!isEditing)
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: HeroSpacing.after),
+                        ),
+                      if (!isEditing)
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: PinnedTabBarDelegate(
+                            background: scheme.surface,
+                            child: AppTabBar<_Tab>(
+                              selected: _tab,
+                              onChanged: _goTab,
+                              pager: _pages,
+                              tabs: tabs,
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                if (lock != null && !isEditing) _LockBanner(message: lock),
-                const SizedBox(height: AppSpacing.sm),
-                Expanded(
-                  child: LockedInEdit(
-                    locked: isEditing,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        AppTabBar<_Tab>(
-                          selected: _tab,
-                          onChanged: (t) => setState(() => _tab = t),
-                          tabs: tabs,
                         ),
-                        Expanded(child: _tabBody(l, v)),
-                      ],
+                    ],
+                    body: LockedInEdit(
+                      locked: isEditing,
+                      child: AppTabPager<_Tab>(
+                        controller: _pages,
+                        values: values,
+                        selected: _tab,
+                        onChanged: _goTab,
+                        enabled: !isEditing,
+                        builder: (context, t) => _tabBody(l, v, t),
+                      ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
         bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
@@ -364,11 +442,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     );
   }
 
-  Widget _tabBody(AppLocalizations l, ProjectView v) => switch (_tab) {
+  Widget _tabBody(AppLocalizations l, ProjectView v, _Tab t) => switch (t) {
     _Tab.dashboard => ProjectDashboardTab(
       view: v,
       onChanged: _load,
-      onSeeAll: () => setState(() => _tab = _Tab.transactions),
+      onSeeAll: () => _goTab(_Tab.transactions),
       onAdd: v.canAddTx ? _addTx : null,
       onOpenMembers: _openMembers,
       onInvite: v.isOwner && v.project.status != ProjectStatus.archived
@@ -387,13 +465,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     ),
   };
 
-  Widget _header(AppLocalizations l, ProjectView v) {
+  Widget _header(AppLocalizations l, ProjectView v, HeroStyle style) {
     final editing = isEditing;
     final project = v.project;
-    final palette = Theme.of(context).extension<AppColors>()!;
     return HeaderCard(
-      accent: working.iconCode?.accentColorFor(palette) ?? palette.primary,
-      glyph: AppIcons.project,
+      heroStyle: style,
       onEdit: v.isOwner && !editing ? enterEdit : null,
       leading: EditableCircle(
         size: 48,
@@ -404,7 +480,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           iconCode: working.iconCode,
         ),
       ),
-      title: AppInput.title(
+      title: HeroNameInput(
         editing: editing,
         controller: _ctrl[_Field.name]!,
         focusNode: _focus[_Field.name],
@@ -417,17 +493,36 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         validator: (t) =>
             (t?.trim().isEmpty ?? true) ? l.projectNameRequired : null,
       ),
+      description: HeroDescription(
+        controller: _ctrl[_Field.description]!,
+        editing: editing,
+        hint: l.commonDescription,
+        maxLength: TextLimits.description,
+        focusNode: _focus[_Field.description],
+        onChanged: (t) => _onText(_Field.description, t),
+        onEnterEdit: v.isOwner
+            ? () => enterEdit(focus: _focus[_Field.description])
+            : null,
+      ),
       topRow: [
-        AppChip(
-          label: projectStatusLabel(l, project.status),
-          dot: true,
-          tone: projectStatusTone(project.status),
-          selected: true,
-          // Owner only; not while editing the info.
-          trailing: v.isOwner && !editing
-              ? AppChipTrailing.dropdown
-              : AppChipTrailing.none,
-          onTap: v.isOwner && !editing ? _changeStatus : null,
+        OptionMenuAnchor<ProjectStatus>(
+          selected: project.status,
+          onSelected: _changeStatus,
+          options: [
+            for (final s in ProjectStatus.values)
+              SheetOption(value: s, label: projectStatusLabel(l, s)),
+          ],
+          builder: (context, toggle) => AppChip(
+            label: projectStatusLabel(l, project.status),
+            dot: true,
+            tone: projectStatusTone(project.status),
+            selected: true,
+            // Owner only; not while editing the info.
+            trailing: v.isOwner && !editing
+                ? AppChipTrailing.dropdown
+                : AppChipTrailing.none,
+            onTap: v.isOwner && !editing ? toggle : null,
+          ),
         ),
         if (project.type?.isNotEmpty ?? false)
           AppChip(
@@ -454,10 +549,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                         : null;
                   },
                 ),
-                Text(
-                  l.projectFormPlannedHelper,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                AppText(l.projectFormPlannedHelper, role: AppTextRole.caption),
               ],
             )
           : null,
@@ -494,12 +586,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
 
     final rows = [
       ?row(
-        _Field.description,
-        l.commonDescription,
-        working.description,
-        TextLimits.description,
-      ),
-      ?row(
         _Field.note,
         l.commonNote,
         working.note,
@@ -508,52 +594,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       ),
     ];
     if (rows.isEmpty) return null;
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
-      child: SectionCard(first: true, children: rows),
-    );
-  }
-}
-
-class _LockBanner extends StatelessWidget {
-  const _LockBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return AppCard(
-      style: AppCardStyle.bordered,
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        0,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          AppIcon(
-            AppIcons.lock,
-            size: AppIconSize.md,
-            color: scheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ),
-        ],
-      ),
-    );
+    return SectionCard(first: true, children: rows);
   }
 }
 

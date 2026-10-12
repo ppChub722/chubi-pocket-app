@@ -23,17 +23,6 @@ class SelectCardOption<T> {
   final String? description;
 }
 
-/// How the SELECTED card is drawn.
-enum SelectCardStyle {
-  /// Today: a tinted fill + an accent border + a filled icon disc.
-  tinted,
-
-  /// PROPOSED (owner 2026-10-12): a clear gradient fill in the option's tone
-  /// (the wallet card / tinted hero family), white / on-colour text and icon,
-  /// no glow border. Disabled + picked = a muted version of the same gradient.
-  gradient,
-}
-
 /// Big choice cards for a mutually exclusive, high-stakes choice at the top
 /// of a form ("ฉันติดเขา / เขาติดฉัน", expense / income). Bigger and more
 /// explicit than a segmented button.
@@ -43,22 +32,21 @@ enum SelectCardStyle {
 /// above the label, and a short last row stretches to fill (5 options at
 /// `columns: 3` → 3 + 2, e.g. the wallet type picker).
 ///
-/// Selected = highlight only (owner 2026-10-11, the app's no-✓ rule): a
-/// tinted fill, an accent border and a filled icon disc, in the option's
-/// own [SelectCardOption.color]. No check badge.
+/// ONE selected look (owner's final call, 2026-10-12): a 2-px border in the
+/// option's tone and a faint wash of it — a gradient from the top-left to the
+/// bottom-right, the same family as the tinted hero / card surface, with NO
+/// watermark glyph — and the label and icon in the tone (darkened in light
+/// mode until they read, ≥ 4.5 : 1). No glow, no check badge (the app's no-✓
+/// rule). Unselected = a plain outlined card. Picked but read-only
+/// (`onChanged` null) = the same, dimmed.
 class SelectCardGroup<T> extends StatelessWidget {
   const SelectCardGroup({
     required this.options,
     required this.selected,
     required this.onChanged,
     this.columns,
-    this.style = SelectCardStyle.tinted,
     super.key,
   });
-
-  /// How the selected card looks ([SelectCardStyle.tinted] until the owner
-  /// adopts the gradient).
-  final SelectCardStyle style;
 
   final List<SelectCardOption<T>> options;
   final T selected;
@@ -68,6 +56,10 @@ class SelectCardGroup<T> extends StatelessWidget {
 
   /// Cards per row; null = all options in one row.
   final int? columns;
+
+  /// The selected wash's opacity, top-left → bottom-right.
+  static const washFrom = 0.18;
+  static const washTo = 0.06;
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +102,26 @@ class SelectCardGroup<T> extends StatelessWidget {
     );
   }
 
+  /// [accent] darkened (or lightened, in dark mode) until it reads on [bg].
+  static Color readable(Color accent, Color bg) {
+    var hsl = HSLColor.fromColor(accent);
+    final lighten = bg.computeLuminance() < 0.4;
+    double ratio(Color a, Color b) {
+      final l1 = a.computeLuminance();
+      final l2 = b.computeLuminance();
+      final hi = l1 > l2 ? l1 : l2;
+      final lo = l1 > l2 ? l2 : l1;
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    for (var i = 0; i < 14 && ratio(hsl.toColor(), bg) < 4.5; i++) {
+      hsl = hsl.withLightness(
+        (hsl.lightness + (lighten ? 0.04 : -0.04)).clamp(0.0, 1.0),
+      );
+    }
+    return hsl.toColor();
+  }
+
   Widget _card(
     BuildContext context,
     SelectCardOption<T> o, {
@@ -119,32 +131,21 @@ class SelectCardGroup<T> extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final active = o.value == selected;
     final accent = o.color ?? scheme.primary;
-    final grad = style == SelectCardStyle.gradient && active;
-    // Gradient: lighter top-left → deeper bottom-right of the accent; picked
-    // but read-only = the same gradient washed toward the surface.
-    final hsl = HSLColor.fromColor(accent);
-    Color shade(double dl) =>
-        hsl.withLightness((hsl.lightness + dl).clamp(0.0, 1.0)).toColor();
-    Color mute(Color c) => onChanged == null
-        ? Color.lerp(c, scheme.surfaceContainerHighest, 0.55)!
-        : c;
-    final gFrom = mute(shade(0.07));
-    final gTo = mute(shade(-0.09));
-    final onGrad = onChanged == null
-        ? scheme.onSurface
-        : ThemeData.estimateBrightnessForColor(Color.lerp(gFrom, gTo, 0.5)!) ==
-              Brightness.dark
-        ? Colors.white
-        : Colors.black87;
+    // Picked but read-only: the same look, dimmed.
+    final dim = onChanged == null ? 0.55 : 1.0;
+    // The wash is a few % of the tone over the surface: that is what the
+    // text has to read on.
+    final washed = Color.alphaBlend(
+      accent.withValues(alpha: washFrom),
+      scheme.surfaceContainerLow,
+    );
+    final ink = active ? readable(accent, washed) : scheme.onSurface;
+
     final label = Text(
       o.label,
       textAlign: stacked ? TextAlign.center : TextAlign.start,
       style: textTheme.titleSmall?.copyWith(
-        color: grad
-            ? onGrad
-            : active
-            ? accent
-            : scheme.onSurface,
+        color: active ? ink.withValues(alpha: dim) : scheme.onSurface,
         fontWeight: active ? FontWeight.w700 : FontWeight.w500,
       ),
     );
@@ -154,17 +155,10 @@ class SelectCardGroup<T> extends StatelessWidget {
             o.description!,
             textAlign: stacked ? TextAlign.center : TextAlign.start,
             style: textTheme.bodySmall?.copyWith(
-              color: grad
-                  ? onGrad.withValues(alpha: 0.85)
-                  : scheme.onSurfaceVariant,
+              color: scheme.onSurfaceVariant,
             ),
           );
-    // Ink that reads on the accent fill.
-    final onAccent =
-        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
-        ? Colors.white
-        : Colors.black87;
-    // The icon sits in a disc: filled with the accent once picked.
+    // The icon sits in a disc: a wash of the tone once picked.
     final disc = stacked ? 44.0 : 36.0;
     final iconDisc = o.icon == null
         ? null
@@ -174,19 +168,15 @@ class SelectCardGroup<T> extends StatelessWidget {
             height: disc,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: grad
-                  ? onGrad.withValues(alpha: 0.22)
-                  : active
-                  ? accent
+              color: active
+                  ? accent.withValues(alpha: 0.16 * dim)
                   : scheme.surfaceContainerHighest,
             ),
             child: Icon(
               o.icon,
               size: stacked ? 24 : 20,
-              color: grad
-                  ? onGrad
-                  : active
-                  ? onAccent
+              color: active
+                  ? ink.withValues(alpha: dim)
                   : scheme.onSurfaceVariant,
             ),
           );
@@ -226,37 +216,23 @@ class SelectCardGroup<T> extends StatelessWidget {
     return AnimatedContainer(
       duration: _motion,
       decoration: BoxDecoration(
-        color: grad
-            ? null
-            : active
-            ? accent.withValues(alpha: 0.10)
-            : scheme.surfaceContainerLow,
-        gradient: grad
+        color: active ? null : scheme.surfaceContainerLow,
+        // The hero / tinted-card wash: top-left → bottom-right, no watermark.
+        gradient: active
             ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [gFrom, gTo],
+                colors: [
+                  accent.withValues(alpha: washFrom * dim),
+                  accent.withValues(alpha: washTo * dim),
+                ],
               )
             : null,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        // The gradient card keeps a 1-px (clear) border, so the card never
-        // changes size between states and there is no glow edge.
         border: Border.all(
-          color: grad
-              ? Colors.transparent
-              : active
-              ? accent
-              : scheme.outlineVariant,
-          width: grad ? 1 : (active ? 2 : 1),
+          color: active ? accent.withValues(alpha: dim) : scheme.outlineVariant,
+          width: active ? 2 : 1,
         ),
-        boxShadow: [
-          if (active && !grad)
-            BoxShadow(
-              color: accent.withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-        ],
       ),
       child: Material(
         type: MaterialType.transparency,

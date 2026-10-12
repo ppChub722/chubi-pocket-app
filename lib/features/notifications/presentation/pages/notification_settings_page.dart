@@ -57,7 +57,7 @@ class _Body extends StatelessWidget {
                     error: state.error!,
                     onRetry: ctx.read<NotificationSettingsCubit>().load,
                   )
-                : const LoadingView();
+                : const DetailPageSkeleton();
           }
           final cubit = ctx.read<NotificationSettingsCubit>();
 
@@ -66,53 +66,50 @@ class _Body extends StatelessWidget {
           Set<String> toggled(Set<String> set, String v, bool add) =>
               add ? {...set, v} : (set.toSet()..remove(v));
 
-          /// One type, as one row: "receive" switch, plus — when it has an action
+          /// One type, as rows: "receive" switch, plus — when it has an action
           /// — an indented "do it automatically" switch. Muted → the auto
           /// switch is disabled (and ignored by the server) but keeps its
           /// value for when the type is turned back on.
-          Widget typeRow(
+          List<Widget> typeRow(
             NotificationType t,
             String label, {
             String? autoLabel,
             Widget? extra,
           }) {
             final on = !s.isMuted(t);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DetailRow(
-                  label: label,
-                  trailing: AppSwitch(
-                    value: on,
-                    onChanged: (v) =>
-                        cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
-                  ),
-                  onTap: () =>
-                      cubit.update(mutedTypes: toggled(muted, t.wire, on)),
+            return [
+              DetailRow(
+                label: label,
+                trailing: AppSwitch(
+                  value: on,
+                  onChanged: (v) =>
+                      cubit.update(mutedTypes: toggled(muted, t.wire, !v)),
                 ),
-                if (autoLabel != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: AppSpacing.xl),
-                    child: DetailRow(
-                      label: autoLabel,
-                      trailing: AppSwitch(
-                        value: s.isAuto(t),
-                        onChanged: on
-                            ? (v) => cubit.update(
-                                autoTypes: toggled(auto, t.wire, v),
-                              )
-                            : null,
-                      ),
-                      onTap: on
-                          ? () => cubit.update(
-                              autoTypes: toggled(auto, t.wire, !s.isAuto(t)),
+                onTap: () =>
+                    cubit.update(mutedTypes: toggled(muted, t.wire, on)),
+              ),
+              if (autoLabel != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.xl),
+                  child: DetailRow(
+                    label: autoLabel,
+                    trailing: AppSwitch(
+                      value: s.isAuto(t),
+                      onChanged: on
+                          ? (v) => cubit.update(
+                              autoTypes: toggled(auto, t.wire, v),
                             )
                           : null,
                     ),
+                    onTap: on
+                        ? () => cubit.update(
+                            autoTypes: toggled(auto, t.wire, !s.isAuto(t)),
+                          )
+                        : null,
                   ),
-                ?extra,
-              ],
-            );
+                ),
+              ?extra,
+            ];
           }
 
           // The cache only feeds the picker; the row's name comes from the
@@ -126,45 +123,43 @@ class _Body extends StatelessWidget {
               !s.isMuted(NotificationType.splitPaid) &&
               s.isAuto(NotificationType.splitPaid);
 
-          return ListView(
-            // Clear the floating top bar; sides like every detail page.
-            padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              MediaQuery.paddingOf(ctx).top + AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
-            ),
-            children: [
-              SectionCard(
-                first: true,
-                title: l.notifSettingsReceive,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg,
-                    ),
-                    child: Text(
-                      l.notifSettingsAutoHint,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+          return DetailPageBody(
+            onRefresh: ctx.read<NotificationSettingsCubit>().load,
+            // Clear the floating top bar and nav.
+            topInset: MediaQuery.paddingOf(ctx).top + AppSpacing.lg,
+            bottomInset: AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom,
+            hero: SectionCard(
+              first: true,
+              title: l.notifSettingsReceive,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
-                ],
-              ),
-              SectionCard(
+                  child: AppText(
+                    l.notifSettingsAutoHint,
+                    role: AppTextRole.caption,
+                  ),
+                ),
+              ],
+            ),
+            sections: [
+              (first) => SectionCard(
+                first: first,
                 title: l.notifGroupSplits,
                 children: [
-                  typeRow(
+                  ...typeRow(
                     NotificationType.splitCreated,
                     l.notifTypeSplitCreated,
                     autoLabel: l.notifAutoAddDebt,
                   ),
                   // Off by default: auto = my debt follows each change.
-                  typeRow(
+                  ...typeRow(
                     NotificationType.splitChanged,
                     l.notifTypeSplitChanged,
                     autoLabel: l.notifAutoApplySplitChange,
                   ),
-                  typeRow(
+                  ...typeRow(
                     NotificationType.splitPaid,
                     l.notifTypeSplitPaid,
                     autoLabel: l.notifAutoRecordPayment,
@@ -204,20 +199,21 @@ class _Body extends StatelessWidget {
                   ),
                 ],
               ),
-              SectionCard(
+              (first) => SectionCard(
+                first: first,
                 title: l.notifGroupProjects,
                 children: [
-                  typeRow(
+                  ...typeRow(
                     NotificationType.projectTxRecordedForYou,
                     l.notifTypeProjectTxForYou,
                     autoLabel: l.notifAutoCopyToBook,
                   ),
-                  typeRow(
+                  ...typeRow(
                     NotificationType.projectTxChanged,
                     l.notifTypeProjectTxChanged,
                     autoLabel: l.notifAutoUpdateCopy,
                   ),
-                  typeRow(
+                  ...typeRow(
                     NotificationType.projectAdded,
                     l.notifTypeProjectAdded,
                   ),
@@ -237,7 +233,8 @@ class _Body extends StatelessWidget {
                   ),
                 ],
               ),
-              SectionCard(
+              (first) => SectionCard(
+                first: first,
                 title: l.notifGroupRequests,
                 children: [
                   DetailRow(

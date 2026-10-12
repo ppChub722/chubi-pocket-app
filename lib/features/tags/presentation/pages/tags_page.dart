@@ -11,7 +11,6 @@ import '../../../../ui/ui.dart';
 import '../../domain/tag.dart';
 import '../cubit/tags_cubit.dart';
 import '../widgets/tag_chip.dart';
-import '../widgets/tags_list_skeleton.dart';
 
 enum _SortBy { name, usage, color, icon }
 
@@ -520,47 +519,53 @@ class _TagsPageState extends State<TagsPage>
         ),
         body: TabSwitchBody(
           child: BlocBuilder<TagsCubit, TagsState>(
-            builder: (context, state) => AsyncStateView(
-              loading:
-                  state.status == TagsStatus.initial ||
-                  state.status == TagsStatus.loading,
-              error: state.error,
+            builder: (context, state) {
+              // Only the FIRST load shows the skeleton: a reload keeps the
+              // rows (the template swaps its body for the skeleton, which
+              // kills a pull-to-refresh).
+              final loading =
+                  (state.status == TagsStatus.initial ||
+                      state.status == TagsStatus.loading) &&
+                  state.tags.isEmpty;
               // Edit mode shows its drafts even before the first tag.
-              isEmpty: !isEditing && state.tags.isEmpty,
-              onRetry: context.read<TagsCubit>().load,
-              skeleton: Padding(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.paddingOf(context).top,
+              final isEmpty = !isEditing && state.tags.isEmpty;
+              final visible = isEditing ? _visibleDrafts() : null;
+              return ListPageBody(
+                loading: loading,
+                error: state.tags.isEmpty ? state.error : null,
+                isEmpty: isEmpty,
+                // Pull to refresh reloads in view mode only; a reload
+                // under a batch edit would fight the drafts.
+                onRetry: isEditing
+                    ? () async {}
+                    : () async {
+                        setState(() => _stickyIds = null);
+                        await context.read<TagsCubit>().load();
+                      },
+                empty: EmptyView(
+                  icon: AppIcons.tag,
+                  title: l.tagsEmptyTitle,
+                  message: l.tagsEmptyMessage,
+                  cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
                 ),
-                child: const LoadingView(skeleton: TagsListSkeleton()),
-              ),
-              empty: EmptyView(
-                icon: AppIcons.tag,
-                title: l.tagsEmptyTitle,
-                message: l.tagsEmptyMessage,
-                cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
-              ),
-              builder: (context) {
-                final visible = isEditing ? _visibleDrafts() : null;
-                return Column(
-                  children: [
-                    // Clear the transparent top bar.
-                    SizedBox(height: MediaQuery.paddingOf(context).top),
-                    AppInput.search(
-                      controller: _searchController,
-                      hint: l.tagsSearchHint,
-                      onChanged: (v) => _onFilterChanged(() => _query = v),
-                    ),
-                    isEditing ? _editBar(l, visible!) : _viewBar(l, state.tags),
-                    Expanded(
-                      child: isEditing
-                          ? _editList(l, visible!)
-                          : _viewList(l, state.tags),
-                    ),
-                  ],
-                );
-              },
-            ),
+                // Rows run edge to edge; the footer pads itself.
+                sidePadding: 0,
+                topInset: 0,
+                header: loading || isEmpty
+                    ? const []
+                    : [
+                        isEditing
+                            ? _editBar(l, visible!)
+                            : _viewBar(l, state.tags),
+                      ],
+                // Edit mode needs every row mounted (form validation,
+                // ensureVisible), so it brings its own non-lazy scroll view.
+                builder: isEditing
+                    ? (context, padding) => _editList(l, visible!, padding)
+                    : null,
+                children: isEditing ? const [] : _viewList(l, state.tags),
+              );
+            },
           ),
         ),
         bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
@@ -582,7 +587,10 @@ class _TagsPageState extends State<TagsPage>
     final codes = tags.map((t) => t.iconCode);
     final colors = {for (final c in codes) ?_colorOf(c)}.toList()..sort();
     final icons = {for (final c in codes) ?_iconOf(c)}.toList()..sort();
-    return FilterBar(
+    return ListToolbar(
+      searchController: _searchController,
+      searchHint: l.tagsSearchHint,
+      onSearchChanged: (v) => _onFilterChanged(() => _query = v),
       chips: [_colorFilter(l, colors), _iconFilter(l, icons)],
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -613,7 +621,10 @@ class _TagsPageState extends State<TagsPage>
   // Edit: [☐ n/N] [สี][ไอคอน][ลบ] — actions on the selection, dimmed until
   // something is selected. No filters (search only).
   Widget _editBar(AppLocalizations l, List<_TagDraft> visible) {
-    return FilterBar(
+    return ListToolbar(
+      searchController: _searchController,
+      searchHint: l.tagsSearchHint,
+      onSearchChanged: (v) => _onFilterChanged(() => _query = v),
       chips: [
         SelectAllCount(
           selected: visible.where((d) => _selected.contains(d.key)).length,
@@ -719,49 +730,44 @@ class _TagsPageState extends State<TagsPage>
     );
   }
 
-  Widget _viewList(AppLocalizations l, List<Tag> tags) {
+  List<Widget> _viewList(AppLocalizations l, List<Tag> tags) {
     final shown = _viewTags(tags);
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return PullToRefresh(
-      onRefresh: () async {
-        setState(() => _stickyIds = null);
-        await context.read<TagsCubit>().load();
-      },
-      child: _RowList(
-        rows: [
-          for (final t in shown)
-            ListRow(
-              key: _tileKey(t.id),
-              leading: IconDisplay(
-                type: IconType.tag,
-                size: 40,
-                iconCode: t.iconCode,
-              ),
-              title: t.name,
-              subtitle: t.description,
-              trailing: t.usageCount > 0
-                  ? Text(
-                      l.tagsUsageCount(t.usageCount),
-                      style: textTheme.labelMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    )
-                  : null,
-              onLongPress: () => _beginEdit(focusKey: t.id),
+    return _rowsWithFooter(
+      rows: [
+        for (final t in shown)
+          ListRow(
+            key: _tileKey(t.id),
+            leading: IconDisplay(
+              type: IconType.tag,
+              size: 40,
+              iconCode: t.iconCode,
             ),
-        ],
-        footer: shown.isEmpty && _hasFilter
-            ? _ListMessage(text: l.tagsNoMatch)
-            : AddTile(label: l.tagsAddNew, onTap: _addTag),
-      ),
+            title: t.name,
+            subtitle: t.description,
+            trailing: t.usageCount > 0
+                ? AppText(
+                    l.tagsUsageCount(t.usageCount),
+                    role: AppTextRole.caption,
+                  )
+                : null,
+            onLongPress: () => _beginEdit(focusKey: t.id),
+          ),
+      ],
+      footer: shown.isEmpty && _hasFilter
+          ? EmptyView.compact(message: l.tagsNoMatch)
+          : AddTile(label: l.tagsAddNew, onTap: _addTag),
     );
   }
 
-  Widget _editList(AppLocalizations l, List<_TagDraft> visible) {
+  Widget _editList(
+    AppLocalizations l,
+    List<_TagDraft> visible,
+    EdgeInsets padding,
+  ) {
     return Form(
       key: _formKey,
       child: _RowList(
+        padding: padding,
         rows: [
           for (final d in visible)
             ListRow(
@@ -781,19 +787,13 @@ class _TagsPageState extends State<TagsPage>
                 controller: _controllerFor(d),
                 focusNode: _focusFor(d.key),
                 maxLength: TextLimits.tagName,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                style: AppTypography.of(context, AppTextRole.body),
                 onChanged: (v) => applyTextChange(
                   d.key,
                   working.map((e) => e.key == d.key ? e.copyWith(name: v) : e),
                 ),
                 validator: (v) => _validateName(l, d.key, v),
-                look: AppInputLook.outlined,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.sm,
-                ),
+                dense: true,
               ),
             ),
         ],
@@ -801,7 +801,7 @@ class _TagsPageState extends State<TagsPage>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (visible.isEmpty && _hasFilter)
-              _ListMessage(text: l.tagsNoMatch),
+              EmptyView.compact(message: l.tagsNoMatch),
             AddTile(label: l.tagsAddNew, onTap: isSaving ? null : _addTag),
           ],
         ),
@@ -818,19 +818,23 @@ class _TagsPageState extends State<TagsPage>
 /// lazy: every row stays mounted, so the form validates all visible rows
 /// and `ensureVisible` can reach them.
 class _RowList extends StatelessWidget {
-  const _RowList({required this.rows, required this.footer});
+  const _RowList({
+    required this.rows,
+    required this.footer,
+    required this.padding,
+  });
 
   final List<Widget> rows;
   final Widget footer;
+
+  /// The list insets the template hands to its `builder`.
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      // Bottom room for the shell's FAB, above the floating nav.
-      padding: EdgeInsets.only(
-        bottom: 96 + MediaQuery.paddingOf(context).bottom,
-      ),
+      padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -853,25 +857,26 @@ class _RowList extends StatelessWidget {
   }
 }
 
-class _ListMessage extends StatelessWidget {
-  const _ListMessage({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
-}
+/// Hairline-separated [rows] then the padded [footer]: the children of a
+/// view-mode `ListPageBody`.
+List<Widget> _rowsWithFooter({
+  required List<Widget> rows,
+  required Widget footer,
+}) => [
+  for (final (i, row) in rows.indexed) ...[
+    if (i > 0) const AppDivider.row(),
+    row,
+  ],
+  Padding(
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.lg,
+      AppSpacing.md,
+      AppSpacing.lg,
+      0,
+    ),
+    child: footer,
+  ),
+];
 
 // ────────────────────────────────────────────────────────────────────
 // Editing snapshot — the whole list is one draft (undo / dirty).

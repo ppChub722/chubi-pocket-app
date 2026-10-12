@@ -26,7 +26,8 @@ import '../molecules/hero_shell.dart';
 ///
 ///   [type][status]                  [action] ✏️
 ///   (icon)  title
-///           subtitle
+///           description (2 lines, muted)
+///           subtitle (chips like "Linked")
 ///   footer
 ///
 /// A [topRow] with no chips (and no [topActions]) collapses: no empty band —
@@ -36,6 +37,7 @@ class HeaderCard extends StatelessWidget {
   const HeaderCard({
     required this.leading,
     required this.title,
+    this.description,
     this.subtitle,
     this.trailing,
     this.footer,
@@ -51,6 +53,10 @@ class HeaderCard extends StatelessWidget {
 
   final Widget leading;
   final Widget title;
+
+  /// The description under the name (muted, 2 lines; edited in place in edit
+  /// mode) — a `HeroDescription`. Hidden by passing null or an empty one.
+  final Widget? description;
   final Widget? subtitle;
   final Widget? trailing;
   final Widget? footer;
@@ -112,6 +118,10 @@ class HeaderCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                     child: title,
                   ),
+                  if (description != null) ...[
+                    const SizedBox(height: 2),
+                    description!,
+                  ],
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
                     DefaultTextStyle.merge(

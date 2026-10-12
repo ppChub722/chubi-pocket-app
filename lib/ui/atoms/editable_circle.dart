@@ -22,6 +22,7 @@ class EditableCircle extends StatelessWidget {
     required this.size,
     required this.child,
     this.onTap,
+    this.onLongPress,
     super.key,
   }) : assert(
          size >= AvatarMetrics.minEditableAvatar,
@@ -43,6 +44,10 @@ class EditableCircle extends StatelessWidget {
   /// toggles [onTap] (view ↔ edit) never reflows its layout.
   final VoidCallback? onTap;
 
+  /// A long-press (view mode: enter edit). Works without [onTap]: the circle
+  /// is then interactive but shows no pencil.
+  final VoidCallback? onLongPress;
+
   @override
   Widget build(BuildContext context) {
     final stack = CornerBadge(
@@ -53,11 +58,12 @@ class EditableCircle extends StatelessWidget {
       essential: true,
       child: child,
     );
-    if (onTap == null) return stack;
+    if (onTap == null && onLongPress == null) return stack;
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         customBorder: const CircleBorder(),
         child: stack,
       ),

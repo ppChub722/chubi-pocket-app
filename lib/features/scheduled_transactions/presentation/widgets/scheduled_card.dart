@@ -21,7 +21,7 @@ class ScheduledCard extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final accent = entry.iconCode?.accentColorFor(palette) ?? scheme.primary;
+    final accent = entry.iconCode.tintFor(palette, fallback: scheme.primary);
     final amountColor = entry.type == ScheduledTransactionType.income
         ? palette.income
         : null;
@@ -29,99 +29,85 @@ class ScheduledCard extends StatelessWidget {
 
     return AppCard(
       style: AppCardStyle.bordered,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              IconDisplay(
-                type: IconType.category,
-                size: 44,
-                iconCode: entry.iconCode,
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Row(
+        children: [
+          IconDisplay(
+            type: IconType.category,
+            size: 44,
+            iconCode: entry.iconCode,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.name,
-                            style: Theme.of(context).textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        AppChip(
-                          label: entry.isLoan
-                              ? l.scheduledVariantLoan
-                              : entry.isInstallment
-                              ? l.scheduledVariantInstallment
-                              : l.scheduledVariantRecurring,
-                          tone: AppChipTone.neutral,
-                          selected: true,
-                          size: ChipSize.chip,
-                        ),
-                      ],
-                    ),
-                    if (desc != null && desc.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        desc,
+                    Expanded(
+                      child: AppText(
+                        entry.name,
+                        role: AppTextRole.title,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
                       ),
-                    ],
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        AppIcon(
-                          AppIcons.date,
-                          size: AppIconSize.sm,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          l.scheduledNextDue(entry.nextBillingDate),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                        if (entry.isInstallment &&
-                            entry.totalInstallments != null) ...[
-                          const SizedBox(width: AppSpacing.md),
-                          Text(
-                            l.scheduledInstallmentsLeft(
-                              entry.remainingInstallments ?? 0,
-                              entry.totalInstallments!,
-                            ),
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.copyWith(color: accent),
-                          ),
-                        ],
-                      ],
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    AppChip(
+                      label: entry.isLoan
+                          ? l.scheduledVariantLoan
+                          : entry.isInstallment
+                          ? l.scheduledVariantInstallment
+                          : l.scheduledVariantRecurring,
+                      tone: AppChipTone.neutral,
+                      selected: true,
+                      size: ChipSize.chip,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              MoneyText(
-                entry.amount,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: amountColor ?? scheme.onSurface,
-                  fontWeight: FontWeight.w700,
+                if (desc != null && desc.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.xxs),
+                  AppText(desc, role: AppTextRole.caption, maxLines: 1),
+                ],
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    AppIcon(
+                      AppIcons.date,
+                      size: AppIconSize.sm,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    AppText(
+                      l.scheduledNextDue(entry.nextBillingDate),
+                      role: AppTextRole.caption,
+                    ),
+                    if (entry.isInstallment &&
+                        entry.totalInstallments != null) ...[
+                      const SizedBox(width: AppSpacing.md),
+                      AppText(
+                        l.scheduledInstallmentsLeft(
+                          entry.remainingInstallments ?? 0,
+                          entry.totalInstallments!,
+                        ),
+                        role: AppTextRole.caption,
+                        color: accent,
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: AppSpacing.md),
+          MoneyText(
+            entry.amount,
+            style: AppTypography.of(
+              context,
+              AppTextRole.money,
+            )?.copyWith(color: amountColor ?? scheme.onSurface),
+          ),
+        ],
       ),
     );
   }

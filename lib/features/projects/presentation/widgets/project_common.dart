@@ -35,42 +35,10 @@ String? projectLockMessage(AppLocalizations l, ProjectStatus s) => switch (s) {
 // Members
 // ────────────────────────────────────────────────────────────────────
 
-/// A member's icon, else a coloured initial (stable per member id).
-class ProjectMemberAvatar extends StatelessWidget {
-  const ProjectMemberAvatar({required this.member, this.size = 32, super.key});
-
-  final ProjectMember member;
-  final double size;
-
-  static const _palette = <Color>[
-    Color(0xFF64B5F6),
-    Color(0xFFAED581),
-    Color(0xFFFFB74D),
-    Color(0xFFBA68C8),
-    Color(0xFF4DD0E1),
-    Color(0xFFF06292),
-    Color(0xFF9575CD),
-    Color(0xFFFFD54F),
-    Color(0xFFA1887F),
-    Color(0xFF4FC3F7),
-    Color(0xFF7986CB),
-    Color(0xFFE57373),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    if (member.iconCode != null) {
-      return IconDisplay(
-        type: IconType.projectMember,
-        size: size,
-        iconCode: member.iconCode,
-      );
-    }
-    final color = _palette[member.id.hashCode.abs() % _palette.length];
-    final name = member.displayName;
-    return AppAvatar.tinted(name: name, color: color, size: size);
-  }
-}
+/// A member's icon, else their initial: maps [ProjectMember] onto the kit's
+/// [ProjectMemberAvatar].
+Widget memberAvatar(ProjectMember m, {double size = 32}) =>
+    ProjectMemberAvatar(name: m.displayName, iconCode: m.iconCode, size: size);
 
 // ────────────────────────────────────────────────────────────────────
 // Everything the detail tabs share, computed once per load.

@@ -126,7 +126,7 @@ class _MoreView extends StatelessWidget {
     // the scaffold body.
     return TabRootScaffold(
       body: Builder(
-        builder: (context) => RefreshIndicator(
+        builder: (context) => PullToRefresh(
           onRefresh: context.read<MeCountsCubit>().load,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -148,20 +148,17 @@ class _MoreView extends StatelessWidget {
                     AppSpacing.sm,
                   ),
                 ),
-                // Fixed card height; column count follows the width (2 on phones,
-                // 3–4 on wide screens) so cards never balloon into empty slabs.
-                GridView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 240,
-                    mainAxisExtent: 124,
-                    mainAxisSpacing: AppSpacing.sm,
-                    crossAxisSpacing: AppSpacing.sm,
-                  ),
+                CardGrid(
                   children: [
-                    for (final e in entries) _MoreCard(entry: e, tint: tint),
+                    for (final e in entries)
+                      TileCard(
+                        icon: e.icon,
+                        title: e.title,
+                        subtitle: e.subtitle,
+                        color: tint,
+                        // Its own tab, opened fresh at its root (owner 2026-10-09).
+                        onTap: () => context.go(e.route),
+                      ),
                   ],
                 ),
               ],
@@ -180,59 +177,4 @@ class _MoreEntry {
   final String title;
   final String subtitle;
   final String route;
-}
-
-class _MoreCard extends StatelessWidget {
-  const _MoreCard({required this.entry, required this.tint});
-
-  final _MoreEntry entry;
-
-  /// The group colour.
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    // Each feature gets its group colour (shared look: TintedCard).
-    return AppCard(
-      style: AppCardStyle.tinted,
-      color: tint,
-      glyph: entry.icon,
-      // Its own tab, opened fresh at its root (owner 2026-10-09).
-      onTap: () => context.go(entry.route),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            IconTile(
-              icon: entry.icon,
-              color: tint,
-              size: 40,
-              shape: IconTileShape.rounded,
-              style: IconTileStyle.solid,
-            ),
-            const Spacer(),
-            Text(
-              entry.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              entry.subtitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

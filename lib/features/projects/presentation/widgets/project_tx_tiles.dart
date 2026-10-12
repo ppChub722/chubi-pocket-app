@@ -5,22 +5,11 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/domain/account.dart';
-import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../categories/domain/category.dart';
-import '../../../categories/domain/category_type.dart';
-import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../categories/presentation/widgets/category_picker_sheet.dart';
-import '../../../personal_debts/data/personal_debts_repository.dart';
-import '../../../personal_debts/domain/personal_debt.dart';
-import '../../../transactions/data/transactions_repository.dart';
-import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/presentation/cubit/transactions_cubit.dart';
-import '../../../transactions/presentation/widgets/account_picker_sheet.dart';
 import '../../data/projects_repository.dart';
 import '../../domain/project.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import 'project_common.dart';
+import 'resolve_sheet.dart';
 
 String projectTxDateLabel(BuildContext context, String ymd) {
   final l = AppLocalizations.of(context)!;
@@ -83,55 +72,51 @@ class ProjectTxTreeTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Opacity(
-          opacity: marked ? 0.5 : 1,
-          child: MoneyListTile(
-            leading: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: view.rowsLocked
-                  ? null
-                  : () => marked
-                        ? _actions(context, parent, isParent: true)
-                        : _tick(context, parent, isParent: true),
-              child: CornerBadge(
-                size: 36,
-                icon: AppIcons.check,
-                show: marked,
-                // The tick marks the row — state, not decoration.
-                essential: true,
-                child: ProjectTxIcon(tx: parent),
-              ),
+        MoneyListTile(
+          dimmed: marked,
+          leading: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: view.rowsLocked
+                ? null
+                : () => marked
+                      ? _actions(context, parent, isParent: true)
+                      : _tick(context, parent, isParent: true),
+            child: CornerBadge(
+              size: 36,
+              icon: AppIcons.check,
+              show: marked,
+              // The tick marks the row — state, not decoration.
+              essential: true,
+              child: ProjectTxIcon(tx: parent),
             ),
-            title: parent.description ?? parent.tags.firstOrNull ?? '—',
-            subtitle: Row(
-              children: [
-                ProjectMemberAvatar(member: payer, size: 16),
-                const SizedBox(width: AppSpacing.xs),
-                Flexible(
-                  child: Text(
-                    [
-                      payer.displayName,
-                      projectTxDateLabel(context, parent.date),
-                      for (final t in parent.tags) '#$t',
-                    ].join(' · '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: subtitleStyle,
-                  ),
-                ),
-              ],
-            ),
-            amount: parent.type == 'expense' ? -parent.amount : parent.amount,
-            onTap: () => _actions(context, parent, isParent: true),
           ),
+          title: parent.description ?? parent.tags.firstOrNull ?? '—',
+          subtitle: Row(
+            children: [
+              memberAvatar(payer, size: 16),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  [
+                    payer.displayName,
+                    projectTxDateLabel(context, parent.date),
+                    for (final t in parent.tags) '#$t',
+                  ].join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: subtitleStyle,
+                ),
+              ),
+            ],
+          ),
+          amount: parent.type == 'expense' ? -parent.amount : parent.amount,
+          onTap: () => _actions(context, parent, isParent: true),
         ),
         for (final c in tree.children)
           _ChildRow(
             child: c,
             debtor: view.memberOf(c),
-            creditor: payer,
             marked: myId != null && c.isMarkedBy(myId),
-            locked: view.rowsLocked,
             onTap: () => myId != null && c.isMarkedBy(myId)
                 ? _actions(context, c, isParent: false)
                 : _tick(context, c, isParent: false),
@@ -178,25 +163,22 @@ class ProjectTxTreeTile extends StatelessWidget {
         : tx.transactionMemberId == my
         ? view.memberOf(tree.parent)
         : view.memberOf(tx);
-    final ok = await showAppSheet<bool>(
+    final ok = await showResolveSheet(
       context,
-      title: AppLocalizations.of(context)!.projectTxResolve,
-      builder: (_) => _ResolveSheet(
-        tx: tx,
-        isParent: isParent,
-        childrenTotal: isParent ? tree.childrenTotal : 0,
-        myMemberId: my,
-        counterparty: counterparty,
-      ),
+      tx: tx,
+      isParent: isParent,
+      childrenTotal: isParent ? tree.childrenTotal : 0,
+      myMemberId: my,
+      counterparty: counterparty,
     );
-    if (ok == true && context.mounted) {
+    if (ok && context.mounted) {
       showAppSnackBar(
         context,
         AppLocalizations.of(context)!.projectResolveDone,
         tone: Tone.success,
       );
     }
-    return ok == true;
+    return ok;
   }
 
   Future<void> _mark(
@@ -322,9 +304,7 @@ class _ChildRow extends StatelessWidget {
   const _ChildRow({
     required this.child,
     required this.debtor,
-    required this.creditor,
     required this.marked,
-    required this.locked,
     required this.onTap,
     required this.symbol,
     required this.owesLabel,
@@ -332,9 +312,7 @@ class _ChildRow extends StatelessWidget {
 
   final ProjectTransaction child;
   final ProjectMember debtor;
-  final ProjectMember creditor;
   final bool marked;
-  final bool locked;
   final VoidCallback onTap;
   final String symbol;
   final String owesLabel;
@@ -342,286 +320,33 @@ class _ChildRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Opacity(
-      opacity: marked ? 0.5 : 1,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xxl + AppSpacing.lg,
-            2,
-            AppSpacing.lg,
-            2,
-          ),
-          child: Row(
-            children: [
-              SelectCheck(
-                value: marked,
-                onTap: locked ? null : onTap,
-                size: 18,
+    final textTheme = Theme.of(context).textTheme;
+    return ListRow(
+      indent: AppSpacing.xxl,
+      checked: marked,
+      dimmed: marked,
+      onTap: onTap,
+      leading: memberAvatar(debtor, size: 20),
+      body: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(text: debtor.displayName),
+            TextSpan(
+              text: ' $owesLabel',
+              style: textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
-              const SizedBox(width: AppSpacing.xs),
-              ProjectMemberAvatar(member: debtor, size: 20),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: debtor.displayName),
-                      TextSpan(
-                        text: ' $owesLabel',
-                        style: TextStyle(color: scheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-              MoneyText(
-                child.amount,
-                symbol: symbol,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────
-// "ลงบัญชีส่วนตัว" — copy a board row into my own book.
-// ────────────────────────────────────────────────────────────────────
-
-enum _Mode { asTransaction, asDebt }
-
-class _ResolveSheet extends StatefulWidget {
-  const _ResolveSheet({
-    required this.tx,
-    required this.isParent,
-    required this.childrenTotal,
-    required this.myMemberId,
-    required this.counterparty,
-  });
-
-  final ProjectTransaction tx;
-  final bool isParent;
-  final double childrenTotal;
-  final String myMemberId;
-
-  /// Split rows only: the other side (payer if I'm the debtor, the debtor
-  /// if I paid).
-  final ProjectMember? counterparty;
-
-  @override
-  State<_ResolveSheet> createState() => _ResolveSheetState();
-}
-
-class _ResolveSheetState extends State<_ResolveSheet> {
-  _Mode _mode = _Mode.asTransaction;
-  Account? _account;
-  Category? _category;
-  bool _shareOnly = false;
-  bool _saving = false;
-  String? _accountError;
-
-  @override
-  void initState() {
-    super.initState();
-    final accounts = context.read<AccountsCubit>();
-    if (accounts.state.accounts.isEmpty) accounts.load();
-    context.read<CategoriesCubit>().loadIfNeeded();
-  }
-
-  double get _amount {
-    if (widget.isParent && _shareOnly) {
-      final share = widget.tx.amount - widget.childrenTotal;
-      return share < 0 ? 0 : share;
-    }
-    return widget.tx.amount;
-  }
-
-  bool get _iAmDebtor => widget.tx.transactionMemberId == widget.myMemberId;
-
-  /// Parent: same direction as the row. Split: debtor pays (expense),
-  /// payer gets paid back (income).
-  TransactionType get _txType {
-    if (widget.isParent) {
-      return widget.tx.type == 'expense'
-          ? TransactionType.expense
-          : TransactionType.income;
-    }
-    return _iAmDebtor ? TransactionType.expense : TransactionType.income;
-  }
-
-  Future<void> _pickAccount() async {
-    final l = AppLocalizations.of(context)!;
-    final r = await showAccountPickerSheet(
-      context: context,
-      accounts: context.read<AccountsCubit>().state.accounts,
-      selected: _account,
-      title: l.debtSettleAccount,
-    );
-    if (r is AccountPickerSelected) {
-      setState(() {
-        _account = r.account;
-        _accountError = null;
-      });
-    }
-  }
-
-  Future<void> _pickCategory() async {
-    final l = AppLocalizations.of(context)!;
-    final r = await showCategoryPickerSheet(
-      context: context,
-      categories: context.read<CategoriesCubit>().state.categories,
-      type: _txType == TransactionType.expense
-          ? CategoryType.expense
-          : CategoryType.income,
-      selected: _category,
-      allowNone: true,
-      noneLabel: l.projectResolveCategoryNone,
-      title: l.projectResolveCategory,
-    );
-    if (r is CategoryPickerSelected) setState(() => _category = r.category);
-    if (r is CategoryPickerCleared) setState(() => _category = null);
-  }
-
-  Future<void> _submit() async {
-    final l = AppLocalizations.of(context)!;
-    if (_mode == _Mode.asTransaction && _account == null) {
-      setState(() => _accountError = l.debtSettleAccountRequired);
-      return;
-    }
-    final accounts = context.read<AccountsCubit>();
-    setState(() => _saving = true);
-    try {
-      if (_mode == _Mode.asTransaction) {
-        final res = await context.read<TransactionsRepository>().create(
-          type: _txType,
-          accountId: _account!.id,
-          amount: _amount,
-          date: widget.tx.date,
-          // Same fields both sides (migration 51): what-for → what-for.
-          description: widget.tx.description,
-          note: widget.tx.note,
-          categoryId: _category?.id,
-          sourceProjectTransactionId: widget.tx.id,
-        );
-        accounts.patchBalances(res.accountBalances);
-        await TransactionsCubit.bookChanged();
-      } else {
-        await context.read<PersonalDebtsRepository>().create(
-          direction: _iAmDebtor ? DebtDirection.iOwe : DebtDirection.owedToMe,
-          counterpartyPersonName: widget.counterparty?.displayName ?? '?',
-          amount: _amount,
-          currency: widget.tx.currency,
-          description: widget.tx.description,
-          note: widget.tx.note,
-        );
-      }
-      if (mounted) Navigator.pop(context, true);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      showAppSnackBar(context, e.message, tone: Tone.danger);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final symbol = Currencies.symbolOf(widget.tx.currency);
-    final name = widget.counterparty?.displayName ?? '?';
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!widget.isParent) ...[
-            AppTabBar<_Mode>(
-              selected: _mode,
-              onChanged: (m) => setState(() => _mode = m),
-              tabs: [
-                AppTab(value: _Mode.asTransaction, label: l.projectResolveAsTx),
-                AppTab(value: _Mode.asDebt, label: l.projectResolveAsDebt),
-              ],
             ),
-            const SizedBox(height: AppSpacing.md),
           ],
-          DetailRow(
-            label: l.projectResolveAmount,
-            trailing: MoneyText(_amount, symbol: symbol),
-          ),
-          if (widget.isParent && widget.childrenTotal > 0)
-            DetailRow(
-              label: l.projectResolveShareOnly,
-              trailing: AppSwitch(
-                value: _shareOnly,
-                onChanged: (v) => setState(() => _shareOnly = v),
-              ),
-              onTap: () => setState(() => _shareOnly = !_shareOnly),
-              helper: l.projectResolveShareHint(
-                moneyString(context, widget.tx.amount, symbol: symbol),
-                moneyString(
-                  context,
-                  widget.tx.amount - widget.childrenTotal,
-                  symbol: symbol,
-                ),
-              ),
-            ),
-          const SizedBox(height: AppSpacing.sm),
-          if (_mode == _Mode.asTransaction) ...[
-            DetailRow.pick(
-              label: l.debtSettleAccount,
-              value: _account?.name,
-              emptyText: l.quickEventNone,
-              leading: const AppIcon(AppIcons.bank),
-              onTap: _pickAccount,
-            ),
-            if (_accountError != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Text(
-                  _accountError!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              ),
-            DetailRow.pick(
-              label: l.projectResolveCategory,
-              value: _category?.name,
-              emptyText: l.projectResolveCategoryNone,
-              leading: const AppIcon(AppIcons.category),
-              onTap: _pickCategory,
-            ),
-          ] else
-            DetailRow(
-              leading: const AppIcon(AppIcons.debt),
-              label: _iAmDebtor ? l.debtYouOwe(name) : l.debtTheyOweYou(name),
-              helper: l.projectResolveDebtHint,
-            ),
-          const SizedBox(height: AppSpacing.lg),
-          AppButton(
-            label: l.projectResolveConfirm,
-            icon: AppIcons.settle,
-            expand: true,
-            loading: _saving,
-            onPressed: _submit,
-          ),
-        ],
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: textTheme.bodySmall,
+      ),
+      trailing: MoneyText(
+        child.amount,
+        symbol: symbol,
+        style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }

@@ -159,6 +159,11 @@ class SplitRowName extends StatelessWidget {
   /// same x.
   static const double textInset = 16;
 
+  /// The height of a name's box: the typed name's framed input and a
+  /// contact's highlight are the SAME height (so the looks line up row to
+  /// row), growing together with the text scale.
+  static const double frameHeight = 40;
+
   /// Every name in the normal weight.
   static TextStyle? style(BuildContext context) =>
       Theme.of(context).textTheme.bodyLarge;
@@ -199,7 +204,7 @@ class SplitRowName extends StatelessWidget {
               maxLength: maxLength,
               textInputAction: TextInputAction.done,
               style: style(context),
-              look: AppInputLook.outlined,
+              dense: true,
               hint: hint,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
@@ -218,6 +223,7 @@ class SplitRowName extends StatelessWidget {
             child: Align(
               alignment: AlignmentDirectional.centerStart,
               child: Container(
+                constraints: const BoxConstraints(minHeight: frameHeight),
                 padding: const EdgeInsets.symmetric(
                   horizontal: textInset,
                   vertical: AppSpacing.sm,

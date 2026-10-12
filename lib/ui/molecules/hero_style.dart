@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_card.dart';
+import '../tokens/color_contrast.dart';
 
 /// How a hero looks — ONE object, so the hero card and its one-line stand-in
 /// ([CompactHeroBar]) can never drift (owner 2026-10-12):
@@ -93,7 +94,10 @@ class HeroSurface extends StatelessWidget {
       glyph: style.glyph,
       glyphSize: glyphSize,
       borderColor:
-          style.borderColor ?? (style.borderWidth != null ? color : null),
+          style.borderColor ??
+          (style.borderWidth != null
+              ? ensureContrast(color, Theme.of(context).colorScheme.surface)
+              : null),
       borderWidth: style.borderWidth,
       onTap: onTap,
       radius: radius,

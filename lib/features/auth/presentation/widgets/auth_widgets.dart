@@ -7,6 +7,9 @@ import '../../../../ui/ui.dart';
 import '../../../preferences/presentation/cubit/locale_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_mode_cubit.dart';
 
+/// Language names by code, shared by the sign-in bar and settings.
+const kLanguageNames = {'th': 'ไทย', 'en': 'English'};
+
 /// Logo · app name · tagline. Hidden dev entrance: tap the logo 5× →
 /// `/dev` (works logged out).
 class AuthBrandHeader extends StatelessWidget {
@@ -72,7 +75,7 @@ class AuthOrDivider extends StatelessWidget {
   }
 }
 
-/// "ดำเนินการต่อด้วย Google". [onPressed] null = not wired yet → dimmed with
+/// "ดำเนินการต่อด้วย Google". [onPressed] null = not wired yet → disabled with
 /// a "เร็ว ๆ นี้" badge (needs `google_sign_in` + `POST /auth/google`,
 /// contract §12).
 class GoogleSignInButton extends StatelessWidget {
@@ -84,58 +87,30 @@ class GoogleSignInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final enabled = onPressed != null && !loading;
-    return Opacity(
-      opacity: onPressed == null ? 0.6 : 1,
-      child: OutlinedButton(
-        onPressed: enabled ? onPressed : null,
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          side: BorderSide(color: scheme.outline),
+    return Stack(
+      alignment: AlignmentDirectional.centerEnd,
+      children: [
+        AppButton(
+          label: l.authContinueWithGoogle,
+          onPressed: onPressed,
+          loading: loading,
+          variant: AppButtonVariant.outlined,
+          size: AppButtonSize.large,
+          expand: true,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Brand-neutral "G" mark (no trademark asset bundled yet).
-            Container(
-              width: 22,
-              height: 22,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: scheme.outline),
-              ),
-              child: Text(
-                'G',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  color: scheme.onSurface,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Flexible(child: Text(l.authContinueWithGoogle)),
-            if (onPressed == null) ...[
-              const SizedBox(width: AppSpacing.sm),
-              AppChip(
+        if (onPressed == null)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: AppSpacing.md),
+            child: IgnorePointer(
+              child: AppChip(
                 label: l.authComingSoon,
                 tone: AppChipTone.info,
                 selected: true,
                 size: ChipSize.mini,
               ),
-            ],
-            if (loading) ...[
-              const SizedBox(width: AppSpacing.sm),
-              const AppSpinner(size: AppSpinnerSize.small),
-            ],
-          ],
-        ),
-      ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -143,8 +118,6 @@ class GoogleSignInButton extends StatelessWidget {
 /// Language + light/dark — changeable before signing in.
 class AuthPrefsBar extends StatelessWidget {
   const AuthPrefsBar({super.key});
-
-  static const _languages = {'th': 'ไทย', 'en': 'English'};
 
   @override
   Widget build(BuildContext context) {
@@ -162,11 +135,11 @@ class AuthPrefsBar extends StatelessWidget {
           selected: code,
           onSelected: (c) => context.read<LocaleCubit>().set(Locale(c)),
           options: [
-            for (final e in _languages.entries)
+            for (final e in kLanguageNames.entries)
               SheetOption(value: e.key, label: e.value),
           ],
           builder: (context, toggle) => AppChip(
-            label: _languages[code] ?? l.authLanguage,
+            label: kLanguageNames[code] ?? l.authLanguage,
             icon: AppIcons.language,
             trailing: AppChipTrailing.dropdown,
             onTap: toggle,

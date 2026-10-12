@@ -169,133 +169,122 @@ class _PendingPageState extends State<PendingPage> {
       body: QuickCreatePresetScope(
         preset: QuickCreatePreset(onAdd: () => context.push('/pending/new')),
         child: TabSwitchBody(
-          child: Builder(
-            builder: (context) => MediaQuery.removePadding(
-              context: context,
-              removeTop: true,
-              child: Column(
+          child: ListPageBody(
+            header: [
+              if (visible.isNotEmpty)
+                SelectionToolbar(
+                  selected: pickedVisible,
+                  total: visible.length,
+                  selectAllTooltip: l.pendingSelectAll,
+                  onSelectAll: () => setState(
+                    () => pickedVisible == visible.length
+                        ? _selected.removeAll(visible.map((p) => p.id))
+                        : _selected.addAll(visible.map((p) => p.id)),
+                  ),
+                  trailing: [
+                    if (canImportSlip)
+                      AppChip(
+                        icon: AppIcons.importSlip,
+                        label: l.pendingImportSlip,
+                        tone: AppChipTone.primary,
+                        selected: true,
+                        onTap: importSlip,
+                      ),
+                  ],
+                  deleteTooltip: l.commonDelete,
+                  onDelete: () => _discardSelected(visible),
+                ),
+              if (others > 0)
+                FilterBar(
+                  chips: [
+                    for (final f in _Filter.values)
+                      AppChip(
+                        trailing: AppChipTrailing.dropdown,
+                        label: switch (f) {
+                          _Filter.all => l.pendingFilterAll(all.length),
+                          _Filter.manual => l.pendingFilterManual(manual),
+                          _Filter.others => l.pendingFilterOthers(others),
+                        },
+                        selected: _filter == f,
+                        // Ticks the new filter hides are dropped, so
+                        // "ยืนยันที่เลือก (n)" counts and sends only
+                        // what's on screen (owner 2026-10-10).
+                        onTap: () => setState(() {
+                          _filter = f;
+                          final shown = _visible(all).map((p) => p.id);
+                          _selected.retainAll(shown);
+                        }),
+                      ),
+                  ],
+                ),
+              if (result != null && result.failed > 0)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    0,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
+                  child: AppMessage(
+                    message: l.pendingResult(result.done, result.failed),
+                    tone: Tone.warning,
+                    onClose: () => setState(() => _lastResult = null),
+                  ),
+                ),
+            ],
+            loading:
+                state.status == PendingStatus.initial ||
+                state.status == PendingStatus.loading,
+            error: state.error,
+            isEmpty: visible.isEmpty,
+            onRetry: context.read<PendingCubit>().load,
+            // Rows are full-bleed (they pad themselves); the template's
+            // bottomInset clears the floating chat button.
+            topInset: 0,
+            sidePadding: 0,
+            // A hairline between rows (the default indent = a TxRow's text).
+            rowDividers: true,
+            empty: EmptyView(
+              icon: AppIcons.empty,
+              title: l.pendingEmptyTitle,
+              message: l.pendingEmptyMessage,
+              cta: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(height: MediaQuery.paddingOf(context).top),
-                  if (visible.isNotEmpty)
-                    _ToolRow(
-                      picked: pickedVisible,
-                      total: visible.length,
-                      selectAllTooltip: l.pendingSelectAll,
-                      onDiscard: pickedVisible == 0
-                          ? null
-                          : () => _discardSelected(visible),
-                      onImportSlip: canImportSlip ? importSlip : null,
-                      onSelectAll: () => setState(
-                        () => pickedVisible == visible.length
-                            ? _selected.removeAll(visible.map((p) => p.id))
-                            : _selected.addAll(visible.map((p) => p.id)),
-                      ),
+                  if (canImportSlip) ...[
+                    AddTile(
+                      label: l.pendingImportSlip,
+                      icon: AppIcons.importSlip,
+                      variant: AddTileVariant.row,
+                      onTap: importSlip,
                     ),
-                  if (others > 0)
-                    FilterBar(
-                      chips: [
-                        for (final f in _Filter.values)
-                          AppChip(
-                            trailing: AppChipTrailing.dropdown,
-                            label: switch (f) {
-                              _Filter.all => l.pendingFilterAll(all.length),
-                              _Filter.manual => l.pendingFilterManual(manual),
-                              _Filter.others => l.pendingFilterOthers(others),
-                            },
-                            selected: _filter == f,
-                            // Ticks the new filter hides are dropped, so
-                            // "ยืนยันที่เลือก (n)" counts and sends only
-                            // what's on screen (owner 2026-10-10).
-                            onTap: () => setState(() {
-                              _filter = f;
-                              final shown = _visible(all).map((p) => p.id);
-                              _selected.retainAll(shown);
-                            }),
-                          ),
-                      ],
-                    ),
-                  if (result != null && result.failed > 0)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        0,
-                        AppSpacing.lg,
-                        AppSpacing.sm,
-                      ),
-                      child: MessageBanner(
-                        message: l.pendingResult(result.done, result.failed),
-                        tone: Tone.warning,
-                        onClose: () => setState(() => _lastResult = null),
-                      ),
-                    ),
-                  Expanded(
-                    child: AsyncStateView(
-                      loading:
-                          state.status == PendingStatus.initial ||
-                          state.status == PendingStatus.loading,
-                      error: state.error,
-                      isEmpty: visible.isEmpty,
-                      onRetry: context.read<PendingCubit>().load,
-                      skeleton: ListView(
-                        children: [
-                          for (var i = 0; i < 4; i++) const SkeletonListTile(),
-                        ],
-                      ),
-                      empty: EmptyView(
-                        icon: AppIcons.empty,
-                        title: l.pendingEmptyTitle,
-                        message: l.pendingEmptyMessage,
-                        cta: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (canImportSlip) ...[
-                              AddTile(
-                                label: l.pendingImportSlip,
-                                icon: AppIcons.importSlip,
-                                variant: AddTileVariant.row,
-                                onTap: importSlip,
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                            ],
-                            AddTile(
-                              label: l.pendingAdd,
-                              onTap: () => context.push('/pending/new'),
-                            ),
-                          ],
-                        ),
-                      ),
-                      builder: (context) => PullToRefresh(
-                        onRefresh: context.read<PendingCubit>().load,
-                        child: ListView(
-                          // Room under the last row for the floating chat button.
-                          padding: EdgeInsets.only(
-                            bottom: 96 + MediaQuery.paddingOf(context).bottom,
-                          ),
-                          children: [
-                            ..._rows(context, visible),
-                            // "เพิ่มร่าง" closes the list.
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                AppSpacing.lg,
-                                AppSpacing.md,
-                                AppSpacing.lg,
-                                0,
-                              ),
-                              child: AddTile(
-                                label: l.pendingAdd,
-                                variant: AddTileVariant.row,
-                                onTap: () => context.push('/pending/new'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                  AddTile(
+                    label: l.pendingAdd,
+                    onTap: () => context.push('/pending/new'),
                   ),
                 ],
               ),
             ),
+            children: [
+              ..._rows(context, visible),
+              // "เพิ่มร่าง" closes the list.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  0,
+                ),
+                child: AddTile(
+                  label: l.pendingAdd,
+                  variant: AddTileVariant.row,
+                  onTap: () => context.push('/pending/new'),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -346,65 +335,6 @@ class _PendingPageState extends State<PendingPage> {
       }
     }
     return out;
-  }
-}
-
-/// The thin row under the top bar (owner 2026-10-10):
-/// `[☐ 2/5] ……… [🗑 ลบ] [นำเข้าสลิป]` — 🗑 acts on the ticked drafts.
-class _ToolRow extends StatelessWidget {
-  const _ToolRow({
-    required this.picked,
-    required this.total,
-    required this.selectAllTooltip,
-    required this.onSelectAll,
-    required this.onDiscard,
-    required this.onImportSlip,
-  });
-
-  final int picked;
-  final int total;
-  final String selectAllTooltip;
-  final VoidCallback onSelectAll;
-
-  /// Null = nothing ticked (the pill dims).
-  final VoidCallback? onDiscard;
-
-  /// Null = no slip scan on this platform (no pill).
-  final VoidCallback? onImportSlip;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        0,
-        AppSpacing.lg,
-        AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          SelectAllCount(
-            selected: picked,
-            total: total,
-            tooltip: selectAllTooltip,
-            onTap: onSelectAll,
-          ),
-          const Spacer(),
-          if (onImportSlip != null) ...[
-            AppChip(
-              icon: AppIcons.importSlip,
-              label: l.pendingImportSlip,
-              tone: AppChipTone.primary,
-              selected: true,
-              onTap: onImportSlip,
-            ),
-            const SizedBox(width: AppSpacing.sm),
-          ],
-          BulkDeleteButton(tooltip: l.commonDelete, onPressed: onDiscard),
-        ],
-      ),
-    );
   }
 }
 
@@ -510,7 +440,7 @@ class _PendingCard extends StatelessWidget {
         for (final t in rowTags)
           TextSpan(
             text: '#${t.name}',
-            style: TextStyle(
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: tagColor(t.iconCode, palette),
               fontWeight: FontWeight.w600,
             ),

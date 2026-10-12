@@ -339,13 +339,13 @@ class _ScheduledForm extends StatelessWidget {
   Future<void> _pickNextBilling(BuildContext context) async {
     final s = controller.schedule;
     final now = DateTime.now();
-    final d = await showDatePicker(
-      context: context,
-      initialDate: s.nextBillingDate,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 20),
+    final r = await showAppDatePicker(
+      context,
+      initial: s.nextBillingDate,
+      first: DateTime(now.year - 1),
+      last: DateTime(now.year + 20),
     );
-    if (d != null) s.setNextBillingDate(d);
+    if (r is AppDatePicked) s.setNextBillingDate(r.date);
   }
 
   @override
@@ -358,7 +358,6 @@ class _ScheduledForm extends StatelessWidget {
         final c = controller;
         final s = c.schedule;
         final err = s.showErrors;
-        const money = TextInputType.numberWithOptions(decimal: true);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -466,110 +465,114 @@ class _ScheduledForm extends StatelessWidget {
                 ),
               ],
             ),
-            SectionHeader(
+            SectionCard(
               title: l.scheduledFormCycleLabel,
-              padding: const EdgeInsets.only(
-                top: AppSpacing.lg,
-                bottom: AppSpacing.sm,
-              ),
-            ),
-            SelectCardGroup<BillingCycle>(
-              selected: s.cycle,
-              onChanged: s.setCycle,
-              options: [
-                // Daily isn't offered (BE-only) — kept when an entry
-                // already has it so the group still shows its value.
-                if (s.cycle == BillingCycle.daily)
-                  SelectCardOption(
-                    value: BillingCycle.daily,
-                    label: l.scheduledCycleDaily,
-                  ),
-                SelectCardOption(
-                  value: BillingCycle.weekly,
-                  label: l.scheduledCycleWeekly,
-                ),
-                SelectCardOption(
-                  value: BillingCycle.monthly,
-                  label: l.scheduledCycleMonthly,
-                ),
-                SelectCardOption(
-                  value: BillingCycle.yearly,
-                  label: l.scheduledCycleYearly,
+              dividers: false,
+              children: [
+                SelectCardGroup<BillingCycle>(
+                  selected: s.cycle,
+                  onChanged: s.setCycle,
+                  options: [
+                    // Daily isn't offered (BE-only) — kept when an entry
+                    // already has it so the group still shows its value.
+                    if (s.cycle == BillingCycle.daily)
+                      SelectCardOption(
+                        value: BillingCycle.daily,
+                        label: l.scheduledCycleDaily,
+                      ),
+                    SelectCardOption(
+                      value: BillingCycle.weekly,
+                      label: l.scheduledCycleWeekly,
+                    ),
+                    SelectCardOption(
+                      value: BillingCycle.monthly,
+                      label: l.scheduledCycleMonthly,
+                    ),
+                    SelectCardOption(
+                      value: BillingCycle.yearly,
+                      label: l.scheduledCycleYearly,
+                    ),
+                  ],
                 ),
               ],
             ),
-            if (s.isInstallment) ...[
-              SectionHeader(
+            if (s.isInstallment)
+              SectionCard(
                 title: l.scheduledFormInstallmentSection,
-                padding: const EdgeInsets.only(
-                  top: AppSpacing.lg,
-                  bottom: AppSpacing.sm,
-                ),
-              ),
-              AppInput(
-                controller: s.totalAmount,
-                label: l.scheduledFormTotalAmountLabel,
-                helper: s.isLoan
-                    ? l.scheduledFormTotalAmountHelperLoan
-                    : l.scheduledFormTotalAmountHelper,
-                prefixIcon: AppIcons.cash,
-                keyboardType: money,
-                inputFormatters: [ThousandsInputFormatter()],
-                errorText: err ? s.totalAmountError(l) : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              AppInput(
-                controller: s.downPayment,
-                label: l.scheduledFormDownPaymentLabel,
-                prefixIcon: AppIcons.cash,
-                keyboardType: money,
-                inputFormatters: [ThousandsInputFormatter()],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                dividers: false,
                 children: [
-                  Expanded(
-                    child: AppInput(
-                      controller: s.totalInstallments,
-                      label: l.scheduledFormTotalInstallmentsLabel,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (v) =>
-                          s._onTotalInstallmentsChanged(v, editing: locked),
-                      errorText: err ? s.totalInstallmentsError(l) : null,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: AppInput(
-                      controller: s.remainingInstallments,
-                      label: l.scheduledFormRemainingInstallmentsLabel,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (_) => s._remainingTouched = true,
-                      errorText: err ? s.remainingInstallmentsError(l) : null,
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AppInput(
+                          controller: s.totalAmount,
+                          label: l.scheduledFormTotalAmountLabel,
+                          helper: s.isLoan
+                              ? l.scheduledFormTotalAmountHelperLoan
+                              : l.scheduledFormTotalAmountHelper,
+                          prefixIcon: AppIcons.cash,
+                          type: AppInputType.amount,
+                          errorText: err ? s.totalAmountError(l) : null,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        AppInput(
+                          controller: s.downPayment,
+                          label: l.scheduledFormDownPaymentLabel,
+                          prefixIcon: AppIcons.cash,
+                          type: AppInputType.amount,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: AppInput(
+                                controller: s.totalInstallments,
+                                label: l.scheduledFormTotalInstallmentsLabel,
+                                type: AppInputType.reference,
+                                onChanged: (v) => s._onTotalInstallmentsChanged(
+                                  v,
+                                  editing: locked,
+                                ),
+                                errorText: err
+                                    ? s.totalInstallmentsError(l)
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: AppInput(
+                                controller: s.remainingInstallments,
+                                label:
+                                    l.scheduledFormRemainingInstallmentsLabel,
+                                type: AppInputType.reference,
+                                onChanged: (_) => s._remainingTouched = true,
+                                errorText: err
+                                    ? s.remainingInstallmentsError(l)
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (s.isLoan) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          AppInput(
+                            controller: s.interestRate,
+                            label: l.scheduledFormInterestRateLabel,
+                            // `number` (not `percent`): a rate keeps its
+                            // decimals.
+                            type: AppInputType.number,
+                            suffixText: '%',
+                            errorText: err ? s.interestRateError(l) : null,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
               ),
-              if (s.isLoan) ...[
-                const SizedBox(height: AppSpacing.sm),
-                AppInput(
-                  controller: s.interestRate,
-                  label: l.scheduledFormInterestRateLabel,
-                  keyboardType: money,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
-                  suffix: const Padding(
-                    padding: EdgeInsets.all(AppSpacing.md),
-                    child: Text('%'),
-                  ),
-                  errorText: err ? s.interestRateError(l) : null,
-                ),
-              ],
-            ],
           ],
         );
       },

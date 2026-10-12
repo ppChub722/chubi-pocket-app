@@ -180,104 +180,58 @@ class _HomeView extends StatelessWidget {
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
           final cubit = context.read<DashboardCubit>();
-          return AsyncStateView(
+          // The Dashboard template: snapshot ("right now"), the month bar,
+          // then the month-scoped kpis · charts · tiles · lists.
+          final d = state.data;
+          return DashboardPageBody(
             loading:
                 state.status == DashboardStatus.initial ||
                 state.status == DashboardStatus.loading,
             error: state.error,
-            isEmpty: state.data == null,
+            isEmpty: d == null,
             onRetry: cubit.load,
-            // Stale data + a failed load → the banner below, not a snackbar.
-            snackOnRefreshError: false,
-            skeleton: ListView(
-              // Body sits under the transparent top bar.
-              padding: const EdgeInsets.all(
-                AppSpacing.lg,
-              ).add(EdgeInsets.only(top: MediaQuery.paddingOf(context).top)),
-              children: const [
-                SkeletonBox(height: 40),
-                SizedBox(height: AppSpacing.md),
-                SkeletonBox(height: 110),
-                SizedBox(height: AppSpacing.md),
-                SkeletonBox(height: 90),
-                SizedBox(height: AppSpacing.lg),
-                SkeletonBox(height: 120),
-                SizedBox(height: AppSpacing.lg),
-                SkeletonBox(height: 160),
-              ],
-            ),
-            builder: (context) {
-              final d = state.data!;
-              return PullToRefresh(
-                onRefresh: cubit.load,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  // Body sits under the transparent top bar.
-                  padding: EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    MediaQuery.paddingOf(context).top + AppSpacing.xs,
-                    AppSpacing.lg,
-                    96 + MediaQuery.paddingOf(context).bottom,
-                  ),
-                  children: [
-                    if (state.status == DashboardStatus.error) ...[
-                      MessageBanner(
-                        message: l.homeLoadError,
-                        tone: Tone.danger,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                    // "Right now" first: net worth, then everything waiting
-                    // on the user (owner 2026-10-10) — none of it follows
-                    // the selected month.
-                    _Dimmed(
-                      loading: state.status == DashboardStatus.loading,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _NetWorthCard(netWorth: d.netWorth),
-                          _TodoSection(
-                            upcoming: d.upcoming,
-                            pending: d.pending,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    // The month bar heads the month-scoped blocks below it;
-                    // it never dims (the month is what's loading).
-                    _MonthBar(month: d.month),
-                    const SizedBox(height: AppSpacing.sm),
-                    _Dimmed(
-                      loading: state.status == DashboardStatus.loading,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _MonthSlide(
-                            month: d.month,
-                            child: _MonthCard(
-                              current: d.summary,
-                              previous: d.previous,
-                            ),
-                          ),
-                          _MonthSlide(
-                            month: d.month,
-                            child: _WhereItWent(d: d),
-                          ),
-                          _MonthSlide(
-                            month: d.month,
-                            child: _Trend(points: d.trend),
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
-                          _Tiles(d: d),
-                          _Recent(d: d),
-                        ],
+            refreshing: state.status == DashboardStatus.loading,
+            // Stale data + a failed load → the banner, not a snackbar.
+            banner: state.status == DashboardStatus.error
+                ? l.homeLoadError
+                : null,
+            // "Right now" first: net worth, then everything waiting on the
+            // user (owner 2026-10-10) — none of it follows the selected
+            // month.
+            snapshot: d == null
+                ? const []
+                : [
+                    _NetWorthCard(netWorth: d.netWorth),
+                    _TodoSection(upcoming: d.upcoming, pending: d.pending),
+                  ],
+            // The month bar heads the month-scoped blocks below it; it
+            // never dims (the month is what's loading).
+            period: d == null ? null : _MonthBar(month: d.month),
+            kpis: d == null
+                ? const []
+                : [
+                    _MonthSlide(
+                      month: d.month,
+                      child: _MonthCard(
+                        current: d.summary,
+                        previous: d.previous,
                       ),
                     ),
                   ],
-                ),
-              );
-            },
+            charts: d == null
+                ? const []
+                : [
+                    _MonthSlide(
+                      month: d.month,
+                      child: _WhereItWent(d: d),
+                    ),
+                    _MonthSlide(
+                      month: d.month,
+                      child: _Trend(points: d.trend),
+                    ),
+                  ],
+            tiles: d == null ? null : _Tiles(d: d),
+            lists: d == null ? const [] : [_Recent(d: d)],
           );
         },
       ),
@@ -318,22 +272,6 @@ class _MonthBar extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Loading another month (or refreshing): the old numbers dim instead of a
-/// spinner beside the month.
-class _Dimmed extends StatelessWidget {
-  const _Dimmed({required this.loading, required this.child});
-
-  final bool loading;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => AnimatedOpacity(
-    duration: AppDurations.fast,
-    opacity: loading ? 0.5 : 1,
-    child: child,
-  );
 }
 
 /// A month-scoped block: when the month changes (swipe, ‹ ›, the picker)
@@ -571,55 +509,49 @@ class _UpcomingCard extends StatelessWidget {
         margin: EdgeInsets.zero,
         borderColor: item.overdue ? palette.expense : null,
         borderWidth: item.overdue ? 1.5 : null,
-        child: InkWell(
-          onTap: () => openPage(
-            context,
-            isCard
-                ? '/accounts/${item.id}'
-                : '/scheduled-transactions/${item.id}',
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  when,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.labelSmall?.copyWith(
-                    color: item.overdue
-                        ? palette.expense
-                        : scheme.onSurfaceVariant,
-                    fontWeight: item.overdue ? FontWeight.w700 : null,
-                  ),
-                ),
-                const Spacer(),
-                IconDisplay(
-                  type: isCard ? IconType.account : IconType.category,
-                  size: 28,
-                  imageUrl: item.logoUrl,
-                  iconCode: item.iconCode,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  isCard ? '${l.homeCardDue} ${item.name}' : item.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodySmall,
-                ),
-                MoneyText(
-                  item.amount,
-                  tone: item.type == TransactionType.income
-                      ? MoneyTone.income
-                      : MoneyTone.expense,
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        onTap: () => openPage(
+          context,
+          isCard
+              ? '/accounts/${item.id}'
+              : '/scheduled-transactions/${item.id}',
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              when,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.labelSmall?.copyWith(
+                color: item.overdue ? palette.expense : scheme.onSurfaceVariant,
+                fontWeight: item.overdue ? FontWeight.w700 : null,
+              ),
             ),
-          ),
+            const Spacer(),
+            IconDisplay(
+              type: isCard ? IconType.account : IconType.category,
+              size: 28,
+              imageUrl: item.logoUrl,
+              iconCode: item.iconCode,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              isCard ? '${l.homeCardDue} ${item.name}' : item.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodySmall,
+            ),
+            MoneyText(
+              item.amount,
+              tone: item.type == TransactionType.income
+                  ? MoneyTone.income
+                  : MoneyTone.expense,
+              style: textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -690,44 +622,29 @@ class _WhereItWent extends StatelessWidget {
                         child: Column(
                           children: [
                             for (final r in rows)
-                              InkWell(
+                              AppCard(
+                                style: AppCardStyle.flat,
+                                radius: BorderRadius.circular(AppRadius.sm),
                                 onTap: r.$4 == null
                                     ? null
                                     : () => context.push('/browse?${r.$4}'),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppSpacing.xs,
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: AppSpacing.xs,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 10,
-                                        height: 10,
-                                        decoration: BoxDecoration(
-                                          color: r.$3,
-                                          borderRadius: BorderRadius.circular(
-                                            3,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Expanded(
-                                        child: Text(
-                                          r.$1,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: textTheme.bodySmall,
-                                        ),
-                                      ),
-                                      MoneyText(
-                                        r.$2,
+                                child: Row(
+                                  children: [
+                                    _colorKey(r.$3),
+                                    const SizedBox(width: AppSpacing.sm),
+                                    Expanded(
+                                      child: Text(
+                                        r.$1,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: textTheme.bodySmall,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    MoneyText(r.$2, style: textTheme.bodySmall),
+                                  ],
                                 ),
                               ),
                           ],
@@ -776,14 +693,7 @@ class _TrendState extends State<_Trend> {
     Widget key(Color c, String label, double v) => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: c,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
+        _colorKey(c),
         const SizedBox(width: AppSpacing.xs),
         Text('$label ', style: textTheme.bodySmall),
         MoneyText(
@@ -1015,50 +925,45 @@ class _Recent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SectionHeader(
-          title: l.homeRecentTitle,
-          actionLabel: d.recent.isEmpty ? null : l.homeRecentViewAll,
-          onAction: d.recent.isEmpty ? null : () => context.go('/transactions'),
-        ),
-        AppCard(
-          margin: EdgeInsets.zero,
-          child: d.recent.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(l.homeNoTxYet, textAlign: TextAlign.center),
-                      const SizedBox(height: AppSpacing.md),
-                      AddTile(
-                        label: l.homeAddFirstTx,
-                        variant: AddTileVariant.row,
-                        // Same flow as the nav's +.
-                        onTap: () => showQuickCreateSheet(context),
-                      ),
-                    ],
-                  ),
-                )
-              : Column(
+    return SectionCard(
+      first: true,
+      title: l.homeRecentTitle,
+      trailing: d.recent.isEmpty
+          ? null
+          : AppButton(
+              label: l.homeRecentViewAll,
+              variant: AppButtonVariant.text,
+              onPressed: () => context.go('/transactions'),
+            ),
+      children: d.recent.isEmpty
+          ? [
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final t in d.recent)
-                      TransactionTile(transaction: t, showDate: true),
+                    Text(l.homeNoTxYet, textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.md),
+                    AddTile(
+                      label: l.homeAddFirstTx,
+                      variant: AddTileVariant.row,
+                      // Same flow as the nav's +.
+                      onTap: () => showQuickCreateSheet(context),
+                    ),
                   ],
                 ),
-        ),
-        // Add right under the list — same as a wallet's รายการ tab.
-        if (d.recent.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.sm),
-          AddTile(
-            label: l.navAddTransaction,
-            variant: AddTileVariant.row,
-            onTap: () => showQuickCreateSheet(context),
-          ),
-        ],
-      ],
+              ),
+            ]
+          : [
+              for (final t in d.recent)
+                TransactionTile(transaction: t, showDate: true),
+              // Add right under the list — same as a wallet's รายการ tab.
+              AddTile(
+                label: l.navAddTransaction,
+                variant: AddTileVariant.row,
+                onTap: () => showQuickCreateSheet(context),
+              ),
+            ],
     );
   }
 }
@@ -1156,9 +1061,9 @@ class _TodoSection extends StatelessWidget {
   }
 }
 
-/// One "ต้องจัดการ" group: an icon + title · count sub-header (with
-/// "ดูทั้งหมด ›" or a [trailing] figure), then its compact content — the
-/// same treatment for all three so they read as one family.
+/// One "ต้องจัดการ" group: a [SectionHeader] (title · count, "ดูทั้งหมด ›" or a
+/// [trailing] figure), then its compact content — the same treatment for all
+/// three so they read as one family.
 class _TodoGroup extends StatelessWidget {
   const _TodoGroup({
     required this.icon,
@@ -1179,65 +1084,23 @@ class _TodoGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            height: 40,
-            child: Row(
-              children: [
-                const SizedBox(width: AppSpacing.xs),
-                AppIcon(
-                  icon,
-                  size: AppIconSize.md,
-                  color: scheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Flexible(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (count != null)
-                  Text(
-                    ' · $count',
-                    style: textTheme.titleSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                const Spacer(),
-                ?trailing,
-                if (onViewAll != null)
-                  TextButton(
-                    onPressed: onViewAll,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(0, 40),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(l.homeRecentViewAll),
-                        const AppIcon(
-                          AppIcons.chevronRight,
-                          size: AppIconSize.md,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+          SectionHeader(
+            leading: AppIcon(
+              icon,
+              size: AppIconSize.md,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+            title: title,
+            count: count,
+            actionLabel: l.homeRecentViewAll,
+            onAction: onViewAll,
+            trailing: trailing,
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 0, 0, 0),
           ),
           child,
         ],
@@ -1294,28 +1157,24 @@ class _DraftsCard extends StatelessWidget {
 
     return AppCard(
       margin: EdgeInsets.zero,
-      child: InkWell(
-        onTap: () => openPage(context, '/pending'),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final p in drafts.take(2)) ...[
-                row(p),
-                const SizedBox(height: AppSpacing.xxs),
-              ],
-              Text(
-                total > 2
-                    ? '${l.pendingBlockMore(total - 2)} · ${l.pendingNotCounted}'
-                    : l.pendingNotCounted,
-                style: textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+      padding: const EdgeInsets.all(AppSpacing.md),
+      onTap: () => openPage(context, '/pending'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final p in drafts.take(2)) ...[
+            row(p),
+            const SizedBox(height: AppSpacing.xxs),
+          ],
+          Text(
+            total > 2
+                ? '${l.pendingBlockMore(total - 2)} · ${l.pendingNotCounted}'
+                : l.pendingNotCounted,
+            style: textTheme.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -1369,3 +1228,9 @@ class _NotificationsCard extends StatelessWidget {
     );
   }
 }
+
+/// The 10 px rounded colour square of a chart key / legend row.
+Widget _colorKey(Color color) => ClipRRect(
+  borderRadius: BorderRadius.circular(3),
+  child: SizedBox.square(dimension: 10, child: ColoredBox(color: color)),
+);

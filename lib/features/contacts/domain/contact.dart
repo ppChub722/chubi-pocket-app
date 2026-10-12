@@ -83,24 +83,6 @@ class Contact extends Equatable {
   bool get isLinked => linkedUser != null;
   bool get isArchived => status == ContactStatus.archived;
 
-  // ── Deprecated source-compat getters (other features still read these) ──
-  @Deprecated('Use name')
-  String get effectiveName => name;
-  @Deprecated('Use name')
-  String get effectiveDisplayName => name;
-  @Deprecated('Use email')
-  String? get effectiveEmail => email;
-  @Deprecated('Use iconCode')
-  IconCode? get effectiveIconCode => iconCode;
-  @Deprecated('Use linkedUser?.id')
-  String? get linkedUserId => linkedUser?.id;
-  @Deprecated('Use linkedUser?.displayName')
-  String? get linkedUserDisplayName => linkedUser?.displayName;
-  @Deprecated('Use linkedUser?.email')
-  String? get linkedUserEmail => linkedUser?.email;
-  @Deprecated('Use linkedUser?.iconCode')
-  IconCode? get linkedUserIconCode => linkedUser?.iconCode;
-
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
       id: json['id'] as String,

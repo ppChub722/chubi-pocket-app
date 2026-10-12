@@ -113,44 +113,40 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
               cur.status == BudgetsStatus.loaded &&
               (prev.status != cur.status || prev.budgets != cur.budgets),
           listener: (context, state) => _loadOverview(state.budgets),
-          builder: (context, state) => AsyncStateView(
-            loading:
-                state.status == BudgetsStatus.initial ||
-                state.status == BudgetsStatus.loading,
-            error: state.error,
-            isEmpty: state.budgets.isEmpty,
-            onRetry: context.read<BudgetsCubit>().load,
-            skeleton: ListView(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).top + AppSpacing.md,
-                AppSpacing.lg,
-                MediaQuery.paddingOf(context).bottom,
+          builder: (context, state) {
+            const top = AppSpacing.md;
+            return ListPageBody(
+              // Only the FIRST load shows the skeleton: a reload keeps the
+              // rows (a skeleton would kill a pull-to-refresh).
+              loading:
+                  (state.status == BudgetsStatus.initial ||
+                      state.status == BudgetsStatus.loading) &&
+                  state.budgets.isEmpty,
+              error: state.budgets.isEmpty ? state.error : null,
+              isEmpty: state.budgets.isEmpty,
+              onRetry: context.read<BudgetsCubit>().load,
+              topInset: top,
+              empty: EmptyView(
+                icon: AppIcons.budget,
+                title: l.budgetsEmptyTitle,
+                message: l.budgetsEmptyMessage,
+                cta: AddTile(label: l.budgetsAddNew, onTap: _add),
               ),
-              children: [
-                BudgetOverviewCard(
-                  periods: const [],
-                  period: BudgetPeriod.monthly,
-                  onPeriodChanged: (_) {},
-                ),
-                const SizedBox(height: AppSpacing.md),
-                for (var i = 0; i < 4; i++) const SkeletonListTile(),
-              ],
-            ),
-            empty: EmptyView(
-              icon: AppIcons.budget,
-              title: l.budgetsEmptyTitle,
-              message: l.budgetsEmptyMessage,
-              cta: AddTile(label: l.budgetsAddNew, onTap: _add),
-            ),
-            builder: (context) => _list(context, l, state.budgets),
-          ),
+              children: state.budgets.isEmpty
+                  ? const []
+                  : _rows(context, l, state.budgets),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _list(BuildContext context, AppLocalizations l, List<Budget> all) {
+  List<Widget> _rows(
+    BuildContext context,
+    AppLocalizations l,
+    List<Budget> all,
+  ) {
     final periods = _periods(all);
     final period = _period(periods)!;
     final overview = _overview?.period == period ? _overview : null;
@@ -163,46 +159,33 @@ class _BudgetsListPageState extends State<BudgetsListPage> {
       ],
     ];
 
-    return PullToRefresh(
-      onRefresh: () => context.read<BudgetsCubit>().load(),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        // Top: clear the floating top bar.
-        padding: EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          MediaQuery.paddingOf(context).top + AppSpacing.md,
-          AppSpacing.lg,
-          96 + MediaQuery.paddingOf(context).bottom,
+    return [
+      if (!_overviewFailed) ...[
+        BudgetOverviewCard(
+          periods: periods,
+          period: period,
+          overview: overview,
+          onPeriodChanged: (p) => _switchPeriod(p, all),
         ),
-        children: [
-          if (!_overviewFailed) ...[
-            BudgetOverviewCard(
-              periods: periods,
-              period: period,
-              overview: overview,
-              onPeriodChanged: (p) => _switchPeriod(p, all),
+        const SizedBox(height: AppSpacing.md),
+      ],
+      if (grouped)
+        for (final p in periods) ...[
+          SectionHeader(
+            title: budgetPeriodLabel(l, p),
+            count: all.where((b) => b.period == p).length,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xs,
+              AppSpacing.sm,
+              0,
+              AppSpacing.sm,
             ),
-            const SizedBox(height: AppSpacing.md),
-          ],
-          if (grouped)
-            for (final p in periods) ...[
-              SectionHeader(
-                title: budgetPeriodLabel(l, p),
-                count: all.where((b) => b.period == p).length,
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xs,
-                  AppSpacing.sm,
-                  0,
-                  AppSpacing.sm,
-                ),
-              ),
-              ...cards(all.where((b) => b.period == p)),
-            ]
-          else
-            ...cards(all),
-          AddTile(label: l.budgetsAddNew, onTap: _add),
-        ],
-      ),
-    );
+          ),
+          ...cards(all.where((b) => b.period == p)),
+        ]
+      else
+        ...cards(all),
+      AddTile(label: l.budgetsAddNew, onTap: _add),
+    ];
   }
 }

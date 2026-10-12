@@ -14,6 +14,7 @@ import '../../domain/category_reorder_logic.dart';
 import '../../domain/category_tree.dart';
 import '../../domain/category_type.dart';
 import '../cubit/categories_cubit.dart';
+import '../widgets/category_chip_path.dart';
 import '../widgets/category_picker_sheet.dart';
 import '../widgets/category_preview_card.dart';
 
@@ -89,20 +90,6 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   /// get it). Null while creating or until the call lands.
   CategoryDetail? _detail;
   bool _feeBusy = false;
-
-  /// This page's own messenger: its snackbars float above the page's
-  /// action bar instead of over it (QA F4 — the shell's Scaffold doesn't
-  /// know about this page's bottom bar).
-  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
-
-  void _snack(String message, {Tone tone = Tone.neutral}) {
-    final messenger = _messengerKey.currentState;
-    if (messenger != null) {
-      showAppSnackBarOn(messenger, message, tone: tone);
-    } else {
-      showAppSnackBar(context, message, tone: tone);
-    }
-  }
 
   /// A save error in words: the depth limit in Thai, else the server's.
   String _errorText(ApiException e, AppLocalizations l) =>
@@ -207,7 +194,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       setState(() => _detail = _detail?.withFee(on));
     } on ApiException {
       if (mounted) {
-        _snack(l.categoryFeeSwitchFailed, tone: Tone.danger);
+        showAppSnackBarOn(
+          pageMessenger!,
+          l.categoryFeeSwitchFailed,
+          tone: Tone.danger,
+        );
       }
     } finally {
       if (mounted) setState(() => _feeBusy = false);
@@ -264,7 +255,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final cubit = context.read<CategoriesCubit>();
     final l = AppLocalizations.of(context)!;
     if (_isCreate && !cubit.canAddMore) {
-      _snack(l.categoriesLimitReached, tone: Tone.warning);
+      showAppSnackBarOn(
+        pageMessenger!,
+        l.categoriesLimitReached,
+        tone: Tone.warning,
+      );
       return;
     }
 
@@ -325,12 +320,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on CategoryLimitExceeded {
       if (!mounted) return;
       setSaving(false);
-      _snack(l.categoriesLimitReached, tone: Tone.warning);
+      showAppSnackBarOn(
+        pageMessenger!,
+        l.categoriesLimitReached,
+        tone: Tone.warning,
+      );
       return;
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      _snack(_errorText(e, l), tone: Tone.danger);
+      showAppSnackBarOn(pageMessenger!, _errorText(e, l), tone: Tone.danger);
       return;
     }
     if (!mounted) return;
@@ -375,7 +374,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     } on ApiException catch (e) {
       if (!mounted) return;
       setSaving(false);
-      _snack(e.message, tone: Tone.danger);
+      showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
     }
   }
 
@@ -399,6 +398,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final all = context.read<CategoriesCubit>().state.categories;
     final parent = context.read<CategoriesCubit>().byId(working.parentId!);
     return parent == null ? null : CategoryTree.resolveIconCode(parent, all);
+  }
+
+  /// The chosen parent from the list, or null (none / not loaded).
+  Category? _parentCategory(List<Category> all) {
+    final id = working.parentId;
+    if (id == null) return null;
+    for (final c in all) {
+      if (c.id == id) return c;
+    }
+    return null;
   }
 
   String? _parentBreadcrumb(List<Category> all) {
@@ -495,25 +504,15 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               extendBodyBehindAppBar: true,
               appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
               // Skeleton → error + retry → not found (AsyncStateView).
-              // Clear the transparent top bar (the Builder's context sees its
-              // height in the top padding).
               body: BlocBuilder<CategoriesCubit, CategoriesState>(
-                builder: (context, state) => Builder(
-                  builder: (context) => Padding(
-                    padding: EdgeInsets.only(
-                      top: MediaQuery.paddingOf(context).top,
-                    ),
-                    child: AsyncStateView.fallback(
-                      loading: !_notFound && state.error == null,
-                      error: _notFound ? null : state.error,
-                      onRetry: context.read<CategoriesCubit>().load,
-                      skeleton: const LoadingView(),
-                      notFound: EmptyView(
-                        icon: AppIcons.empty,
-                        title: l.categoryDetailNotFound,
-                        message: l.categoryDetailNotFoundMessage,
-                      ),
-                    ),
+                builder: (context, state) => AsyncStateView.fallback(
+                  loading: !_notFound && state.error == null,
+                  error: _notFound ? null : state.error,
+                  onRetry: context.read<CategoriesCubit>().load,
+                  notFound: EmptyView(
+                    icon: AppIcons.empty,
+                    title: l.categoryDetailNotFound,
+                    message: l.categoryDetailNotFoundMessage,
                   ),
                 ),
               ),
@@ -522,9 +521,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   Widget _page(AppLocalizations l) {
-    return editScope(
-      ScaffoldMessenger(key: _messengerKey, child: _scaffold(l)),
-    );
+    return editScope(_scaffold(l));
   }
 
   Widget _scaffold(AppLocalizations l) {
@@ -542,15 +539,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         // height in its top padding.
         builder: (context, state) => Form(
           key: _formKey,
-          child: PullToRefresh(
-            enabled: !_isCreate,
-            onRefresh: context.read<CategoriesCubit>().load,
-            child: _body(
-              l,
-              state.categories,
-              topInset: MediaQuery.paddingOf(context).top,
-              bottomInset: MediaQuery.paddingOf(context).bottom,
-            ),
+          child: _body(
+            l,
+            state.categories,
+            topInset: MediaQuery.paddingOf(context).top,
+            bottomInset: MediaQuery.paddingOf(context).bottom,
           ),
         ),
       ),
@@ -579,6 +572,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
     final breadcrumb = _parentBreadcrumb(all);
     final canDelete = !_isCreate && !(_persisted?.isSystem ?? true);
     return DetailPageBody(
+      // Pull = the page's one read (`GET /categories/:id`); off in create.
+      onRefresh: _isCreate ? null : _loadDetail,
       physics: const AlwaysScrollableScrollPhysics(),
       topInset: topInset + AppSpacing.lg,
       bottomInset: AppSpacing.huge + bottomInset,
@@ -587,7 +582,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
         editing: editing,
         isIncome: working.type == CategoryType.income,
         onEdit: editing ? null : enterEdit,
-        nameField: AppInput.title(
+        nameField: HeroNameInput(
           editing: editing,
           controller: _nameController,
           focusNode: _nameFocus,
@@ -596,6 +591,16 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           onEnterEdit: () => enterEdit(focus: _nameFocus),
           onChanged: (v) => _onText(_TextField.name, v),
           validator: (v) => _validateName(v, all),
+        ),
+        // maxLength caps the input, so no length validator.
+        descriptionField: HeroDescription(
+          controller: _descriptionController,
+          editing: editing,
+          focusNode: _descriptionFocus,
+          hint: l.commonDescription,
+          maxLength: TextLimits.description,
+          onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+          onChanged: (v) => _onText(_TextField.description, v),
         ),
         onIconTap: _openIconMaker,
         onIconLongPress: _enterEditThenOpenMaker,
@@ -615,7 +620,12 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             // The parent picker — the row opens the category picker.
             DetailRow.pick(
               label: l.categoryFormParentLabel,
-              value: breadcrumb,
+              // Parent = its ancestor path as chips; the text breadcrumb
+              // stays the fallback while the parent isn't in the list.
+              value: _parentCategory(all) == null ? breadcrumb : null,
+              valueChip: _parentCategory(all) == null
+                  ? null
+                  : categoryChipPath(context, _parentCategory(all)!, all: all),
               emptyText: l.categoryFormParentNone,
               // View mode: enter edit, then open the picker (an empty parent
               // is the placeholder — tapping it starts adding one).
@@ -626,25 +636,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
             ),
           ],
         ),
-        // 2 — words. The note always shows, empty or not (owner rule), with
-        // the long-press hint in view mode.
+        // 2 — the note always shows, empty or not (owner rule), with the
+        // long-press hint in view mode. (The description is in the hero.)
         (first) => SectionCard(
           first: first,
           children: [
-            // maxLength caps the input, so no length validator.
-            DetailStacked(
-              label: l.commonDescription,
-              child: AppInput.inline(
-                editing: editing,
-                controller: _descriptionController,
-                focusNode: _descriptionFocus,
-                maxLines: 3,
-                maxLength: TextLimits.description,
-                viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-                onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-                onChanged: (v) => _onText(_TextField.description, v),
-              ),
-            ),
             DetailStacked(
               label: l.commonNote,
               child: AppInput.inline(
@@ -763,6 +759,7 @@ class _Header extends StatelessWidget {
     required this.editing,
     required this.isIncome,
     required this.nameField,
+    required this.descriptionField,
     required this.onIconTap,
     required this.onIconLongPress,
     this.onEdit,
@@ -772,6 +769,7 @@ class _Header extends StatelessWidget {
   final bool editing;
   final bool isIncome;
   final Widget nameField;
+  final Widget descriptionField;
   final VoidCallback onIconTap;
   final VoidCallback onIconLongPress;
 
@@ -784,7 +782,10 @@ class _Header extends StatelessWidget {
     final palette = Theme.of(context).extension<AppColors>()!;
     final hidden = !category.includeInReport;
     return HeaderCard(
-      accent: isIncome ? palette.income : palette.expense,
+      accent: category.iconCode.tintFor(
+        palette,
+        fallback: isIncome ? palette.income : palette.expense,
+      ),
       glyph: AppIcons.category,
       onEdit: onEdit,
       // The row keeps its height without ✏️ (edit mode), so nothing below
@@ -808,19 +809,18 @@ class _Header extends StatelessWidget {
       ],
       // EditableCircle keeps a constant footprint with or without onTap,
       // so the name column never shifts between modes.
-      leading: GestureDetector(
+      leading: EditableCircle(
+        size: 44,
+        onTap: editing ? onIconTap : null,
         onLongPress: editing ? null : onIconLongPress,
-        child: EditableCircle(
+        child: IconDisplay(
+          type: IconType.category,
           size: 44,
-          onTap: editing ? onIconTap : null,
-          child: IconDisplay(
-            type: IconType.category,
-            size: 44,
-            iconCode: category.iconCode,
-          ),
+          iconCode: category.iconCode,
         ),
       ),
       title: nameField,
+      description: descriptionField,
     );
   }
 }

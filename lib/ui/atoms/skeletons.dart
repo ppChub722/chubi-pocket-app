@@ -78,3 +78,33 @@ class SkeletonListTile extends StatelessWidget {
     );
   }
 }
+
+/// A shimmer bar that takes EXACTLY the height of a line of real text: it lays
+/// out an invisible `' '` in the same [style], then draws the bar over it. A
+/// skeleton built from these has the same row heights as the real content (no
+/// jump when the data arrives), at any text scale.
+///
+/// ```dart
+/// SkeletonText(style: (t) => t.bodyLarge, width: 150)
+/// ```
+class SkeletonText extends StatelessWidget {
+  const SkeletonText({required this.style, this.width, super.key});
+
+  /// Picks the text style of the line this stands in for.
+  final TextStyle? Function(TextTheme theme) style;
+  final double? width;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = style(Theme.of(context).textTheme);
+    final bar = ((s?.fontSize ?? 14) * 0.8).roundToDouble();
+    return Stack(
+      alignment: Alignment.centerLeft,
+      children: [
+        // Defines the line height; never visible.
+        Text(' ', style: s, maxLines: 1),
+        SkeletonLine(width: width, height: bar),
+      ],
+    );
+  }
+}

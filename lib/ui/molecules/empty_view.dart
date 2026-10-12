@@ -13,8 +13,17 @@ class EmptyView extends StatelessWidget {
     required this.title,
     required this.message,
     this.cta,
-  });
+  }) : compact = false;
 
+  /// A small empty line (no icon, no title): a muted caption centred in its
+  /// space — an empty section inside a page.
+  const EmptyView.compact({super.key, required this.message})
+    : icon = Icons.inbox_outlined,
+      title = '',
+      cta = null,
+      compact = true;
+
+  final bool compact;
   final IconData icon;
   final String title;
   final String message;
@@ -24,6 +33,23 @@ class EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
+        ),
+        child: Center(
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Center(
       child: ConstrainedBox(

@@ -28,13 +28,14 @@ class WalletPickCard extends StatelessWidget {
   /// [PickCard.dense], with a smaller icon — two cards on one row.
   final bool dense;
 
-  double get _icon => dense ? 32 : 40;
+  double get _icon =>
+      dense ? AvatarMetrics.sizeSmall : AvatarMetrics.sizeMedium;
 
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<AppColors>()!;
     final a = account;
-    final accent = a?.iconCode?.accentColorFor(palette) ?? palette.primary;
+    final accent = a?.iconCode.tintFor(palette);
     Widget? icon;
     if (a != null) {
       icon = IconDisplay(
@@ -45,6 +46,7 @@ class WalletPickCard extends StatelessWidget {
       if (a.isShared) icon = SharedWalletIconBadge(size: _icon, child: icon);
     }
     return PickCard(
+      reserveSubtitle: true,
       label: label,
       value: a?.name,
       placeholder: placeholder,
@@ -53,10 +55,10 @@ class WalletPickCard extends StatelessWidget {
           ? null
           : MoneyText(
               a.balance,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTypography.of(
+                context,
+                AppTextRole.money,
+              )?.copyWith(color: accent),
             ),
       accent: accent,
       watermark: a?.type.icon,

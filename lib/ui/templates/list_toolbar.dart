@@ -1,0 +1,68 @@
+import 'package:flutter/material.dart';
+
+import '../atoms/app_input.dart';
+import '../molecules/filter_bar.dart';
+import '../tokens/app_spacing.dart';
+
+/// The list pages' toolbar block (owner 2026-10-12): the search capsule and
+/// the filters / sort row under it are ONE block — the gap between them is
+/// [gap] (8), not two stacked paddings. Put it in `ListPageBody.header`; the
+/// spacing ABOVE it (a summary, a period pill) stays the page's own.
+///
+/// - search: [searchController] / [onSearchChanged] / [searchHint]
+///   (`AppInput.search`); leave [searchController] null for no search.
+/// - filters: [chips] (+ [trailing], e.g. a sort menu); empty = no row.
+class ListToolbar extends StatelessWidget {
+  const ListToolbar({
+    this.searchController,
+    this.onSearchChanged,
+    this.searchHint,
+    this.searchKey,
+    this.chips = const [],
+    this.trailing,
+    super.key,
+  });
+
+  static const double gap = AppSpacing.sm;
+
+  final TextEditingController? searchController;
+  final ValueChanged<String>? onSearchChanged;
+  final String? searchHint;
+  final Key? searchKey;
+  final List<Widget> chips;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSearch = searchController != null;
+    final hasFilters = chips.isNotEmpty || trailing != null;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasSearch)
+            AppInput.search(
+              key: searchKey,
+              controller: searchController,
+              onChanged: onSearchChanged,
+              hint: searchHint,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            ),
+          if (hasSearch && hasFilters) const SizedBox(height: gap),
+          if (hasFilters)
+            FilterBar(
+              chips: chips,
+              trailing: trailing,
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                0,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

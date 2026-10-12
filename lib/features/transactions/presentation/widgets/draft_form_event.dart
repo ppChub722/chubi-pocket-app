@@ -169,42 +169,37 @@ class _EventTags extends StatelessWidget {
     bool isOn(String t) =>
         controller.tagNames.any((x) => x.toLowerCase() == t.toLowerCase());
     final mine = context.watch<TagsCubit>().state.tags;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return SectionCard(
+      title: l.projectTxTags,
+      leading: const AppIcon(AppIcons.tag, size: AppIconSize.sm),
+      dividers: false,
+      first: true,
       children: [
-        Row(
-          children: [
-            const AppIcon(AppIcons.tag, size: AppIconSize.sm),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              l.projectTxTags,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
-          children: [
-            for (final t in all)
-              tagAppChip(
-                context,
-                // Project tags are plain names — borrow the look of the
-                // user's own tag of the same name, if any.
-                mine
-                        .where((m) => m.name.toLowerCase() == t.toLowerCase())
-                        .firstOrNull ??
-                    Tag(id: t, name: t),
-                selected: isOn(t),
-                onTap: () => controller.toggleTagName(t),
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final t in all)
+                tagAppChip(
+                  context,
+                  // Project tags are plain names — borrow the look of the
+                  // user's own tag of the same name, if any.
+                  mine
+                          .where((m) => m.name.toLowerCase() == t.toLowerCase())
+                          .firstOrNull ??
+                      Tag(id: t, name: t),
+                  selected: isOn(t),
+                  onTap: () => controller.toggleTagName(t),
+                ),
+              AppChip(
+                icon: AppIcons.add,
+                label: l.projectTxAddTag,
+                onTap: () => _addNew(context),
               ),
-            AppChip(
-              icon: AppIcons.add,
-              label: l.projectTxAddTag,
-              onTap: () => _addNew(context),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -247,29 +242,22 @@ class _MemberSplits extends StatelessWidget {
       if (id != null) c.setSplitMember(s, id);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return SectionCard(
+      title: l.projectTxSplits,
+      description: l.projectTxSplitsHint,
+      leading: const AppIcon(AppIcons.split, size: AppIconSize.sm),
+      trailing: total > 0
+          ? AppButton(
+              variant: AppButtonVariant.text,
+              onPressed: () => c.splitEqually([for (final m in members) m.id]),
+              label: l.projectTxSplitEqual,
+            )
+          : null,
+      first: true,
       children: [
-        Row(
-          children: [
-            const AppIcon(AppIcons.split, size: AppIconSize.sm),
-            const SizedBox(width: AppSpacing.xs),
-            Expanded(
-              child: Text(l.projectTxSplits, style: textTheme.labelLarge),
-            ),
-            if (total > 0)
-              TextButton(
-                onPressed: () =>
-                    c.splitEqually([for (final m in members) m.id]),
-                child: Text(l.projectTxSplitEqual),
-              ),
-          ],
-        ),
-        Text(l.projectTxSplitsHint, style: textTheme.bodySmall),
-        const SizedBox(height: AppSpacing.sm),
         for (final s in c.memberSplits)
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: const EdgeInsets.only(right: AppSpacing.xs),
             child: Row(
               children: [
                 Expanded(
@@ -282,7 +270,7 @@ class _MemberSplits extends StatelessWidget {
                         emptyText: l.quickEventNone,
                         leading: m.isEmpty
                             ? const AppIcon(AppIcons.member)
-                            : ProjectMemberAvatar(member: m.first, size: 24),
+                            : memberAvatar(m.first, size: 24),
                         onTap: () => pickMember(s),
                         horizontalInset: 0,
                       );
@@ -294,14 +282,10 @@ class _MemberSplits extends StatelessWidget {
                   width: 112,
                   child: AppInput(
                     controller: s.amount,
-                    textAlign: TextAlign.right,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [ThousandsInputFormatter()],
-                    look: AppInputLook.outlined,
+                    type: AppInputType.amount,
+                    currencySymbol: symbol,
+                    dense: true,
                     hint: '0',
-                    prefixText: '$symbol ',
                   ),
                 ),
                 AppIconButton.clear(
@@ -322,7 +306,7 @@ class _MemberSplits extends StatelessWidget {
           ),
         if (c.memberSplits.isNotEmpty && total > 0)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Text(
               sum > total + 0.005
                   ? l.projectTxSplitsOver(
@@ -342,93 +326,25 @@ class _MemberSplits extends StatelessWidget {
 }
 
 /// คำอธิบาย: type a new one, or pick one used before in this project
-/// (filtered as you type). Returns the text, or null when dismissed.
+/// (filtered as you type). Returns the text, or null when dismissed. Only the
+/// wrapper — the sheet is the kit's [showDescriptionPickerSheet].
 Future<String?> _showDescriptionPicker(
   BuildContext context, {
   required String current,
   required List<String> past,
 }) {
-  return showAppSheet<String>(
+  final l = AppLocalizations.of(context)!;
+  return showDescriptionPickerSheet(
     context,
-    title: AppLocalizations.of(context)!.projectTxDescriptionHint,
+    current: current,
+    suggestions: past,
+    labels: DescriptionPickerLabels(
+      title: l.projectTxDescriptionHint,
+      hint: l.projectTxDescriptionHint,
+      pastHeading: l.projectTxDescriptionPast,
+      useLabel: l.projectTxDescriptionUse,
+    ),
     // Same navigator as the quick create sheet it opens from.
     useRootNavigator: false,
-    builder: (_) => _DescriptionPicker(current: current, past: past),
   );
-}
-
-class _DescriptionPicker extends StatefulWidget {
-  const _DescriptionPicker({required this.current, required this.past});
-  final String current;
-  final List<String> past;
-
-  @override
-  State<_DescriptionPicker> createState() => _DescriptionPickerState();
-}
-
-class _DescriptionPickerState extends State<_DescriptionPicker> {
-  late final _text = TextEditingController(text: widget.current);
-
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final q = _text.text.trim();
-    final lower = q.toLowerCase();
-    final matches = widget.past
-        .where((d) => lower.isEmpty || d.toLowerCase().contains(lower))
-        .toList();
-    final exact = widget.past.any((d) => d.toLowerCase() == lower);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: AppInput(
-              controller: _text,
-              autofocus: true,
-              hint: l.projectTxDescriptionHint,
-              prefixIcon: AppIcons.note,
-              maxLength: 200,
-              textInputAction: TextInputAction.done,
-              onChanged: (_) => setState(() {}),
-              onSubmitted: (v) => Navigator.pop(context, v.trim()),
-            ),
-          ),
-          // Typed something new → use it as-is.
-          if (q.isNotEmpty && !exact)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                0,
-              ),
-              child: AddTile(
-                label: l.projectTxDescriptionUse(q),
-                variant: AddTileVariant.row,
-                onTap: () => Navigator.pop(context, q),
-              ),
-            ),
-          if (matches.isNotEmpty) ...[
-            SectionHeader(title: l.projectTxDescriptionPast),
-            for (final d in matches)
-              DetailRow(
-                leading: const AppIcon(AppIcons.history),
-                label: d,
-                onTap: () => Navigator.pop(context, d),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
 }

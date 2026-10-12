@@ -13,6 +13,7 @@ class SheetOption<T> {
     this.leading,
     this.enabled = true,
     this.labelStyle,
+    this.destructive = false,
   });
 
   final T value;
@@ -23,6 +24,9 @@ class SheetOption<T> {
 
   /// Per-option label style (e.g. render a font name in that font).
   final TextStyle? labelStyle;
+
+  /// A destructive choice (remove, leave): its label in the error colour.
+  final bool destructive;
 }
 
 /// Single-select list sheet — language, font, currency, status, sort, …
@@ -60,7 +64,11 @@ Future<T?> showOptionSheet<T>(
               PickerRow(
                 leading: o.leading,
                 title: o.label,
-                titleStyle: o.labelStyle,
+                titleStyle: o.destructive
+                    ? (o.labelStyle ?? const TextStyle()).copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      )
+                    : o.labelStyle,
                 subtitle: o.subtitle,
                 selected: o.value == selected,
                 onTap: o.enabled ? () => Navigator.pop(context, o.value) : null,

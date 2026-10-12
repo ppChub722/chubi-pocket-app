@@ -56,16 +56,13 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
       if (!mounted) return;
       showAppSnackBar(
         context,
-        l.debtsPersonLinked(n, contact.effectiveName),
+        l.debtsPersonLinked(n, contact.name),
         tone: Tone.success,
       );
       context.pushReplacement(
         Uri(
           path: '/personal-debts/person',
-          queryParameters: {
-            'contact': contact.id,
-            'name': contact.effectiveName,
-          },
+          queryParameters: {'contact': contact.id, 'name': contact.name},
         ).toString(),
       );
     } on ApiException catch (e) {
@@ -94,11 +91,6 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
           error: state.error,
           isEmpty: state.debts.isEmpty,
           onRetry: context.read<PersonalDebtsCubit>().load,
-          // The generic skeleton is a padded list — clear the bar.
-          skeleton: Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-            child: const LoadingView(),
-          ),
           // No debts with this person → the page's own empty sections.
           builder: (context) {
             final mine =
@@ -116,69 +108,48 @@ class _DebtPersonPageState extends State<DebtPersonPage> {
             );
             final open = mine.where((d) => d.isOpen).toList();
             final closed = mine.where((d) => !d.isOpen).toList();
-            return PullToRefresh(
+            return DetailPageBody(
               onRefresh: () => context.read<PersonalDebtsCubit>().load(),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                // Top: clear the floating top bar.
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                  AppSpacing.lg,
-                  96 + MediaQuery.paddingOf(context).bottom,
+              physics: const AlwaysScrollableScrollPhysics(),
+              // Top: clear the floating top bar.
+              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+              bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
+              hero: _Header(person: person),
+              sections: [
+                // ONE headless box right after the hero: add a debt (+ link
+                // a typed name to a contact). Icons on every row.
+                (first) => SectionCard(
+                  first: first,
+                  children: [
+                    DetailAddRow(label: l.debtsPersonAdd, onTap: _addDebt),
+                    if (widget.contactId == null)
+                      DetailRow(
+                        leading: _linking
+                            ? const AppSpinner(size: AppSpinnerSize.medium)
+                            : const AppIcon(AppIcons.link),
+                        label: l.debtsPersonLinkContact,
+                        helper: l.debtsPersonLinkContactHint,
+                        showChevron: true,
+                        onTap: _linking ? null : _linkToContact,
+                      ),
+                  ],
                 ),
-                children: [
-                  _Header(person: person),
-                  const SizedBox(height: AppSpacing.lg),
-                  // Open debts, then the way to add one more.
-                  SectionCard(
-                    first: true,
-                    title: open.isEmpty ? null : l.debtsStatusOpen,
-                    children: [
-                      for (final d in open) DebtTile(debt: d),
-                      DetailAddRow(label: l.debtsPersonAdd, onTap: _addDebt),
-                    ],
-                  ),
-                  if (widget.contactId == null)
-                    SectionCard(
-                      children: [
-                        DetailRow(
-                          leading: _linking
-                              ? const AppSpinner(size: AppSpinnerSize.medium)
-                              : const AppIcon(AppIcons.link),
-                          label: l.debtsPersonLinkContact,
-                          helper: l.debtsPersonLinkContactHint,
-                          showChevron: true,
-                          onTap: _linking ? null : _linkToContact,
-                        ),
-                      ],
-                    ),
-                  if (closed.isNotEmpty)
-                    SectionCard(
-                      children: [
-                        Theme(
-                          // No divider lines from ExpansionTile.
-                          data: Theme.of(
-                            context,
-                          ).copyWith(dividerColor: Colors.transparent),
-                          child: ExpansionTile(
-                            tilePadding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.lg,
-                            ),
-                            leading: const AppIcon(AppIcons.history),
-                            title: Text(l.debtsPersonHistory(closed.length)),
-                            children: [
-                              for (final (i, d) in closed.indexed) ...[
-                                if (i > 0) const AppDivider.row(),
-                                DebtTile(debt: d),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
+                (first) => open.isEmpty
+                    ? null
+                    : SectionCard(
+                        first: first,
+                        title: l.debtsStatusOpen,
+                        children: [for (final d in open) DebtTile(debt: d)],
+                      ),
+                (first) => closed.isEmpty
+                    ? null
+                    : CollapsibleSection(
+                        title: l.debtsPersonHistory(closed.length),
+                        leading: const AppIcon(AppIcons.history),
+                        initiallyOpen: false,
+                        children: [for (final d in closed) DebtTile(debt: d)],
+                      ),
+              ],
             );
           },
         ),
@@ -198,9 +169,12 @@ class _Header extends StatelessWidget {
     final p = person;
     final symbol = Currencies.symbolOf(p.currency);
     final even = p.net.abs() < 0.005;
+    final palette = Theme.of(context).extension<AppColors>()!;
     return HeaderCard(
-      leading: DebtAvatar(
+      accent: p.person?.iconCode.tintFor(palette, avatarName: p.displayName),
+      leading: PersonMark(
         name: p.displayName,
+        level: p.contactId == null ? PersonLevel.name : PersonLevel.linked,
         iconCode: p.person?.iconCode,
         size: 52,
       ),

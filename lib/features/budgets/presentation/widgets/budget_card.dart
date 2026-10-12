@@ -29,9 +29,9 @@ String budgetPeriodRange(BuildContext context, String start, String end) {
 Color budgetAccent(BuildContext context, Budget b) {
   final palette = Theme.of(context).extension<AppColors>()!;
   final cp = b.currentPeriod;
-  if (cp?.overLimit ?? false) return Theme.of(context).colorScheme.error;
+  if (cp?.overLimit ?? false) return Tone.danger.color(context);
   if ((cp?.utilizationPct ?? 0) >= 80) return palette.warning;
-  return b.iconCode?.accentColorFor(palette) ?? palette.primary;
+  return b.iconCode.tintFor(palette);
 }
 
 /// Budgets list card: category icon · name · description (when set) ·
@@ -45,15 +45,11 @@ class BudgetCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final cp = budget.currentPeriod;
     final over = cp?.overLimit ?? false;
     final pct = cp?.utilizationPct ?? 0;
     final category = budget.category?.name ?? '';
     final desc = budget.description?.trim() ?? '';
-    final secondary = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     // The category only when the name doesn't already say it (the server
     // names a budget after its category by default).
     final subtitle = [
@@ -61,65 +57,47 @@ class BudgetCard extends StatelessWidget {
       budgetPeriodLabel(l, budget.period),
     ].join(' · ');
     return AppCard(
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  IconDisplay(
-                    type: IconType.category,
-                    size: 40,
-                    iconCode: budget.iconCode,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          budget.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (desc.isNotEmpty)
-                          Text(
-                            desc,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: secondary,
-                          ),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: secondary,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (over) AppIcon(AppIcons.warning, color: scheme.error),
-                ],
+              IconDisplay(
+                type: IconType.category,
+                size: 40,
+                iconCode: budget.iconCode,
               ),
-              const SizedBox(height: AppSpacing.md),
-              ProgressRow(
-                value: pct / 100,
-                color: budgetAccent(context, budget),
-                label: cp == null
-                    ? moneyString(context, budget.amount)
-                    : l.budgetSpentLine(
-                        moneyString(context, cp.spent),
-                        moneyString(context, budget.amount),
-                      ),
-                trailing: '${pct.toStringAsFixed(0)}%',
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppText(budget.name, role: AppTextRole.title, maxLines: 1),
+                    if (desc.isNotEmpty)
+                      AppText(desc, role: AppTextRole.caption, maxLines: 1),
+                    AppText(subtitle, role: AppTextRole.caption, maxLines: 1),
+                  ],
+                ),
               ),
+              if (over)
+                AppIcon(AppIcons.warning, color: Tone.danger.color(context)),
             ],
           ),
-        ),
+          const SizedBox(height: AppSpacing.md),
+          ProgressRow(
+            value: pct / 100,
+            color: budgetAccent(context, budget),
+            label: cp == null
+                ? moneyString(context, budget.amount)
+                : l.budgetSpentLine(
+                    moneyString(context, cp.spent),
+                    moneyString(context, budget.amount),
+                  ),
+            trailing: '${pct.toStringAsFixed(0)}%',
+          ),
+        ],
       ),
     );
   }

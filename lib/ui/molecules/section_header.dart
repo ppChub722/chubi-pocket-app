@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/list_break.dart';
 import '../tokens/app/app_icons.dart';
 import '../tokens/app_spacing.dart';
 
 /// Section title with an optional count and a trailing "ดูทั้งหมด ›" style
 /// action — dashboard cards, member strips, grouped lists.
-class SectionHeader extends StatelessWidget {
+class SectionHeader extends StatelessWidget implements ListBreak {
   const SectionHeader({
     required this.title,
+    this.leading,
     this.count,
     this.actionLabel,
     this.onAction,
@@ -22,6 +24,9 @@ class SectionHeader extends StatelessWidget {
   });
 
   final String title;
+
+  /// An icon (or any widget) before the title — a group's mark.
+  final Widget? leading;
   final int? count;
   final String? actionLabel;
   final VoidCallback? onAction;
@@ -38,6 +43,10 @@ class SectionHeader extends StatelessWidget {
       padding: padding,
       child: Row(
         children: [
+          if (leading != null) ...[
+            leading!,
+            const SizedBox(width: AppSpacing.sm),
+          ],
           Flexible(
             child: Text(
               title,

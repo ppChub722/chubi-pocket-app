@@ -52,7 +52,6 @@ class ContactFormPage extends StatefulWidget {
 }
 
 class _ContactFormPageState extends State<ContactFormPage> {
-  final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
@@ -104,7 +103,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
   }
 
   Future<void> _submit() async {
-    if (!(_form.currentState?.validate() ?? false)) return;
+    if (_name.text.trim().isEmpty) {
+      setState(
+        () => _error = AppLocalizations.of(context)!.contactNameRequired,
+      );
+      return;
+    }
     final cubit = context.read<ContactsCubit>();
     setState(() {
       _loading = true;
@@ -151,11 +155,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final title = _isLinkCreate
         ? l.contactLinkCreateTitle
         : l.contactLinkExistingTitle;
-    final saveLabel = l.contactLinkSave;
     // Display_name + email are read-only in both flows: link-create shows
     // the sender's profile, link-existing is about to become linked-driven.
     final lockedHelper = l.contactLinkedLockedHint;
-    const lockedIcon = AppIcons.link;
+    final loadingExisting = _loading && _isLinkExisting && _existing == null;
+    final name = _name.text;
+    final name2 = name.isEmpty ? '…' : name;
     return Scaffold(
       appBar: AppTopBar(title: title, showBack: true, editing: true),
       extendBodyBehindAppBar: true,
@@ -163,94 +168,95 @@ class _ContactFormPageState extends State<ContactFormPage> {
       body: Builder(
         builder: (context) {
           final top = MediaQuery.paddingOf(context).top;
-          if (_loading && _isLinkExisting && _existing == null) {
+          if (loadingExisting) {
             return Padding(
               padding: EdgeInsets.only(top: top),
               child: const LoadingView(),
             );
           }
-          return Form(
-            key: _form,
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.lg).add(
-                EdgeInsets.only(
-                  top: top,
-                  bottom: MediaQuery.paddingOf(context).bottom,
-                ),
+          return ListView(
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              top + AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.xxl + MediaQuery.paddingOf(context).bottom,
+            ),
+            children: [
+              AppMessage(
+                tone: Tone.info,
+                message: _isLinkExisting
+                    ? l.contactLinkBannerExisting(name2)
+                    : l.contactLinkBannerNew(name2),
               ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: _LinkBanner(
-                    senderName: _name.text,
-                    isExisting: _isLinkExisting,
+              const SizedBox(height: AppSpacing.md),
+              if (_error != null) ...[
+                AppMessage(tone: Tone.danger, message: _error!),
+                const SizedBox(height: AppSpacing.md),
+              ],
+              SectionCard(
+                first: true,
+                children: [
+                  DetailRow(
+                    label: l.commonName,
+                    locked: true,
+                    helper: lockedHelper,
+                    trailing: AppText(name),
                   ),
-                ),
-                AppInput(
-                  controller: _name,
-                  label: l.commonName,
-                  readOnly: true,
-                  prefixIcon: lockedIcon,
-                  helper: lockedHelper,
-                  maxLength: TextLimits.name,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? l.contactNameRequired
-                      : null,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                // The contact's own — editable even when name/email are locked.
-                AppInput(
-                  controller: _description,
-                  label: l.commonDescription,
-                  hint: l.contactDescriptionHint,
-                  maxLines: 3,
-                  maxLength: TextLimits.description,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppInput(
-                  controller: _email,
-                  label: l.contactEmailLabel,
-                  readOnly: true,
-                  prefixIcon: lockedIcon,
-                  helper: lockedHelper,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppInput(
-                  controller: _phone,
-                  label: l.contactPhoneLabel,
-                  maxLength: TextLimits.phone,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppInput(
-                  controller: _note,
-                  label: l.commonNote,
-                  hint: l.contactNoteHint,
-                  maxLines: 3,
-                  maxLength: TextLimits.note,
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  // The contact's own — editable even when name/email are
+                  // locked.
+                  DetailStacked(
+                    label: l.commonDescription,
+                    child: AppInput.inline(
+                      editing: true,
+                      controller: _description,
+                      hint: l.contactDescriptionHint,
+                      maxLines: 3,
+                      maxLength: TextLimits.description,
+                    ),
+                  ),
+                  DetailRow(
+                    label: l.contactEmailLabel,
+                    locked: true,
+                    helper: lockedHelper,
+                    trailing: _email.text.isEmpty
+                        ? DetailPlaceholder(l.contactFieldNotSet)
+                        : AppText(_email.text),
+                  ),
+                  DetailStacked(
+                    label: l.contactPhoneLabel,
+                    child: AppInput.inline(
+                      editing: true,
+                      controller: _phone,
+                      maxLength: TextLimits.phone,
+                      keyboardType: TextInputType.phone,
+                    ),
+                  ),
+                  DetailStacked(
+                    label: l.commonNote,
+                    child: AppInput.inline(
+                      editing: true,
+                      controller: _note,
+                      hint: l.contactNoteHint,
+                      maxLines: 3,
+                      maxLength: TextLimits.note,
                     ),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.lg),
-                AppButton(
-                  label: saveLabel,
-                  expand: true,
-                  loading: _loading,
-                  onPressed: _loading ? null : _submit,
-                ),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
+      bottomNavigationBar: loadingExisting
+          ? null
+          : ModeActionBar(
+              canSave: !_loading,
+              saving: _loading,
+              cancelLabel: l.commonCancel,
+              saveLabel: l.contactLinkSave,
+              onCancel: () => Navigator.of(context).maybePop(),
+              onSave: _submit,
+            ),
     );
   }
 
@@ -262,37 +268,5 @@ class _ContactFormPageState extends State<ContactFormPage> {
     _description.dispose();
     _note.dispose();
     super.dispose();
-  }
-}
-
-class _LinkBanner extends StatelessWidget {
-  const _LinkBanner({required this.senderName, required this.isExisting});
-  final String senderName;
-  final bool isExisting;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final name = senderName.isEmpty ? '…' : senderName;
-    return AppCard(
-      style: AppCardStyle.tinted,
-      color: scheme.primary,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: [
-          AppIcon(AppIcons.link, color: scheme.primary, size: AppIconSize.md),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              isExisting
-                  ? l.contactLinkBannerExisting(name)
-                  : l.contactLinkBannerNew(name),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

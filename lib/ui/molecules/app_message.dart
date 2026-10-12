@@ -14,7 +14,7 @@ class AppMessageAction {
   final VoidCallback onPressed;
 }
 
-/// THE message body (PROPOSAL, owner 2026-10-12): one look for the snackbar
+/// THE message body (owner 2026-10-12): one look for the snackbar
 /// AND the banner — same tone colours, icon set, radius, padding and type;
 /// only placement and lifetime differ. The rule stays: something that just
 /// happened → a snackbar, something still true → a banner.
@@ -33,11 +33,16 @@ class AppMessage extends StatelessWidget {
     this.actions = const [],
     this.onClose,
     this.floating = false,
+    this.icon,
     super.key,
   });
 
   final String message;
   final Tone tone;
+
+  /// Replaces the tone's icon (a 🔒 on a "locked" banner); the colour is
+  /// still the tone's.
+  final IconData? icon;
   final List<AppMessageAction> actions;
 
   /// Banner: adds a ✕.
@@ -82,7 +87,7 @@ class AppMessage extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 2),
-          child: Icon(iconOf(tone), color: color, size: 20),
+          child: Icon(icon ?? iconOf(tone), color: color, size: 20),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
@@ -139,9 +144,9 @@ class AppMessage extends StatelessWidget {
   }
 }
 
-/// PROPOSED snackbar: an [AppMessage] floating at the bottom, replacing the
+/// The snackbar: an [AppMessage] floating at the bottom, replacing the
 /// current one, gone after a few seconds, at most one action. (Inside a sheet
-/// the existing top toast still applies until the app adopts this.)
+/// the same body shows as a toast on top of it — see [showAppSnackBar].)
 void showAppMessage(
   BuildContext context,
   String message, {
@@ -149,8 +154,25 @@ void showAppMessage(
   String? actionLabel,
   VoidCallback? onAction,
   Duration duration = const Duration(seconds: 4),
+}) => showAppMessageOn(
+  ScaffoldMessenger.of(context),
+  message,
+  tone: tone,
+  actionLabel: actionLabel,
+  onAction: onAction,
+  duration: duration,
+);
+
+/// [showAppMessage] on a messenger captured up front — for calls after an
+/// `await` / pop, when the original context may already be gone.
+void showAppMessageOn(
+  ScaffoldMessengerState messenger,
+  String message, {
+  Tone tone = Tone.info,
+  String? actionLabel,
+  VoidCallback? onAction,
+  Duration duration = const Duration(seconds: 4),
 }) {
-  final messenger = ScaffoldMessenger.of(context);
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(

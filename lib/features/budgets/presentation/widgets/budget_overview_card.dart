@@ -60,35 +60,33 @@ class _Content extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
     final palette = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
     final o = overview;
     final pct = o.overallUtilizationPct;
     final accent = o.budgetsOverLimit > 0 || pct > 100
-        ? scheme.error
+        ? Tone.danger.color(context)
         : pct >= 80
         ? palette.warning
         : palette.primary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        AppText(
           [
             budgetPeriodLabel(l, o.period),
             budgetPeriodRange(context, o.periodStart, o.periodEnd),
           ].join(' · '),
+          role: AppTextRole.caption,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
+        AppText(
           l.budgetsOverviewSpent(
             moneyString(context, o.totalSpent),
             moneyString(context, o.totalBudget),
           ),
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          role: AppTextRole.title,
+          weight: FontWeight.w700,
         ),
         const SizedBox(height: AppSpacing.md),
         ProgressRow(

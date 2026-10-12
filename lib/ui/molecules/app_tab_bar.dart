@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../atoms/count_badge.dart';
+
 import '../tokens/app_spacing.dart';
 
 /// One tab of an [AppTabBar].
@@ -115,13 +117,12 @@ class AppTabBar<T> extends StatelessWidget {
             AppSpacing.md + 2.5,
           ),
           child: Center(
-            child: t.badgeCount > 0
-                ? Badge(
-                    label: Text('${t.badgeCount}'),
-                    offset: const Offset(14, -6),
-                    child: label,
-                  )
-                : label,
+            // The shared count badge, floating off the label's top-right.
+            child: CountBadge.floating(
+              child: label,
+              count: t.badgeCount,
+              offset: const Offset(-14, -10),
+            ),
           ),
         ),
       ),

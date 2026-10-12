@@ -302,7 +302,7 @@ Future<void> _onTapActionedLinkRequest(
   // 1. Linked-contact match — navigate.
   final linked = _firstWhere(
     contactsCubit.state.contacts,
-    (c) => c.linkedUserId == senderUserId,
+    (c) => c.linkedUser?.id == senderUserId,
   );
   if (linked != null) {
     open('/contacts/${linked.id}');
@@ -331,7 +331,7 @@ Future<void> _onTapActionedLinkRequest(
       (c) =>
           c.email != null &&
           c.email!.toLowerCase() == lower &&
-          c.linkedUserId == null,
+          c.linkedUser == null,
     );
   }
   if (!ctx.mounted) return;

@@ -88,12 +88,13 @@ class _ChatDialState extends State<ChatDial> {
                         onPressed: () => setState(() => _open = false),
                       ),
                       Expanded(
-                        child: AppInput(
+                        child: AppInput.card(
                           controller: _text,
                           autofocus: true,
                           textInputAction: TextInputAction.send,
                           onSubmitted: (_) => _send(),
-                          look: AppInputLook.bare,
+                          // Chat: plain text in the pill, no underline.
+                          underline: false,
                           hint: widget.hint,
                         ),
                       ),

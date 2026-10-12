@@ -1,53 +1,47 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:flutter/services.dart';
 
 import '../tokens/app/app_icons.dart';
-import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
-import 'detail_stacked_value.dart';
+import 'app_input_framed.dart';
+import 'app_input_type.dart';
 import 'ui_config.dart';
 
-/// How an [AppInput] is drawn.
-enum AppInputLook {
-  /// The theme's filled box — forms, auth, settings dialogs.
-  filled,
+enum _Kind { field, card, inline, title, search }
 
-  /// An outline (the detail pages' editable boxes, a small amount box).
-  outlined,
-
-  /// Only an underline — rows that edit in place (split name / amount, an
-  /// identifier number, the header title).
-  underline,
-
-  /// A rounded, borderless, grey capsule — the compact search in a sheet.
-  pill,
-
-  /// No chrome at all — a hero's big amount, a chat box.
-  bare,
-}
-
-enum _Kind { field, inline, title, search }
+/// Where an in-card / title field's NAME label sits (owner 2026-10-12): [left]
+/// of the underline (entity heroes) or [above] it (the transaction hero /
+/// EntryCard two-column layout).
+enum AppInputLabelPlacement { left, above }
 
 /// THE text input (owner 2026-10-12: one input for the whole app). Replaces
 /// the old AppTextField, InlineField, InlineTitleField, AppSearchBar and every
 /// raw `TextField` / `TextFormField` in the features.
 ///
-/// - `AppInput(...)` — a form field: label, hint, helper, error, prefix /
-///   suffix, password toggle ([obscurable]), validator, formatters, counter.
-/// - `AppInput.inline(...)` — one box in view and edit mode on a detail page:
-///   borderless + read-only in view (long-press → [onEnterEdit], an empty
-///   field shows [viewHint]); outlined in edit. Under a `DetailStacked` label
-///   its text lines up with the label.
-/// - `AppInput.title(...)` — a hero's name / description: plain text in view,
-///   underlined in edit, the same height both ways.
-/// - `AppInput.search(...)` — a search box with a leading 🔍 and a ✕ once
+/// The rule: **anything editable has a frame; the only exception is editing
+/// inside a card, which is an underline.**
+///
+/// - `AppInput(...)` — the FIELD: ONE outlined frame, no fill, the label
+///   (optional) notched on the border. States: empty (muted outline + faint
+///   placeholder) · focused (primary) · filled (neutral) · error (red + the
+///   message) · disabled (dimmed) · locked 🔒 ([locked]: no frame). [dense] =
+///   the in-row size. Forms, detail pages in edit mode, split rows, chat.
+/// - `AppInput.card(...)` — IN-CARD: an underline, no frame, no label; for
+///   editing inside a card (a hero's title / amount, the quick-create card).
+/// - `AppInput.inline(...)` — a detail page's value: plain text in view
+///   (long-press → [onEnterEdit]; an empty field shows [viewHint]), the dense
+///   Field in edit. The editable-text indent rule: an editable value's text is
+///   indented by the frame's padding in view AND edit (so the frame appears
+///   around it without anything moving and its left edge lines up with the
+///   title); a read-only value has no frame and is flush with the title.
+/// - `AppInput.title(...)` — a hero's name: plain text in view, underlined in
+///   edit, the same height both ways.
+/// - `AppInput.search(...)` — the grey capsule with a leading 🔍 and a ✕ once
 ///   there is text; owns its controller when none is given.
 ///
-/// [look] picks how it is drawn (default per kind); [style], [textAlign],
-/// [contentPadding], [borderColor] tune a look without a new widget. Strings
-/// (hint, tooltip, view hint) are always parameters — this atom never reads
-/// the app's localisation.
+/// Data TYPES ([AppInputType]: amount, number, percent, reference) layer on
+/// the Field and the in-card look. Strings (hint, tooltip, view hint) are
+/// always parameters — this atom never reads the app's localisation.
 class AppInput extends StatefulWidget {
   const AppInput({
     this.controller,
@@ -60,6 +54,7 @@ class AppInput extends StatefulWidget {
     this.prefix,
     this.prefixText,
     this.suffix,
+    this.suffixText,
     this.keyboardType,
     this.textInputAction,
     this.textCapitalization = TextCapitalization.none,
@@ -71,27 +66,103 @@ class AppInput extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.onTap,
+    this.onTapOutside,
     this.enabled = true,
     this.readOnly = false,
+    this.locked = false,
     this.autofocus = false,
     this.obscurable = false,
     this.autofillHints,
     this.inputFormatters,
-    this.textAlign = TextAlign.start,
+    this.textAlign,
     this.style,
-    this.look = AppInputLook.filled,
+    this.dense = false,
+    this.type = AppInputType.text,
+    this.decimals,
+    this.allowLetters = false,
+    this.allowNegative = false,
+    this.currencySymbol,
+    this.minWidth,
     this.contentPadding,
     this.borderColor,
-    this.fillColor,
     this.focusColor,
     this.cursorColor,
     this.hintStyle,
-    this.minWidth,
-    this.onTapOutside,
     this.showCursor,
     this.enableInteractiveSelection,
     super.key,
   }) : _kind = _Kind.field,
+       underline = true,
+       symbolScale = 1.0,
+       hideHintOnFocus = false,
+       labelPlacement = AppInputLabelPlacement.left,
+       labelWidth = null,
+       editing = true,
+       onEnterEdit = null,
+       viewHint = null,
+       clearTooltip = null,
+       padding = null;
+
+  /// IN-CARD field: an underline, no frame, no label — for editing inside a
+  /// card (hero title / amount, the quick-create / draft card's "what for?"
+  /// and ฿). Types layer on it too: `type: AppInputType.amount` is the hero
+  /// amount (pass a big [style]). [underline] false = plain text until it is
+  /// focused or in error; [symbolScale] sizes the amount symbol relative to the
+  /// digits; [hideHintOnFocus] drops the faint "0" while typing.
+  const AppInput.card({
+    this.controller,
+    this.focusNode,
+    this.hint,
+    this.errorText,
+    this.validator,
+    this.onChanged,
+    this.onSubmitted,
+    this.onTap,
+    this.onTapOutside,
+    this.keyboardType,
+    this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
+    this.minLines,
+    this.maxLines = 1,
+    this.maxLength,
+    this.enabled = true,
+    this.readOnly = false,
+    this.locked = false,
+    this.autofocus = false,
+    this.inputFormatters,
+    this.textAlign,
+    this.style,
+    this.type = AppInputType.text,
+    this.decimals,
+    this.allowLetters = false,
+    this.allowNegative = false,
+    this.currencySymbol,
+    this.minWidth,
+    this.focusColor,
+    this.cursorColor,
+    this.hintStyle,
+    this.showCursor,
+    this.enableInteractiveSelection,
+    this.underline = true,
+    this.symbolScale = 1.0,
+    this.hideHintOnFocus = false,
+    this.label,
+    this.labelPlacement = AppInputLabelPlacement.left,
+    this.labelWidth,
+    super.key,
+  }) : _kind = _Kind.card,
+       dense = false,
+       helper = null,
+       prefixIcon = null,
+       prefix = null,
+       prefixText = null,
+       suffix = null,
+       suffixText = null,
+       showCounter = false,
+       obscurable = false,
+       autofillHints = null,
+       contentPadding = null,
+       borderColor = null,
        editing = true,
        onEnterEdit = null,
        viewHint = null,
@@ -120,31 +191,42 @@ class AppInput extends StatefulWidget {
        prefix = null,
        prefixText = null,
        suffix = null,
+       suffixText = null,
        textInputAction = null,
        textCapitalization = TextCapitalization.none,
        minLines = 1,
        showCounter = false,
        onSubmitted = null,
        onTap = null,
+       onTapOutside = null,
        enabled = true,
        readOnly = false,
+       locked = false,
        autofocus = false,
        obscurable = false,
        autofillHints = null,
        inputFormatters = null,
-       textAlign = TextAlign.start,
+       textAlign = null,
        style = null,
-       look = AppInputLook.outlined,
+       dense = true,
+       type = AppInputType.text,
+       decimals = null,
+       allowLetters = false,
+       allowNegative = false,
+       currencySymbol = null,
+       minWidth = null,
        contentPadding = null,
        borderColor = null,
-       fillColor = null,
-       showCursor = null,
        focusColor = null,
        cursorColor = null,
        hintStyle = null,
-       minWidth = null,
-       onTapOutside = null,
+       showCursor = null,
        enableInteractiveSelection = null,
+       underline = true,
+       symbolScale = 1.0,
+       hideHintOnFocus = false,
+       labelPlacement = AppInputLabelPlacement.left,
+       labelWidth = null,
        clearTooltip = null,
        padding = null;
 
@@ -160,15 +242,18 @@ class AppInput extends StatefulWidget {
     this.maxLength = 100,
     this.maxLines = 1,
     this.style,
+    this.label,
+    this.labelPlacement = AppInputLabelPlacement.left,
+    this.labelWidth,
     super.key,
   }) : _kind = _Kind.title,
-       label = null,
        helper = null,
        errorText = null,
        prefixIcon = null,
        prefix = null,
        prefixText = null,
        suffix = null,
+       suffixText = null,
        keyboardType = null,
        textInputAction = null,
        textCapitalization = TextCapitalization.none,
@@ -176,38 +261,45 @@ class AppInput extends StatefulWidget {
        showCounter = false,
        onSubmitted = null,
        onTap = null,
+       onTapOutside = null,
        enabled = true,
        readOnly = false,
+       locked = false,
        autofocus = false,
        obscurable = false,
        autofillHints = null,
        inputFormatters = null,
-       textAlign = TextAlign.start,
-       look = AppInputLook.underline,
+       textAlign = null,
+       dense = false,
+       type = AppInputType.text,
+       decimals = null,
+       allowLetters = false,
+       allowNegative = false,
+       currencySymbol = null,
+       minWidth = null,
        contentPadding = null,
        borderColor = null,
-       fillColor = null,
-       showCursor = null,
        focusColor = null,
        cursorColor = null,
        hintStyle = null,
-       minWidth = null,
-       onTapOutside = null,
+       showCursor = null,
        enableInteractiveSelection = null,
+       underline = true,
+       symbolScale = 1.0,
+       hideHintOnFocus = false,
        viewHint = null,
        clearTooltip = null,
        padding = null;
 
-  /// See the class doc. [hint] is what the field says when empty; [clearTooltip]
-  /// is the ✕'s tooltip. [look]: [AppInputLook.outlined] (default, a list
-  /// page's top) or [AppInputLook.pill] (compact, in a sheet).
+  /// See the class doc. [hint] is what the field says when empty;
+  /// [clearTooltip] is the ✕'s tooltip; [padding] the space around the
+  /// capsule.
   const AppInput.search({
     required this.onChanged,
     this.controller,
     this.hint,
     this.clearTooltip,
     this.autofocus = false,
-    this.look = AppInputLook.outlined,
     this.padding = const EdgeInsets.fromLTRB(
       AppSpacing.lg,
       AppSpacing.xs,
@@ -224,6 +316,7 @@ class AppInput extends StatefulWidget {
        prefix = null,
        prefixText = null,
        suffix = null,
+       suffixText = null,
        keyboardType = null,
        textInputAction = TextInputAction.search,
        textCapitalization = TextCapitalization.none,
@@ -234,23 +327,34 @@ class AppInput extends StatefulWidget {
        validator = null,
        onSubmitted = null,
        onTap = null,
+       onTapOutside = null,
        enabled = true,
        readOnly = false,
+       locked = false,
        obscurable = false,
        autofillHints = null,
        inputFormatters = null,
-       textAlign = TextAlign.start,
+       textAlign = null,
        style = null,
+       dense = false,
+       type = AppInputType.text,
+       decimals = null,
+       allowLetters = false,
+       allowNegative = false,
+       currencySymbol = null,
+       minWidth = null,
        contentPadding = null,
        borderColor = null,
-       fillColor = null,
-       showCursor = null,
        focusColor = null,
        cursorColor = null,
        hintStyle = null,
-       minWidth = null,
-       onTapOutside = null,
+       showCursor = null,
        enableInteractiveSelection = null,
+       underline = true,
+       symbolScale = 1.0,
+       hideHintOnFocus = false,
+       labelPlacement = AppInputLabelPlacement.left,
+       labelWidth = null,
        editing = true,
        onEnterEdit = null,
        viewHint = null;
@@ -259,6 +363,11 @@ class AppInput extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final String? label;
+
+  /// In-card / title only: where [label] sits, and (left only) a fixed label
+  /// column width so several fields' underlines start at the same x.
+  final AppInputLabelPlacement labelPlacement;
+  final double? labelWidth;
   final String? hint;
   final String? helper;
 
@@ -267,10 +376,11 @@ class AppInput extends StatefulWidget {
   final IconData? prefixIcon;
 
   /// A custom leading widget (a currency symbol, a ± toggle) instead of
-  /// [prefixIcon]; takes only the room it needs.
+  /// [prefixIcon].
   final Widget? prefix;
   final String? prefixText;
   final Widget? suffix;
+  final String? suffixText;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final TextCapitalization textCapitalization;
@@ -284,43 +394,70 @@ class AppInput extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onTap;
+
+  /// A tap outside the field while it has focus (commit on blur).
+  final TapRegionCallback? onTapOutside;
   final bool enabled;
   final bool readOnly;
+
+  /// Read-only AND locked 🔒: no frame, plain text + the lock.
+  final bool locked;
   final bool autofocus;
 
   /// A password field: ● ● ● with a show / hide toggle.
   final bool obscurable;
   final Iterable<String>? autofillHints;
   final List<TextInputFormatter>? inputFormatters;
-  final TextAlign textAlign;
+
+  /// null = numbers right, text left.
+  final TextAlign? textAlign;
 
   /// Overrides the text style (a hero's big amount, a bold name).
   final TextStyle? style;
-  final AppInputLook look;
+
+  /// The in-row size of the Field.
+  final bool dense;
+
+  /// The data type layered on the look ([AppInputType]).
+  final AppInputType type;
+
+  /// Percent: decimal places allowed (default 2); reference: allow letters.
+  final int? decimals;
+  final bool allowLetters;
+
+  /// [AppInputType.amount]: accept a leading "-" (an adjust-balance field);
+  /// every other amount stays positive-only.
+  final bool allowNegative;
+
+  /// [AppInputType.amount]'s symbol; null = [UiStrings.currencySymbol].
+  final String? currencySymbol;
+
+  /// A minimum width for the field (an intrinsic-width amount).
+  final double? minWidth;
   final EdgeInsetsGeometry? contentPadding;
 
-  /// Overrides the border / underline colour (an invalid value in red).
+  /// Overrides the idle outline colour (an invalid value in red).
   final Color? borderColor;
 
-  /// The border / underline colour while focused (default: the primary).
+  /// The focused outline / underline colour (default: the primary).
   final Color? focusColor;
 
   /// The caret colour (default: the theme's).
   final Color? cursorColor;
 
-  /// Overrides the hint style (default: [style] at 40% — a hero amount's
-  /// faint "0" in its own colour).
+  /// Overrides the hint style (default: [style] at 40 %).
   final TextStyle? hintStyle;
-
-  /// A minimum width for the field (an intrinsic-width amount: grows with
-  /// what is typed).
-  final double? minWidth;
-
-  /// A tap outside the field while it has focus (commit on blur).
-  final TapRegionCallback? onTapOutside;
-  final Color? fillColor;
   final bool? showCursor;
   final bool? enableInteractiveSelection;
+
+  /// In-card: false = plain text, no underline until focused / in error.
+  final bool underline;
+
+  /// In-card amount: the symbol's size relative to the digits (hero ฿ = 0.7).
+  final double symbolScale;
+
+  /// Drop the placeholder while focused.
+  final bool hideHintOnFocus;
 
   /// inline / title: false = view mode (read-only, long-press to edit).
   final bool editing;
@@ -333,7 +470,7 @@ class AppInput extends StatefulWidget {
   /// search: the ✕'s tooltip.
   final String? clearTooltip;
 
-  /// search: space around the box.
+  /// search: space around the capsule.
   final EdgeInsetsGeometry? padding;
 
   @override
@@ -341,7 +478,6 @@ class AppInput extends StatefulWidget {
 }
 
 class _AppInputState extends State<AppInput> {
-  late bool _obscured = widget.obscurable;
   TextEditingController? _own;
 
   TextEditingController? get _controller =>
@@ -356,144 +492,115 @@ class _AppInputState extends State<AppInput> {
     super.dispose();
   }
 
-  // ── decoration ────────────────────────────────────────────────────
-  InputBorder _border(AppInputLook look, Color c, {double radius = 10}) =>
-      switch (look) {
-        AppInputLook.underline => UnderlineInputBorder(
-          borderSide: BorderSide(color: c),
-        ),
-        AppInputLook.pill => const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
-          borderSide: BorderSide.none,
-        ),
-        AppInputLook.bare => InputBorder.none,
-        _ => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radius),
-          borderSide: BorderSide(color: c),
-        ),
-      };
+  static OutlineInputBorder _outline(Color c) => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(10),
+    borderSide: BorderSide(color: c),
+  );
 
-  InputDecoration _decoration(
-    BuildContext context, {
-    required Color idle,
-    String? hint,
-    TextStyle? hintStyle,
-    Widget? suffixIcon,
-    Widget? prefixIcon,
-    BoxConstraints? prefixConstraints,
-  }) {
-    final w = widget;
-    final scheme = Theme.of(context).colorScheme;
-    final look = w.look;
-    final base = w.borderColor ?? idle;
-    final theme = look == AppInputLook.filled;
-    return InputDecoration(
-      labelText: w.label,
-      hintText: hint,
-      hintStyle: hintStyle,
-      helperText: w.helper,
-      helperMaxLines: 3,
-      errorText: w.errorText,
-      errorMaxLines: 3,
-      prefixIcon: prefixIcon,
-      prefixIconConstraints: prefixConstraints,
-      prefixText: w.prefixText,
-      suffixIcon: suffixIcon,
-      constraints: w.minWidth == null
-          ? null
-          : BoxConstraints(minWidth: w.minWidth!),
-      isDense: look != AppInputLook.filled,
-      filled: theme || look == AppInputLook.pill || w.fillColor != null,
-      fillColor:
-          w.fillColor ??
-          (look == AppInputLook.pill ? scheme.surfaceContainerHighest : null),
-      counterText: w.showCounter ? null : '',
-      contentPadding: w.contentPadding ?? _padding(look),
-      // `filled` keeps the theme's own borders (its input decoration theme).
-      border: theme && w.borderColor == null ? null : _border(look, base),
-      enabledBorder: theme && w.borderColor == null
-          ? null
-          : _border(look, base),
-      focusedBorder: theme && w.borderColor == null
-          ? null
-          : _border(look, w.focusColor ?? scheme.primary),
-    );
-  }
+  static UnderlineInputBorder _underline(Color c) =>
+      UnderlineInputBorder(borderSide: BorderSide(color: c));
 
-  EdgeInsetsGeometry? _padding(AppInputLook look) => switch (look) {
-    AppInputLook.underline => const EdgeInsets.symmetric(
-      vertical: AppSpacing.sm,
-    ),
-    AppInputLook.pill => const EdgeInsets.symmetric(
-      horizontal: AppSpacing.md,
-      vertical: AppSpacing.sm,
-    ),
-    AppInputLook.bare => EdgeInsets.zero,
-    AppInputLook.outlined => const EdgeInsets.symmetric(
-      horizontal: AppSpacing.md,
-      vertical: 10,
-    ),
-    AppInputLook.filled => null,
-  };
-
-  // ── kinds ─────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) => switch (widget._kind) {
     _Kind.field => _buildField(context),
+    _Kind.card => _withLabel(context, _buildField(context)),
     _Kind.inline => _buildInline(context),
-    _Kind.title => _buildTitle(context),
+    _Kind.title => _withLabel(context, _buildTitle(context)),
     _Kind.search => _buildSearch(context),
   };
 
+  /// An in-card / title field's NAME label ("ชื่อ", "คำอธิบาย", "จำนวนเงิน"):
+  /// the row-label text role, left of the underline or above it; the hint
+  /// stays the friendly placeholder. Shown only when [label] is given (the
+  /// caller passes it in create / edit, null in view).
+  Widget _withLabel(BuildContext context, Widget field) {
+    final w = widget;
+    final label = w.label;
+    if (label == null || (w._kind == _Kind.title && !w.editing)) return field;
+    final theme = Theme.of(context);
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: theme.colorScheme.onSurface,
+      ),
+    );
+    if (w.labelPlacement == AppInputLabelPlacement.above) {
+      return Column(
+        // Hug the content: under a loose bounded parent (an Align in a row) a
+        // max-size Column would take the whole height and push the field up.
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [text, field],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        w.labelWidth == null
+            ? Flexible(flex: 0, child: text)
+            : SizedBox(width: w.labelWidth, child: text),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(child: field),
+      ],
+    );
+  }
+
   Widget _buildField(BuildContext context) {
     final w = widget;
-    final scheme = Theme.of(context).colorScheme;
-    return TextFormField(
+    return FramedInput(
       controller: w.controller,
       focusNode: w.focusNode,
-      enabled: w.enabled,
-      readOnly: w.readOnly,
-      autofocus: w.autofocus,
+      label: w._kind == _Kind.field ? w.label : null,
+      hint: w.hint,
+      helper: w.helper,
+      errorText: w.errorText,
+      prefixIcon: w.prefixIcon,
+      prefix: w.prefix,
+      prefixText: w.prefixText,
+      suffix: w.suffix,
+      suffixText: w.suffixText,
       keyboardType: w.keyboardType,
       textInputAction: w.textInputAction,
       textCapitalization: w.textCapitalization,
-      textAlign: w.textAlign,
-      minLines: w.obscurable ? 1 : w.minLines,
-      maxLines: w.obscurable ? 1 : w.maxLines,
+      minLines: w.minLines,
+      maxLines: w.maxLines,
       maxLength: w.maxLength,
-      obscureText: _obscured,
-      autofillHints: w.autofillHints,
-      inputFormatters: w.inputFormatters,
+      showCounter: w.showCounter,
       validator: w.validator,
       onChanged: w.onChanged,
-      onFieldSubmitted: w.onSubmitted,
+      onSubmitted: w.onSubmitted,
       onTap: w.onTap,
       onTapOutside: w.onTapOutside,
-      showCursor: w.showCursor,
-      cursorColor: w.cursorColor,
-      enableInteractiveSelection: w.enableInteractiveSelection,
+      enabled: w.enabled,
+      readOnly: w.readOnly,
+      locked: w.locked,
+      autofocus: w.autofocus,
+      obscurable: w.obscurable,
+      autofillHints: w.autofillHints,
+      inputFormatters: w.inputFormatters,
+      textAlign: w.textAlign,
       style: w.style,
-      decoration: _decoration(
-        context,
-        idle: scheme.outlineVariant,
-        hint: w.hint,
-        hintStyle:
-            w.hintStyle ??
-            w.style?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
-        prefixIcon:
-            w.prefix ?? (w.prefixIcon == null ? null : Icon(w.prefixIcon)),
-        prefixConstraints: w.prefix == null
-            ? null
-            : const BoxConstraints(minWidth: 0, minHeight: 0),
-        suffixIcon: w.obscurable
-            ? IconButton(
-                icon: Icon(_obscured ? AppIcons.visible : AppIcons.hidden),
-                onPressed: () => setState(() => _obscured = !_obscured),
-              )
-            : w.suffix,
-      ),
+      dense: w.dense,
+      inCard: w._kind == _Kind.card,
+      underline: w.underline,
+      symbolScale: w.symbolScale,
+      hideHintOnFocus: w.hideHintOnFocus,
+      focusColor: w.focusColor,
+      hintStyle: w.hintStyle,
+      decimals: w.decimals,
+      allowLetters: w.allowLetters,
+      allowNegative: w.allowNegative,
+      type: w.type,
+      currencySymbol: w.currencySymbol,
+      minWidth: w.minWidth,
+      contentPadding: w.contentPadding,
+      borderColor: w.borderColor,
+      cursorColor: w.cursorColor,
+      showCursor: w.showCursor,
+      enableInteractiveSelection: w.enableInteractiveSelection,
     );
   }
 
@@ -502,6 +609,12 @@ class _AppInputState extends State<AppInput> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final editing = w.editing;
+    // The EDITABLE-TEXT INDENT rule (owner 2026-10-12): an editable value's
+    // text is indented by the frame's padding in view AND edit mode, so the
+    // frame appears around it without anything moving and the frame's left
+    // edge lines up with the title; a read-only value (nothing to enter) has
+    // no frame and its text is flush with the title.
+    final flush = !editing && w.onEnterEdit == null;
     final field = TextFormField(
       controller: w.controller,
       focusNode: w.focusNode,
@@ -526,46 +639,27 @@ class _AppInputState extends State<AppInput> {
         filled: false,
         isDense: true,
         counterText: '',
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: flush ? 0 : AppSpacing.md,
           vertical: 10,
         ),
-        enabledBorder: _border(
-          AppInputLook.outlined,
-          editing ? scheme.outline : Colors.transparent,
-        ),
-        focusedBorder: _border(AppInputLook.outlined, scheme.primary),
-        border: _border(
-          AppInputLook.outlined,
-          editing ? scheme.outline : Colors.transparent,
-        ),
+        enabledBorder: flush
+            ? InputBorder.none
+            : _outline(editing ? scheme.outline : Colors.transparent),
+        focusedBorder: flush ? InputBorder.none : _outline(scheme.primary),
+        border: flush
+            ? InputBorder.none
+            : _outline(editing ? scheme.outline : Colors.transparent),
       ),
     );
-    final Widget box = editing
+    return editing
         ? field
         : GestureDetector(
             onLongPress: w.onEnterEdit,
             behavior: HitTestBehavior.opaque,
             child: AbsorbPointer(child: field),
           );
-    if (!DetailStackedValue.of(context)) return box;
-    // [_textInset] wider, sticking out on the left — its text then starts at
-    // this widget's left edge, under the label.
-    return LayoutBuilder(
-      builder: (context, c) => OverflowBox(
-        minWidth: c.maxWidth + _textInset,
-        maxWidth: c.maxWidth + _textInset,
-        fit: OverflowBoxFit.deferToChild,
-        alignment: AlignmentDirectional.centerEnd,
-        child: box,
-      ),
-    );
   }
-
-  /// Where the text starts inside an inline field: the 12 content padding
-  /// plus the 4 the outlined decorator adds (measured — test/shared/
-  /// detail_stacked_test.dart guards it).
-  static const double _textInset = AppSpacing.lg;
 
   Widget _buildTitle(BuildContext context) {
     final w = widget;
@@ -589,15 +683,11 @@ class _AppInputState extends State<AppInput> {
         hintStyle: textStyle?.copyWith(
           color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),
-        enabledBorder: _border(
-          AppInputLook.underline,
+        enabledBorder: _underline(
           editing ? scheme.outline : Colors.transparent,
         ),
-        focusedBorder: _border(AppInputLook.underline, scheme.primary),
-        border: _border(
-          AppInputLook.underline,
-          editing ? scheme.outline : Colors.transparent,
-        ),
+        focusedBorder: _underline(scheme.primary),
+        border: _underline(editing ? scheme.outline : Colors.transparent),
       ),
       onChanged: w.onChanged,
       validator: w.validator,
@@ -610,67 +700,67 @@ class _AppInputState extends State<AppInput> {
     );
   }
 
+  /// The search CAPSULE: a grey pill, one height (40), on lists and in sheets.
   Widget _buildSearch(BuildContext context) {
     final w = widget;
     final scheme = Theme.of(context).colorScheme;
     final controller = _controller!;
-    final pill = w.look == AppInputLook.pill;
+    const radius = BorderRadius.all(Radius.circular(20));
+    OutlineInputBorder border(Color c, double width) => OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: width == 0
+          ? BorderSide.none
+          : BorderSide(color: c, width: width),
+    );
     final box = ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, _) {
-        final decoration = InputDecoration(
-          isDense: true,
-          hintText: w.hint ?? UiConfig.stringsOf(context).search,
-          prefixIcon: Icon(AppIcons.search, size: pill ? 18 : null),
-          prefixIconConstraints: pill
-              ? const BoxConstraints(minWidth: 36)
-              : null,
-          suffixIcon: value.text.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: w.clearTooltip ?? UiConfig.stringsOf(context).clear,
-                  icon: Icon(AppIcons.close, size: pill ? 18 : null),
-                  onPressed: () {
-                    controller.clear();
-                    w.onChanged?.call('');
-                  },
-                ),
-          filled: pill,
-          fillColor: pill ? scheme.surfaceContainerHighest : null,
-          contentPadding: pill
-              ? const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
-                )
-              : null,
-          border: pill
-              ? _border(AppInputLook.pill, scheme.primary)
-              : OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-          enabledBorder: pill
-              ? _border(AppInputLook.pill, scheme.primary)
-              : null,
-          focusedBorder: pill
-              ? OutlineInputBorder(
-                  borderRadius: const BorderRadius.all(Radius.circular(18)),
-                  borderSide: BorderSide(color: scheme.primary),
-                )
-              : null,
-        );
         final field = TextField(
           controller: controller,
           autofocus: w.autofocus,
           textInputAction: TextInputAction.search,
-          style: pill ? Theme.of(context).textTheme.bodyMedium : null,
+          // Fills the 40-high box (without this the grey capsule only wraps
+          // its text, ~34 high).
+          expands: true,
+          minLines: null,
+          maxLines: null,
+          textAlignVertical: TextAlignVertical.center,
+          style: Theme.of(context).textTheme.bodyMedium,
           onChanged: w.onChanged,
-          decoration: decoration,
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: w.hint ?? UiConfig.stringsOf(context).search,
+            prefixIcon: const Icon(AppIcons.search, size: 18),
+            prefixIconConstraints: const BoxConstraints(minWidth: 36),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 40,
+              minHeight: 40,
+            ),
+            suffixIcon: value.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip:
+                        w.clearTooltip ?? UiConfig.stringsOf(context).clear,
+                    icon: const Icon(AppIcons.close, size: 18),
+                    onPressed: () {
+                      controller.clear();
+                      w.onChanged?.call('');
+                    },
+                  ),
+            filled: true,
+            fillColor: scheme.surfaceContainerHighest,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            border: border(Colors.transparent, 0),
+            enabledBorder: border(Colors.transparent, 0),
+            focusedBorder: border(scheme.primary, 1.5),
+          ),
         );
-        return pill ? SizedBox(height: 36, child: field) : field;
+        return SizedBox(height: 40, child: field);
       },
     );
-    return pill
-        ? box
-        : Padding(padding: w.padding ?? EdgeInsets.zero, child: box);
+    return Padding(padding: w.padding ?? EdgeInsets.zero, child: box);
   }
 }

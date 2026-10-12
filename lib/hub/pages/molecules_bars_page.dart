@@ -6,7 +6,6 @@ import '../../features/accounts/presentation/widgets/account_card.dart';
 import '../../features/transactions/domain/transaction_type.dart';
 import '../../features/accounts/presentation/widgets/wallet_compact_hero.dart';
 import '../../features/transactions/presentation/widgets/tx_compact_hero.dart';
-import '../../features/transactions/presentation/widgets/tx_hero_card.dart';
 import '../../ui/ui.dart';
 import '../hub_playground.dart';
 
@@ -126,9 +125,665 @@ class _BarsPageState extends State<_BarsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // ---- In the app ----
+        HubInApp(
+          columns: 2,
+          note:
+              'Every real variant, side by side, each with the page that uses it.',
+          uses: [
+            HubUse(
+              label: 'AppTabBar — plain tabs',
+              page: 'Categories (expense / income), notifications inbox',
+              wide: true,
+              child: _frame(
+                HubStateful<String>(
+                  initial: 'expense',
+                  builder: (context, sel, set) => AppTabBar<String>(
+                    tabs: const [
+                      AppTab(value: 'expense', label: 'Expense'),
+                      AppTab(value: 'income', label: 'Income', badgeCount: 3),
+                    ],
+                    selected: sel,
+                    onChanged: set,
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'AppTabBar — three tabs, badge on the last',
+              page: 'Transactions (expense / income / transfer)',
+              wide: true,
+              child: _frame(
+                HubStateful<String>(
+                  initial: 'a',
+                  builder: (context, sel, set) => AppTabBar<String>(
+                    tabs: pagerTabs,
+                    selected: sel,
+                    onChanged: set,
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'AppTabBar + AppTabPager — swipeable',
+              page: 'Account detail, categories',
+              wide: true,
+              child: _frame(
+                Column(
+                  children: [
+                    AppTabBar<String>(
+                      tabs: pagerTabs,
+                      selected: _pagerTab,
+                      pager: _pager,
+                      onChanged: (v) => setState(() => _pagerTab = v),
+                    ),
+                    SizedBox(
+                      height: 110,
+                      child: AppTabPager<String>(
+                        values: const ['a', 'b', 'c'],
+                        selected: _pagerTab,
+                        controller: _pager,
+                        onChanged: (v) => setState(() => _pagerTab = v),
+                        builder: (context, v) => Center(
+                          child: Text(
+                            'Page "$v" - swipe or tap a tab',
+                            style: text.bodyMedium,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'ModeActionBar — cancel / undo / save',
+              page: 'Accounts, categories (edit + reorder mode)',
+              wide: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    children: [
+                      AppChip(
+                        label: 'canUndo',
+                        selected: _canUndo,
+                        onTap: () => setState(() => _canUndo = !_canUndo),
+                      ),
+                      AppChip(
+                        label: 'saving',
+                        selected: _saving,
+                        onTap: () => setState(() => _saving = !_saving),
+                      ),
+                    ],
+                  ),
+                  _frame(
+                    ModeActionBar(
+                      canSave: true,
+                      canUndo: _canUndo,
+                      saving: _saving,
+                      cancelLabel: 'Cancel',
+                      saveLabel: 'Save',
+                      undoTooltip: 'Undo',
+                      onCancel: () {},
+                      onUndo: () {},
+                      onSave: () {},
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            HubUse(
+              label: 'ModeActionBar — nothing to save yet',
+              page: 'Accounts, categories (edit mode, before any change)',
+              wide: true,
+              child: _frame(
+                ModeActionBar(
+                  canSave: false,
+                  cancelLabel: 'Cancel',
+                  saveLabel: 'Save',
+                  onCancel: () {},
+                  onUndo: () {},
+                  onSave: () {},
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'ModeActionBar — form variant, no undo',
+              page: 'Change password',
+              wide: true,
+              child: _frame(
+                ModeActionBar(
+                  canSave: true,
+                  cancelLabel: 'Cancel',
+                  saveLabel: 'Create',
+                  onCancel: () {},
+                  onSave: () {},
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'PinnedBar — one full-width button',
+              page: 'Pending (batch), quick create sheet',
+              wide: true,
+              child: _frame(
+                PinnedBar(
+                  child: AppButton(
+                    label: 'Submit',
+                    size: AppButtonSize.large,
+                    expand: true,
+                    onPressed: () {},
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'Hero — transaction (TxHeroCard)',
+              page: 'Transaction detail, quick create',
+              wide: true,
+              child: TxHeroCard(
+                type: TransactionType.expense,
+                amount: _heroAmount,
+                title: _heroTitle,
+                dateLabel: 'Today',
+                editing: false,
+                inline: true,
+                onEdit: () {},
+              ),
+            ),
+            HubUse(
+              label: 'Hero — wallet (own surface: wash + glyph, Adjust chip)',
+              page: 'Account detail',
+              wide: true,
+              child: AccountCardSurface(
+                account: _wallet,
+                margin: EdgeInsets.zero,
+                glyphSize: 132,
+                child: HeroContent(
+                  rows: [
+                    HeroTopRow(
+                      leading: [
+                        AppChip(
+                          label: 'Bank',
+                          icon: AppIcons.bank,
+                          color: scheme.primary,
+                          selected: true,
+                        ),
+                      ],
+                      trailing: [
+                        AppChip(
+                          icon: AppIcons.reset,
+                          label: 'Adjust',
+                          tone: AppChipTone.primary,
+                          selected: true,
+                          onTap: () {},
+                        ),
+                        AppIconButton(
+                          icon: AppIcons.edit,
+                          size: HeroSpacing.controlHeight,
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const AccountIconCircle(account: _wallet, size: 52),
+                        const SizedBox(width: AppSpacing.md),
+                        Flexible(
+                          child: Text('KBank savings', style: text.titleMedium),
+                        ),
+                      ],
+                    ),
+                    MoneyText(
+                      48200,
+                      style: text.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'Hero — category (tinted, type colour)',
+              page: 'Category detail',
+              wide: true,
+              child: HeaderCard(
+                accent: scheme.error,
+                glyph: AppIcons.category,
+                topRow: const [
+                  AppChip(
+                    label: 'Expense',
+                    icon: AppIcons.expense,
+                    tone: AppChipTone.danger,
+                    selected: true,
+                  ),
+                ],
+                onEdit: () {},
+                leading: const IconDisplay(type: IconType.category, size: 52),
+                title: const Text('Food'),
+                subtitle: const Text('Category'),
+              ),
+            ),
+            HubUse(
+              label: 'Hero — contact, linked (the chip sits under the name)',
+              page: 'Contact detail',
+              wide: true,
+              child: HeaderCard(
+                accent: scheme.primary,
+                glyph: AppIcons.contact,
+                topRow: const [],
+                onEdit: () {},
+                leading: const UserAvatar(displayName: 'Bee', size: 52),
+                title: const Text('Bee'),
+                subtitle: const Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppChip(
+                    label: 'Linked',
+                    icon: AppIcons.link,
+                    tone: AppChipTone.success,
+                    selected: true,
+                    size: ChipSize.chip,
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label:
+                  'Hero — no chips: the top row collapses, edit sits level '
+                  'with the title',
+              page: 'Contact detail (unlinked contact)',
+              wide: true,
+              child: HeaderCard(
+                accent: scheme.primary,
+                glyph: AppIcons.contact,
+                topRow: const [],
+                onEdit: () {},
+                leading: const UserAvatar(displayName: 'Lee', size: 52),
+                title: const Text('Lee'),
+              ),
+            ),
+            HubUse(
+              label: 'Hero — top row with no actions, chips wrapping',
+              page: 'Entity detail pages in view mode',
+              wide: true,
+              child: HeaderCard(
+                accent: scheme.primary,
+                glyph: AppIcons.budget,
+                topRow: [
+                  for (final n in const [
+                    'Type',
+                    'Category',
+                    'Shared',
+                    'Recurring',
+                    'Linked',
+                    'Archived',
+                  ])
+                    AppChip(label: n, selected: true),
+                ],
+                leading: const IconDisplay(type: IconType.category, size: 44),
+                title: const Text('Chips wrap, the row keeps 32'),
+              ),
+            ),
+            HubUse(
+              label: 'CompactHeroBar — transaction (txCompactHeroBar)',
+              page: 'Transaction detail',
+              wide: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  txCompactHeroBar(
+                    context,
+                    type: TransactionType.expense,
+                    description: 'Chicken rice',
+                    amount: 1250,
+                    categoryName: 'Food',
+                    onTap: () {},
+                  ),
+                  _gap(),
+                  txCompactHeroBar(
+                    context,
+                    type: TransactionType.income,
+                    description: '',
+                    amount: 30000,
+                    categoryName: 'Salary',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ),
+            HubUse(
+              label: 'CompactHeroBar — wallet (walletCompactHero)',
+              page: 'Account detail',
+              wide: true,
+              child: walletCompactHero(context, _wallet, onTap: () {}),
+            ),
+            HubUse(
+              label: 'CompactHeroBar — tinted entity hero',
+              page: 'Category / contact / event detail',
+              wide: true,
+              child: CompactHeroBar(
+                style: HeroStyle.tinted(
+                  color: scheme.error,
+                  glyph: AppIcons.category,
+                ),
+                leading: const IconDisplay(type: IconType.category, size: 28),
+                title: const Text('Food'),
+                trailing: const AppChip(
+                  label: 'Expense',
+                  tone: AppChipTone.danger,
+                  selected: true,
+                  size: ChipSize.chip,
+                ),
+                onTap: () {},
+              ),
+            ),
+            HubUse(
+              label: 'CompactHeroBar — plain, long title',
+              page: 'Detail pages without an entity colour',
+              wide: true,
+              child: CompactHeroBar(
+                leading: IconTile(
+                  icon: AppIcons.wallet,
+                  color: scheme.primary,
+                  size: 28,
+                  shape: IconTileShape.rounded,
+                  style: IconTileStyle.solid,
+                ),
+                title: const Text(
+                  'A wallet name that is much too long to fit on one line',
+                ),
+                trailing: Text('48,200.00', style: text.titleSmall),
+              ),
+            ),
+            HubUse(
+              label:
+                  'CompactHeroScope — bar appears once the hero scrolls away',
+              page: 'Every detail page (scroll the box)',
+              wide: true,
+              child: Container(
+                height: 300,
+                decoration: BoxDecoration(
+                  border: Border.all(color: scheme.outlineVariant),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: CompactHeroScope(
+                  heroKey: _heroKey,
+                  top: 0,
+                  bar: CompactHeroBar(
+                    style: _heroStyle,
+                    leading: const AppChip(label: 'Expense', selected: true),
+                    title: const Text('Chicken rice'),
+                    trailing: Text('1,250.00', style: text.titleSmall),
+                  ),
+                  child: ListView(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    children: [
+                      AppCard(
+                        key: _heroKey,
+                        style: AppCardStyle.accent,
+                        color: scheme.primary,
+                        child: HeroContent(
+                          rows: [
+                            HeroTopRow(
+                              leading: const [
+                                AppChip(label: 'Expense', selected: true),
+                              ],
+                            ),
+                            Text('Chicken rice', style: text.titleLarge),
+                            Text('1,250.00', style: text.headlineMedium),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: HeroSpacing.after),
+                      SectionCard(
+                        first: true,
+                        children: [
+                          for (var i = 1; i <= 12; i++)
+                            DetailRow(
+                              label: 'Row $i',
+                              trailing: Text('Value $i'),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'FilterBar — filter chips + sort chip',
+              page: 'Pending, debts, projects, categories, tags, contacts',
+              wide: true,
+              child: _frame(
+                FilterBar(
+                  chips: [
+                    for (final f in const [
+                      ('all', 'All'),
+                      ('expense', 'Expense'),
+                      ('income', 'Income'),
+                      ('transfer', 'Transfer'),
+                      ('debt', 'Debts'),
+                      ('shared', 'Shared'),
+                    ])
+                      AppChip(
+                        label: f.$2,
+                        selected: _filter == f.$1,
+                        onTap: () => setState(() => _filter = f.$1),
+                      ),
+                  ],
+                  trailing: AppChip(
+                    label: _sort == 'date' ? 'Date' : 'Amount',
+                    icon: AppIcons.sort,
+                    onTap: () => setState(
+                      () => _sort = _sort == 'date' ? 'amount' : 'date',
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'ChipRow — icon, scrolling, More',
+              page: 'Transaction form (category / tag rows), pick chip rows',
+              wide: true,
+              child: ChipRow(
+                icon: AppIcons.category,
+                chips: [
+                  for (final n in _chipNames.take(8))
+                    AppChip(
+                      label: n,
+                      selected: _chipPicked.contains(n),
+                      onTap: () => setState(() {
+                        _chipPicked.contains(n)
+                            ? _chipPicked.remove(n)
+                            : _chipPicked.add(n);
+                      }),
+                    ),
+                ],
+                onMore: () {},
+                moreLabel: 'More',
+              ),
+            ),
+            HubUse(
+              label: 'FilterBar — no sort chip',
+              page: 'Notifications inbox, tags',
+              wide: true,
+              child: _frame(
+                FilterBar(
+                  chips: [
+                    for (final n in _chipNames.take(5))
+                      AppChip(label: n, selected: n == 'Food'),
+                  ],
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'ChipRow — view only, no icon, no More',
+              page: 'Transaction form (read-only)',
+              child: ChipRow(
+                chips: [for (final n in _chipNames.take(3)) AppChip(label: n)],
+              ),
+            ),
+            HubUse(
+              label: 'ChipRow — maxLines wrap, cut, More at the end',
+              page: 'Transaction filter sheet (type / wallet / category / tag)',
+              wide: true,
+              child: ChipRow(
+                maxLines: 2,
+                chips: [for (final n in _chipNames) AppChip(label: n)],
+                onMore: () {},
+                moreLabel: 'More',
+              ),
+            ),
+            HubUse(
+              label: 'ChipRow — moreFirst, nothing chosen yet',
+              page: 'Pending draft form (choose wallet / category)',
+              child: ChipRow(
+                icon: AppIcons.wallet,
+                moreFirst: true,
+                chips: const [],
+                onMore: () {},
+                moreLabel: 'Choose wallet',
+              ),
+            ),
+            HubUse(
+              label: 'ChipOrder — the row order freezes once loaded',
+              page: 'Transaction form, transaction filter sheet',
+              wide: true,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Tap a chip: it highlights in place and nothing jumps. '
+                    'Taxes is picked elsewhere (More): it joins at the end and '
+                    'stays.',
+                    style: text.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  ChipRow(
+                    chips: [
+                      for (final n in _chipOrder.ids(
+                        ready: true,
+                        rank: () => _chipNames.take(5).toList(),
+                        picked: _orderPicked,
+                      ))
+                        AppChip(
+                          label: n,
+                          selected: _orderPicked.contains(n),
+                          onTap: () => setState(() {
+                            _orderPicked.contains(n)
+                                ? _orderPicked.remove(n)
+                                : _orderPicked.add(n);
+                          }),
+                        ),
+                    ],
+                    onMore: () => setState(() => _orderPicked.add('Taxes')),
+                    moreLabel: 'More',
+                  ),
+                ],
+              ),
+            ),
+            HubUse(
+              label: 'SelectableFrame — card / tile picked',
+              page: 'Wallet picker sheet, debts, settings (theme tiles)',
+              child: Wrap(
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.md,
+                children: [
+                  SelectableFrame(
+                    selected: false,
+                    child: _tile(context, 'Card', AppRadius.lg),
+                  ),
+                  SelectableFrame(
+                    selected: true,
+                    child: _tile(context, 'Card', AppRadius.lg),
+                  ),
+                  SelectableFrame(
+                    selected: true,
+                    color: scheme.tertiary,
+                    gap: 6,
+                    child: _tile(context, 'Card', AppRadius.lg),
+                  ),
+                  SelectableFrame(
+                    selected: true,
+                    radius: 20,
+                    gap: 2,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: scheme.secondary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            HubUse(
+              label:
+                  'OptionMenuAnchor — single select, subtitle, disabled option',
+              page: 'Accounts, tags, projects, debts, transactions list sort',
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OptionMenuAnchor<String>(
+                  options: _options,
+                  selected: _single,
+                  onSelected: (v) => setState(() => _single = v),
+                  builder: (context, toggle) => AppChip(
+                    label: 'Range: ${_single ?? '-'}',
+                    trailing: AppChipTrailing.dropdown,
+                    onTap: toggle,
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label:
+                  'MultiOptionMenuAnchor — multi select (no feature page yet)',
+              page: 'Not used by a page yet',
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: MultiOptionMenuAnchor<String>(
+                  options: _multiOptions,
+                  selected: _multi,
+                  clearLabel: 'Clear',
+                  onChanged: (v) => setState(() => _multi = v),
+                  builder: (context, toggle) => AppChip(
+                    label: _multi.isEmpty
+                        ? 'Categories'
+                        : 'Categories (${_multi.length})',
+                    selected: _multi.isNotEmpty,
+                    trailing: AppChipTrailing.dropdown,
+                    onTap: toggle,
+                  ),
+                ),
+              ),
+            ),
+            HubUse(
+              label: 'PopoverAnchor — colour swatch grid',
+              page: 'Categories, tags (colour filter)',
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: PopoverAnchor(
+                  builder: (context, toggle) => AppChip(
+                    label: 'Colours (${_swatches.length})',
+                    trailing: AppChipTrailing.dropdown,
+                    onTap: toggle,
+                  ),
+                  contentBuilder: (context, close) => _swatchGrid(scheme),
+                ),
+              ),
+            ),
+          ],
+        ),
         const HubSubheading(
-          'Playgrounds',
-          note: 'One per widget: a live instance and its real options.',
+          'Customize',
+          note: 'Fully custom tweaks, one per widget (collapsed).',
         ),
         // ---- AppTabBar ----
         HubPlayground(
@@ -468,609 +1123,6 @@ class _BarsPageState extends State<_BarsPage> {
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        // ---- In the app ----
-        HubInApp(
-          note: 'The real combinations, each with the page that uses it.',
-          uses: [
-            HubUse(
-              label: 'AppTabBar — plain tabs',
-              page: 'Categories (expense / income), notifications inbox',
-              child: _frame(
-                HubStateful<String>(
-                  initial: 'expense',
-                  builder: (context, sel, set) => AppTabBar<String>(
-                    tabs: const [
-                      AppTab(value: 'expense', label: 'Expense'),
-                      AppTab(value: 'income', label: 'Income', badgeCount: 3),
-                    ],
-                    selected: sel,
-                    onChanged: set,
-                  ),
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'AppTabBar + AppTabPager — swipeable',
-              page: 'Account detail, categories',
-              child: _frame(
-                Column(
-                  children: [
-                    AppTabBar<String>(
-                      tabs: pagerTabs,
-                      selected: _pagerTab,
-                      pager: _pager,
-                      onChanged: (v) => setState(() => _pagerTab = v),
-                    ),
-                    SizedBox(
-                      height: 110,
-                      child: AppTabPager<String>(
-                        values: const ['a', 'b', 'c'],
-                        selected: _pagerTab,
-                        controller: _pager,
-                        onChanged: (v) => setState(() => _pagerTab = v),
-                        builder: (context, v) => Center(
-                          child: Text(
-                            'Page "$v" - swipe or tap a tab',
-                            style: text.bodyMedium,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'ModeActionBar — cancel / undo / save',
-              page: 'Accounts, categories (edit + reorder mode)',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    children: [
-                      AppChip(
-                        label: 'canUndo',
-                        selected: _canUndo,
-                        onTap: () => setState(() => _canUndo = !_canUndo),
-                      ),
-                      AppChip(
-                        label: 'saving',
-                        selected: _saving,
-                        onTap: () => setState(() => _saving = !_saving),
-                      ),
-                    ],
-                  ),
-                  _frame(
-                    ModeActionBar(
-                      canSave: true,
-                      canUndo: _canUndo,
-                      saving: _saving,
-                      cancelLabel: 'Cancel',
-                      saveLabel: 'Save',
-                      undoTooltip: 'Undo',
-                      onCancel: () {},
-                      onUndo: () {},
-                      onSave: () {},
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            HubUse(
-              label: 'ModeActionBar — nothing to save yet',
-              page: 'Accounts, categories (edit mode, before any change)',
-              child: _frame(
-                ModeActionBar(
-                  canSave: false,
-                  cancelLabel: 'Cancel',
-                  saveLabel: 'Save',
-                  onCancel: () {},
-                  onUndo: () {},
-                  onSave: () {},
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'ModeActionBar — form variant, no undo',
-              page: 'Change password',
-              child: _frame(
-                ModeActionBar(
-                  canSave: true,
-                  cancelLabel: 'Cancel',
-                  saveLabel: 'Create',
-                  onCancel: () {},
-                  onSave: () {},
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'PinnedBar — one full-width button',
-              page: 'Pending (batch), quick create sheet',
-              child: _frame(
-                PinnedBar(
-                  child: AppButton(
-                    label: 'Submit',
-                    size: AppButtonSize.large,
-                    expand: true,
-                    onPressed: () {},
-                  ),
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'Hero — transaction (TxHeroCard)',
-              page: 'Transaction detail, quick create',
-              child: TxHeroCard(
-                type: TransactionType.expense,
-                amount: _heroAmount,
-                title: _heroTitle,
-                dateLabel: 'Today',
-                editing: false,
-                inline: true,
-                onEdit: () {},
-              ),
-            ),
-            HubUse(
-              label: 'Hero — wallet (own surface: wash + glyph, Adjust chip)',
-              page: 'Account detail',
-              child: AccountCardSurface(
-                account: _wallet,
-                margin: EdgeInsets.zero,
-                glyphSize: 132,
-                child: HeroContent(
-                  rows: [
-                    HeroTopRow(
-                      leading: [
-                        AppChip(
-                          label: 'Bank',
-                          icon: AppIcons.bank,
-                          color: scheme.primary,
-                        ),
-                      ],
-                      trailing: [
-                        AppChip(
-                          icon: AppIcons.reset,
-                          label: 'Adjust',
-                          tone: AppChipTone.primary,
-                          selected: true,
-                          onTap: () {},
-                        ),
-                        AppIconButton(
-                          icon: AppIcons.edit,
-                          size: HeroSpacing.controlHeight,
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const AccountIconCircle(account: _wallet, size: 52),
-                        const SizedBox(width: AppSpacing.md),
-                        Flexible(
-                          child: Text('KBank savings', style: text.titleMedium),
-                        ),
-                      ],
-                    ),
-                    MoneyText(
-                      48200,
-                      style: text.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'Hero — category (tinted, type colour)',
-              page: 'Category detail',
-              child: HeaderCard(
-                accent: scheme.error,
-                glyph: AppIcons.category,
-                topRow: const [
-                  AppChip(
-                    label: 'Expense',
-                    icon: AppIcons.expense,
-                    tone: AppChipTone.danger,
-                    selected: true,
-                  ),
-                ],
-                onEdit: () {},
-                leading: const IconDisplay(type: IconType.category, size: 52),
-                title: const Text('Food'),
-                subtitle: const Text('Category'),
-              ),
-            ),
-            HubUse(
-              label: 'Hero — contact (tinted, status chip)',
-              page: 'Contact detail',
-              child: HeaderCard(
-                accent: scheme.primary,
-                glyph: AppIcons.contact,
-                topRow: const [
-                  AppChip(
-                    label: 'Linked',
-                    icon: AppIcons.link,
-                    tone: AppChipTone.success,
-                    selected: true,
-                  ),
-                ],
-                onEdit: () {},
-                leading: const UserAvatar(displayName: 'Bee', size: 52),
-                title: const Text('Bee'),
-                subtitle: const Text('Contact'),
-              ),
-            ),
-            HubUse(
-              label:
-                  'Hero — no chips: the top row collapses, edit sits level '
-                  'with the title',
-              page: 'Contact detail (unlinked contact)',
-              child: HeaderCard(
-                accent: scheme.primary,
-                glyph: AppIcons.contact,
-                topRow: const [],
-                onEdit: () {},
-                leading: const UserAvatar(displayName: 'Lee', size: 52),
-                title: const Text('Lee'),
-                subtitle: const Text('Contact'),
-              ),
-            ),
-            HubUse(
-              label: 'Hero — top row with no actions, chips wrapping',
-              page: 'Entity detail pages in view mode',
-              child: HeaderCard(
-                accent: scheme.primary,
-                glyph: AppIcons.budget,
-                topRow: [
-                  for (final n in const [
-                    'Type',
-                    'Category',
-                    'Shared',
-                    'Recurring',
-                    'Linked',
-                    'Archived',
-                  ])
-                    AppChip(label: n, selected: true),
-                ],
-                leading: const IconDisplay(type: IconType.category, size: 44),
-                title: const Text('Chips wrap, the row keeps 32'),
-              ),
-            ),
-            HubUse(
-              label: 'CompactHeroBar — transaction (txCompactHeroBar)',
-              page: 'Transaction detail',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  txCompactHeroBar(
-                    context,
-                    type: TransactionType.expense,
-                    description: 'Chicken rice',
-                    amount: 1250,
-                    categoryName: 'Food',
-                    onTap: () {},
-                  ),
-                  _gap(),
-                  txCompactHeroBar(
-                    context,
-                    type: TransactionType.income,
-                    description: '',
-                    amount: 30000,
-                    categoryName: 'Salary',
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
-            HubUse(
-              label: 'CompactHeroBar — wallet (walletCompactHero)',
-              page: 'Account detail',
-              child: walletCompactHero(context, _wallet, onTap: () {}),
-            ),
-            HubUse(
-              label: 'CompactHeroBar — tinted entity hero',
-              page: 'Category / contact / event detail',
-              child: CompactHeroBar(
-                style: HeroStyle.tinted(
-                  color: scheme.error,
-                  glyph: AppIcons.category,
-                ),
-                leading: const IconDisplay(type: IconType.category, size: 28),
-                title: const Text('Food'),
-                trailing: const AppChip(
-                  label: 'Expense',
-                  tone: AppChipTone.danger,
-                  selected: true,
-                  size: ChipSize.chip,
-                ),
-                onTap: () {},
-              ),
-            ),
-            HubUse(
-              label: 'CompactHeroBar — plain, long title',
-              page: 'Detail pages without an entity colour',
-              child: CompactHeroBar(
-                leading: IconTile(
-                  icon: AppIcons.wallet,
-                  color: scheme.primary,
-                  size: 28,
-                  shape: IconTileShape.rounded,
-                  style: IconTileStyle.solid,
-                ),
-                title: const Text(
-                  'A wallet name that is much too long to fit on one line',
-                ),
-                trailing: Text('48,200.00', style: text.titleSmall),
-              ),
-            ),
-            HubUse(
-              label:
-                  'CompactHeroScope — bar appears once the hero scrolls away',
-              page: 'Every detail page (scroll the box)',
-              child: Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  border: Border.all(color: scheme.outlineVariant),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: CompactHeroScope(
-                  heroKey: _heroKey,
-                  top: 0,
-                  bar: CompactHeroBar(
-                    style: _heroStyle,
-                    leading: const AppChip(label: 'Expense', selected: true),
-                    title: const Text('Chicken rice'),
-                    trailing: Text('1,250.00', style: text.titleSmall),
-                  ),
-                  child: ListView(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    children: [
-                      AppCard(
-                        key: _heroKey,
-                        style: AppCardStyle.accent,
-                        color: scheme.primary,
-                        child: HeroContent(
-                          rows: [
-                            HeroTopRow(
-                              leading: const [
-                                AppChip(label: 'Expense', selected: true),
-                              ],
-                            ),
-                            Text('Chicken rice', style: text.titleLarge),
-                            Text('1,250.00', style: text.headlineMedium),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: HeroSpacing.after),
-                      SectionCard(
-                        first: true,
-                        children: [
-                          for (var i = 1; i <= 12; i++)
-                            DetailRow(
-                              label: 'Row $i',
-                              trailing: Text('Value $i'),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'FilterBar — filter chips + sort chip',
-              page: 'Pending, debts, projects, categories, tags, contacts',
-              child: _frame(
-                FilterBar(
-                  chips: [
-                    for (final f in const [
-                      ('all', 'All'),
-                      ('expense', 'Expense'),
-                      ('income', 'Income'),
-                      ('transfer', 'Transfer'),
-                      ('debt', 'Debts'),
-                      ('shared', 'Shared'),
-                    ])
-                      AppChip(
-                        label: f.$2,
-                        selected: _filter == f.$1,
-                        onTap: () => setState(() => _filter = f.$1),
-                      ),
-                  ],
-                  trailing: AppChip(
-                    label: _sort == 'date' ? 'Date' : 'Amount',
-                    icon: AppIcons.sort,
-                    onTap: () => setState(
-                      () => _sort = _sort == 'date' ? 'amount' : 'date',
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'ChipRow — icon, scrolling, More',
-              page: 'Transaction form (category / tag rows), pick chip rows',
-              child: ChipRow(
-                icon: AppIcons.category,
-                chips: [
-                  for (final n in _chipNames.take(8))
-                    AppChip(
-                      label: n,
-                      selected: _chipPicked.contains(n),
-                      onTap: () => setState(() {
-                        _chipPicked.contains(n)
-                            ? _chipPicked.remove(n)
-                            : _chipPicked.add(n);
-                      }),
-                    ),
-                ],
-                onMore: () {},
-                moreLabel: 'More',
-              ),
-            ),
-            HubUse(
-              label: 'ChipRow — view only, no icon, no More',
-              page: 'Transaction form (read-only)',
-              child: ChipRow(
-                chips: [for (final n in _chipNames.take(3)) AppChip(label: n)],
-              ),
-            ),
-            HubUse(
-              label: 'ChipRow — maxLines wrap, cut, More at the end',
-              page: 'Transaction filter sheet (type / wallet / category / tag)',
-              child: ChipRow(
-                maxLines: 2,
-                chips: [for (final n in _chipNames) AppChip(label: n)],
-                onMore: () {},
-                moreLabel: 'More',
-              ),
-            ),
-            HubUse(
-              label: 'ChipRow — moreFirst, nothing chosen yet',
-              page: 'Pending draft form (choose wallet / category)',
-              child: ChipRow(
-                icon: AppIcons.wallet,
-                moreFirst: true,
-                chips: const [],
-                onMore: () {},
-                moreLabel: 'Choose wallet',
-              ),
-            ),
-            HubUse(
-              label: 'ChipOrder — the row order freezes once loaded',
-              page: 'Transaction form, transaction filter sheet',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Tap a chip: it highlights in place and nothing jumps. '
-                    'Taxes is picked elsewhere (More): it joins at the end and '
-                    'stays.',
-                    style: text.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  ChipRow(
-                    chips: [
-                      for (final n in _chipOrder.ids(
-                        ready: true,
-                        rank: () => _chipNames.take(5).toList(),
-                        picked: _orderPicked,
-                      ))
-                        AppChip(
-                          label: n,
-                          selected: _orderPicked.contains(n),
-                          onTap: () => setState(() {
-                            _orderPicked.contains(n)
-                                ? _orderPicked.remove(n)
-                                : _orderPicked.add(n);
-                          }),
-                        ),
-                    ],
-                    onMore: () => setState(() => _orderPicked.add('Taxes')),
-                    moreLabel: 'More',
-                  ),
-                ],
-              ),
-            ),
-            HubUse(
-              label: 'SelectableFrame — card / tile picked',
-              page: 'Wallet picker sheet, debts, settings (theme tiles)',
-              child: Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.md,
-                children: [
-                  SelectableFrame(
-                    selected: false,
-                    child: _tile(context, 'Card', AppRadius.lg),
-                  ),
-                  SelectableFrame(
-                    selected: true,
-                    child: _tile(context, 'Card', AppRadius.lg),
-                  ),
-                  SelectableFrame(
-                    selected: true,
-                    color: scheme.tertiary,
-                    gap: 6,
-                    child: _tile(context, 'Card', AppRadius.lg),
-                  ),
-                  SelectableFrame(
-                    selected: true,
-                    radius: 20,
-                    gap: 2,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: scheme.secondary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            HubUse(
-              label:
-                  'OptionMenuAnchor — single select, subtitle, disabled option',
-              page: 'Accounts, tags, projects, debts, transactions list sort',
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: OptionMenuAnchor<String>(
-                  options: _options,
-                  selected: _single,
-                  onSelected: (v) => setState(() => _single = v),
-                  builder: (context, toggle) => AppChip(
-                    label: 'Range: ${_single ?? '-'}',
-                    trailing: AppChipTrailing.dropdown,
-                    onTap: toggle,
-                  ),
-                ),
-              ),
-            ),
-            HubUse(
-              label:
-                  'MultiOptionMenuAnchor — multi select (no feature page yet)',
-              page: 'Not used by a page yet',
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: MultiOptionMenuAnchor<String>(
-                  options: _multiOptions,
-                  selected: _multi,
-                  clearLabel: 'Clear',
-                  onChanged: (v) => setState(() => _multi = v),
-                  builder: (context, toggle) => AppChip(
-                    label: _multi.isEmpty
-                        ? 'Categories'
-                        : 'Categories (${_multi.length})',
-                    selected: _multi.isNotEmpty,
-                    trailing: AppChipTrailing.dropdown,
-                    onTap: toggle,
-                  ),
-                ),
-              ),
-            ),
-            HubUse(
-              label: 'PopoverAnchor — colour swatch grid',
-              page: 'Categories, tags (colour filter)',
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: PopoverAnchor(
-                  builder: (context, toggle) => AppChip(
-                    label: 'Colours (${_swatches.length})',
-                    trailing: AppChipTrailing.dropdown,
-                    onTap: toggle,
-                  ),
-                  contentBuilder: (context, close) => _swatchGrid(scheme),
-                ),
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }

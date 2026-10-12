@@ -90,13 +90,6 @@ Widget buildOthersPage(BuildContext context) {
     ),
   );
 
-  const member = ProjectMember(
-    id: 'm1',
-    projectId: 'p1',
-    displayName: 'Aom Chan',
-    role: MemberRole.contributor,
-    status: MemberStatus.active,
-  );
   const memberWithIcon = ProjectMember(
     id: 'm2',
     projectId: 'p1',
@@ -117,9 +110,449 @@ Widget buildOthersPage(BuildContext context) {
     marks: const [],
   );
 
+  Widget debtCard(PersonalDebt d) => AppCard(
+    padding: EdgeInsets.zero,
+    child: DebtTile(debt: d),
+  );
+
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      HubInApp(
+        columns: 2,
+        note:
+            'Real pieces from sample models (no cubit), many variants side by '
+            'side. Wide ones take a whole row.',
+        uses: [
+          // ── Debts ──
+          HubUse(
+            wide: true,
+            label: 'DebtTile — owed to me, with a description',
+            page: 'Debt person page',
+            child: debtCard(
+              debt(
+                id: 'd1',
+                direction: DebtDirection.owedToMe,
+                amount: 1500,
+                description: 'Dinner',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'DebtTile — I owe, no description',
+            page: 'Debt person page',
+            child: debtCard(
+              debt(id: 'd2', direction: DebtDirection.iOwe, amount: 800),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'DebtTile — part repaid: progress shown',
+            page: 'Debt person page',
+            child: debtCard(
+              debt(
+                id: 'd3',
+                direction: DebtDirection.owedToMe,
+                amount: 2000,
+                settled: 500,
+                description: 'Concert tickets',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'DebtTile — overpaid: owed the other way, flagged',
+            page: 'Debt person page, Debt detail',
+            child: debtCard(
+              debt(
+                id: 'd4',
+                direction: DebtDirection.owedToMe,
+                amount: 1000,
+                settled: 1200,
+                description: 'Taxi',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'DebtTile — settled: status chip, full amount, muted',
+            page: 'Debt person page',
+            child: debtCard(
+              debt(
+                id: 'd5',
+                direction: DebtDirection.iOwe,
+                amount: 600,
+                settled: 600,
+                status: DebtStatus.settled,
+                description: 'Lunch',
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'DebtTile — cancelled: status chip, muted',
+            page: 'Debt person page',
+            child: debtCard(
+              debt(
+                id: 'd6',
+                direction: DebtDirection.owedToMe,
+                amount: 300,
+                status: DebtStatus.cancelled,
+              ),
+            ),
+          ),
+          for (final s in DebtStatus.values)
+            HubUse(
+              label: 'debtStatusChip — ${s.name}',
+              page: 'Debt detail page',
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: debtStatusChip(context, s),
+              ),
+            ),
+
+          // ── Notifications ──
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — link request: Accept / Decline',
+            page: 'Notifications inbox, Home',
+            child: notifCard(notif(NotificationType.contactLinkRequest)),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — wallet invite: Accept / Decline',
+            page: 'Notifications inbox, Home',
+            child: notifCard(
+              notif(
+                NotificationType.accountInvite,
+                payload: const {'account_name': 'บัญชีบ้าน'},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — one-tap: add the debt (split created)',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.splitCreated,
+                payload: const {'amount': 450, 'currency': 'THB'},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — one-tap: record the receipt (paid)',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.splitPaid,
+                payload: const {'amount': 450, 'currency': 'THB'},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — one-tap: copy to my book',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.projectTxRecordedForYou,
+                payload: const {'amount': 1200, 'currency': 'THB'},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — read + answered: "accepted" chip',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.contactLinkRequest,
+                readAt: now,
+                actionedAt: now,
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — read + actioned split',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.splitCreated,
+                readAt: now,
+                actionedAt: now,
+                payload: const {'amount': 450, 'currency': 'THB'},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — informational, unread (no buttons)',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.projectAdded,
+                payload: const {'project_name': 'Chiang Mai trip'},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — informational, read (no dot, no tint)',
+            page: 'Notifications inbox',
+            child: notifCard(
+              notif(
+                NotificationType.splitReceived,
+                readAt: now,
+                payload: const {'amount': 450, 'currency': 'THB'},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTile — unknown type (a newer server)',
+            page: 'Notifications inbox',
+            child: notifCard(notif(NotificationType.unknown, readAt: now)),
+          ),
+
+          // ── Project pieces ──
+          HubUse(
+            label: 'ProjectTxIcon — expense',
+            page: 'Project dashboard tab',
+            child: ProjectTxIcon(tx: ptx('expense')),
+          ),
+          HubUse(
+            label: 'ProjectTxIcon — income',
+            page: 'Project dashboard tab',
+            child: ProjectTxIcon(tx: ptx('income')),
+          ),
+          HubUse(
+            label: 'ProjectTxIcon — size 28',
+            page: 'Project dashboard tab',
+            child: ProjectTxIcon(tx: ptx('expense'), size: 28),
+          ),
+          HubUse(
+            label: 'ProjectMemberAvatar — a coloured initial',
+            page: 'Project members page, member pick card',
+            child: const ProjectMemberAvatar(name: 'Aom Chan'),
+          ),
+          HubUse(
+            label: 'ProjectMemberAvatar — own icon',
+            page: 'Project members page, dashboard',
+            child: const ProjectMemberAvatar(
+              name: 'Bee',
+              iconCode: IconCode(icon: 'favorite', iconColors: ['#EF4444']),
+            ),
+          ),
+          HubUse(
+            label: 'ProjectMemberAvatar — size 48',
+            page: 'Project members page',
+            child: const ProjectMemberAvatar(name: 'Aom Chan', size: 48),
+          ),
+          HubUse(
+            label: 'ProjectMemberPickCard — picked',
+            page: 'Project row form (payer)',
+            child: ProjectMemberPickCard(
+              name: 'Aom Chan',
+              label: 'Paid by',
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            label: 'ProjectMemberPickCard — empty with error',
+            page: 'Project row form (payer)',
+            child: ProjectMemberPickCard(
+              name: null,
+              label: 'Paid by',
+              placeholder: 'Pick who paid',
+              errorText: 'Pick who paid',
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTileView — pending, unread (plain values)',
+            page: 'Notifications inbox, Home',
+            child: AppCard(
+              padding: EdgeInsets.zero,
+              child: NotificationTileView(
+                actorName: 'Aom Chan',
+                title: 'Aom Chan wants to link with you',
+                timeText: '09:30',
+                amountText: '฿450',
+                typeIcon: AppIcons.link,
+                unread: true,
+                pending: true,
+                acceptLabel: 'Accept',
+                rejectLabel: 'Decline',
+                rejectConfirm: const NotificationRejectConfirm(
+                  title: 'Decline?',
+                  message: 'The request will be dismissed.',
+                  confirmLabel: 'Decline',
+                ),
+                onTap: () {},
+                onAccept: () {},
+                onReject: () {},
+              ),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'NotificationTileView — answered chip',
+            page: 'Notifications inbox, Home',
+            child: AppCard(
+              padding: EdgeInsets.zero,
+              child: NotificationTileView(
+                actorName: 'Bee',
+                title: 'Bee split Dinner with you',
+                timeText: '08:10',
+                typeIcon: AppIcons.split,
+                acceptedLabel: 'Done',
+                acceptLabel: 'Add',
+                rejectLabel: 'Skip',
+                onTap: () {},
+              ),
+            ),
+          ),
+          for (final s in ProjectStatus.values)
+            HubUse(
+              label: 'Project status chip — ${s.name}',
+              page: 'Projects list, Project detail',
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: AppChip(
+                  label: s.name,
+                  dot: true,
+                  selected: true,
+                  tone: projectStatusTone(s),
+                ),
+              ),
+            ),
+
+          // ── Brand, auth, banners ──
+          const HubUse(
+            label: 'BrandLogo — 128 (splash)',
+            page: 'Splash, Update-required page',
+            child: Align(alignment: Alignment.centerLeft, child: BrandLogo()),
+          ),
+          const HubUse(
+            label: 'BrandLogo — 88',
+            page: 'Auth header (login)',
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: BrandLogo(size: 88),
+            ),
+          ),
+          const HubUse(
+            label: 'BrandLogo — 56',
+            page: 'Auth header (register)',
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: BrandLogo(size: 56),
+            ),
+          ),
+          const HubUse(
+            label: 'BrandLogo — 32',
+            page: 'Small marks',
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: BrandLogo(size: 32),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'BankBrand — the banks\' own colours by BOT code',
+            page: 'Bank picker (wallet identifiers)',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final code in const [
+                  '004',
+                  '014',
+                  '002',
+                  '006',
+                  '025',
+                  '999',
+                ])
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: BankBrand.of(code),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const HubUse(
+            wide: true,
+            label: 'AuthBrandHeader — logo, name, tagline (5 taps opens hub)',
+            page: 'Login',
+            child: AuthBrandHeader(),
+          ),
+          const HubUse(
+            wide: true,
+            label: 'AuthBrandHeader — compact: smaller logo, no tagline',
+            page: 'Register',
+            child: AuthBrandHeader(compact: true),
+          ),
+          const HubUse(
+            wide: true,
+            label: 'AuthOrDivider',
+            page: 'Login, Register',
+            child: AuthOrDivider(),
+          ),
+          const HubUse(
+            wide: true,
+            label: 'GoogleSignInButton — no handler: dimmed, "coming soon"',
+            page: 'Login, Register',
+            child: GoogleSignInButton(),
+          ),
+          HubUse(
+            wide: true,
+            label: 'GoogleSignInButton — live',
+            page: 'Login, Register (when enabled)',
+            child: GoogleSignInButton(onPressed: () {}),
+          ),
+          HubUse(
+            wide: true,
+            label: 'GoogleSignInButton — loading spinner',
+            page: 'Login, Register (signing in)',
+            child: GoogleSignInButton(onPressed: () {}, loading: true),
+          ),
+          HubUse(
+            wide: true,
+            label: 'OfflineBanner — offline (stand-in connectivity)',
+            page: 'App shell (every page)',
+            child: BlocProvider(
+              create: (_) =>
+                  ConnectivityCubit(connectivity: _FakeConnectivity(false)),
+              child: const OfflineBanner(),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'OfflineBanner — online (renders nothing)',
+            page: 'App shell (every page)',
+            child: BlocProvider(
+              create: (_) =>
+                  ConnectivityCubit(connectivity: _FakeConnectivity(true)),
+              child: const OfflineBanner(),
+            ),
+          ),
+          HubUse(
+            wide: true,
+            label: 'UpdateBannerStrip — a newer build is out',
+            page: 'App shell (update banner)',
+            child: UpdateBannerStrip(onUpdate: () {}, onDismiss: () {}),
+          ),
+        ],
+      ),
       HubPlayground(
         title: 'DebtTile',
         note:
@@ -207,7 +640,10 @@ Widget buildOthersPage(BuildContext context) {
             HubCell(
               caption: 'ProjectMemberAvatar',
               child: ProjectMemberAvatar(
-                member: v<bool>('memberIcon') ? memberWithIcon : member,
+                name: v<bool>('memberIcon') ? 'Bee' : 'Aom Chan',
+                iconCode: v<bool>('memberIcon')
+                    ? memberWithIcon.iconCode
+                    : null,
                 size: v<double>('size'),
               ),
             ),
@@ -244,354 +680,6 @@ Widget buildOthersPage(BuildContext context) {
             ),
           ],
         ),
-      ),
-      HubDemo(
-        title: 'DebtTile — open',
-        note:
-            'Used in: Debt person page. '
-            'One debt as a row on the person\'s page: description (what for) '
-            'on top when there is one, then direction and date; the '
-            'outstanding amount tinted by who owes whom; progress once '
-            'something was repaid.',
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              DebtTile(
-                debt: debt(
-                  id: 'd1',
-                  direction: DebtDirection.owedToMe,
-                  amount: 1500,
-                  description: 'Dinner',
-                ),
-              ),
-              const AppDivider.row(),
-              DebtTile(
-                debt: debt(
-                  id: 'd2',
-                  direction: DebtDirection.iOwe,
-                  amount: 800,
-                ),
-              ),
-              const AppDivider.row(),
-              DebtTile(
-                debt: debt(
-                  id: 'd3',
-                  direction: DebtDirection.owedToMe,
-                  amount: 2000,
-                  settled: 500,
-                  description: 'Concert tickets',
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      HubDemo(
-        title: 'DebtTile — overpaid · settled · cancelled',
-        note:
-            'Used in: Debt person page, Debt detail. '
-            'Overpaid: the difference is owed the other way, flagged. Closed '
-            'debts show a status chip and the full amount, muted.',
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              DebtTile(
-                debt: debt(
-                  id: 'd4',
-                  direction: DebtDirection.owedToMe,
-                  amount: 1000,
-                  settled: 1200,
-                  description: 'Taxi',
-                ),
-              ),
-              const AppDivider.row(),
-              DebtTile(
-                debt: debt(
-                  id: 'd5',
-                  direction: DebtDirection.iOwe,
-                  amount: 600,
-                  settled: 600,
-                  status: DebtStatus.settled,
-                  description: 'Lunch',
-                ),
-              ),
-              const AppDivider.row(),
-              DebtTile(
-                debt: debt(
-                  id: 'd6',
-                  direction: DebtDirection.owedToMe,
-                  amount: 300,
-                  status: DebtStatus.cancelled,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      HubDemo(
-        title: 'debtStatusChip',
-        note:
-            'Used in: Debt detail page. '
-            'Open (warning), settled (success), cancelled (neutral).',
-        child: Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: [
-            for (final s in DebtStatus.values) debtStatusChip(context, s),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'NotificationTile — answerable requests',
-        note:
-            'Used in: Notifications inbox, Home. '
-            'Sender avatar with a type badge, the sentence, time and amount, '
-            'a dot when unread. Pending invites and link requests carry '
-            'big Accept / Decline buttons (Decline asks first).',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            notifCard(notif(NotificationType.contactLinkRequest)),
-            const SizedBox(height: AppSpacing.sm),
-            notifCard(
-              notif(
-                NotificationType.accountInvite,
-                payload: const {'account_name': 'บัญชีบ้าน'},
-              ),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'NotificationTile — one-tap actions',
-        note:
-            'Used in: Notifications inbox. '
-            'Prompts with one action and "skip" (a ledger, not a sync): add '
-            'the debt, record the receipt, copy to my book, update my copy.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            notifCard(
-              notif(
-                NotificationType.splitCreated,
-                payload: const {'amount': 450, 'currency': 'THB'},
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            notifCard(
-              notif(
-                NotificationType.splitPaid,
-                payload: const {'amount': 450, 'currency': 'THB'},
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            notifCard(
-              notif(
-                NotificationType.projectTxRecordedForYou,
-                payload: const {'amount': 1200, 'currency': 'THB'},
-              ),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'NotificationTile — read · actioned · informational',
-        note:
-            'Used in: Notifications inbox. '
-            'Read rows lose the dot and the tint. An answered request shows an '
-            '"accepted" chip. Informational types have no buttons.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            notifCard(
-              notif(
-                NotificationType.contactLinkRequest,
-                readAt: now,
-                actionedAt: now,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            notifCard(
-              notif(
-                NotificationType.splitCreated,
-                readAt: now,
-                actionedAt: now,
-                payload: const {'amount': 450, 'currency': 'THB'},
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            notifCard(
-              notif(
-                NotificationType.projectAdded,
-                payload: const {'project_name': 'Chiang Mai trip'},
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            notifCard(
-              notif(
-                NotificationType.splitReceived,
-                readAt: now,
-                payload: const {'amount': 450, 'currency': 'THB'},
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            notifCard(notif(NotificationType.unknown, readAt: now)),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'ProjectTxIcon',
-        note:
-            'Used in: Project dashboard tab. '
-            'The type bubble of a project board row: expense and income.',
-        child: HubRow(
-          cells: [
-            HubCell(
-              caption: 'expense',
-              child: ProjectTxIcon(tx: ptx('expense')),
-            ),
-            HubCell(
-              caption: 'income',
-              child: ProjectTxIcon(tx: ptx('income')),
-            ),
-            HubCell(
-              caption: 'size 28',
-              child: ProjectTxIcon(tx: ptx('expense'), size: 28),
-            ),
-          ],
-        ),
-      ),
-      const HubDemo(
-        title: 'ProjectMemberAvatar',
-        note:
-            'Used in: Project members page, member pick card, project dashboard. '
-            'A member\'s own icon, else a coloured initial (stable colour per '
-            'member id).',
-        child: HubRow(
-          cells: [
-            HubCell(
-              caption: 'initial',
-              child: ProjectMemberAvatar(member: member),
-            ),
-            HubCell(
-              caption: 'icon',
-              child: ProjectMemberAvatar(member: memberWithIcon),
-            ),
-            HubCell(
-              caption: 'size 48',
-              child: ProjectMemberAvatar(member: member, size: 48),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'Project status chips',
-        note:
-            'Used in: Projects list, Project detail. '
-            'projectStatusTone with AppChip(selected: true, dot: true): '
-            'active primary, completed success, cancelled danger, archived '
-            'neutral.',
-        child: Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: [
-            for (final s in ProjectStatus.values)
-              AppChip(
-                label: s.name,
-                dot: true,
-                selected: true,
-                tone: projectStatusTone(s),
-              ),
-          ],
-        ),
-      ),
-      const HubDemo(
-        title: 'BrandLogo',
-        note:
-            'Used in: Splash, Update-required page, Auth header. '
-            'The app mark clipped to a 24% rounded square. 128 is the splash '
-            'size, 88 / 56 the auth header sizes.',
-        child: HubRow(
-          cells: [
-            HubCell(caption: '128 (splash)', child: BrandLogo()),
-            HubCell(caption: '88', child: BrandLogo(size: 88)),
-            HubCell(caption: '56', child: BrandLogo(size: 56)),
-            HubCell(caption: '32', child: BrandLogo(size: 32)),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'AuthBrandHeader',
-        note:
-            'Used in: Login, Register. '
-            'Logo, app name, tagline. Compact: smaller logo, no tagline '
-            '(register). Tapping the logo five times opens the hub.',
-        child: Column(
-          children: const [
-            AuthBrandHeader(),
-            SizedBox(height: AppSpacing.xl),
-            AuthBrandHeader(compact: true),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'AuthOrDivider · GoogleSignInButton',
-        note:
-            'Used in: Login, Register. '
-            'The divider between the form and other sign-in options. The '
-            'Google button is dimmed with a "coming soon" chip while it has '
-            'no handler; with one it is live; loading adds a spinner.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const AuthOrDivider(),
-            const SizedBox(height: AppSpacing.md),
-            const GoogleSignInButton(),
-            const SizedBox(height: AppSpacing.sm),
-            GoogleSignInButton(onPressed: () {}),
-            const SizedBox(height: AppSpacing.sm),
-            GoogleSignInButton(onPressed: () {}, loading: true),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'OfflineBanner',
-        note:
-            'Used in: App shell (every page). '
-            'A strip shown while the device has no network, slides away when '
-            'it returns. Both states below run on a stand-in connectivity '
-            'source, not the real one.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Offline'),
-            const SizedBox(height: AppSpacing.xs),
-            BlocProvider(
-              create: (_) =>
-                  ConnectivityCubit(connectivity: _FakeConnectivity(false)),
-              child: const OfflineBanner(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            const Text('Online (renders nothing)'),
-            const SizedBox(height: AppSpacing.xs),
-            BlocProvider(
-              create: (_) =>
-                  ConnectivityCubit(connectivity: _FakeConnectivity(true)),
-              child: const OfflineBanner(),
-            ),
-          ],
-        ),
-      ),
-      HubDemo(
-        title: 'UpdateBannerStrip',
-        note:
-            'Used in: App shell (update banner). '
-            'The "new version" strip shown while a newer build is out but this '
-            'one still works. The wrapper (UpdateBanner) reads the version '
-            'cubit; the strip itself is shown here.',
-        child: UpdateBannerStrip(onUpdate: () {}, onDismiss: () {}),
       ),
     ],
   );

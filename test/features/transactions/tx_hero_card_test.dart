@@ -1,9 +1,9 @@
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
-import 'package:chubi_pocket/features/transactions/presentation/widgets/tx_hero_card.dart';
-import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
+import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -214,5 +214,72 @@ void main() {
     expect(find.text('รายจ่าย'), findsNothing);
     expect(find.byIcon(AppIcons.lock), findsOneWidget);
     expect(find.byType(Tooltip), findsWidgets);
+  });
+
+  testWidgets('description and amount underlines share one bottom line', (
+    t,
+  ) async {
+    amount.text = '1,250';
+    note.text = 'ข้าวมันไก่';
+    final key = GlobalKey();
+    await pump(
+      t,
+      RepaintBoundary(
+        key: key,
+        child: TxHeroCard(
+          type: TransactionType.expense,
+          amount: amount,
+          title: note,
+          dateLabel: 'วันนี้',
+          inline: true,
+        ),
+      ),
+    );
+    // The labels (คำอธิบาย / จำนวนเงิน) sit ABOVE the inputs in edit mode.
+    expect(find.text('คำอธิบาย'), findsOneWidget);
+    expect(find.text('จำนวนเงิน'), findsOneWidget);
+    // Measure the DRAWN underlines (pixels), not widget rects: a field's
+    // widget bottom can sit below its underline.
+    final fields = find.byType(AppInput);
+    expect(fields, findsNWidgets(2));
+    final image = await t.runAsync(() async {
+      final b =
+          key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      return b.toImage(pixelRatio: 1);
+    });
+    final data = (await t.runAsync(() => image!.toByteData()))!;
+    final outline = Theme.of(
+      t.element(find.byType(TxHeroCard)),
+    ).colorScheme.outline;
+    int lowestUnderline(Finder field) {
+      final r = t.getRect(field);
+      final x = (r.left + 12).round();
+      var hit = -1;
+      for (
+        var y = r.top.round();
+        y < r.bottom.round() + 4 && y < image!.height;
+        y++
+      ) {
+        final o = (y * image.width + x) * 4;
+        final c = Color.fromARGB(
+          data.getUint8(o + 3),
+          data.getUint8(o),
+          data.getUint8(o + 1),
+          data.getUint8(o + 2),
+        );
+        if (c.toARGB32() == outline.toARGB32()) hit = y;
+      }
+      return hit;
+    }
+
+    final titleLine = lowestUnderline(fields.at(0));
+    final amountLine = lowestUnderline(fields.at(1));
+    expect(
+      titleLine,
+      greaterThan(0),
+      reason: 'description underline not drawn',
+    );
+    expect(amountLine, greaterThan(0), reason: 'amount underline not drawn');
+    expect(titleLine, amountLine, reason: 'underlines must share one y');
   });
 }

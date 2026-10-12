@@ -13,6 +13,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../categories/presentation/category_label.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -106,7 +107,6 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
             loading: _fetching,
             error: missing ? null : _error,
             onRetry: _fetch,
-            skeleton: const LoadingView(),
             notFound: EmptyView(
               icon: AppIcons.empty,
               title: l.transactionDetailNotFound,
@@ -511,19 +511,10 @@ class _LoadedState extends State<_Loaded>
     _splitsEditable = canEditSplits;
     final editing = isEditing;
 
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    String stamp(DateTime d) =>
-        '${DateFormatter.medium(d, locale: locale)} '
-        '${DateFormatter.time(d, locale: locale)}';
     final splitCount = math.max(tx.splitCount, tx.splits.length);
     final hasSplits = splitCount > 0;
     final created = tx.createdAt;
     final updated = tx.updatedAt;
-    // Only an edit after the row was made counts as "แก้ไขล่าสุด".
-    final edited =
-        created != null &&
-        updated != null &&
-        updated.difference(created).inSeconds.abs() >= 60;
     void openProject() => openPage(context, '/projects/${tx.projectId}');
     // The one rule for the event card ([txCanJoinEvent]).
     final canJoinEvent = canEdit && txCanJoinEvent(_edited);
@@ -591,7 +582,7 @@ class _LoadedState extends State<_Loaded>
           ? splitsLongPressable(
               splitsBlock([
                 for (final s in tx.splits)
-                  _SplitRow(split: s, onOpen: () => _openSplits(s)),
+                  _splitRow(context, s, () => _openSplits(s)),
               ]),
             )
           : hasSplits
@@ -611,11 +602,10 @@ class _LoadedState extends State<_Loaded>
 
     // The very bottom: small muted record info, one item per line (owner
     // 2026-10-10).
-    final metaLines = <String>[
+    final metaLines = [
       if (tx.createdBy != null)
         l.txDetailMetaRecordedBy(tx.createdBy!.displayName),
-      if (created != null) '${l.txDetailCreatedAt} ${stamp(created)}',
-      if (edited) '${l.txDetailUpdatedAt} ${stamp(updated)}',
+      ...detailMetaLines(context, createdAt: created, updatedAt: updated),
     ];
 
     // A save / delete in flight dims the page and blocks input.
@@ -640,8 +630,7 @@ class _LoadedState extends State<_Loaded>
               return CompactHeroScope(
                 heroKey: _heroKey,
                 bar: _compactBar(context),
-                child: PullToRefresh(
-                  enabled: !editing,
+                child: DetailPageBody(
                   onRefresh: () async {
                     try {
                       await context.read<TransactionsCubit>().refreshOne(tx.id);
@@ -651,25 +640,25 @@ class _LoadedState extends State<_Loaded>
                       }
                     }
                   },
-                  child: ListView(
-                    controller: _scroll,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      MediaQuery.paddingOf(context).top + AppSpacing.md,
-                      AppSpacing.lg,
-                      96 + MediaQuery.paddingOf(context).bottom,
-                    ),
+                  controller: _scroll,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  topInset: MediaQuery.paddingOf(context).top + AppSpacing.md,
+                  bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
+                  // The form renders hero -> note -> tags -> the headed
+                  // "แบ่งรายการ" section itself, so it is the whole hero.
+                  hero: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (isSystemRow) ...[
-                        _LockNote(
-                          text: isRepayment
+                        AppMessage(
+                          message: isRepayment
                               ? l.txDetailRepaymentBanner
                               : l.transactionDetailSystemRowBanner,
+                          tone: Tone.info,
                         ),
                         const SizedBox(height: AppSpacing.md),
                       ] else if (tx.isLocked) ...[
-                        MessageBanner(
+                        AppMessage(
                           message: l.transactionFormLockedBanner,
                           tone: Tone.warning,
                         ),
@@ -679,9 +668,11 @@ class _LoadedState extends State<_Loaded>
                         controller: _c,
                         heroKey: _heroKey,
                         autofocus: false,
-                        // The type can't change after saving; splits can, by the
-                        // author (PUT /transactions/:id/splits).
+                        // The type can't change after saving; splits can, by
+                        // the author (PUT /transactions/:id/splits).
                         typeLocked: true,
+                        // The wallet · category cards sit inside the hero.
+                        cardsInHero: true,
                         allowSplits: canEditSplits,
                         editing: editing,
                         categoryLockedHint: _edited.canEditCategory
@@ -693,38 +684,29 @@ class _LoadedState extends State<_Loaded>
                             : null,
                         splitsReadOnly: splitsReadOnly,
                         eventSlot: eventSlot,
-                        // Moving into an event: the splits go with it (titled so).
+                        // Moving into an event: the splits go with it
+                        // (titled so).
                         eventPending:
                             _eventChange is NewEventTarget ||
                             _eventChange is ExistingEventTarget,
                       ),
-                      if ((editing && canEdit) || isRepayment)
-                        DangerRow(
-                          icon: AppIcons.delete,
-                          label: l.transactionDeleteThis,
-                          onTap: isSaving
+                    ],
+                  ),
+                  sections: const [],
+                  // Delete: edit mode, or a repayment's only action in view.
+                  manage: (editing && canEdit) || isRepayment
+                      ? ManageSection(
+                          deleteLabel: l.transactionDeleteThis,
+                          onDelete: isSaving
                               ? null
                               : () => _confirmDelete(
                                   context,
                                   l,
                                   repayment: isRepayment,
                                 ),
-                        ),
-                      if (metaLines.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.xl),
-                          child: Text(
-                            metaLines.join('\n'),
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        ),
-                    ],
-                  ),
+                        )
+                      : null,
+                  metaLines: metaLines,
                 ),
               );
             },
@@ -745,7 +727,9 @@ class _LoadedState extends State<_Loaded>
       description: _c.description.text,
       amount: _c.amountValue,
       // A sub-category carries its own icon (the API embeds it).
-      categoryName: category?.name ?? _c.foreignCategoryName,
+      categoryName: category == null
+          ? _c.foreignCategoryName
+          : categoryDisplayName(AppLocalizations.of(context)!, category),
       categoryIcon:
           category?.iconCode ??
           (category == null ? null : widget.tx.category?.iconCode),
@@ -839,148 +823,73 @@ String _titleForType(AppLocalizations l, TransactionType t) => switch (t) {
   TransactionType.transfer => l.transactionTypeTransfer,
 };
 
-/// 🔒 + why a system row can't be edited.
-class _LockNote extends StatelessWidget {
-  const _LockNote({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return AppCard(
-      style: AppCardStyle.bordered,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppIcon(
-            AppIcons.lock,
-            size: AppIconSize.md,
-            color: scheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(text, style: Theme.of(context).textTheme.bodySmall),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// One person of the "หารกับ" section (owner 2026-10-10):
 ///
 ///   (mark) ลี                          ฿120
 ///                                 รอคืน ฿20
 ///
-/// Only the avatar + name are tappable — they open that person's debts;
-/// the amount and where it stands are just text.
-class _SplitRow extends StatelessWidget {
-  const _SplitRow({required this.split, required this.onOpen});
-  final TxSplit split;
-  final VoidCallback onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final s = split;
-    // The person's look comes embedded in the split — no contacts cache.
-    final person = s.person;
-    String money(double v) => moneyString(context, v);
-    // Where it stands, from my side of it.
-    final status = switch (s.status) {
-      // Repaid more than the (edited) amount: say which way the difference
-      // goes back (owner 2026-10-10).
-      _ when s.isOverpaid =>
-        s.owedToMe
-            ? l.txSplitStatusOverpaidToThem(money(-s.outstanding))
-            : l.txSplitStatusOverpaidByMe(money(-s.outstanding)),
-      'settled' => s.owedToMe ? l.txSplitStatusPaid : l.txSplitStatusRepaid,
-      'cancelled' => l.txSplitStatusCancelled,
-      _ when s.settledAmount > 0.005 =>
-        s.owedToMe
-            ? l.txSplitStatusPartPaid(money(s.settledAmount), money(s.amount))
-            : l.txSplitStatusPartRepaid(
-                money(s.settledAmount),
-                money(s.amount),
-              ),
-      _ =>
-        s.owedToMe
-            ? l.txSplitStatusAwaiting(money(s.outstanding))
-            : l.txSplitStatusToPay(money(s.outstanding)),
-    };
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: InkWell(
-                onTap: onOpen,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // The kit's three looks, as on the edit chip — and
-                      // the 🔗 slot kept so the names line up (QA run-3 H).
-                      PersonMark(
-                        name: s.personName,
-                        level: s.contactId == null
-                            ? PersonLevel.name
-                            : person.linked
-                            ? PersonLevel.linked
-                            : PersonLevel.contact,
-                        iconCode: person.iconCode,
-                        size: 32,
-                        reserveLinkSlot: true,
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Flexible(
-                        child: Text(
-                          s.personName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+/// A kit [DetailRow]: the row opens that person's debts; the amount and
+/// where it stands are its trailing text.
+DetailRow _splitRow(BuildContext context, TxSplit s, VoidCallback onOpen) {
+  final l = AppLocalizations.of(context)!;
+  final scheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+  final palette = Theme.of(context).extension<AppColors>()!;
+  // The person's look comes embedded in the split — no contacts cache.
+  final person = s.person;
+  String money(double v) => moneyString(context, v);
+  // Where it stands, from my side of it.
+  final status = switch (s.status) {
+    // Repaid more than the (edited) amount: say which way the difference
+    // goes back (owner 2026-10-10).
+    _ when s.isOverpaid =>
+      s.owedToMe
+          ? l.txSplitStatusOverpaidToThem(money(-s.outstanding))
+          : l.txSplitStatusOverpaidByMe(money(-s.outstanding)),
+    'settled' => s.owedToMe ? l.txSplitStatusPaid : l.txSplitStatusRepaid,
+    'cancelled' => l.txSplitStatusCancelled,
+    _ when s.settledAmount > 0.005 =>
+      s.owedToMe
+          ? l.txSplitStatusPartPaid(money(s.settledAmount), money(s.amount))
+          : l.txSplitStatusPartRepaid(money(s.settledAmount), money(s.amount)),
+    _ =>
+      s.owedToMe
+          ? l.txSplitStatusAwaiting(money(s.outstanding))
+          : l.txSplitStatusToPay(money(s.outstanding)),
+  };
+  return DetailRow(
+    label: s.personName,
+    onTap: onOpen,
+    // The kit's three looks, as on the edit chip — and the 🔗 slot kept so
+    // the names line up (QA run-3 H).
+    leading: PersonMark(
+      name: s.personName,
+      level: s.contactId == null
+          ? PersonLevel.name
+          : person.linked
+          ? PersonLevel.linked
+          : PersonLevel.contact,
+      iconCode: person.iconCode,
+      size: 32,
+      reserveLinkSlot: true,
+    ),
+    trailing: Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(money(s.amount), style: textTheme.bodyLarge),
+        Text(
+          status,
+          style: textTheme.bodySmall?.copyWith(
+            color: s.isOverpaid
+                ? palette.warning
+                : s.status == 'settled'
+                ? palette.income
+                : scheme.onSurfaceVariant,
+            fontWeight: s.status == 'settled' ? FontWeight.w600 : null,
           ),
-          const SizedBox(width: AppSpacing.md),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(money(s.amount), style: textTheme.bodyLarge),
-              Text(
-                status,
-                style: textTheme.bodySmall?.copyWith(
-                  color: s.isOverpaid
-                      ? palette.warning
-                      : s.status == 'settled'
-                      ? palette.income
-                      : scheme.onSurfaceVariant,
-                  fontWeight: s.status == 'settled' ? FontWeight.w600 : null,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }

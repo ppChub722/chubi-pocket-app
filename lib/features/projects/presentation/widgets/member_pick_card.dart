@@ -4,7 +4,7 @@ import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
 import 'project_common.dart';
 
-/// A project member as a [PickCard] — the payer of a project row ("จ่ายโดย"),
+/// Thin wrapper over [ProjectMemberPickCard]. A project member as a [PickCard] — the payer of a project row ("จ่ายโดย"),
 /// with their avatar. Nothing picked → the dashed empty card. Use
 /// [showMemberPicker] for the picker itself.
 class MemberPickCard extends StatelessWidget {
@@ -28,19 +28,14 @@ class MemberPickCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final m = member;
-    return PickCard(
-      label: label,
-      value: m?.displayName,
-      placeholder: placeholder,
-      leading: m == null
-          ? const PickCardEmptyIcon(AppIcons.member)
-          : ProjectMemberAvatar(member: m, size: 40),
-      onTap: onTap,
-      errorText: errorText,
-    );
-  }
+  Widget build(BuildContext context) => ProjectMemberPickCard(
+    name: member?.displayName,
+    iconCode: member?.iconCode,
+    label: label,
+    placeholder: placeholder,
+    errorText: errorText,
+    onTap: onTap,
+  );
 }
 
 /// Pick one of [members] (avatar + name). Null when dismissed.
@@ -58,7 +53,7 @@ Future<String?> showMemberPicker(
       SheetOption(
         value: m.id,
         label: m.displayName,
-        leading: ProjectMemberAvatar(member: m, size: 28),
+        leading: memberAvatar(m, size: 28),
       ),
   ],
 );

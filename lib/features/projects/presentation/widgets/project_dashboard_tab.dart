@@ -40,7 +40,6 @@ class ProjectDashboardTab extends StatelessWidget {
     final v = view;
     final s = v.summary;
     final symbol = v.symbol;
-    final textTheme = Theme.of(context).textTheme;
     final palette = Theme.of(context).extension<AppColors>()!;
     final members = v.currentMembers;
 
@@ -80,223 +79,181 @@ class ProjectDashboardTab extends StatelessWidget {
           AppSpacing.lg,
           AppSpacing.md,
           AppSpacing.lg,
-          96 + MediaQuery.paddingOf(context).bottom,
+          AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
-          AppCard(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SummaryStats(
-                    stats: [
-                      SummaryStat(
-                        label: l.projectDashTotalExpense,
-                        amount: s?.totalExpense ?? 0,
-                        tone: MoneyTone.expense,
-                      ),
-                      SummaryStat(
-                        label: l.projectDashTotalIncome,
-                        amount: s?.totalIncome ?? 0,
-                        tone: MoneyTone.income,
-                      ),
-                    ],
-                  ),
-                  if (s != null && s.hasPlan) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    ProgressRow(
-                      value: (s.plannedAmount ?? 0) == 0
-                          ? 0
-                          : (s.spentNet ?? 0) / s.plannedAmount!,
-                      label: s.isOverPlan
-                          ? l.projectPlannedOverLine(
-                              moneyString(
-                                context,
-                                (s.remaining ?? 0).abs(),
-                                symbol: symbol,
-                              ),
-                            )
-                          : l.projectPlannedLine(
-                              moneyString(
-                                context,
-                                s.plannedAmount!,
-                                symbol: symbol,
-                              ),
-                              moneyString(
-                                context,
-                                s.remaining ?? 0,
-                                symbol: symbol,
-                              ),
-                            ),
+          SectionCard(
+            first: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: SummaryStats(
+                  stats: [
+                    SummaryStat(
+                      label: l.projectDashTotalExpense,
+                      amount: s?.totalExpense ?? 0,
+                      tone: MoneyTone.expense,
+                    ),
+                    SummaryStat(
+                      label: l.projectDashTotalIncome,
+                      amount: s?.totalIncome ?? 0,
+                      tone: MoneyTone.income,
                     ),
                   ],
-                  // Caller's standing, computed by the BE (contract §6a).
-                  if (s?.myNet != null) ...[
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l.projectMyPosition(
-                              moneyString(
-                                context,
-                                s!.myPaid ?? 0,
-                                symbol: symbol,
-                              ),
-                              moneyString(
-                                context,
-                                s.myShare ?? 0,
-                                symbol: symbol,
-                              ),
-                            ),
-                            style: textTheme.bodySmall,
-                          ),
-                        ),
-                        Text('${l.projectMyNet} ', style: textTheme.bodySmall),
-                        MoneyText(
-                          s.myNet!,
-                          tone: MoneyTone.signed,
-                          symbol: symbol,
-                          style: textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    l.projectDashTxCount(v.trees.length),
-                    style: textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Add a bill right from the first tab (same handler as the
-          // รายการ tab's tile).
-          if (onAdd != null)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.md),
-              child: AddTile(
-                label: l.projectAddTransaction,
-                variant: AddTileVariant.row,
-                onTap: onAdd,
-              ),
-            ),
-          SectionHeader(
-            title: l.projectDashMembers,
-            count: members.length,
-            actionLabel: l.projectMembersTitle,
-            onAction: onOpenMembers,
-          ),
-          MemberStrip(
-            members: [
-              for (final m in members)
-                PersonRef(
-                  name: m.displayName,
-                  iconCode: m.iconCode,
-                  isOwner: m.isOwner,
-                  pending: m.status == MemberStatus.pending,
                 ),
+              ),
+              if (s != null && s.hasPlan)
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: ProgressRow(
+                    value: (s.plannedAmount ?? 0) == 0
+                        ? 0
+                        : (s.spentNet ?? 0) / s.plannedAmount!,
+                    label: s.isOverPlan
+                        ? l.projectPlannedOverLine(
+                            moneyString(
+                              context,
+                              (s.remaining ?? 0).abs(),
+                              symbol: symbol,
+                            ),
+                          )
+                        : l.projectPlannedLine(
+                            moneyString(
+                              context,
+                              s.plannedAmount!,
+                              symbol: symbol,
+                            ),
+                            moneyString(
+                              context,
+                              s.remaining ?? 0,
+                              symbol: symbol,
+                            ),
+                          ),
+                  ),
+                ),
+              // Caller's standing, computed by the BE (contract §6a).
+              if (s?.myNet != null)
+                DetailRow(
+                  label: l.projectMyNet,
+                  helper: l.projectMyPosition(
+                    moneyString(context, s!.myPaid ?? 0, symbol: symbol),
+                    moneyString(context, s.myShare ?? 0, symbol: symbol),
+                  ),
+                  trailing: MoneyText(
+                    s.myNet!,
+                    tone: MoneyTone.signed,
+                    symbol: symbol,
+                  ),
+                ),
+              DetailRow(label: l.projectDashTxCount(v.trees.length)),
+              // Add a bill right from the first tab (same handler as the
+              // รายการ tab's tile) — folded into the top box, not a lone one.
+              if (onAdd != null)
+                DetailAddRow(label: l.projectAddTransaction, onTap: onAdd),
             ],
-            onMemberTap: (_) => onOpenMembers(),
-            onInvite: onInvite,
-            inviteLabel: l.projectMembersInvite,
           ),
-          if (payers.isNotEmpty) ...[
-            SectionHeader(title: l.projectDashWhoPaid),
-            for (final e in payers)
-              _BarRow(
-                leading: ProjectMemberAvatar(member: v.member(e.key), size: 28),
-                label: v.member(e.key).displayName,
-                amount: e.value,
-                share: totalPaid == 0 ? 0 : e.value / totalPaid,
-                symbol: symbol,
+          SectionCard(
+            title: '${l.projectDashMembers} · ${members.length}',
+            trailing: AppButton(
+              label: l.projectMembersTitle,
+              variant: AppButtonVariant.text,
+              onPressed: onOpenMembers,
+            ),
+            dividers: false,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: MemberStrip(
+                  members: [
+                    for (final m in members)
+                      PersonRef(
+                        name: m.displayName,
+                        iconCode: m.iconCode,
+                        isOwner: m.isOwner,
+                        pending: m.status == MemberStatus.pending,
+                      ),
+                  ],
+                  onMemberTap: (_) => onOpenMembers(),
+                  onInvite: onInvite,
+                  inviteLabel: l.projectMembersInvite,
+                ),
               ),
-          ],
-          if (cats.isNotEmpty) ...[
-            SectionHeader(title: l.projectDashTopTags),
-            for (final e in cats.take(5))
-              _BarRow(
-                leading: ProjectTxIcon(tx: e.value.$2, size: 28),
-                label: e.key,
-                amount: e.value.$1,
-                share: totalPaid == 0 ? 0 : e.value.$1 / totalPaid,
-                symbol: symbol,
-                color: palette.expense,
-              ),
-          ],
-          if (recent.isNotEmpty) ...[
-            SectionHeader(
+            ],
+          ),
+          if (payers.isNotEmpty)
+            SectionCard(
+              title: l.projectDashWhoPaid,
+              children: [
+                for (final e in payers)
+                  _barRow(
+                    leading: memberAvatar(v.member(e.key), size: 28),
+                    label: v.member(e.key).displayName,
+                    amount: e.value,
+                    share: totalPaid == 0 ? 0 : e.value / totalPaid,
+                    symbol: symbol,
+                  ),
+              ],
+            ),
+          if (cats.isNotEmpty)
+            SectionCard(
+              title: l.projectDashTopTags,
+              children: [
+                for (final e in cats.take(5))
+                  _barRow(
+                    leading: ProjectTxIcon(tx: e.value.$2, size: 28),
+                    label: e.key,
+                    amount: e.value.$1,
+                    share: totalPaid == 0 ? 0 : e.value.$1 / totalPaid,
+                    symbol: symbol,
+                    color: palette.expense,
+                  ),
+              ],
+            ),
+          if (recent.isNotEmpty)
+            SectionCard(
               title: l.projectDashRecent,
-              actionLabel: l.projectDashSeeAll,
-              onAction: onSeeAll,
-            ),
-            AppCard(
-              child: Column(
-                children: [
-                  for (final t in recent.take(3))
-                    ProjectTxTreeTile(tree: t, view: v, onChanged: onChanged),
-                ],
+              trailing: AppButton(
+                label: l.projectDashSeeAll,
+                variant: AppButtonVariant.text,
+                onPressed: onSeeAll,
               ),
+              children: [
+                for (final t in recent.take(3))
+                  ProjectTxTreeTile(tree: t, view: v, onChanged: onChanged),
+              ],
             ),
-          ],
         ],
       ),
     );
   }
 }
 
-class _BarRow extends StatelessWidget {
-  const _BarRow({
-    required this.leading,
-    required this.label,
-    required this.amount,
-    required this.share,
-    required this.symbol,
-    this.color,
-  });
-
-  final Widget leading;
-  final String label;
-  final double amount;
-  final double share;
-  final String symbol;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-      child: Row(
-        children: [
-          leading,
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    MoneyText(amount, symbol: symbol),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                ProgressRow(value: share, color: color, height: 6),
-              ],
+/// One bar of a ranking (who paid, top tags): avatar / icon, name + amount,
+/// and the share of the total under them.
+Widget _barRow({
+  required Widget leading,
+  required String label,
+  required double amount,
+  required double share,
+  required String symbol,
+  Color? color,
+}) {
+  return ListRow(
+    leading: leading,
+    body: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+            MoneyText(amount, symbol: symbol),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        ProgressRow(value: share, color: color, height: 6),
+      ],
+    ),
+  );
 }

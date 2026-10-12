@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_radius.dart';
+import '../tokens/color_contrast.dart';
 
 /// How an [AppCard] looks.
 enum AppCardStyle {
@@ -93,6 +94,9 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context).cardTheme;
+    // Tint colours come from user icons (can be pale): the border and glyph are
+    // clamped to >= 3:1 against the surface so they always read.
+    final tint = color == null ? null : ensureContrast(color!, scheme.surface);
 
     final Color? fill = switch (style) {
       AppCardStyle.plain => null,
@@ -109,8 +113,8 @@ class AppCard extends StatelessWidget {
                     : null) ??
                 scheme.outlineVariant,
           AppCardStyle.bordered => scheme.outlineVariant,
-          AppCardStyle.accent => color!,
-          AppCardStyle.tinted => color!.withValues(alpha: 0.25),
+          AppCardStyle.accent => tint!,
+          AppCardStyle.tinted => tint!.withValues(alpha: 0.25),
           AppCardStyle.flat => Colors.transparent,
         };
     var width =
@@ -137,7 +141,7 @@ class AppCard extends StatelessWidget {
             child: Icon(
               glyph,
               size: glyphSize,
-              color: color!.withValues(alpha: 0.10),
+              color: tint!.withValues(alpha: 0.10),
             ),
           ),
           body,
@@ -154,8 +158,8 @@ class AppCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              color!.withValues(alpha: 0.16),
-              color!.withValues(alpha: 0.03),
+              tint!.withValues(alpha: 0.16),
+              tint.withValues(alpha: 0.03),
             ],
           ),
         ),

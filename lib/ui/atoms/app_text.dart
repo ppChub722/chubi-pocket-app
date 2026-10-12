@@ -11,6 +11,7 @@ class AppText extends StatelessWidget {
     this.role = AppTextRole.body,
     this.color,
     this.weight,
+    this.italic = false,
     this.maxLines,
     this.overflow,
     this.textAlign,
@@ -22,6 +23,10 @@ class AppText extends StatelessWidget {
   final AppTextRole role;
   final Color? color;
   final FontWeight? weight;
+
+  /// Slanted (a note, a muted aside). The Thai font has no true italic:
+  /// Flutter slants it synthetically.
+  final bool italic;
   final int? maxLines;
   final TextOverflow? overflow;
   final TextAlign? textAlign;
@@ -30,8 +35,12 @@ class AppText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var style = AppTypography.of(context, role);
-    if (color != null || weight != null) {
-      style = style?.copyWith(color: color, fontWeight: weight);
+    if (color != null || weight != null || italic) {
+      style = style?.copyWith(
+        color: color,
+        fontWeight: weight,
+        fontStyle: italic ? FontStyle.italic : null,
+      );
     }
     return Text(
       text,

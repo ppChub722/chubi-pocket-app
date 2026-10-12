@@ -74,7 +74,7 @@ enum AppChipTrailing {
 ///   type, a tag on a detail page) has no [onTap] and usually
 ///   `selected: true`, so it wears its colour. A not-yet-chosen pick is
 ///   [dashed].
-/// - **Size** ([ChipSize]): [ChipSize.control] 32 (the default — what the user
+/// - **Size** ([ChipSize]): [ChipSize.control] 40 (the default — what the user
 ///   operates, and a hero's top row), [ChipSize.chip] 28 (display chips in
 ///   cards and rows), [ChipSize.mini] 20 (dense list rows) — everything (icon,
 ///   text, padding, gap, avatar, count badge) scales with it. The height is

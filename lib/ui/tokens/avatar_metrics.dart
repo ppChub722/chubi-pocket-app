@@ -21,6 +21,12 @@ import 'dart:math' as math;
 class AvatarMetrics {
   const AvatarMetrics._();
 
+  /// The named avatar sizes (a list row 32, a card 40, a hero chip 44) — never
+  /// a literal in a feature.
+  static const double sizeSmall = 32;
+  static const double sizeMedium = 40;
+  static const double sizeLarge = 44;
+
   static const double _min = 20;
   static const double _max = 64;
 

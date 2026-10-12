@@ -303,56 +303,42 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         final header = <Widget>[
           const SizedBox(height: AppSpacing.sm),
           Center(child: _periodPill()),
-          if (state.totals case final t?) _TotalsCard(totals: t),
-          // Search, the whole width (owner 2026-10-10).
-          AppInput.search(
-            key: const ValueKey('tx-search'),
-            controller: _search,
-            onChanged: _onSearch,
-            hint: l.transactionsSearchHint,
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.xs,
-              AppSpacing.lg,
-              AppSpacing.xs,
-            ),
-          ),
-          // [ตัวกรอง •n]  ……  [⇅ ใหม่สุด ▾] — same height.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.xs,
-              AppSpacing.lg,
-              AppSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                _FiltersButton(
-                  label: l.transactionsFiltersTitle,
-                  count: chips.length,
-                  onTap: _openFilters,
-                ),
-                const Spacer(),
-                OptionMenuAnchor<String>(
-                  selected: _f.sort,
-                  onSelected: (s) => _apply(_f.copyWith(sort: s)),
-                  options: [
-                    for (final s in const [
-                      'date_desc',
-                      'date_asc',
-                      'amount_desc',
-                      'amount_asc',
-                    ])
-                      SheetOption(value: s, label: txSortLabel(l, s)),
-                  ],
-                  builder: (context, toggle) => AppChip(
-                    label: txSortLabel(l, _f.sort),
-                    icon: AppIcons.sort,
-                    trailing: AppChipTrailing.dropdown,
-                    onTap: toggle,
-                  ),
-                ),
+          if (state.totals case final t?) _totals(l, t),
+          // Search (the whole width) + [ตัวกรอง •n] … [⇅ ใหม่สุด ▾] as ONE
+          // block (owner 2026-10-10 / 2026-10-12).
+          ListToolbar(
+            searchKey: const ValueKey('tx-search'),
+            searchController: _search,
+            onSearchChanged: _onSearch,
+            searchHint: l.transactionsSearchHint,
+            chips: [
+              AppChip(
+                label: l.transactionsFiltersTitle,
+                icon: Icons.tune,
+                selected: chips.isNotEmpty,
+                trailing: AppChipTrailing.count,
+                count: chips.length,
+                onTap: _openFilters,
+              ),
+            ],
+            trailing: OptionMenuAnchor<String>(
+              selected: _f.sort,
+              onSelected: (s) => _apply(_f.copyWith(sort: s)),
+              options: [
+                for (final s in const [
+                  'date_desc',
+                  'date_asc',
+                  'amount_desc',
+                  'amount_asc',
+                ])
+                  SheetOption(value: s, label: txSortLabel(l, s)),
               ],
+              builder: (context, toggle) => AppChip(
+                label: txSortLabel(l, _f.sort),
+                icon: AppIcons.sort,
+                trailing: AppChipTrailing.dropdown,
+                onTap: toggle,
+              ),
             ),
           ),
           // Every active filter, wrapping onto more lines (owner: see them
@@ -382,54 +368,37 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             ),
         ];
 
-        final List<Widget> body;
-        if (loading) {
-          body = [for (var i = 0; i < 8; i++) const SkeletonListTile()];
-        } else if (state.status == TransactionsStatus.error &&
-            state.transactions.isEmpty) {
-          body = [
-            const SizedBox(height: AppSpacing.xxl),
-            ErrorView(error: state.error!, onRetry: _refetch),
-          ];
-        } else if (state.transactions.isEmpty) {
-          body = [const SizedBox(height: AppSpacing.xl), _empty(l, locked)];
-        } else {
-          body = _rows(
-            context,
-            state,
-            footer: locked == null
-                ? null
-                : AddTile(
-                    label: l.navAddTransaction,
-                    variant: AddTileVariant.row,
-                    onTap: () => showQuickCreateSheet(context, account: locked),
-                  ),
-          );
-        }
-
-        // The next page near the end. A notification, not a controller of
-        // its own: embedded (a wallet's tab) the list scrolls on the page's
-        // NestedScrollView controller, so its header scrolls away with it.
-        return NotificationListener<ScrollUpdateNotification>(
-          onNotification: (n) {
-            final m = n.metrics;
-            if (n.depth == 0 &&
-                m.axis == Axis.vertical &&
-                m.pixels > m.maxScrollExtent - 240) {
-              context.read<TransactionsCubit>().loadMore();
-            }
-            return false;
-          },
-          child: PullToRefresh(
-            onRefresh: _refetch,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.only(
-                bottom: 96 + MediaQuery.paddingOf(context).bottom,
-              ),
-              children: [...header, ...body],
-            ),
-          ),
+        final failed =
+            state.status == TransactionsStatus.error &&
+            state.transactions.isEmpty;
+        return ListPageBody(
+          loading: loading,
+          error: failed ? state.error : null,
+          isEmpty: state.transactions.isEmpty,
+          onRetry: _refetch,
+          empty: _empty(l, locked),
+          header: header,
+          hasMore: state.hasMore,
+          loadingMore: state.loadingMore,
+          onLoadMore: () => context.read<TransactionsCubit>().loadMore(),
+          // Rows run edge to edge; the header items pad themselves.
+          sidePadding: 0,
+          rowDividers: true,
+          topInset: 0,
+          children: state.transactions.isEmpty
+              ? const []
+              : _rows(
+                  context,
+                  state,
+                  footer: locked == null
+                      ? null
+                      : AddTile(
+                          label: l.navAddTransaction,
+                          variant: AddTileVariant.row,
+                          onTap: () =>
+                              showQuickCreateSheet(context, account: locked),
+                        ),
+                ),
         );
       },
     );
@@ -446,6 +415,39 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     );
   }
 
+  /// รายรับ · รายจ่าย · คงเหลือ of the whole filtered set (every page — the
+  /// server's `totals`), transfers left out.
+  Widget _totals(AppLocalizations l, ListTotals totals) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.lg,
+      AppSpacing.sm,
+      AppSpacing.lg,
+      AppSpacing.xs,
+    ),
+    child: AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: SummaryStats(
+        stats: [
+          SummaryStat(
+            label: l.homeIncome,
+            amount: totals.income,
+            tone: MoneyTone.income,
+          ),
+          SummaryStat(
+            label: l.homeExpense,
+            amount: -totals.expense,
+            tone: MoneyTone.expense,
+          ),
+          SummaryStat(
+            label: l.homeLeftOver,
+            amount: totals.net,
+            tone: totals.net < 0 ? MoneyTone.expense : MoneyTone.income,
+          ),
+        ],
+      ),
+    ),
+  );
+
   /// The page's date filter: ‹ › step, the label opens the period sheet.
   Widget _periodPill() => TxPeriodPill(
     period: _f.period,
@@ -454,7 +456,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
 
   /// Filters changed → "nothing matches" + clear (back to how the page
   /// opened, keeping the period); as opened → nothing here yet + add.
-  Widget _empty(AppLocalizations l, Account? locked) {
+  EmptyView _empty(AppLocalizations l, Account? locked) {
     final thisMonth =
         _f.period == TxPeriod.month(DateTime.now()) && locked == null;
     return EmptyView(
@@ -542,10 +544,8 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         );
       }
     }
-    // Next page in flight → row-shaped skeletons, never a spinner (§8.5).
-    if (state.loadingMore) {
-      children.addAll(const [SkeletonListTile(), SkeletonListTile()]);
-    } else if (footer != null) {
+    // Next page in flight → the template shows row skeletons instead.
+    if (footer != null && !state.loadingMore) {
       children.add(
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -559,76 +559,5 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       );
     }
     return children;
-  }
-}
-
-/// รายรับ · รายจ่าย · คงเหลือ of the whole filtered set (every page — the
-/// server's `totals`), transfers left out.
-class _TotalsCard extends StatelessWidget {
-  const _TotalsCard({required this.totals});
-
-  final ListTotals totals;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.xs,
-      ),
-      child: AppCard(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: SummaryStats(
-            stats: [
-              SummaryStat(
-                label: l.homeIncome,
-                amount: totals.income,
-                tone: MoneyTone.income,
-              ),
-              SummaryStat(
-                label: l.homeExpense,
-                amount: -totals.expense,
-                tone: MoneyTone.expense,
-              ),
-              SummaryStat(
-                label: l.homeLeftOver,
-                amount: totals.net,
-                tone: totals.net < 0 ? MoneyTone.expense : MoneyTone.income,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// "⚙ ตัวกรอง" with the number of active filters on its corner — a kit
-/// pill at the sort chip's height, no ▾ (it opens the side sheet).
-class _FiltersButton extends StatelessWidget {
-  const _FiltersButton({
-    required this.label,
-    required this.count,
-    required this.onTap,
-  });
-
-  final String label;
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppChip(
-      label: label,
-      icon: Icons.tune,
-      selected: count > 0,
-      trailing: AppChipTrailing.count,
-      count: count,
-      onTap: onTap,
-    );
   }
 }

@@ -24,7 +24,7 @@ AppChip categoryAppChip(
   return AppChip(
     label: categoryDisplayName(AppLocalizations.of(context)!, category),
     icon: IconRegistry.get(code?.icon, fallback: AppIcons.category),
-    color: code?.accentColorFor(palette) ?? palette.primary,
+    color: code.tintFor(palette),
     selected: selected,
     onTap: onTap,
     size: size,

@@ -5,6 +5,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/notification.dart';
 
+/// Thin wrapper over [NotificationTileView] (maps model + l10n).
 /// One inbox row (§7): sender avatar with a type badge, the sentence, time,
 /// ● when unread. Swipe left to hide (handled by the page). Pending
 /// invites / link requests get big Accept / Decline buttons (decline asks
@@ -58,132 +59,37 @@ class NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final n = notification;
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final pending = n.awaitsAnswer;
-    final accepted = (_isRequest || _hasAction) && n.isActioned;
-    final amount = _amount(context);
     final actor = n.actor?.displayName ?? l.notificationsSomeone;
+    final accepted = (_isRequest || _hasAction) && n.isActioned;
 
-    return Material(
-      color: n.isUnread
-          ? scheme.primary.withValues(alpha: 0.06)
-          : Colors.transparent,
-      child: InkWell(
-        onTap: () => onTap(n),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CornerBadge(
-                size: 40,
-                icon: _iconFor(n.type),
-                child: UserAvatar(
-                  displayName: actor,
-                  iconCode: n.actor?.iconCode,
-                  size: 40,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _title(context, l, n, actor),
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: n.isUnread
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      [
-                        DateFormatter.time(
-                          n.createdAt.toLocal(),
-                          locale: Localizations.localeOf(
-                            context,
-                          ).toLanguageTag(),
-                        ),
-                        ?amount,
-                      ].join(' · '),
-                      style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (accepted) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      AppChip(
-                        label: _isRequest ? l.notifAccepted : l.notifActionDone,
-                        icon: AppIcons.success,
-                        tone: AppChipTone.success,
-                        selected: true,
-                        size: ChipSize.mini,
-                      ),
-                    ],
-                    if (pending) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppButton(
-                              label: _actionLabel(l),
-                              icon: AppIcons.check,
-                              onPressed: () => onAccept(n.id),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: AppButton(
-                              label: _isRequest
-                                  ? l.notificationReject
-                                  : l.notifActionSkip,
-                              variant: AppButtonVariant.outlined,
-                              onPressed: _isRequest
-                                  ? () => _confirmReject(context)
-                                  : () => onReject(n.id),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              if (n.isUnread)
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSpacing.sm, top: 6),
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
+    return NotificationTileView(
+      actorName: actor,
+      actorIconCode: n.actor?.iconCode,
+      title: _title(context, l, n, actor),
+      timeText: DateFormatter.time(
+        n.createdAt.toLocal(),
+        locale: Localizations.localeOf(context).toLanguageTag(),
       ),
+      amountText: _amount(context),
+      typeIcon: _iconFor(n.type),
+      unread: n.isUnread,
+      pending: n.awaitsAnswer,
+      acceptedLabel: accepted
+          ? (_isRequest ? l.notifAccepted : l.notifActionDone)
+          : null,
+      acceptLabel: _actionLabel(l),
+      rejectLabel: _isRequest ? l.notificationReject : l.notifActionSkip,
+      rejectConfirm: _isRequest
+          ? NotificationRejectConfirm(
+              title: l.notifRejectTitle,
+              message: l.notifRejectBody,
+              confirmLabel: l.notificationReject,
+            )
+          : null,
+      onTap: () => onTap(n),
+      onAccept: () => onAccept(n.id),
+      onReject: () => onReject(n.id),
     );
-  }
-
-  Future<void> _confirmReject(BuildContext context) async {
-    final l = AppLocalizations.of(context)!;
-    final ok = await showConfirmDialog(
-      context,
-      title: l.notifRejectTitle,
-      message: l.notifRejectBody,
-      confirmLabel: l.notificationReject,
-      destructive: true,
-    );
-    if (ok) onReject(notification.id);
   }
 
   String? _amount(BuildContext context) {

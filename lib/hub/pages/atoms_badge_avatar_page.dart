@@ -22,10 +22,218 @@ Widget buildBadgeAvatarPage(BuildContext context) {
   );
   Widget left(Widget child) =>
       Align(alignment: Alignment.centerLeft, child: child);
+  Widget wrap(List<Widget> children) => Wrap(
+    spacing: AppSpacing.sm,
+    runSpacing: AppSpacing.sm,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: children,
+  );
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const HubSubheading('Playgrounds'),
+      HubInApp(
+        columns: 2,
+        note:
+            'Every real combination side by side, each with the page that '
+            'uses it.',
+        uses: [
+          HubUse(
+            label: 'AppBadge — allocation %',
+            page: 'Saving goals list',
+            child: left(const AppBadge(label: '62%')),
+          ),
+          HubUse(
+            label: 'AppBadge — every tone',
+            page: 'Roles, "no wallet"',
+            child: wrap([
+              for (final t in Tone.values) AppBadge(label: t.name, tone: t),
+            ]),
+          ),
+          const HubUse(
+            label: 'AppBadge — with icon',
+            page: 'Counts, tags',
+            child: Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                AppBadge(label: '3', icon: Icons.sell_outlined),
+                AppBadge(label: 'linked', icon: Icons.link, tone: Tone.primary),
+              ],
+            ),
+          ),
+          HubUse(
+            label: 'AppAvatar — initials (hashed colour)',
+            page: 'Contacts, wallet members',
+            child: wrap(const [
+              AppAvatar(name: 'Aom Chan'),
+              AppAvatar(name: 'Bee'),
+              AppAvatar(name: 'Dao Ploy'),
+            ]),
+          ),
+          HubUse(
+            label: 'AppAvatar — empty name (neutral person)',
+            page: 'Unnamed contact',
+            child: left(const AppAvatar(name: '')),
+          ),
+          HubUse(
+            label: 'AppAvatar.tinted — each colour',
+            page: 'Projects (member marks)',
+            child: wrap([
+              for (final (_, c) in colors())
+                AppAvatar.tinted(name: 'Bee', color: c),
+            ]),
+          ),
+          HubUse(
+            label: 'AppAvatar.label — "+N" overflow',
+            page: 'Wallet member stack',
+            child: left(const AppAvatar.label('+3', size: 32)),
+          ),
+          HubUse(
+            label: 'AppAvatar.icon — a glyph',
+            page: 'Generic person',
+            child: left(AppAvatar.icon(AppIcons.profile)),
+          ),
+          HubUse(
+            label: 'UserAvatar — initials fallback',
+            page: 'Profile, members',
+            child: left(const UserAvatar(displayName: 'Aom Chan')),
+          ),
+          HubUse(
+            label: 'UserAvatar — icon maker',
+            page: 'Profile, members',
+            child: left(
+              const UserAvatar(displayName: 'Aom Chan', iconCode: framed),
+            ),
+          ),
+          HubUse(
+            label: 'IconTile — circle · soft',
+            page: 'List rows',
+            child: wrap([
+              for (final (_, c) in colors())
+                IconTile(icon: AppIcons.income, color: c),
+            ]),
+          ),
+          HubUse(
+            label: 'IconTile — rounded · solid',
+            page: 'More hub, dashboard tiles',
+            child: wrap([
+              for (final (_, c) in colors())
+                IconTile(
+                  icon: AppIcons.budget,
+                  color: c,
+                  size: 40,
+                  shape: IconTileShape.rounded,
+                  style: IconTileStyle.solid,
+                ),
+            ]),
+          ),
+          HubUse(
+            label: 'IconTile — with a corner badge',
+            page: 'Pending, project transactions',
+            child: left(
+              IconTile(
+                icon: AppIcons.budget,
+                color: scheme.primary,
+                size: 40,
+                badgeIcon: AppIcons.link,
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'CornerBadge — type / link mark (40)',
+            page: 'Notifications, project transactions, account card',
+            child: left(
+              const CornerBadge(
+                size: 40,
+                icon: AppIcons.link,
+                child: AppAvatar(name: 'Bee'),
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'CornerBadge — 64, tertiary',
+            page: 'Account card',
+            child: left(
+              CornerBadge(
+                size: 64,
+                icon: AppIcons.link,
+                color: scheme.tertiary,
+                child: const AppAvatar(name: 'Bee', size: 64),
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'CornerBadge — under 40 (hidden)',
+            page: 'Dense lists',
+            child: left(
+              const CornerBadge(
+                size: 32,
+                icon: AppIcons.link,
+                child: AppAvatar(name: 'Bee', size: 32),
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'CornerBadge — show off (same footprint)',
+            page: 'Unlinked rows',
+            child: left(
+              const CornerBadge(
+                size: 40,
+                icon: AppIcons.link,
+                show: false,
+                child: AppAvatar(name: 'Bee'),
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'EditableCircle — tap to change the icon',
+            page: 'Category, contact, project, goal, profile, tag forms',
+            child: left(
+              EditableCircle(
+                size: 48,
+                onTap: () {},
+                child: const AppAvatar(name: 'Bee', size: 48),
+              ),
+            ),
+          ),
+          HubUse(
+            label: 'EditableCircle — 64, onTap off',
+            page: 'Read-only form',
+            child: left(
+              const EditableCircle(
+                size: 64,
+                child: AppAvatar(name: 'Bee', size: 64),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const HubSubheading(
+        'In the app / size ladder',
+        note:
+            'The frame thickness and the frame-to-glyph padding scale with the '
+            'size (AvatarMetrics): the smaller the avatar, the larger the '
+            'glyph relative to it. Every framed avatar uses the ladder '
+            '20 · 24 · 32 · 40 · 48 · 64.',
+      ),
+      const _Ladder(),
+      Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.md),
+        child: Text(
+          'Icon Maker avatars — the hard cases',
+          style: text.titleMedium,
+        ),
+      ),
+      Text(
+        'Custom frames, every shape, gradients and low-contrast colours at '
+        '20 → 64, each without and with a corner badge (the badge only '
+        'appears from 40 up). Judge whether the frame, the glyph and the '
+        'shape hold up as the size drops.',
+        style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      const _HardLadder(),
+      const SizedBox(height: AppSpacing.xl),
       HubPlayground(
         title: 'AppBadge',
         note:
@@ -170,114 +378,6 @@ Widget buildBadgeAvatarPage(BuildContext context) {
           );
         },
       ),
-      const HubSubheading('In the app'),
-      HubInApp(
-        note: 'The real combinations, each with the page that uses it.',
-        uses: [
-          HubUse(
-            label: 'AppBadge — allocation %',
-            page: 'Saving goals list',
-            child: left(const AppBadge(label: '62%')),
-          ),
-          HubUse(
-            label: 'AppBadge — tone + icon',
-            page: 'Roles, "no wallet"',
-            child: const Wrap(
-              spacing: AppSpacing.sm,
-              children: [
-                AppBadge(label: 'primary', tone: Tone.primary),
-                AppBadge(label: 'warning', tone: Tone.warning),
-                AppBadge(label: '3', icon: Icons.sell_outlined),
-              ],
-            ),
-          ),
-          HubUse(
-            label: 'AppAvatar — initials (hashed colour)',
-            page: 'Contacts, wallet members',
-            child: left(const AppAvatar(name: 'Aom Chan')),
-          ),
-          HubUse(
-            label: 'AppAvatar.tinted',
-            page: 'Projects (member marks)',
-            child: left(AppAvatar.tinted(name: 'Bee', color: scheme.primary)),
-          ),
-          HubUse(
-            label: 'AppAvatar.label — "+N" overflow',
-            page: 'Wallet member stack',
-            child: left(const AppAvatar.label('+3', size: 32)),
-          ),
-          HubUse(
-            label: 'UserAvatar',
-            page: 'Profile, members',
-            child: left(const UserAvatar(displayName: 'Aom Chan')),
-          ),
-          HubUse(
-            label: 'IconTile — circle · soft',
-            page: 'List rows',
-            child: left(IconTile(icon: AppIcons.income, color: scheme.primary)),
-          ),
-          HubUse(
-            label: 'IconTile — rounded · solid',
-            page: 'More hub, dashboard tiles',
-            child: left(
-              IconTile(
-                icon: AppIcons.budget,
-                color: scheme.tertiary,
-                size: 40,
-                shape: IconTileShape.rounded,
-                style: IconTileStyle.solid,
-              ),
-            ),
-          ),
-          HubUse(
-            label: 'CornerBadge — type / link mark',
-            page: 'Notifications, project transactions, account card',
-            child: left(
-              const CornerBadge(
-                size: 40,
-                icon: AppIcons.link,
-                child: AppAvatar(name: 'Bee'),
-              ),
-            ),
-          ),
-          HubUse(
-            label: 'EditableCircle — tap to change the icon',
-            page: 'Category, contact, project, goal, profile, tag forms',
-            child: left(
-              EditableCircle(
-                size: 48,
-                onTap: () {},
-                child: const AppAvatar(name: 'Bee', size: 48),
-              ),
-            ),
-          ),
-        ],
-      ),
-      const HubSubheading(
-        'In the app / size ladder',
-        note:
-            'The frame thickness and the frame-to-glyph padding scale with the '
-            'size (AvatarMetrics): the smaller the avatar, the larger the '
-            'glyph relative to it. Every framed avatar uses the ladder '
-            '20 · 24 · 32 · 40 · 48 · 64.',
-      ),
-      const _Ladder(),
-      Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.md),
-        child: Text(
-          'Icon Maker avatars — the hard cases',
-          style: text.titleMedium,
-        ),
-      ),
-      Text(
-        'Custom frames, every shape, gradients and low-contrast colours at '
-        '20 → 64, each without and with a corner badge (the badge only '
-        'appears from 40 up). Judge whether the frame, the glyph and the '
-        'shape hold up as the size drops.',
-        style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-      ),
-      const SizedBox(height: AppSpacing.md),
-      const _HardLadder(),
     ],
   );
 }
@@ -399,6 +499,10 @@ IconCode _ic({
   borderColors: borderColors,
   shape: shape,
 );
+
+/// The Icon Maker hard cases (frames, shapes, gradients, low contrast) —
+/// shared with the Button page's profile-chip demo.
+final List<(String, IconCode)> hubHardAvatarCases = _HardLadder._cases;
 
 class _HardLadder extends StatelessWidget {
   const _HardLadder();

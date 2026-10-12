@@ -217,6 +217,8 @@ class _CompactHeroScopeState extends State<CompactHeroScope> {
           right: AppSpacing.md,
           child: CompactHeroBar(
             key: bar.key,
+            // The hero's own style, so the bar is a small hero card.
+            style: bar.style,
             leading: bar.leading,
             title: bar.title,
             trailing: bar.trailing,

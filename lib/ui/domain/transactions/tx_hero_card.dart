@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../l10n/gen/app_localizations.dart';
-import '../../../../ui/ui.dart';
-import '../../domain/transaction_type.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../../ui.dart';
+import '../../../features/transactions/domain/transaction_type.dart';
 
 /// The top card of every transaction form — quick create, แก้ร่าง, event
 /// rows, scheduled entries — and of the transaction detail page (owner
@@ -51,6 +51,7 @@ class TxHeroCard extends StatelessWidget {
     this.amountLabel,
     this.amountError,
     this.titleHint,
+    this.titlePlaceholder,
     this.titleMaxLength = TextLimits.description,
     this.onTitleTap,
     this.titleLeading,
@@ -97,6 +98,12 @@ class TxHeroCard extends StatelessWidget {
 
   /// Defaults to "ค่าอะไร?".
   final String? titleHint;
+
+  /// The description's stand-in (title = description ?? category): the
+  /// category's name, else the type's label. View mode shows it in italic,
+  /// muted, where an empty description would leave a blank; edit mode keeps
+  /// the input empty with it as the placeholder.
+  final String? titlePlaceholder;
   final int titleMaxLength;
 
   /// Non-null → the text line is picked, not typed: tapping it calls this
@@ -123,8 +130,8 @@ class TxHeroCard extends StatelessWidget {
   /// amount, title and date stacked.
   final bool inline;
 
-  /// Inline view mode: an optional row under the description · amount (no
-  /// page uses it now — the detail page puts its cards below the card).
+  /// Inline, editing and view alike: a row under the description · amount
+  /// (a transaction's wallet · category chips, owner 2026-10-12).
   final Widget? footer;
 
   /// Inline edit mode: a line under the amount, right-aligned (the
@@ -212,16 +219,40 @@ class TxHeroCard extends StatelessWidget {
             onPressed: onEdit,
           )
         : null;
+    final baseAmount = compact
+        ? textTheme.titleLarge
+        : textTheme.headlineMedium;
+    final bigAmount = baseAmount?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: accent,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+    // "฿182" as one unit: no +/− (the colour says which), the symbol hugs the
+    // digits at 0.7 of their size; no "0" placeholder while typing.
     Widget amountField({TextAlign align = TextAlign.start}) => longPressable(
-      _AmountInput(
+      AppInput.card(
         controller: amount,
-        type: type,
-        compact: compact,
-        autofocus: autofocus && editing,
-        editing: editing,
-        symbol: symbol,
         focusNode: amountFocus,
+        // The field names sit ABOVE the inputs in create / edit (owner
+        // 2026-10-12): clear labels, friendly placeholders.
+        label: inline && editing ? l.transactionFormAmountLabel : null,
+        labelPlacement: AppInputLabelPlacement.above,
+        type: AppInputType.amount,
+        autofocus: autofocus && editing,
+        readOnly: !editing,
+        enableInteractiveSelection: editing,
+        showCursor: editing ? null : false,
         textAlign: align,
+        style: bigAmount,
+        cursorColor: scheme.primary,
+        focusColor: accent,
+        symbolScale: 0.7,
+        currencySymbol: symbol,
+        minWidth: 12,
+        hint: '0',
+        hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
+        hideHintOnFocus: true,
+        underline: editing,
       ),
       amountFocus,
     );
@@ -234,9 +265,11 @@ class TxHeroCard extends StatelessWidget {
     Widget titleField({int maxLines = 3}) => longPressable(
       Padding(
         padding: const EdgeInsets.only(right: AppSpacing.sm),
-        child: AppInput(
+        child: AppInput.card(
           controller: title,
           focusNode: titleFocus,
+          label: inline && editing ? l.commonDescription : null,
+          labelPlacement: AppInputLabelPlacement.above,
           readOnly: !editing || onTitleTap != null,
           onTap: editing ? onTitleTap : null,
           showCursor: editing && onTitleTap == null ? null : false,
@@ -247,14 +280,12 @@ class TxHeroCard extends StatelessWidget {
           textInputAction: TextInputAction.done,
           style: titleStyle,
           hint: editing
-              ? (titleHint ?? l.txHeroTitleHint)
+              ? (titlePlaceholder ?? titleHint ?? l.txHeroTitleHint)
               : (onLongPressField != null ? l.commonLongPressToEdit : null),
-          // An underline while editing (idle grey, focused in the type's
-          // colour), plain text in view.
-          look: editing ? AppInputLook.underline : AppInputLook.bare,
-          borderColor: scheme.outlineVariant,
+          // An underline while editing (focused in the type's colour),
+          // plain text in view.
           focusColor: accent,
-          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          underline: editing,
         ),
       ),
       titleFocus,
@@ -289,23 +320,67 @@ class TxHeroCard extends StatelessWidget {
                   // content: the amount's whole cell — the right half of
                   // the row — is its tap target, not just the digits.
                   builder: (context, box) => IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: Stack(
                       children: [
-                        Expanded(
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: !editing && title.text.trim().isEmpty
-                                ? const SizedBox.shrink()
-                                : titleField(maxLines: 2),
+                        Row(
+                          // Both cells sit on the SAME bottom line, so the
+                          // description's and the amount's underlines line up.
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              // Bottom-aligned (NOT centred): the description cell is as
+                              // tall as the amount cell, its underline on the same y.
+                              child: Align(
+                                alignment: AlignmentDirectional.bottomStart,
+                                child: !editing && title.text.trim().isEmpty
+                                    ? (titlePlaceholder == null
+                                          ? const SizedBox.shrink()
+                                          : longPressable(
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: AppSpacing.xs,
+                                                    ),
+                                                child: Text(
+                                                  titlePlaceholder!,
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: titleStyle?.copyWith(
+                                                    fontStyle: FontStyle.italic,
+                                                    color:
+                                                        scheme.onSurfaceVariant,
+                                                  ),
+                                                ),
+                                              ),
+                                              titleFocus,
+                                            ))
+                                    : titleField(maxLines: 2),
+                              ),
+                            ),
+                            // The amount keeps its spot however long the
+                            // description wraps.
+                            // A tight width: the numeric field fills its cell, so its
+                            // underline spans it like the description's.
+                            SizedBox(
+                              width: box.maxWidth * 0.48,
+                              child: amountField(align: TextAlign.end),
+                            ),
+                          ],
+                        ),
+                        // The amount's half of the row, whatever the description's height
+                        // (and over its label): the whole cell focuses the amount.
+                        if (editing && amountFocus != null)
+                          Positioned(
+                            top: 0,
+                            bottom: 0,
+                            right: 0,
+                            width: box.maxWidth * 0.48,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onTap: amountFocus!.requestFocus,
+                            ),
                           ),
-                        ),
-                        // The amount keeps its spot however long the
-                        // description wraps.
-                        SizedBox(
-                          width: box.maxWidth * 0.48,
-                          child: amountField(align: TextAlign.end),
-                        ),
                       ],
                     ),
                   ),
@@ -318,7 +393,7 @@ class TxHeroCard extends StatelessWidget {
                 alignment: AlignmentDirectional.centerEnd,
                 child: amountNote,
               ),
-            if (!editing) footer,
+            ?footer,
           ];
     // Stacked (event row, scheduled entry): chips · amount · title · date.
     final List<Widget?> stacked = [
@@ -464,119 +539,4 @@ AppChip txTypeChip(
     trailing: locked ? AppChipTrailing.lock : AppChipTrailing.none,
     tooltip: locked ? l.txTypeLockedHint : null,
   );
-}
-
-/// The amount — numeric keyboard, coloured by type, sign + symbol prefix.
-class _AmountInput extends StatefulWidget {
-  const _AmountInput({
-    required this.controller,
-    required this.type,
-    required this.compact,
-    required this.autofocus,
-    required this.editing,
-    required this.symbol,
-    this.focusNode,
-    this.textAlign = TextAlign.start,
-  });
-  final TextEditingController controller;
-  final TransactionType type;
-  final bool compact;
-  final bool autofocus;
-  final bool editing;
-  final String symbol;
-  final FocusNode? focusNode;
-  final TextAlign textAlign;
-
-  @override
-  State<_AmountInput> createState() => _AmountInputState();
-}
-
-class _AmountInputState extends State<_AmountInput> {
-  /// No "0" placeholder while typing (owner 2026-10-10) — only the cursor.
-  FocusNode? _own;
-  FocusNode get _focus => widget.focusNode ?? (_own ??= FocusNode());
-
-  @override
-  void initState() {
-    super.initState();
-    _focus.addListener(_onFocus);
-  }
-
-  @override
-  void didUpdateWidget(_AmountInput old) {
-    super.didUpdateWidget(old);
-    final before = old.focusNode ?? _own;
-    if (before != null && before != _focus) {
-      before.removeListener(_onFocus);
-      _focus.addListener(_onFocus);
-    }
-  }
-
-  void _onFocus() => setState(() {});
-
-  @override
-  void dispose() {
-    _focus.removeListener(_onFocus);
-    _own?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = txTypeColor(context, widget.type);
-    final base = widget.compact
-        ? Theme.of(context).textTheme.titleLarge
-        : Theme.of(context).textTheme.headlineMedium;
-    final big = base?.copyWith(
-      fontWeight: FontWeight.w700,
-      color: color,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    );
-    // "฿182" as one unit (owner 2026-10-10): no +/− (the colour says
-    // which), and the symbol hugs the digits — the field is only as wide
-    // as what's typed, so the pair grows together from the aligned side.
-    final field = IntrinsicWidth(
-      child: AppInput(
-        controller: widget.controller,
-        focusNode: _focus,
-        autofocus: widget.autofocus,
-        readOnly: !widget.editing,
-        enableInteractiveSelection: widget.editing,
-        showCursor: widget.editing ? null : false,
-        textAlign: widget.textAlign,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [ThousandsInputFormatter()],
-        style: big,
-        cursorColor: Theme.of(context).colorScheme.primary,
-        look: AppInputLook.bare,
-        minWidth: 12,
-        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        hint: _focus.hasFocus ? null : '0',
-        hintStyle: big?.copyWith(color: color.withValues(alpha: 0.35)),
-      ),
-    );
-    // The whole box is the tap target (owner 2026-10-11): the symbol and
-    // the empty space around the digits type into the field too.
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: widget.editing ? _focus.requestFocus : null,
-      child: Align(
-        alignment: widget.textAlign == TextAlign.end
-            ? AlignmentDirectional.centerEnd
-            : AlignmentDirectional.centerStart,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              widget.symbol,
-              style: big?.copyWith(fontSize: (big.fontSize ?? 28) * 0.7),
-            ),
-            Flexible(child: field),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -10,6 +10,7 @@ import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_tree.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../categories/presentation/widgets/category_chip_path.dart';
 import '../../../categories/presentation/widgets/category_picker_sheet.dart';
 import '../../domain/budget.dart';
 import '../../domain/budget_period.dart';
@@ -318,23 +319,16 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     return Scaffold(
       appBar: AppTopBar(title: l.budgetsTitle, showBack: true),
       extendBodyBehindAppBar: true,
-      body: loading
-          // The generic skeleton is a padded list — clear the bar.
-          ? Builder(
-              builder: (context) => Padding(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.paddingOf(context).top,
-                ),
-                child: const LoadingView(),
-              ),
-            )
-          : state.error != null
-          ? ErrorView(error: state.error!, onRetry: cubit.load)
-          : EmptyView(
-              icon: AppIcons.empty,
-              title: l.budgetDetailNotFound,
-              message: l.budgetDetailNotFoundMessage,
-            ),
+      body: AsyncStateView.fallback(
+        loading: loading,
+        error: state.error,
+        onRetry: cubit.load,
+        notFound: EmptyView(
+          icon: AppIcons.empty,
+          title: l.budgetDetailNotFound,
+          message: l.budgetDetailNotFoundMessage,
+        ),
+      ),
     );
   }
 
@@ -355,51 +349,50 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
           key: _formKey,
           // Builder: its context sees the floating bar's height.
           child: Builder(
-            builder: (context) => PullToRefresh(
-              enabled: !widget.isCreate,
-              onRefresh: context.read<BudgetsCubit>().load,
-              child: DetailPageBody(
-                physics: const AlwaysScrollableScrollPhysics(),
-                topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
-                bottomInset:
-                    AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
-                hero: _header(l, budget, category, all),
-                sections: [
-                  (first) => _fields(l, all, category, first),
-                  (first) => budget != null && budget.childBreakdown.isNotEmpty
-                      ? SectionCard(
-                          first: first,
-                          title: l.budgetDetailBreakdownTitle,
-                          description: l.budgetDetailBreakdownDescription,
-                          children: [
-                            for (final row in budget.childBreakdown)
-                              DetailRow(
-                                locked: isEditing,
-                                label: row.name,
-                                trailing: MoneyText(row.spent),
-                              ),
-                          ],
-                        )
-                      : null,
-                ],
-                // Archive · delete — edit mode only, always last (the top
-                // bar carries no page actions).
-                manage: isEditing && budget != null
-                    ? ManageSection(
-                        archiveLabel: l.budgetDetailArchive,
-                        onArchive: isSaving ? null : () => _archive(budget),
-                        deleteLabel: l.budgetDeleteThis,
-                        onDelete: isSaving ? null : () => _delete(budget),
+            builder: (context) => DetailPageBody(
+              onRefresh: widget.isCreate
+                  ? null
+                  : () => context.read<BudgetsCubit>().load(),
+              physics: const AlwaysScrollableScrollPhysics(),
+              topInset: MediaQuery.paddingOf(context).top + AppSpacing.lg,
+              bottomInset:
+                  AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
+              hero: _header(l, budget, category, all),
+              sections: [
+                (first) => _fields(l, all, category, first),
+                (first) => budget != null && budget.childBreakdown.isNotEmpty
+                    ? SectionCard(
+                        first: first,
+                        title: l.budgetDetailBreakdownTitle,
+                        description: l.budgetDetailBreakdownDescription,
+                        children: [
+                          for (final row in budget.childBreakdown)
+                            DetailRow(
+                              locked: isEditing,
+                              label: row.name,
+                              trailing: MoneyText(row.spent),
+                            ),
+                        ],
                       )
                     : null,
-                metaLines: budget == null
-                    ? const []
-                    : detailMetaLines(
-                        context,
-                        createdAt: budget.createdAt,
-                        updatedAt: budget.updatedAt,
-                      ),
-              ),
+              ],
+              // Archive · delete — edit mode only, always last (the top
+              // bar carries no page actions).
+              manage: isEditing && budget != null
+                  ? ManageSection(
+                      archiveLabel: l.budgetDetailArchive,
+                      onArchive: isSaving ? null : () => _archive(budget),
+                      deleteLabel: l.budgetDeleteThis,
+                      onDelete: isSaving ? null : () => _delete(budget),
+                    )
+                  : null,
+              metaLines: budget == null
+                  ? const []
+                  : detailMetaLines(
+                      context,
+                      createdAt: budget.createdAt,
+                      updatedAt: budget.updatedAt,
+                    ),
             ),
           ),
         ),
@@ -425,7 +418,6 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     List<Category> all,
   ) {
     final palette = Theme.of(context).extension<AppColors>()!;
-    final textTheme = Theme.of(context).textTheme;
     final categoryName = category?.name ?? '';
     // The embedded icon while the category is unchanged (matches the list
     // card); the picked one's resolved icon after a change / on create.
@@ -436,11 +428,11 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         (category == null ? null : CategoryTree.resolveIconCode(category, all));
     final accent = budget != null
         ? budgetAccent(context, budget)
-        : (iconCode?.accentColorFor(palette) ?? palette.primary);
+        : (iconCode.tintFor(palette));
 
     // Blank is fine — the server names it after the category, so that's
     // the placeholder.
-    final title = AppInput.title(
+    final title = HeroNameInput(
       editing: isEditing,
       controller: _ctrl[_Field.name]!,
       focusNode: _nameFocus,
@@ -469,41 +461,44 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         iconCode: iconCode,
       ),
       title: title,
+      description: HeroDescription(
+        controller: _ctrl[_Field.description]!,
+        editing: isEditing,
+        hint: l.commonDescription,
+        maxLength: TextLimits.description,
+        focusNode: _descriptionFocus,
+        onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+        onChanged: (v) => _onText(_Field.description, v),
+      ),
       subtitle:
           name.isNotEmpty && categoryName.isNotEmpty && categoryName != name
           ? Text(categoryName, maxLines: 1, overflow: TextOverflow.ellipsis)
           : null,
       footer: budget == null
-          ? _createFooter(l, accent, textTheme)
-          : _footer(l, budget, accent, textTheme),
+          ? _createFooter(l, accent)
+          : _footer(l, budget, accent),
     );
   }
 
   /// Create: nothing spent yet — just the limit being typed.
-  Widget _createFooter(AppLocalizations l, Color accent, TextTheme textTheme) {
+  Widget _createFooter(AppLocalizations l, Color accent) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l.budgetFormAmountLabel, style: textTheme.labelMedium),
+        AppText(l.budgetFormAmountLabel, role: AppTextRole.caption),
         MoneyText(
           AmountInput.parse(working.amount) ?? 0,
           hideable: false,
-          style: textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: accent,
-          ),
+          style: AppTypography.of(
+            context,
+            AppTextRole.display,
+          )?.copyWith(color: accent),
         ),
       ],
     );
   }
 
-  Widget _footer(
-    AppLocalizations l,
-    Budget budget,
-    Color accent,
-    TextTheme textTheme,
-  ) {
-    final scheme = Theme.of(context).colorScheme;
+  Widget _footer(AppLocalizations l, Budget budget, Color accent) {
     final cp = budget.currentPeriod;
     final pct = cp?.utilizationPct ?? 0;
     return Column(
@@ -511,14 +506,14 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       children: [
         MoneyText(
           cp?.spent ?? 0,
-          style: textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: accent,
-          ),
+          style: AppTypography.of(
+            context,
+            AppTextRole.display,
+          )?.copyWith(color: accent),
         ),
-        Text(
+        AppText(
           l.budgetDetailOfLimit(moneyString(context, budget.amount)),
-          style: textTheme.bodySmall,
+          role: AppTextRole.caption,
         ),
         const SizedBox(height: AppSpacing.sm),
         ProgressRow(
@@ -531,28 +526,16 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         ),
         if (cp != null) ...[
           const SizedBox(height: AppSpacing.xs),
-          Text(
+          AppText(
             budgetPeriodRange(context, cp.start, cp.end),
-            style: textTheme.bodySmall,
+            role: AppTextRole.caption,
           ),
         ],
         if (cp?.overLimit ?? false) ...[
           const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              AppIcon(
-                AppIcons.warning,
-                color: scheme.error,
-                size: AppIconSize.md,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  l.budgetDetailOverLimitWarning,
-                  style: textTheme.bodySmall?.copyWith(color: scheme.error),
-                ),
-              ),
-            ],
+          AppMessage(
+            message: l.budgetDetailOverLimitWarning,
+            tone: Tone.danger,
           ),
         ],
       ],
@@ -566,15 +549,10 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   ) {
     final row = DetailRow.pick(
       label: l.budgetFormCategoryLabel,
-      value: category?.name,
-      emptyText: l.quickEventNone,
-      leading: category == null
+      valueChip: category == null
           ? null
-          : IconDisplay(
-              type: IconType.category,
-              size: 24,
-              iconCode: CategoryTree.resolveIconCode(category, all),
-            ),
+          : categoryChipPath(context, category, all: all),
+      emptyText: l.quickEventNone,
       onTap: isSaving
           ? null
           : () {
@@ -595,32 +573,38 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             AppSpacing.lg,
             AppSpacing.sm,
           ),
-          child: Text(
-            l.budgetFormCategoryRequired,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.error,
-            ),
+          child: AppMessage(
+            message: l.budgetFormCategoryRequired,
+            tone: Tone.danger,
           ),
         ),
       ],
     );
   }
 
-  Future<void> _pickPeriod(AppLocalizations l) async {
-    final p = await showOptionSheet<BudgetPeriod>(
-      context,
-      title: l.budgetFormPeriodLabel,
+  /// The period row: a popover (3 short options) anchored to the row; the
+  /// current period is highlighted.
+  Widget _periodRow(AppLocalizations l) {
+    return OptionMenuAnchor<BudgetPeriod>(
       selected: working.period,
       options: [
         for (final p in BudgetPeriod.values)
           SheetOption(value: p, label: budgetPeriodLabel(l, p)),
       ],
+      onSelected: (p) {
+        if (!mounted) return;
+        applyChange(working.copyWith(period: p));
+      },
+      builder: (context, toggle) => DetailRow.pick(
+        label: l.budgetFormPeriodLabel,
+        value: budgetPeriodLabel(l, working.period),
+        emptyText: l.quickEventNone,
+        onTap: isSaving ? null : toggle,
+      ),
     );
-    if (!mounted || p == null) return;
-    applyChange(working.copyWith(period: p));
   }
 
-  /// Category · limit · period · description · note. Category and period
+  /// Category · limit · period · note (the description is in the hero). Category and period
   /// stay live in view mode (using them enters edit mode); text fields
   /// enter it on long-press.
   Widget _fields(
@@ -647,33 +631,12 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
             ),
           )
         else
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
+          DetailRow(
+            label: l.budgetFormAmountLabel,
             onLongPress: enterEdit,
-            child: DetailRow(
-              label: l.budgetFormAmountLabel,
-              trailing: MoneyText(AmountInput.parse(working.amount) ?? 0),
-            ),
+            trailing: MoneyText(AmountInput.parse(working.amount) ?? 0),
           ),
-        DetailRow.pick(
-          label: l.budgetFormPeriodLabel,
-          value: budgetPeriodLabel(l, working.period),
-          emptyText: l.quickEventNone,
-          onTap: isSaving ? null : () => _pickPeriod(l),
-        ),
-        DetailStacked(
-          label: l.commonDescription,
-          child: AppInput.inline(
-            editing: editing,
-            controller: _ctrl[_Field.description]!,
-            focusNode: _descriptionFocus,
-            maxLines: 3,
-            maxLength: TextLimits.description,
-            viewHint: AppLocalizations.of(context)!.commonLongPressToEdit,
-            onEnterEdit: () => enterEdit(focus: _descriptionFocus),
-            onChanged: (v) => _onText(_Field.description, v),
-          ),
-        ),
+        _periodRow(l),
         DetailStacked(
           label: l.commonNote,
           child: AppInput.inline(

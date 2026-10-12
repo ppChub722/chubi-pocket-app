@@ -64,67 +64,55 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
             for (final a in snap.data ?? const <Account>[])
               if (!_restored.contains(a.id)) a,
           ];
-          return AsyncStateView(
+          return ListPageBody(
             loading: snap.connectionState != ConnectionState.done,
             error: snap.hasError
                 ? ApiException.from(snap.error!, snap.stackTrace)
                 : null,
             isEmpty: list.isEmpty,
             onRetry: _refresh,
-            skeleton: ListView(
-              children: [for (var i = 0; i < 3; i++) const SkeletonListTile()],
-            ),
+            // Rows are full-width kit cards.
+            sidePadding: 0,
+            topInset: 0,
             empty: EmptyView(
               icon: AppIcons.archive,
               title: l.accountsArchivedEmpty,
               message: l.accountsArchivedEmptyMessage,
             ),
-            builder: (context) => PullToRefresh(
-              onRefresh: _refresh,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                // Clear the floating top bar (the skeleton's padding-less
-                // ListView gets it automatically).
-                padding: EdgeInsets.only(
-                  top: MediaQuery.paddingOf(context).top,
-                  bottom: 96 + MediaQuery.paddingOf(context).bottom,
-                ),
+            children: [
+              // Kit rows (owner 2026-10-10): dimmed icon · name ·
+              // balance, and [กู้คืน].
+              SectionCard(
+                first: true,
                 children: [
-                  // Kit rows (owner 2026-10-10): dimmed icon · name ·
-                  // balance, and [กู้คืน].
-                  SectionCard(
-                    first: true,
-                    children: [
-                      for (final a in list)
-                        DetailRow(
-                          leading: Opacity(
-                            opacity: 0.6,
-                            child: IconDisplay(
-                              type: IconType.account,
-                              size: 40,
-                              iconCode: a.iconCode,
-                            ),
-                          ),
-                          label: a.name,
-                          helper: moneyString(context, a.balance),
-                          // Only the owner restores (the BE checks too).
-                          trailing: !a.canEdit
-                              ? null
-                              : AppChip(
-                                  label: l.accountRestore,
-                                  icon: AppIcons.unarchive,
-                                  tone: AppChipTone.primary,
-                                  selected: true,
-                                  onTap: _busy.contains(a.id)
-                                      ? null
-                                      : () => _restore(a),
-                                ),
+                  for (final a in list)
+                    DetailRow(
+                      leading: Opacity(
+                        opacity: 0.6,
+                        child: IconDisplay(
+                          type: IconType.account,
+                          size: AvatarMetrics.sizeMedium,
+                          iconCode: a.iconCode,
                         ),
-                    ],
-                  ),
+                      ),
+                      label: a.name,
+                      helper: moneyString(context, a.balance),
+                      // Only the owner restores (the BE checks too).
+                      trailing: !a.canEdit
+                          ? null
+                          : AppChip(
+                              label: l.accountRestore,
+                              icon: AppIcons.unarchive,
+                              tone: AppChipTone.primary,
+                              selected: true,
+                              onTap: _busy.contains(a.id)
+                                  ? null
+                                  : () => _restore(a),
+                            ),
+                    ),
                 ],
               ),
-            ),
+            ],
           );
         },
       ),

@@ -10,6 +10,7 @@ import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
 import '../organisms/saving_overlay.dart';
 import '../molecules/mode_action_bar.dart';
+import 'edit_mode_scope.dart';
 
 /// The app's in-place edit-mode lifecycle, shared by every detail page
 /// (category, tag, contact, account, project, …) so they all behave the
@@ -62,6 +63,13 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   D? _sessionStart;
   Object? _sessionField;
   Timer? _debounce;
+
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  /// This page's own snackbar messenger ([editScope] installs it): snackbars
+  /// shown through it float above the page's action bar instead of over it.
+  /// Use `showAppSnackBarOn(pageMessenger!, …)`; null before the first build.
+  ScaffoldMessengerState? get pageMessenger => _messengerKey.currentState;
 
   ShellChromeController? _shellChrome;
   bool? _chromeHiddenFor;
@@ -305,7 +313,13 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
       },
       // A save / delete in flight dims the page and blocks input
       // ([SavingOverlay]) — the user never edits under a running call.
-      child: SavingOverlay(saving: _saving, child: child),
+      child: EditModeScope(
+        busy: _editing || _saving,
+        child: ScaffoldMessenger(
+          key: _messengerKey,
+          child: SavingOverlay(saving: _saving, child: child),
+        ),
+      ),
     );
   }
 

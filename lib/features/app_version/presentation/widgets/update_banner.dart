@@ -18,7 +18,7 @@ class UpdateBanner extends StatelessWidget {
     final state = cubit?.state;
     final show = state != null && state.showBanner;
     return AnimatedSize(
-      duration: const Duration(milliseconds: 200),
+      duration: AppDurations.fast,
       curve: Curves.easeOut,
       alignment: Alignment.bottomCenter,
       child: show
@@ -43,40 +43,25 @@ class UpdateBannerStrip extends StatelessWidget {
   final VoidCallback onDismiss;
 
   @override
+  @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.primaryContainer,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.md),
-          child: Row(
-            children: [
-              AppIcon(
-                Icons.system_update_rounded,
-                size: AppIconSize.md,
-                color: scheme.onPrimaryContainer,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  l.appUpdateAvailable,
-                  style: TextStyle(color: scheme.onPrimaryContainer),
-                ),
-              ),
-              TextButton(
-                onPressed: onUpdate,
-                child: Text(l.appUpdateAvailableAction),
-              ),
-              AppIconButton.close(
-                tooltip: l.appUpdateLater,
-                onPressed: onDismiss,
-                color: scheme.onPrimaryContainer,
-              ),
-            ],
-          ),
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        child: AppMessage(
+          message: l.appUpdateAvailable,
+          actions: [
+            AppMessageAction(
+              label: l.appUpdateAvailableAction,
+              onPressed: onUpdate,
+            ),
+          ],
+          onClose: onDismiss,
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../cubit/auth_cubit.dart';
 
@@ -76,7 +77,7 @@ class _SplashPageState extends State<SplashPage> {
                         children: [
                           const SizedBox(height: AppSpacing.lg),
                           Text(
-                            'ChubiPocket',
+                            AppLocalizations.of(context)!.appName,
                             style: theme.textTheme.headlineMedium,
                           ),
                           const SizedBox(height: AppSpacing.xl),

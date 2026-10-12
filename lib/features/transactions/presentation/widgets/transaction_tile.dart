@@ -99,7 +99,7 @@ class TransactionTile extends StatelessWidget {
         for (final t in tx.tags)
           TextSpan(
             text: '#${t.name}',
-            style: TextStyle(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: tagColor(t.asTag.iconCode, palette),
               fontWeight: FontWeight.w600,
             ),

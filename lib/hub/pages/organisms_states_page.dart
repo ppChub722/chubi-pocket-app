@@ -16,33 +16,6 @@ class _StatesPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HubPlayground(
-          title: 'AsyncStateView',
-          note:
-              'The one rule for every async screen: the state decides what '
-              'shows. Pick a state; data wins over everything.',
-          controls: [
-            PlayChoice<int>('state', [
-              ('loading', 0),
-              ('error', 1),
-              ('empty', 2),
-              ('data', 3),
-            ], initial: 0),
-          ],
-          builder: (context, v) {
-            final state = v<int>('state');
-            return SizedBox(
-              height: 220,
-              child: AsyncStateView(
-                loading: state == 0,
-                error: state == 1 ? Exception('Boom') : null,
-                isEmpty: state == 2,
-                onRetry: () async {},
-                builder: (_) => const Center(child: Text('The data')),
-              ),
-            );
-          },
-        ),
         const HubSubheading(
           'In the app',
           note: 'The real presets and where they are used.',
@@ -81,6 +54,34 @@ class _StatesPage extends StatelessWidget {
               'Dims the child, shows a spinner and blocks input while a '
               'write is running.',
           child: _SavingDemo(),
+        ),
+
+        HubPlayground(
+          title: 'AsyncStateView',
+          note:
+              'The one rule for every async screen: the state decides what '
+              'shows. Pick a state; data wins over everything.',
+          controls: [
+            PlayChoice<int>('state', [
+              ('loading', 0),
+              ('error', 1),
+              ('empty', 2),
+              ('data', 3),
+            ], initial: 0),
+          ],
+          builder: (context, v) {
+            final state = v<int>('state');
+            return SizedBox(
+              height: 220,
+              child: AsyncStateView(
+                loading: state == 0,
+                error: state == 1 ? Exception('Boom') : null,
+                isEmpty: state == 2,
+                onRetry: () async {},
+                builder: (_) => const Center(child: Text('The data')),
+              ),
+            );
+          },
         ),
       ],
     );
