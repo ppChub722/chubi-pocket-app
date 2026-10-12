@@ -28,6 +28,9 @@ class DetailTextField extends StatelessWidget {
     this.validator,
     this.onChanged,
     this.onEnterEdit,
+    this.obscurable = false,
+    this.helper,
+    this.errorText,
     super.key,
   });
 
@@ -54,6 +57,13 @@ class DetailTextField extends StatelessWidget {
 
   /// Enter edit mode (tap on the empty row, long-press on the value).
   final VoidCallback? onEnterEdit;
+
+  /// A secret: hidden text, the eye at the right inside the frame.
+  final bool obscurable;
+
+  /// Under the frame.
+  final String? helper;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +94,9 @@ class DetailTextField extends StatelessWidget {
             onEnterEdit: locked ? null : onEnterEdit,
             onChanged: onChanged,
             validator: validator,
+            obscurable: obscurable,
+            helper: helper,
+            errorText: errorText,
           ),
         );
       },

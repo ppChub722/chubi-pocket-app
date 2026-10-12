@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
@@ -11,6 +10,7 @@ import '../../../auth/domain/user.dart';
 import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../users/data/users_repository.dart';
 import '../../../users/presentation/refresh_me.dart';
+import '../widgets/change_password_section.dart';
 
 /// `/settings/profile` — the profile detail page, on the same template as the
 /// contact page: hero (avatar · name · @username, tinted with the avatar's
@@ -252,20 +252,10 @@ class _EditProfilePageState extends State<EditProfilePage>
                       ),
                     ],
                   ),
-                  (first) => SectionCard(
-                    first: first,
-                    title: l.settingsSectionAccount,
-                    // Navigating away mid-edit would drop the edits.
-                    locked: editing,
-                    children: [
-                      DetailRow(
-                        leading: const AppIcon(AppIcons.lock),
-                        label: l.settingsChangePassword,
-                        showChevron: true,
-                        onTap: () => context.push('/settings/password'),
-                      ),
-                    ],
-                  ),
+                  // Closed by default; hidden while the profile is being edited so
+                  // there are never two save flows at once.
+                  (first) =>
+                      editing ? null : const ProfileChangePasswordSection(),
                 ],
                 metaLines: detailMetaLines(
                   context,

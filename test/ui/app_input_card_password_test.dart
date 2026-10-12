@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// AppInput.card as a form field (the change-password sheet): label ABOVE, an
 /// underline, the eye at the right end, a helper under it, an error message.
 void main() {
+  inlineTests();
   Widget host(Widget child) => MaterialApp(
     theme: ThemeData(extensions: [sweetTheme.lightColors]),
     home: Scaffold(
@@ -68,5 +69,61 @@ void main() {
     );
     expect(find.text('Wrong password'), findsOneWidget);
     expect(find.text('Current password'), findsOneWidget);
+  });
+}
+
+void inlineTests() {
+  testWidgets('inline: obscurable eye inside the frame, helper, errorText', (
+    t,
+  ) async {
+    final c = TextEditingController(text: 'secret123');
+    await t.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [sweetTheme.lightColors]),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              child: AppInput.inline(
+                editing: true,
+                controller: c,
+                obscurable: true,
+                helper: 'At least 8 characters',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final field = t.getRect(find.byType(AppInput));
+    expect(
+      t.getRect(find.byType(IconButton).first).right,
+      greaterThan(field.right - 24),
+      reason: 'eye at the right, inside the frame',
+    );
+    expect(find.text('At least 8 characters'), findsOneWidget);
+    expect(
+      t.widget<EditableText>(find.byType(EditableText)).obscureText,
+      isTrue,
+    );
+    await t.tap(find.byType(IconButton).first);
+    await t.pump();
+    expect(
+      t.widget<EditableText>(find.byType(EditableText)).obscureText,
+      isFalse,
+    );
+    await t.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: [sweetTheme.lightColors]),
+        home: Scaffold(
+          body: AppInput.inline(
+            editing: true,
+            controller: c,
+            errorText: 'Wrong password',
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Wrong password'), findsOneWidget);
   });
 }

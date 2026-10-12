@@ -746,7 +746,7 @@ final List<HubPage> hubPages = [
   const HubPage(
     level: HubLevel.domain,
     slug: 'sheets-projects',
-    title: 'Sheets: events',
+    title: 'Sheets: events · password section',
     summary:
         'Resolve a board row into my book (tabs, share only, account / category chips) and invite a member; live with sample data.',
     generic: false,
@@ -763,6 +763,9 @@ final List<HubPage> hubPages = [
       'showAddMemberFormSheet',
       'AddMemberLabels',
       'AddMemberFill',
+      'ChangePasswordSection',
+      'ChangePasswordStrings',
+      'ChangePasswordFailure',
     ],
     builder: buildSheetsProjectsPage,
   ),

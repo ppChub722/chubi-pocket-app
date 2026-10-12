@@ -221,11 +221,12 @@ class AppInput extends StatefulWidget {
     this.maxLines = 1,
     this.maxLength = 200,
     this.keyboardType,
+    this.obscurable = false,
+    this.helper,
+    this.errorText,
     super.key,
   }) : _kind = _Kind.inline,
        label = null,
-       helper = null,
-       errorText = null,
        prefixIcon = null,
        prefix = null,
        prefixText = null,
@@ -242,7 +243,6 @@ class AppInput extends StatefulWidget {
        readOnly = false,
        locked = false,
        autofocus = false,
-       obscurable = false,
        autofillHints = null,
        inputFormatters = null,
        textAlign = null,
@@ -526,6 +526,10 @@ class AppInput extends StatefulWidget {
 class _AppInputState extends State<AppInput> {
   TextEditingController? _own;
 
+  /// AppInput.inline with [AppInput.obscurable]: the text is hidden until the
+  /// eye is pressed.
+  bool _inlineObscured = true;
+
   TextEditingController? get _controller =>
       widget.controller ??
       (widget._kind == _Kind.search
@@ -692,10 +696,31 @@ class _AppInputState extends State<AppInput> {
       maxLines: w.maxLines,
       maxLength: w.maxLength,
       keyboardType: w.keyboardType,
+      obscureText: w.obscurable && _inlineObscured,
       style: text.bodyLarge,
       onChanged: w.onChanged,
       validator: w.validator,
       decoration: InputDecoration(
+        helperText: w.helper,
+        helperMaxLines: 3,
+        errorText: w.errorText,
+        errorMaxLines: 3,
+        // The eye, INSIDE the frame at the right end.
+        suffixIcon: w.obscurable && editing
+            ? IconButton(
+                tooltip: null,
+                icon: Icon(
+                  _inlineObscured ? AppIcons.visible : AppIcons.hidden,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    setState(() => _inlineObscured = !_inlineObscured),
+              )
+            : null,
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 32,
+        ),
         hintText: editing
             ? w.hint
             : (w.onEnterEdit != null
