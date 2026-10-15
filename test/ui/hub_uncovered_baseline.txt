@@ -16,8 +16,12 @@ IconRegistry
 IconShape
 IconType
 IconTypeX
+PageExitScope
 ReorderOutline
 SecretTapDetector
+ShellChrome
+ShellChromeController
+ShellChromeHider
 TapUnlockCounter
 TextLimits
 ThemeRegistry
@@ -28,3 +32,4 @@ isThemeToken
 moneyString
 resolveColor
 showIconMakerSheet
+whenRouteSettled

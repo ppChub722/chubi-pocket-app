@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/app/shell/shell_chrome.dart';
+import 'package:chubi_pocket/ui/templates/shell_chrome.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/templates/edit_mode_mixin.dart';
 import 'package:chubi_pocket/ui/domain/l10n/app_ui_config.dart';

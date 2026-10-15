@@ -121,6 +121,7 @@ export 'atoms/connection_scope.dart';
 
 // Popovers (short lists) & sheets (long / searchable lists)
 export 'molecules/option_menu.dart';
+export 'domain/icons/icon_swatch_grid.dart';
 export 'organisms/action_sheet.dart';
 export 'organisms/app_sheet.dart';
 export 'molecules/day_of_month_picker.dart';
@@ -144,7 +145,7 @@ export 'molecules/scope_prompt.dart';
 export 'domain/money/settle_sheet.dart';
 export 'domain/people/people.dart';
 export 'domain/people/person_mark.dart';
-export 'molecules/summary_stats.dart';
+export 'domain/money/summary_stats.dart';
 export 'domain/money/debt_summary_card.dart';
 export 'domain/recurring/occurrence_state_chip.dart';
 export 'domain/recurring/due_text.dart';
@@ -189,7 +190,7 @@ export 'domain/brand/bank_picker_sheet.dart';
 export 'domain/money/adjust_balance_sheet.dart';
 export 'atoms/editable_circle.dart';
 export 'debug/secret_tap.dart';
-export 'atoms/user_avatar.dart';
+export 'domain/people/user_avatar.dart';
 
 // Tokens, icons and mixins features reach for (absorbed from direct imports).
 export 'atoms/skeleton_box.dart';
@@ -209,12 +210,14 @@ export 'templates/auth_page_body.dart';
 export 'templates/detail_page_body.dart';
 export 'templates/edit_mode_scope.dart';
 export 'templates/edit_mode_mixin.dart';
+export 'templates/page_exit_scope.dart';
+export 'templates/shell_chrome.dart';
 export 'templates/list_page_body.dart';
 export 'templates/list_toolbar.dart';
 export 'templates/tabbed_detail_body.dart';
 export 'tokens/app/app_colors.dart';
 export 'tokens/app/app_icons.dart';
-export 'tokens/app/currencies.dart';
+export 'domain/money/currencies.dart';
 export 'tokens/app/fonts/font_registry.dart';
 export 'tokens/app/module_colors.dart';
 export 'tokens/app/quick_create_mode.dart';

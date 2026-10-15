@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
-import '../../../../app/shell/shell_chrome.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';

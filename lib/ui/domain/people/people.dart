@@ -4,7 +4,7 @@ import '../../tokens/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../icons/icon_code.dart';
 import '../../atoms/add_tile.dart';
-import '../../atoms/user_avatar.dart';
+import 'user_avatar.dart';
 
 /// Minimal person shape for avatar widgets — map wallet members, project
 /// members, contacts into this so one widget serves them all.

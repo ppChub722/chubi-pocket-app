@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_icons.dart';
 import '../icons/icon_code.dart';
-import '../../atoms/user_avatar.dart';
+import 'user_avatar.dart';
 
 /// Who a person is to me — the three looks of a person everywhere (owner
 /// 2026-10-11: splits, debts, contact picker rows).

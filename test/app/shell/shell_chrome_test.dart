@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/app/shell/shell_chrome.dart';
+import 'package:chubi_pocket/ui/templates/shell_chrome.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -2,15 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../app/shell/shell_chrome.dart';
-import '../../app/shell/tab_nav.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/confirm_dialog.dart';
 import '../organisms/saving_overlay.dart';
 import '../molecules/mode_action_bar.dart';
 import 'edit_mode_scope.dart';
+import 'page_exit_scope.dart';
+import 'shell_chrome.dart';
 
 /// The app's in-place edit-mode lifecycle, shared by every detail page
 /// (category, tag, contact, account, project, …) so they all behave the
@@ -89,17 +88,10 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   /// Create flows: there's no view mode, so Cancel / back leave the page.
   bool get leaveOnCancel => false;
 
-  /// Leaving the page (create cancel, back in view mode). A plain pop —
-  /// `maybePop` would come back through this page's own PopScope. A page
-  /// opened alone in its tab has nothing to pop: the shell's back takes
-  /// over (previous tab, the เพิ่มเติม hub, or the dashboard).
-  void leavePage() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      ShellBackScope.maybeOf(context)?.call();
-    }
-  }
+  /// Leaving the page (create cancel, back in view mode) — how is the host
+  /// app's call ([PageExitScope]). It must be a plain pop: `maybePop` would
+  /// come back through this page's own PopScope.
+  void leavePage() => PageExitScope.leave(context);
 
   // ── Setup ───────────────────────────────────────────────────────────
 

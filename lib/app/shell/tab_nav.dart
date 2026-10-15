@@ -206,6 +206,17 @@ class ShellBackScope extends InheritedWidget {
   bool updateShouldNotify(ShellBackScope old) => onBack != old.onBack;
 }
 
+/// The app's [PageExitScope.onLeave]: pop the page — or, opened alone in its
+/// tab with nothing to pop, let the shell's back take over (previous tab,
+/// the เพิ่มเติม hub, or the dashboard).
+void leaveShellPage(BuildContext context) {
+  if (context.canPop()) {
+    context.pop();
+  } else {
+    ShellBackScope.maybeOf(context)?.call();
+  }
+}
+
 /// A tab root that spends the sideways swipe on itself first — the
 /// dashboard's month (owner 2026-10-10: swipe changes the month; only past
 /// the last one does it change the tab). [dir] is +1 for a swipe left

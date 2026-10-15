@@ -1,6 +1,5 @@
 import 'package:chubi_pocket/app/shell/fade_branch_container.dart';
 import 'package:chubi_pocket/app/shell/main_shell.dart';
-import 'package:chubi_pocket/app/shell/shell_chrome.dart';
 import 'package:chubi_pocket/app/shell/tab_nav.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';

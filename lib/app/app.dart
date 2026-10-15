@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'shell/keyboard_insets_guard.dart';
+import 'shell/tab_nav.dart';
 import '../core/network/api_client.dart';
 import '../core/network/connectivity_cubit.dart';
 import '../core/network/connection_cubit.dart';
@@ -305,18 +306,21 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                 routerConfig: _router,
                 // Same status-bar style on screens without an AppTopBar.
                 builder: (context, child) => AppUiConfig(
-                  child: AnnotatedRegion<SystemUiOverlayStyle>(
-                    value: ThemeBuilder.systemBarsStyle(
-                      Theme.of(context).scaffoldBackgroundColor,
-                    ),
-                    // A keyboard height left over from leaving the app
-                    // with it open is dropped here, for every page and
-                    // sheet below.
-                    child: KeyboardInsetsGuard(
-                      // Offline mode: ConnectionScope + banners for every
-                      // page and sheet below.
-                      child: ConnectionShell(
-                        child: child ?? const SizedBox.shrink(),
+                  child: PageExitScope(
+                    onLeave: leaveShellPage,
+                    child: AnnotatedRegion<SystemUiOverlayStyle>(
+                      value: ThemeBuilder.systemBarsStyle(
+                        Theme.of(context).scaffoldBackgroundColor,
+                      ),
+                      // A keyboard height left over from leaving the app
+                      // with it open is dropped here, for every page and
+                      // sheet below.
+                      child: KeyboardInsetsGuard(
+                        // Offline mode: ConnectionScope + banners for every
+                        // page and sheet below.
+                        child: ConnectionShell(
+                          child: child ?? const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                   ),

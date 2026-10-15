@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/currencies.dart';
+import 'currencies.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../molecules/option_menu.dart';
 import '../../organisms/option_sheet.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../domain/icons/icon_code.dart';
-import '../domain/icons/icon_display.dart';
-import '../domain/icons/icon_type.dart';
-import 'app_avatar.dart';
+import '../icons/icon_code.dart';
+import '../icons/icon_display.dart';
+import '../icons/icon_type.dart';
+import '../../atoms/app_avatar.dart';
 
 /// A user's avatar: their chosen icon ([iconCode], rendered by the icon
 /// maker) or, without one, an [AppAvatar] of their initials.

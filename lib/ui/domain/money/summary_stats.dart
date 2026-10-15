@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/app_spacing.dart';
-import '../domain/money/money_text.dart';
+import '../../tokens/app_spacing.dart';
+import 'money_text.dart';
 
 /// One labelled amount in a [SummaryStats] row.
 class SummaryStat {

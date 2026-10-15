@@ -9,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../atoms/ui_config.dart';
 import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/currencies.dart';
+import '../money/currencies.dart';
 
 /// The app's Thai: fills the generic kit's [UiConfig] from the app
 /// localisation and maps [ApiException] to the three failure descriptions

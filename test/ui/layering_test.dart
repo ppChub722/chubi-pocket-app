@@ -10,11 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 ///   lib/features/**                                       imports ONLY the gate
 ///
 /// 1. A feature file imports nothing from lib/ui except `ui/ui.dart`.
-/// 2. A generic piece must not import features, the localisation strings or
-///    the network layer. Today's violations are listed in
-///    `test/ui/generic_baseline.txt` and can only shrink: a NEW one fails, a
-///    fixed one fails until it is removed from the baseline (so the list is
-///    always the real debt). Regenerate with `UPDATE_BASELINE=1 flutter test`.
+/// 2. A generic piece imports only the generic layers (plus Flutter and
+///    neutral packages) — no core, features, app, l10n, hub, ui/domain,
+///    go_router or flutter_bloc. It is what moves into the ppForge package.
 void main() {
   final lib = Directory('lib');
 
@@ -46,50 +44,61 @@ void main() {
     );
   });
 
-  test('generic layers do not import features / l10n / network (ratchet)', () {
+  /// [import] as a path under lib/ (`ui/atoms/x.dart`), or null for a
+  /// `dart:` / third-party package import.
+  String? libPathOf(File from, String import) {
+    if (import.startsWith('package:chubi_pocket/')) {
+      return import.substring('package:chubi_pocket/'.length);
+    }
+    if (import.contains(':')) return null;
+    final parts = norm(from.parent.path).split('/');
+    for (final s in import.split('/')) {
+      if (s == '..') {
+        parts.removeLast();
+      } else if (s != '.') {
+        parts.add(s);
+      }
+    }
+    final at = parts.indexOf('lib');
+    return parts.skip(at + 1).join('/');
+  }
+
+  test('generic layers stand alone — the future ppForge package', () {
     const generic = ['tokens', 'atoms', 'molecules', 'organisms', 'templates'];
-    final found = <String>{};
+    // Inside lib/, a generic piece may reach only the generic layers.
+    const allowed = [
+      'ui/tokens/',
+      'ui/atoms/',
+      'ui/molecules/',
+      'ui/organisms/',
+      'ui/templates/',
+    ];
+    // The app's own stack — never in the kit.
+    const bannedPackages = ['package:flutter_bloc/', 'package:go_router/'];
+    final bad = <String>[];
     for (final layer in generic) {
       final dir = Directory('lib/ui/$layer');
       if (!dir.existsSync()) continue;
       for (final f in dartFiles(dir.path)) {
-        // tokens/app = the app's own values (themes, money colours, Thai
-        // currency names) — not part of the generic core.
+        // tokens/app = the app's own values (themes, module colours) —
+        // split into kit / app when the theme is made injectable.
         if (norm(f.path).contains('/tokens/app/')) continue;
         for (final i in importsOf(f)) {
-          final n = norm(i);
-          if (n.contains('/features/') ||
-              n.contains('l10n/gen/app_localizations') ||
-              n.contains('/core/network/')) {
-            found.add(
-              '${norm(f.path)} → ${n.split('/').skip(n.contains('package:') ? 0 : 0).where((s) => s != '..' && s != '.').join('/')}',
-            );
+          final target = libPathOf(f, i);
+          final leaves = target != null && !allowed.any(target.startsWith);
+          if (leaves || bannedPackages.any(i.startsWith)) {
+            bad.add('${norm(f.path)} → ${target ?? i}');
           }
         }
       }
     }
-    final baselineFile = File('test/ui/generic_baseline.txt');
-    if (Platform.environment['UPDATE_BASELINE'] == '1' ||
-        !baselineFile.existsSync()) {
-      baselineFile.writeAsStringSync(
-        '${(found.toList()..sort()).join('\n')}\n',
-      );
-    }
-    final baseline = baselineFile
-        .readAsLinesSync()
-        .where((l) => l.trim().isNotEmpty)
-        .toSet();
     expect(
-      found.difference(baseline),
+      bad,
       isEmpty,
       reason:
-          'new layering violation(s) — generic widgets take strings / data as parameters',
-    );
-    expect(
-      baseline.difference(found),
-      isEmpty,
-      reason:
-          'fixed — remove from test/ui/generic_baseline.txt (UPDATE_BASELINE=1)',
+          'generic widgets take strings / data / behaviour as parameters or '
+          'scopes (UiConfig, PageExitScope); app pieces live in ui/domain:\n'
+          '${bad.join('\n')}',
     );
     expect(lib.existsSync(), isTrue);
   });

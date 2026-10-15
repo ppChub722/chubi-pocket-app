@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../atoms/ui_config.dart';
 import '../tokens/app_spacing.dart';
-import '../../core/utils/date_formatter.dart';
 
 /// The very bottom of a detail page: small muted record info, one item
 /// per line (owner 2026-10-10, the transaction detail) —
@@ -44,8 +44,7 @@ List<String> detailMetaLines(
   final l = UiConfig.stringsOf(context);
   final locale = Localizations.localeOf(context).toLanguageTag();
   String stamp(DateTime d) =>
-      '${DateFormatter.medium(d, locale: locale)} '
-      '${DateFormatter.time(d, locale: locale)}';
+      '${DateFormat.yMMMd(locale).format(d)} ${DateFormat.jm(locale).format(d)}';
   final edited =
       createdAt != null &&
       updatedAt != null &&
