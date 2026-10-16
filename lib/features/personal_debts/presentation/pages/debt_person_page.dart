@@ -89,13 +89,15 @@ class _PersonViewState extends State<_PersonView> {
     _cubit.openTab(t);
   }
 
+  /// The shell's + and this button open the same preset. The page patches
+  /// from the write response through [DebtBook] (no re-fetch).
+  QuickCreatePreset _preset(DebtPersonState s) => QuickCreatePreset.debt(
+    person: _person(s),
+    debtDirection: debtDirectionFor(s.balance?.net),
+  );
+
   Future<void> _addEntry() async {
-    // The page patches from the write response (no re-fetch).
-    await showQuickCreateSheet(
-      context,
-      preset: QuickCreatePreset.debt(person: _person(_cubit.state)),
-      onDebtSaved: _cubit.addEntry,
-    );
+    await showQuickCreateSheet(context, preset: _preset(_cubit.state));
   }
 
   /// The entry's detail = the transaction detail page in debt mode
@@ -144,7 +146,7 @@ class _PersonViewState extends State<_PersonView> {
       builder: (context, s) {
         final notFound = s.error?.statusCode == 404;
         return QuickCreatePresetScope(
-          preset: QuickCreatePreset.debt(person: _person(s)),
+          preset: _preset(s),
           child: Scaffold(
             appBar: AppTopBar(title: _name(s), showBack: true),
             extendBodyBehindAppBar: true,

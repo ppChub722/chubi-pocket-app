@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_ledger.dart';
+import 'debt_book.dart';
 import 'debt_people_cubit.dart';
 
 /// One tab's list of entries (the timeline, or the money history).
@@ -140,14 +141,20 @@ class DebtPersonState extends Equatable {
   ];
 }
 
-class DebtPersonCubit extends Cubit<DebtPersonState> {
+class DebtPersonCubit extends Cubit<DebtPersonState> with DebtBookListener {
   DebtPersonCubit({
     required PersonalDebtsRepository repository,
     required String personKey,
     this.perPage = 30,
     this.debounce = const Duration(milliseconds: 300),
   }) : _repo = repository,
-       super(DebtPersonState(personKey: personKey));
+       super(DebtPersonState(personKey: personKey)) {
+    DebtBook.attach(this);
+  }
+
+  /// An entry was saved elsewhere (the shell's +): patch from the response.
+  @override
+  void onEntrySaved(DebtEntryWriteResult r) => addEntry(r);
 
   final PersonalDebtsRepository _repo;
   final int perPage;
@@ -428,6 +435,7 @@ class DebtPersonCubit extends Cubit<DebtPersonState> {
 
   @override
   Future<void> close() {
+    DebtBook.detach(this);
     for (final t in _timers.values) {
       t.cancel();
     }

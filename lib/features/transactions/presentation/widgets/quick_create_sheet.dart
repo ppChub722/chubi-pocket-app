@@ -21,6 +21,7 @@ import '../../../categories/presentation/cubit/categories_cubit.dart';
 import '../../../home/presentation/cubit/dashboard_cubit.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
+import '../../../personal_debts/presentation/cubit/debt_book.dart';
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/project.dart';
 import '../../../projects/presentation/cubit/projects_cubit.dart';
@@ -241,7 +242,7 @@ Future<bool> showQuickCreateSheet(
         onEventSaved: onEventSaved,
         entry: entry,
         initialAmount: amount,
-        initialDebtDirection: debtDirection,
+        initialDebtDirection: debtDirection ?? preset?.debtDirection,
       );
       if (options == null) return sheet;
       return BlocProvider<TxFormOptionsCubit>.value(
@@ -1013,6 +1014,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       // Home's debts tile.
       dashboard.markStale();
       widget.onDebtSaved?.call(r);
+      // Every live debts cubit (people list, an open person page) patches
+      // itself, whichever page opened the sheet.
+      DebtBook.entrySaved(r);
       navigator.pop(true);
       showAppSnackBarOn(messenger, l.debtEntrySaved, tone: Tone.success);
     } on ApiException catch (e) {

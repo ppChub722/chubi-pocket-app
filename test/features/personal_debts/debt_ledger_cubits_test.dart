@@ -4,8 +4,10 @@ import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_book.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_people_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_person_cubit.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/debt_wiring.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -370,6 +372,35 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(repo.calls.last, 'entries c:1 p1 money=false q= sort=date_desc');
       await c.close();
+    });
+
+    test('DebtBook.entrySaved reaches the people list and the open person '
+        'page', () async {
+      final repo = _FakeRepo();
+      final people = DebtPeopleCubit(repository: repo);
+      final person = DebtPersonCubit(repository: repo, personKey: 'c:1');
+      await people.load();
+      await person.load();
+      repo.calls.clear();
+      DebtBook.entrySaved(saved('new', '2026-10-13'));
+      await Future<void>.delayed(Duration.zero);
+      // Person page: patched, no call. People list: row patched + 1 reload
+      // (totals and new people come from the server).
+      expect(person.state.balance!.net, 150);
+      expect(person.state.entries.items.first.id, 'new');
+      expect(repo.calls, ['people p1 q= all=false side=null']);
+      await people.close();
+      await person.close();
+      // Closed cubits are detached: no call, no throw.
+      DebtBook.entrySaved(saved('later', '2026-10-14'));
+      expect(repo.calls.length, 1);
+    });
+
+    test('debtDirectionFor: the balance picks the + direction', () {
+      expect(debtDirectionFor(120), DebtEntryDirection.received);
+      expect(debtDirectionFor(-40), DebtEntryDirection.paid);
+      expect(debtDirectionFor(0), isNull);
+      expect(debtDirectionFor(null), isNull);
     });
 
     test('addEntry for another person is ignored', () async {

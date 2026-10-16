@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../features/accounts/domain/account.dart';
 import '../../features/categories/domain/category.dart';
+import '../../features/personal_debts/domain/debt_ledger.dart';
 import '../../features/tags/domain/tag.dart';
 import '../../features/transactions/domain/refs.dart';
 import '../../ui/ui.dart';
@@ -25,6 +26,7 @@ class QuickCreatePreset {
     this.tag,
     this.person,
     this.goalId,
+    this.debtDirection,
   });
 
   /// Saving mode (ออม), optionally with the goal selected (a goal page);
@@ -34,10 +36,12 @@ class QuickCreatePreset {
       account = null,
       category = null,
       tag = null,
-      person = null;
+      person = null,
+      debtDirection = null;
 
-  /// Debt mode, optionally with the person.
-  const QuickCreatePreset.debt({this.person})
+  /// Debt mode, optionally with the person and the direction to start on
+  /// (null = the form's default).
+  const QuickCreatePreset.debt({this.person, this.debtDirection})
     : mode = QuickCreateMode.debt,
       account = null,
       category = null,
@@ -58,6 +62,9 @@ class QuickCreatePreset {
   /// Saving mode's goal (null = spare).
   final String? goalId;
 
+  /// Debt mode's starting direction.
+  final DebtEntryDirection? debtDirection;
+
   @override
   bool operator ==(Object other) =>
       other is QuickCreatePreset &&
@@ -66,11 +73,19 @@ class QuickCreatePreset {
       other.category?.id == category?.id &&
       other.tag?.id == tag?.id &&
       other.person == person &&
-      other.goalId == goalId;
+      other.goalId == goalId &&
+      other.debtDirection == debtDirection;
 
   @override
-  int get hashCode =>
-      Object.hash(mode, account?.id, category?.id, tag?.id, person, goalId);
+  int get hashCode => Object.hash(
+    mode,
+    account?.id,
+    category?.id,
+    tag?.id,
+    person,
+    goalId,
+    debtDirection,
+  );
 }
 
 /// The shell's list of pages that offer a [QuickCreatePreset] — one per

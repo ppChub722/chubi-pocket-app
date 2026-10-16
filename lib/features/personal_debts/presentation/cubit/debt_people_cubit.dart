@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_ledger.dart';
+import 'debt_book.dart';
 
 enum DebtLoadStatus { initial, loading, loaded, error }
 
@@ -93,13 +94,15 @@ class DebtPeopleState extends Equatable {
   ];
 }
 
-class DebtPeopleCubit extends Cubit<DebtPeopleState> {
+class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
   DebtPeopleCubit({
     required PersonalDebtsRepository repository,
     this.perPage = 30,
     this.debounce = const Duration(milliseconds: 300),
   }) : _repo = repository,
-       super(const DebtPeopleState());
+       super(const DebtPeopleState()) {
+    DebtBook.attach(this);
+  }
 
   final PersonalDebtsRepository _repo;
   final int perPage;
@@ -221,8 +224,19 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> {
     emit(state.copyWith(items: next));
   }
 
+  /// An entry was saved elsewhere (the shell's +): the person's row follows
+  /// its balance at once; the list reloads for the totals and for a new
+  /// person (the list is the server's view). Only once the list has loaded.
+  @override
+  void onEntrySaved(DebtEntryWriteResult r) {
+    if (isClosed || state.status == DebtLoadStatus.initial) return;
+    applyBalance(r.balance);
+    load();
+  }
+
   @override
   Future<void> close() {
+    DebtBook.detach(this);
     _searchTimer?.cancel();
     return super.close();
   }
