@@ -72,24 +72,24 @@ class EditScopeChoice extends StatelessWidget {
     return Dialog(
       backgroundColor: scheme.surfaceContainerHigh,
       elevation: 4,
-      insetPadding: const EdgeInsets.all(AppSpacing.lg),
+      insetPadding: const EdgeInsets.all(PpForgeSpacing.lg),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: maxWidth),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md + 2,
-                  AppSpacing.xs,
-                  AppSpacing.md + 2,
-                  AppSpacing.sm,
+                  PpForgeSpacing.md + 2,
+                  PpForgeSpacing.xs,
+                  PpForgeSpacing.md + 2,
+                  PpForgeSpacing.sm,
                 ),
                 child: Text(
                   title,

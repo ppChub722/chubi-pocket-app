@@ -16,7 +16,7 @@ enum ConnectionBannerState {
 }
 
 /// The persistent server-connection banner at the top of every page (owner
-/// 2026-10-12): an [AppMessage] banner that never auto-dismisses while the
+/// 2026-10-12): an [PpForgeMessage] banner that never auto-dismisses while the
 /// connection is down — "can't reach the server · trying again…" with a retry
 /// button, then a short "connected again". The strings are the page's / app's.
 class ConnectionBanner extends StatelessWidget {
@@ -42,19 +42,19 @@ class ConnectionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      ConnectionBannerState.offline => AppMessage(
+      ConnectionBannerState.offline => PpForgeMessage(
         tone: Tone.danger,
         message: offlineText,
         actions: [
           if (onRetry != null)
-            AppMessageAction(label: retryLabel, onPressed: onRetry!),
+            PpForgeMessageAction(label: retryLabel, onPressed: onRetry!),
         ],
       ),
-      ConnectionBannerState.reconnecting => AppMessage(
+      ConnectionBannerState.reconnecting => PpForgeMessage(
         tone: Tone.warning,
         message: reconnectingText,
       ),
-      ConnectionBannerState.backOnline => AppMessage(
+      ConnectionBannerState.backOnline => PpForgeMessage(
         tone: Tone.success,
         message: backText,
       ),

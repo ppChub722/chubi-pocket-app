@@ -37,7 +37,7 @@ void main() {
             name: 'ทริป',
             description: 'หารค่าที่พัก',
             statusLabel: 'กำลังดำเนินการ',
-            statusTone: AppChipTone.success,
+            statusTone: PpForgeChipTone.success,
             meta: '4 คน · 1–5 ต.ค.',
             tags: const [EventTagRef('อาหาร')],
             progress: 0.5,
@@ -129,7 +129,7 @@ void main() {
       expect(tagIndex, 1);
       expect(tagContext, isNotNull);
       expect(
-        find.ancestor(of: find.text('b'), matching: find.byType(AppChip)),
+        find.ancestor(of: find.text('b'), matching: find.byType(PpForgeChip)),
         findsOneWidget,
       );
 
@@ -200,7 +200,7 @@ void main() {
       await t.pumpWidget(
         host(const EventBillRow(title: 'l', amount: 1, linked: true)),
       );
-      expect(find.byIcon(AppIcons.link), findsOneWidget);
+      expect(find.byIcon(PpForgeIcons.link), findsOneWidget);
     });
 
     testWidgets('children render under the row with their own ticks', (

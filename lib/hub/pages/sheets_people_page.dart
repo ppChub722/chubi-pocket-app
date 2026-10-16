@@ -111,38 +111,38 @@ class _SheetsPeoplePageState extends State<_SheetsPeoplePage> {
               'row, typed name -> use as is / save as contact, create row. '
               'Selected = highlight (Nok).',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
-              AppButton(label: 'Open', onPressed: _pick),
-              AppButton(
+              PpForgeButton(label: 'Open', onPressed: _pick),
+              PpForgeButton(
                 label: 'With create row',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _pick(create: true),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Unlink as',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _pick(unlinkAs: 'Somchai'),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Contacts only',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _pick(free: false),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Empty',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _pick(rows: const []),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Loading',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _pick(rows: const [], loading: true),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Error',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _pick(rows: const [], error: 'Network down'),
               ),
             ],
@@ -153,11 +153,11 @@ class _SheetsPeoplePageState extends State<_SheetsPeoplePage> {
           note:
               'FormSheet: caption, search, checkable rows, primary "Match n" '
               '(disabled until one is checked; saving dims the sheet).',
-          child: AppButton(label: 'Open', onPressed: _wire),
+          child: PpForgeButton(label: 'Open', onPressed: _wire),
         ),
         HubDemo(
           title: 'Last result',
-          child: AppText(_last, role: AppTextRole.body),
+          child: PpForgeText(_last, role: PpForgeTextRole.body),
         ),
       ],
     );

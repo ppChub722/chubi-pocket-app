@@ -39,7 +39,7 @@ class _EventsPageState extends State<_EventsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return Column(
@@ -60,19 +60,19 @@ class _EventsPageState extends State<_EventsPage> {
                 name: 'ทริปเชียงใหม่',
                 iconCode: _trip,
                 statusLabel: 'กำลังดำเนินการ',
-                statusTone: AppChipTone.success,
+                statusTone: PpForgeChipTone.success,
                 meta: '4 คน · 1–5 ต.ค.',
                 myNet: 1250,
                 tags: const [_travel, _stay],
                 onTap: () => _tapped('card: active'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventCard(
                 name: 'ปาร์ตี้ปีใหม่',
                 iconCode: _party,
                 description: 'หารค่าอาหาร เครื่องดื่ม และสถานที่',
                 statusLabel: 'วางแผน',
-                statusTone: AppChipTone.info,
+                statusTone: PpForgeChipTone.info,
                 meta: '8 คน · 31 ธ.ค.',
                 progress: 0.62,
                 progressLabel: 'ใช้ไป ฿6,200 จาก ฿10,000',
@@ -80,12 +80,12 @@ class _EventsPageState extends State<_EventsPage> {
                 myNet: 0,
                 onTap: () => _tapped('card: planned'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventCard(
                 name: 'งานสัมมนา',
                 iconCode: _work,
                 statusLabel: 'เกินงบ',
-                statusTone: AppChipTone.danger,
+                statusTone: PpForgeChipTone.danger,
                 meta: '3 คน · 12–13 ก.ย.',
                 progress: 1.18,
                 progressLabel: 'ใช้ไป ฿11,800 จาก ฿10,000',
@@ -94,7 +94,7 @@ class _EventsPageState extends State<_EventsPage> {
                 tags: const [_food],
                 onTap: () => _tapped('card: negative net, over plan'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventCard(
                 name: 'ทริปภูเก็ต (ปิดแล้ว)',
                 statusLabel: 'ปิดแล้ว',
@@ -138,7 +138,7 @@ class _EventsPageState extends State<_EventsPage> {
                 ),
                 onTap: () => _tapped('bill: unresolved (tap tick)'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 title: 'ข้าวเย็น',
                 amount: -1280,
@@ -152,7 +152,7 @@ class _EventsPageState extends State<_EventsPage> {
                 onTagTap: (_, i) => _tapped('tag $i tapped'),
                 onTap: () => _tapped('bill: resolved'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 title: 'ค่ารถตู้',
                 amount: -2400,
@@ -164,11 +164,14 @@ class _EventsPageState extends State<_EventsPage> {
                 locked: true,
                 onTap: () => _tapped('never fires'),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               EventBillRow(
                 title: 'เงินคืนจากโรงแรม',
                 amount: 500,
-                leading: IconTile(icon: AppIcons.income, color: palette.income),
+                leading: IconTile(
+                  icon: PpForgeIcons.income,
+                  color: palette.income,
+                ),
                 payerName: 'มาตาก',
                 payerLevel: PersonLevel.linked,
                 caption: '4 ต.ค.',
@@ -274,7 +277,7 @@ class _EventsPageState extends State<_EventsPage> {
               ),
               PositionRow(
                 leading: IconTile(
-                  icon: AppIcons.tag,
+                  icon: PpForgeIcons.tag,
                   color: palette.expense,
                   size: 28,
                 ),
@@ -294,9 +297,9 @@ class _EventsPageState extends State<_EventsPage> {
             const PlayText('name', initialValue: 'ทริปเชียงใหม่'),
             const PlayText('description', initialValue: ''),
             const PlayText('statusLabel', initialValue: 'กำลังดำเนินการ'),
-            PlayChoice<AppChipTone>('statusTone', [
-              for (final t in AppChipTone.values) (t.name, t),
-            ], initial: AppChipTone.success),
+            PlayChoice<PpForgeChipTone>('statusTone', [
+              for (final t in PpForgeChipTone.values) (t.name, t),
+            ], initial: PpForgeChipTone.success),
             const PlayBool('statusDot', initialValue: true),
             const PlayText('meta', initialValue: '4 คน · 1–5 ต.ค.'),
             const PlayNum('tags', min: 0, max: 3, initialValue: 1),
@@ -327,7 +330,7 @@ class _EventsPageState extends State<_EventsPage> {
               iconCode: v<bool>('icon') ? _trip : null,
               description: desc.isEmpty ? null : desc,
               statusLabel: status.isEmpty ? null : status,
-              statusTone: v<AppChipTone>('statusTone'),
+              statusTone: v<PpForgeChipTone>('statusTone'),
               statusDot: v<bool>('statusDot'),
               meta: v<String>('meta'),
               tags: const [
@@ -381,7 +384,7 @@ class _EventsPageState extends State<_EventsPage> {
               marked: v<bool>('marked'),
               onTickTap: v<bool>('tick tappable') ? () {} : null,
               leading: v<bool>('type glyph')
-                  ? IconTile(icon: AppIcons.expense, color: palette.expense)
+                  ? IconTile(icon: PpForgeIcons.expense, color: palette.expense)
                   : null,
               tags: const [
                 _stay,
@@ -438,10 +441,10 @@ class _HighlightDemoState extends State<_HighlightDemo> {
           highlighted: _on,
           onTap: () {},
         ),
-        const SizedBox(height: AppSpacing.sm),
-        AppButton(
+        const SizedBox(height: PpForgeSpacing.sm),
+        PpForgeButton(
           label: 'Play the highlight',
-          variant: AppButtonVariant.tonal,
+          variant: PpForgeButtonVariant.tonal,
           onPressed: _play,
         ),
       ],

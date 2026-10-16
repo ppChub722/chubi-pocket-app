@@ -20,9 +20,9 @@ enum SavingTxKind {
   allocate;
 
   IconData get icon => switch (this) {
-    SavingTxKind.deposit => AppIcons.savingDeposit,
-    SavingTxKind.withdraw => AppIcons.savingWithdraw,
-    SavingTxKind.allocate => AppIcons.savingAllocate,
+    SavingTxKind.deposit => PpForgeIcons.savingDeposit,
+    SavingTxKind.withdraw => PpForgeIcons.savingWithdraw,
+    SavingTxKind.allocate => PpForgeIcons.savingAllocate,
   };
 }
 
@@ -93,7 +93,7 @@ class SavingTxRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final small = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     final out = kind == SavingTxKind.withdraw;
     final tint = out ? scheme.onSurfaceVariant : (accent ?? palette.income);
@@ -102,7 +102,7 @@ class SavingTxRow extends StatelessWidget {
         ? const SizedBox.shrink()
         : ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 120),
-            child: AppChip(
+            child: PpForgeChip(
               label: walletLabel!,
               leading: walletIcon,
               size: ChipSize.mini,
@@ -119,10 +119,10 @@ class SavingTxRow extends StatelessWidget {
             ),
           );
     Widget arrow() => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.xs),
       child: Text('→', style: small),
     );
-    const gap = SizedBox(width: AppSpacing.xs);
+    const gap = SizedBox(width: PpForgeSpacing.xs);
     // Line 2 keeps the height of a TxRow text line: a mini chip (20) in it
     // overflows evenly instead of growing the row.
     final lineHeight = (TextPainter(
@@ -161,14 +161,14 @@ class SavingTxRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.sm,
         ),
         child: Row(
           children: [
             if (select != null) ...[
               select!,
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
             ],
             draft
                 ? DecoratedBox(
@@ -184,7 +184,7 @@ class SavingTxRow extends StatelessWidget {
                     ),
                   )
                 : IconTile(icon: kind.icon, color: tint),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +218,7 @@ class SavingTxRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [

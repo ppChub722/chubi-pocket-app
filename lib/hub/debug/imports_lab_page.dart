@@ -33,12 +33,12 @@ class ImportsLabScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Imports lab')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         children: const [
           _RealSlipCard(),
-          SizedBox(height: AppSpacing.md),
+          SizedBox(height: PpForgeSpacing.md),
           _ParseTextCard(),
-          SizedBox(height: AppSpacing.md),
+          SizedBox(height: PpForgeSpacing.md),
           _SlipFlowCard(),
         ],
       ),
@@ -124,7 +124,7 @@ class _LabCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -133,9 +133,9 @@ class _LabCard extends StatelessWidget {
               endpoint,
               style: textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             ...inputs,
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             FilledButton.icon(
               onPressed: busy ? null : onSend,
               icon: busy
@@ -148,7 +148,7 @@ class _LabCard extends StatelessWidget {
               label: const Text('Send'),
             ),
             if (ex != null) ...[
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               Row(
                 children: [
                   Icon(
@@ -156,7 +156,7 @@ class _LabCard extends StatelessWidget {
                     size: 18,
                     color: ok ? Colors.green : scheme.error,
                   ),
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
                   Expanded(
                     child: Text(
                       [
@@ -190,7 +190,7 @@ class _Block extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -204,7 +204,7 @@ class _Block extends StatelessWidget {
               ).showSnackBar(SnackBar(content: Text('$label copied')));
             },
             child: Container(
-              padding: const EdgeInsets.all(AppSpacing.sm),
+              padding: const EdgeInsets.all(PpForgeSpacing.sm),
               decoration: BoxDecoration(
                 color: scheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),

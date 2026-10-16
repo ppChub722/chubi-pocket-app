@@ -12,7 +12,7 @@ import '../molecules/error_view.dart';
 import '../atoms/skeletons.dart';
 
 /// The shell every picker sheet shares (owner 2026-10-10) — open it with
-/// `showAppSheetCustom`:
+/// `showPpForgeSheetCustom`:
 ///
 ///   title                                   ✕
 ///   [🔍 ค้นหา…]                  (optional, chip height, filters live)
@@ -86,13 +86,13 @@ class _PickerSheetState extends State<PickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final textTheme = Theme.of(context).textTheme;
     final error = widget.error;
     final Widget body;
     if (error != null) {
       body = Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(PpForgeSpacing.lg),
         child: ErrorView(error: error, onRetry: widget.onRetry),
       );
     } else if (widget.loading) {
@@ -112,10 +112,10 @@ class _PickerSheetState extends State<PickerSheet> {
           // The standard header: title + ✕ (no big custom title).
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
+              PpForgeSpacing.lg,
               0,
-              AppSpacing.xs,
-              AppSpacing.xs,
+              PpForgeSpacing.xs,
+              PpForgeSpacing.xs,
             ),
             child: Row(
               children: [
@@ -127,7 +127,7 @@ class _PickerSheetState extends State<PickerSheet> {
                     ),
                   ),
                 ),
-                AppIconButton.close(
+                PpForgeIconButton.close(
                   tooltip: strings.close,
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
@@ -137,12 +137,12 @@ class _PickerSheetState extends State<PickerSheet> {
           if (widget.searchable)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
                 0,
-                AppSpacing.lg,
-                AppSpacing.sm,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
               ),
-              child: AppInput.search(
+              child: PpForgeInput.search(
                 controller: widget.searchController,
                 autofocus: widget.searchAutofocus,
                 hint: widget.searchHint ?? strings.search,
@@ -237,16 +237,18 @@ class PickerRow extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: rowHeight),
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.lg + indent,
-              AppSpacing.xs,
-              trailing == null && !chevron ? AppSpacing.lg : AppSpacing.xs,
-              AppSpacing.xs,
+              PpForgeSpacing.lg + indent,
+              PpForgeSpacing.xs,
+              trailing == null && !chevron
+                  ? PpForgeSpacing.lg
+                  : PpForgeSpacing.xs,
+              PpForgeSpacing.xs,
             ),
             child: Row(
               children: [
                 if (checked != null) ...[
                   SelectCheck(value: checked, onTap: null),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: PpForgeSpacing.md),
                 ],
                 if (leading != null) ...[
                   IconTheme.merge(
@@ -258,7 +260,7 @@ class PickerRow extends StatelessWidget {
                     ),
                     child: leading!,
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: PpForgeSpacing.md),
                 ],
                 Expanded(
                   child: Column(
@@ -291,7 +293,10 @@ class PickerRow extends StatelessWidget {
                 if (trailing != null)
                   trailing!
                 else if (chevron)
-                  Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
+                  Icon(
+                    PpForgeIcons.chevronRight,
+                    color: scheme.onSurfaceVariant,
+                  ),
               ],
             ),
           ),
@@ -330,15 +335,15 @@ class PickerConfirmBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
       ),
-      child: AppButton(
+      child: PpForgeButton(
         label: label,
         expand: true,
-        size: AppButtonSize.large,
+        size: PpForgeButtonSize.large,
         submits: submits,
         onPressed: onPressed,
       ),
@@ -362,13 +367,13 @@ class PickerCreateRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.md,
         ),
         child: Row(
           children: [
-            Icon(AppIcons.add, size: 22, color: scheme.primary),
-            const SizedBox(width: AppSpacing.md),
+            Icon(PpForgeIcons.add, size: 22, color: scheme.primary),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Text(
                 label,

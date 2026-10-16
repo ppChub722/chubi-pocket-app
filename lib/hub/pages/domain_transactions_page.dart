@@ -32,10 +32,10 @@ void _noop() {}
 /// with [people] two plain person lines under it.
 Widget _splitSample(SplitEventVariant variant, bool people) {
   final compact = variant == SplitEventVariant.compact;
-  final chip = AppChip(
-    icon: AppIcons.add,
+  final chip = PpForgeChip(
+    icon: PpForgeIcons.add,
     label: 'Add person',
-    tone: AppChipTone.primary,
+    tone: PpForgeChipTone.primary,
     selected: true,
     dashed: compact,
     size: compact ? ChipSize.chip : ChipSize.control,
@@ -45,8 +45,8 @@ Widget _splitSample(SplitEventVariant variant, bool people) {
     for (final p in const ['Lee  ฿200', 'Mai  ฿150'])
       Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: compact ? 0 : AppSpacing.lg,
-          vertical: AppSpacing.xs,
+          horizontal: compact ? 0 : PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.xs,
         ),
         child: Text(p),
       ),
@@ -124,7 +124,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
       context: context,
       builder: (_) => Dialog(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(PpForgeSpacing.lg),
           child: DraftForm(
             controller: controller,
             chipLayout: chipLayout,
@@ -138,7 +138,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final allCats = const [_catFood, _catSalary];
     final accounts = context.read<AccountsCubit>().state.accounts;
     final categories = context.read<CategoriesCubit>().state.categories;
@@ -162,35 +162,35 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           child: Column(
             children: [
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'ข้าวมันไก่',
                 amount: -540,
                 category: 'อาหาร',
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.income, palette.income),
+                leading: _leading(PpForgeIcons.income, palette.income),
                 title: 'เงินเดือน',
                 amount: 42000,
                 walletLabel: 'กสิกร',
-                walletIcon: const Icon(AppIcons.wallet, size: 12),
+                walletIcon: const Icon(PpForgeIcons.wallet, size: 12),
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'ค่ากาแฟ',
                 amount: -95,
-                source: const AppChip(
+                source: const PpForgeChip(
                   label: 'Manual',
-                  tone: AppChipTone.info,
+                  tone: PpForgeChipTone.info,
                   selected: true,
                   size: ChipSize.mini,
                 ),
                 category: 'อาหาร',
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'ข้าวกลางวัน',
                 amount: -180,
                 category: 'อาหาร',
@@ -211,38 +211,38 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   ),
                 ],
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'ค่าอาหารทริป',
                 amount: -2400,
                 category: 'อาหาร',
                 hasSplits: true,
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.transfer, palette.primary),
+                leading: _leading(PpForgeIcons.transfer, palette.primary),
                 title: 'โอนเข้าออมทรัพย์',
                 amount: 5000,
                 tone: MoneyTone.plain,
                 extra: '→ ออมทรัพย์',
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'Draft with a warning',
                 amount: -300,
                 warning: 'Pick a wallet before submitting',
-                source: const AppChip(
+                source: const PpForgeChip(
                   label: 'Text',
-                  tone: AppChipTone.primary,
+                  tone: PpForgeChipTone.primary,
                   selected: true,
                   size: ChipSize.mini,
                 ),
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'Selectable (off)',
                 amount: -120,
                 category: 'อาหาร',
@@ -252,9 +252,9 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 ),
                 onTap: () => setState(() => _selected = !_selected),
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'Selectable (on)',
                 amount: -120,
                 category: 'อาหาร',
@@ -278,11 +278,11 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           child: Column(
             children: [
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'Netflix',
                 amount: -419,
                 walletLabel: 'กสิกร',
-                walletIcon: const Icon(AppIcons.wallet, size: 12),
+                walletIcon: const Icon(PpForgeIcons.wallet, size: 12),
                 metaLeading: DueText(
                   date: DateTime.now().add(const Duration(days: 3)),
                   withDate: false,
@@ -290,9 +290,9 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 meta: const ['ทุกวันที่ 3'],
                 recurring: true,
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'ผ่อนโทรศัพท์',
                 amount: -1290,
                 metaLeading: DueText(
@@ -304,29 +304,29 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 progress: '3/12',
                 linked: true,
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.expense, palette.expense),
+                leading: _leading(PpForgeIcons.expense, palette.expense),
                 title: 'ค่ายิม',
                 amount: -900,
                 category: 'สุขภาพ',
                 meta: const ['ทุกเดือน'],
                 recurring: true,
-                statusChip: const AppChip(
+                statusChip: const PpForgeChip(
                   label: 'หยุดชั่วคราว',
-                  tone: AppChipTone.warning,
+                  tone: PpForgeChipTone.warning,
                   size: ChipSize.mini,
                 ),
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               TxRow(
-                leading: _leading(AppIcons.income, palette.income),
+                leading: _leading(PpForgeIcons.income, palette.income),
                 title: 'ค่าเช่าห้อง',
                 amount: 6000,
                 category: 'รายได้อื่น',
                 recurring: true,
                 progress: '12/12',
-                statusChip: const AppChip(
+                statusChip: const PpForgeChip(
                   label: 'เก็บถาวร',
                   size: ChipSize.mini,
                 ),
@@ -372,31 +372,31 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 onTypeChanged: (t) => setState(() => _type = t),
                 onPickDate: () {},
                 walletRow: const _DemoChipRow(
-                  icon: AppIcons.wallet,
+                  icon: PpForgeIcons.wallet,
                   blank: 'เลือกกระเป๋า',
                   chips: ['กสิกร', 'เงินสด'],
                   selected: 0,
                 ),
                 toWalletRow: const _DemoChipRow(
-                  icon: AppIcons.wallet,
+                  icon: PpForgeIcons.wallet,
                   blank: 'เลือกกระเป๋าปลายทาง',
                   chips: ['ออมทรัพย์', 'เงินสด'],
                   selected: 0,
                 ),
                 categoryRow: const _DemoChipRow(
-                  icon: AppIcons.category,
+                  icon: PpForgeIcons.category,
                   blank: 'เลือกหมวด',
                   chips: ['อาหาร', 'เดินทาง', 'ของใช้'],
                   selected: 0,
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const _DemoChipRow(
-                icon: AppIcons.tag,
+                icon: PpForgeIcons.tag,
                 chips: ['#งาน', '#กิน'],
                 selected: -1,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               EntryCard(
                 type: TransactionType.expense,
                 amount: TextEditingController(),
@@ -405,13 +405,13 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 onTypeChanged: (_) {},
                 missing: const {EntryField.wallet, EntryField.category},
                 walletRow: const _DemoChipRow(
-                  icon: AppIcons.wallet,
+                  icon: PpForgeIcons.wallet,
                   blank: 'เลือกกระเป๋า',
                   chips: ['กสิกร', 'เงินสด'],
                   selected: -1,
                 ),
                 categoryRow: const _DemoChipRow(
-                  icon: AppIcons.category,
+                  icon: PpForgeIcons.category,
                   blank: 'เลือกหมวด',
                   chips: ['อาหาร', 'เดินทาง'],
                   selected: -1,
@@ -444,13 +444,13 @@ class _TransactionsPageState extends State<_TransactionsPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             walletRow: const _DemoChipRow(
-              icon: AppIcons.wallet,
+              icon: PpForgeIcons.wallet,
               blank: 'เลือกกระเป๋า',
               chips: ['ไม่ผูก', 'กสิกร', 'เงินสด'],
               selected: 0,
             ),
             categoryRow: const _DemoChipRow(
-              icon: AppIcons.contact,
+              icon: PpForgeIcons.contact,
               blank: 'เลือกคน',
               chips: ['แม่', 'บีม', 'โอ๊ต'],
               selected: 0,
@@ -470,7 +470,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
           child: Column(
             children: [
               EntryCardSkeleton(),
-              SizedBox(height: AppSpacing.md),
+              SizedBox(height: PpForgeSpacing.md),
               EntryCardSkeleton(editing: false),
             ],
           ),
@@ -490,7 +490,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   onPickDate: () {},
                   compact: true,
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
             ],
           ),
@@ -509,7 +509,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 editing: false,
                 onEdit: () => _note('hero: edit tapped'),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               TxHeroCard(
                 type: TransactionType.income,
                 amount: _amount,
@@ -518,7 +518,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                 inline: true,
                 editing: false,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               TxHeroCard(
                 type: TransactionType.expense,
                 amount: _amount,
@@ -531,7 +531,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               TxHeroCard(
                 type: TransactionType.expense,
                 amount: _amount,
@@ -557,7 +557,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   HubCell(
                     caption: 'txTypeChip (null = all)',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         txTypeChip(context, type: null, selected: true),
                         for (final t in TransactionType.values)
@@ -568,7 +568,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   HubCell(
                     caption: 'txTypeChip selected / locked',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         txTypeChip(
                           context,
@@ -591,7 +591,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   HubCell(
                     caption: 'categoryAppChip',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         categoryAppChip(
                           context,
@@ -618,7 +618,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   HubCell(
                     caption: 'tagAppChip',
                     child: Wrap(
-                      spacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
                       children: [
                         tagAppChip(context, _tagFood, onTap: () {}),
                         tagAppChip(
@@ -652,7 +652,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   variant.name,
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 for (final (label, people, slot) in [
                   ('empty', false, const SplitEventSlot(onTap: _noop)),
                   (
@@ -686,7 +686,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                         ? 'This split will live in the event.'
                         : null,
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                 ],
               ],
             ],
@@ -708,17 +708,17 @@ class _TransactionsPageState extends State<_TransactionsPage> {
               'Live data: opens the real form (a local DraftFormController) '
               'in a dialog. chipLayout is the pending drafts layout.',
           child: Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
+            spacing: PpForgeSpacing.md,
+            runSpacing: PpForgeSpacing.md,
             children: [
-              AppButton(
+              PpForgeButton(
                 label: 'Open DraftForm',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _openForm(false),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Open DraftForm (chipLayout)',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _openForm(true),
               ),
             ],
@@ -736,12 +736,12 @@ class _TransactionsPageState extends State<_TransactionsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.md,
+                spacing: PpForgeSpacing.md,
+                runSpacing: PpForgeSpacing.md,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'showAccountPickerSheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () async {
                       final r = await showAccountPickerSheet(
                         context: context,
@@ -751,9 +751,9 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                       _note('account: ${r.runtimeType}');
                     },
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'showCategoryPickerSheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () async {
                       final r = await showCategoryPickerSheet(
                         context: context,
@@ -763,9 +763,9 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                       _note('category: ${r.runtimeType}');
                     },
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'showTagPickerSheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () async {
                       final r = await showTagPickerSheet(
                         context,
@@ -774,17 +774,17 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                       _note('tags: ${r?.length}');
                     },
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'showContactPickerSheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () async {
                       final r = await showContactPickerSheet(context);
                       _note('contact: ${r.runtimeType}');
                     },
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'showEventTargetSheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () async {
                       final r = await showEventTargetSheet(
                         context,
@@ -793,7 +793,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                       _note('event: ${r.runtimeType}');
                     },
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'showQuickCreateSheet',
                     onPressed: () async {
                       final r = await showQuickCreateSheet(context);
@@ -802,7 +802,7 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Text(
                 'Last result: $_last',
                 style: Theme.of(context).textTheme.bodySmall,
@@ -837,10 +837,10 @@ class _DemoChipRow extends StatelessWidget {
     final first = blank == null
         ? null
         : selected >= 0
-        ? AppChip(label: chips[selected], selected: true, onTap: () {})
-        : AppChip(
+        ? PpForgeChip(label: chips[selected], selected: true, onTap: () {})
+        : PpForgeChip(
             label: blank!,
-            icon: AppIcons.add,
+            icon: PpForgeIcons.add,
             dashed: true,
             onTap: () {},
           );
@@ -848,21 +848,24 @@ class _DemoChipRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          AppIcon(
+          PpForgeIcon(
             icon,
-            size: AppIconSize.md,
+            size: PpForgeIconSize.md,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: AppSpacing.xs),
-          if (first != null) ...[first, const SizedBox(width: AppSpacing.xs)],
+          const SizedBox(width: PpForgeSpacing.xs),
+          if (first != null) ...[
+            first,
+            const SizedBox(width: PpForgeSpacing.xs),
+          ],
           for (final (i, c) in chips.indexed)
             if (blank == null || i != selected) ...[
-              AppChip(
+              PpForgeChip(
                 label: c,
                 selected: blank == null && i == selected,
                 onTap: () {},
               ),
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
             ],
         ],
       ),

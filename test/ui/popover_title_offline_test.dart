@@ -124,8 +124,10 @@ void main() {
     );
 
     bool barEnabled(WidgetTester tester, String label) {
-      final finder = find.widgetWithText(AppButton, label);
-      return tester.widget<AppButton>(finder).isEnabled(tester.element(finder));
+      final finder = find.widgetWithText(PpForgeButton, label);
+      return tester
+          .widget<PpForgeButton>(finder)
+          .isEnabled(tester.element(finder));
     }
 
     testWidgets('ActionBar: a submits item is off offline only', (

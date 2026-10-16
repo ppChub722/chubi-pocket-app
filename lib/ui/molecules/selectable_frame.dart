@@ -10,7 +10,7 @@ class SelectableFrame extends StatelessWidget {
   const SelectableFrame({
     required this.selected,
     required this.child,
-    this.radius = AppRadius.lg,
+    this.radius = PpForgeRadius.lg,
     this.color,
     this.gap = 3,
     super.key,

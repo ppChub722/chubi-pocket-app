@@ -210,7 +210,7 @@ void main() {
 
     testWidgets('"All" chip = 1 call with all=true', (t) async {
       await pump(t, const PersonalDebtsPage());
-      await t.tap(find.widgetWithText(AppChip, 'All'));
+      await t.tap(find.widgetWithText(PpForgeChip, 'All'));
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls.last, 'people all=true');
     });

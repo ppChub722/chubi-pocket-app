@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import '../tokens/app_spacing.dart';
 
 /// The one hairline (owner 2026-10-12): a 1-px line in the outline colour.
-/// `AppDivider()` spans its width; `AppDivider.row()` is inset like the
+/// `PpForgeDivider()` spans its width; `PpForgeDivider.row()` is inset like the
 /// rows of a detail section (a rule between rows); [height] is the space it
 /// takes (the line sits in the middle). Never a raw `Divider`.
-class AppDivider extends StatelessWidget {
-  const AppDivider({this.height = 1, this.indent = 0, super.key});
+class PpForgeDivider extends StatelessWidget {
+  const PpForgeDivider({this.height = 1, this.indent = 0, super.key});
 
-  /// Between the rows of a section: inset [AppSpacing.lg] on both sides.
-  const AppDivider.row({super.key}) : height = 1, indent = AppSpacing.lg;
+  /// Between the rows of a section: inset [PpForgeSpacing.lg] on both sides.
+  const PpForgeDivider.row({super.key})
+    : height = 1,
+      indent = PpForgeSpacing.lg;
 
   /// The space the divider takes up (the line is centred in it).
   final double height;

@@ -65,7 +65,7 @@ void main() {
           ),
         ),
       );
-      final input = t.getRect(find.byType(AppInput));
+      final input = t.getRect(find.byType(PpForgeInput));
       final chip = t.getRect(
         find
             .ancestor(of: find.text('Bee'), matching: find.byType(Container))

@@ -130,7 +130,7 @@ class ProgressCard extends StatelessWidget {
     if (skeleton) return _skeleton();
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final tint = iconCode.tintFor(palette);
     final color = tone.resolve(context, entityTint: tint);
     final hasTile = leading != null || iconCode != null || fallbackIcon != null;
@@ -149,7 +149,7 @@ class ProgressCard extends StatelessWidget {
                 fallbackIcon: fallbackIcon ?? Icons.savings_outlined,
                 fallbackColor: tint,
               ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: PpForgeSpacing.md),
         ],
         Expanded(
           child: Column(
@@ -172,7 +172,10 @@ class ProgressCard extends StatelessWidget {
             ],
           ),
         ),
-        if (badge != null) ...[const SizedBox(width: AppSpacing.sm), badge!],
+        if (badge != null) ...[
+          const SizedBox(width: PpForgeSpacing.sm),
+          badge!,
+        ],
       ],
     );
 
@@ -184,7 +187,7 @@ class ProgressCard extends StatelessWidget {
     final footer = !hasFooter
         ? const SizedBox.shrink()
         : Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -229,7 +232,7 @@ class ProgressCard extends StatelessWidget {
                   ),
                 ),
                 if (percentText != null) ...[
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                   Text(
                     percentText!,
                     key: const ValueKey('progressPercent'),
@@ -246,15 +249,15 @@ class ProgressCard extends StatelessWidget {
 
     final body = Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
+        horizontal: PpForgeSpacing.lg,
+        vertical: PpForgeSpacing.md,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           header,
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
           ProgressRow(
             value: value,
             expected: expected,
@@ -276,8 +279,8 @@ class ProgressCard extends StatelessWidget {
 
   Widget _skeleton() => Padding(
     padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.lg,
-      vertical: AppSpacing.md,
+      horizontal: PpForgeSpacing.lg,
+      vertical: PpForgeSpacing.md,
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -286,23 +289,23 @@ class ProgressCard extends StatelessWidget {
           children: [
             if (!compact && skeletonIcon) ...const [
               SkeletonBox(width: _tile, height: _tile, shape: BoxShape.circle),
-              SizedBox(width: AppSpacing.md),
+              SizedBox(width: PpForgeSpacing.md),
             ],
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SkeletonBox(width: 140, height: 14),
-                  SizedBox(height: AppSpacing.xs),
+                  SizedBox(height: PpForgeSpacing.xs),
                   SkeletonBox(width: 100, height: 10),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         SkeletonBox(height: compact ? 6 : 8, borderRadius: 8),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

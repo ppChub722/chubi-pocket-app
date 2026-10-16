@@ -23,7 +23,7 @@ class ActionBarItem {
   final bool primary;
 
   /// The action sends to the server (save, delete, create …): disabled while
-  /// the app is offline ([AppButton.submits]). Default false.
+  /// the app is offline ([PpForgeButton.submits]). Default false.
   final bool submits;
 }
 
@@ -52,15 +52,15 @@ class ActionBar extends StatelessWidget {
       child: Row(
         children: [
           for (final (i, a) in actions.indexed) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.sm),
+            if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 label: a.label,
                 icon: a.icon,
                 expand: true,
                 variant: a.primary
-                    ? AppButtonVariant.primary
-                    : AppButtonVariant.tonal,
+                    ? PpForgeButtonVariant.primary
+                    : PpForgeButtonVariant.tonal,
                 submits: a.submits,
                 onPressed: a.onPressed,
               ),

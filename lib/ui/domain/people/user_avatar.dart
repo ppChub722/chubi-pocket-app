@@ -6,7 +6,7 @@ import '../icons/icon_type.dart';
 import '../../atoms/app_avatar.dart';
 
 /// A user's avatar: their chosen icon ([iconCode], rendered by the icon
-/// maker) or, without one, an [AppAvatar] of their initials.
+/// maker) or, without one, an [PpForgeAvatar] of their initials.
 class UserAvatar extends StatelessWidget {
   const UserAvatar({
     super.key,
@@ -28,6 +28,6 @@ class UserAvatar extends StatelessWidget {
         iconCode: iconCode,
       );
     }
-    return AppAvatar(name: displayName, size: size);
+    return PpForgeAvatar(name: displayName, size: size);
   }
 }

@@ -14,7 +14,7 @@ import '../money/money_text.dart';
 ///               [source chip] [metaLeading] · category · meta · #tags  🔁 3/12 🔗 ⑂
 ///
 /// - Line 1: the title (description ?? category) and the wallet as a mini
-///   [AppChip] with the wallet's icon right after it; then the optional
+///   [PpForgeChip] with the wallet's icon right after it; then the optional
 ///   [statusChip] (a mini chip, e.g. "หยุดชั่วคราว"); the amount at the end.
 ///   The status chip rides on line 1 because a mini chip (20) is taller than
 ///   the line-2 text: there it would grow the row.
@@ -70,7 +70,7 @@ class TxRow extends StatelessWidget {
   /// The wallet's icon, shown inside the chip.
   final Widget? walletIcon;
 
-  /// The pending source chip (a mini [AppChip]) — null on transactions.
+  /// The pending source chip (a mini [PpForgeChip]) — null on transactions.
   final Widget? source;
 
   final String? category;
@@ -143,20 +143,20 @@ class TxRow extends StatelessWidget {
         Icon(icon, size: 12, color: scheme.onSurfaceVariant);
     final glyphs = <Widget>[
       if (recurring) ...[
-        const SizedBox(width: AppSpacing.sm),
-        glyph(AppIcons.recurring),
+        const SizedBox(width: PpForgeSpacing.sm),
+        glyph(PpForgeIcons.recurring),
         if (progress != null && progress!.isNotEmpty) ...[
           const SizedBox(width: 2),
           Text(progress!, style: small, maxLines: 1),
         ],
       ],
       if (linked) ...[
-        const SizedBox(width: AppSpacing.sm),
-        glyph(AppIcons.link),
+        const SizedBox(width: PpForgeSpacing.sm),
+        glyph(PpForgeIcons.link),
       ],
       if (hasSplits) ...[
-        const SizedBox(width: AppSpacing.sm),
-        glyph(AppIcons.split),
+        const SizedBox(width: PpForgeSpacing.sm),
+        glyph(PpForgeIcons.split),
       ],
     ];
     final showLine2 =
@@ -166,17 +166,17 @@ class TxRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.sm,
         ),
         child: Row(
           children: [
             if (select != null) ...[
               select!,
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
             ],
             leading,
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,10 +193,10 @@ class TxRow extends StatelessWidget {
                         ),
                       ),
                       if (walletLabel != null) ...[
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 120),
-                          child: AppChip(
+                          child: PpForgeChip(
                             label: walletLabel!,
                             leading: walletIcon,
                             size: ChipSize.mini,
@@ -204,7 +204,7 @@ class TxRow extends StatelessWidget {
                         ),
                       ],
                       if (statusChip != null) ...[
-                        const SizedBox(width: AppSpacing.xs),
+                        const SizedBox(width: PpForgeSpacing.xs),
                         Flexible(child: statusChip!),
                       ],
                     ],
@@ -217,7 +217,7 @@ class TxRow extends StatelessWidget {
                           if (source != null) ...[
                             source!,
                             if (hasLine2 || metaLeading != null)
-                              const SizedBox(width: AppSpacing.xs),
+                              const SizedBox(width: PpForgeSpacing.xs),
                           ],
                           if (metaLeading != null) ...[
                             Flexible(child: metaLeading!),
@@ -230,15 +230,15 @@ class TxRow extends StatelessWidget {
                     ),
                   if (warning != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
+                      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
                       child: Row(
                         children: [
                           Icon(
-                            AppIcons.warning,
+                            PpForgeIcons.warning,
                             size: 14,
                             color: warningColor ?? scheme.error,
                           ),
-                          const SizedBox(width: AppSpacing.xs),
+                          const SizedBox(width: PpForgeSpacing.xs),
                           Expanded(
                             child: Text(
                               warning!,
@@ -254,7 +254,7 @@ class TxRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             MoneyText(
               amount,
               tone: tone,

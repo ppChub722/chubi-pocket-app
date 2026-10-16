@@ -95,12 +95,12 @@ void main() {
   testWidgets('dashed pick chips lead the wallet and category rows', (t) async {
     await pump(t);
     await t.pump();
-    final wallet = find.widgetWithText(AppChip, 'เลือกกระเป๋า');
-    final category = find.widgetWithText(AppChip, 'เลือกหมวด');
+    final wallet = find.widgetWithText(PpForgeChip, 'เลือกกระเป๋า');
+    final category = find.widgetWithText(PpForgeChip, 'เลือกหมวด');
     expect(wallet, findsOneWidget);
     expect(category, findsOneWidget);
-    expect(t.widget<AppChip>(wallet).dashed, isTrue);
-    expect(t.widget<AppChip>(category).dashed, isTrue);
+    expect(t.widget<PpForgeChip>(wallet).dashed, isTrue);
+    expect(t.widget<PpForgeChip>(category).dashed, isTrue);
     // The wallet row sits above the category row; no big cards.
     expect(t.getTopLeft(wallet).dy, lessThan(t.getTopLeft(category).dy));
     expect(find.byType(PickCard), findsNothing);

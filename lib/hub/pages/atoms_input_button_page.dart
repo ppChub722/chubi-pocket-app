@@ -29,13 +29,13 @@ class _ButtonPageState extends State<_ButtonPage> {
           note: 'The real presets and where they are used.',
         ),
         HubDemo(
-          title: 'AppButton — variants',
+          title: 'PpForgeButton — variants',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
-              for (final v in AppButtonVariant.values)
-                AppButton(label: v.name, variant: v, onPressed: () {}),
+              for (final v in PpForgeButtonVariant.values)
+                PpForgeButton(label: v.name, variant: v, onPressed: () {}),
             ],
           ),
         ),
@@ -44,14 +44,14 @@ class _ButtonPageState extends State<_ButtonPage> {
           note:
               'Disabled (onPressed null) and loading (spinner replaces the label).',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
-              const AppButton(label: 'Disabled', onPressed: null),
-              AppButton(label: 'Loading', loading: true, onPressed: () {}),
-              AppButton(
+              const PpForgeButton(label: 'Disabled', onPressed: null),
+              PpForgeButton(label: 'Loading', loading: true, onPressed: () {}),
+              PpForgeButton(
                 label: 'With icon',
-                icon: AppIcons.add,
+                icon: PpForgeIcons.add,
                 onPressed: () {},
               ),
             ],
@@ -68,13 +68,13 @@ class _ButtonPageState extends State<_ButtonPage> {
             offline: true,
             reconnects: 0,
             child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppButton(label: 'Save', submits: true, onPressed: () {}),
-                AppButton(
+                PpForgeButton(label: 'Save', submits: true, onPressed: () {}),
+                PpForgeButton(
                   label: 'Cancel',
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   onPressed: () {},
                 ),
               ],
@@ -83,9 +83,9 @@ class _ButtonPageState extends State<_ButtonPage> {
         ),
         HubDemo(
           title: 'Large, full width',
-          child: AppButton(
+          child: PpForgeButton(
             label: _loading ? 'Saving…' : 'Tap to fake a save',
-            size: AppButtonSize.large,
+            size: PpForgeButtonSize.large,
             expand: true,
             loading: _loading,
             onPressed: () async {
@@ -96,14 +96,14 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
-          title: 'AppIconButton — activity',
+          title: 'PpForgeIconButton — activity',
           note:
               'none · progress (a bar overlaid under the icon) · done (the icon '
               'at ~0.3 with a ✓ on top). The icon and the button size never move. '
               'Tap to cycle; the count badge (3) floats outside the circle, '
               'top-right, and hides while a job runs.',
-          child: AppIconButton(
-            icon: AppIcons.notifications,
+          child: PpForgeIconButton(
+            icon: PpForgeIcons.notifications,
             badgeCount: 3,
             tooltip: 'Cycle',
             activity: _activity,
@@ -115,31 +115,34 @@ class _ButtonPageState extends State<_ButtonPage> {
           ),
         ),
         HubDemo(
-          title: 'Edit ✏️ — AppIconButton.edit',
+          title: 'Edit ✏️ — PpForgeIconButton.edit',
           note:
               "The round ✏️. Hero top row (32, level with the chips: HeaderCard, "
               "the transaction hero, the wallet hero) and a list header's "
               "\"enter edit / reorder mode\" (36: wallets, categories, tags). "
               "Null onPressed dims it.",
           child: Wrap(
-            spacing: AppSpacing.lg,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.lg,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               HubCell(
                 caption: 'hero 32',
-                child: AppIconButton.edit(
-                  size: AppIconButton.sizeHero,
+                child: PpForgeIconButton.edit(
+                  size: PpForgeIconButton.sizeHero,
                   tooltip: 'Edit',
                   onPressed: () {},
                 ),
               ),
               HubCell(
                 caption: 'list 36',
-                child: AppIconButton.edit(tooltip: 'Edit', onPressed: () {}),
+                child: PpForgeIconButton.edit(
+                  tooltip: 'Edit',
+                  onPressed: () {},
+                ),
               ),
               const HubCell(
                 caption: 'disabled',
-                child: AppIconButton.edit(onPressed: null),
+                child: PpForgeIconButton.edit(onPressed: null),
               ),
             ],
           ),
@@ -155,19 +158,19 @@ class _ButtonPageState extends State<_ButtonPage> {
           child: Row(
             children: [
               Expanded(
-                child: AppButton(
+                child: PpForgeButton(
                   label: 'Cancel',
-                  variant: AppButtonVariant.outlined,
-                  size: AppButtonSize.large,
+                  variant: PpForgeButtonVariant.outlined,
+                  size: PpForgeButtonSize.large,
                   expand: true,
                   onPressed: () {},
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               Expanded(
-                child: AppButton(
+                child: PpForgeButton(
                   label: 'Save',
-                  size: AppButtonSize.large,
+                  size: PpForgeButtonSize.large,
                   expand: true,
                   onPressed: () {},
                 ),
@@ -181,16 +184,16 @@ class _ButtonPageState extends State<_ButtonPage> {
               "The top bar's chips, normal and \"current page\" (the page they "
               "open is on screen: primary-container fill + primary ring). "
               "Inbox ⏳ (pending drafts) and bell carry a count badge that floats outside the circle, top-right, in a page-colour ring; the "
-              "profile chip is an AppAvatarButton whose ring follows the "
+              "profile chip is an PpForgeAvatarButton whose ring follows the "
               "avatar's own shape. Used by AppTopBar.",
           child: Wrap(
-            spacing: AppSpacing.lg,
-            runSpacing: AppSpacing.md,
+            spacing: PpForgeSpacing.lg,
+            runSpacing: PpForgeSpacing.md,
             children: [
               HubCell(
                 caption: 'inbox · normal',
-                child: AppIconButton(
-                  icon: AppIcons.pending,
+                child: PpForgeIconButton(
+                  icon: PpForgeIcons.pending,
                   badgeCount: 3,
                   tooltip: 'Pending',
                   onPressed: () {},
@@ -198,8 +201,8 @@ class _ButtonPageState extends State<_ButtonPage> {
               ),
               HubCell(
                 caption: 'inbox · current',
-                child: AppIconButton(
-                  icon: AppIcons.pending,
+                child: PpForgeIconButton(
+                  icon: PpForgeIcons.pending,
                   badgeCount: 3,
                   selected: true,
                   tooltip: 'Pending',
@@ -208,8 +211,8 @@ class _ButtonPageState extends State<_ButtonPage> {
               ),
               HubCell(
                 caption: 'bell · normal',
-                child: AppIconButton(
-                  icon: AppIcons.notifications,
+                child: PpForgeIconButton(
+                  icon: PpForgeIcons.notifications,
                   badgeCount: 12,
                   tooltip: 'Notifications',
                   onPressed: () {},
@@ -217,8 +220,8 @@ class _ButtonPageState extends State<_ButtonPage> {
               ),
               HubCell(
                 caption: 'bell · current',
-                child: AppIconButton(
-                  icon: AppIcons.notifications,
+                child: PpForgeIconButton(
+                  icon: PpForgeIcons.notifications,
                   selected: true,
                   tooltip: 'Notifications',
                   onPressed: () {},
@@ -226,7 +229,7 @@ class _ButtonPageState extends State<_ButtonPage> {
               ),
               HubCell(
                 caption: 'profile · normal',
-                child: AppAvatarButton(
+                child: PpForgeAvatarButton(
                   tooltip: 'Profile',
                   onTap: () {},
                   child: const UserAvatar(displayName: 'Aom Chan', size: 32),
@@ -234,7 +237,7 @@ class _ButtonPageState extends State<_ButtonPage> {
               ),
               HubCell(
                 caption: 'profile · current',
-                child: AppAvatarButton(
+                child: PpForgeAvatarButton(
                   tooltip: 'Profile',
                   active: true,
                   onTap: () {},
@@ -259,7 +262,7 @@ class _ButtonPageState extends State<_ButtonPage> {
             children: [
               for (final (name, code) in hubHardAvatarCases)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  padding: const EdgeInsets.only(bottom: PpForgeSpacing.md),
                   child: Row(
                     children: [
                       Expanded(
@@ -269,7 +272,7 @@ class _ButtonPageState extends State<_ButtonPage> {
                         ),
                       ),
                       for (final active in [false, true]) ...[
-                        const SizedBox(width: AppSpacing.md),
+                        const SizedBox(width: PpForgeSpacing.md),
                         _profileChip(code, active: active),
                       ],
                     ],
@@ -285,10 +288,10 @@ class _ButtonPageState extends State<_ButtonPage> {
               'It floats off the top-right of what it counts, half outside, '
               'anchored to that thing (CountBadge.floating) — an icon button '
               "or a tab's label, never over the icon or text. Used by "
-              'AppIconButton (shell inbox / bell) and AppTabBar.',
+              'PpForgeIconButton (shell inbox / bell) and PpForgeTabBar.',
           child: Wrap(
-            spacing: AppSpacing.xl,
-            runSpacing: AppSpacing.lg,
+            spacing: PpForgeSpacing.xl,
+            runSpacing: PpForgeSpacing.lg,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               for (final n in [0, 1, 12, 99, 120])
@@ -298,8 +301,8 @@ class _ButtonPageState extends State<_ButtonPage> {
                 ),
               HubCell(
                 caption: 'on a button',
-                child: AppIconButton(
-                  icon: AppIcons.notifications,
+                child: PpForgeIconButton(
+                  icon: PpForgeIcons.notifications,
                   badgeCount: 7,
                   onPressed: () {},
                 ),
@@ -323,34 +326,46 @@ class _ButtonPageState extends State<_ButtonPage> {
           note:
               'No chip: a plain 48 dp tap target. ✕ close (PickerSheet, '
               'SideSheet, the quick-create header, update banner, chat dial); '
-              '✕ clear (remove a split / event / row, AppMessage); ⋯ more '
+              '✕ clear (remove a split / event / row, PpForgeMessage); ⋯ more '
               '(a member row); ← back; .flat for anything else (the 🗑 in a '
               'draft header). iconSize / color override the look; dense '
               'shrinks the target for inline use.',
           child: Wrap(
-            spacing: AppSpacing.lg,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.lg,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               HubCell(
                 caption: 'close',
-                child: AppIconButton.close(tooltip: 'Close', onPressed: () {}),
+                child: PpForgeIconButton.close(
+                  tooltip: 'Close',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'clear',
-                child: AppIconButton.clear(tooltip: 'Clear', onPressed: () {}),
+                child: PpForgeIconButton.clear(
+                  tooltip: 'Clear',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'more',
-                child: AppIconButton.more(tooltip: 'More', onPressed: () {}),
+                child: PpForgeIconButton.more(
+                  tooltip: 'More',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'back',
-                child: AppIconButton.back(tooltip: 'Back', onPressed: () {}),
+                child: PpForgeIconButton.back(
+                  tooltip: 'Back',
+                  onPressed: () {},
+                ),
               ),
               HubCell(
                 caption: 'flat 🗑 (error)',
-                child: AppIconButton.flat(
-                  icon: AppIcons.delete,
+                child: PpForgeIconButton.flat(
+                  icon: PpForgeIcons.delete,
                   color: Theme.of(context).colorScheme.error,
                   tooltip: 'Delete',
                   onPressed: () {},
@@ -358,7 +373,7 @@ class _ButtonPageState extends State<_ButtonPage> {
               ),
               HubCell(
                 caption: 'dense, 18',
-                child: AppIconButton.clear(
+                child: PpForgeIconButton.clear(
                   dense: true,
                   iconSize: 18,
                   onPressed: () {},
@@ -366,7 +381,7 @@ class _ButtonPageState extends State<_ButtonPage> {
               ),
               const HubCell(
                 caption: 'disabled',
-                child: AppIconButton.close(onPressed: null),
+                child: PpForgeIconButton.close(onPressed: null),
               ),
             ],
           ),
@@ -378,43 +393,43 @@ class _ButtonPageState extends State<_ButtonPage> {
         ),
 
         HubPlayground(
-          title: 'AppButton',
+          title: 'PpForgeButton',
           hug: Alignment.centerLeft,
-          note: 'Every option AppButton has.',
+          note: 'Every option PpForgeButton has.',
           controls: [
             const PlayText('label', initialValue: 'Save'),
-            PlayChoice<AppButtonVariant>('variant', [
-              for (final v in AppButtonVariant.values) (v.name, v),
+            PlayChoice<PpForgeButtonVariant>('variant', [
+              for (final v in PpForgeButtonVariant.values) (v.name, v),
             ]),
-            PlayChoice<AppButtonSize>('size', [
-              for (final v in AppButtonSize.values) (v.name, v),
+            PlayChoice<PpForgeButtonSize>('size', [
+              for (final v in PpForgeButtonSize.values) (v.name, v),
             ]),
             const PlayBool('icon'),
             const PlayBool('loading'),
             const PlayBool('expand'),
             const PlayBool('enabled', initialValue: true),
           ],
-          builder: (context, v) => AppButton(
+          builder: (context, v) => PpForgeButton(
             label: v<String>('label'),
-            variant: v<AppButtonVariant>('variant'),
-            size: v<AppButtonSize>('size'),
-            icon: v<bool>('icon') ? AppIcons.check : null,
+            variant: v<PpForgeButtonVariant>('variant'),
+            size: v<PpForgeButtonSize>('size'),
+            icon: v<bool>('icon') ? PpForgeIcons.check : null,
             loading: v<bool>('loading'),
             expand: v<bool>('expand'),
             onPressed: v<bool>('enabled') ? () {} : null,
           ),
         ),
         HubPlayground(
-          title: 'AppIconButton',
+          title: 'PpForgeIconButton',
           hug: Alignment.centerLeft,
           note: 'The chip itself (the flat variants are in the demos below).',
           controls: [
             PlayChoice<IconData>('icon', [
-              ('edit', AppIcons.edit),
-              ('close', AppIcons.close),
-              ('inbox', AppIcons.pending),
-              ('bell', AppIcons.notifications),
-              ('delete', AppIcons.delete),
+              ('edit', PpForgeIcons.edit),
+              ('close', PpForgeIcons.close),
+              ('inbox', PpForgeIcons.pending),
+              ('bell', PpForgeIcons.notifications),
+              ('delete', PpForgeIcons.delete),
             ]),
             const PlayNum(
               'badgeCount',
@@ -431,7 +446,7 @@ class _ButtonPageState extends State<_ButtonPage> {
             ]),
             const PlayBool('enabled', initialValue: true),
           ],
-          builder: (context, v) => AppIconButton(
+          builder: (context, v) => PpForgeIconButton(
             icon: v<IconData>('icon'),
             badgeCount: v<double>('badgeCount').round(),
             selected: v<bool>('selected'),
@@ -451,7 +466,7 @@ class _ButtonPageState extends State<_ButtonPage> {
 /// the ring following the avatar's shape, the icon-maker frame dropped.
 Widget _profileChip(IconCode code, {required bool active}) {
   final outline = IconShape.fromId(code.shape).radius(40);
-  return AppAvatarButton(
+  return PpForgeAvatarButton(
     outline: outline,
     active: active,
     tooltip: 'Profile',

@@ -95,39 +95,39 @@ class _SettleSheetDemoState extends State<_SettleSheetDemo> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+          spacing: PpForgeSpacing.sm,
+          runSpacing: PpForgeSpacing.sm,
           children: [
-            AppButton(
+            PpForgeButton(
               label: 'Receive',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () => _open(
                 receive: true,
                 outstanding: 1200,
                 description: 'Lunch money',
               ),
             ),
-            AppButton(
+            PpForgeButton(
               label: 'Pay back (pre-filled 300)',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () =>
                   _open(receive: false, outstanding: 800, initial: 300),
             ),
-            AppButton(
+            PpForgeButton(
               label: 'Overpaid (cannot settle)',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () => _open(receive: true, outstanding: -50),
             ),
-            AppButton(
+            PpForgeButton(
               label: 'Failing call',
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               onPressed: () =>
                   _open(receive: true, outstanding: 500, fail: true),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
-        AppText('Result: $_result'),
+        const SizedBox(height: PpForgeSpacing.sm),
+        PpForgeText('Result: $_result'),
       ],
     );
   }

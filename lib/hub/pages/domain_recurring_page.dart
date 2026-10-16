@@ -64,8 +64,8 @@ class _RecurringPage extends StatelessWidget {
               'pending · a real tx = done · archived = "don\'t want it". One '
               'tone per state (StatusChip).',
           child: Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               for (final s in OccurrenceState.values)
                 OccurrenceStateChip(state: s),
@@ -426,9 +426,9 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppButton(
+        PpForgeButton(
           label: 'showRecurrenceSheet',
-          variant: AppButtonVariant.outlined,
+          variant: PpForgeButtonVariant.outlined,
           onPressed: () async {
             final r = await showRecurrenceSheet(context, initial: _rule);
             if (!mounted) return;
@@ -438,10 +438,10 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
             });
           },
         ),
-        const SizedBox(height: AppSpacing.sm),
-        AppText(
+        const SizedBox(height: PpForgeSpacing.sm),
+        PpForgeText(
           '$_last · ${recurrenceLabel(l, _rule, showEnd: true)}',
-          role: AppTextRole.caption,
+          role: PpForgeTextRole.caption,
         ),
       ],
     );

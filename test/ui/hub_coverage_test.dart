@@ -35,6 +35,8 @@ void main() {
       for (final m in exportRe.allMatches(src)) {
         final rel = m.group(1)!;
         if (rel.startsWith('package:') || rel.startsWith('dart:')) continue;
+        // App* aliases of PpForge* pieces — covered by what they alias.
+        if (rel == 'app_aliases.dart') continue;
         visit(Uri.parse('$dir/').resolve(rel).path);
       }
     }

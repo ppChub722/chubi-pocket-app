@@ -10,9 +10,9 @@ import 'dashed_rect_border.dart';
 import '../tokens/chip_size.dart';
 import '../tokens/tone.dart';
 
-/// [AppChip]'s colour, by meaning. [color] on the chip overrides it with
+/// [PpForgeChip]'s colour, by meaning. [color] on the chip overrides it with
 /// any colour (a category's, a tag's, a wallet's accent).
-enum AppChipTone {
+enum PpForgeChipTone {
   primary,
 
   /// Grey even when selected — a quiet label ("ผ่อน", "แบบเกิดซ้ำ").
@@ -23,17 +23,17 @@ enum AppChipTone {
   info;
 
   /// The status [Tone]s (a project's, a debt's, a member's) as chip tones.
-  static AppChipTone fromTone(Tone tone) => switch (tone) {
-    Tone.neutral => AppChipTone.neutral,
-    Tone.primary => AppChipTone.primary,
-    Tone.success => AppChipTone.success,
-    Tone.warning => AppChipTone.warning,
-    Tone.danger => AppChipTone.danger,
-    Tone.info => AppChipTone.info,
+  static PpForgeChipTone fromTone(Tone tone) => switch (tone) {
+    Tone.neutral => PpForgeChipTone.neutral,
+    Tone.primary => PpForgeChipTone.primary,
+    Tone.success => PpForgeChipTone.success,
+    Tone.warning => PpForgeChipTone.warning,
+    Tone.danger => PpForgeChipTone.danger,
+    Tone.info => PpForgeChipTone.info,
   };
 
   Color resolve(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     return switch (this) {
       primary => scheme.primary,
@@ -46,20 +46,20 @@ enum AppChipTone {
   }
 }
 
-/// What sits after an [AppChip]'s label.
-enum AppChipTrailing {
+/// What sits after an [PpForgeChip]'s label.
+enum PpForgeChipTrailing {
   none,
 
   /// ▾ — the chip opens a menu / sheet.
   dropdown,
 
-  /// ✕ — drops it ([AppChip.onRemove]).
+  /// ✕ — drops it ([PpForgeChip.onRemove]).
   remove,
 
   /// 🔒 — can't be changed (a saved row's type).
   lock,
 
-  /// A small counter ([AppChip.count]) — how many are picked.
+  /// A small counter ([PpForgeChip.count]) — how many are picked.
   count,
 }
 
@@ -81,9 +81,9 @@ enum AppChipTrailing {
 ///   the size's, whatever the content.
 /// - **Disabled:** [enabled] false fades it and ignores taps.
 ///
-/// Not chips: [AppBadge] (a counter label) and the period steppers.
-class AppChip extends StatelessWidget {
-  const AppChip({
+/// Not chips: [PpForgeBadge] (a counter label) and the period steppers.
+class PpForgeChip extends StatelessWidget {
+  const PpForgeChip({
     required this.label,
     this.icon,
     this.leading,
@@ -92,7 +92,7 @@ class AppChip extends StatelessWidget {
     this.color,
     this.selected = false,
     this.onTap,
-    this.trailing = AppChipTrailing.none,
+    this.trailing = PpForgeChipTrailing.none,
     this.onRemove,
     this.count = 0,
     ChipSize? size,
@@ -102,8 +102,8 @@ class AppChip extends StatelessWidget {
     this.maxWidth,
     super.key,
   }) : assert(
-         trailing != AppChipTrailing.remove || onRemove != null,
-         'AppChipTrailing.remove needs onRemove',
+         trailing != PpForgeChipTrailing.remove || onRemove != null,
+         'PpForgeChipTrailing.remove needs onRemove',
        ),
        _size = size;
 
@@ -120,21 +120,21 @@ class AppChip extends StatelessWidget {
 
   /// The chip's colour by meaning — null = primary (the icon then follows
   /// the text: grey until selected).
-  final AppChipTone? tone;
+  final PpForgeChipTone? tone;
 
   /// Any colour — overrides [tone].
   final Color? color;
 
   final bool selected;
 
-  /// Null = display-only (no ink). With [AppChipTrailing.remove] and no
+  /// Null = display-only (no ink). With [PpForgeChipTrailing.remove] and no
   /// [onTap], tapping anywhere removes.
   final VoidCallback? onTap;
 
-  final AppChipTrailing trailing;
+  final PpForgeChipTrailing trailing;
   final VoidCallback? onRemove;
 
-  /// For [AppChipTrailing.count].
+  /// For [PpForgeChipTrailing.count].
   final int count;
 
   /// [ChipSize.control] (default), [ChipSize.chip] or [ChipSize.mini]; null =
@@ -162,7 +162,7 @@ class AppChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = _size ?? ChipSizeScope.of(context) ?? ChipSize.control;
     final scheme = Theme.of(context).colorScheme;
-    final tint = color ?? (tone ?? AppChipTone.primary).resolve(context);
+    final tint = color ?? (tone ?? PpForgeChipTone.primary).resolve(context);
     final fg = selected ? tint : scheme.onSurfaceVariant;
     // A chosen colour shows on the icon even unselected (a category's icon);
     // the default primary doesn't.
@@ -170,7 +170,7 @@ class AppChip extends StatelessWidget {
     final iconSize = size.icon;
     final gap = size.gap;
     final tap = enabled
-        ? (onTap ?? (trailing == AppChipTrailing.remove ? onRemove : null))
+        ? (onTap ?? (trailing == PpForgeChipTrailing.remove ? onRemove : null))
         : null;
 
     final Widget? lead = leading != null
@@ -194,27 +194,27 @@ class AppChip extends StatelessWidget {
         : null;
 
     final Widget? tail = switch (trailing) {
-      AppChipTrailing.none => null,
-      AppChipTrailing.dropdown => Icon(
-        AppIcons.dropdown,
+      PpForgeChipTrailing.none => null,
+      PpForgeChipTrailing.dropdown => Icon(
+        PpForgeIcons.dropdown,
         size: iconSize + 4,
         color: fg,
       ),
-      AppChipTrailing.lock => Icon(
-        AppIcons.lock,
+      PpForgeChipTrailing.lock => Icon(
+        PpForgeIcons.lock,
         size: iconSize - 2,
         color: fg,
       ),
-      AppChipTrailing.remove =>
+      PpForgeChipTrailing.remove =>
         // Its own target when the chip does something else on tap.
         onTap == null
-            ? Icon(AppIcons.close, size: iconSize, color: fg)
+            ? Icon(PpForgeIcons.close, size: iconSize, color: fg)
             : InkResponse(
                 onTap: enabled ? onRemove : null,
                 radius: size.height / 2,
-                child: Icon(AppIcons.close, size: iconSize, color: fg),
+                child: Icon(PpForgeIcons.close, size: iconSize, color: fg),
               ),
-      AppChipTrailing.count =>
+      PpForgeChipTrailing.count =>
         count <= 0 ? null : _Count(count: count, color: fg, size: size),
     };
 
@@ -248,9 +248,9 @@ class AppChip extends StatelessWidget {
               // concentric with the chip's round end instead.
               right: tail == null
                   ? sidePad
-                  : trailing == AppChipTrailing.count
+                  : trailing == PpForgeChipTrailing.count
                   ? (size.height - (size.icon + 2)) / 2
-                  : sidePad - AppSpacing.xs,
+                  : sidePad - PpForgeSpacing.xs,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -304,7 +304,7 @@ class AppChip extends StatelessWidget {
   }
 }
 
-/// [AppChipTrailing.count]: the number on a faint stadium of [color].
+/// [PpForgeChipTrailing.count]: the number on a faint stadium of [color].
 class _Count extends StatelessWidget {
   const _Count({required this.count, required this.color, required this.size});
   final int count;
@@ -375,7 +375,7 @@ class _RenderExpandedHit extends RenderProxyBox {
   }
 }
 
-/// Sets the size of every [AppChip] below it that doesn't pass its own [size]
+/// Sets the size of every [PpForgeChip] below it that doesn't pass its own [size]
 /// (a list toolbar's chip row is [ChipSize.chip], one size down from the
 /// search capsule it sits under).
 class ChipSizeScope extends InheritedWidget {

@@ -43,8 +43,8 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
     mainAxisSize: MainAxisSize.min,
     children: [
       for (final v in const [false, true]) ...[
-        if (v) const SizedBox(width: AppSpacing.xs),
-        AppChip(
+        if (v) const SizedBox(width: PpForgeSpacing.xs),
+        PpForgeChip(
           label: v ? 'Edit' : 'View',
           selected: editing == v,
           onTap: () => onChanged(v),
@@ -55,16 +55,16 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final big = text.headlineMedium?.copyWith(fontWeight: FontWeight.w800);
     void noop() {}
 
-    Widget chips() => const AppChip(
+    Widget chips() => const PpForgeChip(
       label: 'Active',
       dot: true,
-      tone: AppChipTone.success,
+      tone: PpForgeChipTone.success,
       selected: true,
     );
 
@@ -98,19 +98,19 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               child: HeaderCard(
                 accent: palette.expense,
                 topRow: [
-                  AppChip(
+                  PpForgeChip(
                     label: 'Expense',
-                    icon: AppIcons.expense,
+                    icon: PpForgeIcons.expense,
                     color: palette.expense,
                     selected: true,
                   ),
                   chips(),
                 ],
                 topActions: [
-                  AppChip(
-                    icon: AppIcons.reset,
+                  PpForgeChip(
+                    icon: PpForgeIcons.reset,
                     label: 'Adjust',
-                    tone: AppChipTone.primary,
+                    tone: PpForgeChipTone.primary,
                     selected: true,
                     onTap: noop,
                   ),
@@ -150,10 +150,10 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               child: HeaderCard(
                 accent: palette.success,
                 topRow: const [
-                  AppChip(
+                  PpForgeChip(
                     label: 'Goal reached',
-                    icon: AppIcons.success,
-                    tone: AppChipTone.success,
+                    icon: PpForgeIcons.success,
+                    tone: PpForgeChipTone.success,
                     selected: true,
                   ),
                 ],
@@ -167,7 +167,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                       30000,
                       style: big?.copyWith(color: palette.success),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: PpForgeSpacing.sm),
                     ProgressRow(
                       value: 1,
                       color: palette.success,
@@ -186,9 +186,9 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                 leading: const IconDisplay(type: IconType.account, size: 44),
                 title: const Text('Overdue'),
                 subtitle: const Text('accent: scheme.error'),
-                trailing: const AppChip(
+                trailing: const PpForgeChip(
                   label: 'Late',
-                  tone: AppChipTone.danger,
+                  tone: PpForgeChipTone.danger,
                   selected: true,
                 ),
               ),
@@ -199,11 +199,11 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               page: 'Category detail',
               child: HeaderCard(
                 accent: palette.income,
-                glyph: AppIcons.category,
+                glyph: PpForgeIcons.category,
                 topRow: [
-                  AppChip(
+                  PpForgeChip(
                     label: 'Income',
-                    icon: AppIcons.income,
+                    icon: PpForgeIcons.income,
                     color: palette.income,
                     selected: true,
                   ),
@@ -222,7 +222,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               page: 'Every detail page (HeaderCard.description)',
               child: HeaderCard(
                 accent: palette.primary,
-                glyph: AppIcons.contact,
+                glyph: PpForgeIcons.contact,
                 leading: const IconDisplay(type: IconType.category, size: 44),
                 title: const Text('Lee'),
                 description: HeroDescription(
@@ -234,9 +234,9 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                   editing: false,
                   hint: 'Description',
                 ),
-                subtitle: const AppChip(
+                subtitle: const PpForgeChip(
                   label: 'Linked',
-                  tone: AppChipTone.success,
+                  tone: PpForgeChipTone.success,
                   selected: true,
                   size: ChipSize.chip,
                 ),
@@ -259,7 +259,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               child: HeaderCard(
                 heroStyle: HeroStyle.tinted(
                   color: palette.expense,
-                  glyph: AppIcons.budget,
+                  glyph: PpForgeIcons.budget,
                   strongBorder: false,
                 ),
                 accent: palette.expense,
@@ -287,7 +287,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                 page: 'Every hero / tinted card — IconCode.tintFor',
                 child: HeaderCard(
                   accent: code.tintFor(palette, fallback: palette.income),
-                  glyph: AppIcons.category,
+                  glyph: PpForgeIcons.category,
                   leading: const IconDisplay(type: IconType.category, size: 44),
                   title: const Text('Tinted by the icon'),
                 ),
@@ -318,7 +318,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                 extraActions: [
                   ManageAction(
                     label: 'Close budget',
-                    icon: AppIcons.success,
+                    icon: PpForgeIcons.success,
                     onTap: noop,
                   ),
                 ],
@@ -420,9 +420,9 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               wide: true,
               label: 'normal, 3 stats — in a card',
               page: 'Home, Account summary, Project totals',
-              child: AppCard(
+              child: PpForgeCard(
                 child: Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
+                  padding: EdgeInsets.all(PpForgeSpacing.lg),
                   child: SummaryStats(stats: _stats),
                 ),
               ),
@@ -431,9 +431,9 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               wide: true,
               label: 'normal, 2 stats — in a card',
               page: 'Event summary, Budget period',
-              child: AppCard(
+              child: PpForgeCard(
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  padding: const EdgeInsets.all(PpForgeSpacing.lg),
                   child: SummaryStats(stats: _stats.take(2).toList()),
                 ),
               ),
@@ -499,7 +499,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
           ],
           builder: (context, v) {
             final accent = v<Color>('accent');
-            final glyph = v<bool>('glyph') ? AppIcons.budget : null;
+            final glyph = v<bool>('glyph') ? PpForgeIcons.budget : null;
             final HeroStyle? style = switch (v<String>('heroStyle')) {
               'plain' => const HeroStyle.plain(),
               'soft' => HeroStyle.tinted(
@@ -515,9 +515,9 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               heroStyle: style,
               topRow: v<bool>('topRow')
                   ? [
-                      AppChip(
+                      PpForgeChip(
                         label: 'Expense',
-                        icon: AppIcons.expense,
+                        icon: PpForgeIcons.expense,
                         color: palette.expense,
                         selected: true,
                       ),
@@ -526,10 +526,10 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                   : const [],
               topActions: v<bool>('topActions')
                   ? [
-                      AppChip(
-                        icon: AppIcons.reset,
+                      PpForgeChip(
+                        icon: PpForgeIcons.reset,
                         label: 'Adjust',
-                        tone: AppChipTone.primary,
+                        tone: PpForgeChipTone.primary,
                         selected: true,
                         onTap: noop,
                       ),
@@ -538,9 +538,9 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
               onEdit: v<bool>('onEdit') ? noop : null,
               onTap: v<bool>('onTap') ? noop : null,
               trailing: v<bool>('trailing')
-                  ? const AppChip(
+                  ? const PpForgeChip(
                       label: 'Late',
-                      tone: AppChipTone.danger,
+                      tone: PpForgeChipTone.danger,
                       selected: true,
                     )
                   : null,
@@ -552,7 +552,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         MoneyText(6200, style: big),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: PpForgeSpacing.sm),
                         const ProgressRow(
                           value: 0.62,
                           label: 'of ฿10,000',
@@ -677,7 +677,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
   Widget _samplePage(BuildContext context, TextStyle? big) {
     final editing = _pageEdit;
     final enter = editing ? null : () => setState(() => _pageEdit = true);
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -685,26 +685,26 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
           alignment: Alignment.centerRight,
           child: _toggle(_pageEdit, (v) => setState(() => _pageEdit = v)),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         DecoratedBox(
           decoration: BoxDecoration(
             border: Border.all(
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
-            borderRadius: BorderRadius.circular(AppSpacing.md),
+            borderRadius: BorderRadius.circular(PpForgeSpacing.md),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(PpForgeSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 HeaderCard(
                   accent: palette.primary,
                   topRow: const [
-                    AppChip(
+                    PpForgeChip(
                       label: 'Active',
                       dot: true,
-                      tone: AppChipTone.success,
+                      tone: PpForgeChipTone.success,
                       selected: true,
                     ),
                   ],
@@ -714,7 +714,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                     onTap: editing ? () {} : null,
                     child: const IconDisplay(type: IconType.project, size: 52),
                   ),
-                  title: AppInput.title(
+                  title: PpForgeInput.title(
                     editing: editing,
                     controller: _name,
                     hint: 'Name',
@@ -768,7 +768,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                   children: [
                     DetailStacked(
                       label: 'Description',
-                      child: AppInput.inline(
+                      child: PpForgeInput.inline(
                         editing: editing,
                         controller: _description,
                         maxLines: 3,
@@ -778,7 +778,7 @@ class _SectionHeroPageState extends State<_SectionHeroPage> {
                     ),
                     DetailStacked(
                       label: 'Note',
-                      child: AppInput.inline(
+                      child: PpForgeInput.inline(
                         editing: editing,
                         controller: _note,
                         maxLines: 5,

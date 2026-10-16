@@ -102,10 +102,10 @@ class _PickersPageState extends State<_PickersPage> {
 
   void _say(Object? v) => setState(() => _result = '$v');
 
-  Widget _demoButton(String label, VoidCallback onPressed) => AppButton(
+  Widget _demoButton(String label, VoidCallback onPressed) => PpForgeButton(
     label: label,
     onPressed: onPressed,
-    variant: AppButtonVariant.outlined,
+    variant: PpForgeButtonVariant.outlined,
   );
 
   Future<void> _category({
@@ -184,8 +184,8 @@ class _PickersPageState extends State<_PickersPage> {
               'CategoryPickerNone / null (dismissed). The feature wrapper '
               'showCategoryPickerSheet maps Category models and l10n.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               _demoButton('Three levels (Fruit picked)', _category),
               _demoButton(
@@ -209,8 +209,8 @@ class _PickersPageState extends State<_PickersPage> {
               'cubit list and creates through it; showNewTagNameSheet is the '
               'name sheet on its own.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               _demoButton('Pick tags (can create)', _tag),
               _demoButton('Filter (no create)', () => _tag(create: false)),
@@ -240,7 +240,7 @@ class _PickersPageState extends State<_PickersPage> {
             ],
           ),
         ),
-        HubDemo(title: 'Last result', child: AppText(_result)),
+        HubDemo(title: 'Last result', child: PpForgeText(_result)),
       ],
     );
   }

@@ -21,7 +21,7 @@ class DetailMeta extends StatelessWidget {
   Widget build(BuildContext context) {
     if (lines.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xl),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.xl),
       child: Text(
         lines.join('\n'),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -41,7 +41,7 @@ List<String> detailMetaLines(
   DateTime? createdAt,
   DateTime? updatedAt,
 }) {
-  final l = UiConfig.stringsOf(context);
+  final l = PpForgeConfig.stringsOf(context);
   final locale = Localizations.localeOf(context).toLanguageTag();
   String stamp(DateTime d) =>
       '${DateFormat.yMMMd(locale).format(d)} ${DateFormat.jm(locale).format(d)}';

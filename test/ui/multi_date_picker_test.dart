@@ -41,9 +41,12 @@ void main() {
   Finder day(String n) =>
       find.descendant(of: find.byType(InkResponse), matching: find.text(n));
 
-  AppButton confirmButton(WidgetTester tester) => tester.widget<AppButton>(
-    find.byWidgetPredicate((w) => w is AppButton && w.label.startsWith('Use ')),
-  );
+  PpForgeButton confirmButton(WidgetTester tester) =>
+      tester.widget<PpForgeButton>(
+        find.byWidgetPredicate(
+          (w) => w is PpForgeButton && w.label.startsWith('Use '),
+        ),
+      );
 
   testWidgets('tapping days toggles them; the confirm counts them', (
     tester,
@@ -90,11 +93,11 @@ void main() {
       tester,
       initial: {DateTime(2026, 10, 8), DateTime(2026, 10, 20)},
     );
-    expect(find.byType(AppChip), findsNWidgets(2));
+    expect(find.byType(PpForgeChip), findsNWidgets(2));
 
-    await tester.tap(find.byType(AppChip).first);
+    await tester.tap(find.byType(PpForgeChip).first);
     await tester.pump();
-    expect(find.byType(AppChip), findsOneWidget);
+    expect(find.byType(PpForgeChip), findsOneWidget);
     expect(changed, {DateTime(2026, 10, 20)});
     expect(find.text('Use 1 dates'), findsOneWidget);
   });
@@ -106,8 +109,8 @@ void main() {
     await tester.tap(find.text('Clear'));
     await tester.pump();
     expect(changed, isEmpty);
-    expect(find.byType(AppChip), findsNothing);
-    expect(find.text(const UiStrings().pickDatesHint), findsOneWidget);
+    expect(find.byType(PpForgeChip), findsNothing);
+    expect(find.text(const PpForgeStrings().pickDatesHint), findsOneWidget);
     expect(find.text('Clear'), findsNothing);
     expect(confirmButton(tester).onPressed, isNull);
   });
@@ -125,7 +128,7 @@ void main() {
     await tester.tap(day('15'));
     await tester.pump();
     // Next month, pick the 2nd.
-    await tester.tap(find.byTooltip(const UiStrings().monthNext));
+    await tester.tap(find.byTooltip(const PpForgeStrings().monthNext));
     await tester.pump();
     await tester.tap(day('2'));
     await tester.pump();

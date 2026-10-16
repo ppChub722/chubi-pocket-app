@@ -17,8 +17,8 @@ import 'package:flutter/material.dart';
 /// shell disables them for inactive tabs). A vetoed page can't start a
 /// predictive gesture, so back falls through to the router, which picks
 /// the right navigator. Visible pages keep the predictive animation.
-class AppPageTransitionsBuilder extends PageTransitionsBuilder {
-  const AppPageTransitionsBuilder();
+class PpForgePageTransitionsBuilder extends PageTransitionsBuilder {
+  const PpForgePageTransitionsBuilder();
 
   static const _inner = PredictiveBackPageTransitionsBuilder();
 

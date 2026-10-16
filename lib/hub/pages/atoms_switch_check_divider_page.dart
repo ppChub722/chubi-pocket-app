@@ -19,7 +19,8 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
             'uses it.',
         uses: [
           HubUse(
-            label: 'AppSwitch — trailing of a DetailRow, the row toggles it',
+            label:
+                'PpForgeSwitch — trailing of a DetailRow, the row toggles it',
             page: 'Detail / edit pages (include in reports, active, …)',
             wide: true,
             child: HubStateful<bool>(
@@ -29,40 +30,40 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
                   DetailRow(
                     label: 'Include in my reports',
                     helper: 'Counts in totals and charts',
-                    trailing: AppSwitch(value: on, onChanged: set),
+                    trailing: PpForgeSwitch(value: on, onChanged: set),
                     onTap: () => set(!on),
                   ),
-                  const AppDivider.row(),
+                  const PpForgeDivider.row(),
                   const DetailRow(
                     label: 'Disabled',
-                    trailing: AppSwitch(value: false, onChanged: null),
+                    trailing: PpForgeSwitch(value: false, onChanged: null),
                   ),
                 ],
               ),
             ),
           ),
           HubUse(
-            label: 'AppSwitch — on / off',
+            label: 'PpForgeSwitch — on / off',
             page: 'Notification settings',
             child: HubStateful<bool>(
               initial: true,
               builder: (context, on, set) => Wrap(
-                spacing: AppSpacing.lg,
+                spacing: PpForgeSpacing.lg,
                 children: [
-                  AppSwitch(value: on, onChanged: set),
-                  AppSwitch(value: !on, onChanged: (x) => set(!x)),
+                  PpForgeSwitch(value: on, onChanged: set),
+                  PpForgeSwitch(value: !on, onChanged: (x) => set(!x)),
                 ],
               ),
             ),
           ),
           const HubUse(
-            label: 'AppSwitch — disabled (on / off)',
+            label: 'PpForgeSwitch — disabled (on / off)',
             page: 'Locked settings',
             child: Wrap(
-              spacing: AppSpacing.lg,
+              spacing: PpForgeSpacing.lg,
               children: [
-                AppSwitch(value: true, onChanged: null),
-                AppSwitch(value: false, onChanged: null),
+                PpForgeSwitch(value: true, onChanged: null),
+                PpForgeSwitch(value: false, onChanged: null),
               ],
             ),
           ),
@@ -72,8 +73,8 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
             child: HubStateful<bool?>(
               initial: true,
               builder: (context, on, set) => Wrap(
-                spacing: AppSpacing.lg,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.lg,
+                runSpacing: PpForgeSpacing.sm,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   SelectCheck(value: on, onTap: () => set(!(on ?? false))),
@@ -87,8 +88,8 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
             label: 'SelectAllCount — none / some / all / empty',
             page: 'Select-mode bars',
             child: Wrap(
-              spacing: AppSpacing.lg,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.lg,
+              runSpacing: PpForgeSpacing.sm,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 SelectAllCount(selected: 0, total: 5, onTap: () {}),
@@ -99,21 +100,21 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
             ),
           ),
           const HubUse(
-            label: 'AppDivider.row — between rows of a section',
+            label: 'PpForgeDivider.row — between rows of a section',
             page: 'Detail sections, settings',
             child: Column(
-              children: [Text('row'), AppDivider.row(), Text('row')],
+              children: [Text('row'), PpForgeDivider.row(), Text('row')],
             ),
           ),
           const HubUse(
-            label: 'AppDivider — full width / taller gap',
+            label: 'PpForgeDivider — full width / taller gap',
             page: 'Sheets, lists',
             child: Column(
               children: [
                 Text('above'),
-                AppDivider(),
+                PpForgeDivider(),
                 Text('between'),
-                AppDivider(height: 24),
+                PpForgeDivider(height: 24),
                 Text('below'),
               ],
             ),
@@ -149,25 +150,28 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
             child: AddTile(label: 'Add new', onTap: null),
           ),
           const HubUse(
-            label: 'AppSpinner — small / medium / large',
+            label: 'PpForgeSpinner — small / medium / large',
             page: 'Login button, Debt person page, Splash',
             child: Wrap(
-              spacing: AppSpacing.lg,
+              spacing: PpForgeSpacing.lg,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                AppSpinner(size: AppSpinnerSize.small),
-                AppSpinner(),
-                AppSpinner(size: AppSpinnerSize.large),
+                PpForgeSpinner(size: PpForgeSpinnerSize.small),
+                PpForgeSpinner(),
+                PpForgeSpinner(size: PpForgeSpinnerSize.large),
               ],
             ),
           ),
           const HubUse(
-            label: 'AppSpinner — determinate',
+            label: 'PpForgeSpinner — determinate',
             page: 'Uploads, imports',
             child: Wrap(
-              spacing: AppSpacing.lg,
+              spacing: PpForgeSpacing.lg,
               crossAxisAlignment: WrapCrossAlignment.center,
-              children: [AppSpinner(value: 0.25), AppSpinner(value: 0.75)],
+              children: [
+                PpForgeSpinner(value: 0.25),
+                PpForgeSpinner(value: 0.75),
+              ],
             ),
           ),
           const HubUse(
@@ -178,51 +182,54 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SkeletonListTile(),
-                SkeletonBox(height: 64, borderRadius: AppRadius.lg),
-                SizedBox(height: AppSpacing.sm),
+                SkeletonBox(height: 64, borderRadius: PpForgeRadius.lg),
+                SizedBox(height: PpForgeSpacing.sm),
                 Row(
                   children: [
                     SkeletonCircle(size: 32),
-                    SizedBox(width: AppSpacing.md),
+                    SizedBox(width: PpForgeSpacing.md),
                     Expanded(child: SkeletonLine(width: 160)),
                   ],
                 ),
-                SizedBox(height: AppSpacing.sm),
+                SizedBox(height: PpForgeSpacing.sm),
                 SkeletonText(style: _bodyLarge, width: 200),
               ],
             ),
           ),
           HubUse(
-            label: 'AppIcon — inherited colour / primary',
+            label: 'PpForgeIcon — inherited colour / primary',
             page: 'Rows, chips, empty states (72 usages)',
             child: Wrap(
-              spacing: AppSpacing.md,
+              spacing: PpForgeSpacing.md,
               children: [
-                const AppIcon(AppIcons.wallet, size: AppIconSize.lg),
-                AppIcon(
-                  AppIcons.wallet,
-                  size: AppIconSize.lg,
+                const PpForgeIcon(
+                  PpForgeIcons.wallet,
+                  size: PpForgeIconSize.lg,
+                ),
+                PpForgeIcon(
+                  PpForgeIcons.wallet,
+                  size: PpForgeIconSize.lg,
                   color: scheme.primary,
                 ),
               ],
             ),
           ),
           HubUse(
-            label: 'AppIcon — error, small',
+            label: 'PpForgeIcon — error, small',
             page: 'Validation, overdue rows',
             child: left(
-              AppIcon(
-                AppIcons.wallet,
-                size: AppIconSize.sm,
+              PpForgeIcon(
+                PpForgeIcons.wallet,
+                size: PpForgeIconSize.sm,
                 color: scheme.error,
               ),
             ),
           ),
         ],
       ),
-      const SizedBox(height: AppSpacing.xl),
+      const SizedBox(height: PpForgeSpacing.xl),
       HubPlayground(
-        title: 'AppSwitch',
+        title: 'PpForgeSwitch',
         note: 'The one on / off switch. enabled off = onChanged null (greyed).',
         controls: const [
           PlayBool('value', initialValue: true),
@@ -233,7 +240,7 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
           key: ValueKey(v<bool>('value')),
           initial: v<bool>('value'),
           builder: (context, on, set) => left(
-            AppSwitch(
+            PpForgeSwitch(
               value: on ?? false,
               semanticLabel: 'demo switch',
               onChanged: v<bool>('enabled') ? (x) => set(x) : null,
@@ -280,15 +287,15 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
         ),
       ),
       HubPlayground(
-        title: 'AppDivider',
+        title: 'PpForgeDivider',
         note:
             'One hairline. height sets the space it takes; indent insets both '
-            'ends (AppDivider.row() = indent of a detail row).',
+            'ends (PpForgeDivider.row() = indent of a detail row).',
         controls: const [
           PlayNum('height', min: 1, max: 48, step: 1, initialValue: 1),
           PlayNum('indent', min: 0, max: 48, step: 4, initialValue: 0),
         ],
-        builder: (context, v) => AppDivider(
+        builder: (context, v) => PpForgeDivider(
           height: v<double>('height'),
           indent: v<double>('indent'),
         ),
@@ -324,13 +331,13 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
         },
       ),
       HubPlayground(
-        title: 'AppSpinner',
+        title: 'PpForgeSpinner',
         note:
             'A call in flight (save, delete). value null = spinning; a number '
             '= determinate. Skeletons are for the first load only.',
         controls: [
-          PlayChoice<AppSpinnerSize>('size', [
-            for (final s in AppSpinnerSize.values) (s.name, s),
+          PlayChoice<PpForgeSpinnerSize>('size', [
+            for (final s in PpForgeSpinnerSize.values) (s.name, s),
           ]),
           PlayChoice<Color?>('color', [
             ('default', null),
@@ -344,8 +351,8 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
           ]),
         ],
         builder: (context, v) => left(
-          AppSpinner(
-            size: v<AppSpinnerSize>('size'),
+          PpForgeSpinner(
+            size: v<PpForgeSpinnerSize>('size'),
             color: v<Color?>('color'),
             value: v<double?>('value'),
           ),
@@ -388,12 +395,12 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
                 lines: v<double>('lines').round(),
                 indent: v<double>('indent'),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               left(
                 SkeletonBox(
                   width: circle ? h : null,
                   height: h,
-                  borderRadius: AppRadius.lg,
+                  borderRadius: PpForgeRadius.lg,
                   shape: v<BoxShape>('boxShape'),
                 ),
               ),
@@ -402,19 +409,19 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
         },
       ),
       HubPlayground(
-        title: 'AppIcon',
+        title: 'PpForgeIcon',
         note:
-            'One icon: a glyph at an AppIconSize step (null = inherit the '
+            'One icon: a glyph at an PpForgeIconSize step (null = inherit the '
             'surrounding IconTheme), in color or the surrounding icon colour.',
         controls: [
           PlayChoice<double?>('size', const [
             ('inherit', null),
-            ('xs', AppIconSize.xs),
-            ('sm', AppIconSize.sm),
-            ('md', AppIconSize.md),
-            ('lg', AppIconSize.lg),
-            ('xl', AppIconSize.xl),
-            ('hero', AppIconSize.hero),
+            ('xs', PpForgeIconSize.xs),
+            ('sm', PpForgeIconSize.sm),
+            ('md', PpForgeIconSize.md),
+            ('lg', PpForgeIconSize.lg),
+            ('xl', PpForgeIconSize.xl),
+            ('hero', PpForgeIconSize.hero),
           ]),
           PlayChoice<Color?>('color', [
             ('inherit', null),
@@ -423,8 +430,8 @@ Widget buildSwitchCheckDividerPage(BuildContext context) {
           ]),
         ],
         builder: (context, v) => left(
-          AppIcon(
-            AppIcons.wallet,
+          PpForgeIcon(
+            PpForgeIcons.wallet,
             size: v<double?>('size'),
             color: v<Color?>('color'),
           ),

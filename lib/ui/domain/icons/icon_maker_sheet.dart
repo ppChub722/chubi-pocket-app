@@ -85,13 +85,13 @@ Future<IconMakerResult?> showIconMakerSheet({
       context: context,
       builder: (_) => Dialog(
         insetPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.xl,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.xl,
         ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 680, maxHeight: 720),
           child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.lg),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.lg),
             child: body,
           ),
         ),
@@ -252,7 +252,7 @@ class _SheetState extends State<_Sheet> {
   static const int _undoLimit = 10;
 
   // ── Picker palette ───────────────────────────────────────────────────────
-  // Row 1 — theme-derived: 6 specs that resolve through the active AppColors.
+  // Row 1 — theme-derived: 6 specs that resolve through the active PpForgeColors.
   // The picker draws a small 🎨 badge over each to mark them as theme-tracking.
   static const _themeRowSpecs = <String>[
     '@presetThemeColor1',
@@ -510,7 +510,7 @@ class _SheetState extends State<_Sheet> {
     // Seed the dialog with the resolved hex of the focused slot — even if
     // the slot currently holds a `@presetTheme*` token, the user sees the
     // colour they're editing.
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final eff = _focusedRole != null
         ? _effectiveColors(_focusedRole!)
         : const <String>[];
@@ -559,23 +559,25 @@ class _SheetState extends State<_Sheet> {
           _buildPreview(context),
           if (widget.roles.length > 1)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: PpForgeSpacing.lg,
+              ),
               child: _buildLayerSwitcher(context, l),
             ),
           if (showTabs)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
+                PpForgeSpacing.lg,
                 0,
               ),
-              child: AppTabBar<_Tab>(
+              child: PpForgeTabBar<_Tab>(
                 selected: _tab,
                 onChanged: (t) => setState(() => _tab = t),
                 tabs: [
-                  AppTab(value: _Tab.style, label: l.iconMakerTabStyle),
-                  AppTab(value: _Tab.color, label: l.iconMakerTabColor),
+                  PpForgeTab(value: _Tab.style, label: l.iconMakerTabStyle),
+                  PpForgeTab(value: _Tab.color, label: l.iconMakerTabColor),
                 ],
               ),
             ),
@@ -583,17 +585,17 @@ class _SheetState extends State<_Sheet> {
             child: SingleChildScrollView(
               controller: _scroll,
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.md,
-                AppSpacing.lg,
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.lg,
               ),
               child: _activeTab == _Tab.style
                   ? _buildStyleTab(context, l)
                   : _buildColorTab(context, l),
             ),
           ),
-          const AppDivider(),
+          const PpForgeDivider(),
           ModeActionBar(
             canSave: true,
             canUndo: _undoStack.isNotEmpty,
@@ -616,10 +618,10 @@ class _SheetState extends State<_Sheet> {
   Widget _buildHeader(BuildContext context, AppLocalizations l) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.xl,
+        PpForgeSpacing.xl,
         0,
-        AppSpacing.sm,
-        AppSpacing.xs,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.xs,
       ),
       child: Row(
         children: [
@@ -636,13 +638,13 @@ class _SheetState extends State<_Sheet> {
               SheetOption(
                 value: 'reset',
                 label: l.iconMakerReset,
-                leading: const Icon(AppIcons.reset),
+                leading: const Icon(PpForgeIcons.reset),
               ),
               if (widget.removeLabel != null)
                 SheetOption(
                   value: 'default',
                   label: l.iconMakerUseDefault,
-                  leading: const Icon(AppIcons.useDefaultIcon),
+                  leading: const Icon(PpForgeIcons.useDefaultIcon),
                 ),
             ],
             onSelected: (v) async {
@@ -661,7 +663,8 @@ class _SheetState extends State<_Sheet> {
                 ).pop<IconMakerResult>(const IconMakerRemoved());
               }
             },
-            builder: (context, toggle) => AppIconButton.more(onPressed: toggle),
+            builder: (context, toggle) =>
+                PpForgeIconButton.more(onPressed: toggle),
           ),
         ],
       ),
@@ -682,7 +685,7 @@ class _SheetState extends State<_Sheet> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           for (var i = 0; i < sizes.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.xl),
+            if (i > 0) const SizedBox(width: PpForgeSpacing.xl),
             IconCodeWidget(iconCode: code, size: sizes[i]),
           ],
         ],
@@ -691,13 +694,13 @@ class _SheetState extends State<_Sheet> {
     return AnimatedSize(
       duration: const Duration(milliseconds: 180),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             main,
             if (widget.previewSubtitle != null && !_compactPreview) ...[
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               widget.previewSubtitle!,
             ],
           ],
@@ -755,13 +758,13 @@ class _SheetState extends State<_Sheet> {
                 height: 20,
                 child: off
                     ? Icon(
-                        AppIcons.none,
+                        PpForgeIcons.none,
                         size: 18,
                         color: scheme.onSurfaceVariant,
                       )
                     : _layerMini(role, 20),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               Flexible(
                 child: Text(
                   _roleLabel(l, role),
@@ -810,7 +813,7 @@ class _SheetState extends State<_Sheet> {
   /// A glyph-only code on an auto-contrast disc, so an icon tinted like the
   /// sheet surface (e.g. white "on icon") never disappears in a tile.
   Widget _onContrast(IconCode glyph, double size) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final fg = glyph.iconColors.isNotEmpty
         ? resolveColor(glyph.iconColors.first, palette)
         : Theme.of(context).colorScheme.primary;
@@ -844,7 +847,10 @@ class _SheetState extends State<_Sheet> {
   // ── Style tab ─────────────────────────────────────────────────────────────
 
   Widget _section(String text) => Padding(
-    padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
+    padding: const EdgeInsets.only(
+      top: PpForgeSpacing.md,
+      bottom: PpForgeSpacing.sm,
+    ),
     child: Text(
       text,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -859,7 +865,7 @@ class _SheetState extends State<_Sheet> {
 
     if (role == _Role.icon) {
       children.add(
-        AppInput.search(
+        PpForgeInput.search(
           padding: EdgeInsets.zero,
           hint: l.iconMakerSearchHint,
           onChanged: (q) => setState(() => _query = q),
@@ -870,17 +876,17 @@ class _SheetState extends State<_Sheet> {
     if (widget.packs.length > 1) {
       children.add(
         Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
           child: Wrap(
-            spacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
             children: [
-              AppChip(
+              PpForgeChip(
                 label: l.transactionsRangeAll,
                 selected: _packFilter == null,
                 onTap: () => setState(() => _packFilter = null),
               ),
               for (final p in widget.packs)
-                AppChip(
+                PpForgeChip(
                   label: p.id,
                   selected: _packFilter == p.id,
                   onTap: () => setState(() => _packFilter = p.id),
@@ -910,7 +916,7 @@ class _SheetState extends State<_Sheet> {
       );
       children.add(_section(l.iconMakerPattern));
     } else {
-      children.add(const SizedBox(height: AppSpacing.md));
+      children.add(const SizedBox(height: PpForgeSpacing.md));
     }
 
     final q = _query.trim().toLowerCase();
@@ -928,7 +934,7 @@ class _SheetState extends State<_Sheet> {
     if (items.isEmpty && filtering) {
       children.add(
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+          padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xl),
           child: Text(
             l.iconMakerNoMatch(_query.trim()),
             textAlign: TextAlign.center,
@@ -947,7 +953,7 @@ class _SheetState extends State<_Sheet> {
             _StyleTile(
               selected: currentId == null,
               preview: Icon(
-                AppIcons.none,
+                PpForgeIcons.none,
                 size: 28,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -1033,7 +1039,7 @@ class _SheetState extends State<_Sheet> {
   // ── Colour tab ────────────────────────────────────────────────────────────
 
   String _hexOf(String spec) {
-    final c = resolveColor(spec, Theme.of(context).extension<AppColors>()!);
+    final c = resolveColor(spec, Theme.of(context).extension<PpForgeColors>()!);
     return '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
@@ -1089,7 +1095,7 @@ class _SheetState extends State<_Sheet> {
     final Widget content;
     if (off || colors.isEmpty) {
       content = Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
         child: Text(
           off
               ? l.iconMakerLayerOff(_roleLabel(l, role))
@@ -1110,7 +1116,7 @@ class _SheetState extends State<_Sheet> {
       content = Row(
         children: [
           for (var i = 0; i < colors.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSpacing.md),
+            if (i > 0) const SizedBox(width: PpForgeSpacing.md),
             InkWell(
               onTap: () => setState(() => _focusedSlotIndex = i),
               borderRadius: BorderRadius.circular(12),
@@ -1141,7 +1147,7 @@ class _SheetState extends State<_Sheet> {
           const Spacer(),
           SizedBox(
             width: 104,
-            child: AppInput(
+            child: PpForgeInput(
               controller: _hexCtl,
               focusNode: _hexFocus,
               maxLength: 7,
@@ -1153,7 +1159,7 @@ class _SheetState extends State<_Sheet> {
               hint: '#RRGGBB',
               borderColor: _hexInvalid ? scheme.error : scheme.outlineVariant,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
+                horizontal: PpForgeSpacing.sm,
                 vertical: 10,
               ),
               onChanged: (_) {
@@ -1173,15 +1179,15 @@ class _SheetState extends State<_Sheet> {
             onPressed: def == null || _hexOf(def) == current
                 ? null
                 : () => _applyColor(def, isCustom: false),
-            icon: const Icon(AppIcons.reset),
+            icon: const Icon(PpForgeIcons.reset),
           ),
         ],
       );
     }
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
+        horizontal: PpForgeSpacing.sm,
+        vertical: PpForgeSpacing.xs,
       ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
@@ -1206,7 +1212,7 @@ class _SheetState extends State<_Sheet> {
   Widget _swatchRow(List<Widget> cells) => Row(
     children: [
       for (var i = 0; i < cells.length; i++) ...[
-        if (i > 0) const SizedBox(width: AppSpacing.sm),
+        if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
         Expanded(child: AspectRatio(aspectRatio: 1, child: cells[i])),
       ],
     ],
@@ -1247,7 +1253,7 @@ class _SheetState extends State<_Sheet> {
                 borderRadius: Radius.circular(d / 2),
                 child: Center(
                   child: Icon(
-                    AppIcons.eyedropper,
+                    PpForgeIcons.eyedropper,
                     size: d * 0.4,
                     color: scheme.primary,
                   ),
@@ -1286,9 +1292,9 @@ Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
     builder: (ctx) => AlertDialog(
       title: Text(l.colorPickerTitle),
       contentPadding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
+        PpForgeSpacing.lg,
         0,
       ),
       content: SingleChildScrollView(
@@ -1328,7 +1334,7 @@ class _Dot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return Container(
       width: size,
       height: size,
@@ -1385,7 +1391,7 @@ class _StyleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return Column(
       children: [
         Expanded(

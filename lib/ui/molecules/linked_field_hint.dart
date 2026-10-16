@@ -24,12 +24,12 @@ class LinkedFieldHint extends StatelessWidget {
     final line = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppIcon(
-          AppIcons.link,
-          size: AppIconSize.sm,
+        PpForgeIcon(
+          PpForgeIcons.link,
+          size: PpForgeIconSize.sm,
           color: scheme.onSurfaceVariant,
         ),
-        const SizedBox(width: AppSpacing.xs),
+        const SizedBox(width: PpForgeSpacing.xs),
         Expanded(
           child: Text(
             text,

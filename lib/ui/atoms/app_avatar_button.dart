@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// The profile chip: an avatar in the same frame as the [AppIconButton] chips
+/// The profile chip: an avatar in the same frame as the [PpForgeIconButton] chips
 /// beside it — a neutral surface ring, or the bottom nav's active look
 /// (primary container + primary ring) while [active] (the page it opens is on
 /// screen). The ring, shadow and ripple follow the avatar's own shape
 /// ([outline]: circle, squircle, leaf, …).
-class AppAvatarButton extends StatelessWidget {
-  const AppAvatarButton({
+class PpForgeAvatarButton extends StatelessWidget {
+  const PpForgeAvatarButton({
     required this.child,
     required this.onTap,
     this.outline,

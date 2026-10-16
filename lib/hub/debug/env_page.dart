@@ -59,10 +59,10 @@ class _EnvInfoScreenState extends State<EnvInfoScreen> {
       appBar: AppBar(title: const Text('Environment')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.huge,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.md,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.huge,
         ),
         children: [
           for (final (k, v) in rows)

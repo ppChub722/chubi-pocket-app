@@ -36,7 +36,7 @@ void main() {
     t,
   ) async {
     final ctx = await openSheet(t);
-    showAppSnackBar(ctx, 'ยอดที่แบ่งยังไม่ลงตัว', tone: Tone.danger);
+    showPpForgeSnackBar(ctx, 'ยอดที่แบ่งยังไม่ลงตัว', tone: Tone.danger);
     await t.pump();
     await t.pump(const Duration(milliseconds: 300));
     expect(find.byType(SnackBar), findsNothing);
@@ -51,9 +51,9 @@ void main() {
 
   testWidgets('a new one replaces the one showing', (t) async {
     final ctx = await openSheet(t);
-    showAppSnackBar(ctx, 'หนึ่ง');
+    showPpForgeSnackBar(ctx, 'หนึ่ง');
     await t.pump();
-    showAppSnackBar(ctx, 'สอง');
+    showPpForgeSnackBar(ctx, 'สอง');
     await t.pump();
     expect(find.text('หนึ่ง'), findsNothing);
     expect(find.text('สอง'), findsOneWidget);
@@ -68,7 +68,7 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
-              onPressed: () => showAppSnackBar(context, 'บันทึกแล้ว'),
+              onPressed: () => showPpForgeSnackBar(context, 'บันทึกแล้ว'),
               child: const Text('go'),
             ),
           ),

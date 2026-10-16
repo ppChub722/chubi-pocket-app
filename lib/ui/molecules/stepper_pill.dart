@@ -141,7 +141,7 @@ class StepperPill extends StatelessWidget {
         nextTooltip: nextTooltip,
       );
     }
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final start = startOf(unit, _value!);
     final prev = shift(unit, start, -1);
@@ -208,12 +208,12 @@ class StepperPill extends StatelessWidget {
     }
 
     Widget labelButton = InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(PpForgeRadius.md),
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: arrows ? AppSpacing.xs : AppSpacing.md,
-          vertical: AppSpacing.sm,
+          horizontal: arrows ? PpForgeSpacing.xs : PpForgeSpacing.md,
+          vertical: PpForgeSpacing.sm,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -229,7 +229,11 @@ class StepperPill extends StatelessWidget {
               ),
             ),
             if (onTap != null)
-              Icon(AppIcons.dropdown, size: 20, color: scheme.onSurfaceVariant),
+              Icon(
+                PpForgeIcons.dropdown,
+                size: 20,
+                color: scheme.onSurfaceVariant,
+              ),
           ],
         ),
       ),
@@ -247,9 +251,9 @@ class StepperPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (arrows) step(AppIcons.chevronLeft, prevTooltip, onPrev),
+          if (arrows) step(PpForgeIcons.chevronLeft, prevTooltip, onPrev),
           Flexible(child: labelButton),
-          if (arrows) step(AppIcons.chevronRight, nextTooltip, onNext),
+          if (arrows) step(PpForgeIcons.chevronRight, nextTooltip, onNext),
         ],
       ),
     );

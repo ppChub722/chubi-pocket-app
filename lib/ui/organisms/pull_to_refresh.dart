@@ -59,7 +59,7 @@ class _PullToRefreshState extends State<PullToRefresh>
   /// Fade-out after done / cancel.
   late final AnimationController _exit = AnimationController(
     vsync: this,
-    duration: AppDurations.fast,
+    duration: PpForgeDurations.fast,
   );
 
   /// The reconnect count last seen — a change means the connection came back.
@@ -204,7 +204,7 @@ class CoinDropIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final refreshing = drop != null;
     final t = drop ?? 0;
 
@@ -269,7 +269,7 @@ class CoinDropIndicator extends StatelessWidget {
                       scaleY: 1 - squash,
                       alignment: Alignment.bottomCenter,
                       child: Icon(
-                        AppIcons.wallet,
+                        PpForgeIcons.wallet,
                         size: 24,
                         color: scheme.primary,
                       ),

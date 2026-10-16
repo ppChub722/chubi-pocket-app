@@ -11,8 +11,8 @@ import '../../tokens/chip_size.dart';
 /// when the form appears:
 ///
 ///   [type chips]                [📅 date]      ← HeroTopRow, control height
-///   description label · amount label           ← AppInputSize.labelRow
-///   description value · amount value           ← AppInputSize.hero.valueRow
+///   description label · amount label           ← PpForgeInputSize.labelRow
+///   description value · amount value           ← PpForgeInputSize.hero.valueRow
 ///   [wallet chip row]                          ← [rows] chip rows, control
 ///   [category chip row]                           height, itemGap apart
 ///
@@ -26,16 +26,19 @@ class EntryCardSkeleton extends StatelessWidget {
   final bool editing;
 
   /// Under a sized card field's value row: its bottom inset + the underline
-  /// (kept equal to AppInput's by entry_card_skeleton_geometry_test).
+  /// (kept equal to PpForgeInput's by entry_card_skeleton_geometry_test).
   static const double _fieldBottom = 8;
 
   @override
   Widget build(BuildContext context) {
     final control = ChipSize.control.height;
     final label = editing
-        ? AppInputSize.scaled(context, AppInputSize.labelRow)
+        ? PpForgeInputSize.scaled(context, PpForgeInputSize.labelRow)
         : 0.0;
-    final value = AppInputSize.scaled(context, AppInputSize.hero.valueRow);
+    final value = PpForgeInputSize.scaled(
+      context,
+      PpForgeInputSize.hero.valueRow,
+    );
     Widget pill({double? width}) =>
         SkeletonBox(width: width, height: control, borderRadius: control / 2);
     return HeroSurface(

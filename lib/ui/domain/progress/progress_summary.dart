@@ -63,16 +63,16 @@ class ProgressSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     if (skeleton) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+        padding: EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SkeletonBox(width: 140, height: 28),
-            SizedBox(height: AppSpacing.xs),
+            SizedBox(height: PpForgeSpacing.xs),
             SkeletonBox(width: 180, height: 10),
-            SizedBox(height: AppSpacing.sm),
+            SizedBox(height: PpForgeSpacing.sm),
             SkeletonBox(height: 8, borderRadius: 8),
-            SizedBox(height: AppSpacing.xs),
+            SizedBox(height: PpForgeSpacing.xs),
             SkeletonBox(width: 120, height: 10),
           ],
         ),
@@ -91,7 +91,7 @@ class ProgressSummary extends StatelessWidget {
           style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         if (caption != null) Text(caption!, style: muted),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         ProgressRow(
           value: value,
           expected: expected,
@@ -102,7 +102,7 @@ class ProgressSummary extends StatelessWidget {
         ),
         if (footnote != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
             child: Text(footnote!, style: muted),
           ),
       ],

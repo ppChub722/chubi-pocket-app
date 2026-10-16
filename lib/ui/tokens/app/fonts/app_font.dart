@@ -6,8 +6,8 @@ import 'package:flutter/foundation.dart';
 /// When adding a new font, you **must** set `supportedLanguages` so the app
 /// can filter and auto-fallback correctly.
 @immutable
-class AppFont {
-  const AppFont({
+class PpForgeFont {
+  const PpForgeFont({
     required this.id,
     required this.family,
     required this.supportedLanguages,

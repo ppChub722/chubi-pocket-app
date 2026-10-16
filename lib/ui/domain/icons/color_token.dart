@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app/app_colors.dart';
 
-/// Resolves a colour spec against the active [AppColors] palette.
+/// Resolves a colour spec against the active [PpForgeColors] palette.
 ///
 /// A spec is one of:
 /// - **Hex literal** — `#FF0000`, `#00A389` → returned as-is.
@@ -16,11 +16,11 @@ import '../../tokens/app/app_colors.dart';
 ///
 /// Token names are flat and visual (not Material role names) so the picker
 /// UI can show them as `1`, `2`, `3` to the user. Internally each maps to
-/// a slot on [AppColors].
+/// a slot on [PpForgeColors].
 ///
 /// User-saved [IconCode]s may contain either form. Tokens make a saved
 /// code "follow the active theme"; hex pins it.
-Color resolveColor(String spec, AppColors palette) {
+Color resolveColor(String spec, PpForgeColors palette) {
   if (spec.isEmpty) return palette.primary;
   if (spec.startsWith('#')) return _parseHex(spec) ?? palette.primary;
   if (spec.startsWith('@')) return _resolveToken(spec, palette);
@@ -39,7 +39,7 @@ Color? _parseHex(String hex) {
 
 final _tokenRegex = RegExp(r'^presetThemeColor(\w+?)(Darker|Lighter)?(\d+)?$');
 
-Color _resolveToken(String token, AppColors p) {
+Color _resolveToken(String token, PpForgeColors p) {
   final stripped = token.substring(1); // drop leading '@'
   final m = _tokenRegex.firstMatch(stripped);
   if (m == null) return p.primary;
@@ -55,11 +55,11 @@ Color _resolveToken(String token, AppColors p) {
       : Color.lerp(base, Colors.white, t)!;
 }
 
-Color _baseColor(String name, AppColors p) {
+Color _baseColor(String name, PpForgeColors p) {
   return switch (name) {
     '1' => p.primary,
     '2' => p.secondary,
-    '3' => p.info, // AppColors has no tertiary; info is the third accent
+    '3' => p.info, // PpForgeColors has no tertiary; info is the third accent
     'Container' => p.primaryContainer,
     'OnIcon' => p.onPrimary,
     'Border' => p.outline,

@@ -43,9 +43,9 @@ class TabbedDetailBody<T> extends StatefulWidget {
   /// The hero card (a `HeaderCard`).
   final Widget hero;
 
-  /// Under the hero, in order, [AppSpacing.md] apart.
+  /// Under the hero, in order, [PpForgeSpacing.md] apart.
   final List<Widget> belowHero;
-  final List<AppTab<T>> tabs;
+  final List<PpForgeTab<T>> tabs;
   final T selected;
   final ValueChanged<T> onChanged;
 
@@ -81,8 +81,8 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
       0,
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
-          : AppDurations.chrome,
-      curve: AppDurations.chromeCurve,
+          : PpForgeDurations.chrome,
+      curve: PpForgeDurations.chromeCurve,
     );
   }
 
@@ -96,9 +96,9 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.lg,
               0,
             ),
             child: Column(
@@ -106,7 +106,7 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
               children: [
                 KeyedSubtree(key: _heroKey, child: w.hero),
                 for (final b in w.belowHero) ...[
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   b,
                 ],
               ],
@@ -119,7 +119,7 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
             pinned: true,
             delegate: PinnedTabBarDelegate(
               background: Theme.of(context).colorScheme.surface,
-              child: AppTabBar<T>(
+              child: PpForgeTabBar<T>(
                 tabs: w.tabs,
                 selected: w.selected,
                 onChanged: w.onChanged,
@@ -136,7 +136,7 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
         child: MediaQuery.removePadding(
           context: context,
           removeTop: true,
-          child: AppTabPager<T>(
+          child: PpForgeTabPager<T>(
             controller: _pages,
             values: _values,
             selected: w.selected,

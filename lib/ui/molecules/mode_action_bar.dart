@@ -43,24 +43,24 @@ class ModeActionBar extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.sm,
-          AppSpacing.lg,
-          AppSpacing.md,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.sm,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.md,
         ),
         child: Row(
           children: [
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 label: cancelLabel,
-                variant: AppButtonVariant.outlined,
-                size: AppButtonSize.large,
+                variant: PpForgeButtonVariant.outlined,
+                size: PpForgeButtonSize.large,
                 expand: true,
                 onPressed: saving ? null : onCancel,
               ),
             ),
             if (onUndo != null) ...[
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
                 transitionBuilder: (child, anim) =>
@@ -70,7 +70,7 @@ class ModeActionBar extends StatelessWidget {
                         key: const ValueKey('undo-on'),
                         tooltip: undoTooltip,
                         onPressed: onUndo,
-                        icon: const Icon(AppIcons.undo),
+                        icon: const Icon(PpForgeIcons.undo),
                       )
                     : const SizedBox(
                         key: ValueKey('undo-off'),
@@ -79,11 +79,11 @@ class ModeActionBar extends StatelessWidget {
                       ),
               ),
             ],
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 label: saveLabel,
-                size: AppButtonSize.large,
+                size: PpForgeButtonSize.large,
                 expand: true,
                 loading: saving,
                 submits: true,

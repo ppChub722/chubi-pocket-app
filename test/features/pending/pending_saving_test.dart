@@ -131,7 +131,7 @@ void main() {
 
   testWidgets('row: 🐷 draft with the goal name', (t) async {
     await pump(t, PendingTransaction.fromJson(_saving('p1')));
-    expect(find.byIcon(AppIcons.savingDeposit), findsWidgets);
+    expect(find.byIcon(PpForgeIcons.savingDeposit), findsWidgets);
     expect(find.text('Japan trip'), findsWidgets);
     expect(find.text('KBank'), findsOneWidget);
     expect(find.text('Save monthly · 2/12'), findsOneWidget);

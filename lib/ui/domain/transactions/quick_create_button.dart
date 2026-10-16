@@ -10,7 +10,7 @@ import '../../tokens/icon_size.dart';
 /// a page-coloured ring, so it reads as punched through the bottom bar. Its
 /// fill is the [mode]'s colour ([QuickCreateModeColors]) — the mode the
 /// quick create will open in on the page on screen — and a change of mode
-/// (tab switch, push, pop) cross-fades over [AppDurations.fast].
+/// (tab switch, push, pop) cross-fades over [PpForgeDurations.fast].
 class QuickCreateButton extends StatelessWidget {
   const QuickCreateButton({
     required this.onPressed,
@@ -45,7 +45,7 @@ class QuickCreateButton extends StatelessWidget {
       ),
       child: TweenAnimationBuilder<Color?>(
         tween: ColorTween(end: fill),
-        duration: still ? Duration.zero : AppDurations.fast,
+        duration: still ? Duration.zero : PpForgeDurations.fast,
         curve: Curves.easeOutCubic,
         builder: (context, color, _) => Material(
           color: color,
@@ -56,7 +56,11 @@ class QuickCreateButton extends StatelessWidget {
           child: InkWell(
             onTap: onPressed,
             child: Center(
-              child: AppIcon(AppIcons.add, size: AppIconSize.xl, color: on),
+              child: PpForgeIcon(
+                PpForgeIcons.add,
+                size: PpForgeIconSize.xl,
+                color: on,
+              ),
             ),
           ),
         ),

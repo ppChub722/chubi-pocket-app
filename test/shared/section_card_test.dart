@@ -25,7 +25,7 @@ void main() {
         children: [Text('a'), Text('b'), Text('c')],
       ),
     );
-    expect(find.byType(AppDivider), findsNothing);
+    expect(find.byType(PpForgeDivider), findsNothing);
     final a = t.getRect(
       find.ancestor(of: find.text('a'), matching: find.byType(ClipRRect)).first,
     );

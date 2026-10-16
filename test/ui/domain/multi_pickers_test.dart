@@ -53,7 +53,7 @@ void main() {
         theme: ThemeData(extensions: [sweetTheme.lightColors]),
         home: Scaffold(
           body: Builder(
-            builder: (context) => AppButton(
+            builder: (context) => PpForgeButton(
               label: 'open',
               onPressed: () async {
                 result = await show(context);

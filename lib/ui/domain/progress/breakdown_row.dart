@@ -73,8 +73,8 @@ class BreakdownRow extends StatelessWidget {
         : null;
     final body = Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
+        horizontal: PpForgeSpacing.lg,
+        vertical: PpForgeSpacing.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,7 +84,7 @@ class BreakdownRow extends StatelessWidget {
             children: [
               if (leading != null) ...[
                 leading!,
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
               ],
               Flexible(
                 child: Text(
@@ -95,7 +95,7 @@ class BreakdownRow extends StatelessWidget {
                 ),
               ),
               if (caption != null) ...[
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 Text(
                   caption!,
                   maxLines: 1,
@@ -109,7 +109,7 @@ class BreakdownRow extends StatelessWidget {
             ],
           ),
           if (value != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             ProgressRow(
               value: expected ? 0 : value!,
               expected: expected ? value : null,

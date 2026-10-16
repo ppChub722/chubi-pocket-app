@@ -9,11 +9,11 @@ import 'app_message.dart';
 /// Shows a floating snackbar, replacing any current one (so rapid actions
 /// don't queue a backlog). [tone] adds a leading status icon.
 ///
-/// From inside a sheet or a dialog ([PopupRoute] — every [showAppSheet] /
+/// From inside a sheet or a dialog ([PopupRoute] — every [showPpForgeSheet] /
 /// quick create / picker) a snackbar would land on the page's Scaffold,
 /// UNDER the sheet and its barrier — invisible (QA run-3 S1). There the
 /// message shows as a toast on top of the sheet instead ([_SheetToast]).
-void showAppSnackBar(
+void showPpForgeSnackBar(
   BuildContext context,
   String message, {
   Tone tone = Tone.neutral,
@@ -30,7 +30,7 @@ void showAppSnackBar(
     );
     return;
   }
-  showAppSnackBarOn(
+  showPpForgeSnackBarOn(
     ScaffoldMessenger.of(context),
     message,
     tone: tone,
@@ -39,16 +39,16 @@ void showAppSnackBar(
   );
 }
 
-/// [showAppSnackBar] on a messenger captured up front — for calls after an
+/// [showPpForgeSnackBar] on a messenger captured up front — for calls after an
 /// `await` / pop, when the original context may already be gone. Now the one
-/// message design ([AppMessage]); kept as the app-wide entry point.
-void showAppSnackBarOn(
+/// message design ([PpForgeMessage]); kept as the app-wide entry point.
+void showPpForgeSnackBarOn(
   ScaffoldMessengerState messenger,
   String message, {
   Tone tone = Tone.neutral,
   String? actionLabel,
   VoidCallback? onAction,
-}) => showAppMessageOn(
+}) => showPpForgeMessageOn(
   messenger,
   message,
   tone: tone,
@@ -137,9 +137,9 @@ class _SheetToastState extends State<_SheetToast> {
   Widget build(BuildContext context) {
     final animate = !MediaQuery.disableAnimationsOf(context);
     return Positioned(
-      left: AppSpacing.lg,
-      right: AppSpacing.lg,
-      top: MediaQuery.paddingOf(context).top + AppSpacing.sm,
+      left: PpForgeSpacing.lg,
+      right: PpForgeSpacing.lg,
+      top: MediaQuery.paddingOf(context).top + PpForgeSpacing.sm,
       child: AnimatedSlide(
         offset: _visible ? Offset.zero : const Offset(0, -0.4),
         duration: animate ? const Duration(milliseconds: 200) : Duration.zero,
@@ -149,13 +149,13 @@ class _SheetToastState extends State<_SheetToast> {
           duration: animate ? const Duration(milliseconds: 200) : Duration.zero,
           child: GestureDetector(
             onTap: _hide,
-            child: AppMessage(
+            child: PpForgeMessage(
               message: widget.message,
               tone: widget.tone,
               floating: true,
               actions: widget.actionLabel != null && widget.onAction != null
                   ? [
-                      AppMessageAction(
+                      PpForgeMessageAction(
                         label: widget.actionLabel!,
                         onPressed: () {
                           _hide();

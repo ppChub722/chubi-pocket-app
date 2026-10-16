@@ -54,7 +54,7 @@ Future<List<String>?> showAccountMultiPicker(
   required AccountMultiPickerLabels labels,
   List<String> initial = const [],
 }) {
-  return showAppSheetCustom<List<String>>(
+  return showPpForgeSheetCustom<List<String>>(
     context,
     builder: (_) => AccountMultiPickerSheet(
       wallets: wallets,
@@ -117,7 +117,7 @@ class _AccountMultiPickerSheetState extends State<AccountMultiPickerSheet> {
                   for (final w in visible)
                     PickerRow(
                       key: ValueKey('wallet-${w.id}'),
-                      leading: AppIcon(w.icon),
+                      leading: PpForgeIcon(w.icon),
                       title: w.name,
                       subtitle: w.balance,
                       checked: _picked.contains(w.id),
@@ -127,7 +127,7 @@ class _AccountMultiPickerSheetState extends State<AccountMultiPickerSheet> {
               )
             else
               EmptyView.compact(message: q.isEmpty ? l.empty : l.noMatch),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
           ],
         );
       },

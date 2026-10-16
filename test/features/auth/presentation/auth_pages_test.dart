@@ -103,7 +103,7 @@ void main() {
   testWidgets('login: AuthPageBody + 2 kit inputs + brand + prefs', (t) async {
     await pump(t, const LoginPage());
     expect(find.byType(AuthPageBody), findsOneWidget);
-    expect(find.byType(AppInput), findsNWidgets(2));
+    expect(find.byType(PpForgeInput), findsNWidgets(2));
     expect(find.byType(BrandHeader), findsOneWidget);
     expect(find.byType(LanguageThemeBar), findsOneWidget);
     expect(find.byType(OrDivider), findsOneWidget);
@@ -113,7 +113,7 @@ void main() {
     await pump(t, const RegisterPage());
     expect(find.byType(AuthPageBody), findsOneWidget);
     expect(find.byType(SectionCard), findsNWidgets(2));
-    expect(find.byType(AppInput), findsNWidgets(5));
+    expect(find.byType(PpForgeInput), findsNWidgets(5));
   });
 
   // Offline mode (owner 2026-10-12): sign in / register can't reach the
@@ -121,7 +121,7 @@ void main() {
   bool submitEnabled(WidgetTester t, String label) => t
       .widget<ButtonStyleButton>(
         find.descendant(
-          of: find.widgetWithText(AppButton, label),
+          of: find.widgetWithText(PpForgeButton, label),
           matching: find.bySubtype<ButtonStyleButton>(),
         ),
       )

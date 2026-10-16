@@ -25,14 +25,14 @@ class _SavingPageState extends State<_SavingPage> {
       name: 'KBank',
       availableText: 'Has ฿40,000',
       amount: 40000,
-      leading: IconTile(icon: AppIcons.wallet, color: Color(0xFF16A34A)),
+      leading: IconTile(icon: PpForgeIcons.wallet, color: Color(0xFF16A34A)),
     ),
     SavingSplitRow(
       walletId: 'scb',
       name: 'SCB',
       availableText: 'Has ฿12,000',
       amount: 5000,
-      leading: IconTile(icon: AppIcons.wallet, color: Color(0xFF7C3AED)),
+      leading: IconTile(icon: PpForgeIcons.wallet, color: Color(0xFF7C3AED)),
     ),
   ];
 
@@ -105,8 +105,10 @@ class _SavingPageState extends State<_SavingPage> {
     const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const actual = <double>[10, 16, 22, 28, 34, 40];
     const projection = <double>[44, 48];
-    Widget box(Widget child) =>
-        AppCard(padding: const EdgeInsets.all(AppSpacing.md), child: child);
+    Widget box(Widget child) => PpForgeCard(
+      padding: const EdgeInsets.all(PpForgeSpacing.md),
+      child: child,
+    );
     final tint = Theme.of(context).colorScheme.primary;
 
     return Column(
@@ -192,7 +194,7 @@ class _SavingPageState extends State<_SavingPage> {
               'The saving-tx record (never a real tx): kind glyph · title · '
               'source chip · line 2 "wallet → bucket" or "bucket → wallet" · '
               'signed amount (accent + / muted −). Same row height as TxRow.',
-          child: AppCard(
+          child: PpForgeCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
@@ -206,7 +208,7 @@ class _SavingPageState extends State<_SavingPage> {
                 SavingTxRow(
                   kind: SavingTxKind.deposit,
                   title: 'Recurring saving',
-                  source: AppChip(label: 'Recurring', size: ChipSize.mini),
+                  source: PpForgeChip(label: 'Recurring', size: ChipSize.mini),
                   walletLabel: 'KBank',
                   to: 'Japan trip',
                   amount: 4000,
@@ -236,7 +238,7 @@ class _SavingPageState extends State<_SavingPage> {
               'draft: the 🐷 row of the pending list — wallet chip up after '
               'the title, line 2 = kind / source chips + the target, outlined '
               'glyph, slightly faded; same height. dimmed = archived.',
-          child: AppCard(
+          child: PpForgeCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
@@ -246,8 +248,8 @@ class _SavingPageState extends State<_SavingPage> {
                   title: 'Save for Japan trip',
                   walletLabel: 'KBank',
                   draftChips: [
-                    AppChip(label: 'Saving', size: ChipSize.mini),
-                    AppChip(label: 'Recurring', size: ChipSize.mini),
+                    PpForgeChip(label: 'Saving', size: ChipSize.mini),
+                    PpForgeChip(label: 'Recurring', size: ChipSize.mini),
                   ],
                   to: 'Japan trip',
                   amount: 4000,
@@ -274,18 +276,18 @@ class _SavingPageState extends State<_SavingPage> {
             actions: [
               ActionBarItem(
                 label: 'Add savings',
-                icon: AppIcons.savingDeposit,
+                icon: PpForgeIcons.savingDeposit,
                 primary: true,
                 onPressed: () {},
               ),
               ActionBarItem(
                 label: 'Withdraw',
-                icon: AppIcons.savingWithdraw,
+                icon: PpForgeIcons.savingWithdraw,
                 onPressed: () {},
               ),
               ActionBarItem(
                 label: 'Move',
-                icon: AppIcons.savingAllocate,
+                icon: PpForgeIcons.savingAllocate,
                 onPressed: () {},
               ),
             ],
@@ -303,27 +305,27 @@ class _SavingPageState extends State<_SavingPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'Move sheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => _move(withdraw: false),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Withdraw sheet',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => _move(withdraw: true),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Close goal dialog',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: _close,
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Text(_result, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),

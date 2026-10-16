@@ -31,18 +31,18 @@ class _RowsPageState extends State<_RowsPage> {
     super.dispose();
   }
 
-  Widget _gap() => const SizedBox(height: AppSpacing.md);
+  Widget _gap() => const SizedBox(height: PpForgeSpacing.md);
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     Widget frame(Widget child) =>
-        AppCard(style: AppCardStyle.bordered, child: child);
+        PpForgeCard(style: PpForgeCardStyle.bordered, child: child);
     Widget pageBg(Widget child) => ColoredBox(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: child,
       ),
     );
@@ -59,14 +59,14 @@ class _RowsPageState extends State<_RowsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               HintLine(
-                icon: AppIcons.scheduled,
+                icon: PpForgeIcons.scheduled,
                 linkLabel: 'Upcoming',
                 text: 'goes to drafts on 3 Nov 2026',
                 onTap: () {},
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const HintLine(
-                icon: AppIcons.scheduled,
+                icon: PpForgeIcons.scheduled,
                 text: 'A plain hint, not tappable',
               ),
             ],
@@ -110,7 +110,7 @@ class _RowsPageState extends State<_RowsPage> {
                 DetailRow(
                   label: 'Counts in reports',
                   helper: 'Counts in totals and charts',
-                  trailing: AppSwitch(
+                  trailing: PpForgeSwitch(
                     value: _switch,
                     onChanged: (v) => setState(() => _switch = v),
                   ),
@@ -128,7 +128,7 @@ class _RowsPageState extends State<_RowsPage> {
               page: 'Wallet / budget detail',
               child: frame(
                 const DetailRow(
-                  icon: AppIcons.wallet,
+                  icon: PpForgeIcons.wallet,
                   label: 'Wallet',
                   trailing: Text('KBank'),
                 ),
@@ -151,7 +151,7 @@ class _RowsPageState extends State<_RowsPage> {
               child: frame(
                 DetailRow(
                   label: 'Reminders',
-                  trailing: AppSwitch(value: false, onChanged: (_) {}),
+                  trailing: PpForgeSwitch(value: false, onChanged: (_) {}),
                 ),
               ),
             ),
@@ -180,7 +180,7 @@ class _RowsPageState extends State<_RowsPage> {
                       emptyText: 'Not selected',
                       onTap: () {},
                     ),
-                    const AppDivider.row(),
+                    const PpForgeDivider.row(),
                     DetailRow.pick(
                       label: 'Category',
                       value: null,
@@ -206,12 +206,12 @@ class _RowsPageState extends State<_RowsPage> {
                         segments: [
                           ChipPathSegment(
                             label: 'Food & Drinks',
-                            icon: AppIcons.category,
+                            icon: PpForgeIcons.category,
                             color: Colors.orange,
                           ),
                           ChipPathSegment(
                             label: 'Food Delivery',
-                            icon: AppIcons.transfer,
+                            icon: PpForgeIcons.transfer,
                             color: Colors.green,
                           ),
                         ],
@@ -219,18 +219,18 @@ class _RowsPageState extends State<_RowsPage> {
                       emptyText: 'No parent',
                       onTap: () {},
                     ),
-                    const AppDivider.row(),
+                    const PpForgeDivider.row(),
                     DetailRow.pick(
                       label: 'Wallet',
-                      valueChip: const AppChip(
+                      valueChip: const PpForgeChip(
                         label: 'Savings',
-                        icon: AppIcons.wallet,
+                        icon: PpForgeIcons.wallet,
                         size: ChipSize.chip,
                       ),
                       emptyText: 'Not selected',
                       onTap: () {},
                     ),
-                    const AppDivider.row(),
+                    const PpForgeDivider.row(),
                     DetailRow.pick(
                       label: 'Event',
                       emptyText: 'None',
@@ -248,7 +248,7 @@ class _RowsPageState extends State<_RowsPage> {
                   label: 'Currency',
                   value: 'THB',
                   emptyText: 'Not selected',
-                  leading: const Icon(AppIcons.currency),
+                  leading: const Icon(PpForgeIcons.currency),
                   locked: true,
                 ),
               ),
@@ -268,7 +268,7 @@ class _RowsPageState extends State<_RowsPage> {
               ),
             ),
             HubUse(
-              label: 'DetailStacked + AppInput.inline — view / edit',
+              label: 'DetailStacked + PpForgeInput.inline — view / edit',
               page: 'Every detail page (the note)',
               wide: true,
               child: frame(
@@ -276,21 +276,21 @@ class _RowsPageState extends State<_RowsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(AppSpacing.md),
+                      padding: const EdgeInsets.all(PpForgeSpacing.md),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: AppChip(
+                        child: PpForgeChip(
                           label: _editing ? 'Editing' : 'Viewing',
                           selected: _editing,
-                          icon: AppIcons.edit,
+                          icon: PpForgeIcons.edit,
                           onTap: () => setState(() => _editing = !_editing),
                         ),
                       ),
                     ),
-                    const AppDivider.row(),
+                    const PpForgeDivider.row(),
                     DetailStacked(
                       label: 'Note',
-                      child: AppInput.inline(
+                      child: PpForgeInput.inline(
                         editing: _editing,
                         controller: _viewNote,
                         viewHint: 'No note',
@@ -299,10 +299,10 @@ class _RowsPageState extends State<_RowsPage> {
                         onEnterEdit: () => setState(() => _editing = true),
                       ),
                     ),
-                    const AppDivider.row(),
+                    const PpForgeDivider.row(),
                     DetailStacked(
                       label: 'Empty note',
-                      child: AppInput.inline(
+                      child: PpForgeInput.inline(
                         editing: _editing,
                         controller: _emptyNote,
                         viewHint: 'Long-press to add a note',
@@ -310,10 +310,10 @@ class _RowsPageState extends State<_RowsPage> {
                         onEnterEdit: () => setState(() => _editing = true),
                       ),
                     ),
-                    const AppDivider.row(),
+                    const PpForgeDivider.row(),
                     DetailStacked(
                       label: 'Second note',
-                      child: AppInput.inline(
+                      child: PpForgeInput.inline(
                         editing: _editing,
                         controller: _editNote,
                         hint: 'Add a note',
@@ -334,7 +334,7 @@ class _RowsPageState extends State<_RowsPage> {
                       label: 'Phone',
                       trailing: Text('081 234 5678'),
                     ),
-                    const AppDivider.row(),
+                    const PpForgeDivider.row(),
                     DetailAddRow(label: 'Add a number', onTap: () {}),
                   ],
                 ),
@@ -369,9 +369,9 @@ class _RowsPageState extends State<_RowsPage> {
                     first: true,
                     title: 'Sharing',
                     description: 'A short explanation of this section.',
-                    trailing: AppChip(
+                    trailing: PpForgeChip(
                       label: 'Share',
-                      icon: AppIcons.share,
+                      icon: PpForgeIcons.share,
                       onTap: () {},
                     ),
                     children: const [
@@ -419,8 +419,8 @@ class _RowsPageState extends State<_RowsPage> {
               child: frame(
                 SectionHeader(
                   title: 'Wallets',
-                  trailing: AppIconButton(
-                    icon: AppIcons.sort,
+                  trailing: PpForgeIconButton(
+                    icon: PpForgeIcons.sort,
                     tooltip: 'Reorder',
                     onPressed: () {},
                   ),
@@ -436,7 +436,7 @@ class _RowsPageState extends State<_RowsPage> {
                   title: 'Food',
                   subtitle: 'Used 24 times',
                   leading: IconTile(
-                    icon: AppIcons.category,
+                    icon: PpForgeIcons.category,
                     color: scheme.primary,
                     size: 40,
                     shape: IconTileShape.rounded,
@@ -459,7 +459,7 @@ class _RowsPageState extends State<_RowsPage> {
                       subtitle: 'indent: 24',
                       indent: 24,
                     ),
-                    AppDivider.row(),
+                    PpForgeDivider.row(),
                     ListRow(
                       title: 'Archived',
                       subtitle: 'dimmed: true',
@@ -477,7 +477,7 @@ class _RowsPageState extends State<_RowsPage> {
                 Column(
                   children: [
                     for (var i = 0; i < 3; i++) ...[
-                      if (i > 0) const AppDivider.row(),
+                      if (i > 0) const PpForgeDivider.row(),
                       ListRow(
                         title: 'Selectable row ${i + 1}',
                         subtitle: _checked.contains(i)
@@ -546,7 +546,7 @@ class _RowsPageState extends State<_RowsPage> {
               label: 'DangerRow — delete (red)',
               page: 'Transaction detail, debt detail, event pick',
               child: DangerRow(
-                icon: AppIcons.delete,
+                icon: PpForgeIcons.delete,
                 label: 'Delete this item',
                 padding: EdgeInsets.zero,
                 onTap: () {},
@@ -556,7 +556,7 @@ class _RowsPageState extends State<_RowsPage> {
               label: 'DangerRow — archive (caution)',
               page: 'Detail pages (the management block)',
               child: DangerRow(
-                icon: AppIcons.archive,
+                icon: PpForgeIcons.archive,
                 label: 'Archive this item',
                 caution: true,
                 padding: EdgeInsets.zero,
@@ -570,14 +570,14 @@ class _RowsPageState extends State<_RowsPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const DangerRow(
-                    icon: AppIcons.delete,
+                    icon: PpForgeIcons.delete,
                     label: 'Disabled (red)',
                     padding: EdgeInsets.zero,
                     onTap: null,
                   ),
                   _gap(),
                   const DangerRow(
-                    icon: AppIcons.archive,
+                    icon: PpForgeIcons.archive,
                     label: 'Disabled (caution)',
                     caution: true,
                     padding: EdgeInsets.zero,
@@ -588,7 +588,7 @@ class _RowsPageState extends State<_RowsPage> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: PpForgeSpacing.lg),
         // ---- Grouped sections ----
         HubDemo(
           title: 'Grouped sections — the one section style',
@@ -608,28 +608,28 @@ class _RowsPageState extends State<_RowsPage> {
                   description: 'What this is and where it sits.',
                   children: [
                     DetailRow(
-                      icon: AppIcons.wallet,
+                      icon: PpForgeIcons.wallet,
                       label: 'Wallet',
                       trailing: const Text('KBank'),
                     ),
                     DetailRow.pick(
-                      icon: AppIcons.category,
+                      icon: PpForgeIcons.category,
                       label: 'Category',
                       value: null,
                       emptyText: 'Not selected',
                       onTap: () {},
                     ),
                     DetailRow(
-                      icon: AppIcons.currency,
+                      icon: PpForgeIcons.currency,
                       label: 'Currency',
                       helper: 'Fixed after create',
                       trailing: const Text('THB'),
                       locked: true,
                     ),
                     DetailRow(
-                      icon: AppIcons.info,
+                      icon: PpForgeIcons.info,
                       label: 'Counts in reports',
-                      trailing: AppSwitch(
+                      trailing: PpForgeSwitch(
                         value: _switch,
                         onChanged: (v) => setState(() => _switch = v),
                       ),
@@ -684,7 +684,7 @@ class _RowsPageState extends State<_RowsPage> {
           ],
           builder: (context, v) {
             final kind = v<String>('kind');
-            final icon = v<bool>('icon') ? AppIcons.wallet : null;
+            final icon = v<bool>('icon') ? PpForgeIcons.wallet : null;
             final helper = v<bool>('helper') ? 'A short explanation' : null;
             final locked = v<bool>('locked');
             final onTap = v<bool>('onTap') ? () {} : null;
@@ -715,7 +715,7 @@ class _RowsPageState extends State<_RowsPage> {
                   onTap: onTap,
                   trailing: switch (kind) {
                     'value' => const Text('KBank savings'),
-                    'switch' => AppSwitch(value: on, onChanged: set),
+                    'switch' => PpForgeSwitch(value: on, onChanged: set),
                     _ => null,
                   },
                 ),
@@ -728,7 +728,7 @@ class _RowsPageState extends State<_RowsPage> {
           title: 'DetailStacked',
           note:
               'Label on top, the child below with its text lined up under the '
-              'label. editing flips the AppInput.inline child between a '
+              'label. editing flips the PpForgeInput.inline child between a '
               'borderless read-only view and an outlined box.',
           controls: [
             const PlayText('label', initialValue: 'Note'),
@@ -744,7 +744,7 @@ class _RowsPageState extends State<_RowsPage> {
               builder: (context, c) => DetailStacked(
                 label: v<String>('label'),
                 child: v<bool>('child')
-                    ? AppInput.inline(
+                    ? PpForgeInput.inline(
                         editing: v<bool>('editing'),
                         controller: c,
                         viewHint: 'No note',
@@ -763,8 +763,8 @@ class _RowsPageState extends State<_RowsPage> {
           controls: [
             const PlayText('label', initialValue: 'Add a number'),
             PlayChoice<IconData>('icon', [
-              ('add (default)', AppIcons.add),
-              ('link', AppIcons.link),
+              ('add (default)', PpForgeIcons.add),
+              ('link', PpForgeIcons.link),
             ]),
             const PlayBool('onTap', initialValue: true),
           ],
@@ -801,9 +801,9 @@ class _RowsPageState extends State<_RowsPage> {
                     ? 'What this is and where it sits.'
                     : null,
                 trailing: v<bool>('trailing')
-                    ? AppChip(
+                    ? PpForgeChip(
                         label: 'Share',
-                        icon: AppIcons.share,
+                        icon: PpForgeIcons.share,
                         onTap: () {},
                       )
                     : null,
@@ -813,7 +813,7 @@ class _RowsPageState extends State<_RowsPage> {
                 children: [
                   for (var i = 1; i <= v<double>('rows').round(); i++)
                     DetailRow(
-                      icon: icons ? AppIcons.wallet : null,
+                      icon: icons ? PpForgeIcons.wallet : null,
                       label: 'Row $i',
                       trailing: Text('Value $i'),
                     ),
@@ -840,8 +840,8 @@ class _RowsPageState extends State<_RowsPage> {
               actionLabel: v<bool>('action') ? 'See all' : null,
               onAction: v<bool>('action') ? () {} : null,
               trailing: v<bool>('trailing')
-                  ? AppIconButton(
-                      icon: AppIcons.sort,
+                  ? PpForgeIconButton(
+                      icon: PpForgeIcons.sort,
                       tooltip: 'Reorder',
                       onPressed: () {},
                     )
@@ -877,7 +877,7 @@ class _RowsPageState extends State<_RowsPage> {
               subtitle: v<bool>('subtitle') ? 'One line of description' : null,
               leading: v<bool>('leading')
                   ? IconTile(
-                      icon: AppIcons.category,
+                      icon: PpForgeIcons.category,
                       color: scheme.primary,
                       size: 40,
                       shape: IconTileShape.rounded,
@@ -909,7 +909,9 @@ class _RowsPageState extends State<_RowsPage> {
             const PlayBool('enabled', initialValue: true),
           ],
           builder: (context, v) => DangerRow(
-            icon: v<bool>('caution') ? AppIcons.archive : AppIcons.delete,
+            icon: v<bool>('caution')
+                ? PpForgeIcons.archive
+                : PpForgeIcons.delete,
             label: v<String>('label'),
             caution: v<bool>('caution'),
             padding: EdgeInsets.zero,

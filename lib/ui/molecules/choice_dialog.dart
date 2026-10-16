@@ -8,14 +8,14 @@ class DialogChoice<T> {
   const DialogChoice({
     required this.value,
     required this.label,
-    this.variant = AppButtonVariant.outlined,
+    this.variant = PpForgeButtonVariant.outlined,
   });
 
   final T value;
   final String label;
 
   /// primary = the suggested way out · destructive = loses something.
-  final AppButtonVariant variant;
+  final PpForgeButtonVariant variant;
 }
 
 /// A dialog with more than two ways out ("keep as draft · keep editing ·
@@ -39,11 +39,11 @@ Future<T?> showChoiceDialog<T>(
         children: [
           if (message != null) ...[
             Text(message),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: PpForgeSpacing.lg),
           ],
           for (var i = 0; i < choices.length; i++) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.sm),
-            AppButton(
+            if (i > 0) const SizedBox(height: PpForgeSpacing.sm),
+            PpForgeButton(
               label: choices[i].label,
               variant: choices[i].variant,
               expand: true,

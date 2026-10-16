@@ -121,10 +121,10 @@ class MemberStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final itemWidth = avatarSize + AppSpacing.lg;
+    final itemWidth = avatarSize + PpForgeSpacing.lg;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -138,7 +138,7 @@ class MemberStrip extends StatelessWidget {
                   width: itemWidth,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
+                      vertical: PpForgeSpacing.xs,
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -148,7 +148,7 @@ class MemberStrip extends StatelessWidget {
                           iconCode: members[i].iconCode,
                           size: avatarSize,
                         ),
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: PpForgeSpacing.xs),
                         Text(
                           members[i].isOwner
                               ? '${members[i].name} 👑'
@@ -174,7 +174,7 @@ class MemberStrip extends StatelessWidget {
             ),
           if (onInvite != null)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
               child: AddTile(
                 label:
                     inviteLabel ?? AppLocalizations.of(context)!.commonInvite,

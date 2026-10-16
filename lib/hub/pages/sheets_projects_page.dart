@@ -8,13 +8,21 @@ Widget buildSheetsProjectsPage(BuildContext context) =>
     const _SheetsProjectsPage();
 
 const _accounts = <ResolvePickValue>[
-  ResolvePickValue(label: 'Cash', icon: AppIcons.wallet, color: Colors.green),
-  ResolvePickValue(label: 'Savings', icon: AppIcons.bank, color: Colors.blue),
+  ResolvePickValue(
+    label: 'Cash',
+    icon: PpForgeIcons.wallet,
+    color: Colors.green,
+  ),
+  ResolvePickValue(
+    label: 'Savings',
+    icon: PpForgeIcons.bank,
+    color: Colors.blue,
+  ),
 ];
 
 const _categories = <ResolvePickValue>[
-  ResolvePickValue(label: 'Food', icon: AppIcons.category),
-  ResolvePickValue(label: 'Travel', icon: AppIcons.category),
+  ResolvePickValue(label: 'Food', icon: PpForgeIcons.category),
+  ResolvePickValue(label: 'Travel', icon: PpForgeIcons.category),
 ];
 
 class _SheetsProjectsPage extends StatefulWidget {
@@ -96,27 +104,27 @@ class _SheetsProjectsPageState extends State<_SheetsProjectsPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(PpForgeSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppText('Last result: $_result'),
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
+          PpForgeText('Last result: $_result'),
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeButton(
             label: 'Resolve — split row (tabs)',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _resolve(parent: false),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.sm),
+          PpForgeButton(
             label: 'Resolve — parent row (share only)',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _resolve(parent: true),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.sm),
+          PpForgeButton(
             label: 'Add member',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: _addMember,
           ),
         ],

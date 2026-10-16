@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// counts — an icon button's circle, a tab's label — about half of it outside
 /// ([CountBadge.floating] places it); it never sits over the icon or text.
 ///
-/// Used by [AppIconButton] and [AppTabBar]. Not [AppBadge] (an inline label)
+/// Used by [PpForgeIconButton] and [PpForgeTabBar]. Not [PpForgeBadge] (an inline label)
 /// and not [CornerBadge] (the avatar's bottom-right mark).
 class CountBadge extends StatelessWidget {
   const CountBadge({required this.count, super.key});

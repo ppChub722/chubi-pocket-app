@@ -45,7 +45,7 @@ class ReorderMoveBar extends StatelessWidget {
   }
 
   Widget _bar(BuildContext context) {
-    final l = UiConfig.stringsOf(context);
+    final l = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     final c = controller;
     Widget button(
@@ -59,41 +59,41 @@ class ReorderMoveBar extends StatelessWidget {
       onPressed: enabled ? onTap : null,
     );
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
       // Hugs the bar (a bare Center would take a bottom bar's full height).
       child: Center(
         heightFactor: 1,
         child: Material(
           elevation: 3,
           color: scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
+          borderRadius: BorderRadius.circular(PpForgeRadius.pill),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.xs),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (c.isTree)
                   button(
-                    AppIcons.back,
+                    PpForgeIcons.back,
                     l.reorderOutdent,
                     c.canOutdent,
                     c.outdent,
                   ),
                 button(
-                  AppIcons.trendUp,
+                  PpForgeIcons.trendUp,
                   l.reorderMoveUp,
                   c.canMoveUp,
                   c.moveUp,
                 ),
                 button(
-                  AppIcons.trendDown,
+                  PpForgeIcons.trendDown,
                   l.reorderMoveDown,
                   c.canMoveDown,
                   c.moveDown,
                 ),
                 if (c.isTree)
                   button(
-                    AppIcons.arrowForward,
+                    PpForgeIcons.arrowForward,
                     l.reorderIndent,
                     c.canIndent,
                     c.indent,

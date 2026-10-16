@@ -27,7 +27,7 @@ void main() {
         t,
         DetailStacked(
           label: 'LABEL',
-          child: AppInput.inline(
+          child: PpForgeInput.inline(
             editing: editing,
             controller: c,
             onEnterEdit: () {},
@@ -37,7 +37,7 @@ void main() {
       final label = t.getTopLeft(find.text('LABEL')).dx;
       xs.add(t.getTopLeft(find.byType(EditableText)).dx - label);
       // The frame's left edge lines up with the label.
-      expect(t.getTopLeft(find.byType(AppInput)).dx, closeTo(label, 0.5));
+      expect(t.getTopLeft(find.byType(PpForgeInput)).dx, closeTo(label, 0.5));
     }
     expect(xs[0], closeTo(xs[1], 0.5), reason: 'nothing moves into edit');
     expect(xs[0], closeTo(16, 0.5));
@@ -52,7 +52,7 @@ void main() {
       t,
       DetailStacked(
         label: 'LABEL',
-        child: AppInput.inline(editing: false, controller: c),
+        child: PpForgeInput.inline(editing: false, controller: c),
       ),
     );
     final label = t.getTopLeft(find.text('LABEL')).dx;
@@ -62,8 +62,8 @@ void main() {
   testWidgets('outside DetailStacked: the inner padding stays', (t) async {
     final c = TextEditingController(text: 'x');
     addTearDown(c.dispose);
-    await pump(t, AppInput.inline(editing: true, controller: c));
-    final box = t.getTopLeft(find.byType(AppInput)).dx;
+    await pump(t, PpForgeInput.inline(editing: true, controller: c));
+    final box = t.getTopLeft(find.byType(PpForgeInput)).dx;
     final text = t.getTopLeft(find.byType(EditableText)).dx;
     expect(text - box, moreOrLessEquals(16, epsilon: 0.5));
   });

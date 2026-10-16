@@ -26,7 +26,7 @@ class _BarsPageState extends State<_BarsPage> {
   final _heroTitle = TextEditingController(text: 'Chicken rice');
   late final _heroStyle = HeroStyle.tinted(
     color: Colors.teal,
-    glyph: AppIcons.expense,
+    glyph: PpForgeIcons.expense,
   );
   static const _wallet = Account(
     id: 'w',
@@ -86,10 +86,10 @@ class _BarsPageState extends State<_BarsPage> {
     'Taxes',
   ];
 
-  Widget _gap() => const SizedBox(height: AppSpacing.md);
+  Widget _gap() => const SizedBox(height: PpForgeSpacing.md);
 
   Widget _frame(Widget child) =>
-      AppCard(style: AppCardStyle.bordered, child: child);
+      PpForgeCard(style: PpForgeCardStyle.bordered, child: child);
 
   Widget _swatchGrid(ColorScheme scheme) => ColorSwatchGrid(
     colors: [
@@ -114,9 +114,9 @@ class _BarsPageState extends State<_BarsPage> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final pagerTabs = [
-      const AppTab(value: 'a', label: 'First'),
-      const AppTab(value: 'b', label: 'Second'),
-      const AppTab(value: 'c', label: 'Third', badgeCount: 12),
+      const PpForgeTab(value: 'a', label: 'First'),
+      const PpForgeTab(value: 'b', label: 'Second'),
+      const PpForgeTab(value: 'c', label: 'Third', badgeCount: 12),
     ];
     final colorChoices = <(String, Color)>[
       ('primary', scheme.primary),
@@ -133,16 +133,20 @@ class _BarsPageState extends State<_BarsPage> {
               'Every real variant, side by side, each with the page that uses it.',
           uses: [
             HubUse(
-              label: 'AppTabBar — plain tabs',
+              label: 'PpForgeTabBar — plain tabs',
               page: 'Categories (expense / income), notifications inbox',
               wide: true,
               child: _frame(
                 HubStateful<String>(
                   initial: 'expense',
-                  builder: (context, sel, set) => AppTabBar<String>(
+                  builder: (context, sel, set) => PpForgeTabBar<String>(
                     tabs: const [
-                      AppTab(value: 'expense', label: 'Expense'),
-                      AppTab(value: 'income', label: 'Income', badgeCount: 3),
+                      PpForgeTab(value: 'expense', label: 'Expense'),
+                      PpForgeTab(
+                        value: 'income',
+                        label: 'Income',
+                        badgeCount: 3,
+                      ),
                     ],
                     selected: sel,
                     onChanged: set,
@@ -151,13 +155,13 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'AppTabBar — three tabs, badge on the last',
+              label: 'PpForgeTabBar — three tabs, badge on the last',
               page: 'Transactions (expense / income / transfer)',
               wide: true,
               child: _frame(
                 HubStateful<String>(
                   initial: 'a',
-                  builder: (context, sel, set) => AppTabBar<String>(
+                  builder: (context, sel, set) => PpForgeTabBar<String>(
                     tabs: pagerTabs,
                     selected: sel,
                     onChanged: set,
@@ -166,13 +170,13 @@ class _BarsPageState extends State<_BarsPage> {
               ),
             ),
             HubUse(
-              label: 'AppTabBar + AppTabPager — swipeable',
+              label: 'PpForgeTabBar + PpForgeTabPager — swipeable',
               page: 'Account detail, categories',
               wide: true,
               child: _frame(
                 Column(
                   children: [
-                    AppTabBar<String>(
+                    PpForgeTabBar<String>(
                       tabs: pagerTabs,
                       selected: _pagerTab,
                       pager: _pager,
@@ -180,7 +184,7 @@ class _BarsPageState extends State<_BarsPage> {
                     ),
                     SizedBox(
                       height: 110,
-                      child: AppTabPager<String>(
+                      child: PpForgeTabPager<String>(
                         values: const ['a', 'b', 'c'],
                         selected: _pagerTab,
                         controller: _pager,
@@ -205,14 +209,14 @@ class _BarsPageState extends State<_BarsPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Wrap(
-                    spacing: AppSpacing.sm,
+                    spacing: PpForgeSpacing.sm,
                     children: [
-                      AppChip(
+                      PpForgeChip(
                         label: 'canUndo',
                         selected: _canUndo,
                         onTap: () => setState(() => _canUndo = !_canUndo),
                       ),
-                      AppChip(
+                      PpForgeChip(
                         label: 'saving',
                         selected: _saving,
                         onTap: () => setState(() => _saving = !_saving),
@@ -270,9 +274,9 @@ class _BarsPageState extends State<_BarsPage> {
               wide: true,
               child: _frame(
                 PinnedBar(
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: 'Submit',
-                    size: AppButtonSize.large,
+                    size: PpForgeButtonSize.large,
                     expand: true,
                     onPressed: () {},
                   ),
@@ -305,23 +309,23 @@ class _BarsPageState extends State<_BarsPage> {
                   rows: [
                     HeroTopRow(
                       leading: [
-                        AppChip(
+                        PpForgeChip(
                           label: 'Bank',
-                          icon: AppIcons.bank,
+                          icon: PpForgeIcons.bank,
                           color: scheme.primary,
                           selected: true,
                         ),
                       ],
                       trailing: [
-                        AppChip(
-                          icon: AppIcons.reset,
+                        PpForgeChip(
+                          icon: PpForgeIcons.reset,
                           label: 'Adjust',
-                          tone: AppChipTone.primary,
+                          tone: PpForgeChipTone.primary,
                           selected: true,
                           onTap: () {},
                         ),
-                        AppIconButton(
-                          icon: AppIcons.edit,
+                        PpForgeIconButton(
+                          icon: PpForgeIcons.edit,
                           size: HeroSpacing.controlHeight,
                           onPressed: () {},
                         ),
@@ -330,7 +334,7 @@ class _BarsPageState extends State<_BarsPage> {
                     Row(
                       children: [
                         const AccountIconCircle(account: _wallet, size: 52),
-                        const SizedBox(width: AppSpacing.md),
+                        const SizedBox(width: PpForgeSpacing.md),
                         Flexible(
                           child: Text('KBank savings', style: text.titleMedium),
                         ),
@@ -352,12 +356,12 @@ class _BarsPageState extends State<_BarsPage> {
               wide: true,
               child: HeaderCard(
                 accent: scheme.error,
-                glyph: AppIcons.category,
+                glyph: PpForgeIcons.category,
                 topRow: const [
-                  AppChip(
+                  PpForgeChip(
                     label: 'Expense',
-                    icon: AppIcons.expense,
-                    tone: AppChipTone.danger,
+                    icon: PpForgeIcons.expense,
+                    tone: PpForgeChipTone.danger,
                     selected: true,
                   ),
                 ],
@@ -373,17 +377,17 @@ class _BarsPageState extends State<_BarsPage> {
               wide: true,
               child: HeaderCard(
                 accent: scheme.primary,
-                glyph: AppIcons.contact,
+                glyph: PpForgeIcons.contact,
                 topRow: const [],
                 onEdit: () {},
                 leading: const UserAvatar(displayName: 'Bee', size: 52),
                 title: const Text('Bee'),
                 subtitle: const Align(
                   alignment: Alignment.centerLeft,
-                  child: AppChip(
+                  child: PpForgeChip(
                     label: 'Linked',
-                    icon: AppIcons.link,
-                    tone: AppChipTone.success,
+                    icon: PpForgeIcons.link,
+                    tone: PpForgeChipTone.success,
                     selected: true,
                     size: ChipSize.chip,
                   ),
@@ -398,7 +402,7 @@ class _BarsPageState extends State<_BarsPage> {
               wide: true,
               child: HeaderCard(
                 accent: scheme.primary,
-                glyph: AppIcons.contact,
+                glyph: PpForgeIcons.contact,
                 topRow: const [],
                 onEdit: () {},
                 leading: const UserAvatar(displayName: 'Lee', size: 52),
@@ -411,7 +415,7 @@ class _BarsPageState extends State<_BarsPage> {
               wide: true,
               child: HeaderCard(
                 accent: scheme.primary,
-                glyph: AppIcons.budget,
+                glyph: PpForgeIcons.budget,
                 topRow: [
                   for (final n in const [
                     'Type',
@@ -421,7 +425,7 @@ class _BarsPageState extends State<_BarsPage> {
                     'Linked',
                     'Archived',
                   ])
-                    AppChip(label: n, selected: true),
+                    PpForgeChip(label: n, selected: true),
                 ],
                 leading: const IconDisplay(type: IconType.category, size: 44),
                 title: const Text('Chips wrap, the row keeps 32'),
@@ -477,13 +481,13 @@ class _BarsPageState extends State<_BarsPage> {
               child: CompactHeroBar(
                 style: HeroStyle.tinted(
                   color: scheme.error,
-                  glyph: AppIcons.category,
+                  glyph: PpForgeIcons.category,
                 ),
                 leading: const IconDisplay(type: IconType.category, size: 28),
                 title: const Text('Food'),
-                trailing: const AppChip(
+                trailing: const PpForgeChip(
                   label: 'Expense',
-                  tone: AppChipTone.danger,
+                  tone: PpForgeChipTone.danger,
                   selected: true,
                   size: ChipSize.chip,
                 ),
@@ -496,7 +500,7 @@ class _BarsPageState extends State<_BarsPage> {
               wide: true,
               child: CompactHeroBar(
                 leading: IconTile(
-                  icon: AppIcons.wallet,
+                  icon: PpForgeIcons.wallet,
                   color: scheme.primary,
                   size: 28,
                   shape: IconTileShape.rounded,
@@ -517,7 +521,7 @@ class _BarsPageState extends State<_BarsPage> {
                 height: 300,
                 decoration: BoxDecoration(
                   border: Border.all(color: scheme.outlineVariant),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(PpForgeRadius.md),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: CompactHeroScope(
@@ -525,22 +529,25 @@ class _BarsPageState extends State<_BarsPage> {
                   top: 0,
                   bar: CompactHeroBar(
                     style: _heroStyle,
-                    leading: const AppChip(label: 'Expense', selected: true),
+                    leading: const PpForgeChip(
+                      label: 'Expense',
+                      selected: true,
+                    ),
                     title: const Text('Chicken rice'),
                     trailing: Text('1,250.00', style: text.titleSmall),
                   ),
                   child: ListView(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    padding: const EdgeInsets.all(PpForgeSpacing.lg),
                     children: [
-                      AppCard(
+                      PpForgeCard(
                         key: _heroKey,
-                        style: AppCardStyle.accent,
+                        style: PpForgeCardStyle.accent,
                         color: scheme.primary,
                         child: HeroContent(
                           rows: [
                             HeroTopRow(
                               leading: const [
-                                AppChip(label: 'Expense', selected: true),
+                                PpForgeChip(label: 'Expense', selected: true),
                               ],
                             ),
                             Text('Chicken rice', style: text.titleLarge),
@@ -579,15 +586,15 @@ class _BarsPageState extends State<_BarsPage> {
                       ('debt', 'Debts'),
                       ('shared', 'Shared'),
                     ])
-                      AppChip(
+                      PpForgeChip(
                         label: f.$2,
                         selected: _filter == f.$1,
                         onTap: () => setState(() => _filter = f.$1),
                       ),
                   ],
-                  trailing: AppChip(
+                  trailing: PpForgeChip(
                     label: _sort == 'date' ? 'Date' : 'Amount',
-                    icon: AppIcons.sort,
+                    icon: PpForgeIcons.sort,
                     onTap: () => setState(
                       () => _sort = _sort == 'date' ? 'amount' : 'date',
                     ),
@@ -600,10 +607,10 @@ class _BarsPageState extends State<_BarsPage> {
               page: 'Transaction form (category / tag rows), pick chip rows',
               wide: true,
               child: ChipRow(
-                icon: AppIcons.category,
+                icon: PpForgeIcons.category,
                 chips: [
                   for (final n in _chipNames.take(8))
-                    AppChip(
+                    PpForgeChip(
                       label: n,
                       selected: _chipPicked.contains(n),
                       onTap: () => setState(() {
@@ -625,7 +632,7 @@ class _BarsPageState extends State<_BarsPage> {
                 FilterBar(
                   chips: [
                     for (final n in _chipNames.take(5))
-                      AppChip(label: n, selected: n == 'Food'),
+                      PpForgeChip(label: n, selected: n == 'Food'),
                   ],
                 ),
               ),
@@ -634,7 +641,9 @@ class _BarsPageState extends State<_BarsPage> {
               label: 'ChipRow — view only, no icon, no More',
               page: 'Transaction form (read-only)',
               child: ChipRow(
-                chips: [for (final n in _chipNames.take(3)) AppChip(label: n)],
+                chips: [
+                  for (final n in _chipNames.take(3)) PpForgeChip(label: n),
+                ],
               ),
             ),
             HubUse(
@@ -643,7 +652,7 @@ class _BarsPageState extends State<_BarsPage> {
               wide: true,
               child: ChipRow(
                 maxLines: 2,
-                chips: [for (final n in _chipNames) AppChip(label: n)],
+                chips: [for (final n in _chipNames) PpForgeChip(label: n)],
                 onMore: () {},
                 moreLabel: 'More',
               ),
@@ -652,7 +661,7 @@ class _BarsPageState extends State<_BarsPage> {
               label: 'ChipRow — moreFirst, nothing chosen yet',
               page: 'Pending draft form (choose wallet / category)',
               child: ChipRow(
-                icon: AppIcons.wallet,
+                icon: PpForgeIcons.wallet,
                 moreFirst: true,
                 chips: const [],
                 onMore: () {},
@@ -674,7 +683,7 @@ class _BarsPageState extends State<_BarsPage> {
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: PpForgeSpacing.xs),
                   ChipRow(
                     chips: [
                       for (final n in _chipOrder.ids(
@@ -682,7 +691,7 @@ class _BarsPageState extends State<_BarsPage> {
                         rank: () => _chipNames.take(5).toList(),
                         picked: _orderPicked,
                       ))
-                        AppChip(
+                        PpForgeChip(
                           label: n,
                           selected: _orderPicked.contains(n),
                           onTap: () => setState(() {
@@ -702,22 +711,22 @@ class _BarsPageState extends State<_BarsPage> {
               label: 'SelectableFrame — card / tile picked',
               page: 'Wallet picker sheet, debts, settings (theme tiles)',
               child: Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.md,
+                spacing: PpForgeSpacing.md,
+                runSpacing: PpForgeSpacing.md,
                 children: [
                   SelectableFrame(
                     selected: false,
-                    child: _tile(context, 'Card', AppRadius.lg),
+                    child: _tile(context, 'Card', PpForgeRadius.lg),
                   ),
                   SelectableFrame(
                     selected: true,
-                    child: _tile(context, 'Card', AppRadius.lg),
+                    child: _tile(context, 'Card', PpForgeRadius.lg),
                   ),
                   SelectableFrame(
                     selected: true,
                     color: scheme.tertiary,
                     gap: 6,
-                    child: _tile(context, 'Card', AppRadius.lg),
+                    child: _tile(context, 'Card', PpForgeRadius.lg),
                   ),
                   SelectableFrame(
                     selected: true,
@@ -745,9 +754,9 @@ class _BarsPageState extends State<_BarsPage> {
                   options: _options,
                   selected: _single,
                   onSelected: (v) => setState(() => _single = v),
-                  builder: (context, toggle) => AppChip(
+                  builder: (context, toggle) => PpForgeChip(
                     label: 'Range: ${_single ?? '-'}',
-                    trailing: AppChipTrailing.dropdown,
+                    trailing: PpForgeChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                 ),
@@ -764,12 +773,12 @@ class _BarsPageState extends State<_BarsPage> {
                   selected: _multi,
                   clearLabel: 'Clear',
                   onChanged: (v) => setState(() => _multi = v),
-                  builder: (context, toggle) => AppChip(
+                  builder: (context, toggle) => PpForgeChip(
                     label: _multi.isEmpty
                         ? 'Categories'
                         : 'Categories (${_multi.length})',
                     selected: _multi.isNotEmpty,
-                    trailing: AppChipTrailing.dropdown,
+                    trailing: PpForgeChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                 ),
@@ -781,9 +790,9 @@ class _BarsPageState extends State<_BarsPage> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: PopoverAnchor(
-                  builder: (context, toggle) => AppChip(
+                  builder: (context, toggle) => PpForgeChip(
                     label: 'Colours (${_swatches.length})',
-                    trailing: AppChipTrailing.dropdown,
+                    trailing: PpForgeChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                   contentBuilder: (context, close) => _swatchGrid(scheme),
@@ -796,9 +805,9 @@ class _BarsPageState extends State<_BarsPage> {
           'Customize',
           note: 'Fully custom tweaks, one per widget (collapsed).',
         ),
-        // ---- AppTabBar ----
+        // ---- PpForgeTabBar ----
         HubPlayground(
-          title: 'AppTabBar',
+          title: 'PpForgeTabBar',
           note:
               'Equal-width underline tabs, value-driven; the underline slides. '
               'badgeCount > 0 on a tab shows a badge. (The pager option is '
@@ -813,10 +822,10 @@ class _BarsPageState extends State<_BarsPage> {
             return HubStateful<int>(
               initial: 0,
               builder: (context, sel, set) => _frame(
-                AppTabBar<int>(
+                PpForgeTabBar<int>(
                   tabs: [
                     for (var i = 0; i < n; i++)
-                      AppTab(
+                      PpForgeTab(
                         value: i,
                         label: names[i],
                         badgeCount: v<bool>('badge') && i == 1 ? 3 : 0,
@@ -873,9 +882,9 @@ class _BarsPageState extends State<_BarsPage> {
             PinnedBar(
               bottomGap: v<double>('bottomGap'),
               keyboardGap: v<double>('keyboardGap'),
-              child: AppButton(
+              child: PpForgeButton(
                 label: 'Submit',
-                size: AppButtonSize.large,
+                size: PpForgeButtonSize.large,
                 expand: true,
                 onPressed: () {},
               ),
@@ -900,15 +909,15 @@ class _BarsPageState extends State<_BarsPage> {
           builder: (context, v) {
             const names = ['Type', 'Category', 'Shared', 'Recurring', 'Linked'];
             final n = v<double>('chips').round();
-            return AppCard(
-              style: AppCardStyle.tinted,
+            return PpForgeCard(
+              style: PpForgeCardStyle.tinted,
               color: scheme.primary,
               child: HeroContent(
                 rows: [
                   HeroTopRow(
                     leading: [
                       for (var i = 0; i < n; i++)
-                        AppChip(
+                        PpForgeChip(
                           label:
                               names[i % names.length] + (i >= 5 ? ' $i' : ''),
                           selected: true,
@@ -916,16 +925,16 @@ class _BarsPageState extends State<_BarsPage> {
                     ],
                     trailing: [
                       if (v<bool>('adjustChip'))
-                        AppChip(
-                          icon: AppIcons.reset,
+                        PpForgeChip(
+                          icon: PpForgeIcons.reset,
                           label: 'Adjust',
-                          tone: AppChipTone.primary,
+                          tone: PpForgeChipTone.primary,
                           selected: true,
                           onTap: () {},
                         ),
                       if (v<bool>('editButton'))
-                        AppIconButton(
-                          icon: AppIcons.edit,
+                        PpForgeIconButton(
+                          icon: PpForgeIcons.edit,
                           size: HeroSpacing.controlHeight,
                           onPressed: () {},
                         ),
@@ -965,11 +974,11 @@ class _BarsPageState extends State<_BarsPage> {
                 ? const HeroStyle.plain()
                 : HeroStyle.tinted(
                     color: v<Color>('color'),
-                    glyph: v<bool>('glyph') ? AppIcons.category : null,
+                    glyph: v<bool>('glyph') ? PpForgeIcons.category : null,
                     strongBorder: v<bool>('strongBorder'),
                   ),
             leading: v<bool>('leading')
-                ? const AppChip(label: 'Expense', selected: true)
+                ? const PpForgeChip(label: 'Expense', selected: true)
                 : null,
             title: Text(v<String>('title')),
             trailing: v<bool>('trailing')
@@ -995,14 +1004,18 @@ class _BarsPageState extends State<_BarsPage> {
               FilterBar(
                 chips: [
                   for (var i = 0; i < v<double>('chips').round(); i++)
-                    AppChip(
+                    PpForgeChip(
                       label: _chipNames[i],
                       selected: sel == i,
                       onTap: () => set(i),
                     ),
                 ],
                 trailing: v<bool>('trailing')
-                    ? AppChip(label: 'Date', icon: AppIcons.sort, onTap: () {})
+                    ? PpForgeChip(
+                        label: 'Date',
+                        icon: PpForgeIcons.sort,
+                        onTap: () {},
+                      )
                     : null,
               ),
             ),
@@ -1031,8 +1044,8 @@ class _BarsPageState extends State<_BarsPage> {
                   _frame(
                     ListToolbar(
                       chips: [
-                        AppChip(label: 'ฉันจ่าย', onTap: () {}),
-                        AppChip(label: 'ค้าง', onTap: () {}),
+                        PpForgeChip(label: 'ฉันจ่าย', onTap: () {}),
+                        PpForgeChip(label: 'ค้าง', onTap: () {}),
                       ],
                       trailing: SortChip<String>(
                         value: sort,
@@ -1042,7 +1055,7 @@ class _BarsPageState extends State<_BarsPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: SortChip<String>(
@@ -1080,10 +1093,10 @@ class _BarsPageState extends State<_BarsPage> {
           builder: (context, v) {
             final moreFirst = v<bool>('moreFirst');
             return ChipRow(
-              icon: v<bool>('icon') ? AppIcons.category : null,
+              icon: v<bool>('icon') ? PpForgeIcons.category : null,
               chips: [
                 for (final n in _chipNames.take(v<double>('chips').round()))
-                  AppChip(label: n, selected: n == 'Food'),
+                  PpForgeChip(label: n, selected: n == 'Food'),
               ],
               maxLines: moreFirst ? null : v<int?>('maxLines'),
               moreFirst: moreFirst,
@@ -1140,12 +1153,12 @@ class _BarsPageState extends State<_BarsPage> {
                 showClear: v<bool>('showClear'),
                 clearLabel: v<String>('clearLabel'),
                 onChanged: set,
-                builder: (context, toggle) => AppChip(
+                builder: (context, toggle) => PpForgeChip(
                   label: sel.isEmpty
                       ? 'Categories'
                       : 'Categories (${sel.length})',
                   selected: sel.isNotEmpty,
-                  trailing: AppChipTrailing.dropdown,
+                  trailing: PpForgeChipTrailing.dropdown,
                   onTap: toggle,
                 ),
               ),
@@ -1172,9 +1185,9 @@ class _BarsPageState extends State<_BarsPage> {
             alignment: Alignment.centerLeft,
             child: PopoverAnchor(
               maxWidth: v<double>('maxWidth'),
-              builder: (context, toggle) => AppChip(
+              builder: (context, toggle) => PpForgeChip(
                 label: 'Colours (${_swatches.length})',
-                trailing: AppChipTrailing.dropdown,
+                trailing: PpForgeChipTrailing.dropdown,
                 onTap: toggle,
               ),
               contentBuilder: (context, close) => _swatchGrid(scheme),
@@ -1190,8 +1203,8 @@ class _BarsPageState extends State<_BarsPage> {
               'how?", the cycle choice). MultiOptionMenuAnchor and '
               'PopoverAnchor take it too. No title = no change.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               HubStateful<String>(
                 initial: 'one',
@@ -1209,18 +1222,18 @@ class _BarsPageState extends State<_BarsPage> {
                   ],
                   selected: sel,
                   onSelected: set,
-                  builder: (context, toggle) => AppChip(
+                  builder: (context, toggle) => PpForgeChip(
                     label: 'Scope: $sel',
-                    trailing: AppChipTrailing.dropdown,
+                    trailing: PpForgeChipTrailing.dropdown,
                     onTap: toggle,
                   ),
                 ),
               ),
               PopoverAnchor(
                 title: 'Colour',
-                builder: (context, toggle) => AppChip(
+                builder: (context, toggle) => PpForgeChip(
                   label: 'Titled colours',
-                  trailing: AppChipTrailing.dropdown,
+                  trailing: PpForgeChipTrailing.dropdown,
                   onTap: toggle,
                 ),
                 contentBuilder: (context, close) => _swatchGrid(scheme),
@@ -1247,19 +1260,19 @@ class _BarsPageState extends State<_BarsPage> {
                   actions: [
                     ActionBarItem(
                       label: 'Adjust',
-                      icon: AppIcons.edit,
+                      icon: PpForgeIcons.edit,
                       submits: true,
                       onPressed: () {},
                     ),
                     ActionBarItem(
                       label: 'Entry',
-                      icon: AppIcons.add,
+                      icon: PpForgeIcons.add,
                       primary: true,
                       onPressed: () {},
                     ),
                     ActionBarItem(
                       label: 'Transfer',
-                      icon: AppIcons.transfer,
+                      icon: PpForgeIcons.transfer,
                       submits: true,
                       onPressed: () {},
                     ),
@@ -1284,10 +1297,10 @@ class _BarsPageState extends State<_BarsPage> {
                       ),
                     ],
                     onSelected: (_) {},
-                    builder: (context, toggle) => AppChip(
+                    builder: (context, toggle) => PpForgeChip(
                       label: 'Row options (offline)',
-                      icon: AppIcons.more,
-                      trailing: AppChipTrailing.dropdown,
+                      icon: PpForgeIcons.more,
+                      trailing: PpForgeChipTrailing.dropdown,
                       onTap: toggle,
                     ),
                   ),
@@ -1296,7 +1309,7 @@ class _BarsPageState extends State<_BarsPage> {
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: PpForgeSpacing.lg),
       ],
     );
   }

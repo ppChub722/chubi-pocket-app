@@ -11,7 +11,7 @@ import '../tokens/app_spacing.dart';
 ///   pinned: true,
 ///   delegate: PinnedTabBarDelegate(
 ///     background: Theme.of(context).scaffoldBackgroundColor,
-///     child: AppTabBar<…>(…),
+///     child: PpForgeTabBar<…>(…),
 ///   ),
 /// )
 /// ```
@@ -37,9 +37,9 @@ class PinnedTabBarDelegate extends SliverPersistentHeaderDelegate {
         color: background,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.sm,
+            PpForgeSpacing.lg,
             0,
           ),
           child: child,

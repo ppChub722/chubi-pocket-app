@@ -34,7 +34,7 @@ class EditableCircle extends StatelessWidget {
   /// the pencil badge proportionally.
   final double size;
 
-  /// The circle content — typically an `IconDisplay`, an `AppAvatar` or a
+  /// The circle content — typically an `IconDisplay`, an `PpForgeAvatar` or a
   /// `UserAvatar`.
   final Widget child;
 
@@ -52,7 +52,7 @@ class EditableCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     final stack = CornerBadge(
       size: size,
-      icon: AppIcons.editBadge,
+      icon: PpForgeIcons.editBadge,
       show: onTap != null,
       // The pencil is the whole point of an editable circle.
       essential: true,

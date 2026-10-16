@@ -139,7 +139,7 @@ void main() {
     t,
   ) async {
     await pump(t);
-    expect(find.byIcon(AppIcons.lock), findsNothing);
+    expect(find.byIcon(PpForgeIcons.lock), findsNothing);
     // The contacts' names are tappable (→ the picker); the typed one is an
     // input.
     expect(find.text('บี'), findsWidgets);

@@ -6,7 +6,7 @@ import '../tokens/app_spacing.dart';
 /// row, safe-area + keyboard padding, scrolls when tall.
 ///
 /// [footer] stays pinned under the scrolling body (confirm buttons).
-Future<T?> showAppSheet<T>(
+Future<T?> showPpForgeSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   String? title,
@@ -20,15 +20,15 @@ Future<T?> showAppSheet<T>(
     showDragHandle: true,
     useRootNavigator: useRootNavigator,
     builder: (ctx) =>
-        AppSheetScaffold(title: title, footer: footer, child: builder(ctx)),
+        PpForgeSheetScaffold(title: title, footer: footer, child: builder(ctx)),
   );
 }
 
-/// [showAppSheet] for a sheet that builds its own [AppSheetScaffold]
+/// [showPpForgeSheet] for a sheet that builds its own [PpForgeSheetScaffold]
 /// (stateful sheets: a form with its own buttons, a picker with search) —
 /// same route (drag handle, safe area, root navigator, keyboard), no
 /// second scaffold around it.
-Future<T?> showAppSheetCustom<T>(
+Future<T?> showPpForgeSheetCustom<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   bool useRootNavigator = true,
@@ -43,12 +43,12 @@ Future<T?> showAppSheetCustom<T>(
   );
 }
 
-/// Layout used by [showAppSheet] — exposed so custom sheets (stateful
+/// Layout used by [showPpForgeSheet] — exposed so custom sheets (stateful
 /// pickers) can share the same chrome (open them with
-/// [showAppSheetCustom]). It pads for the keyboard itself, so content
+/// [showPpForgeSheetCustom]). It pads for the keyboard itself, so content
 /// inside must not add `viewInsets` again.
-class AppSheetScaffold extends StatelessWidget {
-  const AppSheetScaffold({
+class PpForgeSheetScaffold extends StatelessWidget {
+  const PpForgeSheetScaffold({
     required this.child,
     this.title,
     this.footer,
@@ -71,10 +71,10 @@ class AppSheetScaffold extends StatelessWidget {
           if (title != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
+                PpForgeSpacing.lg,
                 0,
-                AppSpacing.lg,
-                AppSpacing.md,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
               ),
               child: Text(
                 title!,
@@ -85,10 +85,10 @@ class AppSheetScaffold extends StatelessWidget {
           if (footer != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.sm,
-                AppSpacing.lg,
-                AppSpacing.md,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
               ),
               child: footer!,
             ),

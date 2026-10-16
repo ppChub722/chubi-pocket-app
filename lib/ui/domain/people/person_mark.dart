@@ -30,7 +30,7 @@ class PersonLinkBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Icon(
-    AppIcons.link,
+    PpForgeIcons.link,
     size: size,
     color: Theme.of(context).colorScheme.primary,
   );
@@ -73,7 +73,7 @@ class PersonMark extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final Widget mark = level == PersonLevel.name
-        ? Icon(AppIcons.profile, size: size, color: scheme.onSurfaceVariant)
+        ? Icon(PpForgeIcons.profile, size: size, color: scheme.onSurfaceVariant)
         : UserAvatar(
             displayName: name.isEmpty ? '?' : name,
             iconCode: iconCode,

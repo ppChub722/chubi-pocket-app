@@ -84,7 +84,7 @@ class TagPickerLabels {
 }
 
 /// The colour of a tag chip — its icon tint; no colour -> the theme primary.
-Color _tagColor(IconCode? code, AppColors palette) =>
+Color _tagColor(IconCode? code, PpForgeColors palette) =>
     (code?.iconColors.isNotEmpty ?? false)
     ? resolveColor(code!.iconColors.first, palette)
     : palette.primary;
@@ -108,7 +108,7 @@ Future<Set<String>?> showTagPicker(
   Future<String?> Function(String name)? onCreate,
   VoidCallback? onRetry,
 }) {
-  return showAppSheetCustom<Set<String>>(
+  return showPpForgeSheetCustom<Set<String>>(
     context,
     builder: (_) => TagPickerSheet(
       data: data,
@@ -129,7 +129,7 @@ Future<String?> showNewTagNameSheet(
   required String hint,
   int maxLength = TextLimits.tagName,
 }) async {
-  final name = await showAppSheetCustom<String>(
+  final name = await showPpForgeSheetCustom<String>(
     context,
     builder: (_) => _NewTagNameSheet(
       title: title,
@@ -177,7 +177,7 @@ class _NewTagNameSheetState extends State<_NewTagNameSheet> {
       title: widget.title,
       primaryLabel: widget.saveLabel,
       onPrimary: () => Navigator.pop(context, _text.text),
-      child: AppInput(
+      child: PpForgeInput(
         controller: _text,
         autofocus: true,
         maxLength: widget.maxLength,
@@ -241,7 +241,7 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final l = widget.labels;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final allowCreate = widget.onCreate != null;
     return ValueListenableBuilder<TagPickerData>(
       valueListenable: widget.data,
@@ -255,12 +255,12 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
         onRetry: widget.onRetry,
         footer: Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.sm,
-            AppSpacing.lg,
-            AppSpacing.md,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.sm,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.md,
           ),
-          child: AppButton(
+          child: PpForgeButton(
             label: l.ok,
             expand: true,
             onPressed: () => Navigator.pop(context, _picked),
@@ -279,21 +279,21 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
               if (tags.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.xs,
-                    AppSpacing.lg,
-                    AppSpacing.sm,
+                    PpForgeSpacing.lg,
+                    PpForgeSpacing.xs,
+                    PpForgeSpacing.lg,
+                    PpForgeSpacing.sm,
                   ),
                   child: Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
+                    spacing: PpForgeSpacing.xs,
+                    runSpacing: PpForgeSpacing.xs,
                     children: [
                       for (final t in tags)
-                        AppChip(
+                        PpForgeChip(
                           label: t.name,
                           icon: IconRegistry.get(
                             t.iconCode?.icon,
-                            fallback: AppIcons.tag,
+                            fallback: PpForgeIcons.tag,
                           ),
                           color: _tagColor(t.iconCode, palette),
                           selected: _picked.contains(t.id),

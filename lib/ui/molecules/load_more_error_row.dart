@@ -16,7 +16,7 @@ class LoadMoreErrorRow extends StatelessWidget {
   /// Null = no retry button (nothing to call).
   final VoidCallback? onRetry;
 
-  /// Defaults to [UiStrings.loadMoreFailed].
+  /// Defaults to [PpForgeStrings.loadMoreFailed].
   final String? message;
 
   /// The same height as a list row, so nothing jumps when it swaps with the
@@ -25,18 +25,18 @@ class LoadMoreErrorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: height,
       child: Row(
         children: [
-          AppIcon(
-            AppIcons.error,
-            size: AppIconSize.md,
+          PpForgeIcon(
+            PpForgeIcons.error,
+            size: PpForgeIconSize.md,
             color: scheme.onSurfaceVariant,
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: Text(
               message ?? strings.loadMoreFailed,
@@ -48,9 +48,9 @@ class LoadMoreErrorRow extends StatelessWidget {
             ),
           ),
           if (onRetry != null)
-            AppButton(
+            PpForgeButton(
               label: strings.retry,
-              variant: AppButtonVariant.text,
+              variant: PpForgeButtonVariant.text,
               onPressed: onRetry,
             ),
         ],

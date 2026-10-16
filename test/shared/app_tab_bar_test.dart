@@ -26,18 +26,18 @@ class _HostState extends State<_Host> {
     home: Scaffold(
       body: Column(
         children: [
-          AppTabBar<int>(
+          PpForgeTabBar<int>(
             selected: tab,
             onChanged: (v) => setState(() => tab = v),
             pager: pages,
             tabs: const [
-              AppTab(value: 0, label: 'A'),
-              AppTab(value: 1, label: 'B'),
+              PpForgeTab(value: 0, label: 'A'),
+              PpForgeTab(value: 1, label: 'B'),
             ],
           ),
           Text('selected $tab'),
           Expanded(
-            child: AppTabPager<int>(
+            child: PpForgeTabPager<int>(
               controller: pages,
               values: const [0, 1],
               selected: tab,
@@ -82,7 +82,7 @@ void main() {
   ) async {
     await t.pumpWidget(const _Host());
     double underlineLeft() =>
-        t.getTopLeft(find.byKey(AppTabBar.underlineKey)).dx;
+        t.getTopLeft(find.byKey(PpForgeTabBar.underlineKey)).dx;
     expect(underlineLeft(), 0);
     await t.tap(find.text('B'));
     await t.pump(); // starts the slide

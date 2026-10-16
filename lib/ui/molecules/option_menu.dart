@@ -16,7 +16,7 @@ import '../organisms/option_sheet.dart';
 /// accounts) → `showOptionSheet` bottom sheet.
 ///
 /// Every anchor takes a `builder(context, toggle)`: render your trigger
-/// (an [AppChip] with ▾, a button…) and call `toggle` on tap.
+/// (an [PpForgeChip] with ▾, a button…) and call `toggle` on tap.
 
 typedef PopoverTriggerBuilder =
     Widget Function(BuildContext context, VoidCallback toggle);
@@ -27,10 +27,12 @@ MenuStyle _menuStyle(BuildContext context) {
     backgroundColor: WidgetStatePropertyAll(scheme.surfaceContainerHigh),
     elevation: const WidgetStatePropertyAll(4),
     shape: WidgetStatePropertyAll(
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
+      ),
     ),
     padding: const WidgetStatePropertyAll(
-      EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
     ),
   );
 }
@@ -53,10 +55,10 @@ class _PopoverTitle extends StatelessWidget {
       padding:
           padding ??
           const EdgeInsets.fromLTRB(
-            AppSpacing.md + 2,
-            AppSpacing.xs,
-            AppSpacing.md + 2,
-            AppSpacing.xs,
+            PpForgeSpacing.md + 2,
+            PpForgeSpacing.xs,
+            PpForgeSpacing.md + 2,
+            PpForgeSpacing.xs,
           ),
       child: Text(
         title,
@@ -91,7 +93,7 @@ class _PopoverItem extends StatelessWidget {
         !(option.submits && ConnectionScope.isOffline(context));
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs + 2,
+        horizontal: PpForgeSpacing.xs + 2,
         vertical: 2,
       ),
       child: MenuItemButton(
@@ -105,7 +107,7 @@ class _PopoverItem extends StatelessWidget {
           ),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(PpForgeRadius.md),
               side: selected
                   ? BorderSide(color: scheme.primary, width: 1.5)
                   : BorderSide.none,
@@ -166,7 +168,7 @@ class OptionMenuAnchor<T> extends StatelessWidget {
       // The tap that closes the popover must not also hit what lies
       // underneath (QA S2: a row opened while closing the filter).
       consumeOutsideTap: true,
-      alignmentOffset: const Offset(0, AppSpacing.xs),
+      alignmentOffset: const Offset(0, PpForgeSpacing.xs),
       menuChildren: [
         if (title != null) _PopoverTitle(title!),
         for (final o in options)
@@ -199,11 +201,11 @@ class PopoverClearItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const AppDivider(height: AppSpacing.sm),
+        const PpForgeDivider(height: PpForgeSpacing.sm),
         MenuItemButton(
-          leadingIcon: const Icon(AppIcons.clear, size: 18),
+          leadingIcon: const Icon(PpForgeIcons.clear, size: 18),
           onPressed: onPressed,
-          child: Text(label ?? UiConfig.stringsOf(context).clear),
+          child: Text(label ?? PpForgeConfig.stringsOf(context).clear),
         ),
       ],
     );
@@ -244,7 +246,7 @@ class MultiOptionMenuAnchor<T> extends StatelessWidget {
       // The tap that closes the popover must not also hit what lies
       // underneath (QA S2: a row opened while closing the filter).
       consumeOutsideTap: true,
-      alignmentOffset: const Offset(0, AppSpacing.xs),
+      alignmentOffset: const Offset(0, PpForgeSpacing.xs),
       menuChildren: [
         if (title != null) _PopoverTitle(title!),
         for (final o in options)
@@ -298,7 +300,7 @@ class PopoverAnchor extends StatelessWidget {
       // The tap that closes the popover must not also hit what lies
       // underneath (QA S2: a row opened while closing the filter).
       consumeOutsideTap: true,
-      alignmentOffset: const Offset(0, AppSpacing.xs),
+      alignmentOffset: const Offset(0, PpForgeSpacing.xs),
       menuChildren: [
         Builder(
           builder: (ctx) {
@@ -307,8 +309,8 @@ class PopoverAnchor extends StatelessWidget {
               constraints: BoxConstraints(maxWidth: maxWidth),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+                  horizontal: PpForgeSpacing.md,
+                  vertical: PpForgeSpacing.sm,
                 ),
                 child: title == null
                     ? contentBuilder(ctx, () => controller?.close())
@@ -319,7 +321,7 @@ class PopoverAnchor extends StatelessWidget {
                           _PopoverTitle(
                             title!,
                             padding: const EdgeInsets.only(
-                              bottom: AppSpacing.sm,
+                              bottom: PpForgeSpacing.sm,
                             ),
                           ),
                           contentBuilder(ctx, () => controller?.close()),
@@ -377,8 +379,8 @@ class ColorSwatchGrid extends StatelessWidget {
 
   Widget _grid() {
     return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: [
         for (var i = 0; i < colors.length; i++)
           InkResponse(

@@ -72,10 +72,10 @@ class SelectionToolbar extends StatelessWidget {
           onTap: onSelectAll,
         ),
         for (final a in actions)
-          AppChip(
+          PpForgeChip(
             icon: a.icon,
             label: a.label,
-            tone: AppChipTone.primary,
+            tone: PpForgeChipTone.primary,
             selected: true,
             enabled: a.onTap != null && (!a.needsSelection || any),
             onTap: a.onTap,
@@ -88,7 +88,7 @@ class SelectionToolbar extends StatelessWidget {
               children: [
                 for (final w in trailing) ...[
                   w,
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                 ],
                 if (onDelete != null)
                   BulkDeleteButton(

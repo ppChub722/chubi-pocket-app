@@ -13,7 +13,7 @@ void main() {
     ThemeRegistry.defaultThemeId,
   ).colorsFor(Brightness.light);
 
-  Widget host(Widget child, {UiStrings? strings}) {
+  Widget host(Widget child, {PpForgeStrings? strings}) {
     final app = MaterialApp(
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -23,7 +23,7 @@ void main() {
     );
     return strings == null
         ? app
-        : UiConfig(strings: strings, errors: const _Errors(), child: app);
+        : PpForgeConfig(strings: strings, errors: const _Errors(), child: app);
   }
 
   Future<void> wide(WidgetTester t) async {
@@ -292,7 +292,7 @@ void main() {
       await t.pumpWidget(
         host(
           Builder(
-            builder: (context) => AppButton(
+            builder: (context) => PpForgeButton(
               label: 'open',
               onPressed: () async {
                 result = await showScopePrompt(
@@ -332,30 +332,31 @@ void main() {
   });
 
   group('default currency', () {
-    testWidgets('MoneyText / moneyString follow UiConfig, symbol overrides', (
-      t,
-    ) async {
-      late String s;
-      await t.pumpWidget(
-        host(
-          Builder(
-            builder: (context) {
-              s = moneyString(context, 5);
-              return const Column(
-                children: [
-                  MoneyText(1234.5),
-                  MoneyText(1, symbol: r'$'),
-                ],
-              );
-            },
+    testWidgets(
+      'MoneyText / moneyString follow PpForgeConfig, symbol overrides',
+      (t) async {
+        late String s;
+        await t.pumpWidget(
+          host(
+            Builder(
+              builder: (context) {
+                s = moneyString(context, 5);
+                return const Column(
+                  children: [
+                    MoneyText(1234.5),
+                    MoneyText(1, symbol: r'$'),
+                  ],
+                );
+              },
+            ),
+            strings: const PpForgeStrings(currencySymbol: '€'),
           ),
-          strings: const UiStrings(currencySymbol: '€'),
-        ),
-      );
-      expect(find.text('€1,234.50'), findsOneWidget);
-      expect(find.text(r'$1.00'), findsOneWidget);
-      expect(s, '€5.00');
-    });
+        );
+        expect(find.text('€1,234.50'), findsOneWidget);
+        expect(find.text(r'$1.00'), findsOneWidget);
+        expect(s, '€5.00');
+      },
+    );
 
     testWidgets('no config = the baht default', (t) async {
       await t.pumpWidget(host(const MoneyText(2)));
@@ -453,10 +454,13 @@ void main() {
   });
 }
 
-class _Errors extends UiErrors {
+class _Errors extends PpForgeErrors {
   const _Errors();
 
   @override
-  UiErrorInfo describe(Object error) =>
-      const UiErrorInfo(icon: Icons.error_outline, title: 'x', message: 'y');
+  PpForgeErrorInfo describe(Object error) => const PpForgeErrorInfo(
+    icon: Icons.error_outline,
+    title: 'x',
+    message: 'y',
+  );
 }

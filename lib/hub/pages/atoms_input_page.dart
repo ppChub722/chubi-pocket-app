@@ -47,32 +47,35 @@ class _InputPageState extends State<_InputPage> {
             const HubUse(
               label: 'Empty — label + placeholder',
               page: 'Forms: contact, project, debt',
-              child: AppInput(label: 'Name', hint: 'Wallet name'),
+              child: PpForgeInput(label: 'Name', hint: 'Wallet name'),
             ),
             HubUse(
               label: 'Filled',
               page: 'Forms',
               child: _filled(
                 'กสิกร',
-                (c) => AppInput(controller: c, label: 'Name'),
+                (c) => PpForgeInput(controller: c, label: 'Name'),
               ),
             ),
             const HubUse(
               label: 'Error + message',
               page: 'Register, change password',
-              child: AppInput(label: 'Email', errorText: 'Enter a valid email'),
+              child: PpForgeInput(
+                label: 'Email',
+                errorText: 'Enter a valid email',
+              ),
             ),
             const HubUse(
               label: 'Disabled',
               page: 'Forms while saving',
-              child: AppInput(label: 'Name', enabled: false),
+              child: PpForgeInput(label: 'Name', enabled: false),
             ),
             HubUse(
               label: 'Locked 🔒 — no frame',
               page: 'A linked email, a system row',
               child: _filled(
                 'aom@mail.com',
-                (c) => AppInput(
+                (c) => PpForgeInput(
                   controller: c,
                   label: 'Linked email',
                   locked: true,
@@ -82,17 +85,17 @@ class _InputPageState extends State<_InputPage> {
             const HubUse(
               label: 'Password — icon + toggle + helper',
               page: 'Login, register',
-              child: AppInput(
+              child: PpForgeInput(
                 label: 'Password',
                 obscurable: true,
-                prefixIcon: AppIcons.lock,
+                prefixIcon: PpForgeIcons.lock,
                 helper: 'At least 8 characters',
               ),
             ),
             const HubUse(
               label: 'Dense, no label',
               page: 'Tag name, split-row name, icon maker',
-              child: AppInput(hint: 'Tag name', dense: true),
+              child: PpForgeInput(hint: 'Tag name', dense: true),
             ),
             HubUse(
               label: 'Multiline + counter',
@@ -100,7 +103,7 @@ class _InputPageState extends State<_InputPage> {
               wide: true,
               child: _filled(
                 'บัญชีรับเงินเดือน',
-                (c) => AppInput(
+                (c) => PpForgeInput(
                   controller: c,
                   label: 'Note',
                   maxLines: 3,
@@ -125,53 +128,56 @@ class _InputPageState extends State<_InputPage> {
               page: 'Adjust balance, settle, goal target',
               child: _filled(
                 '1250',
-                (c) => AppInput(
+                (c) => PpForgeInput(
                   controller: c,
                   label: 'Amount',
-                  type: AppInputType.amount,
+                  type: PpForgeInputType.amount,
                 ),
               ),
             ),
             const HubUse(
               label: 'Number',
               page: 'Installments, statement day',
-              child: AppInput(label: 'Quantity', type: AppInputType.number),
+              child: PpForgeInput(
+                label: 'Quantity',
+                type: PpForgeInputType.number,
+              ),
             ),
             HubUse(
               label: 'Percent',
               page: 'Goal allocation, interest',
               child: _filled(
                 '33.5',
-                (c) => AppInput(
+                (c) => PpForgeInput(
                   controller: c,
                   label: 'Rate',
-                  type: AppInputType.percent,
+                  type: PpForgeInputType.percent,
                 ),
               ),
             ),
             const HubUse(
               label: 'Reference number',
               page: 'Wallet identifiers',
-              child: AppInput(
+              child: PpForgeInput(
                 label: 'Account no.',
-                type: AppInputType.reference,
+                type: PpForgeInputType.reference,
                 hint: '0000000000',
               ),
             ),
             const HubUse(
               label: 'Reference — letters allowed',
               page: 'Wallet identifier (other)',
-              child: AppInput(
+              child: PpForgeInput(
                 label: 'Identifier',
-                type: AppInputType.reference,
+                type: PpForgeInputType.reference,
                 allowLetters: true,
               ),
             ),
             const HubUse(
               label: 'Amount — dense, no label',
               page: 'Split row amount',
-              child: AppInput(
-                type: AppInputType.amount,
+              child: PpForgeInput(
+                type: PpForgeInputType.amount,
                 dense: true,
                 hint: '0',
               ),
@@ -195,10 +201,10 @@ class _InputPageState extends State<_InputPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const AppInput.card(hint: 'What for?'),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppInput.card(
-                    type: AppInputType.amount,
+                  const PpForgeInput.card(hint: 'What for?'),
+                  const SizedBox(height: PpForgeSpacing.lg),
+                  PpForgeInput.card(
+                    type: PpForgeInputType.amount,
                     hint: '0',
                     hideHintOnFocus: true,
                     symbolScale: 0.7,
@@ -206,8 +212,8 @@ class _InputPageState extends State<_InputPage> {
                     style: Theme.of(context).textTheme.displaySmall,
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const AppInput.card(
+                  const SizedBox(height: PpForgeSpacing.lg),
+                  const PpForgeInput.card(
                     hint: 'A note (plain text until focused)',
                     underline: false,
                     minLines: 2,
@@ -217,13 +223,13 @@ class _InputPageState extends State<_InputPage> {
               ),
             ),
             HubUse(
-              label: 'Token geometry — AppInputSize, side by side',
+              label: 'Token geometry — PpForgeInputSize, side by side',
               page: 'Tx hero + EntryCard (description · amount), entity heroes',
               wide: true,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final size in AppInputSize.values) ...[
+                  for (final size in PpForgeInputSize.values) ...[
                     Text(
                       'size: ${size.name}  (value row ${size.valueRow.round()}, '
                       'baseline ${size.valueBaseline.round()})',
@@ -233,35 +239,35 @@ class _InputPageState extends State<_InputPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: AppInput.card(
+                          child: PpForgeInput.card(
                             size: size,
                             label: 'คำอธิบาย',
-                            labelPlacement: AppInputLabelPlacement.above,
+                            labelPlacement: PpForgeInputLabelPlacement.above,
                             hint: 'ค่าอะไร?',
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.md),
+                        const SizedBox(width: PpForgeSpacing.md),
                         Expanded(
-                          child: AppInput.card(
+                          child: PpForgeInput.card(
                             size: size,
                             label: 'จำนวนเงิน',
-                            labelPlacement: AppInputLabelPlacement.above,
-                            type: AppInputType.amount,
+                            labelPlacement: PpForgeInputLabelPlacement.above,
+                            type: PpForgeInputType.amount,
                             currencySymbol: '฿',
                             textAlign: TextAlign.end,
                             hint: '0',
                             style: TextStyle(
                               fontSize: switch (size) {
-                                AppInputSize.regular => 18,
-                                AppInputSize.title => 22,
-                                AppInputSize.hero => 28,
+                                PpForgeInputSize.regular => 18,
+                                PpForgeInputSize.title => 22,
+                                PpForgeInputSize.hero => 28,
                               },
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: PpForgeSpacing.lg),
                   ],
                 ],
               ),
@@ -273,27 +279,27 @@ class _InputPageState extends State<_InputPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const AppInput.card(
+                  const PpForgeInput.card(
                     label: 'ชื่อ',
                     labelWidth: 96,
                     hint: 'e.g. Savings',
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  const AppInput.card(
+                  const SizedBox(height: PpForgeSpacing.md),
+                  const PpForgeInput.card(
                     label: 'คำอธิบาย',
                     labelWidth: 96,
                     hint: 'ค่าอะไร?',
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const AppInput.card(
+                  const SizedBox(height: PpForgeSpacing.lg),
+                  const PpForgeInput.card(
                     label: 'จำนวนเงิน',
-                    labelPlacement: AppInputLabelPlacement.above,
-                    type: AppInputType.amount,
+                    labelPlacement: PpForgeInputLabelPlacement.above,
+                    type: PpForgeInputType.amount,
                     hint: '0',
                     currencySymbol: '฿',
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppInput.title(
+                  const SizedBox(height: PpForgeSpacing.lg),
+                  PpForgeInput.title(
                     editing: true,
                     controller: _title,
                     label: 'ชื่อ',
@@ -303,20 +309,20 @@ class _InputPageState extends State<_InputPage> {
               ),
             ),
             HubUse(
-              label: 'Detail value — view ⇄ edit (AppInput.inline)',
+              label: 'Detail value — view ⇄ edit (PpForgeInput.inline)',
               page: 'Every detail page: note, description',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: _editing ? 'Switch to view' : 'Switch to edit',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => setState(() => _editing = !_editing),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: PpForgeSpacing.sm),
                   DetailStacked(
                     label: 'Note',
-                    child: AppInput.inline(
+                    child: PpForgeInput.inline(
                       editing: _editing,
                       controller: _note,
                       hint: 'Add a note',
@@ -327,7 +333,7 @@ class _InputPageState extends State<_InputPage> {
                   ),
                   DetailStacked(
                     label: 'Created by (read-only)',
-                    child: AppInput.inline(
+                    child: PpForgeInput.inline(
                       editing: false,
                       controller: TextEditingController(text: 'Aom Chan'),
                     ),
@@ -336,9 +342,9 @@ class _InputPageState extends State<_InputPage> {
               ),
             ),
             HubUse(
-              label: 'Hero name — view ⇄ edit (AppInput.title)',
+              label: 'Hero name — view ⇄ edit (PpForgeInput.title)',
               page: 'Detail page heroes',
-              child: AppInput.title(
+              child: PpForgeInput.title(
                 editing: _editing,
                 controller: _title,
                 hint: 'Name',
@@ -348,7 +354,7 @@ class _InputPageState extends State<_InputPage> {
             HubUse(
               label: 'Search capsule',
               page: 'Lists (transactions, contacts, tags), pickers',
-              child: AppInput.search(
+              child: PpForgeInput.search(
                 onChanged: (_) {},
                 hint: 'Search',
                 padding: EdgeInsets.zero,
@@ -357,16 +363,16 @@ class _InputPageState extends State<_InputPage> {
           ],
         ),
         HubPlayground(
-          title: 'AppInput',
-          note: 'The Field: every option AppInput(...) has.',
+          title: 'PpForgeInput',
+          note: 'The Field: every option PpForgeInput(...) has.',
           controls: [
             const PlayText('label', initialValue: 'Name'),
             const PlayText('hint', initialValue: 'Placeholder'),
             const PlayText('helper'),
             const PlayText('errorText'),
             const PlayText('prefixText'),
-            PlayChoice<AppInputType>('type', [
-              for (final t in AppInputType.values) (t.name, t),
+            PlayChoice<PpForgeInputType>('type', [
+              for (final t in PpForgeInputType.values) (t.name, t),
             ]),
             const PlayBool('dense'),
             const PlayBool('enabled', initialValue: true),
@@ -393,13 +399,13 @@ class _InputPageState extends State<_InputPage> {
             String? text(String k) =>
                 v<String>(k).isEmpty ? null : v<String>(k);
             final max = v<double>('maxLength').round();
-            return AppInput(
+            return PpForgeInput(
               label: text('label'),
               hint: text('hint'),
               helper: text('helper'),
               errorText: text('errorText'),
               prefixText: text('prefixText'),
-              type: v<AppInputType>('type'),
+              type: v<PpForgeInputType>('type'),
               dense: v<bool>('dense'),
               enabled: v<bool>('enabled'),
               readOnly: v<bool>('readOnly'),

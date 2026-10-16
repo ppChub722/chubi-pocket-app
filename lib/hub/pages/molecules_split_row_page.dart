@@ -54,7 +54,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 avatar: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const AppAvatar(name: 'Me', size: SplitRow.avatarSize),
+                    const PpForgeAvatar(name: 'Me', size: SplitRow.avatarSize),
                     SizedBox(
                       width: PersonMark.linkSlotWidth(SplitRow.avatarSize),
                     ),
@@ -63,7 +63,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 name: const SplitRowName.muted('My share'),
                 amount: const _DemoAmount('฿400.00'),
                 trailing: SplitRowAction(
-                  icon: AppIcons.auto,
+                  icon: PpForgeIcons.auto,
                   tooltip: 'Auto',
                   selected: _auto,
                   onTap: () => setState(() => _auto = !_auto),
@@ -83,7 +83,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 ),
                 amount: const _DemoAmount('฿150.00'),
                 trailing: SplitRowAction(
-                  icon: AppIcons.close,
+                  icon: PpForgeIcons.close,
                   tooltip: 'Remove',
                   onTap: _noop,
                 ),
@@ -98,7 +98,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 name: const SplitRowName.picked('Bee', onTap: _noop),
                 amount: const _DemoAmount('฿150.00'),
                 trailing: SplitRowAction(
-                  icon: AppIcons.close,
+                  icon: PpForgeIcons.close,
                   tooltip: 'Remove',
                   onTap: _noop,
                 ),
@@ -112,7 +112,7 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 name: const SplitRowName.picked('Ton', onTap: _noop),
                 amount: const _DemoAmount('฿150.00'),
                 trailing: SplitRowAction(
-                  icon: AppIcons.close,
+                  icon: PpForgeIcons.close,
                   tooltip: 'Remove',
                   onTap: _noop,
                 ),
@@ -142,13 +142,13 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 ? null
                 : kind == 0
                 ? SplitRowAction(
-                    icon: AppIcons.auto,
+                    icon: PpForgeIcons.auto,
                     tooltip: 'Auto',
                     selected: v<bool>('autoOn'),
                     onTap: () {},
                   )
                 : SplitRowAction(
-                    icon: AppIcons.close,
+                    icon: PpForgeIcons.close,
                     tooltip: 'Remove',
                     onTap: () {},
                   );
@@ -156,7 +156,10 @@ class _SplitRowPageState extends State<_SplitRowPage> {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const AppAvatar(name: 'Me', size: SplitRow.avatarSize),
+                      const PpForgeAvatar(
+                        name: 'Me',
+                        size: SplitRow.avatarSize,
+                      ),
                       SizedBox(
                         width: PersonMark.linkSlotWidth(SplitRow.avatarSize),
                       ),

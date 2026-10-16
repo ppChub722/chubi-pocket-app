@@ -110,20 +110,20 @@ class NotificationTileView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                AppText(
+                PpForgeText(
                   title,
                   weight: unread ? FontWeight.w600 : FontWeight.w400,
                 ),
-                AppText(
+                PpForgeText(
                   [timeText, ?amountText].join(' · '),
-                  role: AppTextRole.caption,
+                  role: PpForgeTextRole.caption,
                 ),
                 if (acceptedLabel != null) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  AppChip(
+                  const SizedBox(height: PpForgeSpacing.xs),
+                  PpForgeChip(
                     label: acceptedLabel!,
-                    icon: AppIcons.success,
-                    tone: AppChipTone.success,
+                    icon: PpForgeIcons.success,
+                    tone: PpForgeChipTone.success,
                     selected: true,
                     size: ChipSize.mini,
                   ),
@@ -131,33 +131,37 @@ class NotificationTileView extends StatelessWidget {
               ],
             ),
             trailing: unread
-                ? Icon(Icons.circle, size: AppSpacing.sm, color: scheme.primary)
+                ? Icon(
+                    Icons.circle,
+                    size: PpForgeSpacing.sm,
+                    color: scheme.primary,
+                  )
                 : null,
           ),
           if (pending)
             // The answer buttons sit under the text, past the avatar.
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg + _avatar + AppSpacing.md,
+                PpForgeSpacing.lg + _avatar + PpForgeSpacing.md,
                 0,
-                AppSpacing.lg,
-                AppSpacing.md,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.md,
               ),
               child: Row(
                 children: [
                   Expanded(
-                    child: AppButton(
+                    child: PpForgeButton(
                       label: acceptLabel,
-                      icon: AppIcons.check,
+                      icon: PpForgeIcons.check,
                       submits: true,
                       onPressed: onAccept,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                   Expanded(
-                    child: AppButton(
+                    child: PpForgeButton(
                       label: rejectLabel,
-                      variant: AppButtonVariant.outlined,
+                      variant: PpForgeButtonVariant.outlined,
                       submits: true,
                       onPressed: () => _reject(context),
                     ),

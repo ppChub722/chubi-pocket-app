@@ -17,7 +17,7 @@ Widget _view({
   bool isEmpty = true,
   VoidCallback? onRetry,
 }) => MaterialApp(
-  // Snackbar tones read the AppColors extension.
+  // Snackbar tones read the PpForgeColors extension.
   theme: ThemeData(extensions: [sweetTheme.lightColors]),
   locale: const Locale('en'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,

@@ -12,8 +12,8 @@ import '../tokens/app_spacing.dart';
 class PinnedBar extends StatelessWidget {
   const PinnedBar({
     required this.child,
-    this.bottomGap = AppSpacing.lg,
-    this.keyboardGap = AppSpacing.sm,
+    this.bottomGap = PpForgeSpacing.lg,
+    this.keyboardGap = PpForgeSpacing.sm,
     super.key,
   });
 
@@ -28,8 +28,8 @@ class PinnedBar extends StatelessWidget {
   /// The bottom padding [PinnedBar] uses — for a bar that can't be one.
   static double bottomPadding(
     BuildContext context, {
-    double bottomGap = AppSpacing.lg,
-    double keyboardGap = AppSpacing.sm,
+    double bottomGap = PpForgeSpacing.lg,
+    double keyboardGap = PpForgeSpacing.sm,
   }) => MediaQuery.viewInsetsOf(context).bottom > 0
       ? keyboardGap
       : bottomGap + MediaQuery.viewPaddingOf(context).bottom;
@@ -43,9 +43,9 @@ class PinnedBar extends StatelessWidget {
         border: Border(top: BorderSide(color: scheme.outlineVariant)),
       ),
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
         bottomPadding(context, bottomGap: bottomGap, keyboardGap: keyboardGap),
       ),
       child: child,

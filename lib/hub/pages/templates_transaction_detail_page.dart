@@ -127,12 +127,12 @@ class _TxPageState extends State<_TxPage> {
       color: Theme.of(context).colorScheme.onSurfaceVariant,
     );
     Widget rule(String title, String body) => Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppIcon(AppIcons.info, size: AppIconSize.md),
-          const SizedBox(width: AppSpacing.sm),
+          const PpForgeIcon(PpForgeIcons.info, size: PpForgeIconSize.md),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             child: Text.rich(
               TextSpan(
@@ -230,13 +230,13 @@ class _TxPageState extends State<_TxPage> {
               ),
               Builder(
                 builder: (context) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  padding: const EdgeInsets.only(bottom: PpForgeSpacing.md),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: Theme.of(context).colorScheme.outlineVariant,
                       ),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(PpForgeRadius.md),
                     ),
                     child: txCompactHeroBar(
                       context,
@@ -342,8 +342,8 @@ class _SampleState extends State<_Sample> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
+                  horizontal: PpForgeSpacing.lg,
+                  vertical: PpForgeSpacing.md,
                 ),
                 child: Text(
                   l.txSplitRowLabel,
@@ -357,26 +357,26 @@ class _SampleState extends State<_Sample> {
     return DecoratedBox(
       decoration: BoxDecoration(
         border: Border.all(color: scheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(PpForgeRadius.lg),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(PpForgeSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (widget.system) ...[
-              AppCard(
-                style: AppCardStyle.bordered,
-                padding: const EdgeInsets.all(AppSpacing.md),
+              PpForgeCard(
+                style: PpForgeCardStyle.bordered,
+                padding: const EdgeInsets.all(PpForgeSpacing.md),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppIcon(
-                      AppIcons.lock,
-                      size: AppIconSize.md,
+                    PpForgeIcon(
+                      PpForgeIcons.lock,
+                      size: PpForgeIconSize.md,
                       color: scheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
                     Expanded(
                       child: Text(
                         l.transactionDetailSystemRowBanner,
@@ -386,7 +386,7 @@ class _SampleState extends State<_Sample> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
             ],
             DraftForm(
               controller: _c,
@@ -403,25 +403,25 @@ class _SampleState extends State<_Sample> {
             ),
             if (_editing && canEdit)
               DangerRow(
-                icon: AppIcons.delete,
+                icon: PpForgeIcons.delete,
                 label: l.transactionDeleteThis,
                 onTap: () {},
               ),
             if (_editing && !widget.startEditing)
               Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.md),
+                padding: const EdgeInsets.only(top: PpForgeSpacing.md),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: 'Back to view',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => setState(() => _editing = false),
                   ),
                 ),
               ),
             if (!_editing)
               Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.xl),
+                padding: const EdgeInsets.only(top: PpForgeSpacing.xl),
                 child: Text(
                   'Recorded by You\nCreated 11 Oct 2026 12:30',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -454,8 +454,8 @@ class _PersonRow extends StatelessWidget {
         : 'awaiting ฿${s.amount.toStringAsFixed(0)}';
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
+        horizontal: PpForgeSpacing.lg,
+        vertical: PpForgeSpacing.sm,
       ),
       child: Row(
         children: [
@@ -465,7 +465,7 @@ class _PersonRow extends StatelessWidget {
             size: 32,
             reserveLinkSlot: true,
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: PpForgeSpacing.md),
           Expanded(
             child: Text(
               s.personName,

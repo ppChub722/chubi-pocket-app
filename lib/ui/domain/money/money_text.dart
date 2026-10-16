@@ -45,16 +45,17 @@ class MoneyText extends StatelessWidget {
   final MoneyTone tone;
   final TextStyle? style;
 
-  /// Null = the user's currency symbol from `UiConfig` (set from /me).
+  /// Null = the user's currency symbol from `PpForgeConfig` (set from /me).
   final String? symbol;
   final bool hideable;
   final TextAlign? textAlign;
 
   @override
   Widget build(BuildContext context) {
-    final symbol = this.symbol ?? UiConfig.stringsOf(context).currencySymbol;
+    final symbol =
+        this.symbol ?? PpForgeConfig.stringsOf(context).currencySymbol;
     final hidden = hideable && isMoneyHidden(context);
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final (Color? color, String sign) = switch (tone) {
       MoneyTone.plain => (null, ''),
       MoneyTone.income => (palette.income, '+'),
@@ -91,7 +92,8 @@ String moneyString(BuildContext context, num amount, {String? symbol}) =>
     _moneyString(context, amount, symbol);
 
 String _moneyString(BuildContext context, num amount, String? symbolOrNull) {
-  final symbol = symbolOrNull ?? UiConfig.stringsOf(context).currencySymbol;
+  final symbol =
+      symbolOrNull ?? PpForgeConfig.stringsOf(context).currencySymbol;
   return isMoneyHidden(context)
       ? '$symbol••••'
       : CurrencyFormatter.format(amount, symbol: symbol);
@@ -135,7 +137,7 @@ class MoneyVisibilityToggle extends StatelessWidget {
       iconSize: size,
       visualDensity: VisualDensity.compact,
       icon: Icon(
-        hidden ? AppIcons.hidden : AppIcons.visible,
+        hidden ? PpForgeIcons.hidden : PpForgeIcons.visible,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       onPressed: () => context.read<MoneyVisibilityCubit>().toggle(),

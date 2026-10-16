@@ -20,9 +20,9 @@ import '../tokens/app_spacing.dart';
 /// the content so loading, error, empty, refresh and paging behave identically
 /// on every list.
 ///
-/// - [header]: widgets pinned above the list — an `AppInput.search`, a
+/// - [header]: widgets pinned above the list — an `PpForgeInput.search`, a
 ///   `FilterBar`, a `ListSelectionBar` (select all + bulk actions + the red
-///   trash), an `AppMessage` banner. They don't scroll.
+///   trash), an `PpForgeMessage` banner. They don't scroll.
 /// - the list itself, one of:
 ///   * [children] — rows / cards / `SectionHeader`s in order (a grouped list is
 ///     a flat list with a header before each group);
@@ -40,7 +40,7 @@ import '../tokens/app_spacing.dart';
 ///   instead ([onRetryMore]); the rows already loaded stay.
 /// - [footer]: after the last row (a count, "that's all").
 /// - tabs (a list split by expense / income …): use [TabbedListPageBody] —
-///   an `AppTabBar` over an `AppTabPager`, each tab its own ListPageBody
+///   an `PpForgeTabBar` over an `PpForgeTabPager`, each tab its own ListPageBody
 ///   (own empty / refresh state).
 /// - [bottomInset] clears the floating bars (the centre + / a chat dial).
 class ListPageBody extends StatefulWidget {
@@ -66,9 +66,9 @@ class ListPageBody extends StatefulWidget {
     this.rowDividers = false,
     this.rowDividerIndent = defaultRowDividerIndent,
     this.rowGap = 0,
-    this.topInset = AppSpacing.md,
+    this.topInset = PpForgeSpacing.md,
     this.bottomInset = floatingBarClearance,
-    this.sidePadding = AppSpacing.lg,
+    this.sidePadding = PpForgeSpacing.lg,
     super.key,
   }) : assert(
          children == const <Widget>[] || builder == null,
@@ -242,7 +242,7 @@ class _ListPageBodyState extends State<ListPageBody> {
 }
 
 /// A list page split into tabs (categories: expense / income): the pinned
-/// [header] widgets, then an `AppTabBar` over an `AppTabPager` whose pages are
+/// [header] widgets, then an `PpForgeTabBar` over an `PpForgeTabPager` whose pages are
 /// each a [ListPageBody] built by [pageBuilder] — so every tab has its own
 /// loading / empty / refresh / paging state and scroll position.
 class TabbedListPageBody<T> extends StatelessWidget {
@@ -260,7 +260,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
     super.key,
   });
 
-  final List<AppTab<T>> tabs;
+  final List<PpForgeTab<T>> tabs;
   final T selected;
   final ValueChanged<T> onChanged;
 
@@ -294,7 +294,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
               topInset + (clearTopBar ? MediaQuery.paddingOf(context).top : 0),
         ),
         if (!headerBelowTabs) ...header,
-        AppTabBar<T>(
+        PpForgeTabBar<T>(
           tabs: tabs,
           selected: selected,
           onChanged: onChanged,
@@ -305,7 +305,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
           child: MediaQuery.removePadding(
             context: context,
             removeTop: true,
-            child: AppTabPager<T>(
+            child: PpForgeTabPager<T>(
               values: [for (final t in tabs) t.value],
               selected: selected,
               onChanged: onChanged,

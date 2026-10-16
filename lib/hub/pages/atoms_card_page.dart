@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../ui/ui.dart';
 import '../hub_playground.dart';
 
-/// `/dev/ui/atoms/card` — AppCard: every surface in the app. The reference
+/// `/dev/ui/atoms/card` — PpForgeCard: every surface in the app. The reference
 /// for the hub's playground pattern: live instance + controls on top (the
 /// widget's real options), then "In the app".
 Widget buildCardPage(BuildContext context) {
   final scheme = Theme.of(context).colorScheme;
   final text = Theme.of(context).textTheme;
   Widget body(String label) => Padding(
-    padding: const EdgeInsets.all(AppSpacing.lg),
+    padding: const EdgeInsets.all(PpForgeSpacing.lg),
     child: Text(label, style: text.bodyMedium),
   );
   return Column(
@@ -23,21 +23,21 @@ Widget buildCardPage(BuildContext context) {
           HubUse(
             label: 'plain — the theme card',
             page: 'Lists, summaries',
-            child: AppCard(child: body('plain — lists, summaries')),
+            child: PpForgeCard(child: body('plain — lists, summaries')),
           ),
           HubUse(
             label: 'bordered — a raised surface, normal outline',
             page: 'Picker cards, nested cards',
-            child: AppCard(
-              style: AppCardStyle.bordered,
+            child: PpForgeCard(
+              style: PpForgeCardStyle.bordered,
               child: body('bordered — a card inside a card'),
             ),
           ),
           HubUse(
             label: 'accent — 1.5 coloured border',
             page: 'Icon maker preview',
-            child: AppCard(
-              style: AppCardStyle.accent,
+            child: PpForgeCard(
+              style: PpForgeCardStyle.accent,
               color: scheme.primary,
               child: body('accent — the icon preview card'),
             ),
@@ -45,25 +45,25 @@ Widget buildCardPage(BuildContext context) {
           HubUse(
             label: 'tinted + glyph — a colour wash',
             page: 'Wallet cards, More hub, dashboard tiles',
-            child: AppCard(
-              style: AppCardStyle.tinted,
+            child: PpForgeCard(
+              style: PpForgeCardStyle.tinted,
               color: scheme.tertiary,
-              glyph: AppIcons.budget,
+              glyph: PpForgeIcons.budget,
               child: body('tinted — a wash + a faded corner glyph'),
             ),
           ),
           HubUse(
             label: 'flat — no fill, no border',
             page: 'PickCard (nothing picked)',
-            child: AppCard(
-              style: AppCardStyle.flat,
+            child: PpForgeCard(
+              style: PpForgeCardStyle.flat,
               child: body('flat — an empty slot'),
             ),
           ),
           HubUse(
             label: 'tappable',
             page: 'List rows, pick cards',
-            child: AppCard(
+            child: PpForgeCard(
               onTap: () {},
               child: body('tappable — ripple on tap'),
             ),
@@ -71,7 +71,7 @@ Widget buildCardPage(BuildContext context) {
           HubUse(
             label: 'selected — 1.5 primary border',
             page: 'Pickers',
-            child: AppCard(
+            child: PpForgeCard(
               selected: true,
               child: body('selected — a picked card'),
             ),
@@ -79,7 +79,7 @@ Widget buildCardPage(BuildContext context) {
           HubUse(
             label: 'borderColor — warning / error outline',
             page: 'Scheduled list (overdue)',
-            child: AppCard(
+            child: PpForgeCard(
               borderColor: scheme.error,
               borderWidth: 1.5,
               child: body('borderColor — overdue, error'),
@@ -89,13 +89,13 @@ Widget buildCardPage(BuildContext context) {
       ),
 
       HubPlayground(
-        title: 'AppCard',
+        title: 'PpForgeCard',
         note:
-            'Every option AppCard has. color is the accent border / the tint '
+            'Every option PpForgeCard has. color is the accent border / the tint '
             'wash (accent and tinted need one); glyph is tinted only.',
         controls: [
-          PlayChoice<AppCardStyle>('style', [
-            for (final s in AppCardStyle.values) (s.name, s),
+          PlayChoice<PpForgeCardStyle>('style', [
+            for (final s in PpForgeCardStyle.values) (s.name, s),
           ]),
           PlayChoice<Color>('color', [
             ('primary', scheme.primary),
@@ -119,11 +119,11 @@ Widget buildCardPage(BuildContext context) {
           const PlayNum('padding', min: 0, max: 32, step: 4, initialValue: 16),
         ],
         builder: (context, v) {
-          final style = v<AppCardStyle>('style');
-          return AppCard(
+          final style = v<PpForgeCardStyle>('style');
+          return PpForgeCard(
             style: style,
             color: v<Color>('color'),
-            glyph: v<bool>('glyph') ? AppIcons.budget : null,
+            glyph: v<bool>('glyph') ? PpForgeIcons.budget : null,
             glyphSize: v<double>('glyphSize'),
             selected: v<bool>('selected'),
             borderColor: v<Color?>('borderColor'),

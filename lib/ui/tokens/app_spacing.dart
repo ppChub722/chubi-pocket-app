@@ -1,5 +1,5 @@
-class AppSpacing {
-  const AppSpacing._();
+class PpForgeSpacing {
+  const PpForgeSpacing._();
 
   static const double xxs = 2;
   static const double xs = 4;

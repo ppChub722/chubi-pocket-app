@@ -117,7 +117,7 @@ Future<SettleResult?> showSettleSheet(
   required SettleWalletField walletField,
   required Future<String?> Function(SettleResult result) onConfirm,
   Account? initialAccount,
-}) => showAppSheetCustom<SettleResult>(
+}) => showPpForgeSheetCustom<SettleResult>(
   context,
   builder: (_) => SettleSheet(
     data: data,
@@ -180,13 +180,13 @@ class _SettleSheetState extends State<SettleSheet> {
   }
 
   Future<void> _pickDate() async {
-    final r = await showAppDatePicker(
+    final r = await showPpForgeDatePicker(
       context,
       initial: _date,
       first: DateTime(2000),
       last: DateTime.now().add(const Duration(days: 365)),
     );
-    if (r is AppDatePicked) setState(() => _date = r.date);
+    if (r is PpForgeDatePicked) setState(() => _date = r.date);
   }
 
   /// Amount within (0, outstanding]; null = fine.
@@ -224,7 +224,7 @@ class _SettleSheetState extends State<SettleSheet> {
       return;
     }
     setState(() => _saving = false);
-    showAppSnackBar(context, error, tone: Tone.danger);
+    showPpForgeSnackBar(context, error, tone: Tone.danger);
   }
 
   void _fill(double amount) {
@@ -261,12 +261,12 @@ class _SettleSheetState extends State<SettleSheet> {
             onPickDate: _pickDate,
             symbol: data.symbol,
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
           Wrap(
-            spacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
             children: [
-              AppChip(label: labels.all, onTap: () => _fill(out)),
-              AppChip(
+              PpForgeChip(label: labels.all, onTap: () => _fill(out)),
+              PpForgeChip(
                 label: labels.half,
                 onTap: () => _fill((out / 2 * 100).roundToDouble() / 100),
               ),
@@ -280,17 +280,17 @@ class _SettleSheetState extends State<SettleSheet> {
                 _account,
                 (a) => setState(() => _account = a),
               ),
-              const SizedBox(height: AppSpacing.md),
-              AppInput(
+              const SizedBox(height: PpForgeSpacing.md),
+              PpForgeInput(
                 controller: _note,
                 label: labels.noteLabel,
-                prefixIcon: AppIcons.note,
+                prefixIcon: PpForgeIcons.note,
                 maxLines: 3,
                 maxLength: TextLimits.note,
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
         ],
       ),
     );

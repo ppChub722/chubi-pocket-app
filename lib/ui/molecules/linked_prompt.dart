@@ -39,19 +39,19 @@ Future<LinkedChoice?> showLinkedPrompt(
     DialogChoice(
       value: null,
       label: cancelLabel,
-      variant: AppButtonVariant.text,
+      variant: PpForgeButtonVariant.text,
     ),
     DialogChoice(
       value: LinkedChoice.thisSideOnly,
       label: thisSideLabel,
-      variant: AppButtonVariant.outlined,
+      variant: PpForgeButtonVariant.outlined,
     ),
     DialogChoice(
       value: LinkedChoice.bothSides,
       label: bothSidesLabel,
       variant: destructive
-          ? AppButtonVariant.destructive
-          : AppButtonVariant.primary,
+          ? PpForgeButtonVariant.destructive
+          : PpForgeButtonVariant.primary,
     ),
   ],
 );

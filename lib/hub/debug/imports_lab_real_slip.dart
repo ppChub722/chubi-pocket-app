@@ -144,7 +144,7 @@ class _RealSlipCardState extends State<_RealSlipCard> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -153,13 +153,13 @@ class _RealSlipCardState extends State<_RealSlipCard> {
               'gallery → QR on phone → POST /pending-transactions/scan-slip',
               style: textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             if (!SlipQrReader.isSupported)
               // Phone only (owner 2026-10-09) — no pick button on web.
               Row(
                 children: [
                   Icon(Icons.error, color: scheme.error),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                   Expanded(
                     child: Text(
                       'Slip import works in the Android app only.',
@@ -219,7 +219,7 @@ class _RealSlipCardState extends State<_RealSlipCard> {
                     ),
                   ),
                   if (_files.isNotEmpty) ...[
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PpForgeSpacing.sm),
                     OutlinedButton(
                       onPressed: _busy ? null : _readAll,
                       child: const Text('Run again'),
@@ -254,7 +254,7 @@ class _SlipResult extends StatelessWidget {
     final height = (ocr?['height'] as num?)?.toDouble() ?? 0;
 
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.lg),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -268,7 +268,7 @@ class _SlipResult extends StatelessWidget {
           if (run.status case final status?) _StatusChip(status: status),
           if (ocr != null)
             Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
               child: Text(
                 [
                   'conf ${ocr['conf']}',
@@ -281,7 +281,7 @@ class _SlipResult extends StatelessWidget {
                 style: textTheme.labelMedium,
               ),
             ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
           if (width > 0 && height > 0)
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 560),
@@ -385,7 +385,7 @@ class _StatusChip extends StatelessWidget {
       _ => '',
     };
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
       child: Text.rich(
         TextSpan(
           children: [
@@ -426,7 +426,7 @@ class _QrLine extends StatelessWidget {
       _ => (false, 'No QR found'),
     };
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.xs),
+      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -435,7 +435,7 @@ class _QrLine extends StatelessWidget {
             size: 18,
             color: ok ? Colors.green : scheme.onSurfaceVariant,
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           Expanded(
             child: SelectableText(
               text,

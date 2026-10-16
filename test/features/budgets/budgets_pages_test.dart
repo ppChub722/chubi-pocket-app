@@ -489,7 +489,7 @@ void main() {
     testWidgets('recurring: tabs, the period dashboard, ONE call', (t) async {
       await pump(t, const BudgetDetailPage(id: 'b1'));
       expect(repo.calls, ['get:b1']);
-      expect(find.byType(AppTabBar<dynamic>), findsNothing);
+      expect(find.byType(PpForgeTabBar<dynamic>), findsNothing);
       expect(find.text('Periods'), findsWidgets);
       expect(find.text('Setup'), findsOneWidget);
       expect(find.text('Overview'), findsOneWidget);

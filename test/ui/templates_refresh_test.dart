@@ -30,8 +30,8 @@ void main() {
       host(
         TabbedListPageBody<int>(
           tabs: const [
-            AppTab(value: 0, label: 'one'),
-            AppTab(value: 1, label: 'two'),
+            PpForgeTab(value: 0, label: 'one'),
+            PpForgeTab(value: 1, label: 'two'),
           ],
           selected: 0,
           onChanged: (_) {},

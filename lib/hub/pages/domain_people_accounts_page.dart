@@ -133,7 +133,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
     List<PaymentProvider>? provs,
     bool hidden = false,
     VoidCallback? onDelete,
-  }) => AppCard(
+  }) => PpForgeCard(
     padding: EdgeInsets.zero,
     child: IdentifierRow(
       identifier: id,
@@ -194,7 +194,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             label: 'PersonLinkBadge — 16 (fixed) and 24',
             page: 'Next to a linked avatar',
             child: const Wrap(
-              spacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
               children: [PersonLinkBadge(), PersonLinkBadge(size: 24)],
             ),
           ),
@@ -204,7 +204,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                 'reserveLinkSlot — unlinked marks keep the badge space so '
                 'every name starts at the same x',
             page: 'Contact picker sheet, Splits section',
-            child: const AppCard(
+            child: const PpForgeCard(
               padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -219,7 +219,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                     title: 'มาตาก',
                     subtitle: 'linked',
                   ),
-                  AppDivider.row(),
+                  PpForgeDivider.row(),
                   ListRow(
                     leading: PersonMark(
                       name: 'บี',
@@ -230,7 +230,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                     title: 'บี',
                     subtitle: 'contact — slot kept empty',
                   ),
-                  AppDivider.row(),
+                  PpForgeDivider.row(),
                   ListRow(
                     leading: PersonMark(
                       name: 'ลี',
@@ -250,18 +250,18 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             label: 'PersonMark in a chip — name · contact · linked',
             page: 'Split / payer chips',
             child: const Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
+              spacing: PpForgeSpacing.sm,
+              runSpacing: PpForgeSpacing.sm,
               children: [
-                AppChip(
+                PpForgeChip(
                   label: 'ลี',
                   leading: PersonMark(name: 'ลี', level: PersonLevel.name),
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'บี',
                   leading: PersonMark(name: 'บี', level: PersonLevel.contact),
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'ต้น',
                   leading: PersonMark(name: 'ต้น', level: PersonLevel.linked),
                 ),
@@ -361,14 +361,14 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               child: AccountCardSurface(
                 account: bank,
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(PpForgeSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const AccountIconCircle(account: bank, size: 40),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: PpForgeSpacing.sm),
                       Text(bank.name, style: text.titleMedium),
-                      const AppText('฿••••', role: AppTextRole.money),
+                      const PpForgeText('฿••••', role: PpForgeTextRole.money),
                     ],
                   ),
                 ),
@@ -383,16 +383,16 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               child: AccountCardSurface(
                 account: shared,
                 child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(PpForgeSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       AccountIconCircle(account: shared, size: 40),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: PpForgeSpacing.sm),
                       Text(shared.name, style: text.titleMedium),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: PpForgeSpacing.xs),
                       MemberAvatarStack(members: members.skip(1).toList()),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: PpForgeSpacing.xs),
                       MoneyText(
                         shared.balance,
                         style: text.titleMedium?.copyWith(
@@ -453,7 +453,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
             child: SharedWalletIconBadge(
               size: 32,
               child: IconTile(
-                icon: AppIcons.cash,
+                icon: PpForgeIcons.cash,
                 color: scheme.primary,
                 size: 32,
               ),
@@ -678,7 +678,7 @@ Widget buildPeopleAccountsPage(BuildContext context) {
               maxVisible: v<double>('maxVisible').round(),
               size: v<double>('size'),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
             MemberStrip(
               members: people,
               avatarSize: v<double>('size'),
@@ -790,8 +790,8 @@ Widget buildPeopleAccountsPage(BuildContext context) {
                 size: v<double>('size'),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AppCard(
+            const SizedBox(height: PpForgeSpacing.sm),
+            PpForgeCard(
               padding: EdgeInsets.zero,
               child: IdentifierRow(
                 identifier: AccountIdentifier(

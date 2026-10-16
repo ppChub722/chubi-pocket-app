@@ -28,16 +28,16 @@ class ThemeModeChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      (ThemeMode.light, AppIcons.lightMode, lightLabel),
-      (ThemeMode.dark, AppIcons.darkMode, darkLabel),
-      (ThemeMode.system, AppIcons.systemMode, systemLabel),
+      (ThemeMode.light, PpForgeIcons.lightMode, lightLabel),
+      (ThemeMode.dark, PpForgeIcons.darkMode, darkLabel),
+      (ThemeMode.system, PpForgeIcons.systemMode, systemLabel),
     ];
     return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: [
         for (final (mode, icon, label) in items)
-          AppChip(
+          PpForgeChip(
             label: label,
             icon: icon,
             selected: mode == selected,

@@ -23,7 +23,7 @@ void main() {
     String? changed;
     await pump(
       t,
-      AppInput(
+      PpForgeInput(
         controller: c,
         label: 'Name',
         errorText: 'Taken',
@@ -40,7 +40,7 @@ void main() {
   });
 
   testWidgets('obscurable: the eye toggles the text', (t) async {
-    await pump(t, const AppInput(label: 'Password', obscurable: true));
+    await pump(t, const PpForgeInput(label: 'Password', obscurable: true));
     TextField field() => t.widget<TextField>(find.byType(TextField));
     expect(field().obscureText, isTrue);
     await t.tap(find.byType(IconButton));
@@ -56,7 +56,7 @@ void main() {
     var entered = 0;
     await pump(
       t,
-      AppInput.inline(
+      PpForgeInput.inline(
         editing: false,
         controller: c,
         viewHint: 'Long-press to edit',
@@ -65,7 +65,7 @@ void main() {
     );
     expect(find.text('Long-press to edit'), findsOneWidget);
     expect(t.widget<TextField>(find.byType(TextField)).readOnly, isTrue);
-    await t.longPress(find.byType(AppInput));
+    await t.longPress(find.byType(PpForgeInput));
     expect(entered, 1);
   });
 
@@ -74,7 +74,7 @@ void main() {
     addTearDown(c.dispose);
     await pump(
       t,
-      AppInput.inline(
+      PpForgeInput.inline(
         editing: true,
         controller: c,
         hint: 'Add a note',
@@ -90,15 +90,18 @@ void main() {
   testWidgets('title: same box in view and edit', (t) async {
     final c = TextEditingController(text: 'กสิกร');
     addTearDown(c.dispose);
-    await pump(t, AppInput.title(editing: false, controller: c));
-    final view = t.getSize(find.byType(AppInput));
-    await pump(t, AppInput.title(editing: true, controller: c));
-    expect(t.getSize(find.byType(AppInput)), view);
+    await pump(t, PpForgeInput.title(editing: false, controller: c));
+    final view = t.getSize(find.byType(PpForgeInput));
+    await pump(t, PpForgeInput.title(editing: true, controller: c));
+    expect(t.getSize(find.byType(PpForgeInput)), view);
   });
 
   testWidgets('search: ✕ appears with text and clears it', (t) async {
     String? last;
-    await pump(t, AppInput.search(hint: 'Search', onChanged: (v) => last = v));
+    await pump(
+      t,
+      PpForgeInput.search(hint: 'Search', onChanged: (v) => last = v),
+    );
     expect(find.byType(IconButton), findsNothing);
     await t.enterText(find.byType(TextField), 'abc');
     await t.pump();
@@ -109,15 +112,17 @@ void main() {
     expect(find.byType(IconButton), findsNothing);
   });
 
-  testWidgets('AppSwitch toggles; AppDivider draws a hairline', (t) async {
+  testWidgets('PpForgeSwitch toggles; PpForgeDivider draws a hairline', (
+    t,
+  ) async {
     var on = false;
     await pump(
       t,
       StatefulBuilder(
         builder: (context, set) => Column(
           children: [
-            AppSwitch(value: on, onChanged: (v) => set(() => on = v)),
-            const AppDivider.row(),
+            PpForgeSwitch(value: on, onChanged: (v) => set(() => on = v)),
+            const PpForgeDivider.row(),
           ],
         ),
       ),
@@ -128,15 +133,16 @@ void main() {
     expect(find.byType(Divider), findsOneWidget);
   });
 
-  testWidgets('AppText: a role gives the theme style; maxLines ellipsises', (
-    t,
-  ) async {
-    await pump(
-      t,
-      const AppText('Hello', role: AppTextRole.section, maxLines: 1),
-    );
-    final text = t.widget<Text>(find.text('Hello'));
-    expect(text.overflow, TextOverflow.ellipsis);
-    expect(text.style?.fontWeight, FontWeight.w600);
-  });
+  testWidgets(
+    'PpForgeText: a role gives the theme style; maxLines ellipsises',
+    (t) async {
+      await pump(
+        t,
+        const PpForgeText('Hello', role: PpForgeTextRole.section, maxLines: 1),
+      );
+      final text = t.widget<Text>(find.text('Hello'));
+      expect(text.overflow, TextOverflow.ellipsis);
+      expect(text.style?.fontWeight, FontWeight.w600);
+    },
+  );
 }

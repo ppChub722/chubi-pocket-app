@@ -68,11 +68,11 @@ class ProgressHeroFooter extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SkeletonBox(width: 80, height: 10),
-          SizedBox(height: AppSpacing.xs),
+          SizedBox(height: PpForgeSpacing.xs),
           SkeletonBox(width: 140, height: 28),
-          SizedBox(height: AppSpacing.xs),
+          SizedBox(height: PpForgeSpacing.xs),
           SkeletonBox(width: 180, height: 10),
-          SizedBox(height: AppSpacing.sm),
+          SizedBox(height: PpForgeSpacing.sm),
           SkeletonBox(height: 10, borderRadius: 10),
         ],
       );
@@ -82,7 +82,7 @@ class ProgressHeroFooter extends StatelessWidget {
     Widget dot(Color c) => Container(
       width: 8,
       height: 8,
-      margin: const EdgeInsets.only(right: AppSpacing.xs),
+      margin: const EdgeInsets.only(right: PpForgeSpacing.xs),
       decoration: ShapeDecoration(shape: const CircleBorder(), color: c),
     );
     return Column(
@@ -98,7 +98,7 @@ class ProgressHeroFooter extends StatelessWidget {
           ),
         ),
         if (subCaption != null) Text(subCaption!, style: muted, maxLines: 1),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         ProgressRow(
           value: value,
           expected: expected,
@@ -108,7 +108,7 @@ class ProgressHeroFooter extends StatelessWidget {
         ),
         if (legendUsed != null || legendExpected != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
             child: Row(
               children: [
                 if (legendUsed != null)

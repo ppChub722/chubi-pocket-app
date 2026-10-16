@@ -57,10 +57,10 @@ class SortChip<T> extends StatelessWidget {
       options: [
         for (final o in options) SheetOption<T>(value: o.value, label: o.label),
       ],
-      builder: (context, toggle) => AppChip(
+      builder: (context, toggle) => PpForgeChip(
         label: current.label,
-        icon: icon ?? AppIcons.sort,
-        trailing: AppChipTrailing.dropdown,
+        icon: icon ?? PpForgeIcons.sort,
+        trailing: PpForgeChipTrailing.dropdown,
         tooltip: tooltip,
         onTap: toggle,
       ),

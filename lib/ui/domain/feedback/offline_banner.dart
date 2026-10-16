@@ -37,10 +37,10 @@ class OfflineBanner extends StatelessWidget {
               bottom: false,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.xs,
-                  AppSpacing.md,
-                  AppSpacing.xs,
+                  PpForgeSpacing.md,
+                  PpForgeSpacing.xs,
+                  PpForgeSpacing.md,
+                  PpForgeSpacing.xs,
                 ),
                 child: ConnectionBanner(
                   state: switch (state.status) {

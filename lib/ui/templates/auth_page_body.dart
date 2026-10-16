@@ -7,7 +7,7 @@ import '../tokens/app_spacing.dart';
 /// same skeleton, built only from kit pieces —
 ///
 ///   [brand]          logo · name · tagline
-///   [banner]         an AppMessage for a failed attempt
+///   [banner]         an PpForgeMessage for a failed attempt
 ///   [groups]         the form: SectionCards of framed AppInputs (or bare
 ///                    inputs), spaced by the template
 ///   [submit]         the large primary button
@@ -51,16 +51,16 @@ class AuthPageBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gap = compact ? AppSpacing.lg : AppSpacing.xl;
+    final gap = compact ? PpForgeSpacing.lg : PpForgeSpacing.xl;
     return CenteredFormBody(
       safeTop: !clearTopBar,
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
         clearTopBar
-            ? MediaQuery.paddingOf(context).top + AppSpacing.md
-            : AppSpacing.xl,
-        AppSpacing.lg,
-        AppSpacing.xl,
+            ? MediaQuery.paddingOf(context).top + PpForgeSpacing.md
+            : PpForgeSpacing.xl,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.xl,
       ),
       child: AutofillGroup(
         child: Form(
@@ -73,31 +73,31 @@ class AuthPageBody extends StatelessWidget {
               SizedBox(height: gap),
               if (banner != null) ...[
                 banner!,
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
               for (final (i, g) in groups.indexed) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.md),
+                if (i > 0) const SizedBox(height: PpForgeSpacing.md),
                 g,
               ],
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: PpForgeSpacing.xl),
               submit,
               if (alternatives.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: PpForgeSpacing.lg),
                 for (final (i, a) in alternatives.indexed) ...[
-                  if (i > 0) const SizedBox(height: AppSpacing.lg),
+                  if (i > 0) const SizedBox(height: PpForgeSpacing.lg),
                   a,
                 ],
               ],
               if (switchLink != null) ...[
                 SizedBox(
                   height: alternatives.isNotEmpty
-                      ? AppSpacing.lg
-                      : AppSpacing.md,
+                      ? PpForgeSpacing.lg
+                      : PpForgeSpacing.md,
                 ),
                 switchLink!,
               ],
               if (footer != null) ...[
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: PpForgeSpacing.xl),
                 footer!,
               ],
             ],

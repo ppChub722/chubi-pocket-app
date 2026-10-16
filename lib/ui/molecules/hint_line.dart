@@ -36,8 +36,12 @@ class HintLine extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          AppIcon(icon!, size: AppIconSize.sm, color: scheme.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.xs),
+          PpForgeIcon(
+            icon!,
+            size: PpForgeIconSize.sm,
+            color: scheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
         Flexible(
           child: Text.rich(
@@ -54,9 +58,9 @@ class HintLine extends StatelessWidget {
                   if (onTap != null)
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
-                      child: AppIcon(
-                        AppIcons.chevronRight,
-                        size: AppIconSize.sm,
+                      child: PpForgeIcon(
+                        PpForgeIcons.chevronRight,
+                        size: PpForgeIconSize.sm,
                         color: scheme.primary,
                       ),
                     ),
@@ -75,9 +79,9 @@ class HintLine extends StatelessWidget {
     if (onTap == null) return line;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSpacing.sm),
+      borderRadius: BorderRadius.circular(PpForgeSpacing.sm),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xxs),
         child: line,
       ),
     );

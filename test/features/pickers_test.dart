@@ -65,14 +65,14 @@ void main() {
     testWidgets('▾ only on a row with children; it opens the level', (t) async {
       await open(t, show);
       // One parent → one ▾; no › chevrons, no ✓.
-      expect(find.byIcon(AppIcons.expand), findsOneWidget);
-      expect(find.byIcon(AppIcons.chevronRight), findsNothing);
-      expect(find.byIcon(AppIcons.check), findsNothing);
+      expect(find.byIcon(PpForgeIcons.expand), findsOneWidget);
+      expect(find.byIcon(PpForgeIcons.chevronRight), findsNothing);
+      expect(find.byIcon(PpForgeIcons.check), findsNothing);
       expect(find.text('ข้าวมันไก่'), findsNothing);
-      await t.tap(find.byIcon(AppIcons.expand));
+      await t.tap(find.byIcon(PpForgeIcons.expand));
       await t.pumpAndSettle();
       expect(find.text('ข้าวมันไก่'), findsOneWidget);
-      expect(find.byIcon(AppIcons.collapse), findsOneWidget);
+      expect(find.byIcon(PpForgeIcons.collapse), findsOneWidget);
     });
 
     testWidgets('a search match shows inside its opened parent', (t) async {

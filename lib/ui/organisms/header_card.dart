@@ -94,9 +94,9 @@ class HeaderCard extends StatelessWidget {
         : null;
     final edit = onEdit == null
         ? null
-        : AppIconButton.edit(
+        : PpForgeIconButton.edit(
             size: HeroSpacing.controlHeight,
-            tooltip: UiConfig.stringsOf(context).edit,
+            tooltip: PpForgeConfig.stringsOf(context).edit,
             onPressed: onEdit,
           );
     // The kit's hero spacing ([HeroContent]): 16 inside, 12 between rows,
@@ -108,7 +108,7 @@ class HeaderCard extends StatelessWidget {
         Row(
           children: [
             leading,
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

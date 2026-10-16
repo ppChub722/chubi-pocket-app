@@ -46,8 +46,8 @@ void main() {
   ) async {
     await pump(t, fruits(selected: 'ทุเรียน'));
     expect(find.text('เลือกผลไม้'), findsOneWidget);
-    expect(find.byIcon(AppIcons.close), findsOneWidget);
-    expect(find.byIcon(AppIcons.check), findsNothing);
+    expect(find.byIcon(PpForgeIcons.close), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.check), findsNothing);
     final row = t.widget<PickerRow>(find.widgetWithText(PickerRow, 'ทุเรียน'));
     expect(row.selected, isTrue);
 

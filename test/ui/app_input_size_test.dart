@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// AppInput.card geometry is fixed by TOKENS ([AppInputSize]), not by the
+/// PpForgeInput.card geometry is fixed by TOKENS ([PpForgeInputSize]), not by the
 /// value's font: two sized fields side by side — a big amount and a normal
 /// description — share their label top and their DRAWN underline row, empty,
 /// filled or focused, at text scale 1.0 and 1.3.
 void main() {
-  for (final size in AppInputSize.values) {
+  for (final size in PpForgeInputSize.values) {
     for (final scale in const [1.0, 1.3]) {
       for (final state in const [
         'empty',
@@ -54,33 +54,33 @@ void main() {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: AppInput.card(
+                          child: PpForgeInput.card(
                             controller: left,
                             focusNode: leftFocus,
                             size: size,
                             label: 'Description',
-                            labelPlacement: AppInputLabelPlacement.above,
+                            labelPlacement: PpForgeInputLabelPlacement.above,
                             hint: 'What for?',
                             focusColor: Colors.red,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: AppInput.card(
+                          child: PpForgeInput.card(
                             controller: right,
                             focusNode: rightFocus,
                             size: size,
                             label: 'Amount',
-                            labelPlacement: AppInputLabelPlacement.above,
-                            type: AppInputType.amount,
+                            labelPlacement: PpForgeInputLabelPlacement.above,
+                            type: PpForgeInputType.amount,
                             currencySymbol: '฿',
                             textAlign: TextAlign.end,
                             // The big value of that size class.
                             style: TextStyle(
                               fontSize: switch (size) {
-                                AppInputSize.regular => 18,
-                                AppInputSize.title => 22,
-                                AppInputSize.hero => 28,
+                                PpForgeInputSize.regular => 18,
+                                PpForgeInputSize.title => 22,
+                                PpForgeInputSize.hero => 28,
                               },
                             ),
                             hint: '0',
@@ -107,7 +107,7 @@ void main() {
 
           // 2. the DRAWN underlines share one row: the lowest non-white pixel
           //    of each field's column.
-          final fields = find.byType(AppInput);
+          final fields = find.byType(PpForgeInput);
           final image = (await t.runAsync(() async {
             final b =
                 key.currentContext!.findRenderObject()!

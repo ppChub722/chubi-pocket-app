@@ -55,7 +55,7 @@ void main() {
     final real = await height(
       t,
       HeaderCard(
-        topRow: [AppChip(label: 'Status', selected: true, onTap: () {})],
+        topRow: [PpForgeChip(label: 'Status', selected: true, onTap: () {})],
         leading: const SizedBox(width: 52, height: 52),
         title: const Text('Name'),
         description: const Text('Description', maxLines: 1),
@@ -88,7 +88,7 @@ void main() {
       ListToolbar(
         searchController: TextEditingController(),
         onSearchChanged: (_) {},
-        chips: const [AppChip(label: 'Filters')],
+        chips: const [PpForgeChip(label: 'Filters')],
       ),
     );
     final skel = await height(t, const ListToolbarSkeleton());

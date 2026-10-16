@@ -8,7 +8,7 @@ import '../atoms/ui_config.dart';
 ///
 /// - view: muted text, at most 2 lines with an ellipsis; an EMPTY description
 ///   shows nothing at all;
-/// - edit ([editing]): edited in place — an `AppInput.card` underline with the
+/// - edit ([editing]): edited in place — an `PpForgeInput.card` underline with the
 ///   small field-name label "คำอธิบาย" on its left (edit / create only) and the
 ///   friendly [hint] as the placeholder, 2 lines.
 class HeroDescription extends StatelessWidget {
@@ -42,16 +42,16 @@ class HeroDescription extends StatelessWidget {
       context,
     ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
     if (editing) {
-      return AppInput.card(
+      return PpForgeInput.card(
         controller: controller,
         focusNode: focusNode,
         hint: hint,
-        label: UiConfig.stringsOf(context).fieldDescription,
+        label: PpForgeConfig.stringsOf(context).fieldDescription,
         maxLines: 2,
         maxLength: maxLength,
         onChanged: onChanged,
         style: style,
-        size: AppInputSize.regular,
+        size: PpForgeInputSize.regular,
       );
     }
     return ValueListenableBuilder<TextEditingValue>(
@@ -77,7 +77,7 @@ class HeroDescription extends StatelessWidget {
 /// The entity's NAME inside its hero (`HeaderCard.title`): plain text in view;
 /// in create / edit the underline input carries the small field-name label
 /// "ชื่อ" on its left, the friendly [hint] stays the placeholder. Same
-/// parameters as `AppInput.title`.
+/// parameters as `PpForgeInput.title`.
 class HeroNameInput extends StatelessWidget {
   const HeroNameInput({
     required this.editing,
@@ -105,7 +105,7 @@ class HeroNameInput extends StatelessWidget {
   final TextStyle? style;
 
   @override
-  Widget build(BuildContext context) => AppInput.title(
+  Widget build(BuildContext context) => PpForgeInput.title(
     editing: editing,
     controller: controller,
     focusNode: focusNode,
@@ -116,7 +116,7 @@ class HeroNameInput extends StatelessWidget {
     maxLength: maxLength,
     maxLines: maxLines,
     style: style,
-    label: UiConfig.stringsOf(context).fieldName,
-    size: AppInputSize.title,
+    label: PpForgeConfig.stringsOf(context).fieldName,
+    size: PpForgeInputSize.title,
   );
 }

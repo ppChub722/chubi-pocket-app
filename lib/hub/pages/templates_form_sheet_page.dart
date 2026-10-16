@@ -22,7 +22,7 @@ class _FormSheetPageState extends State<_FormSheetPage> {
     bool destructive = false,
     bool showCancel = true,
   }) async {
-    final result = await showAppSheetCustom<String>(
+    final result = await showPpForgeSheetCustom<String>(
       context,
       builder: (ctx) => _DemoForm(
         fail: fail,
@@ -48,26 +48,26 @@ class _FormSheetPageState extends State<_FormSheetPage> {
               'closed. A failed save stays on the sheet with a retry '
               'snackbar — nothing typed is lost.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
-              AppButton(
+              PpForgeButton(
                 label: 'Save succeeds',
                 onPressed: () => _open(fail: false),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Save fails (retry)',
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _open(fail: true),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Destructive',
-                variant: AppButtonVariant.destructiveOutlined,
+                variant: PpForgeButtonVariant.destructiveOutlined,
                 onPressed: () => _open(fail: false, destructive: true),
               ),
-              AppButton(
+              PpForgeButton(
                 label: 'Primary only',
-                variant: AppButtonVariant.tonal,
+                variant: PpForgeButtonVariant.tonal,
                 onPressed: () => _open(fail: false, showCancel: false),
               ),
             ],
@@ -75,23 +75,23 @@ class _FormSheetPageState extends State<_FormSheetPage> {
         ),
         HubDemo(
           title: 'Last result',
-          child: AppText(_last, role: AppTextRole.body),
+          child: PpForgeText(_last, role: PpForgeTextRole.body),
         ),
         const HubDemo(
           title: 'Rules',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppText(
-                '· Open it with showAppSheetCustom; return FormSheet from the builder.',
+              PpForgeText(
+                '· Open it with showPpForgeSheetCustom; return FormSheet from the builder.',
               ),
-              AppText(
+              PpForgeText(
                 '· Primary disabled until the form is valid; dirty = anything changed.',
               ),
-              AppText(
+              PpForgeText(
                 '· Saving: set `saving`, call the API, on failure set it back and showErrorSnackBar(retry).',
               ),
-              AppText(
+              PpForgeText(
                 '· Never add viewInsets padding inside — the sheet already handles the keyboard.',
               ),
             ],
@@ -160,20 +160,20 @@ class _DemoFormState extends State<_DemoForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppInput(
+          PpForgeInput(
             controller: _name,
             label: 'Name',
             hint: 'e.g. Savings',
             onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppInput(
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeInput(
             controller: _note,
             label: 'Note',
             maxLines: 3,
             onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
         ],
       ),
     );

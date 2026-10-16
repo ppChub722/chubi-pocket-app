@@ -15,9 +15,9 @@ class OrDivider extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        const Expanded(child: AppDivider()),
+        const Expanded(child: PpForgeDivider()),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.md),
           child: Text(
             label,
             style: Theme.of(
@@ -25,7 +25,7 @@ class OrDivider extends StatelessWidget {
             ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),
-        const Expanded(child: AppDivider()),
+        const Expanded(child: PpForgeDivider()),
       ],
     );
   }

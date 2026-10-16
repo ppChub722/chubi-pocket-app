@@ -52,22 +52,22 @@ class SkeletonListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg + indent,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.sm,
+        PpForgeSpacing.lg + indent,
+        PpForgeSpacing.sm,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.sm,
       ),
       child: Row(
         children: [
           SkeletonCircle(size: avatarSize),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: PpForgeSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SkeletonLine(width: 150),
                 if (lines > 1) ...[
-                  const SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: PpForgeSpacing.xs),
                   const SkeletonLine(width: 90, height: 10),
                 ],
               ],

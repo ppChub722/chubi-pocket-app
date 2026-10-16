@@ -38,7 +38,7 @@ class StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final tinted = tone == Tone.warning || tone == Tone.danger;
     final accent = tone == Tone.warning
         ? palette.warning
@@ -46,18 +46,18 @@ class StatTile extends StatelessWidget {
         ? palette.error
         : null;
     final muted = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
-    final radius = BorderRadius.circular(AppRadius.md);
+    final radius = BorderRadius.circular(PpForgeRadius.md);
     final body = Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + AppSpacing.xxs,
+        horizontal: PpForgeSpacing.md,
+        vertical: PpForgeSpacing.sm + PpForgeSpacing.xxs,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(caption, style: muted, maxLines: 1),
-          const SizedBox(height: AppSpacing.xxs),
+          const SizedBox(height: PpForgeSpacing.xxs),
           valueWidget ??
               Text(
                 value!,
@@ -95,7 +95,7 @@ class StatGrid extends StatelessWidget {
   const StatGrid({
     required this.children,
     this.columns = 2,
-    this.spacing = AppSpacing.sm,
+    this.spacing = PpForgeSpacing.sm,
     super.key,
   });
 

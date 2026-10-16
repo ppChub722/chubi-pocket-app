@@ -67,7 +67,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
 
   /// This page's own snackbar messenger ([editScope] installs it): snackbars
   /// shown through it float above the page's action bar instead of over it.
-  /// Use `showAppSnackBarOn(pageMessenger!, …)`; null before the first build.
+  /// Use `showPpForgeSnackBarOn(pageMessenger!, …)`; null before the first build.
   ScaffoldMessengerState? get pageMessenger => _messengerKey.currentState;
 
   ShellChromeController? _shellChrome;
@@ -175,7 +175,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
       return;
     }
     if (isDirty || _sessionStart != null) {
-      final l = UiConfig.stringsOf(context);
+      final l = PpForgeConfig.stringsOf(context);
       _askingToDiscard = true;
       final ok = await showConfirmDialog(
         context,
@@ -318,7 +318,7 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
 
   /// The standard ยกเลิก · ↶ · บันทึก bar for `bottomNavigationBar`.
   Widget editActionBar({required VoidCallback onSave, bool canSave = true}) {
-    final l = UiConfig.stringsOf(context);
+    final l = PpForgeConfig.stringsOf(context);
     return ModeActionBar(
       canUndo: canUndo && !_saving,
       canSave: canSave && isDirty && !_saving,

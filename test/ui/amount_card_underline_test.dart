@@ -15,9 +15,9 @@ void main() {
             body: Center(
               child: SizedBox(
                 width: 300,
-                child: AppInput.card(
+                child: PpForgeInput.card(
                   controller: c,
-                  type: AppInputType.amount,
+                  type: PpForgeInputType.amount,
                   currencySymbol: '฿',
                   textAlign: TextAlign.end,
                   style: const TextStyle(fontSize: 24, color: Colors.red),

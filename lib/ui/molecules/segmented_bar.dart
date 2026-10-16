@@ -60,10 +60,10 @@ class SegmentedBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         bar,
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.xs,
+          spacing: PpForgeSpacing.md,
+          runSpacing: PpForgeSpacing.xs,
           children: [
             for (final s in shown)
               if (s.label != null) LegendDot(color: s.color, label: s.label!),
@@ -90,10 +90,10 @@ class LegendDot extends StatelessWidget {
         height: 8,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(PpForgeRadius.sm),
         ),
       ),
-      const SizedBox(width: AppSpacing.xs),
+      const SizedBox(width: PpForgeSpacing.xs),
       Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(

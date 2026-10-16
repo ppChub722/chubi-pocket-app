@@ -77,8 +77,8 @@ void main() {
       ),
     );
     // Expense + income only (no transfer).
-    expect(find.widgetWithText(AppChip, 'รายจ่าย'), findsOneWidget);
-    expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
+    expect(find.widgetWithText(PpForgeChip, 'รายจ่าย'), findsOneWidget);
+    expect(find.widgetWithText(PpForgeChip, 'รายรับ'), findsOneWidget);
     expect(find.text('โอนเงิน'), findsNothing);
     await t.tap(find.text('รายรับ'));
     expect(picked, TransactionType.income);
@@ -94,7 +94,7 @@ void main() {
         dateLabel: 'วันนี้',
       ),
     );
-    expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
+    expect(find.widgetWithText(PpForgeChip, 'รายรับ'), findsOneWidget);
     expect(find.text('รายจ่าย'), findsNothing);
     await t.fling(find.byType(TxHeroCard), const Offset(-300, 0), 1500);
     await t.pumpAndSettle();
@@ -164,9 +164,9 @@ void main() {
     // An empty description shows nothing in view mode.
     expect(find.byType(TextField), findsOneWidget); // just the amount
     // Only its own type, and no 🔒 in view (owner 2026-10-10).
-    expect(find.widgetWithText(AppChip, 'รายจ่าย'), findsOneWidget);
+    expect(find.widgetWithText(PpForgeChip, 'รายจ่าย'), findsOneWidget);
     expect(find.text('รายรับ'), findsNothing);
-    expect(find.byIcon(AppIcons.lock), findsNothing);
+    expect(find.byIcon(PpForgeIcons.lock), findsNothing);
     expect(find.text('฿'), findsOneWidget); // no −/+ before it
     expect(find.text('182'), findsOneWidget);
   });
@@ -211,9 +211,9 @@ void main() {
         inline: true,
       ),
     );
-    expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
+    expect(find.widgetWithText(PpForgeChip, 'รายรับ'), findsOneWidget);
     expect(find.text('รายจ่าย'), findsNothing);
-    expect(find.byIcon(AppIcons.lock), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.lock), findsOneWidget);
     expect(find.byType(Tooltip), findsWidgets);
   });
 
@@ -241,7 +241,7 @@ void main() {
     expect(find.text('จำนวนเงิน'), findsOneWidget);
     // Measure the DRAWN underlines (pixels), not widget rects: a field's
     // widget bottom can sit below its underline.
-    final fields = find.byType(AppInput);
+    final fields = find.byType(PpForgeInput);
     expect(fields, findsNWidgets(2));
     final image = await t.runAsync(() async {
       final b =

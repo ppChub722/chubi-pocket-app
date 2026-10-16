@@ -92,8 +92,8 @@ void main() {
         onChanged: onChanged,
         editing: editing,
         tabs: const [
-          AppTab(value: _T.a, label: 'Tab A'),
-          AppTab(value: _T.b, label: 'Tab B'),
+          PpForgeTab(value: _T.a, label: 'Tab A'),
+          PpForgeTab(value: _T.b, label: 'Tab B'),
         ],
         hero: const SizedBox(height: 120, child: Text('hero')),
         belowHero: const [Text('the button')],

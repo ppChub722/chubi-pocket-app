@@ -31,7 +31,7 @@ class HubToolbar extends StatelessWidget {
     final locale = context.watch<LocaleCubit>().state;
 
     Widget group(String label, List<Widget> chips) => Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.lg),
+      padding: const EdgeInsets.only(right: PpForgeSpacing.lg),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -41,8 +41,11 @@ class HubToolbar extends StatelessWidget {
               context,
             ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(width: AppSpacing.xs),
-          for (final c in chips) ...[c, const SizedBox(width: AppSpacing.xs)],
+          const SizedBox(width: PpForgeSpacing.xs),
+          for (final c in chips) ...[
+            c,
+            const SizedBox(width: PpForgeSpacing.xs),
+          ],
         ],
       ),
     );
@@ -53,12 +56,12 @@ class HubToolbar extends StatelessWidget {
         height: 52,
         child: ListView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
           children: [
             Center(
               child: group('Theme', [
                 for (final t in ThemeRegistry.all)
-                  AppChip(
+                  PpForgeChip(
                     label: t.id,
                     size: ChipSize.chip,
                     selected: t.id == themeId,
@@ -69,11 +72,11 @@ class HubToolbar extends StatelessWidget {
             Center(
               child: group('Mode', [
                 for (final (m, icon) in const [
-                  (ThemeMode.light, AppIcons.lightMode),
-                  (ThemeMode.dark, AppIcons.darkMode),
-                  (ThemeMode.system, AppIcons.systemMode),
+                  (ThemeMode.light, PpForgeIcons.lightMode),
+                  (ThemeMode.dark, PpForgeIcons.darkMode),
+                  (ThemeMode.system, PpForgeIcons.systemMode),
                 ])
-                  AppChip(
+                  PpForgeChip(
                     label: m.name,
                     icon: icon,
                     size: ChipSize.chip,
@@ -85,7 +88,7 @@ class HubToolbar extends StatelessWidget {
             Center(
               child: group('Language', [
                 for (final loc in supportedLocales)
-                  AppChip(
+                  PpForgeChip(
                     label: loc.languageCode.toUpperCase(),
                     size: ChipSize.chip,
                     selected: loc.languageCode == locale.languageCode,
@@ -96,7 +99,7 @@ class HubToolbar extends StatelessWidget {
             Center(
               child: group('Text', [
                 for (final s in hubTextScales)
-                  AppChip(
+                  PpForgeChip(
                     label: '${(s * 100).round()}%',
                     size: ChipSize.chip,
                     selected: s == textScale,

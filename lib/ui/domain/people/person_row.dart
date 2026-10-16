@@ -51,7 +51,7 @@ class PersonRow extends StatelessWidget {
   final String? role;
 
   /// Colours [role] (worn selected); null = an outlined quiet label.
-  final AppChipTone? roleTone;
+  final PpForgeChipTone? roleTone;
 
   /// The row's end (a menu button, an amount).
   final Widget? trailing;
@@ -68,14 +68,14 @@ class PersonRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (role != null)
-                AppChip(
+                PpForgeChip(
                   label: role!,
                   size: ChipSize.chip,
-                  tone: roleTone ?? AppChipTone.neutral,
+                  tone: roleTone ?? PpForgeChipTone.neutral,
                   selected: roleTone != null,
                 ),
               if (role != null && trailing != null)
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
               ?trailing,
             ],
           );

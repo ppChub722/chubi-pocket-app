@@ -90,14 +90,14 @@ class PickCard extends StatelessWidget {
     // Nothing picked → a flat card inside a dashed outline ("not chosen
     // yet"), like the dashed add tiles; picked → solid accent card.
     // Nothing picked → a flat slot inside a dashed outline ("not chosen
-    // yet"), like the dashed add tiles; picked → an AppCard (tinted when it
+    // yet"), like the dashed add tiles; picked → an PpForgeCard (tinted when it
     // has an accent colour, plain otherwise).
-    final Widget card = AppCard(
+    final Widget card = PpForgeCard(
       style: empty
-          ? AppCardStyle.flat
+          ? PpForgeCardStyle.flat
           : tint == null
-          ? AppCardStyle.plain
-          : AppCardStyle.tinted,
+          ? PpForgeCardStyle.plain
+          : PpForgeCardStyle.tinted,
       color: tint,
       glyph: empty ? null : watermark,
       glyphSize: 72,
@@ -114,13 +114,13 @@ class PickCard extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.symmetric(
             // 12 inside.
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
+            horizontal: PpForgeSpacing.md,
+            vertical: PpForgeSpacing.md,
           ),
           child: Row(
             children: [
               Opacity(opacity: empty ? 0.6 : 1, child: leading),
-              SizedBox(width: dense ? AppSpacing.sm : AppSpacing.md),
+              SizedBox(width: dense ? PpForgeSpacing.sm : PpForgeSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,7 +190,7 @@ class PickCard extends StatelessWidget {
     final framed = empty
         ? DashedRectBorder(
             color: hasError ? scheme.error : scheme.outline,
-            borderRadius: const Radius.circular(AppRadius.lg),
+            borderRadius: const Radius.circular(PpForgeRadius.lg),
             child: card,
           )
         : card;

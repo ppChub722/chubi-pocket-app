@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// The three sizes of the one chip, [AppChip] (owner 2026-10-11) — everything
+/// The three sizes of the one chip, [PpForgeChip] (owner 2026-10-11) — everything
 /// (icon, text, padding, gap, avatar, count badge) scales with the size:
 ///
 /// - [mini] 20 — chips that ride on a dense list row next to text (a
@@ -75,7 +75,7 @@ enum ChipSize {
   /// The leading avatar / logo box.
   final double leading;
 
-  /// [AppChip] count badge: its number size and side padding; its height is
+  /// [PpForgeChip] count badge: its number size and side padding; its height is
   /// [icon] + 2.
   final double badgeText;
   final double badgePad;

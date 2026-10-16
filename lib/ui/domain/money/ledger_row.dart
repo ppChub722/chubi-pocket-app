@@ -82,7 +82,7 @@ class LedgerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final paid = direction == LedgerDirection.paid;
     final color = paid ? palette.expense : palette.income;
     final small = textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
@@ -91,26 +91,27 @@ class LedgerRow extends StatelessWidget {
     final leading = Transform.rotate(
       angle: paid ? -math.pi / 4 : math.pi * 3 / 4,
       child: IconTile(
-        icon: AppIcons.arrowForward,
+        icon: PpForgeIcons.arrowForward,
         color: color,
         size: leadingSize,
       ),
     );
 
-    Widget mini(String label, {Widget? icon, AppChipTone? tone}) => Flexible(
-      child: _OnLine(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 120),
-          child: AppChip(
-            label: label,
-            leading: icon,
-            tone: tone,
-            selected: tone != null,
-            size: ChipSize.mini,
+    Widget mini(String label, {Widget? icon, PpForgeChipTone? tone}) =>
+        Flexible(
+          child: _OnLine(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: PpForgeChip(
+                label: label,
+                leading: icon,
+                tone: tone,
+                selected: tone != null,
+                size: ChipSize.mini,
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
 
     // Three groups share a tight line (date · chips · source), each shrinking
     // (ellipsis) only when the line is full.
@@ -126,16 +127,16 @@ class LedgerRow extends StatelessWidget {
           ),
         ),
         if (hasChips) ...[
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
           Flexible(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (walletLabel != null) mini(walletLabel!, icon: walletIcon),
                 if (walletLabel != null && paidLabel != null)
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
                 if (paidLabel != null)
-                  mini(paidLabel!, tone: AppChipTone.success),
+                  mini(paidLabel!, tone: PpForgeChipTone.success),
               ],
             ),
           ),
@@ -156,13 +157,13 @@ class LedgerRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.sm,
         ),
         child: Row(
           children: [
             leading,
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +179,7 @@ class LedgerRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             MoneyText(
               amount.abs(),
               symbol: currencySymbol,

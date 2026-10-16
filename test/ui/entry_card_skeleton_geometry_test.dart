@@ -47,8 +47,8 @@ void main() {
 
   Widget chipRow(IconData icon, List<String> labels) => Row(
     children: [
-      AppIcon(icon, size: AppIconSize.md),
-      for (final l in labels) AppChip(label: l, onTap: () {}),
+      PpForgeIcon(icon, size: PpForgeIconSize.md),
+      for (final l in labels) PpForgeChip(label: l, onTap: () {}),
     ],
   );
 
@@ -65,8 +65,8 @@ void main() {
           dateLabel: 'วันนี้',
           onTypeChanged: (_) {},
           onPickDate: () {},
-          walletRow: chipRow(AppIcons.wallet, ['เงินสด', 'กสิกร']),
-          categoryRow: chipRow(AppIcons.category, ['อาหาร', 'เดินทาง']),
+          walletRow: chipRow(PpForgeIcons.wallet, ['เงินสด', 'กสิกร']),
+          categoryRow: chipRow(PpForgeIcons.category, ['อาหาร', 'เดินทาง']),
         ),
         scale: scale,
       );

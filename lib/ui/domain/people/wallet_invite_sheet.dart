@@ -46,7 +46,7 @@ Future<WalletInviteCandidate?> showWalletInviteSelectSheet(
   required List<WalletInviteCandidate> candidates,
   required WalletInviteStrings strings,
 }) {
-  return showAppSheetCustom<WalletInviteCandidate>(
+  return showPpForgeSheetCustom<WalletInviteCandidate>(
     context,
     builder: (ctx) => WalletInviteSheet(
       candidates: candidates,
@@ -100,14 +100,14 @@ class WalletInviteSheet extends StatelessWidget {
                   .toList();
         final hint = Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
             0,
-            AppSpacing.lg,
-            AppSpacing.sm,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.sm,
           ),
-          child: AppText(
+          child: PpForgeText(
             candidates.isEmpty ? strings.empty : strings.hint,
-            role: AppTextRole.caption,
+            role: PpForgeTextRole.caption,
           ),
         );
         return Column(
@@ -135,7 +135,7 @@ class WalletInviteSheet extends StatelessWidget {
                     ),
                 ],
               ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
           ],
         );
       },

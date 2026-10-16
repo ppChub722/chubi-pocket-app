@@ -5,17 +5,17 @@ import 'package:flutter_test/flutter_test.dart';
 /// Owner 2026-10-12: the count badge floats OUTSIDE the circle, and the
 /// activity states never move the icon or change the button's size.
 void main() {
-  Future<void> pump(WidgetTester t, AppIconButton b) => t.pumpWidget(
+  Future<void> pump(WidgetTester t, PpForgeIconButton b) => t.pumpWidget(
     MaterialApp(
       home: Scaffold(body: Center(child: b)),
     ),
   );
 
-  AppIconButton chip({
+  PpForgeIconButton chip({
     IconChipActivity activity = IconChipActivity.none,
     int badge = 0,
-  }) => AppIconButton(
-    icon: AppIcons.notifications,
+  }) => PpForgeIconButton(
+    icon: PpForgeIcons.notifications,
     onPressed: () {},
     activity: activity,
     badgeCount: badge,
@@ -25,27 +25,31 @@ void main() {
     t,
   ) async {
     await pump(t, chip());
-    final size = t.getSize(find.byType(AppIconButton));
-    final at = t.getCenter(find.byIcon(AppIcons.notifications));
+    final size = t.getSize(find.byType(PpForgeIconButton));
+    final at = t.getCenter(find.byIcon(PpForgeIcons.notifications));
     for (final a in [IconChipActivity.progress, IconChipActivity.done]) {
       await pump(t, chip(activity: a));
       await t.pump(const Duration(milliseconds: 300));
-      expect(t.getSize(find.byType(AppIconButton)), size, reason: '$a size');
+      expect(
+        t.getSize(find.byType(PpForgeIconButton)),
+        size,
+        reason: '$a size',
+      );
       if (a == IconChipActivity.progress) {
         expect(
-          t.getCenter(find.byIcon(AppIcons.notifications)),
+          t.getCenter(find.byIcon(PpForgeIcons.notifications)),
           at,
           reason: 'progress keeps the icon in place',
         );
       } else {
         // The icon stays in place (dimmed) and the ✓ sits on top of it.
-        expect(t.getCenter(find.byIcon(AppIcons.notifications)), at);
-        expect(t.getCenter(find.byIcon(AppIcons.check)), at);
+        expect(t.getCenter(find.byIcon(PpForgeIcons.notifications)), at);
+        expect(t.getCenter(find.byIcon(PpForgeIcons.check)), at);
         expect(
           t
               .widget<AnimatedOpacity>(
                 find.ancestor(
-                  of: find.byIcon(AppIcons.notifications),
+                  of: find.byIcon(PpForgeIcons.notifications),
                   matching: find.byType(AnimatedOpacity),
                 ),
               )
@@ -60,16 +64,16 @@ void main() {
     'the badge sits outside the circle (top-right), not over the icon',
     (t) async {
       await pump(t, chip(badge: 7));
-      final circle = t.getRect(find.byType(AppIconButton));
+      final circle = t.getRect(find.byType(PpForgeIconButton));
       final badge = t.getRect(find.text('7'));
-      final icon = t.getRect(find.byIcon(AppIcons.notifications));
+      final icon = t.getRect(find.byIcon(PpForgeIcons.notifications));
       // Half of it past the right / top edge.
       expect(badge.center.dx, greaterThan(circle.right - 8));
       expect(badge.center.dy, lessThan(circle.top + 8));
       expect(badge.overlaps(icon), isFalse);
       // The button's own size is unchanged by the badge.
       await pump(t, chip());
-      expect(t.getSize(find.byType(AppIconButton)), circle.size);
+      expect(t.getSize(find.byType(PpForgeIconButton)), circle.size);
     },
   );
 
@@ -96,7 +100,7 @@ void main() {
         ),
       ),
     );
-    final button = t.getRect(find.byType(AppIconButton).first);
+    final button = t.getRect(find.byType(PpForgeIconButton).first);
     final badge = t.getRect(find.text('3'));
     final circle = t.getRect(find.byType(Material).last);
     expect(

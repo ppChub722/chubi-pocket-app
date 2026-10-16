@@ -17,7 +17,7 @@ class IconSwatchGrid extends StatelessWidget {
     required this.onToggle,
     this.onClear,
     this.clearLabel,
-    this.fallback = AppIcons.category,
+    this.fallback = PpForgeIcons.category,
     this.size = 32,
     super.key,
   });
@@ -38,8 +38,8 @@ class IconSwatchGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final grid = Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.sm,
+      spacing: PpForgeSpacing.sm,
+      runSpacing: PpForgeSpacing.sm,
       children: [
         for (final g in glyphs)
           InkResponse(
@@ -49,7 +49,7 @@ class IconSwatchGrid extends StatelessWidget {
               selected: selected.contains(g),
               radius: size / 2,
               gap: 2,
-              child: AppAvatar.icon(
+              child: PpForgeAvatar.icon(
                 IconRegistry.get(g, fallback: fallback),
                 size: size,
               ),

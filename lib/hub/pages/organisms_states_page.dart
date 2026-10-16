@@ -94,7 +94,7 @@ Widget _stageBox(BuildContext context, Widget child) => Container(
   height: _stageHeight,
   decoration: BoxDecoration(
     border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-    borderRadius: BorderRadius.circular(AppRadius.md),
+    borderRadius: BorderRadius.circular(PpForgeRadius.md),
   ),
   clipBehavior: Clip.antiAlias,
   child: child,
@@ -102,15 +102,15 @@ Widget _stageBox(BuildContext context, Widget child) => Container(
 
 Widget _sampleList() => ListView(
   physics: const AlwaysScrollableScrollPhysics(),
-  padding: const EdgeInsets.all(AppSpacing.md),
+  padding: const EdgeInsets.all(PpForgeSpacing.md),
   children: [
     for (final name in ['Groceries', 'Rent', 'Coffee', 'Transport', 'Salary'])
       Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-        child: AppCard(
+        padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
+        child: PpForgeCard(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: AppText(name),
+            padding: const EdgeInsets.all(PpForgeSpacing.md),
+            child: PpForgeText(name),
           ),
         ),
       ),
@@ -128,11 +128,15 @@ Widget _selector<T>({
   required T value,
   required ValueChanged<T> onChanged,
 }) => Wrap(
-  spacing: AppSpacing.sm,
-  runSpacing: AppSpacing.sm,
+  spacing: PpForgeSpacing.sm,
+  runSpacing: PpForgeSpacing.sm,
   children: [
     for (final (v, label) in options)
-      AppChip(label: label, selected: v == value, onTap: () => onChanged(v)),
+      PpForgeChip(
+        label: label,
+        selected: v == value,
+        onTap: () => onChanged(v),
+      ),
   ],
 );
 
@@ -187,7 +191,7 @@ class _AsyncDemoState extends State<_AsyncDemo> {
             }
           },
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         _stageBox(
           context,
           AsyncStateView(
@@ -200,7 +204,7 @@ class _AsyncDemoState extends State<_AsyncDemo> {
                 _mode == _Mode.empty,
             onRetry: _retry,
             empty: EmptyView(
-              icon: AppIcons.empty,
+              icon: PpForgeIcons.empty,
               title: 'No wallets yet',
               message: 'Add your first wallet to start tracking.',
               cta: AddTile(label: 'Add wallet', onTap: () {}),
@@ -209,10 +213,10 @@ class _AsyncDemoState extends State<_AsyncDemo> {
           ),
         ),
         if (_mode == _Mode.refreshFailed) ...[
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeButton(
             label: 'Fail the refresh again',
-            variant: AppButtonVariant.tonal,
+            variant: PpForgeButtonVariant.tonal,
             onPressed: () {
               setState(() => _error = null);
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -253,7 +257,7 @@ class _FallbackDemoState extends State<_FallbackDemo> {
           value: _mode,
           onChanged: (m) => setState(() => _mode = m),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         _stageBox(
           context,
           AsyncStateView.fallback(
@@ -265,7 +269,7 @@ class _FallbackDemoState extends State<_FallbackDemo> {
               if (mounted) setState(() => _mode = _Fallback.notFound);
             },
             notFound: const EmptyView(
-              icon: AppIcons.empty,
+              icon: PpForgeIcons.empty,
               title: 'Not found',
               message: 'This item no longer exists.',
             ),
@@ -340,24 +344,24 @@ class _SavingDemoState extends State<_SavingDemo> {
       children: [
         SavingOverlay(
           saving: _saving,
-          child: AppCard(
+          child: PpForgeCard(
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+              padding: const EdgeInsets.all(PpForgeSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const AppText('Main wallet', role: AppTextRole.title),
-                  const SizedBox(height: AppSpacing.sm),
-                  const AppText('Balance 12,500.00'),
-                  const SizedBox(height: AppSpacing.md),
-                  AppButton(label: 'Tap me while saving', onPressed: () {}),
+                  const PpForgeText('Main wallet', role: PpForgeTextRole.title),
+                  const SizedBox(height: PpForgeSpacing.sm),
+                  const PpForgeText('Balance 12,500.00'),
+                  const SizedBox(height: PpForgeSpacing.md),
+                  PpForgeButton(label: 'Tap me while saving', onPressed: () {}),
                 ],
               ),
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
-        AppButton(label: 'Save for 2 s', onPressed: _saving ? null : _save),
+        const SizedBox(height: PpForgeSpacing.md),
+        PpForgeButton(label: 'Save for 2 s', onPressed: _saving ? null : _save),
       ],
     );
   }

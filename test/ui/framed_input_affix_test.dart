@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// A framed AppInput with a label and a trailing affix (the password eye, a
+/// A framed PpForgeInput with a label and a trailing affix (the password eye, a
 /// suffix text): the label is drawn WHOLE (not cut by a parent's clip — a
 /// SectionCard cell used to), the affix sits at the RIGHT edge and the text
 /// area starts at the LEFT.
@@ -35,9 +35,12 @@ void main() {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          AppInput(label: 'Current password', obscurable: true),
+                          PpForgeInput(
+                            label: 'Current password',
+                            obscurable: true,
+                          ),
                           const SizedBox(height: 16),
-                          AppInput(label: 'Amount', suffixText: 'THB'),
+                          PpForgeInput(label: 'Amount', suffixText: 'THB'),
                         ],
                       ),
                     ),
@@ -50,7 +53,7 @@ void main() {
       );
       await t.pumpAndSettle();
 
-      final fields = find.byType(AppInput);
+      final fields = find.byType(PpForgeInput);
       final pw = t.getRect(fields.at(0));
       final eye = t.getRect(find.byType(IconButton).first);
       expect(

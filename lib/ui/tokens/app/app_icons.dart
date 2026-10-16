@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 /// Change a glyph here and every screen that shows that concept follows.
 ///
 /// Rules:
-/// - New UI code uses `AppIcons.x`, never `Icons.x` directly.
+/// - New UI code uses `PpForgeIcons.x`, never `Icons.x` directly.
 /// - One meaning → one glyph. If two things need different glyphs they get
 ///   two names (e.g. [debt] vs [bank], [category] vs [iconPicker]).
 /// - User-chosen icons (icon maker art) are NOT here — see `IconRegistry`.
 ///
 /// Browse them live at `/dev/widgets` → ไอคอน.
-abstract final class AppIcons {
+abstract final class PpForgeIcons {
   // ── Tabs / chrome ────────────────────────────────────────────────────
   static const dashboard = Icons.dashboard_outlined;
   static const dashboardActive = Icons.dashboard;

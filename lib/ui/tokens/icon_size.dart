@@ -1,5 +1,5 @@
 /// The icon sizes — one scale for every icon in the app (owner 2026-10-12).
-/// Features never write a number: `AppIcon(icon, size: AppIconSize.md)`.
+/// Features never write a number: `PpForgeIcon(icon, size: PpForgeIconSize.md)`.
 ///
 /// | token | px | for |
 /// |---|---|---|
@@ -9,8 +9,8 @@
 /// | [lg] | 24 | the standard icon (Material default), list-row leading |
 /// | [xl] | 32 | a feature icon, an empty-state glyph beside text |
 /// | [hero] | 56 | an empty / error screen's big glyph |
-class AppIconSize {
-  const AppIconSize._();
+class PpForgeIconSize {
+  const PpForgeIconSize._();
 
   static const double xs = 12;
   static const double sm = 16;

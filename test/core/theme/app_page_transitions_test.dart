@@ -50,7 +50,7 @@ class _Harness {
       MaterialApp.router(
         theme: ThemeData(
           pageTransitionsTheme: const PageTransitionsTheme(
-            builders: {TargetPlatform.android: AppPageTransitionsBuilder()},
+            builders: {TargetPlatform.android: PpForgePageTransitionsBuilder()},
           ),
         ),
         routerConfig: router,

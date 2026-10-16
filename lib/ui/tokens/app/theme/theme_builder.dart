@@ -12,8 +12,8 @@ class ThemeBuilder {
   const ThemeBuilder._();
 
   static ThemeData build({
-    required AppTheme theme,
-    required AppFont font,
+    required PpForgeTheme theme,
+    required PpForgeFont font,
     required Brightness brightness,
   }) {
     final colors = theme.colorsFor(brightness);
@@ -30,7 +30,7 @@ class ThemeBuilder {
       extensions: [colors, ?theme.modulesFor(brightness)],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: AppPageTransitionsBuilder(),
+          TargetPlatform.android: PpForgePageTransitionsBuilder(),
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
           TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
           TargetPlatform.windows: ZoomPageTransitionsBuilder(),
@@ -51,7 +51,7 @@ class ThemeBuilder {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(PpForgeRadius.lg),
           side: BorderSide(color: colors.outlineSoft),
         ),
       ),
@@ -64,15 +64,15 @@ class ThemeBuilder {
         filled: true,
         fillColor: colors.surfaceVariant,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           borderSide: BorderSide(color: colors.outlineSoft),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           borderSide: BorderSide(color: colors.primary, width: 1.5),
         ),
       ),
@@ -82,7 +82,7 @@ class ThemeBuilder {
           foregroundColor: colors.onPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(PpForgeRadius.md),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           textStyle: textTheme.labelLarge,
@@ -99,7 +99,7 @@ class ThemeBuilder {
         contentTextStyle: textTheme.bodyMedium?.copyWith(color: colors.surface),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
         ),
       ),
     );
@@ -123,7 +123,7 @@ class ThemeBuilder {
   }
 
   static TextTheme _buildTextTheme({
-    required AppFont font,
+    required PpForgeFont font,
     required Color onSurface,
   }) {
     final base = ThemeData(

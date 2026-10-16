@@ -24,7 +24,7 @@ class _ReorderChartsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = ChartPalette.categorical(context);
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final text = Theme.of(context).textTheme;
     List<DonutSegment> segments(int n) => [
       for (var i = 0; i < n; i++)
@@ -126,7 +126,7 @@ class _ReorderChartsPage extends StatelessWidget {
               child: Row(
                 children: [
                   DonutChart(segments: segments(5), center: center('Total')),
-                  const SizedBox(width: AppSpacing.lg),
+                  const SizedBox(width: PpForgeSpacing.lg),
                   Expanded(
                     child: Text(
                       'Legend + amounts sit next to it; colour is never the '
@@ -142,8 +142,8 @@ class _ReorderChartsPage extends StatelessWidget {
               label: 'ChartPalette — categorical (4) + the grey "other"',
               page: 'Every chart',
               child: Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
                   for (final c in [...colors, ChartPalette.other(context)])
                     Container(
@@ -151,7 +151,7 @@ class _ReorderChartsPage extends StatelessWidget {
                       height: 32,
                       decoration: BoxDecoration(
                         color: c,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        borderRadius: BorderRadius.circular(PpForgeRadius.sm),
                       ),
                     ),
                 ],
@@ -362,10 +362,10 @@ class _ReorderDemoState extends State<_ReorderDemo> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+          spacing: PpForgeSpacing.sm,
+          runSpacing: PpForgeSpacing.sm,
           children: [
-            AppChip(
+            PpForgeChip(
               label: '3-level tree',
               selected: !_flatMode,
               onTap: () {
@@ -373,7 +373,7 @@ class _ReorderDemoState extends State<_ReorderDemo> {
                 _reset();
               },
             ),
-            AppChip(
+            PpForgeChip(
               label: 'Flat, 2 sections',
               selected: _flatMode,
               onTap: () {
@@ -383,7 +383,7 @@ class _ReorderDemoState extends State<_ReorderDemo> {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         SizedBox(
           height: 520,
           child: Column(
@@ -394,10 +394,10 @@ class _ReorderDemoState extends State<_ReorderDemo> {
                     border: Border.all(
                       color: Theme.of(context).colorScheme.outlineVariant,
                     ),
-                    borderRadius: BorderRadius.circular(AppSpacing.md),
+                    borderRadius: BorderRadius.circular(PpForgeSpacing.md),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSpacing.md),
+                    borderRadius: BorderRadius.circular(PpForgeSpacing.md),
                     child: ReorderListScope(
                       controller: _c,
                       scrollController: _scroll,
@@ -408,7 +408,9 @@ class _ReorderDemoState extends State<_ReorderDemo> {
                                 : 'Under ${_names[id]}',
                       child: ListView(
                         controller: _scroll,
-                        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                        padding: const EdgeInsets.only(
+                          bottom: PpForgeSpacing.lg,
+                        ),
                         children: _flatMode ? _flatRows() : _treeRows(),
                       ),
                     ),
@@ -435,12 +437,12 @@ class _ReorderDemoState extends State<_ReorderDemo> {
 
   List<Widget> _treeRows() => [
     for (final (i, item) in _c.visible().indexed) ...[
-      if (i > 0) const AppDivider.row(),
+      if (i > 0) const PpForgeDivider.row(),
       ReorderRow(
         key: ValueKey(item.id),
         id: item.id,
         child: ListRow(
-          indent: (item.level - 1) * AppSpacing.xxl,
+          indent: (item.level - 1) * PpForgeSpacing.xxl,
           leading: CircleAvatar(
             radius: 20,
             child: Text(_names[item.id]!.characters.first),
@@ -452,8 +454,8 @@ class _ReorderDemoState extends State<_ReorderDemo> {
                   visualDensity: VisualDensity.compact,
                   icon: Icon(
                     _c.isCollapsed(item.id)
-                        ? AppIcons.expand
-                        : AppIcons.collapse,
+                        ? PpForgeIcons.expand
+                        : PpForgeIcons.collapse,
                   ),
                   onPressed: () => _c.toggleCollapsed(item.id),
                 )
@@ -479,7 +481,7 @@ class _ReorderDemoState extends State<_ReorderDemo> {
           child: ListRow(
             leading: const CircleAvatar(
               radius: 20,
-              child: Icon(AppIcons.wallet),
+              child: Icon(PpForgeIcons.wallet),
             ),
             title: _names[item.id]!,
           ),
@@ -504,7 +506,7 @@ class _BarsDemoState extends State<_BarsDemo> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return PairedBarChart(
       groups: widget.months,
       colorA: palette.income,

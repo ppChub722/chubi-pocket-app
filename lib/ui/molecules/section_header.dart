@@ -15,10 +15,10 @@ class SectionHeader extends StatelessWidget implements ListBreak {
     this.onAction,
     this.trailing,
     this.padding = const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.md,
-      AppSpacing.sm,
-      AppSpacing.xs,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.md,
+      PpForgeSpacing.sm,
+      PpForgeSpacing.xs,
     ),
     super.key,
   });
@@ -45,7 +45,7 @@ class SectionHeader extends StatelessWidget implements ListBreak {
         children: [
           if (leading != null) ...[
             leading!,
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
           ],
           Flexible(
             child: Text(
@@ -58,7 +58,7 @@ class SectionHeader extends StatelessWidget implements ListBreak {
             ),
           ),
           if (count != null) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             Text(
               '· $count',
               style: textTheme.titleMedium?.copyWith(
@@ -72,13 +72,15 @@ class SectionHeader extends StatelessWidget implements ListBreak {
               onPressed: onAction,
               style: TextButton.styleFrom(
                 minimumSize: const Size(0, 40),
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: PpForgeSpacing.sm,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(actionLabel!),
-                  const Icon(AppIcons.chevronRight, size: 18),
+                  const Icon(PpForgeIcons.chevronRight, size: 18),
                 ],
               ),
             ),

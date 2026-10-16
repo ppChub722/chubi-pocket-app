@@ -56,16 +56,16 @@ class CompactHeroBar extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final duration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
-        : AppDurations.chrome;
+        : PpForgeDurations.chrome;
     final content = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: height),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.md),
         child: Row(
           children: [
             if (leading != null) ...[
               leading!,
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
             ],
             Expanded(
               child: DefaultTextStyle.merge(
@@ -78,7 +78,7 @@ class CompactHeroBar extends StatelessWidget {
               ),
             ),
             if (trailing != null) ...[
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               trailing!,
             ],
           ],
@@ -105,11 +105,11 @@ class CompactHeroBar extends StatelessWidget {
       child: AnimatedSlide(
         offset: visible ? Offset.zero : const Offset(0, -0.5),
         duration: duration,
-        curve: AppDurations.chromeCurve,
+        curve: PpForgeDurations.chromeCurve,
         child: AnimatedOpacity(
           opacity: visible ? 1 : 0,
           duration: duration,
-          curve: AppDurations.chromeCurve,
+          curve: PpForgeDurations.chromeCurve,
           child: bar,
         ),
       ),
@@ -212,9 +212,9 @@ class _CompactHeroScopeState extends State<CompactHeroScope> {
           child: widget.child,
         ),
         Positioned(
-          top: _line + AppSpacing.xs,
-          left: AppSpacing.md,
-          right: AppSpacing.md,
+          top: _line + PpForgeSpacing.xs,
+          left: PpForgeSpacing.md,
+          right: PpForgeSpacing.md,
           child: CompactHeroBar(
             key: bar.key,
             // The hero's own style, so the bar is a small hero card.

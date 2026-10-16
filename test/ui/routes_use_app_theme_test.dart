@@ -18,7 +18,7 @@ void main() {
     final key = GlobalKey();
     final rootKey = GlobalKey<NavigatorState>();
     // The app's theme, built without the web fonts (no network in tests).
-    ThemeData build(Brightness b, AppColors c) => ThemeData(
+    ThemeData build(Brightness b, PpForgeColors c) => ThemeData(
       useMaterial3: true,
       brightness: b,
       colorScheme: c.toColorScheme(),

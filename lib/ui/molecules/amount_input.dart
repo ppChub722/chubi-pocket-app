@@ -89,7 +89,7 @@ class AmountInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppInput(
+        PpForgeInput(
           controller: controller,
           enabled: enabled,
           autofocus: autofocus,
@@ -104,8 +104,8 @@ class AmountInput extends StatelessWidget {
           onChanged: onChanged,
           prefix: Padding(
             padding: const EdgeInsets.only(
-              left: AppSpacing.lg,
-              right: AppSpacing.sm,
+              left: PpForgeSpacing.lg,
+              right: PpForgeSpacing.sm,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -115,15 +115,15 @@ class AmountInput extends StatelessWidget {
                     message: '+ / −',
                     child: InkWell(
                       onTap: enabled ? _toggleSign : null,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderRadius: BorderRadius.circular(PpForgeRadius.sm),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
+                          horizontal: PpForgeSpacing.sm,
+                          vertical: PpForgeSpacing.xs,
                         ),
                         decoration: BoxDecoration(
                           color: scheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderRadius: BorderRadius.circular(PpForgeRadius.sm),
                         ),
                         child: Text(
                           '±',
@@ -132,24 +132,24 @@ class AmountInput extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                 ],
                 Text(currencySymbol, style: big),
               ],
             ),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.lg,
+            horizontal: PpForgeSpacing.lg,
+            vertical: PpForgeSpacing.lg,
           ),
         ),
         if (quickFills.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
           Wrap(
-            spacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
             children: [
               for (final q in quickFills)
-                AppChip(
+                PpForgeChip(
                   label: q.label,
                   enabled: enabled,
                   onTap: enabled

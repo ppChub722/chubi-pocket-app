@@ -221,7 +221,7 @@ class TxHeroCard extends StatelessWidget {
                 for (final t in _types)
                   if (canSwitch || t == type) t,
               ].indexed) ...[
-                if (i > 0) const SizedBox(width: AppSpacing.xs),
+                if (i > 0) const SizedBox(width: PpForgeSpacing.xs),
                 txTypeChip(
                   context,
                   type: t,
@@ -238,14 +238,14 @@ class TxHeroCard extends StatelessWidget {
         ),
     ];
     // The date: a control-height chip, read-only (no ink) in view mode.
-    final datePill = AppChip(
+    final datePill = PpForgeChip(
       label: dateLabel,
-      icon: AppIcons.date,
+      icon: PpForgeIcons.date,
       onTap: editing ? onPickDate : null,
     );
     final editChip = !editing && onEdit != null
-        ? AppIconButton.edit(
-            size: AppIconButton.sizeHero,
+        ? PpForgeIconButton.edit(
+            size: PpForgeIconButton.sizeHero,
             tooltip: l.commonEdit,
             onPressed: onEdit,
           )
@@ -261,10 +261,10 @@ class TxHeroCard extends StatelessWidget {
     // "฿182" as one unit: no +/− (the colour says which), the symbol hugs the
     // digits at 0.7 of their size; no "0" placeholder while typing.
     Widget amountField({TextAlign align = TextAlign.start}) => longPressable(
-      AppInput.card(
+      PpForgeInput.card(
         controller: amount,
         focusNode: amountFocus,
-        type: AppInputType.amount,
+        type: PpForgeInputType.amount,
         autofocus: autofocus && editing && !amountLocked,
         readOnly: !editing || amountLocked,
         enableInteractiveSelection: editing && !amountLocked,
@@ -276,9 +276,9 @@ class TxHeroCard extends StatelessWidget {
         symbolScale: 0.7,
         currencySymbol: symbol,
         minWidth: 12,
-        size: AppInputSize.hero,
+        size: PpForgeInputSize.hero,
         label: editing && inline ? l.transactionFormAmountLabel : null,
-        labelPlacement: AppInputLabelPlacement.above,
+        labelPlacement: PpForgeInputLabelPlacement.above,
         hint: '0',
         hintStyle: bigAmount?.copyWith(color: accent.withValues(alpha: 0.35)),
         hideHintOnFocus: true,
@@ -294,8 +294,8 @@ class TxHeroCard extends StatelessWidget {
           );
     Widget titleField({int maxLines = 3}) => longPressable(
       Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
-        child: AppInput.card(
+        padding: const EdgeInsets.only(right: PpForgeSpacing.sm),
+        child: PpForgeInput.card(
           controller: title,
           focusNode: titleFocus,
           readOnly: !editing || onTitleTap != null,
@@ -303,9 +303,9 @@ class TxHeroCard extends StatelessWidget {
           showCursor: editing && onTitleTap == null ? null : false,
           enableInteractiveSelection: editing && onTitleTap == null,
           maxLength: titleMaxLength,
-          size: inline ? AppInputSize.hero : null,
+          size: inline ? PpForgeInputSize.hero : null,
           label: editing && inline ? l.commonDescription : null,
-          labelPlacement: AppInputLabelPlacement.above,
+          labelPlacement: PpForgeInputLabelPlacement.above,
           minLines: 1,
           maxLines: maxLines,
           textInputAction: TextInputAction.done,
@@ -356,12 +356,12 @@ class TxHeroCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // No IntrinsicHeight: a sized AppInput has a fixed-baseline value row,
+                      // No IntrinsicHeight: a sized PpForgeInput has a fixed-baseline value row,
                       // whose intrinsic height is not its real one.
                       Stack(
                         children: [
                           Row(
-                            // Both fields are AppInputSize.hero: same label top,
+                            // Both fields are PpForgeInputSize.hero: same label top,
                             // baseline and underline y by their own tokens.
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -377,7 +377,8 @@ class TxHeroCard extends StatelessWidget {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.symmetric(
-                                                        vertical: AppSpacing.xs,
+                                                        vertical:
+                                                            PpForgeSpacing.xs,
                                                       ),
                                                   child: Text(
                                                     titlePlaceholder!,
@@ -542,7 +543,7 @@ HeroStyle txHeroStyle(BuildContext context, TransactionType type) {
 }
 
 Color txTypeColor(BuildContext context, TransactionType t) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   return switch (t) {
     TransactionType.expense => palette.expense,
     TransactionType.income => palette.income,
@@ -550,13 +551,13 @@ Color txTypeColor(BuildContext context, TransactionType t) {
   };
 }
 
-/// One type chip — `[− รายจ่าย]` — as an [AppChip] at control height (owner
+/// One type chip — `[− รายจ่าย]` — as an [PpForgeChip] at control height (owner
 /// 2026-10-11): [selected] = a tinted border and faint fill in the type's
 /// colour, otherwise the grey outline. [type] null = "ทั้งหมด" (the filter's
 /// any-type chip) in the primary colour, no icon. [locked] (a saved row's
 /// type): a 🔒 and a tap-to-read hint ("can't change after saving") instead
 /// of silently doing nothing.
-AppChip txTypeChip(
+PpForgeChip txTypeChip(
   BuildContext context, {
   required TransactionType? type,
   required bool selected,
@@ -568,22 +569,25 @@ AppChip txTypeChip(
   final (IconData? icon, label) = switch (type) {
     null => (null, l.transactionsListFilterAll),
     TransactionType.expense => (
-      AppIcons.expense,
+      PpForgeIcons.expense,
       debt ? l.debtsDirPaid : l.transactionTypeExpense,
     ),
     TransactionType.income => (
-      AppIcons.income,
+      PpForgeIcons.income,
       debt ? l.debtsDirReceived : l.transactionTypeIncome,
     ),
-    TransactionType.transfer => (AppIcons.transfer, l.transactionTypeTransfer),
+    TransactionType.transfer => (
+      PpForgeIcons.transfer,
+      l.transactionTypeTransfer,
+    ),
   };
-  return AppChip(
+  return PpForgeChip(
     label: label,
     icon: icon,
     color: type == null ? null : txTypeColor(context, type),
     selected: selected,
     onTap: onTap,
-    trailing: locked ? AppChipTrailing.lock : AppChipTrailing.none,
+    trailing: locked ? PpForgeChipTrailing.lock : PpForgeChipTrailing.none,
     tooltip: locked ? l.txTypeLockedHint : null,
   );
 }

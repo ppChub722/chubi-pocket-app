@@ -35,7 +35,7 @@ class DetailPageBody extends StatelessWidget {
     this.tags,
     this.manage,
     this.metaLines = const [],
-    this.bottomInset = AppSpacing.xxl,
+    this.bottomInset = PpForgeSpacing.xxl,
     this.topInset = 0,
     this.controller,
     this.physics,
@@ -48,7 +48,7 @@ class DetailPageBody extends StatelessWidget {
   /// spacer under it goes too.
   final Widget? hero;
 
-  /// A tab bar ([AppTabBar]) directly under the hero, before the tags and
+  /// A tab bar ([PpForgeTabBar]) directly under the hero, before the tags and
   /// every section (a budget's periods / items tabs). The page swaps what
   /// its sections show on the tab; null = none.
   final Widget? tabBar;
@@ -127,15 +127,18 @@ class DetailPageBody extends StatelessWidget {
           physics ??
           (refresh == null ? null : const AlwaysScrollableScrollPhysics()),
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
         topInset,
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
         bottomInset,
       ),
       children: [
         if (hero != null) ...[hero!, const SizedBox(height: HeroSpacing.after)],
-        if (tabBar != null) ...[tabBar!, const SizedBox(height: AppSpacing.md)],
-        if (tags != null) ...[tags!, const SizedBox(height: AppSpacing.md)],
+        if (tabBar != null) ...[
+          tabBar!,
+          const SizedBox(height: PpForgeSpacing.md),
+        ],
+        if (tags != null) ...[tags!, const SizedBox(height: PpForgeSpacing.md)],
         ...buildSections(),
         ?manage,
         DetailMeta(lines: metaLines),

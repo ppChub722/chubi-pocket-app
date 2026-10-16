@@ -1,6 +1,6 @@
-/// The data type an [AppInput] edits — layered on the look, never a look of
+/// The data type an [PpForgeInput] edits — layered on the look, never a look of
 /// its own (owner 2026-10-12).
-enum AppInputType {
+enum PpForgeInputType {
   /// Plain text.
   text,
 

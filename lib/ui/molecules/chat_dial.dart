@@ -60,7 +60,7 @@ class _ChatDialState extends State<ChatDial> {
     final scheme = Theme.of(context).colorScheme;
     final width =
         widget.openWidth ??
-        MediaQuery.sizeOf(context).width - AppSpacing.lg * 2;
+        MediaQuery.sizeOf(context).width - PpForgeSpacing.lg * 2;
     return AnimatedSize(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
@@ -73,22 +73,22 @@ class _ChatDialState extends State<ChatDial> {
                 elevation: 4,
                 shadowColor: scheme.shadow.withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  borderRadius: BorderRadius.circular(PpForgeRadius.xl),
                   side: BorderSide(color: scheme.outlineVariant),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
+                    horizontal: PpForgeSpacing.xs,
                   ),
                   child: Row(
                     children: [
-                      AppIconButton.close(
+                      PpForgeIconButton.close(
                         tooltip: widget.closeTooltip,
                         iconSize: 20,
                         onPressed: () => setState(() => _open = false),
                       ),
                       Expanded(
-                        child: AppInput.card(
+                        child: PpForgeInput.card(
                           controller: _text,
                           autofocus: true,
                           textInputAction: TextInputAction.send,
@@ -100,7 +100,7 @@ class _ChatDialState extends State<ChatDial> {
                       ),
                       IconButton.filled(
                         tooltip: widget.sendTooltip,
-                        icon: const Icon(AppIcons.send, size: 20),
+                        icon: const Icon(PpForgeIcons.send, size: 20),
                         onPressed: _send,
                       ),
                     ],
@@ -112,7 +112,7 @@ class _ChatDialState extends State<ChatDial> {
               heroTag: null,
               tooltip: widget.tooltip,
               onPressed: () => setState(() => _open = true),
-              child: const Icon(AppIcons.chat),
+              child: const Icon(PpForgeIcons.chat),
             ),
     );
   }

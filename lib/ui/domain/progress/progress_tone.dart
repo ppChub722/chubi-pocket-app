@@ -25,7 +25,7 @@ enum ProgressTone {
   /// (`iconCode.tintFor(palette)`).
   Color resolve(BuildContext context, {Color? entityTint}) {
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     return switch (this) {
       ProgressTone.neutral => entityTint ?? scheme.primary,
       ProgressTone.warning => palette.warning,

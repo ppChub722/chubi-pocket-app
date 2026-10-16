@@ -122,7 +122,7 @@ class ContactPickerSheetData {
 Future<ContactPickerOutcome?> showContactPicker(
   BuildContext context, {
   required ContactPickerSheetData Function(BuildContext sheetContext) data,
-}) => showAppSheetCustom<ContactPickerOutcome>(
+}) => showPpForgeSheetCustom<ContactPickerOutcome>(
   context,
   builder: (_) =>
       Builder(builder: (ctx) => ContactPickerSheet(data: data(ctx))),
@@ -271,7 +271,7 @@ class _ContactPickerSheetState extends State<ContactPickerSheet> {
                 ],
               ),
             if (all.isEmpty && !offerName) EmptyView.compact(message: l.empty),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
           ],
         );
       },

@@ -11,8 +11,8 @@ class CenteredFormBody extends StatelessWidget {
     this.maxWidth = 400,
     this.safeTop = true,
     this.padding = const EdgeInsets.symmetric(
-      horizontal: AppSpacing.lg,
-      vertical: AppSpacing.xl,
+      horizontal: PpForgeSpacing.lg,
+      vertical: PpForgeSpacing.xl,
     ),
     super.key,
   });

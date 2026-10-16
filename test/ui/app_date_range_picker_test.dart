@@ -12,7 +12,7 @@ void main() {
       MaterialApp(
         theme: ThemeData(extensions: [sweetTheme.lightColors]),
         home: Scaffold(
-          body: AppDateRangePickerSheet(
+          body: PpForgeDateRangePickerSheet(
             initial: DateTimeRange(
               start: DateTime(2026, 10, 1),
               end: DateTime(2026, 10, 1),
@@ -28,7 +28,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('20'));
     await tester.pump();
-    await tester.tap(find.byType(AppButton));
+    await tester.tap(find.byType(PpForgeButton));
     expect(got?.start, DateTime(2026, 10, 10));
     expect(got?.end, DateTime(2026, 10, 20));
   });

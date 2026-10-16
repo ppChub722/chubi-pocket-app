@@ -6,7 +6,7 @@ import '../hub_kit.dart';
 /// `/dev/tokens/colors` — the palette of the active theme and mode (switch
 /// theme / mode in Debug → Theme switcher or the status bar toggle).
 Widget buildColorsPage(BuildContext context) {
-  final palette = Theme.of(context).extension<AppColors>()!;
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
   final scheme = Theme.of(context).colorScheme;
   final module = ModuleColors.of(context);
   Widget swatch(String name, Color c, Color on) => HubCell(
@@ -17,7 +17,7 @@ Widget buildColorsPage(BuildContext context) {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: c,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(PpForgeRadius.sm),
         border: Border.all(color: scheme.outlineVariant),
       ),
       child: Text(
@@ -94,13 +94,13 @@ Widget buildColorsPage(BuildContext context) {
         title: 'Semantic tones',
         note: 'Tone → colour, as chips, snackbars and banners use them.',
         child: Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
+          spacing: PpForgeSpacing.sm,
+          runSpacing: PpForgeSpacing.sm,
           children: [
             for (final t in Tone.values)
-              AppChip(
+              PpForgeChip(
                 label: t.name,
-                tone: AppChipTone.fromTone(t),
+                tone: PpForgeChipTone.fromTone(t),
                 selected: true,
                 size: ChipSize.chip,
               ),
@@ -113,14 +113,14 @@ Widget buildColorsPage(BuildContext context) {
 
 /// `/dev/tokens/typography` — the seven roles.
 Widget buildTypographyPage(BuildContext context) {
-  const samples = <(AppTextRole, String)>[
-    (AppTextRole.display, '฿1,250.00'),
-    (AppTextRole.title, 'ข้าวมันไก่ · Chicken rice'),
-    (AppTextRole.section, 'สมาชิก · Members'),
-    (AppTextRole.label, 'วันที่ · Date'),
-    (AppTextRole.body, 'บัญชีรับเงินเดือน ใช้จ่ายประจำ · Salary account'),
-    (AppTextRole.caption, 'สร้างเมื่อ 12 ต.ค. · Created 12 Oct'),
-    (AppTextRole.money, '฿96,248.33'),
+  const samples = <(PpForgeTextRole, String)>[
+    (PpForgeTextRole.display, '฿1,250.00'),
+    (PpForgeTextRole.title, 'ข้าวมันไก่ · Chicken rice'),
+    (PpForgeTextRole.section, 'สมาชิก · Members'),
+    (PpForgeTextRole.label, 'วันที่ · Date'),
+    (PpForgeTextRole.body, 'บัญชีรับเงินเดือน ใช้จ่ายประจำ · Salary account'),
+    (PpForgeTextRole.caption, 'สร้างเมื่อ 12 ต.ค. · Created 12 Oct'),
+    (PpForgeTextRole.money, '฿96,248.33'),
   ];
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -129,50 +129,51 @@ Widget buildTypographyPage(BuildContext context) {
         HubDemo(
           title: role.name,
           note: _roleNote[role],
-          child: AppText(text, role: role),
+          child: PpForgeText(text, role: role),
         ),
     ],
   );
 }
 
-const _roleNote = <AppTextRole, String>{
-  AppTextRole.display: 'A big number or heading on its own — a hero’s amount.',
-  AppTextRole.title: 'A page or hero title.',
-  AppTextRole.section:
+const _roleNote = <PpForgeTextRole, String>{
+  PpForgeTextRole.display:
+      'A big number or heading on its own — a hero’s amount.',
+  PpForgeTextRole.title: 'A page or hero title.',
+  PpForgeTextRole.section:
       'The big green heading of a detail section (หัวข้อ section).',
-  AppTextRole.label: 'A row’s field label (หัวข้อ).',
-  AppTextRole.body: 'Running text and values.',
-  AppTextRole.caption: 'Small muted supporting text — hints, meta lines.',
-  AppTextRole.money: 'An amount of money: bold, tabular digits.',
+  PpForgeTextRole.label: 'A row’s field label (หัวข้อ).',
+  PpForgeTextRole.body: 'Running text and values.',
+  PpForgeTextRole.caption: 'Small muted supporting text — hints, meta lines.',
+  PpForgeTextRole.money: 'An amount of money: bold, tabular digits.',
 };
 
-/// `/dev/tokens/icons` — every AppIcons entry by group.
+/// `/dev/tokens/icons` — every PpForgeIcons entry by group.
 Widget buildIconsPage(BuildContext context) {
   final scheme = Theme.of(context).colorScheme;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      for (final entry in AppIcons.catalog.entries)
+      for (final entry in PpForgeIcons.catalog.entries)
         HubDemo(
           title: entry.key,
           child: Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
+            spacing: PpForgeSpacing.md,
+            runSpacing: PpForgeSpacing.md,
             children: [
               for (final icon in entry.value.entries)
                 SizedBox(
                   width: 84,
                   child: Column(
                     children: [
-                      AppIcon(
+                      PpForgeIcon(
                         icon.value,
-                        size: AppIconSize.lg,
+                        size: PpForgeIconSize.lg,
                         color: scheme.onSurface,
                       ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      AppText(
+                      const SizedBox(height: PpForgeSpacing.xxs),
+                      PpForgeText(
                         icon.key,
-                        role: AppTextRole.caption,
+                        role: PpForgeTextRole.caption,
                         maxLines: 2,
                         textAlign: TextAlign.center,
                       ),

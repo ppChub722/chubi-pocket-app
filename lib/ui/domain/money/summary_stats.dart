@@ -40,7 +40,7 @@ class SummaryStats extends StatelessWidget {
               if (i > 0)
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
+                    horizontal: PpForgeSpacing.sm,
                   ),
                   child: Text(
                     '·',

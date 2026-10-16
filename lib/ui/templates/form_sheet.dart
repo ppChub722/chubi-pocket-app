@@ -8,11 +8,11 @@ import '../organisms/saving_overlay.dart';
 import '../tokens/app_spacing.dart';
 
 /// THE form sheet (owner 2026-10-12): a bottom sheet that edits something
-/// and ends with Cancel · Save. Open it with `showAppSheetCustom` and return
+/// and ends with Cancel · Save. Open it with `showPpForgeSheetCustom` and return
 /// a `FormSheet` from the builder:
 ///
 /// ```dart
-/// showAppSheetCustom<Result>(context, builder: (ctx) => FormSheet(
+/// showPpForgeSheetCustom<Result>(context, builder: (ctx) => FormSheet(
 ///   title: 'Adjust balance',
 ///   primaryLabel: 'Adjust',
 ///   onPrimary: canSave ? () => Navigator.pop(ctx, result) : null,
@@ -22,7 +22,7 @@ import '../tokens/app_spacing.dart';
 ///
 /// What it owns, so no sheet re-invents it:
 /// - the chrome (drag handle, title, scrolling body, keyboard padding —
-///   [AppSheetScaffold]) and the pinned footer: a Cancel button + the primary
+///   [PpForgeSheetScaffold]) and the pinned footer: a Cancel button + the primary
 ///   action, both large;
 /// - [saving]: a dim overlay + spinner while the call runs, the buttons and
 ///   back disabled (see [SavingOverlay]);
@@ -69,7 +69,7 @@ class FormSheet extends StatelessWidget {
       Navigator.of(context).maybePop();
       return;
     }
-    final s = UiConfig.stringsOf(context);
+    final s = PpForgeConfig.stringsOf(context);
     final discard = await showConfirmDialog(
       context,
       title: s.discardTitle,
@@ -83,7 +83,7 @@ class FormSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = UiConfig.stringsOf(context);
+    final s = PpForgeConfig.stringsOf(context);
     return PopScope(
       // Back / swipe on a changed form goes through the question.
       canPop: !dirty || saving,
@@ -92,29 +92,29 @@ class FormSheet extends StatelessWidget {
       },
       child: SavingOverlay(
         saving: saving,
-        child: AppSheetScaffold(
+        child: PpForgeSheetScaffold(
           title: title,
           footer: Row(
             children: [
               if (showCancel) ...[
                 Expanded(
-                  child: AppButton(
+                  child: PpForgeButton(
                     label: cancelLabel ?? s.cancel,
-                    variant: AppButtonVariant.outlined,
-                    size: AppButtonSize.large,
+                    variant: PpForgeButtonVariant.outlined,
+                    size: PpForgeButtonSize.large,
                     expand: true,
                     onPressed: saving ? null : () => _close(context),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: PpForgeSpacing.md),
               ],
               Expanded(
-                child: AppButton(
+                child: PpForgeButton(
                   label: primaryLabel,
                   variant: destructive
-                      ? AppButtonVariant.destructive
-                      : AppButtonVariant.primary,
-                  size: AppButtonSize.large,
+                      ? PpForgeButtonVariant.destructive
+                      : PpForgeButtonVariant.primary,
+                  size: PpForgeButtonSize.large,
                   expand: true,
                   // Offline: a save can't reach the server, so the button
                   // disables itself (the banner says why); typed input stays.
@@ -125,7 +125,7 @@ class FormSheet extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: child,
           ),
         ),

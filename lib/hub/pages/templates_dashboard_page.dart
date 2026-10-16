@@ -33,10 +33,10 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border.all(color: scheme.outlineVariant),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
           child: child,
         ),
       ),
@@ -45,10 +45,10 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
 
   // ── Chubi Home: the real kit widgets, sample data ──────────────────────
 
-  Widget _netWorth() => AppCard(
+  Widget _netWorth() => PpForgeCard(
     margin: EdgeInsets.zero,
     child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(PpForgeSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -75,21 +75,26 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
     children: [
       const SectionHeader(
         title: 'Needs attention',
-        padding: EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.lg, 0, 0),
+        padding: EdgeInsets.fromLTRB(
+          PpForgeSpacing.xs,
+          PpForgeSpacing.lg,
+          0,
+          0,
+        ),
       ),
-      AppCard(
-        margin: const EdgeInsets.only(top: AppSpacing.xs),
+      PpForgeCard(
+        margin: const EdgeInsets.only(top: PpForgeSpacing.xs),
         child: Column(
           children: const [
             ListRow(
               title: '3 drafts to confirm',
               subtitle: 'Not counted yet',
-              leading: AppAvatar.icon(AppIcons.pending, size: 36),
+              leading: PpForgeAvatar.icon(PpForgeIcons.pending, size: 36),
             ),
             ListRow(
               title: 'Aom paid you back',
               subtitle: 'Notification',
-              leading: AppAvatar.icon(AppIcons.notifications, size: 36),
+              leading: PpForgeAvatar.icon(PpForgeIcons.notifications, size: 36),
             ),
           ],
         ),
@@ -97,10 +102,10 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
     ],
   );
 
-  Widget _kpis() => AppCard(
-    margin: const EdgeInsets.only(bottom: AppSpacing.md),
+  Widget _kpis() => PpForgeCard(
+    margin: const EdgeInsets.only(bottom: PpForgeSpacing.md),
     child: const Padding(
-      padding: EdgeInsets.all(AppSpacing.lg),
+      padding: EdgeInsets.all(PpForgeSpacing.lg),
       child: SummaryStats(
         stats: [
           SummaryStat(label: 'Income', amount: 42000, tone: MoneyTone.income),
@@ -113,10 +118,10 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
 
   Widget _donut() {
     final colors = ChartPalette.categorical(context);
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+    return PpForgeCard(
+      margin: const EdgeInsets.only(bottom: PpForgeSpacing.md),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(PpForgeSpacing.lg),
         child: Row(
           children: [
             DonutChart(
@@ -128,7 +133,7 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
                 DonutSegment(value: 2400, color: colors[2]),
               ],
             ),
-            const SizedBox(width: AppSpacing.lg),
+            const SizedBox(width: PpForgeSpacing.lg),
             const Expanded(
               child: Text('Where it went: Food · Transport · Home'),
             ),
@@ -139,11 +144,11 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
   }
 
   Widget _trend() {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    return PpForgeCard(
+      margin: const EdgeInsets.only(bottom: PpForgeSpacing.md),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(PpForgeSpacing.lg),
         child: PairedBarChart(
           colorA: palette.income,
           colorB: palette.expense,
@@ -161,10 +166,10 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
     final modules = ModuleColors.of(context);
     Widget tile(IconData icon, Color color, String label, String value) =>
         Expanded(
-          child: AppCard(
+          child: PpForgeCard(
             margin: EdgeInsets.zero,
             child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(PpForgeSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -179,11 +184,11 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
         );
     return Row(
       children: [
-        tile(AppIcons.scheduled, modules.planning, 'Planning', '2 due'),
-        const SizedBox(width: AppSpacing.sm),
-        tile(AppIcons.debt, modules.people, 'Debts', '฿1,200'),
-        const SizedBox(width: AppSpacing.sm),
-        tile(AppIcons.category, modules.library, 'Library', '12'),
+        tile(PpForgeIcons.scheduled, modules.planning, 'Planning', '2 due'),
+        const SizedBox(width: PpForgeSpacing.sm),
+        tile(PpForgeIcons.debt, modules.people, 'Debts', '฿1,200'),
+        const SizedBox(width: PpForgeSpacing.sm),
+        tile(PpForgeIcons.category, modules.library, 'Library', '12'),
       ],
     );
   }
@@ -196,25 +201,25 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
         actionLabel: 'See all',
         onAction: () {},
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.xs,
-          AppSpacing.lg,
+          PpForgeSpacing.xs,
+          PpForgeSpacing.lg,
           0,
-          AppSpacing.xs,
+          PpForgeSpacing.xs,
         ),
       ),
-      AppCard(
+      PpForgeCard(
         margin: EdgeInsets.zero,
         child: Column(
           children: [
             TxRow(
-              leading: const AppAvatar.icon(AppIcons.expense, size: 36),
+              leading: const PpForgeAvatar.icon(PpForgeIcons.expense, size: 36),
               title: 'Chicken rice',
               amount: -120,
               walletLabel: 'Cash',
               category: 'Food',
             ),
             TxRow(
-              leading: const AppAvatar.icon(AppIcons.income, size: 36),
+              leading: const PpForgeAvatar.icon(PpForgeIcons.income, size: 36),
               title: 'Salary',
               amount: 42000,
               walletLabel: 'KBank',
@@ -235,16 +240,16 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
   );
 
   Widget _stateChips() => Wrap(
-    spacing: AppSpacing.xs,
-    runSpacing: AppSpacing.xs,
+    spacing: PpForgeSpacing.xs,
+    runSpacing: PpForgeSpacing.xs,
     children: [
       for (final s in _Data.values)
-        AppChip(
+        PpForgeChip(
           label: s.name,
           selected: _data == s,
           onTap: () => setState(() => _data = s),
         ),
-      AppChip(
+      PpForgeChip(
         label: 'refreshing (dim)',
         selected: _refreshing,
         onTap: () => setState(() => _refreshing = !_refreshing),
@@ -289,7 +294,7 @@ class _DashboardTemplateState extends State<_DashboardTemplate> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _stateChips(),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: PpForgeSpacing.sm),
                   _framed(home),
                 ],
               ),

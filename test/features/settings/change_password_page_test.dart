@@ -96,7 +96,7 @@ void main() {
     await pump(t);
     expect(find.byType(DetailPageBody), findsOneWidget);
     expect(find.byType(SectionCard), findsOneWidget);
-    expect(find.byType(AppInput), findsNWidgets(3));
+    expect(find.byType(PpForgeInput), findsNWidgets(3));
     expect(find.text('At least 8 characters'), findsOneWidget);
   });
 

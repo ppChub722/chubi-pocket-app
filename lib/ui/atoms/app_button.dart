@@ -4,8 +4,8 @@ import '../tokens/app_spacing.dart';
 import 'app_spinner.dart';
 import 'connection_scope.dart';
 
-/// Visual weight of an [AppButton].
-enum AppButtonVariant {
+/// Visual weight of an [PpForgeButton].
+enum PpForgeButtonVariant {
   /// Filled brand colour — the one main action on a screen.
   primary,
 
@@ -27,7 +27,7 @@ enum AppButtonVariant {
 
 /// Button heights. Both meet the 40dp+ touch-target rule; [large] is the
 /// full-width form / bottom-bar size.
-enum AppButtonSize { regular, large }
+enum PpForgeButtonSize { regular, large }
 
 /// The one button the app uses. Wraps the Material buttons so every screen
 /// gets the same heights, icon spacing, loading state and destructive
@@ -40,13 +40,13 @@ enum AppButtonSize { regular, large }
 ///   submit, sign in, delete …): it disables itself while the app is offline
 ///   ([ConnectionScope]) — the banner says why — and typed input is left
 ///   alone. Pages never check the connection themselves.
-class AppButton extends StatelessWidget {
-  const AppButton({
+class PpForgeButton extends StatelessWidget {
+  const PpForgeButton({
     required this.label,
     required this.onPressed,
     this.icon,
-    this.variant = AppButtonVariant.primary,
-    this.size = AppButtonSize.regular,
+    this.variant = PpForgeButtonVariant.primary,
+    this.size = PpForgeButtonSize.regular,
     this.loading = false,
     this.expand = false,
     this.submits = false,
@@ -56,15 +56,15 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
-  final AppButtonVariant variant;
-  final AppButtonSize size;
+  final PpForgeButtonVariant variant;
+  final PpForgeButtonSize size;
   final bool loading;
   final bool expand;
 
   /// Sends to the server: disabled while offline (see the class doc).
   final bool submits;
 
-  double get _height => size == AppButtonSize.large ? 48 : 40;
+  double get _height => size == PpForgeButtonSize.large ? 48 : 40;
 
   /// Whether the button takes taps right now ([onPressed] set, not
   /// [loading], and not a [submits] button while offline).
@@ -79,23 +79,23 @@ class AppButton extends StatelessWidget {
     final enabled = isEnabled(context);
     final callback = enabled ? onPressed : null;
     final minSize = Size(expand ? double.infinity : 0, _height);
-    const padding = EdgeInsets.symmetric(horizontal: AppSpacing.lg);
+    const padding = EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg);
 
     final Widget button;
     switch (variant) {
-      case AppButtonVariant.primary:
+      case PpForgeButtonVariant.primary:
         button = FilledButton(
           onPressed: callback,
           style: FilledButton.styleFrom(minimumSize: minSize, padding: padding),
           child: _content(scheme.onPrimary),
         );
-      case AppButtonVariant.tonal:
+      case PpForgeButtonVariant.tonal:
         button = FilledButton.tonal(
           onPressed: callback,
           style: FilledButton.styleFrom(minimumSize: minSize, padding: padding),
           child: _content(scheme.onSecondaryContainer),
         );
-      case AppButtonVariant.outlined:
+      case PpForgeButtonVariant.outlined:
         button = OutlinedButton(
           onPressed: callback,
           style: OutlinedButton.styleFrom(
@@ -104,13 +104,13 @@ class AppButton extends StatelessWidget {
           ),
           child: _content(scheme.primary),
         );
-      case AppButtonVariant.text:
+      case PpForgeButtonVariant.text:
         button = TextButton(
           onPressed: callback,
           style: TextButton.styleFrom(minimumSize: minSize, padding: padding),
           child: _content(scheme.primary),
         );
-      case AppButtonVariant.destructive:
+      case PpForgeButtonVariant.destructive:
         button = FilledButton(
           onPressed: callback,
           style: FilledButton.styleFrom(
@@ -121,7 +121,7 @@ class AppButton extends StatelessWidget {
           ),
           child: _content(scheme.onError),
         );
-      case AppButtonVariant.destructiveOutlined:
+      case PpForgeButtonVariant.destructiveOutlined:
         button = OutlinedButton(
           onPressed: callback,
           style: OutlinedButton.styleFrom(
@@ -138,14 +138,17 @@ class AppButton extends StatelessWidget {
 
   Widget _content(Color spinnerColor) {
     if (loading) {
-      return AppSpinner(size: AppSpinnerSize.small, color: spinnerColor);
+      return PpForgeSpinner(
+        size: PpForgeSpinnerSize.small,
+        color: spinnerColor,
+      );
     }
     if (icon == null) return Text(label);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 18),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
       ],
     );

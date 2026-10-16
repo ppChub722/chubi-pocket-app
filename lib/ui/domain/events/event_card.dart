@@ -24,17 +24,18 @@ class EventTagRef {
 
   /// The tag's one colour: its icon colour (tags never show a bg), else
   /// the entity tint ([IconCodeTint.tintFor]), else primary.
-  Color colorOf(AppColors palette) => (iconCode?.iconColors.isNotEmpty ?? false)
+  Color colorOf(PpForgeColors palette) =>
+      (iconCode?.iconColors.isNotEmpty ?? false)
       ? resolveColor(iconCode!.iconColors.first, palette)
       : iconCode.tintFor(palette);
 
-  /// The tag as a mini [AppChip] (dense list rows): `[icon] name` in its
+  /// The tag as a mini [PpForgeChip] (dense list rows): `[icon] name` in its
   /// colour. [onTap] null = display only.
   Widget chip(BuildContext context, {VoidCallback? onTap, double? maxWidth}) {
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return AppChip(
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    return PpForgeChip(
       label: name,
-      icon: IconRegistry.get(iconCode?.icon, fallback: AppIcons.tag),
+      icon: IconRegistry.get(iconCode?.icon, fallback: PpForgeIcons.tag),
       color: colorOf(palette),
       selected: true,
       onTap: onTap,
@@ -70,7 +71,7 @@ class EventCard extends StatelessWidget {
     this.description,
     this.tags = const [],
     this.statusLabel,
-    this.statusTone = AppChipTone.neutral,
+    this.statusTone = PpForgeChipTone.neutral,
     this.statusDot = true,
     this.meta,
     this.progress,
@@ -91,7 +92,7 @@ class EventCard extends StatelessWidget {
   final String? description;
   final List<EventTagRef> tags;
   final String? statusLabel;
-  final AppChipTone statusTone;
+  final PpForgeChipTone statusTone;
   final bool statusDot;
   final String? meta;
   final double? progress;
@@ -127,8 +128,8 @@ class EventCard extends StatelessWidget {
               ),
             ),
             if (statusLabel != null) ...[
-              const SizedBox(width: AppSpacing.sm),
-              AppChip(
+              const SizedBox(width: PpForgeSpacing.sm),
+              PpForgeChip(
                 label: statusLabel!,
                 tone: statusTone,
                 dot: statusDot,
@@ -147,16 +148,16 @@ class EventCard extends StatelessWidget {
           ),
         if (tags.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
             child: Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
+              spacing: PpForgeSpacing.xs,
+              runSpacing: PpForgeSpacing.xs,
               children: [for (final t in tags) t.chip(context, maxWidth: 140)],
             ),
           ),
         if (hasMeta)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xxs),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.xxs),
             child: Row(
               children: [
                 Expanded(
@@ -168,7 +169,7 @@ class EventCard extends StatelessWidget {
                   ),
                 ),
                 if (myNet != null) ...[
-                  const SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: PpForgeSpacing.sm),
                   MoneyText(
                     myNet!,
                     tone: MoneyTone.signed,
@@ -183,7 +184,7 @@ class EventCard extends StatelessWidget {
           ),
         if (progress != null)
           Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            padding: const EdgeInsets.only(top: PpForgeSpacing.sm),
             child: ProgressRow(
               value: progress!,
               label: progressLabel,
@@ -200,8 +201,8 @@ class EventCard extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
+            horizontal: PpForgeSpacing.lg,
+            vertical: PpForgeSpacing.md,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +212,7 @@ class EventCard extends StatelessWidget {
                 size: iconSize,
                 iconCode: iconCode,
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: PpForgeSpacing.md),
               Expanded(child: body),
             ],
           ),

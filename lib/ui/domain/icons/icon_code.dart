@@ -54,7 +54,7 @@ class IconCode extends Equatable {
   /// [palette] so `@presetTheme*` tokens follow the active theme.
   /// Used by card borders, balance text, etc. on screens that read from
   /// saved icon codes which may now contain tokens.
-  Color accentColorFor(AppColors palette) {
+  Color accentColorFor(PpForgeColors palette) {
     if (bgColors.isNotEmpty) return resolveColor(bgColors.first, palette);
     if (iconColors.isNotEmpty) return resolveColor(iconColors.first, palette);
     return palette.primary;
@@ -63,7 +63,7 @@ class IconCode extends Equatable {
   /// Theme-aware background colour. Token-aware replacement for
   /// [resolvedBgColor]. Returns `null` when no bg slot is set so callers
   /// can fall through to their own neutral default.
-  Color? bgColorFor(AppColors palette) =>
+  Color? bgColorFor(PpForgeColors palette) =>
       bgColors.isNotEmpty ? resolveColor(bgColors.first, palette) : null;
 
   static Color hexToColor(String hex) {
@@ -141,7 +141,7 @@ class IconCode extends Equatable {
 /// Cards clamp their border / glyph to ≥ 3:1 contrast; text stays onSurface.
 /// `entity.iconCode.tintFor(palette, fallback: …)`.
 extension IconCodeTint on IconCode? {
-  Color tintFor(AppColors palette, {Color? fallback, String? avatarName}) {
+  Color tintFor(PpForgeColors palette, {Color? fallback, String? avatarName}) {
     final code = this;
     if (code != null) {
       if (code.bgColors.isNotEmpty) {
@@ -154,7 +154,7 @@ extension IconCodeTint on IconCode? {
     // No custom icon: an entity drawn as an initials avatar keeps the avatar's
     // own (name-hashed) colour, so hero and avatar always match.
     final name = avatarName?.trim() ?? '';
-    if (name.isNotEmpty) return AppAvatar.colorFor(name);
+    if (name.isNotEmpty) return PpForgeAvatar.colorFor(name);
     return fallback ?? palette.primary;
   }
 }

@@ -46,7 +46,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
                 labels: _labels,
                 onChanged: (m) => setState(() => _mode = m),
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               SizedBox(
                 height: 96,
                 child: MainBottomNav(

@@ -4,9 +4,13 @@ import '../atoms/count_badge.dart';
 
 import '../tokens/app_spacing.dart';
 
-/// One tab of an [AppTabBar].
-class AppTab<T> {
-  const AppTab({required this.value, required this.label, this.badgeCount = 0});
+/// One tab of an [PpForgeTabBar].
+class PpForgeTab<T> {
+  const PpForgeTab({
+    required this.value,
+    required this.label,
+    this.badgeCount = 0,
+  });
 
   final T value;
   final String label;
@@ -16,10 +20,10 @@ class AppTab<T> {
 /// Equal-width underline tab bar (categories' expense/income tabs style).
 /// Value-driven — no `TabController` needed; the page swaps its body on
 /// [onChanged]. The underline is one indicator that slides to the selected
-/// tab. Put the body in an [AppTabPager] (and pass its [pager] here) to
+/// tab. Put the body in an [PpForgeTabPager] (and pass its [pager] here) to
 /// swipe between tabs with the underline following the finger.
-class AppTabBar<T> extends StatelessWidget {
-  const AppTabBar({
+class PpForgeTabBar<T> extends StatelessWidget {
+  const PpForgeTabBar({
     required this.tabs,
     required this.selected,
     required this.onChanged,
@@ -27,11 +31,11 @@ class AppTabBar<T> extends StatelessWidget {
     super.key,
   });
 
-  final List<AppTab<T>> tabs;
+  final List<PpForgeTab<T>> tabs;
   final T selected;
   final ValueChanged<T> onChanged;
 
-  /// The [AppTabPager]'s controller — the underline then tracks the page
+  /// The [PpForgeTabPager]'s controller — the underline then tracks the page
   /// position (mid-swipe included) instead of jumping per tab.
   final PageController? pager;
 
@@ -94,7 +98,7 @@ class AppTabBar<T> extends StatelessWidget {
     );
   }
 
-  Widget _tab(BuildContext context, ColorScheme scheme, AppTab<T> t) {
+  Widget _tab(BuildContext context, ColorScheme scheme, PpForgeTab<T> t) {
     final active = t.value == selected;
     final label = AnimatedDefaultTextStyle(
       duration: _slide,
@@ -111,10 +115,10 @@ class AppTabBar<T> extends StatelessWidget {
         child: Padding(
           // Bottom: room for the indicator.
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md + 2.5,
+            PpForgeSpacing.xs,
+            PpForgeSpacing.md,
+            PpForgeSpacing.xs,
+            PpForgeSpacing.md + 2.5,
           ),
           child: Center(
             // The shared count badge, floating off the label's top-right.
@@ -130,21 +134,21 @@ class AppTabBar<T> extends StatelessWidget {
   }
 }
 
-/// The body under an [AppTabBar], one page per tab: the content follows
+/// The body under an [PpForgeTabBar], one page per tab: the content follows
 /// the finger sideways and settles on a tab; tapping a tab slides there
 /// slow → fast → slow (owner 2026-10-09: this, not a fling-and-cut, app
 /// wide). Pages stay alive off-screen (scroll, filters, loaded data).
 ///
 /// The page owns [controller] — create it with `initialPage` = the
-/// selected tab's index — and passes it to [AppTabBar.pager] too, so the
+/// selected tab's index — and passes it to [PpForgeTabBar.pager] too, so the
 /// underline tracks the swipe.
 ///
 /// [enabled] false stops paging via physics only — the tree doesn't
 /// change, so a long-press that turns into a drag mid-gesture (reorder)
 /// isn't torn down. Each page builds its own scrollables: a
 /// `ScrollController` must not be shared between pages.
-class AppTabPager<T> extends StatefulWidget {
-  const AppTabPager({
+class PpForgeTabPager<T> extends StatefulWidget {
+  const PpForgeTabPager({
     required this.values,
     required this.selected,
     required this.onChanged,
@@ -169,15 +173,15 @@ class AppTabPager<T> extends StatefulWidget {
   static const curve = Curves.easeInOutCubic;
 
   @override
-  State<AppTabPager<T>> createState() => _AppTabPagerState<T>();
+  State<PpForgeTabPager<T>> createState() => _AppTabPagerState<T>();
 }
 
-class _AppTabPagerState<T> extends State<AppTabPager<T>> {
+class _AppTabPagerState<T> extends State<PpForgeTabPager<T>> {
   /// A tap-driven slide is running — the pages it passes aren't picks.
   bool _sliding = false;
 
   @override
-  void didUpdateWidget(AppTabPager<T> old) {
+  void didUpdateWidget(PpForgeTabPager<T> old) {
     super.didUpdateWidget(old);
     final c = widget.controller;
     final i = widget.values.indexOf(widget.selected);
@@ -186,8 +190,8 @@ class _AppTabPagerState<T> extends State<AppTabPager<T>> {
     c
         .animateToPage(
           i,
-          duration: AppTabPager.duration,
-          curve: AppTabPager.curve,
+          duration: PpForgeTabPager.duration,
+          curve: PpForgeTabPager.curve,
         )
         .whenComplete(() => _sliding = false);
   }

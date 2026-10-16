@@ -3,7 +3,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The final AppInput (owner 2026-10-12): Field = ONE outlined frame, no fill;
+/// The final PpForgeInput (owner 2026-10-12): Field = ONE outlined frame, no fill;
 /// In-card = underline; data types layered on both; locked = no frame.
 void main() {
   labelTests();
@@ -20,7 +20,7 @@ void main() {
   );
 
   testWidgets('Field: one frame, no fill anywhere', (t) async {
-    await pump(t, const AppInput(label: 'Name', hint: 'Placeholder'));
+    await pump(t, const PpForgeInput(label: 'Name', hint: 'Placeholder'));
     final decorators = t.widgetList<InputDecorator>(
       find.byType(InputDecorator),
     );
@@ -37,10 +37,10 @@ void main() {
   testWidgets('Field: error shows the message; disabled is dimmed', (t) async {
     await pump(
       t,
-      const AppInput(label: 'Email', errorText: 'Enter a valid email'),
+      const PpForgeInput(label: 'Email', errorText: 'Enter a valid email'),
     );
     expect(find.text('Enter a valid email'), findsOneWidget);
-    await pump(t, const AppInput(label: 'Name', enabled: false));
+    await pump(t, const PpForgeInput(label: 'Name', enabled: false));
     final op = t.widget<Opacity>(
       find
           .ancestor(
@@ -59,7 +59,7 @@ void main() {
       t,
       Form(
         key: key,
-        child: AppInput(
+        child: PpForgeInput(
           controller: c,
           label: 'Name',
           validator: (v) => (v ?? '').isEmpty ? 'Required' : null,
@@ -75,41 +75,50 @@ void main() {
 
   testWidgets('types: amount, percent, reference', (t) async {
     final amount = TextEditingController();
-    await pump(t, AppInput(controller: amount, type: AppInputType.amount));
+    await pump(
+      t,
+      PpForgeInput(controller: amount, type: PpForgeInputType.amount),
+    );
     await t.enterText(find.byType(EditableText), '1234567');
     expect(amount.text, '1,234,567');
     // The symbol is the app's, stuck to the number.
     expect(find.text('฿'), findsOneWidget);
 
     final pct = TextEditingController();
-    await pump(t, AppInput(controller: pct, type: AppInputType.percent));
+    await pump(
+      t,
+      PpForgeInput(controller: pct, type: PpForgeInputType.percent),
+    );
     await t.enterText(find.byType(EditableText), '150');
     expect(pct.text, '100');
     expect(find.text('%'), findsOneWidget);
 
     final ref = TextEditingController();
-    await pump(t, AppInput(controller: ref, type: AppInputType.reference));
+    await pump(
+      t,
+      PpForgeInput(controller: ref, type: PpForgeInputType.reference),
+    );
     await t.enterText(find.byType(EditableText), '12a-34');
     expect(ref.text, '1234');
   });
 
   testWidgets('locked: no field, the text and a 🔒', (t) async {
     final c = TextEditingController(text: 'aom@mail.com');
-    await pump(t, AppInput(controller: c, label: 'Email', locked: true));
+    await pump(t, PpForgeInput(controller: c, label: 'Email', locked: true));
     expect(find.byType(EditableText), findsNothing);
     expect(find.text('aom@mail.com'), findsOneWidget);
-    expect(find.byIcon(AppIcons.lock), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.lock), findsOneWidget);
   });
 
   testWidgets('In-card: an underline, no frame, no label', (t) async {
-    await pump(t, const AppInput.card(hint: 'What for?'));
+    await pump(t, const PpForgeInput.card(hint: 'What for?'));
     final d = t.widgetList<InputDecorator>(find.byType(InputDecorator)).first;
     expect(d.decoration.border, isA<UnderlineInputBorder>());
     expect(d.decoration.labelText, isNull);
   });
   testWidgets('percent takes decimals (default 2), clamped 0-100', (t) async {
     final c = TextEditingController();
-    await pump(t, AppInput(controller: c, type: AppInputType.percent));
+    await pump(t, PpForgeInput(controller: c, type: PpForgeInputType.percent));
     await t.enterText(find.byType(EditableText), '33.567');
     expect(c.text, '33.56');
     await t.enterText(find.byType(EditableText), '100.5');
@@ -117,7 +126,11 @@ void main() {
     final whole = TextEditingController();
     await pump(
       t,
-      AppInput(controller: whole, type: AppInputType.percent, decimals: 0),
+      PpForgeInput(
+        controller: whole,
+        type: PpForgeInputType.percent,
+        decimals: 0,
+      ),
     );
     await t.enterText(find.byType(EditableText), '7.5');
     expect(whole.text, '75');
@@ -127,7 +140,11 @@ void main() {
     final c = TextEditingController();
     await pump(
       t,
-      AppInput(controller: c, type: AppInputType.reference, allowLetters: true),
+      PpForgeInput(
+        controller: c,
+        type: PpForgeInputType.reference,
+        allowLetters: true,
+      ),
     );
     await t.enterText(find.byType(EditableText), 'ab-12x');
     expect(c.text, 'ab-12x');
@@ -136,8 +153,8 @@ void main() {
   testWidgets('textAlign: start keeps a number on the left', (t) async {
     await pump(
       t,
-      const AppInput.card(
-        type: AppInputType.amount,
+      const PpForgeInput.card(
+        type: PpForgeInputType.amount,
         hint: '0',
         textAlign: TextAlign.start,
       ),
@@ -161,10 +178,10 @@ void labelTests() {
       host(
         const Column(
           children: [
-            AppInput.card(label: 'ชื่อ', hint: 'h1'),
-            AppInput.card(
+            PpForgeInput.card(label: 'ชื่อ', hint: 'h1'),
+            PpForgeInput.card(
               label: 'จำนวนเงิน',
-              labelPlacement: AppInputLabelPlacement.above,
+              labelPlacement: PpForgeInputLabelPlacement.above,
               hint: 'h2',
             ),
           ],
@@ -183,7 +200,9 @@ void labelTests() {
     final c = TextEditingController(text: 'x');
     for (final editing in [true, false]) {
       await t.pumpWidget(
-        host(AppInput.title(editing: editing, controller: c, label: 'ชื่อ')),
+        host(
+          PpForgeInput.title(editing: editing, controller: c, label: 'ชื่อ'),
+        ),
       );
       expect(find.text('ชื่อ'), editing ? findsOneWidget : findsNothing);
     }

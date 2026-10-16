@@ -150,7 +150,7 @@ void main() {
             from: 'Spare',
             to: 'Trip',
             amount: 100,
-            source: const AppChip(label: 'Rec', size: ChipSize.mini),
+            source: const PpForgeChip(label: 'Rec', size: ChipSize.mini),
           ),
         );
         expect(row, closeTo(tx, 1), reason: '$k');
@@ -162,7 +162,7 @@ void main() {
           draft: true,
           title: 'Save',
           walletLabel: 'KBank',
-          draftChips: [AppChip(label: 'Sav', size: ChipSize.mini)],
+          draftChips: [PpForgeChip(label: 'Sav', size: ChipSize.mini)],
           to: 'Trip',
           amount: 100,
         ),
@@ -253,7 +253,9 @@ void main() {
       await t.pumpAndSettle();
       expect(find.textContaining('off '), findsOneWidget);
       expect(
-        t.widget<AppButton>(find.widgetWithText(AppButton, 'Go')).onPressed,
+        t
+            .widget<PpForgeButton>(find.widgetWithText(PpForgeButton, 'Go'))
+            .onPressed,
         isNull,
       );
       await t.enterText(fields.last, '5,000');

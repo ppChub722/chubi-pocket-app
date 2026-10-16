@@ -22,18 +22,18 @@ class LoadingView extends StatelessWidget {
     // should pass an explicit skeleton instead.
     return ListView(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md + MediaQuery.paddingOf(context).bottom,
+        PpForgeSpacing.md,
+        PpForgeSpacing.md,
+        PpForgeSpacing.md,
+        PpForgeSpacing.md + MediaQuery.paddingOf(context).bottom,
       ),
       children: const [
         SkeletonBox(height: 24, width: 200),
-        SizedBox(height: AppSpacing.md),
+        SizedBox(height: PpForgeSpacing.md),
         SkeletonBox(height: 80),
-        SizedBox(height: AppSpacing.md),
+        SizedBox(height: PpForgeSpacing.md),
         SkeletonBox(height: 80),
-        SizedBox(height: AppSpacing.md),
+        SizedBox(height: PpForgeSpacing.md),
         SkeletonBox(height: 80),
       ],
     );

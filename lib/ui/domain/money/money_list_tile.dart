@@ -19,8 +19,8 @@ class MoneyListTile extends StatelessWidget {
     this.onTap,
     this.dimmed = false,
     this.padding = const EdgeInsets.symmetric(
-      horizontal: AppSpacing.lg,
-      vertical: AppSpacing.sm,
+      horizontal: PpForgeSpacing.lg,
+      vertical: PpForgeSpacing.sm,
     ),
     super.key,
   });
@@ -56,7 +56,7 @@ class MoneyListTile extends StatelessWidget {
         child: Row(
           children: [
             leading,
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,7 +93,7 @@ class MoneyListTile extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
@@ -139,10 +139,10 @@ class DateGroupHeader extends StatelessWidget implements ListBreak {
     ).textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.xs,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.xs,
       ),
       child: Row(
         children: [

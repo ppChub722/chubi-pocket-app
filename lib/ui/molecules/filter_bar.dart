@@ -9,10 +9,10 @@ class FilterBar extends StatelessWidget {
     required this.chips,
     this.trailing,
     this.padding = const EdgeInsets.fromLTRB(
-      AppSpacing.lg,
-      AppSpacing.xs,
-      AppSpacing.md,
-      AppSpacing.xs,
+      PpForgeSpacing.lg,
+      PpForgeSpacing.xs,
+      PpForgeSpacing.md,
+      PpForgeSpacing.xs,
     ),
     super.key,
   });
@@ -49,7 +49,7 @@ class FilterBar extends StatelessWidget {
                 child: Row(
                   children: [
                     for (var i = 0; i < chips.length; i++) ...[
-                      if (i > 0) const SizedBox(width: AppSpacing.sm),
+                      if (i > 0) const SizedBox(width: PpForgeSpacing.sm),
                       chips[i],
                     ],
                   ],
@@ -58,7 +58,7 @@ class FilterBar extends StatelessWidget {
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             trailing!,
           ],
         ],

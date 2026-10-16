@@ -28,8 +28,8 @@ enum IconTileStyle {
 /// (rounded · solid), which differed only by these two parameters.
 ///
 /// ```dart
-/// IconTile(icon: AppIcons.expense, color: c)                  // row glyph
-/// IconTile(icon: AppIcons.budget, color: c,
+/// IconTile(icon: PpForgeIcons.expense, color: c)                  // row glyph
+/// IconTile(icon: PpForgeIcons.budget, color: c,
 ///          shape: IconTileShape.rounded, style: IconTileStyle.solid,
 ///          size: 40)                                          // card head
 /// ```
@@ -57,7 +57,7 @@ class IconTile extends StatelessWidget {
   final IconData? badgeIcon;
 
   /// Gap under a tile before the card's title.
-  static const gap = SizedBox(height: AppSpacing.sm);
+  static const gap = SizedBox(height: PpForgeSpacing.sm);
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +72,9 @@ class IconTile extends StatelessWidget {
             : BoxShape.rectangle,
         borderRadius: shape == IconTileShape.circle
             ? null
-            : BorderRadius.circular(size >= 40 ? AppRadius.md : AppRadius.sm),
+            : BorderRadius.circular(
+                size >= 40 ? PpForgeRadius.md : PpForgeRadius.sm,
+              ),
       ),
       // Module / accent colours are saturated — white reads on all of them.
       child: Icon(

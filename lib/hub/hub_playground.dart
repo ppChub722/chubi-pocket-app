@@ -8,13 +8,13 @@ import '../ui/ui.dart';
 ///
 /// ```dart
 /// HubPlayground(
-///   title: 'AppCard',
+///   title: 'PpForgeCard',
 ///   controls: [
-///     PlayChoice<AppCardStyle>('style', AppCardStyle.values.map((s) => (s.name, s))),
+///     PlayChoice<PpForgeCardStyle>('style', PpForgeCardStyle.values.map((s) => (s.name, s))),
 ///     PlayBool('selected'),
 ///     PlayNum('padding', min: 0, max: 32, step: 4, initial: 16),
 ///   ],
-///   builder: (context, v) => AppCard(style: v<AppCardStyle>('style'), …),
+///   builder: (context, v) => PpForgeCard(style: v<PpForgeCardStyle>('style'), …),
 /// )
 /// ```
 ///
@@ -66,23 +66,25 @@ class _HubPlaygroundState extends State<HubPlayground> {
     // Collapsible, CLOSED by default (owner 2026-10-12): the real examples
     // lead the page ("In the app"); the controls are for fully custom tweaks.
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.xl),
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border.all(color: scheme.outlineVariant),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
             initiallyExpanded: false,
             maintainState: true,
-            tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: PpForgeSpacing.md,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
+              PpForgeSpacing.md,
               0,
-              AppSpacing.md,
-              AppSpacing.md,
+              PpForgeSpacing.md,
+              PpForgeSpacing.md,
             ),
             expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
             leading: const Icon(Icons.tune),
@@ -100,8 +102,8 @@ class _HubPlaygroundState extends State<HubPlayground> {
                       Expanded(
                         child: Text(widget.title, style: text.titleMedium),
                       ),
-                      AppChip(
-                        icon: AppIcons.reset,
+                      PpForgeChip(
+                        icon: PpForgeIcons.reset,
                         label: 'Reset',
                         size: ChipSize.control,
                         onTap: () => setState(() => _v = _initial()),
@@ -109,7 +111,7 @@ class _HubPlaygroundState extends State<HubPlayground> {
                     ],
                   ),
                   if (widget.note != null) ...[
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     Text(
                       widget.note!,
                       style: text.bodySmall?.copyWith(
@@ -117,13 +119,13 @@ class _HubPlaygroundState extends State<HubPlayground> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: PpForgeSpacing.md),
                   // The live instance.
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    padding: const EdgeInsets.all(PpForgeSpacing.lg),
                     decoration: BoxDecoration(
                       color: scheme.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(PpForgeRadius.md),
                       border: Border.all(color: scheme.outlineVariant),
                     ),
                     child: widget.hug == null
@@ -133,16 +135,16 @@ class _HubPlaygroundState extends State<HubPlayground> {
                             child: widget.builder(context, PlayValues._(_v)),
                           ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: PpForgeSpacing.sm),
                   // The controls.
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
+                      horizontal: PpForgeSpacing.md,
+                      vertical: PpForgeSpacing.sm,
                     ),
                     decoration: BoxDecoration(
                       color: scheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      borderRadius: BorderRadius.circular(PpForgeRadius.md),
                     ),
                     child: Column(
                       children: [
@@ -271,11 +273,11 @@ class _ControlRowState extends State<_ControlRow> {
     switch (c) {
       case PlayChoice():
         control = Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
+          spacing: PpForgeSpacing.xs,
+          runSpacing: PpForgeSpacing.xs,
           children: [
             for (final (name, value) in c.options)
-              AppChip(
+              PpForgeChip(
                 label: name,
                 size: ChipSize.control,
                 selected: widget.value == value,
@@ -286,7 +288,7 @@ class _ControlRowState extends State<_ControlRow> {
       case PlayBool():
         control = Align(
           alignment: Alignment.centerLeft,
-          child: AppSwitch(
+          child: PpForgeSwitch(
             value: widget.value as bool,
             semanticLabel: c.name,
             onChanged: widget.onChanged,
@@ -294,7 +296,7 @@ class _ControlRowState extends State<_ControlRow> {
         );
       case PlayText():
         _text ??= TextEditingController(text: widget.value as String);
-        control = AppInput(controller: _text, onChanged: widget.onChanged);
+        control = PpForgeInput(controller: _text, onChanged: widget.onChanged);
       case PlayNum():
         final v = widget.value as double;
         final steps = (c.max - c.min) / c.step;
@@ -321,7 +323,7 @@ class _ControlRowState extends State<_ControlRow> {
               )
             : Row(
                 children: [
-                  AppIconButton.flat(
+                  PpForgeIconButton.flat(
                     icon: Icons.remove,
                     dense: true,
                     onPressed: v <= c.min
@@ -337,7 +339,7 @@ class _ControlRowState extends State<_ControlRow> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  AppIconButton.flat(
+                  PpForgeIconButton.flat(
                     icon: Icons.add,
                     dense: true,
                     onPressed: v >= c.max
@@ -350,7 +352,7 @@ class _ControlRowState extends State<_ControlRow> {
               );
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -387,7 +389,7 @@ class HubInApp extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -397,18 +399,18 @@ class HubInApp extends StatelessWidget {
               note!,
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           // Many real examples SIDE BY SIDE (owner 2026-10-12), so the
           // differences read at a glance: [columns] per row, each labelled
           // with what differs and the page that uses it.
           LayoutBuilder(
             builder: (context, c) {
-              const gap = AppSpacing.md;
+              const gap = PpForgeSpacing.md;
               final cols = columns.clamp(1, 4);
               final w = (c.maxWidth - gap * (cols - 1)) / cols;
               return Wrap(
                 spacing: gap,
-                runSpacing: AppSpacing.lg,
+                runSpacing: PpForgeSpacing.lg,
                 children: [
                   for (final u in uses)
                     SizedBox(
@@ -417,12 +419,15 @@ class HubInApp extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(u.label, style: text.labelLarge),
-                          const SizedBox(height: AppSpacing.xxs),
+                          const SizedBox(height: PpForgeSpacing.xxs),
                           Align(
                             alignment: Alignment.centerLeft,
-                            child: AppChip(label: u.page, size: ChipSize.mini),
+                            child: PpForgeChip(
+                              label: u.page,
+                              size: ChipSize.mini,
+                            ),
                           ),
-                          const SizedBox(height: AppSpacing.xs),
+                          const SizedBox(height: PpForgeSpacing.xs),
                           u.child,
                         ],
                       ),
@@ -465,7 +470,10 @@ class HubSubheading extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final t = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.md),
+      padding: const EdgeInsets.only(
+        top: PpForgeSpacing.md,
+        bottom: PpForgeSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -475,8 +483,8 @@ class HubSubheading extends StatelessWidget {
               note!,
               style: t.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
-          const SizedBox(height: AppSpacing.xs),
-          Divider(color: scheme.outlineVariant, height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.xs),
+          Divider(color: scheme.outlineVariant, height: PpForgeSpacing.md),
         ],
       ),
     );

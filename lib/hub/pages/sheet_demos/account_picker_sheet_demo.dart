@@ -18,21 +18,21 @@ const _wallets = [
   WalletPickItem(
     id: 'w1',
     name: 'Cash',
-    icon: AppIcons.wallet,
+    icon: PpForgeIcons.wallet,
     subtitle: 'Cash',
     balance: '฿1,250.50',
   ),
   WalletPickItem(
     id: 'w2',
     name: 'Savings',
-    icon: AppIcons.wallet,
+    icon: PpForgeIcons.wallet,
     subtitle: 'Bank',
     balance: '฿48,200.00',
   ),
   WalletPickItem(
     id: 'w3',
     name: 'Credit card',
-    icon: AppIcons.wallet,
+    icon: PpForgeIcons.wallet,
     subtitle: 'Credit card',
     balance: '-฿3,900.00',
   ),
@@ -83,27 +83,27 @@ class _AccountPickerSheetDemoState extends State<_AccountPickerSheetDemo> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
+        spacing: PpForgeSpacing.sm,
+        runSpacing: PpForgeSpacing.sm,
         children: [
-          AppButton(
+          PpForgeButton(
             label: 'Wallets',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: _open,
           ),
-          AppButton(
+          PpForgeButton(
             label: 'With none + create',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(allowNone: true, allowCreate: true),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'Empty',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(wallets: const []),
           ),
         ],
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: PpForgeSpacing.sm),
       Text(_result),
     ],
   );

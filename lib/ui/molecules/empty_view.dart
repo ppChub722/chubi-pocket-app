@@ -36,8 +36,8 @@ class EmptyView extends StatelessWidget {
     if (compact) {
       return Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.lg,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.lg,
         ),
         child: Center(
           child: Text(
@@ -55,19 +55,19 @@ class EmptyView extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.all(PpForgeSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(icon, size: 64, color: scheme.onSurfaceVariant),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: PpForgeSpacing.lg),
               Text(
                 title,
                 style: theme.textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: PpForgeSpacing.lg),
               Text(
                 message,
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -75,7 +75,10 @@ class EmptyView extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              if (cta != null) ...[const SizedBox(height: AppSpacing.lg), cta!],
+              if (cta != null) ...[
+                const SizedBox(height: PpForgeSpacing.lg),
+                cta!,
+              ],
             ],
           ),
         ),

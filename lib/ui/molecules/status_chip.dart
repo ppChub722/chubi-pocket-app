@@ -8,41 +8,41 @@ import '../tokens/chip_size.dart';
 /// same everywhere (owner 2026-10-13: shared by recurring, budgets, goals).
 enum StatusKind {
   /// Running normally.
-  active(AppChipTone.success),
+  active(PpForgeChipTone.success),
 
   /// Stopped for now; resumes.
-  paused(AppChipTone.neutral),
+  paused(PpForgeChipTone.neutral),
 
   /// Put away (hidden from the default lists).
-  archived(AppChipTone.neutral),
+  archived(PpForgeChipTone.neutral),
 
   /// Close to its end / limit.
-  endingSoon(AppChipTone.warning),
+  endingSoon(PpForgeChipTone.warning),
 
   /// Needs a look (near a budget limit, a goal that stopped counting).
-  warning(AppChipTone.warning),
+  warning(PpForgeChipTone.warning),
 
   /// Past its limit.
-  over(AppChipTone.danger),
+  over(PpForgeChipTone.danger),
 
   /// Finished / reached.
-  done(AppChipTone.success),
+  done(PpForgeChipTone.success),
 
   /// Called off.
-  cancelled(AppChipTone.neutral),
+  cancelled(PpForgeChipTone.neutral),
 
   /// Still in the future.
-  upcoming(AppChipTone.info),
+  upcoming(PpForgeChipTone.info),
 
   /// Waiting for the user (a draft to confirm).
-  pending(AppChipTone.warning),
+  pending(PpForgeChipTone.warning),
 
   /// Never produced (its date came, nothing was made).
-  notCreated(AppChipTone.neutral);
+  notCreated(PpForgeChipTone.neutral);
 
   const StatusKind(this.tone);
 
-  final AppChipTone tone;
+  final PpForgeChipTone tone;
 }
 
 /// A status as a chip (owner 2026-10-11: status badges are chips): the
@@ -64,7 +64,7 @@ class StatusChip extends StatelessWidget {
   /// A raw chip tone when no [StatusKind] fits.
   const StatusChip.tone({
     required this.label,
-    required AppChipTone this.tone,
+    required PpForgeChipTone this.tone,
     this.icon,
     this.size,
     this.onTap,
@@ -72,7 +72,7 @@ class StatusChip extends StatelessWidget {
   }) : _kind = null;
 
   final String label;
-  final AppChipTone? tone;
+  final PpForgeChipTone? tone;
   final StatusKind? _kind;
 
   /// Replaces the dot.
@@ -85,14 +85,16 @@ class StatusChip extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => AppChip(
+  Widget build(BuildContext context) => PpForgeChip(
     label: label,
     tone: tone ?? _kind!.tone,
     icon: icon,
     dot: icon == null,
     selected: true,
     size: size,
-    trailing: onTap == null ? AppChipTrailing.none : AppChipTrailing.dropdown,
+    trailing: onTap == null
+        ? PpForgeChipTrailing.none
+        : PpForgeChipTrailing.dropdown,
     onTap: onTap,
   );
 }

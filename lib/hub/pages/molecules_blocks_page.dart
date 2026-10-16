@@ -36,8 +36,8 @@ class _BlocksPageState extends State<_BlocksPage> {
               '(rows under the fade stay tappable) and shifts nothing. Dark and '
               'light, a list and a detail-like page; the list is scrolled.',
           child: Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.md,
+            spacing: PpForgeSpacing.md,
+            runSpacing: PpForgeSpacing.md,
             children: [
               for (final (dark, detail) in const [
                 (true, false),
@@ -63,22 +63,22 @@ class _BlocksPageState extends State<_BlocksPage> {
                 actions: [
                   ActionBarItem(
                     label: 'ปรับยอด',
-                    icon: AppIcons.refresh,
+                    icon: PpForgeIcons.refresh,
                     onPressed: () {},
                   ),
                   ActionBarItem(
                     label: 'รายการ',
-                    icon: AppIcons.add,
+                    icon: PpForgeIcons.add,
                     onPressed: () {},
                   ),
                   ActionBarItem(
                     label: 'โอน',
-                    icon: AppIcons.transfer,
+                    icon: PpForgeIcons.transfer,
                     onPressed: () {},
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               ActionBar(
                 actions: [
                   ActionBarItem(label: 'Edit', onPressed: () {}),
@@ -107,17 +107,17 @@ class _BlocksPageState extends State<_BlocksPage> {
                 actions: [
                   SelectionAction(
                     label: 'Colour',
-                    icon: AppIcons.colorPicker,
+                    icon: PpForgeIcons.colorPicker,
                     onTap: () {},
                   ),
                   SelectionAction(
                     label: 'Icon',
-                    icon: AppIcons.iconPicker,
+                    icon: PpForgeIcons.iconPicker,
                     onTap: () {},
                   ),
                   SelectionAction(
                     label: 'Import slip',
-                    icon: AppIcons.importSlip,
+                    icon: PpForgeIcons.importSlip,
                     needsSelection: false,
                     onTap: () {},
                   ),
@@ -126,10 +126,10 @@ class _BlocksPageState extends State<_BlocksPage> {
                 deleteTooltip: 'Delete',
               ),
               Wrap(
-                spacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
                 children: [
                   for (final n in [0, 2, 5])
-                    AppChip(
+                    PpForgeChip(
                       label: 'picked: $n',
                       size: ChipSize.chip,
                       selected: _picked == n,
@@ -150,28 +150,28 @@ class _BlocksPageState extends State<_BlocksPage> {
           child: CardGrid(
             children: [
               TileCard(
-                icon: AppIcons.wallet,
+                icon: PpForgeIcons.wallet,
                 title: 'Wallets',
                 subtitle: 'Your accounts and balances',
                 color: scheme.primary,
                 onTap: () {},
               ),
               TileCard(
-                icon: AppIcons.category,
+                icon: PpForgeIcons.category,
                 title: 'Categories',
                 subtitle: 'Group your spending',
                 color: scheme.tertiary,
                 onTap: () {},
               ),
               TileCard(
-                icon: AppIcons.budget,
+                icon: PpForgeIcons.budget,
                 title: 'Budgets',
                 subtitle: 'Limits per category',
                 color: scheme.secondary,
                 onTap: () {},
               ),
               TileCard(
-                icon: AppIcons.scheduled,
+                icon: PpForgeIcons.scheduled,
                 title: 'Scheduled',
                 color: scheme.error,
                 onTap: () {},
@@ -190,7 +190,7 @@ class _BlocksPageState extends State<_BlocksPage> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 border: Border.all(color: scheme.outlineVariant),
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(PpForgeRadius.md),
               ),
               child: CustomScrollView(
                 slivers: [
@@ -206,13 +206,17 @@ class _BlocksPageState extends State<_BlocksPage> {
                     pinned: true,
                     delegate: PinnedTabBarDelegate(
                       background: scheme.surface,
-                      child: AppTabBar<String>(
+                      child: PpForgeTabBar<String>(
                         selected: _tab,
                         onChanged: (v) => setState(() => _tab = v),
                         tabs: const [
-                          AppTab(value: 'a', label: 'Overview'),
-                          AppTab(value: 'b', label: 'Members', badgeCount: 3),
-                          AppTab(value: 'c', label: 'History'),
+                          PpForgeTab(value: 'a', label: 'Overview'),
+                          PpForgeTab(
+                            value: 'b',
+                            label: 'Members',
+                            badgeCount: 3,
+                          ),
+                          PpForgeTab(value: 'c', label: 'History'),
                         ],
                       ),
                     ),
@@ -260,16 +264,16 @@ class _BlocksPageState extends State<_BlocksPage> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 border: Border.all(color: scheme.outlineVariant),
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(PpForgeRadius.md),
               ),
               child: const CenteredFormBody(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AppInput(label: 'Email'),
-                    SizedBox(height: AppSpacing.md),
-                    AppInput(label: 'Password', obscurable: true),
+                    PpForgeInput(label: 'Email'),
+                    SizedBox(height: PpForgeSpacing.md),
+                    PpForgeInput(label: 'Password', obscurable: true),
                   ],
                 ),
               ),
@@ -310,9 +314,9 @@ class _ScrimPhone extends StatelessWidget {
                 '${dark ? 'dark' : 'light'} · ${detail ? 'detail' : 'list'}',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderRadius: BorderRadius.circular(PpForgeRadius.lg),
                 child: SizedBox(
                   width: 190,
                   height: 280,
@@ -357,9 +361,9 @@ class _ScrimPhone extends StatelessWidget {
                           right: 8,
                           child: Row(
                             children: [
-                              AppChip(label: 'Page', size: ChipSize.chip),
+                              PpForgeChip(label: 'Page', size: ChipSize.chip),
                               const Spacer(),
-                              AppChip(label: '3', size: ChipSize.chip),
+                              PpForgeChip(label: '3', size: ChipSize.chip),
                             ],
                           ),
                         ),

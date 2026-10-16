@@ -63,10 +63,10 @@ class DebtSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    return AppCard(
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    return PpForgeCard(
       margin: margin,
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(PpForgeSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -93,7 +93,7 @@ class DebtSummaryCard extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           Row(
             children: [
               Expanded(
@@ -106,7 +106,7 @@ class DebtSummaryCard extends StatelessWidget {
                   onTap: onOwedToMeTap,
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: PpForgeSpacing.sm),
               Expanded(
                 child: _Box(
                   label: iOweLabel,
@@ -153,12 +153,12 @@ class _Box extends StatelessWidget {
       child: SelectableFrame(
         selected: selected,
         color: color,
-        radius: AppRadius.md,
-        child: AppCard(
-          style: AppCardStyle.tinted,
+        radius: PpForgeRadius.md,
+        child: PpForgeCard(
+          style: PpForgeCardStyle.tinted,
           color: color,
-          radius: BorderRadius.circular(AppRadius.md),
-          padding: const EdgeInsets.all(AppSpacing.md),
+          radius: BorderRadius.circular(PpForgeRadius.md),
+          padding: const EdgeInsets.all(PpForgeSpacing.md),
           onTap: onTap,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +171,7 @@ class _Box extends StatelessWidget {
                   color: scheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               MoneyText(
                 amount.abs(),
                 symbol: symbol,

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 /// The words and error descriptions the generic kit needs (owner 2026-10-12:
 /// generic pieces never read the app's localisation). The app supplies the
-/// real ones once, at its root, with [UiConfig] (see `AppUiConfig` in
-/// `ui/domain/l10n/`); a generic piece reads them with [UiConfig.of]. With no
+/// real ones once, at its root, with [PpForgeConfig] (see `AppUiConfig` in
+/// `ui/domain/l10n/`); a generic piece reads them with [PpForgeConfig.of]. With no
 /// provider (a test, a future host app) the English defaults below apply.
 @immutable
-class UiStrings {
-  const UiStrings({
+class PpForgeStrings {
+  const PpForgeStrings({
     this.close = 'Close',
     this.cancel = 'Cancel',
     this.save = 'Save',
@@ -117,8 +117,8 @@ class UiStrings {
 
 /// How a failure reads to the user: an icon, a headline, a sentence.
 @immutable
-class UiErrorInfo {
-  const UiErrorInfo({
+class PpForgeErrorInfo {
+  const PpForgeErrorInfo({
     required this.icon,
     required this.title,
     required this.message,
@@ -129,51 +129,51 @@ class UiErrorInfo {
   final String message;
 }
 
-/// Turns any error object into [UiErrorInfo]. The app maps its own exception
+/// Turns any error object into [PpForgeErrorInfo]. The app maps its own exception
 /// type (network / server / unknown); the default describes everything as
 /// unexpected.
-abstract class UiErrors {
-  const UiErrors();
+abstract class PpForgeErrors {
+  const PpForgeErrors();
 
-  UiErrorInfo describe(Object error);
+  PpForgeErrorInfo describe(Object error);
 }
 
-class _DefaultErrors extends UiErrors {
+class _DefaultErrors extends PpForgeErrors {
   const _DefaultErrors();
 
   @override
-  UiErrorInfo describe(Object error) => const UiErrorInfo(
+  PpForgeErrorInfo describe(Object error) => const PpForgeErrorInfo(
     icon: Icons.error_outline,
     title: 'Unexpected error',
     message: 'Something we did not expect happened. Please try again.',
   );
 }
 
-/// Provides [UiStrings] and [UiErrors] to everything below it.
-class UiConfig extends InheritedWidget {
-  const UiConfig({
+/// Provides [PpForgeStrings] and [PpForgeErrors] to everything below it.
+class PpForgeConfig extends InheritedWidget {
+  const PpForgeConfig({
     required this.strings,
     required this.errors,
     required super.child,
     super.key,
   });
 
-  final UiStrings strings;
-  final UiErrors errors;
+  final PpForgeStrings strings;
+  final PpForgeErrors errors;
 
-  static const _defaults = UiConfig(
-    strings: UiStrings(),
+  static const _defaults = PpForgeConfig(
+    strings: PpForgeStrings(),
     errors: _DefaultErrors(),
     child: SizedBox.shrink(),
   );
 
-  static UiConfig of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<UiConfig>() ?? _defaults;
+  static PpForgeConfig of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PpForgeConfig>() ?? _defaults;
 
-  /// Shorthand for `UiConfig.of(context).strings`.
-  static UiStrings stringsOf(BuildContext context) => of(context).strings;
+  /// Shorthand for `PpForgeConfig.of(context).strings`.
+  static PpForgeStrings stringsOf(BuildContext context) => of(context).strings;
 
   @override
-  bool updateShouldNotify(UiConfig old) =>
+  bool updateShouldNotify(PpForgeConfig old) =>
       strings != old.strings || errors != old.errors;
 }

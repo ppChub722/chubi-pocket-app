@@ -97,7 +97,7 @@ void main() {
             expect(descTop, closeTo(amountTop, 0.5), reason: 'label tops');
 
             // 2. the DRAWN underlines share one y.
-            final fields = find.byType(AppInput);
+            final fields = find.byType(PpForgeInput);
             expect(fields, findsNWidgets(2));
             final image = (await t.runAsync(() async {
               final b =

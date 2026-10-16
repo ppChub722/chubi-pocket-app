@@ -147,7 +147,7 @@ class EventBillRow extends StatelessWidget {
             ),
           ),
           if (tags.isNotEmpty) ...[
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
             ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: box.maxWidth * tagsMaxShare,
@@ -160,7 +160,7 @@ class EventBillRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (var i = 0; i < tags.length; i++) ...[
-                      if (i > 0) const SizedBox(width: AppSpacing.xs),
+                      if (i > 0) const SizedBox(width: PpForgeSpacing.xs),
                       _tag(context, i),
                     ],
                   ],
@@ -183,7 +183,7 @@ class EventBillRow extends StatelessWidget {
               iconCode: payerIconCode,
               size: 16,
             ),
-            const SizedBox(width: AppSpacing.xs),
+            const SizedBox(width: PpForgeSpacing.xs),
           ],
           if (line2Text.isNotEmpty)
             Flexible(
@@ -195,8 +195,8 @@ class EventBillRow extends StatelessWidget {
               ),
             ),
           if (linked) ...[
-            const SizedBox(width: AppSpacing.xs),
-            Icon(AppIcons.link, size: 14, color: scheme.onSurfaceVariant),
+            const SizedBox(width: PpForgeSpacing.xs),
+            Icon(PpForgeIcons.link, size: 14, color: scheme.onSurfaceVariant),
           ],
         ],
       ),
@@ -206,8 +206,8 @@ class EventBillRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+          horizontal: PpForgeSpacing.lg,
+          vertical: PpForgeSpacing.sm,
         ),
         child: Row(
           children: [
@@ -216,10 +216,10 @@ class EventBillRow extends StatelessWidget {
               onTap: locked ? null : onTickTap,
               tooltip: tickTooltip,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             if (leading != null) ...[
               leading!,
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(width: PpForgeSpacing.md),
             ],
             Expanded(
               child: Column(
@@ -228,7 +228,7 @@ class EventBillRow extends StatelessWidget {
                 children: [line1, if (hasLine2) line2],
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             MoneyText(
               amount,
               tone: tone,
@@ -349,7 +349,7 @@ class EventBillChildRow extends StatelessWidget {
   });
 
   /// How far the line sits right of its bill row's content.
-  static const double indent = AppSpacing.xxl;
+  static const double indent = PpForgeSpacing.xxl;
 
   final String name;
   final num amount;
@@ -372,10 +372,10 @@ class EventBillChildRow extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg + indent,
-          AppSpacing.xs,
-          AppSpacing.lg,
-          AppSpacing.xs,
+          PpForgeSpacing.lg + indent,
+          PpForgeSpacing.xs,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.xs,
         ),
         child: Row(
           children: [
@@ -384,14 +384,14 @@ class EventBillChildRow extends StatelessWidget {
               onTap: locked ? null : onTickTap,
               tooltip: tickTooltip,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             PersonMark(
               name: name,
               level: level,
               iconCode: iconCode,
               reserveLinkSlot: true,
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
               child: Text.rich(
                 TextSpan(
@@ -411,7 +411,7 @@ class EventBillChildRow extends StatelessWidget {
                 style: textTheme.bodyMedium,
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             MoneyText(
               amount,
               tone: tone,

@@ -102,7 +102,7 @@ Future<bool> showEventResolveSheet(
   String? shareHint,
   bool showModeTabs = false,
 }) async {
-  final ok = await showAppSheetCustom<bool>(
+  final ok = await showPpForgeSheetCustom<bool>(
     context,
     builder: (_) => EventResolveSheet(
       labels: labels,
@@ -168,7 +168,7 @@ class _EventResolveSheetState extends State<EventResolveSheet> {
 
   Widget? _chip(ResolvePickValue? v) => v == null
       ? null
-      : AppChip(
+      : PpForgeChip(
           label: v.label,
           icon: v.icon,
           color: v.color,
@@ -227,18 +227,18 @@ class _EventResolveSheetState extends State<EventResolveSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (widget.showModeTabs) ...[
-            AppTabBar<EventResolveMode>(
+            PpForgeTabBar<EventResolveMode>(
               selected: _mode,
               onChanged: (m) => setState(() => _mode = m),
               tabs: [
-                AppTab(
+                PpForgeTab(
                   value: EventResolveMode.asTransaction,
                   label: l.asTransaction,
                 ),
-                AppTab(value: EventResolveMode.asDebt, label: l.asDebt),
+                PpForgeTab(value: EventResolveMode.asDebt, label: l.asDebt),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
           ],
           SectionCard(
             first: !widget.showModeTabs,
@@ -253,7 +253,7 @@ class _EventResolveSheetState extends State<EventResolveSheet> {
               if (hasShare)
                 DetailRow(
                   label: l.shareOnly,
-                  trailing: AppSwitch(
+                  trailing: PpForgeSwitch(
                     value: _shareOnly,
                     onChanged: (v) => setState(() => _shareOnly = v),
                   ),
@@ -269,15 +269,15 @@ class _EventResolveSheetState extends State<EventResolveSheet> {
                   label: l.account,
                   valueChip: _chip(_account),
                   emptyText: l.accountEmpty,
-                  leading: const AppIcon(AppIcons.bank),
+                  leading: const PpForgeIcon(PpForgeIcons.bank),
                   onTap: _pickAccount,
                 ),
                 if (_accountMissing)
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
+                      vertical: PpForgeSpacing.xs,
                     ),
-                    child: AppMessage(
+                    child: PpForgeMessage(
                       message: l.accountRequired,
                       tone: Tone.danger,
                     ),
@@ -286,7 +286,7 @@ class _EventResolveSheetState extends State<EventResolveSheet> {
                   label: l.category,
                   valueChip: _chip(_category),
                   emptyText: l.categoryEmpty,
-                  leading: const AppIcon(AppIcons.category),
+                  leading: const PpForgeIcon(PpForgeIcons.category),
                   onTap: _pickCategory,
                 ),
               ],
@@ -295,7 +295,7 @@ class _EventResolveSheetState extends State<EventResolveSheet> {
             SectionCard(
               children: [
                 DetailRow(
-                  leading: const AppIcon(AppIcons.debt),
+                  leading: const PpForgeIcon(PpForgeIcons.debt),
                   label: l.debtRow,
                   helper: l.debtHint,
                 ),

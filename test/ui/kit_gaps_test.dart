@@ -3,7 +3,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The kit gaps of the all-hands pass: AppInput.card options, the date
+/// The kit gaps of the all-hands pass: PpForgeInput.card options, the date
 /// picker, CollapsibleSection, SectionHeader's leading slot.
 void main() {
   Future<void> pump(WidgetTester t, Widget child) => t.pumpWidget(
@@ -13,29 +13,33 @@ void main() {
     ),
   );
 
-  testWidgets('AppInput.card: no underline in view mode, underline on focus', (
-    t,
-  ) async {
-    await pump(t, const AppInput.card(hint: 'What for?', underline: false));
-    InputDecorator deco() =>
-        t.widgetList<InputDecorator>(find.byType(InputDecorator)).first;
-    expect(deco().decoration.enabledBorder, isA<InputBorder>());
-    expect(deco().decoration.enabledBorder, InputBorder.none);
-    await t.tap(find.byType(EditableText));
-    await t.pump();
-    expect(deco().decoration.focusedBorder, isA<UnderlineInputBorder>());
-  });
+  testWidgets(
+    'PpForgeInput.card: no underline in view mode, underline on focus',
+    (t) async {
+      await pump(
+        t,
+        const PpForgeInput.card(hint: 'What for?', underline: false),
+      );
+      InputDecorator deco() =>
+          t.widgetList<InputDecorator>(find.byType(InputDecorator)).first;
+      expect(deco().decoration.enabledBorder, isA<InputBorder>());
+      expect(deco().decoration.enabledBorder, InputBorder.none);
+      await t.tap(find.byType(EditableText));
+      await t.pump();
+      expect(deco().decoration.focusedBorder, isA<UnderlineInputBorder>());
+    },
+  );
 
-  testWidgets('AppInput.card: hint hidden while focused; focus colour', (
+  testWidgets('PpForgeInput.card: hint hidden while focused; focus colour', (
     t,
   ) async {
     await pump(
       t,
-      const AppInput.card(
+      const PpForgeInput.card(
         hint: '0',
         hideHintOnFocus: true,
         focusColor: Colors.red,
-        type: AppInputType.amount,
+        type: PpForgeInputType.amount,
         symbolScale: 0.7,
         style: TextStyle(fontSize: 40),
       ),
@@ -57,16 +61,16 @@ void main() {
     expect(symbol.style?.fontSize, closeTo(28, 0.01));
   });
 
-  testWidgets('showAppDatePicker: tapping a day picks it; Today; Clear', (
+  testWidgets('showPpForgeDatePicker: tapping a day picks it; Today; Clear', (
     t,
   ) async {
-    AppDateResult? got;
+    PpForgeDateResult? got;
     await pump(
       t,
       Builder(
         builder: (context) => TextButton(
           onPressed: () async {
-            got = await showAppDatePicker(
+            got = await showPpForgeDatePicker(
               context,
               initial: DateTime(2026, 10, 14),
               first: DateTime(2026, 10, 1),
@@ -82,14 +86,14 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('20'));
     await t.pumpAndSettle();
-    expect(got, isA<AppDatePicked>());
-    expect((got! as AppDatePicked).date, DateTime(2026, 10, 20));
+    expect(got, isA<PpForgeDatePicked>());
+    expect((got! as PpForgeDatePicked).date, DateTime(2026, 10, 20));
 
     await t.tap(find.text('open'));
     await t.pumpAndSettle();
     await t.tap(find.text('Clear'));
     await t.pumpAndSettle();
-    expect(got, isA<AppDateCleared>());
+    expect(got, isA<PpForgeDateCleared>());
   });
 
   testWidgets('CollapsibleSection: hint open, summary closed, toggles', (
@@ -210,13 +214,17 @@ void main() {
     expect(t.getSize(find.byType(ConstrainedBox).last).width, 400);
   });
 
-  testWidgets('AppMessage icon override; MoneyListTile dimmed', (t) async {
+  testWidgets('PpForgeMessage icon override; MoneyListTile dimmed', (t) async {
     await pump(
       t,
-      const AppMessage(message: 'Locked', tone: Tone.warning, icon: Icons.lock),
+      const PpForgeMessage(
+        message: 'Locked',
+        tone: Tone.warning,
+        icon: Icons.lock,
+      ),
     );
     expect(find.byIcon(Icons.lock), findsOneWidget);
-    expect(find.byIcon(AppIcons.warning), findsNothing);
+    expect(find.byIcon(PpForgeIcons.warning), findsNothing);
     await pump(
       t,
       const MoneyListTile(
@@ -242,7 +250,7 @@ void main() {
         ],
       ),
     );
-    expect(find.byIcon(AppIcons.chevronRight), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.chevronRight), findsOneWidget);
     expect(
       t
           .widget<Opacity>(

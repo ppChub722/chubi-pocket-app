@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AppDurations {
-  const AppDurations._();
+class PpForgeDurations {
+  const PpForgeDurations._();
 
   static const Duration instant = Duration(milliseconds: 100);
   static const Duration fast = Duration(milliseconds: 200);

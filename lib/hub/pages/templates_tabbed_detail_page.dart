@@ -57,14 +57,14 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
     loadingMore: _loadingMore,
     loadMoreError: _moreError,
     onLoadMore: _loadMore,
-    bottomInset: AppSpacing.lg,
+    bottomInset: PpForgeSpacing.lg,
     header: [
       ListToolbar(
         searchHint: 'Search',
         onSearchChanged: (_) {},
         chips: [
-          AppChip(label: 'Paid', onTap: () {}),
-          AppChip(label: 'Open', onTap: () {}),
+          PpForgeChip(label: 'Paid', onTap: () {}),
+          PpForgeChip(label: 'Open', onTap: () {}),
         ],
       ),
     ],
@@ -93,29 +93,29 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Wrap(
-                spacing: AppSpacing.xs,
+                spacing: PpForgeSpacing.xs,
                 children: [
-                  AppChip(
+                  PpForgeChip(
                     label: 'fail the next page',
                     selected: _failNext,
                     onTap: () => setState(() => _failNext = !_failNext),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Container(
                 height: 560,
                 decoration: BoxDecoration(
                   border: Border.all(color: scheme.outlineVariant),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderRadius: BorderRadius.circular(PpForgeRadius.lg),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: TabbedDetailBody<_Tab>(
                   selected: _tab,
                   onChanged: (t) => setState(() => _tab = t),
                   tabs: const [
-                    AppTab(value: _Tab.ledger, label: 'Entries'),
-                    AppTab(value: _Tab.history, label: 'Payments'),
+                    PpForgeTab(value: _Tab.ledger, label: 'Entries'),
+                    PpForgeTab(value: _Tab.history, label: 'Payments'),
                   ],
                   hero: const HeaderCard(
                     leading: SizedBox(width: 52, height: 52),
@@ -123,9 +123,9 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
                     subtitle: Text('Linked contact'),
                   ),
                   belowHero: [
-                    AppButton(
+                    PpForgeButton(
                       label: 'Add an entry',
-                      icon: AppIcons.add,
+                      icon: PpForgeIcons.add,
                       expand: true,
                       onPressed: () {},
                     ),

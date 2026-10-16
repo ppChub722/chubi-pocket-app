@@ -42,10 +42,10 @@ void main() {
         onChanged: got.add,
       ),
     );
-    await t.tap(find.byIcon(AppIcons.chevronLeft));
+    await t.tap(find.byIcon(PpForgeIcons.chevronLeft));
     expect(got, [DateTime(2026, 10, 5)]);
     // › is dimmed and does nothing at the last period.
-    await t.tap(find.byIcon(AppIcons.chevronRight));
+    await t.tap(find.byIcon(PpForgeIcons.chevronRight));
     expect(got.length, 1);
   });
 
@@ -58,11 +58,11 @@ void main() {
         onChanged: (_) {},
       ),
     );
-    expect(find.byIcon(AppIcons.dropdown), findsNothing);
+    expect(find.byIcon(PpForgeIcons.dropdown), findsNothing);
     await pump(
       t,
       StepperPill.month(value: DateTime(2026, 5), onChanged: (_) {}),
     );
-    expect(find.byIcon(AppIcons.dropdown), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.dropdown), findsOneWidget);
   });
 }

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 /// The spinner sizes: inside a button / chip ([small]), inline next to text
 /// ([medium]), a page or overlay ([large]).
-enum AppSpinnerSize {
+enum PpForgeSpinnerSize {
   small(16, 2),
   medium(24, 2.5),
   large(36, 3.5);
 
-  const AppSpinnerSize(this.dimension, this.stroke);
+  const PpForgeSpinnerSize(this.dimension, this.stroke);
   final double dimension;
   final double stroke;
 }
@@ -15,15 +15,15 @@ enum AppSpinnerSize {
 /// The one spinner (owner 2026-10-12): a circle in a fixed box. Features never
 /// size a `CircularProgressIndicator` by hand. Skeletons are for first loads;
 /// the spinner is for a call in flight (save, delete) — see `SavingOverlay`.
-class AppSpinner extends StatelessWidget {
-  const AppSpinner({
-    this.size = AppSpinnerSize.medium,
+class PpForgeSpinner extends StatelessWidget {
+  const PpForgeSpinner({
+    this.size = PpForgeSpinnerSize.medium,
     this.color,
     this.value,
     super.key,
   });
 
-  final AppSpinnerSize size;
+  final PpForgeSpinnerSize size;
 
   /// Defaults to the theme's primary colour.
   final Color? color;

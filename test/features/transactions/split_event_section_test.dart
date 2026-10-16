@@ -39,7 +39,7 @@ void main() {
     expect(find.text('อีเวนต์'), findsOneWidget);
     // The faint placeholder when no event is set.
     expect(find.text('ไม่ได้เลือก'), findsOneWidget);
-    expect(find.byType(AppDivider), findsNothing);
+    expect(find.byType(PpForgeDivider), findsNothing);
     // Not collapsible: no chevron, tapping the heading changes nothing.
     await t.tap(find.text('แบ่งรายการ'));
     await t.pump();
@@ -148,8 +148,8 @@ void _compactTests() {
     expect(t.getTopLeft(find.text('อีเวนต์')).dx, note);
     expect(t.getTopLeft(find.text('แบ่งยอด')).dx, note);
     // Value column starts one label width in.
-    final chip = find.widgetWithText(AppChip, 'เพิ่มอีเวนต์');
-    expect(t.widget<AppChip>(chip).dashed, isTrue);
+    final chip = find.widgetWithText(PpForgeChip, 'เพิ่มอีเวนต์');
+    expect(t.widget<PpForgeChip>(chip).dashed, isTrue);
     expect(t.getTopLeft(chip).dx, closeTo(note + DraftFieldRow.labelWidth, 1));
   });
 
@@ -167,14 +167,16 @@ void _compactTests() {
         ),
       ),
     );
-    final chip = find.widgetWithText(AppChip, 'ทริป');
-    expect(t.widget<AppChip>(chip).trailing, AppChipTrailing.remove);
-    t.widget<AppChip>(chip).onRemove!();
+    final chip = find.widgetWithText(PpForgeChip, 'ทริป');
+    expect(t.widget<PpForgeChip>(chip).trailing, PpForgeChipTrailing.remove);
+    t.widget<PpForgeChip>(chip).onRemove!();
     expect(cleared, isTrue);
 
     await pump(t, section(const SplitEventSlot(name: 'ทริป', locked: true)));
-    final locked = t.widget<AppChip>(find.widgetWithText(AppChip, 'ทริป'));
-    expect(locked.trailing, AppChipTrailing.none);
+    final locked = t.widget<PpForgeChip>(
+      find.widgetWithText(PpForgeChip, 'ทริป'),
+    );
+    expect(locked.trailing, PpForgeChipTrailing.none);
     expect(locked.onTap, isNull);
   });
 

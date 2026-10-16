@@ -3,7 +3,7 @@ import '../icon_pack.dart';
 /// Shared background variants used by every base pack.
 ///
 /// Defaults are theme tokens (`@presetThemeColor*`) — they resolve through
-/// the active [AppColors] palette so a freshly-picked asset matches the
+/// the active [PpForgeColors] palette so a freshly-picked asset matches the
 /// current theme. See `lib/shared/icon_maker/color_token.dart` for the
 /// resolver and supported tokens.
 const commonBaseBackgrounds = <IconPackItem>[

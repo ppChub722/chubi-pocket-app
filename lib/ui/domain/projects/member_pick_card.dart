@@ -36,7 +36,7 @@ class ProjectMemberPickCard extends StatelessWidget {
     value: name,
     placeholder: placeholder,
     leading: name == null
-        ? const PickCardEmptyIcon(AppIcons.member)
+        ? const PickCardEmptyIcon(PpForgeIcons.member)
         : ProjectMemberAvatar(name: name!, iconCode: iconCode, size: 40),
     onTap: onTap,
     errorText: errorText,

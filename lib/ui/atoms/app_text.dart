@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../tokens/typography.dart';
 
-/// Text in one of the seven roles ([AppTextRole]) — the only way features
+/// Text in one of the seven roles ([PpForgeTextRole]) — the only way features
 /// write words (owner 2026-10-12). [color], [weight] and the layout options
 /// tune a role without leaving it.
-class AppText extends StatelessWidget {
-  const AppText(
+class PpForgeText extends StatelessWidget {
+  const PpForgeText(
     this.text, {
-    this.role = AppTextRole.body,
+    this.role = PpForgeTextRole.body,
     this.color,
     this.weight,
     this.italic = false,
@@ -20,7 +20,7 @@ class AppText extends StatelessWidget {
   });
 
   final String text;
-  final AppTextRole role;
+  final PpForgeTextRole role;
   final Color? color;
   final FontWeight? weight;
 
@@ -34,7 +34,7 @@ class AppText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var style = AppTypography.of(context, role);
+    var style = PpForgeTypography.of(context, role);
     if (color != null || weight != null || italic) {
       style = style?.copyWith(
         color: color,

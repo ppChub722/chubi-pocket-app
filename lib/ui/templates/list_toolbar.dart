@@ -12,7 +12,7 @@ import '../tokens/chip_size.dart';
 /// spacing ABOVE it (a summary, a period pill) stays the page's own.
 ///
 /// - search: [searchController] / [onSearchChanged] / [searchHint]
-///   (`AppInput.search`); leave [searchController] null for no search.
+///   (`PpForgeInput.search`); leave [searchController] null for no search.
 /// - filters: [chips] (+ [trailing], e.g. a sort menu); empty = no row.
 class ListToolbar extends StatelessWidget {
   const ListToolbar({
@@ -25,7 +25,7 @@ class ListToolbar extends StatelessWidget {
     super.key,
   });
 
-  static const double gap = AppSpacing.sm;
+  static const double gap = PpForgeSpacing.sm;
 
   final TextEditingController? searchController;
   final ValueChanged<String>? onSearchChanged;
@@ -39,17 +39,19 @@ class ListToolbar extends StatelessWidget {
     final hasSearch = searchController != null;
     final hasFilters = chips.isNotEmpty || trailing != null;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (hasSearch)
-            AppInput.search(
+            PpForgeInput.search(
               key: searchKey,
               controller: searchController,
               onChanged: onSearchChanged,
               hint: searchHint,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: PpForgeSpacing.lg,
+              ),
             ),
           if (hasSearch && hasFilters) const SizedBox(height: gap),
           // The chip row sits one size below the search capsule (chip 28 under
@@ -61,9 +63,9 @@ class ListToolbar extends StatelessWidget {
                 chips: chips,
                 trailing: trailing,
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
+                  PpForgeSpacing.lg,
                   0,
-                  AppSpacing.lg,
+                  PpForgeSpacing.lg,
                   0,
                 ),
               ),

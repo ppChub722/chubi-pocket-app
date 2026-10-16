@@ -13,7 +13,7 @@ import '../tokens/color_contrast.dart';
 ///   a lighter border).
 ///
 /// Build it once where the hero is built (e.g. `HeroStyle.tinted(color:
-/// category colour, glyph: AppIcons.category)`) and hand it to the hero card
+/// category colour, glyph: PpForgeIcons.category)`) and hand it to the hero card
 /// AND to its compact bar.
 @immutable
 class HeroStyle {
@@ -55,7 +55,7 @@ class HeroStyle {
   int get hashCode => Object.hash(color, glyph, borderColor, borderWidth);
 }
 
-/// The surface of a hero for a [HeroStyle]: an [AppCard] in the style's
+/// The surface of a hero for a [HeroStyle]: an [PpForgeCard] in the style's
 /// look. Used by the hero card and by the compact bar (which passes a pill
 /// [radius] and a smaller [glyphSize]).
 class HeroSurface extends StatelessWidget {
@@ -80,16 +80,16 @@ class HeroSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = style.color;
     if (color == null) {
-      return AppCard(
-        style: AppCardStyle.bordered,
+      return PpForgeCard(
+        style: PpForgeCardStyle.bordered,
         onTap: onTap,
         radius: radius,
         margin: margin,
         child: child,
       );
     }
-    return AppCard(
-      style: AppCardStyle.tinted,
+    return PpForgeCard(
+      style: PpForgeCardStyle.tinted,
       color: color,
       glyph: style.glyph,
       glyphSize: glyphSize,

@@ -11,7 +11,7 @@ void main() {
   test('no icon: the card tint is the initials avatar colour', () {
     for (final name in ['QA Lead', 'Aom Chan', 'Bee', 'ก้อง']) {
       final tint = (null as IconCode?).tintFor(palette, avatarName: name);
-      expect(tint, AppAvatar.colorFor(name), reason: name);
+      expect(tint, PpForgeAvatar.colorFor(name), reason: name);
     }
   });
 
@@ -33,7 +33,7 @@ void main() {
       ),
     );
     final surface = t.widget<HeroSurface>(find.byType(HeroSurface));
-    expect(surface.style.color, AppAvatar.colorFor(name));
+    expect(surface.style.color, PpForgeAvatar.colorFor(name));
     expect(surface.style.tinted, isTrue);
   });
 }

@@ -76,10 +76,10 @@ class _ProgressPage extends StatelessWidget {
                 ? StatusChip.tone(
                     label: tone.name,
                     tone: switch (tone) {
-                      ProgressTone.danger => AppChipTone.danger,
-                      ProgressTone.warning => AppChipTone.warning,
-                      ProgressTone.success => AppChipTone.success,
-                      _ => AppChipTone.neutral,
+                      ProgressTone.danger => PpForgeChipTone.danger,
+                      ProgressTone.warning => PpForgeChipTone.warning,
+                      ProgressTone.success => PpForgeChipTone.success,
+                      _ => PpForgeChipTone.neutral,
                     },
                     size: ChipSize.mini,
                   )
@@ -138,7 +138,7 @@ class _ProgressPage extends StatelessWidget {
                 overLabel: 'เกิน ฿860',
                 percentText: '122%',
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               ProgressCard.compact(
                 title: 'ก.ย. 2026',
                 value: 1.06,
@@ -146,9 +146,9 @@ class _ProgressPage extends StatelessWidget {
                 label: '฿8,460 จาก ฿8,000',
                 percentText: '106%',
               ),
-              const AppDivider(),
+              const PpForgeDivider(),
               const ProgressCard.skeleton(),
-              const AppDivider(),
+              const PpForgeDivider(),
               const ProgressCard.skeleton(compact: true),
             ],
           ),
@@ -170,7 +170,7 @@ class _ProgressPage extends StatelessWidget {
                 percentText: '62%',
                 footnote: 'เหลือ ฿7,600 · เกิน 1 งบ',
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: PpForgeSpacing.lg),
               const ProgressSummary.skeleton(),
             ],
           ),
@@ -185,7 +185,7 @@ class _ProgressPage extends StatelessWidget {
             title: const Text('อาหาร'),
             accent: Colors.orange,
             footer: const Padding(
-              padding: EdgeInsets.only(top: AppSpacing.md),
+              padding: EdgeInsets.only(top: PpForgeSpacing.md),
               child: ProgressHeroFooter(
                 caption: 'ใช้ไปแล้ว',
                 amount: 3120,

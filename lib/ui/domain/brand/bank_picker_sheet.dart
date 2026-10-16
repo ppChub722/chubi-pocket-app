@@ -57,7 +57,7 @@ Future<BankPickerChoice?> showBankSelectSheet(
   String? selectedCode,
   bool allowNone = true,
 }) {
-  return showAppSheetCustom<BankPickerChoice>(
+  return showPpForgeSheetCustom<BankPickerChoice>(
     context,
     builder: (_) => PickerSheet(
       title: strings.title,
@@ -80,7 +80,7 @@ Future<BankPickerChoice?> showBankSelectSheet(
                 children: [
                   if (allowNone && query.isEmpty)
                     PickerRow(
-                      leading: const AppIcon(AppIcons.bank),
+                      leading: const PpForgeIcon(PpForgeIcons.bank),
                       title: strings.noneLabel,
                       selected: selectedCode == null,
                       onTap: () =>
@@ -101,7 +101,7 @@ Future<BankPickerChoice?> showBankSelectSheet(
                     ),
                 ],
               ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
           ],
         );
       },
@@ -140,6 +140,9 @@ class BankBrandMark extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      AppAvatar.brand(name: _letters, color: BankBrand.of(code), size: size);
+  Widget build(BuildContext context) => PpForgeAvatar.brand(
+    name: _letters,
+    color: BankBrand.of(code),
+    size: size,
+  );
 }

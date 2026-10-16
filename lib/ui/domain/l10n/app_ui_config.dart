@@ -11,7 +11,7 @@ import '../../atoms/ui_config.dart';
 import '../../tokens/app/app_icons.dart';
 import '../money/currencies.dart';
 
-/// The app's Thai: fills the generic kit's [UiConfig] from the app
+/// The app's Thai: fills the generic kit's [PpForgeConfig] from the app
 /// localisation and maps [ApiException] to the three failure descriptions
 /// (no connection / server / unexpected). Installed once, in the app's
 /// `MaterialApp.builder`, so every page, sheet and dialog sees it.
@@ -23,8 +23,8 @@ class AppUiConfig extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return UiConfig(
-      strings: UiStrings(
+    return PpForgeConfig(
+      strings: PpForgeStrings(
         close: l.commonClose,
         cancel: l.commonCancel,
         save: l.commonSave,
@@ -71,13 +71,13 @@ class AppUiConfig extends StatelessWidget {
   }
 }
 
-class _AppErrors extends UiErrors {
+class _AppErrors extends PpForgeErrors {
   const _AppErrors(this.l);
 
   final AppLocalizations l;
 
   @override
-  UiErrorInfo describe(Object error) {
+  PpForgeErrorInfo describe(Object error) {
     final e = error is ApiException ? error : null;
     // A TimeoutException comes from the templates' "still loading" safety net.
     final network =
@@ -86,21 +86,21 @@ class _AppErrors extends UiErrors {
             (e.code == 'NETWORK_ERROR' || e.code == 'NETWORK_TIMEOUT'));
     final server = e != null && (e.statusCode ?? 0) >= 500;
     if (network) {
-      return UiErrorInfo(
-        icon: AppIcons.offline,
+      return PpForgeErrorInfo(
+        icon: PpForgeIcons.offline,
         title: l.errorNetworkTitle,
         message: l.errorNetworkMessage,
       );
     }
     if (server) {
-      return UiErrorInfo(
-        icon: AppIcons.serverDown,
+      return PpForgeErrorInfo(
+        icon: PpForgeIcons.serverDown,
         title: l.errorServerTitle,
         message: l.errorServerMessage,
       );
     }
-    return UiErrorInfo(
-      icon: AppIcons.error,
+    return PpForgeErrorInfo(
+      icon: PpForgeIcons.error,
       title: l.errorUnknownTitle,
       message: l.errorUnknownMessage,
     );
@@ -117,7 +117,7 @@ class _AppErrors extends UiErrors {
 /// The signed-in user's currency symbol (from /me), or the kit default
 /// when nobody is signed in / there is no [AuthCubit] (tests, hub).
 String _userCurrencySymbol(BuildContext context) {
-  const fallback = UiStrings();
+  const fallback = PpForgeStrings();
   try {
     final code = context.select<AuthCubit, String?>(
       (c) => switch (c.state) {

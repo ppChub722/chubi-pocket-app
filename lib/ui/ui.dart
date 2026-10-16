@@ -7,6 +7,9 @@
 /// Browse them live at `/dev/widgets` (Dev hub → Widget gallery).
 library;
 
+// chubiPocket's App* names for the PpForge* pieces.
+export 'app_aliases.dart';
+
 // Buttons
 export 'atoms/app_avatar.dart';
 export 'atoms/app_button.dart';

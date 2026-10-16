@@ -83,9 +83,9 @@ class _MultiPickersPageState extends State<_MultiPickersPage> {
             cells: [
               HubCell(
                 caption: 'result: $_catsLast',
-                child: AppButton(
+                child: PpForgeButton(
                   label: 'showCategoryMultiPicker',
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   onPressed: () async {
                     final r = await showCategoryMultiPicker(
                       context,
@@ -120,9 +120,9 @@ class _MultiPickersPageState extends State<_MultiPickersPage> {
             cells: [
               HubCell(
                 caption: 'result: $_walletsLast',
-                child: AppButton(
+                child: PpForgeButton(
                   label: 'showAccountMultiPicker',
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   onPressed: () async {
                     final r = await showAccountMultiPicker(
                       context,

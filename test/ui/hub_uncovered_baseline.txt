@@ -1,4 +1,4 @@
-AppTheme
+PpForgeTheme
 AvatarMetrics
 Currencies
 EditModeMixin

@@ -99,10 +99,13 @@ class EntryCard extends StatelessWidget {
     final error = Theme.of(context).colorScheme.error;
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         border: Border.all(color: error),
       ),
-      child: Padding(padding: const EdgeInsets.all(AppSpacing.xxs), child: row),
+      child: Padding(
+        padding: const EdgeInsets.all(PpForgeSpacing.xxs),
+        child: row,
+      ),
     );
   }
 

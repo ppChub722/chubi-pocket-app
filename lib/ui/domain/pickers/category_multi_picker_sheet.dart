@@ -56,7 +56,7 @@ Future<List<CategoryMultiPick>?> showCategoryMultiPicker(
   List<CategoryMultiPick> initial = const [],
   int maxDepth = 2,
 }) {
-  return showAppSheetCustom<List<CategoryMultiPick>>(
+  return showPpForgeSheetCustom<List<CategoryMultiPick>>(
     context,
     builder: (_) => CategoryMultiPickerSheet(
       rows: rows,
@@ -186,7 +186,7 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
         if (rows.isNotEmpty) SectionCard(first: true, children: rows),
         if (empty)
           EmptyView.compact(message: query.isEmpty ? l.empty : l.noMatch),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
       ],
     );
   }
@@ -220,15 +220,15 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            AppSwitch(
+            PpForgeSwitch(
               key: ValueKey('include-${category.id}'),
               value: _picked[category.id]!,
               semanticLabel: widget.labels.includeChildren,
               onChanged: (v) => setState(() => _picked[category.id] = v),
             ),
           ],
-          AppIconButton.flat(
-            icon: isExpanded ? AppIcons.collapse : AppIcons.expand,
+          PpForgeIconButton.flat(
+            icon: isExpanded ? PpForgeIcons.collapse : PpForgeIcons.expand,
             onPressed: forced.contains(category.id)
                 ? null
                 : () => setState(() {
@@ -244,7 +244,7 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
     out.add(
       PickerRow(
         key: ValueKey('row-${category.id}'),
-        indent: depth * AppSpacing.xl,
+        indent: depth * PpForgeSpacing.xl,
         leading: IconDisplay(
           type: IconType.category,
           size: 32,

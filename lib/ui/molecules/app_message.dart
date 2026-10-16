@@ -6,9 +6,9 @@ import '../tokens/app_radius.dart';
 import '../tokens/app_spacing.dart';
 import '../tokens/tone.dart';
 
-/// One action of an [AppMessage] ("เลิกทำ", "ลองใหม่").
-class AppMessageAction {
-  const AppMessageAction({required this.label, required this.onPressed});
+/// One action of an [PpForgeMessage] ("เลิกทำ", "ลองใหม่").
+class PpForgeMessageAction {
+  const PpForgeMessageAction({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback onPressed;
@@ -19,15 +19,15 @@ class AppMessageAction {
 /// only placement and lifetime differ. The rule stays: something that just
 /// happened → a snackbar, something still true → a banner.
 ///
-/// - **Banner** (`AppMessage(...)`) — inline in a page / section, stays until
+/// - **Banner** (`PpForgeMessage(...)`) — inline in a page / section, stays until
 ///   resolved or closed ([onClose] adds the ✕); 1–2 [actions].
-/// - **Snackbar** ([showAppMessage]) — the same body [floating] at the bottom
+/// - **Snackbar** ([showPpForgeMessage]) — the same body [floating] at the bottom
 ///   (a soft shadow), gone after a few seconds; at most one action.
 ///
 /// Tones: [Tone.info] (also neutral / primary), success, warning, danger.
 /// One action sits at the end of the text; two go under the text, right-aligned.
-class AppMessage extends StatelessWidget {
-  const AppMessage({
+class PpForgeMessage extends StatelessWidget {
+  const PpForgeMessage({
     required this.message,
     this.tone = Tone.info,
     this.actions = const [],
@@ -43,7 +43,7 @@ class AppMessage extends StatelessWidget {
   /// Replaces the tone's icon (a 🔒 on a "locked" banner); the colour is
   /// still the tone's.
   final IconData? icon;
-  final List<AppMessageAction> actions;
+  final List<PpForgeMessageAction> actions;
 
   /// Banner: adds a ✕.
   final VoidCallback? onClose;
@@ -52,15 +52,15 @@ class AppMessage extends StatelessWidget {
   final bool floating;
 
   static IconData iconOf(Tone tone) => switch (tone) {
-    Tone.danger => AppIcons.error,
-    Tone.warning => AppIcons.warning,
-    Tone.success => AppIcons.success,
-    _ => AppIcons.info,
+    Tone.danger => PpForgeIcons.error,
+    Tone.warning => PpForgeIcons.warning,
+    Tone.success => PpForgeIcons.success,
+    _ => PpForgeIcons.info,
   };
 
   @override
   Widget build(BuildContext context) {
-    assert(actions.length <= 2, 'an AppMessage has at most two actions');
+    assert(actions.length <= 2, 'an PpForgeMessage has at most two actions');
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final color = tone.color(context);
@@ -71,12 +71,12 @@ class AppMessage extends StatelessWidget {
     );
     final two = actions.length == 2;
 
-    Widget button(AppMessageAction a) => TextButton(
+    Widget button(PpForgeMessageAction a) => TextButton(
       onPressed: a.onPressed,
       style: TextButton.styleFrom(
         foregroundColor: color,
         visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
         textStyle: text.labelLarge?.copyWith(fontWeight: FontWeight.w700),
       ),
       child: Text(a.label),
@@ -89,7 +89,7 @@ class AppMessage extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: Icon(icon ?? iconOf(tone), color: color, size: 20),
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(width: PpForgeSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -99,7 +99,7 @@ class AppMessage extends StatelessWidget {
                 Align(
                   alignment: AlignmentDirectional.centerEnd,
                   child: Wrap(
-                    spacing: AppSpacing.xs,
+                    spacing: PpForgeSpacing.xs,
                     children: [for (final a in actions) button(a)],
                   ),
                 ),
@@ -108,7 +108,7 @@ class AppMessage extends StatelessWidget {
         ),
         if (actions.length == 1) button(actions.first),
         if (onClose != null)
-          AppIconButton.clear(
+          PpForgeIconButton.clear(
             dense: true,
             iconSize: 18,
             color: color,
@@ -123,18 +123,18 @@ class AppMessage extends StatelessWidget {
         color: fill,
         elevation: floating ? 4 : 0,
         shadowColor: scheme.shadow.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
         child: Container(
           padding: EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm + 2,
+            PpForgeSpacing.md,
+            PpForgeSpacing.sm + 2,
             onClose == null && actions.length != 1
-                ? AppSpacing.md
-                : AppSpacing.xs,
-            AppSpacing.sm + 2,
+                ? PpForgeSpacing.md
+                : PpForgeSpacing.xs,
+            PpForgeSpacing.sm + 2,
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(PpForgeRadius.md),
             border: Border.all(color: color.withValues(alpha: 0.4)),
           ),
           child: body,
@@ -144,17 +144,17 @@ class AppMessage extends StatelessWidget {
   }
 }
 
-/// The snackbar: an [AppMessage] floating at the bottom, replacing the
+/// The snackbar: an [PpForgeMessage] floating at the bottom, replacing the
 /// current one, gone after a few seconds, at most one action. (Inside a sheet
-/// the same body shows as a toast on top of it — see [showAppSnackBar].)
-void showAppMessage(
+/// the same body shows as a toast on top of it — see [showPpForgeSnackBar].)
+void showPpForgeMessage(
   BuildContext context,
   String message, {
   Tone tone = Tone.info,
   String? actionLabel,
   VoidCallback? onAction,
   Duration duration = const Duration(seconds: 4),
-}) => showAppMessageOn(
+}) => showPpForgeMessageOn(
   ScaffoldMessenger.of(context),
   message,
   tone: tone,
@@ -163,9 +163,9 @@ void showAppMessage(
   duration: duration,
 );
 
-/// [showAppMessage] on a messenger captured up front — for calls after an
+/// [showPpForgeMessage] on a messenger captured up front — for calls after an
 /// `await` / pop, when the original context may already be gone.
-void showAppMessageOn(
+void showPpForgeMessageOn(
   ScaffoldMessengerState messenger,
   String message, {
   Tone tone = Tone.info,
@@ -182,13 +182,13 @@ void showAppMessageOn(
         backgroundColor: Colors.transparent,
         elevation: 0,
         padding: EdgeInsets.zero,
-        margin: const EdgeInsets.all(AppSpacing.md),
-        content: AppMessage(
+        margin: const EdgeInsets.all(PpForgeSpacing.md),
+        content: PpForgeMessage(
           message: message,
           tone: tone,
           floating: true,
           actions: actionLabel != null && onAction != null
-              ? [AppMessageAction(label: actionLabel, onPressed: onAction)]
+              ? [PpForgeMessageAction(label: actionLabel, onPressed: onAction)]
               : const [],
         ),
       ),

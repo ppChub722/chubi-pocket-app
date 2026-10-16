@@ -3,7 +3,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// AppInput.card as a form field (the change-password sheet): label ABOVE, an
+/// PpForgeInput.card as a form field (the change-password sheet): label ABOVE, an
 /// underline, the eye at the right end, a helper under it, an error message.
 void main() {
   inlineTests();
@@ -20,17 +20,17 @@ void main() {
     final c = TextEditingController(text: 'secret123');
     await t.pumpWidget(
       host(
-        AppInput.card(
+        PpForgeInput.card(
           controller: c,
           label: 'New password',
-          labelPlacement: AppInputLabelPlacement.above,
-          size: AppInputSize.regular,
+          labelPlacement: PpForgeInputLabelPlacement.above,
+          size: PpForgeInputSize.regular,
           obscurable: true,
           helper: 'At least 8 characters',
         ),
       ),
     );
-    final field = t.getRect(find.byType(AppInput));
+    final field = t.getRect(find.byType(PpForgeInput));
     final eye = t.getRect(find.byType(IconButton).first);
     expect(
       eye.right,
@@ -58,10 +58,10 @@ void main() {
   testWidgets('card: errorText shows with the label above', (t) async {
     await t.pumpWidget(
       host(
-        const AppInput.card(
+        const PpForgeInput.card(
           label: 'Current password',
-          labelPlacement: AppInputLabelPlacement.above,
-          size: AppInputSize.regular,
+          labelPlacement: PpForgeInputLabelPlacement.above,
+          size: PpForgeInputSize.regular,
           obscurable: true,
           errorText: 'Wrong password',
         ),
@@ -84,7 +84,7 @@ void inlineTests() {
           body: Center(
             child: SizedBox(
               width: 320,
-              child: AppInput.inline(
+              child: PpForgeInput.inline(
                 editing: true,
                 controller: c,
                 obscurable: true,
@@ -95,7 +95,7 @@ void inlineTests() {
         ),
       ),
     );
-    final field = t.getRect(find.byType(AppInput));
+    final field = t.getRect(find.byType(PpForgeInput));
     expect(
       t.getRect(find.byType(IconButton).first).right,
       greaterThan(field.right - 24),
@@ -116,7 +116,7 @@ void inlineTests() {
       MaterialApp(
         theme: ThemeData(extensions: [sweetTheme.lightColors]),
         home: Scaffold(
-          body: AppInput.inline(
+          body: PpForgeInput.inline(
             editing: true,
             controller: c,
             errorText: 'Wrong password',

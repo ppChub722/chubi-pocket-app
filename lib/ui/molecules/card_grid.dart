@@ -31,8 +31,8 @@ class CardGrid extends StatelessWidget {
     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
       maxCrossAxisExtent: maxCrossAxisExtent,
       mainAxisExtent: mainAxisExtent,
-      mainAxisSpacing: AppSpacing.sm,
-      crossAxisSpacing: AppSpacing.sm,
+      mainAxisSpacing: PpForgeSpacing.sm,
+      crossAxisSpacing: PpForgeSpacing.sm,
     ),
     children: children,
   );
@@ -63,13 +63,13 @@ class TileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    return AppCard(
-      style: AppCardStyle.tinted,
+    return PpForgeCard(
+      style: PpForgeCardStyle.tinted,
       color: color,
       glyph: icon,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -30,14 +30,14 @@ class BrandHeader extends StatelessWidget {
         onSecretUnlock == null
             ? logo
             : SecretTapDetector(onUnlock: onSecretUnlock!, child: logo),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         Text(
           name,
           style: (compact ? textTheme.titleLarge : textTheme.headlineSmall)
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
         if (!compact && tagline != null) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Text(
             tagline!,
             textAlign: TextAlign.center,

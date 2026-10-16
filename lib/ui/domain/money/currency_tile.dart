@@ -36,7 +36,7 @@ class CurrencyTile extends StatelessWidget {
         label: tileLabel,
         value: display,
         emptyText: display,
-        leading: const Icon(AppIcons.currency),
+        leading: const Icon(PpForgeIcons.currency),
         locked: true,
         horizontalInset: 0,
       );
@@ -59,7 +59,7 @@ class CurrencyTile extends StatelessWidget {
         label: tileLabel,
         value: display,
         emptyText: display,
-        leading: const Icon(AppIcons.currency),
+        leading: const Icon(PpForgeIcons.currency),
         onTap: toggle,
         horizontalInset: 0,
       ),

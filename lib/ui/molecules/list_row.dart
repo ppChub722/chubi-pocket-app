@@ -59,20 +59,20 @@ class ListRow extends StatelessWidget {
         onLongPress: onLongPress,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg + indent,
-            AppSpacing.md,
-            AppSpacing.lg,
-            AppSpacing.md,
+            PpForgeSpacing.lg + indent,
+            PpForgeSpacing.md,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.md,
           ),
           child: Row(
             children: [
               if (selecting) ...[
                 SelectCheck(value: checked, onTap: onCheck ?? onTap),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: PpForgeSpacing.md),
               ],
               if (leading != null) ...[
                 leading!,
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: PpForgeSpacing.md),
               ],
               Expanded(
                 child:
@@ -102,7 +102,7 @@ class ListRow extends StatelessWidget {
                     ),
               ),
               if (trailing != null) ...[
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: PpForgeSpacing.sm),
                 trailing!,
               ],
             ],

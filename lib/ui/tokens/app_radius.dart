@@ -1,5 +1,5 @@
-class AppRadius {
-  const AppRadius._();
+class PpForgeRadius {
+  const PpForgeRadius._();
 
   static const double xs = 4;
   static const double sm = 8;

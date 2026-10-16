@@ -28,8 +28,8 @@ void main() {
                 child: ListToolbar(
                   searchController: TextEditingController(),
                   chips: [
-                    AppChip(label: 'All', selected: true, onTap: () {}),
-                    AppChip(label: 'Friends', onTap: () {}),
+                    PpForgeChip(label: 'All', selected: true, onTap: () {}),
+                    PpForgeChip(label: 'Friends', onTap: () {}),
                   ],
                 ),
               ),
@@ -39,7 +39,7 @@ void main() {
       ),
     );
     final search = t.getRect(find.byType(TextField));
-    final chip = t.getRect(find.byType(AppChip).first);
+    final chip = t.getRect(find.byType(PpForgeChip).first);
     expect(search.height, 40);
     expect(chip.height, 28);
     expect(chip.top - search.bottom, 8);

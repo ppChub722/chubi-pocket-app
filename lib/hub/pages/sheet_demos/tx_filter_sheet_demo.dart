@@ -27,15 +27,15 @@ const _labels = TxFilterSheetLabels(
 
 const _options = TxFilterOptions(
   wallets: [
-    TxFilterOption(id: 'w1', label: 'Cash', icon: AppIcons.wallet),
-    TxFilterOption(id: 'w2', label: 'Savings', icon: AppIcons.wallet),
-    TxFilterOption(id: 'w3', label: 'Credit card', icon: AppIcons.wallet),
+    TxFilterOption(id: 'w1', label: 'Cash', icon: PpForgeIcons.wallet),
+    TxFilterOption(id: 'w2', label: 'Savings', icon: PpForgeIcons.wallet),
+    TxFilterOption(id: 'w3', label: 'Credit card', icon: PpForgeIcons.wallet),
   ],
   categories: [
     TxFilterOption(
       id: 'c1',
       label: 'Food',
-      icon: AppIcons.category,
+      icon: PpForgeIcons.category,
       subtitle: 'Expense',
       sortOrder: 1,
       types: {TransactionType.expense},
@@ -43,22 +43,22 @@ const _options = TxFilterOptions(
     TxFilterOption(
       id: 'c2',
       label: 'Coffee',
-      icon: AppIcons.category,
+      icon: PpForgeIcons.category,
       parentId: 'c1',
       types: {TransactionType.expense},
     ),
     TxFilterOption(
       id: 'c3',
       label: 'Salary',
-      icon: AppIcons.category,
+      icon: PpForgeIcons.category,
       subtitle: 'Income',
       sortOrder: 2,
       types: {TransactionType.income},
     ),
   ],
   tags: [
-    TxFilterOption(id: 't1', label: 'work', icon: AppIcons.tag),
-    TxFilterOption(id: 't2', label: 'trip', icon: AppIcons.tag),
+    TxFilterOption(id: 't1', label: 'work', icon: PpForgeIcons.tag),
+    TxFilterOption(id: 't2', label: 'trip', icon: PpForgeIcons.tag),
   ],
 );
 
@@ -100,17 +100,17 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
+        spacing: PpForgeSpacing.sm,
+        runSpacing: PpForgeSpacing.sm,
         children: [
-          AppButton(
+          PpForgeButton(
             label: 'Filters',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(options: Future.value(_options)),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'Loading (2 s)',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(
               options: Future.delayed(
                 const Duration(seconds: 2),
@@ -118,15 +118,15 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
               ),
             ),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'Wallet locked',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () =>
                 _open(options: Future.value(_options), walletLocked: true),
           ),
         ],
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: PpForgeSpacing.sm),
       Text(_result),
     ],
   );

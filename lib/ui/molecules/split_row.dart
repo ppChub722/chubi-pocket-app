@@ -45,9 +45,9 @@ class SplitRow extends StatelessWidget {
         height: height,
         child: Align(alignment: Alignment.centerLeft, child: avatar),
       ),
-      const SizedBox(width: AppSpacing.sm),
+      const SizedBox(width: PpForgeSpacing.sm),
       Expanded(child: name),
-      const SizedBox(width: AppSpacing.xs),
+      const SizedBox(width: PpForgeSpacing.xs),
       amount,
       SizedBox(
         width: trailingSlot,
@@ -93,9 +93,9 @@ class SplitRowAction extends StatelessWidget {
             shape: BoxShape.circle,
             color: selected ? scheme.primaryContainer : null,
           ),
-          child: AppIcon(
+          child: PpForgeIcon(
             icon,
-            size: AppIconSize.md,
+            size: PpForgeIconSize.md,
             color: selected ? scheme.primary : scheme.onSurfaceVariant,
           ),
         ),
@@ -107,7 +107,7 @@ class SplitRowAction extends StatelessWidget {
 /// The name cell of a [SplitRow], by who it is:
 /// - [SplitRowName.muted] — me ("ส่วนของฉัน"): lighter weight, muted colour
 ///   (no italic: the Thai font has none);
-/// - [SplitRowName.input] — level 1, a typed name: an outlined [AppInput],
+/// - [SplitRowName.input] — level 1, a typed name: an outlined [PpForgeInput],
 ///   clearly typeable;
 /// - [SplitRowName.picked] — level 2 / 3, a contact: the name on a faint
 ///   highlight in the avatar's colour; a tap opens the picker.
@@ -197,7 +197,7 @@ class SplitRowName extends StatelessWidget {
         return SizedBox(
           height: SplitRow.height,
           child: Center(
-            child: AppInput(
+            child: PpForgeInput(
               controller: controller,
               focusNode: focusNode,
               autofocus: autofocus,
@@ -207,8 +207,8 @@ class SplitRowName extends StatelessWidget {
               dense: true,
               hint: hint,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
+                horizontal: PpForgeSpacing.md,
+                vertical: PpForgeSpacing.sm,
               ),
               onChanged: onChanged,
             ),
@@ -226,11 +226,11 @@ class SplitRowName extends StatelessWidget {
                 constraints: const BoxConstraints(minHeight: frameHeight),
                 padding: const EdgeInsets.symmetric(
                   horizontal: textInset,
-                  vertical: AppSpacing.sm,
+                  vertical: PpForgeSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: AppAvatar.colorFor(text).withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  color: PpForgeAvatar.colorFor(text).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(PpForgeRadius.md),
                 ),
                 child: Text(
                   text,

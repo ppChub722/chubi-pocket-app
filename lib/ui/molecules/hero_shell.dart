@@ -18,20 +18,20 @@ import '../tokens/app_spacing.dart';
 /// [HeroContent] lays the rows; [HeroTopRow] lays a row of controls.
 abstract final class HeroSpacing {
   /// Inside the card, all sides.
-  static const double padding = AppSpacing.lg;
+  static const double padding = PpForgeSpacing.lg;
 
   /// Between rows inside the card.
-  static const double rowGap = AppSpacing.md;
+  static const double rowGap = PpForgeSpacing.md;
 
   /// Between buttons / pills / chips in a row.
-  static const double itemGap = AppSpacing.sm;
+  static const double itemGap = PpForgeSpacing.sm;
 
   /// Every control in the card's top row is this tall (date chip, ✏️,
   /// type / shared pills — [ChipSize.control]).
   static const double controlHeight = 40;
 
   /// From the card to the next block on the page.
-  static const double after = AppSpacing.lg;
+  static const double after = PpForgeSpacing.lg;
 }
 
 /// A hero card's inside: [HeroSpacing.padding] all round, [rows] stacked

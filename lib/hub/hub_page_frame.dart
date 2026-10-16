@@ -57,31 +57,33 @@ class _Body extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.huge,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.huge,
       ),
       children: [
         Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
+          spacing: PpForgeSpacing.xs,
+          runSpacing: PpForgeSpacing.xs,
           children: [
-            AppChip(
+            PpForgeChip(
               label: page.level.title,
               size: ChipSize.chip,
-              tone: AppChipTone.primary,
+              tone: PpForgeChipTone.primary,
               selected: true,
             ),
             if (page.level.isUi)
-              AppChip(
+              PpForgeChip(
                 label: page.generic ? 'generic' : 'domain',
                 size: ChipSize.chip,
-                tone: page.generic ? AppChipTone.info : AppChipTone.warning,
+                tone: page.generic
+                    ? PpForgeChipTone.info
+                    : PpForgeChipTone.warning,
                 selected: true,
               ),
             if (!page.live)
-              AppChip(
+              PpForgeChip(
                 label: page.phase == 0
                     ? 'planned'
                     : 'planned · phase ${page.phase}',
@@ -89,27 +91,27 @@ class _Body extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         Text(page.summary, style: text.bodyLarge),
         if (page.usedBy.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Text(
             'Used by: ${page.usedBy}',
             style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
         if (page.covers.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
           Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               for (final c in page.covers)
-                AppChip(label: c, size: ChipSize.mini),
+                PpForgeChip(label: c, size: ChipSize.mini),
             ],
           ),
         ],
-        const Divider(height: AppSpacing.xl),
+        const Divider(height: PpForgeSpacing.xl),
         page.builder?.call(context) ?? HubPlanned(page: page),
       ],
     );
@@ -137,10 +139,10 @@ class HubPlanned extends StatelessWidget {
           ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
         ),
         if (page.legacyRoute != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          AppButton(
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeButton(
             label: 'Open the current screen',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => context.push(page.legacyRoute!),
           ),
         ],

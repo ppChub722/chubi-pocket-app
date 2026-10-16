@@ -46,7 +46,9 @@ class SavingOverlay extends StatelessWidget {
         if (saving)
           const Positioned.fill(
             child: IgnorePointer(
-              child: Center(child: AppSpinner(size: AppSpinnerSize.large)),
+              child: Center(
+                child: PpForgeSpinner(size: PpForgeSpinnerSize.large),
+              ),
             ),
           ),
       ],

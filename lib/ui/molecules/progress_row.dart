@@ -93,7 +93,7 @@ class ProgressRow extends StatelessWidget {
           ),
         ),
         if (label != null || trailing != null) ...[
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Row(
             children: [
               if (label != null)

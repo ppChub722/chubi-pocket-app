@@ -25,13 +25,13 @@ class ListRowSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.sm,
+        horizontal: PpForgeSpacing.lg,
+        vertical: PpForgeSpacing.sm,
       ),
       child: Row(
         children: [
           SkeletonCircle(size: 36),
-          SizedBox(width: AppSpacing.md),
+          SizedBox(width: PpForgeSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,7 +43,7 @@ class ListRowSkeleton extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: AppSpacing.sm),
+          SizedBox(width: PpForgeSpacing.sm),
           SkeletonText(style: _titleSmall, width: 56),
         ],
       ),
@@ -59,10 +59,10 @@ class DayHeaderSkeleton extends StatelessWidget implements ListBreak {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.xs,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.md,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.xs,
       ),
       child: Row(
         children: [
@@ -81,16 +81,16 @@ class ListToolbarSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      padding: EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: SkeletonBox(height: 40, borderRadius: 20),
           ),
-          SizedBox(height: AppSpacing.sm),
+          SizedBox(height: PpForgeSpacing.sm),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: Row(
               children: [
                 SkeletonBox(width: 96, height: 28, borderRadius: 14),
@@ -113,7 +113,7 @@ class ListToolbarSkeleton extends StatelessWidget {
 /// - [ListSkeletonShape.grid]: a cards grid (wallets) — an optional summary
 ///   block of [headerHeight] on top, an optional sort row (a chip at the
 ///   right), then two rows of [gridColumns] cards of [gridItemExtent], all
-///   inset by [AppSpacing.lg] like the real cards.
+///   inset by [PpForgeSpacing.lg] like the real cards.
 class ListSkeletonShape {
   const ListSkeletonShape({this.rows = 6})
     : headerHeight = 0,
@@ -163,15 +163,15 @@ class ListPageSkeleton extends StatelessWidget {
   final ListSkeletonShape? shape;
 
   Widget _grid(ListSkeletonShape s) {
-    const inset = EdgeInsets.symmetric(horizontal: AppSpacing.lg);
+    const inset = EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg);
     return Padding(
       padding: inset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (s.headerHeight > 0) ...[
-            SkeletonBox(height: s.headerHeight, borderRadius: AppRadius.md),
-            const SizedBox(height: AppSpacing.lg),
+            SkeletonBox(height: s.headerHeight, borderRadius: PpForgeRadius.md),
+            const SizedBox(height: PpForgeSpacing.lg),
           ],
           if (s.sortRow) ...[
             Align(
@@ -182,18 +182,18 @@ class ListPageSkeleton extends StatelessWidget {
                 borderRadius: ChipSize.chip.height / 2,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: PpForgeSpacing.md),
           ],
           for (var r = 0; r < 2; r++) ...[
-            if (r > 0) const SizedBox(height: AppSpacing.md),
+            if (r > 0) const SizedBox(height: PpForgeSpacing.md),
             Row(
               children: [
                 for (var c = 0; c < s.gridColumns; c++) ...[
-                  if (c > 0) const SizedBox(width: AppSpacing.md),
+                  if (c > 0) const SizedBox(width: PpForgeSpacing.md),
                   Expanded(
                     child: SkeletonBox(
                       height: s.gridItemExtent,
-                      borderRadius: AppRadius.lg,
+                      borderRadius: PpForgeRadius.lg,
                     ),
                   ),
                 ],
@@ -278,7 +278,7 @@ class TagsStripSkeleton extends StatelessWidget {
       children: [
         for (final w in const [64.0, 84.0, 56.0]) ...[
           SkeletonBox(width: w, height: ChipSize.chip.height, borderRadius: 14),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
       ],
     );
@@ -294,15 +294,15 @@ class DetailRowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.md),
       child: Row(
         children: [
           if (icon) ...[
             const SkeletonCircle(size: 22),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
           ],
           const Expanded(child: SkeletonText(style: _labelBold, width: 110)),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: PpForgeSpacing.md),
           const SkeletonText(style: _bodyLarge, width: 72),
         ],
       ),
@@ -331,23 +331,23 @@ class SectionSkeleton extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!first) const SizedBox(height: AppSpacing.lg),
+        if (!first) const SizedBox(height: PpForgeSpacing.lg),
         if (heading) ...const [
           Padding(
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.md,
+              PpForgeSpacing.md,
               0,
-              AppSpacing.xs,
-              AppSpacing.xs,
+              PpForgeSpacing.xs,
+              PpForgeSpacing.xs,
             ),
             child: SkeletonText(style: _labelLarge, width: 96),
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(
-              AppSpacing.md,
+              PpForgeSpacing.md,
               0,
-              AppSpacing.md,
-              AppSpacing.sm,
+              PpForgeSpacing.md,
+              PpForgeSpacing.sm,
             ),
             child: SkeletonText(style: _bodySmall, width: 200),
           ),
@@ -357,7 +357,9 @@ class SectionSkeleton extends StatelessWidget {
           children: [
             for (var i = 0; i < rows; i++)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: PpForgeSpacing.lg,
+                ),
                 child: DetailRowSkeleton(icon: icons),
               ),
           ],
@@ -388,21 +390,22 @@ class DetailPageSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final top = topInset ?? MediaQuery.paddingOf(context).top + AppSpacing.lg;
+    final top =
+        topInset ?? MediaQuery.paddingOf(context).top + PpForgeSpacing.lg;
     return ListView(
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
-        AppSpacing.lg,
+        PpForgeSpacing.lg,
         top,
-        AppSpacing.lg,
-        AppSpacing.xxl,
+        PpForgeSpacing.lg,
+        PpForgeSpacing.xxl,
       ),
       children: [
         const HeroSkeleton(),
         const SizedBox(height: HeroSpacing.after),
         if (tags) ...const [
           TagsStripSkeleton(),
-          SizedBox(height: AppSpacing.md),
+          SizedBox(height: PpForgeSpacing.md),
         ],
         if (rows > 0) SectionSkeleton(rows: rows, heading: false, first: true),
         for (final n in sections) SectionSkeleton(rows: n),
@@ -477,14 +480,14 @@ class DashboardPageSkeleton extends StatelessWidget {
       children: [
         for (final h in shape.snapshots) _block(h),
         if (shape.period) ...[
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           const SkeletonBox(height: periodHeight, borderRadius: 20),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
         ],
         for (final h in shape.kpis) _block(h),
         for (final h in shape.charts) _block(h),
         if (shape.tilesHeight > 0) ...[
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: PpForgeSpacing.lg),
           SkeletonBox(height: shape.tilesHeight, borderRadius: 16),
         ],
       ],

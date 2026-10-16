@@ -97,7 +97,7 @@ Future<CategoryPickerChoice?> showCategoryPicker(
   int maxDepth = 2,
   Future<String?> Function()? onCreate,
 }) {
-  return showAppSheetCustom<CategoryPickerChoice>(
+  return showPpForgeSheetCustom<CategoryPickerChoice>(
     context,
     builder: (_) => CategoryPickerSheet(
       rows: rows,
@@ -219,7 +219,7 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
     final rows = <Widget>[
       if (widget.allowNone && query.isEmpty)
         PickerRow(
-          leading: const AppIcon(AppIcons.noCategory),
+          leading: const PpForgeIcon(PpForgeIcons.noCategory),
           title: l.none,
           selected: widget.selectedId == null,
           onTap: () => Navigator.of(context).pop(const CategoryPickerNone()),
@@ -243,7 +243,7 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
         if (rows.isNotEmpty) SectionCard(first: true, children: rows),
         if (empty)
           EmptyView.compact(message: query.isEmpty ? l.empty : l.noMatch),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
       ],
     );
   }
@@ -269,7 +269,7 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
     out.add(
       PickerRow(
         key: picked ? _selectedKey : null,
-        indent: depth * AppSpacing.xl,
+        indent: depth * PpForgeSpacing.xl,
         leading: IconDisplay(
           type: IconType.category,
           size: 32,
@@ -282,8 +282,8 @@ class _CategoryPickerSheetState extends State<CategoryPickerSheet> {
         // The chevron only where there's a level to open (a right chevron
         // would mean "go somewhere else" in this app).
         trailing: hasChildren
-            ? AppIconButton.flat(
-                icon: isExpanded ? AppIcons.collapse : AppIcons.expand,
+            ? PpForgeIconButton.flat(
+                icon: isExpanded ? PpForgeIcons.collapse : PpForgeIcons.expand,
                 onPressed: forced.contains(category.id)
                     ? null
                     : () => setState(() {

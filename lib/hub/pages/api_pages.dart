@@ -24,11 +24,11 @@ Widget buildApiSchemasPage(BuildContext context) =>
 
 // ── Shared bits ──────────────────────────────────────────────────────────────
 
-AppChipTone _methodTone(String method) => switch (method) {
-  'GET' => AppChipTone.info,
-  'POST' => AppChipTone.success,
-  'DELETE' => AppChipTone.danger,
-  _ => AppChipTone.warning,
+PpForgeChipTone _methodTone(String method) => switch (method) {
+  'GET' => PpForgeChipTone.info,
+  'POST' => PpForgeChipTone.success,
+  'DELETE' => PpForgeChipTone.danger,
+  _ => PpForgeChipTone.warning,
 };
 
 class _MethodChip extends StatelessWidget {
@@ -37,10 +37,10 @@ class _MethodChip extends StatelessWidget {
   final bool muted;
 
   @override
-  Widget build(BuildContext context) => AppChip(
+  Widget build(BuildContext context) => PpForgeChip(
     label: method,
     size: ChipSize.mini,
-    tone: muted ? AppChipTone.neutral : _methodTone(method),
+    tone: muted ? PpForgeChipTone.neutral : _methodTone(method),
     selected: !muted,
   );
 }
@@ -49,10 +49,10 @@ class _BreakingChip extends StatelessWidget {
   const _BreakingChip();
 
   @override
-  Widget build(BuildContext context) => const AppChip(
+  Widget build(BuildContext context) => const PpForgeChip(
     label: 'breaking',
     size: ChipSize.mini,
-    tone: AppChipTone.danger,
+    tone: PpForgeChipTone.danger,
     selected: true,
   );
 }
@@ -73,10 +73,10 @@ class _Json extends StatelessWidget {
         ? value as String
         : const JsonEncoder.withIndent('  ').convert(value);
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      padding: const EdgeInsets.all(PpForgeSpacing.sm),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(PpForgeRadius.sm),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -92,7 +92,10 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.xs),
+    padding: const EdgeInsets.only(
+      top: PpForgeSpacing.md,
+      bottom: PpForgeSpacing.xs,
+    ),
     child: Text(
       text.toUpperCase(),
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -135,21 +138,23 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border.all(color: scheme.outlineVariant),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(PpForgeRadius.md),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: PpForgeSpacing.md,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
+              PpForgeSpacing.md,
               0,
-              AppSpacing.md,
-              AppSpacing.md,
+              PpForgeSpacing.md,
+              PpForgeSpacing.md,
             ),
             initiallyExpanded: initiallyExpanded,
             expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
@@ -205,13 +210,13 @@ class _PagesViewState extends State<_PagesView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _CoverageCard(doc: doc, flows: flows),
-        const SizedBox(height: AppSpacing.md),
-        AppInput.search(
+        const SizedBox(height: PpForgeSpacing.md),
+        PpForgeInput.search(
           hint: 'Search pages, paths, summaries',
           onChanged: (v) => setState(() => _query = v),
           padding: EdgeInsets.zero,
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         if (shown.isEmpty) const _Muted('No page matches.'),
         for (final f in shown) _FlowCard(flow: f, doc: doc),
         if (unused.isNotEmpty && _query.trim().isEmpty)
@@ -246,10 +251,10 @@ class _CoverageCard extends StatelessWidget {
     final breaking = doc.endpoints.where((e) => e.breaking != null).length;
     final overOpen = flows.where((f) => f.overOpen).length;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(PpForgeSpacing.md),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(PpForgeRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,16 +266,16 @@ class _CoverageCard extends StatelessWidget {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           if (total != null && total > 0) ...[
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: PpForgeSpacing.sm),
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(PpForgeRadius.sm),
               child: LinearProgressIndicator(
                 value: (spec / total).clamp(0, 1).toDouble(),
                 minHeight: 8,
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PpForgeSpacing.sm),
           _Muted(
             '${flows.length} pages · $overOpen over the '
             '1-call-on-open target · $breaking endpoints marked breaking',
@@ -295,35 +300,35 @@ class _FlowCard extends StatelessWidget {
     return _Card(
       title: Text(flow.page, style: Theme.of(context).textTheme.titleSmall),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.xs),
+        padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _Muted(flow.purpose),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
+              spacing: PpForgeSpacing.xs,
+              runSpacing: PpForgeSpacing.xs,
               children: [
-                AppChip(
+                PpForgeChip(
                   label: open == 0
                       ? 'on open: none'
                       : 'on open: $open ${open == 1 ? 'call' : 'calls'}',
                   size: ChipSize.mini,
                   tone: flow.overOpen
-                      ? AppChipTone.danger
-                      : AppChipTone.neutral,
+                      ? PpForgeChipTone.danger
+                      : PpForgeChipTone.neutral,
                   selected: flow.overOpen,
                 ),
-                AppChip(
+                PpForgeChip(
                   label: 'actions: ${flow.actions.length}',
                   size: ChipSize.mini,
                 ),
                 if (overActions > 0)
-                  AppChip(
+                  PpForgeChip(
                     label: '$overActions over target',
                     size: ChipSize.mini,
-                    tone: AppChipTone.danger,
+                    tone: PpForgeChipTone.danger,
                     selected: true,
                   ),
               ],
@@ -357,7 +362,9 @@ class _CallRow extends StatelessWidget {
         method: call.method!,
         path: call.path!,
         subtitle: call.note,
-        badges: const [AppChip(label: 'not in spec yet', size: ChipSize.mini)],
+        badges: const [
+          PpForgeChip(label: 'not in spec yet', size: ChipSize.mini),
+        ],
       );
     }
     final e = doc.byOperation(call.operationId!);
@@ -436,12 +443,12 @@ class _RowShell extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _MethodChip(method, muted: muted),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,19 +466,19 @@ class _RowShell extends StatelessWidget {
                     ),
                   if (badges.isNotEmpty && muted)
                     Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
-                      child: Wrap(spacing: AppSpacing.xs, children: badges),
+                      padding: const EdgeInsets.only(top: PpForgeSpacing.xs),
+                      child: Wrap(spacing: PpForgeSpacing.xs, children: badges),
                     ),
                 ],
               ),
             ),
             if (!muted && badges.isNotEmpty) ...[
-              const SizedBox(width: AppSpacing.xs),
+              const SizedBox(width: PpForgeSpacing.xs),
               ...badges,
             ],
             if (open != null)
               Icon(
-                open! ? AppIcons.collapse : AppIcons.expand,
+                open! ? PpForgeIcons.collapse : PpForgeIcons.expand,
                 size: 20,
                 color: scheme.onSurfaceVariant,
               ),
@@ -491,13 +498,13 @@ class _EndpointDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = endpoint;
     return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      margin: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
+      padding: const EdgeInsets.all(PpForgeSpacing.sm),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
         ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(PpForgeRadius.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -533,11 +540,11 @@ class _EndpointDetail extends StatelessWidget {
             const _Muted('No page flow lists this yet.')
           else
             Wrap(
-              spacing: AppSpacing.xs,
-              runSpacing: AppSpacing.xs,
+              spacing: PpForgeSpacing.xs,
+              runSpacing: PpForgeSpacing.xs,
               children: [
                 for (final u in e.usedBy)
-                  AppChip(
+                  PpForgeChip(
                     label: u.calls > 1 ? '${u.page} ×${u.calls}' : u.page,
                     size: ChipSize.chip,
                   ),
@@ -555,22 +562,22 @@ class _ParamRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+    padding: const EdgeInsets.only(bottom: PpForgeSpacing.xs),
     child: Wrap(
-      spacing: AppSpacing.xs,
+      spacing: PpForgeSpacing.xs,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           p.name,
           style: _mono(context)?.copyWith(fontWeight: FontWeight.w700),
         ),
-        AppChip(label: p.where, size: ChipSize.mini),
-        AppChip(label: p.type, size: ChipSize.mini),
+        PpForgeChip(label: p.where, size: ChipSize.mini),
+        PpForgeChip(label: p.type, size: ChipSize.mini),
         if (p.required)
-          const AppChip(
+          const PpForgeChip(
             label: 'required',
             size: ChipSize.mini,
-            tone: AppChipTone.warning,
+            tone: PpForgeChipTone.warning,
             selected: true,
           ),
         if (p.description != null) _Muted(p.description!),
@@ -591,19 +598,19 @@ class _PayloadView extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final ref = p.ref;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Wrap(
-            spacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (status != null)
-                AppChip(
+                PpForgeChip(
                   label: status,
                   size: ChipSize.mini,
-                  tone: ok ? AppChipTone.success : AppChipTone.danger,
+                  tone: ok ? PpForgeChipTone.success : PpForgeChipTone.danger,
                   selected: true,
                 ),
               if (p.type.isNotEmpty)
@@ -626,7 +633,7 @@ class _PayloadView extends StatelessWidget {
             ],
           ),
           if (p.example != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             _Json(p.example!),
           ],
         ],
@@ -671,16 +678,16 @@ class _SchemasViewState extends State<_SchemasView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppInput.search(
+        PpForgeInput.search(
           hint: 'Search schemas and fields',
           onChanged: (v) => setState(() => _query = v),
           padding: EdgeInsets.zero,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PpForgeSpacing.sm),
         if (_only != null)
           Align(
             alignment: Alignment.centerLeft,
-            child: AppChip(
+            child: PpForgeChip(
               label: 'Only $_only — show all',
               size: ChipSize.control,
               selected: true,
@@ -689,7 +696,7 @@ class _SchemasViewState extends State<_SchemasView> {
           )
         else
           _Muted('${shown.length} of ${widget.doc.schemas.length} schemas'),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         for (final s in shown) _SchemaCard(s, open: _only != null),
       ],
     );
@@ -710,8 +717,8 @@ class _SchemaCard extends StatelessWidget {
           Flexible(
             child: Text(s.name, style: Theme.of(context).textTheme.titleSmall),
           ),
-          const SizedBox(width: AppSpacing.xs),
-          AppChip(label: s.type, size: ChipSize.mini),
+          const SizedBox(width: PpForgeSpacing.xs),
+          PpForgeChip(label: s.type, size: ChipSize.mini),
         ],
       ),
       subtitle: s.description == null
@@ -722,11 +729,11 @@ class _SchemaCard extends StatelessWidget {
         if (s.enumValues.isNotEmpty) ...[
           const _Label('Values'),
           Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
+            spacing: PpForgeSpacing.xs,
+            runSpacing: PpForgeSpacing.xs,
             children: [
               for (final v in s.enumValues)
-                AppChip(label: v, size: ChipSize.chip),
+                PpForgeChip(label: v, size: ChipSize.chip),
             ],
           ),
         ],
@@ -746,12 +753,12 @@ class _PropRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: AppSpacing.xs,
+          spacing: PpForgeSpacing.xs,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
@@ -761,12 +768,12 @@ class _PropRow extends StatelessWidget {
                 size: 13,
               )?.copyWith(fontWeight: FontWeight.w700),
             ),
-            AppChip(label: p.type, size: ChipSize.mini),
+            PpForgeChip(label: p.type, size: ChipSize.mini),
             if (p.required)
-              const AppChip(
+              const PpForgeChip(
                 label: 'required',
                 size: ChipSize.mini,
-                tone: AppChipTone.warning,
+                tone: PpForgeChipTone.warning,
                 selected: true,
               ),
           ],

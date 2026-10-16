@@ -8,7 +8,7 @@ const _sweetPink = Color(0xFFFFB3C6);
 const _sweetPinkDeep = Color(0xFFFF8FB1);
 const _sweetAccent = Color(0xFFFFD6E0);
 
-final sweetTheme = AppTheme(
+final sweetTheme = PpForgeTheme(
   id: 'sweet',
   nameKey: 'theme_sweet',
   isPremium: false,
@@ -24,7 +24,7 @@ final sweetTheme = AppTheme(
     people: Color(0xFFFB923C),
     planning: Color(0xFFC084FC),
   ),
-  lightColors: const AppColors(
+  lightColors: const PpForgeColors(
     brightness: Brightness.light,
     primary: _sweetPinkDeep,
     onPrimary: Color(0xFFFFFFFF),
@@ -55,7 +55,7 @@ final sweetTheme = AppTheme(
     walletAsset: Color(0xFF0284C7),
     walletLiability: Color(0xFFEA580C),
   ),
-  darkColors: const AppColors(
+  darkColors: const PpForgeColors(
     brightness: Brightness.dark,
     primary: _sweetPink,
     onPrimary: Color(0xFF4A1029),

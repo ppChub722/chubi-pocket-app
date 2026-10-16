@@ -355,7 +355,7 @@ void main() {
     await pump(t);
     await dragSlowly(
       t,
-      t.getCenter(find.byIcon(AppIcons.dashboardActive)),
+      t.getCenter(find.byIcon(PpForgeIcons.dashboardActive)),
       180,
     );
     expect(find.text('tab b').hitTestable(), findsOneWidget);
@@ -364,7 +364,7 @@ void main() {
   testWidgets('bar: a fling moves one slot that way', (t) async {
     await pump(t, at: '/c');
     await t.fling(
-      find.byIcon(AppIcons.walletActive),
+      find.byIcon(PpForgeIcons.walletActive),
       const Offset(-60, 0),
       1000,
     );
@@ -377,7 +377,7 @@ void main() {
     await pump(t, at: '/c');
     _pageSwipes = 0;
     await t.fling(
-      find.byIcon(AppIcons.walletActive),
+      find.byIcon(PpForgeIcons.walletActive),
       const Offset(60, 0),
       1000,
     );
@@ -388,9 +388,9 @@ void main() {
 
   testWidgets('bar: a drag starting on + scrubs; taps still switch', (t) async {
     await pump(t);
-    await dragSlowly(t, t.getCenter(find.byIcon(AppIcons.add)), 300);
+    await dragSlowly(t, t.getCenter(find.byIcon(PpForgeIcons.add)), 300);
     expect(find.text('tab c').hitTestable(), findsOneWidget);
-    await t.tap(find.byIcon(AppIcons.transactions));
+    await t.tap(find.byIcon(PpForgeIcons.transactions));
     await t.pumpAndSettle();
     expect(find.text('tab b').hitTestable(), findsOneWidget);
   });

@@ -39,7 +39,7 @@ void main() {
   }
 
   const lead = SizedBox(width: 36, height: 36);
-  const status = AppChip(label: 'หยุดชั่วคราว', size: ChipSize.mini);
+  const status = PpForgeChip(label: 'หยุดชั่วคราว', size: ChipSize.mini);
 
   TxRow marked() => TxRow(
     leading: lead,
@@ -99,10 +99,10 @@ void main() {
 
   testWidgets('renders 🔁 + progress, 🔗, the status chip, dimmed', (t) async {
     await pump(t, marked());
-    expect(find.byIcon(AppIcons.recurring), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.recurring), findsOneWidget);
     expect(find.text('3/12'), findsOneWidget);
-    expect(find.byIcon(AppIcons.link), findsOneWidget);
-    expect(find.byIcon(AppIcons.split), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.link), findsOneWidget);
+    expect(find.byIcon(PpForgeIcons.split), findsOneWidget);
     expect(find.text('หยุดชั่วคราว'), findsOneWidget);
     expect(find.text('เลยกำหนด 2 วัน'), findsOneWidget);
     expect(find.textContaining('ทุกวันที่ 3'), findsOneWidget);
@@ -117,8 +117,8 @@ void main() {
       t,
       const TxRow(leading: lead, title: 'Lunch', amount: -120, category: 'F'),
     );
-    expect(find.byIcon(AppIcons.scheduled), findsNothing);
-    expect(find.byIcon(AppIcons.link), findsNothing);
+    expect(find.byIcon(PpForgeIcons.scheduled), findsNothing);
+    expect(find.byIcon(PpForgeIcons.link), findsNothing);
     expect(
       find.ancestor(of: find.text('Lunch'), matching: find.byType(Opacity)),
       findsNothing,

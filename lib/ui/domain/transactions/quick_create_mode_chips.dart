@@ -30,11 +30,11 @@ class QuickCreateModeChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: AppSpacing.xs,
+      spacing: PpForgeSpacing.xs,
       children: [
         for (final m in QuickCreateMode.values)
           if (labels[m] != null)
-            AppChip(
+            PpForgeChip(
               label: labels[m]!,
               color: QuickCreateModeColors.of(context, m),
               selected: m == mode,

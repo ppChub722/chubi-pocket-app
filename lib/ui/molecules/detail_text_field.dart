@@ -9,7 +9,7 @@ import 'detail_rows.dart';
 ///
 /// - view, nothing set, [placeholderWhenEmpty] (and not [locked]): ONE row —
 ///   label left, the faint [notSetLabel] right; tap → [onEnterEdit];
-/// - otherwise a stacked [DetailStacked] label + [AppInput.inline] (long-press
+/// - otherwise a stacked [DetailStacked] label + [PpForgeInput.inline] (long-press
 ///   → edit in view; typed in edit; locked = never editable).
 class DetailTextField extends StatelessWidget {
   const DetailTextField({
@@ -82,7 +82,7 @@ class DetailTextField extends StatelessWidget {
         }
         return DetailStacked(
           label: label,
-          child: AppInput.inline(
+          child: PpForgeInput.inline(
             editing: editing && !locked,
             controller: controller,
             focusNode: focusNode,

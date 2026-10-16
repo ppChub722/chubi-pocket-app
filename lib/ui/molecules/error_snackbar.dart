@@ -9,7 +9,7 @@ import 'error_view.dart';
 /// stay on the page (never replace it with an error page — the user would
 /// lose their edits) and show a danger snackbar with a retry action.
 ///
-/// [error] is anything the app's [UiErrors] can describe (network / server /
+/// [error] is anything the app's [PpForgeErrors] can describe (network / server /
 /// unexpected). Omit [onRetry] to show the message without the action. A
 /// load failure with NO data on screen is the full-page [ErrorView] instead
 /// (see `AsyncStateView`).
@@ -18,11 +18,13 @@ void showErrorSnackBar(
   Object error, {
   VoidCallback? onRetry,
 }) {
-  showAppSnackBar(
+  showPpForgeSnackBar(
     context,
     ErrorView.titleFor(context, error),
     tone: Tone.danger,
-    actionLabel: onRetry == null ? null : UiConfig.stringsOf(context).retry,
+    actionLabel: onRetry == null
+        ? null
+        : PpForgeConfig.stringsOf(context).retry,
     onAction: onRetry,
   );
 }

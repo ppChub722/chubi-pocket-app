@@ -7,9 +7,9 @@ class ThemeRegistry {
 
   static const String defaultThemeId = 'mint';
 
-  static final List<AppTheme> all = [mintTheme, sweetTheme];
+  static final List<PpForgeTheme> all = [mintTheme, sweetTheme];
 
-  static AppTheme byId(String id) {
+  static PpForgeTheme byId(String id) {
     return all.firstWhere(
       (t) => t.id == id,
       orElse: () => all.firstWhere((t) => t.id == defaultThemeId),

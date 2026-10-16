@@ -23,12 +23,12 @@ List<Widget> dividedRows(
     if (i > 0 && c is ListBreak && !prevIsBreak) {
       out.add(ColoredBox(color: band, child: const SizedBox(height: 8)));
     } else if (prevIsBreak && c is! ListBreak) {
-      out.add(const AppDivider());
+      out.add(const PpForgeDivider());
     } else if (i > 0 && c is! ListBreak && !prevIsBreak) {
       out.add(
         Padding(
-          padding: EdgeInsets.only(left: indent, right: AppSpacing.lg),
-          child: const AppDivider(),
+          padding: EdgeInsets.only(left: indent, right: PpForgeSpacing.lg),
+          child: const PpForgeDivider(),
         ),
       );
     }

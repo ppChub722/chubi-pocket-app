@@ -24,19 +24,19 @@ class HubDemo extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: text.titleMedium),
           if (note != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             Text(
               note!,
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           child,
         ],
       ),
@@ -58,7 +58,7 @@ class HubCell extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         child,
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: PpForgeSpacing.xs),
         Text(
           caption,
           style: text.labelSmall?.copyWith(
@@ -78,8 +78,8 @@ class HubRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Wrap(
-    spacing: AppSpacing.lg,
-    runSpacing: AppSpacing.lg,
+    spacing: PpForgeSpacing.lg,
+    runSpacing: PpForgeSpacing.lg,
     crossAxisAlignment: WrapCrossAlignment.end,
     children: cells,
   );

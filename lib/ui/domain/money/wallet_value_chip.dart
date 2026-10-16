@@ -14,10 +14,10 @@ Widget walletValueChip(
   required String name,
   IconCode? iconCode,
 }) {
-  final palette = Theme.of(context).extension<AppColors>()!;
-  return AppChip(
+  final palette = Theme.of(context).extension<PpForgeColors>()!;
+  return PpForgeChip(
     label: name,
-    icon: IconRegistry.get(iconCode?.icon, fallback: AppIcons.wallet),
+    icon: IconRegistry.get(iconCode?.icon, fallback: PpForgeIcons.wallet),
     color: iconCode.tintFor(palette),
     size: ChipSize.chip,
     maxWidth: 200,

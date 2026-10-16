@@ -115,11 +115,11 @@ class _MenuCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: AppCard(
-        style: AppCardStyle.bordered,
+      padding: const EdgeInsets.only(bottom: PpForgeSpacing.md),
+      child: PpForgeCard(
+        style: PpForgeCardStyle.bordered,
         onTap: onTap,
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.all(PpForgeSpacing.lg),
         child: Row(
           children: [
             IconTile(
@@ -129,7 +129,7 @@ class _MenuCard extends StatelessWidget {
               shape: IconTileShape.rounded,
               style: IconTileStyle.solid,
             ),
-            const SizedBox(width: AppSpacing.md),
+            const SizedBox(width: PpForgeSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,24 +145,24 @@ class _MenuCard extends StatelessWidget {
                     ),
                   ),
                   if (tag != null) ...[
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     Text(
                       tag!,
                       style: text.labelMedium?.copyWith(color: scheme.primary),
                     ),
                   ],
                   if (chips.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: PpForgeSpacing.xs),
                     Wrap(
-                      spacing: AppSpacing.xs,
-                      runSpacing: AppSpacing.xs,
+                      spacing: PpForgeSpacing.xs,
+                      runSpacing: PpForgeSpacing.xs,
                       children: chips,
                     ),
                   ],
                 ],
               ),
             ),
-            Icon(AppIcons.chevronRight, color: scheme.onSurfaceVariant),
+            Icon(PpForgeIcons.chevronRight, color: scheme.onSurfaceVariant),
           ],
         ),
       ),
@@ -171,10 +171,10 @@ class _MenuCard extends StatelessWidget {
 }
 
 EdgeInsets get _pad => const EdgeInsets.fromLTRB(
-  AppSpacing.lg,
-  AppSpacing.md,
-  AppSpacing.lg,
-  AppSpacing.huge,
+  PpForgeSpacing.lg,
+  PpForgeSpacing.md,
+  PpForgeSpacing.lg,
+  PpForgeSpacing.huge,
 );
 
 bool _matches(HubPage p, String query) {
@@ -193,13 +193,13 @@ Widget _pageCard(BuildContext context, HubPage p) => _MenuCard(
   purpose: p.summary,
   chips: [
     if (p.level.isUi)
-      AppChip(
+      PpForgeChip(
         label: p.generic ? 'generic' : 'domain',
         size: ChipSize.mini,
-        tone: p.generic ? AppChipTone.info : AppChipTone.warning,
+        tone: p.generic ? PpForgeChipTone.info : PpForgeChipTone.warning,
         selected: true,
       ),
-    if (!p.live) const AppChip(label: 'planned', size: ChipSize.mini),
+    if (!p.live) const PpForgeChip(label: 'planned', size: ChipSize.mini),
   ],
   onTap: () => context.push(p.path),
 );
@@ -234,13 +234,13 @@ class _HubIndexScreenState extends State<HubIndexScreen> {
             'lands here first, the owner reviews it, then the pages adopt it.',
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(height: AppSpacing.md),
-          AppInput.search(
+          const SizedBox(height: PpForgeSpacing.md),
+          PpForgeInput.search(
             hint: 'Search every page and piece',
             padding: EdgeInsets.zero,
             onChanged: (v) => setState(() => _query = v),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: PpForgeSpacing.lg),
           if (searching) ...[
             for (final p in found) _pageCard(context, p),
             if (found.isEmpty)
@@ -285,7 +285,7 @@ class HubSectionScreen extends StatelessWidget {
             section.purpose,
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: PpForgeSpacing.lg),
           if (section == HubSection.ui)
             for (final level in section.levels)
               _MenuCard(
@@ -326,7 +326,7 @@ class HubLevelScreen extends StatelessWidget {
             level.blurb,
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: PpForgeSpacing.lg),
           for (final p in pages) _pageCard(context, p),
         ],
       ),

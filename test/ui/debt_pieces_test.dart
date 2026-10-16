@@ -79,7 +79,7 @@ void main() {
       );
       expect(find.text('มาตาก'), findsOneWidget);
       expect(find.text('ผูกบัญชีแล้ว'), findsOneWidget);
-      expect(find.widgetWithText(AppChip, 'เจ้าของ'), findsOneWidget);
+      expect(find.widgetWithText(PpForgeChip, 'เจ้าของ'), findsOneWidget);
       expect(find.byType(PersonLinkBadge), findsOneWidget);
       await t.tap(find.text('มาตาก'));
       expect(taps, 1);
@@ -138,7 +138,7 @@ void main() {
       expect(find.text('ค้าง 2 รายการ'), findsOneWidget);
       expect(find.text('฿300.00'), findsOneWidget);
       expect(find.text(owe), findsOneWidget);
-      expect(find.byIcon(AppIcons.check), findsNothing);
+      expect(find.byIcon(PpForgeIcons.check), findsNothing);
       await t.tap(find.text('ค้าง 2 รายการ'));
       expect(taps, 1);
     });
@@ -151,7 +151,7 @@ void main() {
         t.element(find.text('ค้าง 2 รายการ')),
       ).colorScheme.primary;
       expect(tintOf(t), primary.withValues(alpha: 0.10));
-      expect(find.byIcon(AppIcons.check), findsNothing);
+      expect(find.byIcon(PpForgeIcons.check), findsNothing);
     });
   });
 
@@ -175,8 +175,8 @@ void main() {
       );
       expect(find.text('ฉันจ่ายให้มาตาก'), findsOneWidget);
       expect(find.text('12 ต.ค.'), findsOneWidget);
-      expect(find.widgetWithText(AppChip, 'กสิกร'), findsOneWidget);
-      expect(find.widgetWithText(AppChip, 'จ่ายแล้ว'), findsOneWidget);
+      expect(find.widgetWithText(PpForgeChip, 'กสิกร'), findsOneWidget);
+      expect(find.widgetWithText(PpForgeChip, 'จ่ายแล้ว'), findsOneWidget);
       expect(find.text(' · ทริป'), findsOneWidget);
       expect(find.text('฿500.00'), findsOneWidget);
       expect(colorOf(t, '฿500.00'), colors.expense);
@@ -197,7 +197,7 @@ void main() {
           dateLabel: '10 ต.ค.',
         ),
       );
-      expect(find.byType(AppChip), findsNothing);
+      expect(find.byType(PpForgeChip), findsNothing);
       expect(colorOf(t, '฿300.00'), colors.income);
       expect(t.widget<IconTile>(find.byType(IconTile)).color, colors.income);
     });
@@ -251,13 +251,13 @@ void main() {
       );
       expect(find.text('เก่าสุด'), findsOneWidget);
       expect(find.text('ใหม่สุด'), findsNothing);
-      expect(find.byIcon(AppIcons.sort), findsOneWidget);
-      expect(find.byIcon(AppIcons.dropdown), findsOneWidget);
+      expect(find.byIcon(PpForgeIcons.sort), findsOneWidget);
+      expect(find.byIcon(PpForgeIcons.dropdown), findsOneWidget);
 
       await t.tap(find.text('เก่าสุด'));
       await t.pumpAndSettle();
       expect(find.text('ใหม่สุด'), findsOneWidget);
-      expect(find.byIcon(AppIcons.check), findsNothing);
+      expect(find.byIcon(PpForgeIcons.check), findsNothing);
       await t.tap(find.text('ใหม่สุด'));
       await t.pumpAndSettle();
       expect(picked, 'new');
@@ -276,7 +276,7 @@ void main() {
         ),
       );
       expect(
-        t.getSize(find.byType(AppChip)).height,
+        t.getSize(find.byType(PpForgeChip)).height,
         closeTo(ChipSize.chip.height, 1),
       );
     });

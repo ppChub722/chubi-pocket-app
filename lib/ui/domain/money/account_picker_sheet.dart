@@ -87,7 +87,7 @@ Future<AccountPick?> showAccountPickSheet(
   String? selectedId,
   bool allowNone = false,
   Future<String?> Function()? onCreate,
-}) => showAppSheetCustom<AccountPick>(
+}) => showPpForgeSheetCustom<AccountPick>(
   context,
   builder: (ctx) => AccountPickerSheet(
     wallets: wallets,
@@ -153,14 +153,14 @@ class AccountPickerSheet extends StatelessWidget {
         ];
         return Padding(
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
+            PpForgeSpacing.md,
             0,
-            AppSpacing.md,
-            AppSpacing.md,
+            PpForgeSpacing.md,
+            PpForgeSpacing.md,
           ),
           child: tiles.isEmpty
               ? Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  padding: const EdgeInsets.all(PpForgeSpacing.sm),
                   child: Text(
                     labels.empty,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -175,8 +175,8 @@ class AccountPickerSheet extends StatelessWidget {
                     // Same columns as the wallets page.
                     crossAxisCount:
                         MediaQuery.sizeOf(context).shortestSide >= 600 ? 3 : 2,
-                    mainAxisSpacing: AppSpacing.xs,
-                    crossAxisSpacing: AppSpacing.xs,
+                    mainAxisSpacing: PpForgeSpacing.xs,
+                    crossAxisSpacing: PpForgeSpacing.xs,
                     // Fixed height: a vertical wallet card (icon · name ·
                     // type · balance + optional credit bar) + the selection
                     // ring.
@@ -199,23 +199,31 @@ class AccountPickerSheet extends StatelessWidget {
       glyphSize: 88,
       onTap: tap,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(PpForgeSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppIcon(a.icon, size: AppIconSize.xl, color: color),
+            PpForgeIcon(a.icon, size: PpForgeIconSize.xl, color: color),
             const Spacer(),
-            AppText(
+            PpForgeText(
               a.name,
-              role: AppTextRole.title,
+              role: PpForgeTextRole.title,
               weight: FontWeight.w700,
               maxLines: 1,
             ),
             if (a.subtitle != null)
-              AppText(a.subtitle!, role: AppTextRole.caption, maxLines: 1),
+              PpForgeText(
+                a.subtitle!,
+                role: PpForgeTextRole.caption,
+                maxLines: 1,
+              ),
             if (a.balance != null) ...[
-              const SizedBox(height: AppSpacing.xs),
-              AppText(a.balance!, role: AppTextRole.money, color: color),
+              const SizedBox(height: PpForgeSpacing.xs),
+              PpForgeText(
+                a.balance!,
+                role: PpForgeTextRole.money,
+                color: color,
+              ),
             ],
           ],
         ),
@@ -234,16 +242,16 @@ class _NoneTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return AppCard(
-      style: AppCardStyle.bordered,
-      padding: const EdgeInsets.all(AppSpacing.md),
+    return PpForgeCard(
+      style: PpForgeCardStyle.bordered,
+      padding: const EdgeInsets.all(PpForgeSpacing.md),
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIcon(
-            AppIcons.noWallet,
-            size: AppIconSize.xl,
+          PpForgeIcon(
+            PpForgeIcons.noWallet,
+            size: PpForgeIconSize.xl,
             color: scheme.onSurfaceVariant,
           ),
           const Spacer(),

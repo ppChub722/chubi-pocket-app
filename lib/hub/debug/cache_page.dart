@@ -185,10 +185,10 @@ class _CachePageState extends State<CachePage> {
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.md,
-          AppSpacing.lg,
-          AppSpacing.huge,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.md,
+          PpForgeSpacing.lg,
+          PpForgeSpacing.huge,
         ),
         children: [
           Text(
@@ -198,12 +198,12 @@ class _CachePageState extends State<CachePage> {
             'locally.',
             style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: PpForgeSpacing.md),
           for (final e in entries)
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: AppCard(
-                padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
+              child: PpForgeCard(
+                padding: const EdgeInsets.all(PpForgeSpacing.md),
                 child: Row(
                   children: [
                     Expanded(
@@ -213,16 +213,17 @@ class _CachePageState extends State<CachePage> {
                           Row(
                             children: [
                               Text(e.name, style: text.titleSmall),
-                              const SizedBox(width: AppSpacing.sm),
-                              AppChip(
+                              const SizedBox(width: PpForgeSpacing.sm),
+                              PpForgeChip(
                                 label: e.status,
                                 size: ChipSize.mini,
                                 selected: true,
                                 tone: switch (e.status) {
-                                  'loaded' || 'polling' => AppChipTone.success,
-                                  'error' => AppChipTone.danger,
-                                  'loading' => AppChipTone.info,
-                                  _ => AppChipTone.neutral,
+                                  'loaded' ||
+                                  'polling' => PpForgeChipTone.success,
+                                  'error' => PpForgeChipTone.danger,
+                                  'loading' => PpForgeChipTone.info,
+                                  _ => PpForgeChipTone.neutral,
                                 },
                               ),
                             ],
@@ -240,17 +241,19 @@ class _CachePageState extends State<CachePage> {
                     if (e.reload != null)
                       _busy.contains(e.name)
                           ? const Padding(
-                              padding: EdgeInsets.all(AppSpacing.sm),
-                              child: AppSpinner(size: AppSpinnerSize.small),
+                              padding: EdgeInsets.all(PpForgeSpacing.sm),
+                              child: PpForgeSpinner(
+                                size: PpForgeSpinnerSize.small,
+                              ),
                             )
                           : IconButton(
                               tooltip: 'Reload',
-                              icon: const Icon(AppIcons.refresh),
+                              icon: const Icon(PpForgeIcons.refresh),
                               onPressed: () => unawaited(_reload(e)),
                             ),
                     IconButton(
                       tooltip: 'Clear',
-                      icon: const Icon(AppIcons.clear),
+                      icon: const Icon(PpForgeIcons.clear),
                       onPressed: e.clear,
                     ),
                   ],

@@ -4,7 +4,7 @@ import '../tokens/app/app_icons.dart';
 import 'app_icon.dart';
 import 'count_badge.dart';
 
-/// What a long-running job tied to an [AppIconButton] is doing — shown
+/// What a long-running job tied to an [PpForgeIconButton] is doing — shown
 /// under the icon (e.g. the Pending chip while slips are being read).
 enum IconChipActivity {
   /// Nothing — the plain chip.
@@ -31,13 +31,13 @@ enum IconChipActivity {
 ///   in a page-colour ring (hidden while a job runs).
 ///
 /// Variants (owner 2026-10-12 — every recurring icon button is one of these):
-/// - `AppIconButton(...)` — the chip itself (top-bar actions, hero corners);
-/// - `AppIconButton.edit(...)` — the round ✏️ ("edit" in a hero's top row,
+/// - `PpForgeIconButton(...)` — the chip itself (top-bar actions, hero corners);
+/// - `PpForgeIconButton.edit(...)` — the round ✏️ ("edit" in a hero's top row,
 ///   "enter edit / reorder mode" in a list header): [sizeHero] / [sizeList], both the one control height 40;
 /// - the FLAT ones, no chip — `.flat` (any icon), `.close` ✕, `.clear` ✕ (a
 ///   field or row's remove), `.more` ⋯, `.back` ←: a plain 48-dp tap target
 ///   with the icon at [iconSize] and [color]; [dense] shrinks the target.
-class AppIconButton extends StatelessWidget {
+class PpForgeIconButton extends StatelessWidget {
   /// A hero's ✏️ (the same height as the chips beside it).
   static const double sizeHero = 40;
 
@@ -47,7 +47,7 @@ class AppIconButton extends StatelessWidget {
   /// The top bar's chips.
   static const double sizeBar = 40;
 
-  const AppIconButton({
+  const PpForgeIconButton({
     required this.icon,
     required this.onPressed,
     this.tooltip,
@@ -64,12 +64,12 @@ class AppIconButton extends StatelessWidget {
        dense = false;
 
   /// The round ✏️ chip.
-  const AppIconButton.edit({
+  const PpForgeIconButton.edit({
     required this.onPressed,
     this.tooltip,
     this.size = sizeList,
     super.key,
-  }) : icon = AppIcons.edit,
+  }) : icon = PpForgeIcons.edit,
        badgeCount = 0,
        destructive = false,
        selected = false,
@@ -81,7 +81,7 @@ class AppIconButton extends StatelessWidget {
        dense = false;
 
   /// A plain icon button, any icon (a trash in a bar, an eye toggle).
-  const AppIconButton.flat({
+  const PpForgeIconButton.flat({
     required this.icon,
     required this.onPressed,
     this.tooltip,
@@ -98,14 +98,14 @@ class AppIconButton extends StatelessWidget {
        _flat = true;
 
   /// ✕ — close a sheet / banner / dialog.
-  const AppIconButton.close({
+  const PpForgeIconButton.close({
     required this.onPressed,
     this.tooltip,
     this.iconSize,
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.close,
+  }) : icon = PpForgeIcons.close,
        size = 40,
        badgeCount = 0,
        destructive = false,
@@ -115,14 +115,14 @@ class AppIconButton extends StatelessWidget {
        _flat = true;
 
   /// ✕ — clear / remove a field's value or a row.
-  const AppIconButton.clear({
+  const PpForgeIconButton.clear({
     required this.onPressed,
     this.tooltip,
     this.iconSize,
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.clear,
+  }) : icon = PpForgeIcons.clear,
        size = 40,
        badgeCount = 0,
        destructive = false,
@@ -132,14 +132,14 @@ class AppIconButton extends StatelessWidget {
        _flat = true;
 
   /// ⋯ — a row's menu.
-  const AppIconButton.more({
+  const PpForgeIconButton.more({
     required this.onPressed,
     this.tooltip,
     this.iconSize,
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.more,
+  }) : icon = PpForgeIcons.more,
        size = 40,
        badgeCount = 0,
        destructive = false,
@@ -149,14 +149,14 @@ class AppIconButton extends StatelessWidget {
        _flat = true;
 
   /// ← — back.
-  const AppIconButton.back({
+  const PpForgeIconButton.back({
     required this.onPressed,
     this.tooltip,
     this.iconSize,
     this.color,
     this.dense = false,
     super.key,
-  }) : icon = AppIcons.back,
+  }) : icon = PpForgeIcons.back,
        size = 40,
        badgeCount = 0,
        destructive = false,
@@ -194,7 +194,7 @@ class AppIconButton extends StatelessWidget {
         onPressed: onPressed,
         visualDensity: dense ? VisualDensity.compact : null,
         color: color,
-        icon: AppIcon(icon, size: iconSize),
+        icon: PpForgeIcon(icon, size: iconSize),
       );
     }
     final scheme = Theme.of(context).colorScheme;
@@ -223,7 +223,11 @@ class AppIconButton extends StatelessWidget {
         AnimatedOpacity(
           duration: fade,
           opacity: done ? 1 : 0,
-          child: Icon(AppIcons.check, size: glyphSize, color: scheme.primary),
+          child: Icon(
+            PpForgeIcons.check,
+            size: glyphSize,
+            color: scheme.primary,
+          ),
         ),
       ],
     );

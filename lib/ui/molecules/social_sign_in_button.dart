@@ -29,21 +29,21 @@ class SocialSignInButton extends StatelessWidget {
     return Stack(
       alignment: AlignmentDirectional.centerEnd,
       children: [
-        AppButton(
+        PpForgeButton(
           label: label,
           onPressed: onPressed,
           loading: loading,
-          variant: AppButtonVariant.outlined,
-          size: AppButtonSize.large,
+          variant: PpForgeButtonVariant.outlined,
+          size: PpForgeButtonSize.large,
           expand: true,
         ),
         if (onPressed == null && badge != null)
           Padding(
-            padding: const EdgeInsetsDirectional.only(end: AppSpacing.md),
+            padding: const EdgeInsetsDirectional.only(end: PpForgeSpacing.md),
             child: IgnorePointer(
-              child: AppChip(
+              child: PpForgeChip(
                 label: badge,
-                tone: AppChipTone.info,
+                tone: PpForgeChipTone.info,
                 selected: true,
                 size: ChipSize.mini,
               ),

@@ -69,32 +69,32 @@ class _EventTargetSheetDemoState extends State<_EventTargetSheetDemo> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.sm,
+        spacing: PpForgeSpacing.sm,
+        runSpacing: PpForgeSpacing.sm,
         children: [
-          AppButton(
+          PpForgeButton(
             label: 'Events + create',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: _open,
           ),
-          AppButton(
+          PpForgeButton(
             label: 'In an event (remove)',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(selectedId: 'e2', hasCurrent: true),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'No events',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(items: const []),
           ),
-          AppButton(
+          PpForgeButton(
             label: 'No create',
-            variant: AppButtonVariant.outlined,
+            variant: PpForgeButtonVariant.outlined,
             onPressed: () => _open(allowCreate: false),
           ),
         ],
       ),
-      const SizedBox(height: AppSpacing.sm),
+      const SizedBox(height: PpForgeSpacing.sm),
       Text(_result),
     ],
   );

@@ -41,14 +41,16 @@ class ChipPath extends StatelessWidget {
           for (final (i, s) in segments.indexed) ...[
             if (i > 0)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
-                child: AppIcon(
-                  AppIcons.chevronRight,
-                  size: AppIconSize.sm,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: PpForgeSpacing.xxs,
+                ),
+                child: PpForgeIcon(
+                  PpForgeIcons.chevronRight,
+                  size: PpForgeIconSize.sm,
                   color: scheme.onSurfaceVariant,
                 ),
               ),
-            AppChip(
+            PpForgeChip(
               label: s.label,
               icon: s.icon,
               color: s.color,

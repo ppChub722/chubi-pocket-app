@@ -7,22 +7,22 @@ import '../tokens/avatar_metrics.dart';
 /// build a `CircleAvatar`.
 ///
 /// ```dart
-/// AppAvatar(name: 'Aom Chan')                         // "AC" on a hashed colour
-/// AppAvatar.tinted(name: 'Bee', color: c, size: 28)    // soft tint, coloured B
-/// AppAvatar.icon(AppIcons.person, size: 40)            // a glyph on a neutral disc
-/// AppAvatar.label('+3', size: 32)                      // neutral disc, text
+/// PpForgeAvatar(name: 'Aom Chan')                         // "AC" on a hashed colour
+/// PpForgeAvatar.tinted(name: 'Bee', color: c, size: 28)    // soft tint, coloured B
+/// PpForgeAvatar.icon(PpForgeIcons.person, size: 40)            // a glyph on a neutral disc
+/// PpForgeAvatar.label('+3', size: 32)                      // neutral disc, text
 /// ```
-class AppAvatar extends StatelessWidget {
+class PpForgeAvatar extends StatelessWidget {
   /// Initials (first letters of the first two words) in white on a colour
   /// hashed from [name]. An empty name falls back to a neutral person glyph.
-  const AppAvatar({required this.name, this.size = 40, super.key})
+  const PpForgeAvatar({required this.name, this.size = 40, super.key})
     : _mode = _Mode.initials,
       _glyph = null,
       _color = null,
       _text = null;
 
   /// The first letter of [name] in [color], on a 28% tint of it.
-  const AppAvatar.tinted({
+  const PpForgeAvatar.tinted({
     required this.name,
     required Color color,
     this.size = 40,
@@ -34,7 +34,7 @@ class AppAvatar extends StatelessWidget {
 
   /// The first letter of [name] on a solid brand [color] (a bank's colour),
   /// the letter in white or black — whichever reads on that colour.
-  const AppAvatar.brand({
+  const PpForgeAvatar.brand({
     required this.name,
     required Color color,
     this.size = 40,
@@ -45,7 +45,7 @@ class AppAvatar extends StatelessWidget {
        _text = null;
 
   /// A glyph on a neutral disc.
-  const AppAvatar.icon(IconData glyph, {this.size = 40, super.key})
+  const PpForgeAvatar.icon(IconData glyph, {this.size = 40, super.key})
     : name = '',
       _mode = _Mode.glyph,
       _glyph = glyph,
@@ -53,7 +53,7 @@ class AppAvatar extends StatelessWidget {
       _text = null;
 
   /// Any short text (a "+3" overflow count) on a neutral disc.
-  const AppAvatar.label(String text, {this.size = 40, super.key})
+  const PpForgeAvatar.label(String text, {this.size = 40, super.key})
     : name = '',
       _mode = _Mode.label,
       _glyph = null,

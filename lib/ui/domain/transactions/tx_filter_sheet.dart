@@ -302,13 +302,13 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
         SheetOption(
           value: '-',
           label: _l.noWallet,
-          leading: const AppIcon(AppIcons.noWallet),
+          leading: const PpForgeIcon(PpForgeIcons.noWallet),
         ),
         for (final a in wallets)
           SheetOption(
             value: a.id,
             label: a.label,
-            leading: AppIcon(a.listIcon ?? a.icon ?? AppIcons.wallet),
+            leading: PpForgeIcon(a.listIcon ?? a.icon ?? PpForgeIcons.wallet),
           ),
       ],
     );
@@ -340,7 +340,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
         SheetOption(
           value: '-',
           label: _l.uncategorized,
-          leading: const AppIcon(AppIcons.noCategory),
+          leading: const PpForgeIcon(PpForgeIcons.noCategory),
         ),
         for (final root in roots) ...[
           SheetOption(
@@ -379,7 +379,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
           SheetOption(
             value: t.id,
             label: t.label,
-            leading: AppIcon(t.icon ?? AppIcons.tag),
+            leading: PpForgeIcon(t.icon ?? PpForgeIcons.tag),
           ),
       ],
     );
@@ -402,8 +402,8 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
     ];
     final tags = o?.tags ?? const <TxFilterOption>[];
     // "all" leads each pick row — selected = no filter there.
-    AppChip all({required bool selected, required VoidCallback onTap}) =>
-        AppChip(label: _l.all, selected: selected, onTap: onTap);
+    PpForgeChip all({required bool selected, required VoidCallback onTap}) =>
+        PpForgeChip(label: _l.all, selected: selected, onTap: onTap);
     final anyWallet = _f.walletId == null && !_f.noWallet;
     return SideSheetScaffold(
       title: _l.title,
@@ -411,12 +411,12 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Every row the same: the icon goes in front of the section title,
-          // the chips start flush left, one chip geometry ([AppChip]). Types:
+          // the chips start flush left, one chip geometry ([PpForgeChip]). Types:
           // selected = a tint of their own colour — all primary, expense red,
           // income green, transfer grey.
           SideSheetSection(
             title: _l.typeTitle,
-            icon: AppIcons.transfer,
+            icon: PpForgeIcons.transfer,
             child: ChipRow(
               maxLines: _chipLines,
               chips: [
@@ -426,13 +426,13 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                   TransactionType.income,
                   TransactionType.transfer,
                 ])
-                  AppChip(
+                  PpForgeChip(
                     label: _l.typeLabel(t),
                     icon: switch (t) {
                       null => null,
-                      TransactionType.expense => AppIcons.expense,
-                      TransactionType.income => AppIcons.income,
-                      TransactionType.transfer => AppIcons.transfer,
+                      TransactionType.expense => PpForgeIcons.expense,
+                      TransactionType.income => PpForgeIcons.income,
+                      TransactionType.transfer => PpForgeIcons.transfer,
                     },
                     // Null = the app primary (all).
                     color: t == null ? null : txTypeColor(context, t),
@@ -446,7 +446,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
           if (!widget.walletLocked)
             SideSheetSection(
               title: _l.walletTitle,
-              icon: AppIcons.wallet,
+              icon: PpForgeIcons.wallet,
               child: ChipRow(
                 maxLines: _chipLines,
                 moreLabel: _l.more,
@@ -458,7 +458,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                   ),
                   if (o == null) ..._skeletonChips(),
                   for (final a in wallets.take(_chipMax))
-                    AppChip(
+                    PpForgeChip(
                       label: a.label,
                       icon: a.icon,
                       color: a.color,
@@ -470,9 +470,9 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                       ),
                     ),
                   if (_f.noWallet)
-                    AppChip(
+                    PpForgeChip(
                       label: _l.noWallet,
-                      icon: AppIcons.noWallet,
+                      icon: PpForgeIcons.noWallet,
                       selected: true,
                       onTap: () => _set(_f.copyWith(clearWallet: true)),
                     ),
@@ -483,7 +483,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
           // more; only the type filter's categories.
           SideSheetSection(
             title: _l.categoryTitle,
-            icon: AppIcons.category,
+            icon: PpForgeIcons.category,
             child: ChipRow(
               maxLines: _chipLines,
               moreLabel: _l.more,
@@ -495,7 +495,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                 ),
                 if (o == null) ..._skeletonChips(),
                 for (final c in cats.take(_chipMax))
-                  AppChip(
+                  PpForgeChip(
                     label: c.label,
                     icon: c.icon,
                     color: c.color,
@@ -504,9 +504,9 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                         _setCategory(_f.categoryId == c.id ? null : c.id),
                   ),
                 if (_f.uncategorized)
-                  AppChip(
+                  PpForgeChip(
                     label: _l.uncategorized,
-                    icon: AppIcons.noCategory,
+                    icon: PpForgeIcons.noCategory,
                     selected: true,
                     onTap: () => _setCategory(null),
                   ),
@@ -516,7 +516,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
           // Several tags at once.
           SideSheetSection(
             title: _l.tagTitle,
-            icon: AppIcons.tag,
+            icon: PpForgeIcons.tag,
             child: ChipRow(
               maxLines: _chipLines,
               moreLabel: _l.more,
@@ -528,7 +528,7 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                 ),
                 if (o == null) ..._skeletonChips(),
                 for (final t in tags.take(_chipMax))
-                  AppChip(
+                  PpForgeChip(
                     label: t.label,
                     icon: t.icon,
                     color: t.color,
@@ -538,23 +538,23 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: PpForgeSpacing.xl),
         ],
       ),
       footer: Row(
         children: [
           Expanded(
-            child: AppButton(
+            child: PpForgeButton(
               label: _l.clear,
-              variant: AppButtonVariant.outlined,
+              variant: PpForgeButtonVariant.outlined,
               expand: true,
               onPressed: () => _set(widget.reset),
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
+          const SizedBox(width: PpForgeSpacing.sm),
           Expanded(
             flex: 2,
-            child: AppButton(
+            child: PpForgeButton(
               label: _l.apply,
               expand: true,
               onPressed: () => widget.onApply(_f),

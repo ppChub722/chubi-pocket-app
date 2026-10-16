@@ -62,25 +62,25 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
     SelectCardOption<int>(
       value: 0,
       label: 'Expense',
-      icon: AppIcons.expense,
+      icon: PpForgeIcons.expense,
       color: Colors.red,
     ),
     SelectCardOption<int>(
       value: 1,
       label: 'Income',
-      icon: AppIcons.income,
+      icon: PpForgeIcons.income,
       color: Colors.green,
     ),
     SelectCardOption<int>(
       value: 2,
       label: 'Transfer',
-      icon: AppIcons.transfer,
+      icon: PpForgeIcons.transfer,
       color: Colors.blueGrey,
     ),
     SelectCardOption<int>(
       value: 3,
       label: 'Primary',
-      icon: AppIcons.check,
+      icon: PpForgeIcons.check,
       description: 'No colour set',
     ),
   ];
@@ -110,7 +110,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
 
   @override
   Widget build(BuildContext context) {
-    const gap = SizedBox(height: AppSpacing.md);
+    const gap = SizedBox(height: PpForgeSpacing.md);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -133,57 +133,57 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 '3 lines — empty · picked · error',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               const PickCard(
                 label: 'Wallet',
                 placeholder: 'Choose a wallet',
-                leading: PickCardEmptyIcon(AppIcons.wallet),
+                leading: PickCardEmptyIcon(PpForgeIcons.wallet),
                 reserveSubtitle: true,
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               PickCard(
                 label: 'Wallet',
                 value: 'Savings',
                 accent: Colors.teal,
-                leading: const PickCardEmptyIcon(AppIcons.wallet),
+                leading: const PickCardEmptyIcon(PpForgeIcons.wallet),
                 subtitle: const Text('Balance 12,400'),
                 reserveSubtitle: true,
                 onTap: () {},
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const PickCard(
                 label: 'Wallet',
                 placeholder: 'Choose a wallet',
-                leading: PickCardEmptyIcon(AppIcons.wallet),
+                leading: PickCardEmptyIcon(PpForgeIcons.wallet),
                 errorText: 'Pick a wallet first',
                 reserveSubtitle: true,
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               Text(
                 '2 lines (plain) — empty · picked · error',
                 style: Theme.of(context).textTheme.labelMedium,
               ),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               const PickCard(
                 label: 'Payer',
                 placeholder: 'Choose a member',
-                leading: PickCardEmptyIcon(AppIcons.contact),
+                leading: PickCardEmptyIcon(PpForgeIcons.contact),
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const PickCard(
                 label: 'Payer',
                 value: 'Aom',
-                leading: PickCardEmptyIcon(AppIcons.contact),
+                leading: PickCardEmptyIcon(PpForgeIcons.contact),
                 onTap: null,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               const PickCard(
                 label: 'Payer',
                 placeholder: 'Choose a member',
-                leading: PickCardEmptyIcon(AppIcons.contact),
+                leading: PickCardEmptyIcon(PpForgeIcons.contact),
                 errorText: 'Pick who paid',
                 onTap: null,
               ),
@@ -201,10 +201,10 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               PickCard(
                 label: 'Wallet',
                 placeholder: 'Choose a wallet',
-                leading: const PickCardEmptyIcon(AppIcons.wallet),
+                leading: const PickCardEmptyIcon(PpForgeIcons.wallet),
                 value: _wallet,
                 accent: Colors.teal,
-                watermark: AppIcons.wallet,
+                watermark: PpForgeIcons.wallet,
                 subtitle: const Text('Balance 12,400'),
                 onTap: () => setState(
                   () => _wallet = _wallet == null ? 'Savings' : null,
@@ -214,7 +214,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               const PickCard(
                 label: 'Category (plain, no accent)',
                 value: 'Food',
-                leading: PickCardEmptyIcon(AppIcons.category, size: 32),
+                leading: PickCardEmptyIcon(PpForgeIcons.category, size: 32),
                 dense: true,
                 onTap: null,
               ),
@@ -222,7 +222,7 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               PickCard(
                 label: 'Wallet',
                 placeholder: 'Choose a wallet',
-                leading: const PickCardEmptyIcon(AppIcons.wallet),
+                leading: const PickCardEmptyIcon(PpForgeIcons.wallet),
                 errorText: 'Pick a wallet first',
                 onTap: () {},
               ),
@@ -230,14 +230,14 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               PickCard(
                 label: 'Date',
                 value: '12 Oct 2026',
-                leading: const PickCardEmptyIcon(AppIcons.date),
-                trailing: const Icon(AppIcons.chevronRight),
+                leading: const PickCardEmptyIcon(PpForgeIcons.date),
+                trailing: const Icon(PpForgeIcons.chevronRight),
                 onTap: () {},
               ),
-              const SizedBox(height: AppSpacing.xs),
-              const AppText(
+              const SizedBox(height: PpForgeSpacing.xs),
+              const PpForgeText(
                 'Tap the first card to toggle empty / picked.',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
             ],
           ),
@@ -259,9 +259,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
             children: [
               for (final spec in _selectSpecs) ...[
                 Text(spec.title, style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 _selectPair(spec),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: PpForgeSpacing.md),
               ],
             ],
           ),
@@ -281,13 +281,13 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                   SelectCardOption(
                     value: _Kind.expense,
                     label: 'Expense',
-                    icon: AppIcons.expense,
+                    icon: PpForgeIcons.expense,
                     color: Colors.red,
                   ),
                   SelectCardOption(
                     value: _Kind.income,
                     label: 'Income',
-                    icon: AppIcons.income,
+                    icon: PpForgeIcons.income,
                     color: Colors.green,
                   ),
                 ],
@@ -301,19 +301,19 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                   SelectCardOption(
                     value: _Kind.expense,
                     label: 'Expense',
-                    icon: AppIcons.expense,
+                    icon: PpForgeIcons.expense,
                     color: Colors.red,
                   ),
                   SelectCardOption(
                     value: _Kind.income,
                     label: 'Income',
-                    icon: AppIcons.income,
+                    icon: PpForgeIcons.income,
                     color: Colors.green,
                   ),
                   SelectCardOption(
                     value: _Kind.transfer,
                     label: 'Transfer',
-                    icon: AppIcons.transfer,
+                    icon: PpForgeIcons.transfer,
                   ),
                 ],
               ),
@@ -437,9 +437,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               gap,
               Row(
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'showMonthPicker',
-                    variant: AppButtonVariant.tonal,
+                    variant: PpForgeButtonVariant.tonal,
                     onPressed: () async {
                       final m = await showMonthPicker(
                         context,
@@ -448,22 +448,22 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                       if (m != null) setState(() => _pickedMonth = m);
                     },
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: PpForgeSpacing.md),
                   Expanded(
-                    child: AppText(
+                    child: PpForgeText(
                       _pickedMonth == null
                           ? 'Result: not picked yet'
                           : 'Result: ${_pickedMonth!.year}-'
                                 '${_pickedMonth!.month}',
-                      role: AppTextRole.caption,
+                      role: PpForgeTextRole.caption,
                     ),
                   ),
                 ],
               ),
               gap,
-              const AppText(
+              const PpForgeText(
                 'MonthPickerGrid (inline, bounded Jun 2026 - Mar 2027)',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
               MonthPickerGrid(
                 selected: _month,
@@ -486,9 +486,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
             children: [
               Row(
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'showDayOfMonthPicker',
-                    variant: AppButtonVariant.tonal,
+                    variant: PpForgeButtonVariant.tonal,
                     onPressed: () async {
                       final DayOfMonthPick? r = await showDayOfMonthPicker(
                         context,
@@ -498,11 +498,11 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                       if (r != null) setState(() => _day = r.day);
                     },
                   ),
-                  const SizedBox(width: AppSpacing.md),
+                  const SizedBox(width: PpForgeSpacing.md),
                   Expanded(
-                    child: AppText(
+                    child: PpForgeText(
                       dayOfMonthLabel(context, _day),
-                      role: AppTextRole.label,
+                      role: PpForgeTextRole.label,
                     ),
                   ),
                 ],
@@ -512,31 +512,33 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                 cells: [
                   HubCell(
                     caption: 'dayOfMonthLabel(null)',
-                    child: AppText(dayOfMonthLabel(context, null)),
+                    child: PpForgeText(dayOfMonthLabel(context, null)),
                   ),
                   HubCell(
                     caption: 'dayOfMonthLabel(5)',
-                    child: AppText(dayOfMonthLabel(context, 5)),
+                    child: PpForgeText(dayOfMonthLabel(context, 5)),
                   ),
                   HubCell(
                     caption: 'dayOfMonthLabel(kLastDayOfMonth)',
-                    child: AppText(dayOfMonthLabel(context, kLastDayOfMonth)),
+                    child: PpForgeText(
+                      dayOfMonthLabel(context, kLastDayOfMonth),
+                    ),
                   ),
                 ],
               ),
               gap,
-              const AppText(
+              const PpForgeText(
                 'DayOfMonthGrid (allowNone: true)',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
               DayOfMonthGrid(
                 selected: _gridDay,
                 onPicked: (d) => setState(() => _gridDay = d),
               ),
               gap,
-              const AppText(
+              const PpForgeText(
                 'DayOfMonthGrid (allowNone: false)',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
               DayOfMonthGrid(
                 selected: _gridDay ?? 1,
@@ -589,11 +591,11 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
               gap,
               ListenableBuilder(
                 listenable: _plain,
-                builder: (_, _) => AppText(
+                builder: (_, _) => PpForgeText(
                   'parse("${_plain.text}") = '
                   '${AmountInput.parse(_plain.text)}'
                   ' / format(1234.5) = ${AmountInput.format(1234.5)}',
-                  role: AppTextRole.caption,
+                  role: PpForgeTextRole.caption,
                 ),
               ),
             ],
@@ -633,9 +635,9 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
                   ),
                 ),
               ),
-              AppText(
+              PpForgeText(
                 _sent == null ? 'Sent: nothing yet' : 'Sent: $_sent',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
             ],
           ),
@@ -663,11 +665,11 @@ class _PickersInputsPageState extends State<_PickersInputsPage> {
           builder: (context, v) => PickCard(
             label: 'Wallet',
             placeholder: 'Choose a wallet',
-            leading: const PickCardEmptyIcon(AppIcons.wallet),
+            leading: const PickCardEmptyIcon(PpForgeIcons.wallet),
             value: v<bool>('picked') ? 'Savings' : null,
             accent: v<Color?>('accent'),
             subtitle: v<bool>('subtitle') ? const Text('Balance 12,400') : null,
-            watermark: v<bool>('watermark') ? AppIcons.wallet : null,
+            watermark: v<bool>('watermark') ? PpForgeIcons.wallet : null,
             dense: v<bool>('dense'),
             reserveSubtitle: v<bool>('reserveSubtitle'),
             errorText: v<String>('errorText').isEmpty

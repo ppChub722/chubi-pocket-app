@@ -55,7 +55,7 @@ class MilestoneRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _disc(context, s, accent),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 Text(
                   s.label,
                   maxLines: 1,

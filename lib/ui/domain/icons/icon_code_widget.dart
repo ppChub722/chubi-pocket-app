@@ -20,7 +20,7 @@ enum IconDisplayMode { full, compact }
 /// Renders an [IconCode] as a fixed-diameter widget.
 ///
 /// Type-unaware — resolves colour specs (hex literals or `@presetTheme*`
-/// tokens) through the active [AppColors] palette so theme tokens follow
+/// tokens) through the active [PpForgeColors] palette so theme tokens follow
 /// the active theme.
 ///
 /// | IconCode state              | Renders                                   |
@@ -49,7 +49,7 @@ class IconCodeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final ic = iconCode;
 
     // null iconCode → "no data" fallback circle + fallback glyph.
@@ -124,7 +124,7 @@ class IconCodeWidget extends StatelessWidget {
 
   BoxDecoration _buildDecoration(
     IconCode ic,
-    AppColors palette,
+    PpForgeColors palette,
     BorderRadius radius,
   ) {
     final border = _buildBorder(ic, palette);
@@ -202,7 +202,7 @@ class IconCodeWidget extends StatelessWidget {
     };
   }
 
-  Border? _buildBorder(IconCode ic, AppColors palette) {
+  Border? _buildBorder(IconCode ic, PpForgeColors palette) {
     if (displayMode == IconDisplayMode.compact) return null;
     if (ic.border == null || ic.borderColors.isEmpty) return null;
     final color = resolveColor(ic.borderColors.first, palette);

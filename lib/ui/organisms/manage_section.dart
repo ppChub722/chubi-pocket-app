@@ -67,7 +67,7 @@ class ManageSection extends StatelessWidget {
     // Offline: archive / delete can't reach the server — disabled.
     final offline = ConnectionScope.isOffline(context);
     return Padding(
-      padding: EdgeInsets.only(top: first ? 0 : AppSpacing.lg),
+      padding: EdgeInsets.only(top: first ? 0 : PpForgeSpacing.lg),
       child: Column(
         children: [
           for (final (i, a) in extraActions.indexed)
@@ -75,26 +75,26 @@ class ManageSection extends StatelessWidget {
               icon: a.icon,
               label: a.label,
               neutral: true,
-              padding: EdgeInsets.only(top: i > 0 ? AppSpacing.sm : 0),
+              padding: EdgeInsets.only(top: i > 0 ? PpForgeSpacing.sm : 0),
               onTap: a.submits && offline ? null : a.onTap,
             ),
           if (archiveLabel != null)
             DangerRow(
-              icon: AppIcons.archive,
+              icon: PpForgeIcons.archive,
               label: archiveLabel!,
               caution: true,
               padding: EdgeInsets.only(
-                top: extraActions.isNotEmpty ? AppSpacing.sm : 0,
+                top: extraActions.isNotEmpty ? PpForgeSpacing.sm : 0,
               ),
               onTap: offline ? null : onArchive,
             ),
           if (deleteLabel != null)
             DangerRow(
-              icon: AppIcons.delete,
+              icon: PpForgeIcons.delete,
               label: deleteLabel!,
               padding: EdgeInsets.only(
                 top: archiveLabel != null || extraActions.isNotEmpty
-                    ? AppSpacing.sm
+                    ? PpForgeSpacing.sm
                     : 0,
               ),
               onTap: offline ? null : onDelete,

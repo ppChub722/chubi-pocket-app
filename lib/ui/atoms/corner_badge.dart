@@ -8,7 +8,7 @@ import '../tokens/avatar_metrics.dart';
 /// same look everywhere (it is the pencil of `EditableCircle`).
 ///
 /// ```dart
-/// CornerBadge(size: 40, icon: AppIcons.link, child: UserAvatar(…, size: 40))
+/// CornerBadge(size: 40, icon: PpForgeIcons.link, child: UserAvatar(…, size: 40))
 /// ```
 ///
 /// The badge scales with the avatar ([size], via [AvatarMetrics]) and is left

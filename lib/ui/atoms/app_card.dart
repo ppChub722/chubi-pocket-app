@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../tokens/app_radius.dart';
 import '../tokens/color_contrast.dart';
 
-/// How an [AppCard] looks.
-enum AppCardStyle {
+/// How an [PpForgeCard] looks.
+enum PpForgeCardStyle {
   /// The theme's card: surface fill, soft outline. Lists, summaries.
   plain,
 
@@ -31,23 +31,23 @@ enum AppCardStyle {
 /// [style].
 ///
 /// ```dart
-/// AppCard(child: …)                                   // plain list card
-/// AppCard(style: AppCardStyle.accent, color: c, …)    // coloured border
-/// AppCard(style: AppCardStyle.tinted, color: c, glyph: AppIcons.budget, …)
+/// PpForgeCard(child: …)                                   // plain list card
+/// PpForgeCard(style: PpForgeCardStyle.accent, color: c, …)    // coloured border
+/// PpForgeCard(style: PpForgeCardStyle.tinted, color: c, glyph: PpForgeIcons.budget, …)
 /// ```
 ///
-/// - [color] = the border colour of [AppCardStyle.accent] / the wash of
-///   [AppCardStyle.tinted]; ignored by the other styles.
+/// - [color] = the border colour of [PpForgeCardStyle.accent] / the wash of
+///   [PpForgeCardStyle.tinted]; ignored by the other styles.
 /// - [onTap] adds the ripple; the card clips its child to the corners.
 /// - [margin] defaults to none (the page's gaps place cards); [padding]
 ///   defaults to none (rows / heroes bring their own).
 /// - [borderColor] overrides the border of any style (a warning / error
 ///   outline, e.g. an overdue row).
 /// - [selected] draws the 1.5 primary border of a picked card.
-class AppCard extends StatelessWidget {
-  const AppCard({
+class PpForgeCard extends StatelessWidget {
+  const PpForgeCard({
     required this.child,
-    this.style = AppCardStyle.plain,
+    this.style = PpForgeCardStyle.plain,
     this.color,
     this.glyph,
     this.glyphSize = 88,
@@ -61,13 +61,13 @@ class AppCard extends StatelessWidget {
     this.radius,
     super.key,
   }) : assert(
-         style != AppCardStyle.tinted && style != AppCardStyle.accent ||
+         style != PpForgeCardStyle.tinted && style != PpForgeCardStyle.accent ||
              color != null,
          'accent and tinted cards need a color',
        );
 
   final Widget child;
-  final AppCardStyle style;
+  final PpForgeCardStyle style;
 
   /// The accent border / the tint wash colour.
   final Color? color;
@@ -87,7 +87,7 @@ class AppCard extends StatelessWidget {
   final EdgeInsetsGeometry margin;
   final EdgeInsetsGeometry? padding;
 
-  /// Corner radius; null = [AppRadius.lg] (a pill-shaped bar passes its own).
+  /// Corner radius; null = [PpForgeRadius.lg] (a pill-shaped bar passes its own).
   final BorderRadius? radius;
 
   @override
@@ -99,28 +99,29 @@ class AppCard extends StatelessWidget {
     final tint = color == null ? null : ensureContrast(color!, scheme.surface);
 
     final Color? fill = switch (style) {
-      AppCardStyle.plain => null,
-      AppCardStyle.bordered || AppCardStyle.accent => scheme.surfaceContainer,
-      AppCardStyle.tinted => null,
-      AppCardStyle.flat => Colors.transparent,
+      PpForgeCardStyle.plain => null,
+      PpForgeCardStyle.bordered ||
+      PpForgeCardStyle.accent => scheme.surfaceContainer,
+      PpForgeCardStyle.tinted => null,
+      PpForgeCardStyle.flat => Colors.transparent,
     };
     var border =
         borderColor ??
         switch (style) {
-          AppCardStyle.plain =>
+          PpForgeCardStyle.plain =>
             (theme.shape is RoundedRectangleBorder
                     ? (theme.shape! as RoundedRectangleBorder).side.color
                     : null) ??
                 scheme.outlineVariant,
-          AppCardStyle.bordered => scheme.outlineVariant,
-          AppCardStyle.accent => tint!,
-          AppCardStyle.tinted => tint!.withValues(alpha: 0.25),
-          AppCardStyle.flat => Colors.transparent,
+          PpForgeCardStyle.bordered => scheme.outlineVariant,
+          PpForgeCardStyle.accent => tint!,
+          PpForgeCardStyle.tinted => tint!.withValues(alpha: 0.25),
+          PpForgeCardStyle.flat => Colors.transparent,
         };
     var width =
         borderWidth ??
         switch (style) {
-          AppCardStyle.accent => 1.5,
+          PpForgeCardStyle.accent => 1.5,
           _ => 1.0,
         };
     if (selected) {
@@ -132,7 +133,7 @@ class AppCard extends StatelessWidget {
         ? child
         : Padding(padding: padding!, child: child);
 
-    if (style == AppCardStyle.tinted && glyph != null) {
+    if (style == PpForgeCardStyle.tinted && glyph != null) {
       body = Stack(
         children: [
           Positioned(
@@ -151,7 +152,7 @@ class AppCard extends StatelessWidget {
     if (onTap != null || onLongPress != null) {
       body = InkWell(onTap: onTap, onLongPress: onLongPress, child: body);
     }
-    if (style == AppCardStyle.tinted) {
+    if (style == PpForgeCardStyle.tinted) {
       body = DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -170,10 +171,10 @@ class AppCard extends StatelessWidget {
     return Card(
       margin: margin,
       clipBehavior: Clip.antiAlias,
-      elevation: style == AppCardStyle.flat ? 0 : null,
+      elevation: style == PpForgeCardStyle.flat ? 0 : null,
       color: fill,
       shape: RoundedRectangleBorder(
-        borderRadius: radius ?? BorderRadius.circular(AppRadius.lg),
+        borderRadius: radius ?? BorderRadius.circular(PpForgeRadius.lg),
         side: BorderSide(color: border, width: width),
       ),
       child: body,

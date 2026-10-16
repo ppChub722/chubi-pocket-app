@@ -6,22 +6,22 @@ import '../hub_kit.dart';
 /// `/dev/tokens/spacing` — the spacing steps, as bars and in context.
 Widget buildSpacingPage(BuildContext context) {
   const steps = <(String, double)>[
-    ('xxs', AppSpacing.xxs),
-    ('xs', AppSpacing.xs),
-    ('sm', AppSpacing.sm),
-    ('md', AppSpacing.md),
-    ('lg', AppSpacing.lg),
-    ('xl', AppSpacing.xl),
-    ('xxl', AppSpacing.xxl),
-    ('xxxl', AppSpacing.xxxl),
-    ('huge', AppSpacing.huge),
+    ('xxs', PpForgeSpacing.xxs),
+    ('xs', PpForgeSpacing.xs),
+    ('sm', PpForgeSpacing.sm),
+    ('md', PpForgeSpacing.md),
+    ('lg', PpForgeSpacing.lg),
+    ('xl', PpForgeSpacing.xl),
+    ('xxl', PpForgeSpacing.xxl),
+    ('xxxl', PpForgeSpacing.xxxl),
+    ('huge', PpForgeSpacing.huge),
   ];
   final scheme = Theme.of(context).colorScheme;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       HubDemo(
-        title: 'AppSpacing',
+        title: 'PpForgeSpacing',
         note:
             'The only gaps and paddings. No hand-sized numbers in features: '
             'a gap is a step name.',
@@ -29,14 +29,14 @@ Widget buildSpacingPage(BuildContext context) {
           children: [
             for (final (name, v) in steps)
               Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                padding: const EdgeInsets.only(bottom: PpForgeSpacing.xs),
                 child: Row(
                   children: [
                     SizedBox(
                       width: 72,
-                      child: AppText(
+                      child: PpForgeText(
                         '$name · ${v.toInt()}',
-                        role: AppTextRole.caption,
+                        role: PpForgeTextRole.caption,
                       ),
                     ),
                     Container(
@@ -44,7 +44,7 @@ Widget buildSpacingPage(BuildContext context) {
                       height: 12,
                       decoration: BoxDecoration(
                         color: scheme.primary.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                        borderRadius: BorderRadius.circular(PpForgeRadius.xs),
                       ),
                     ),
                   ],
@@ -57,21 +57,24 @@ Widget buildSpacingPage(BuildContext context) {
         title: 'In context',
         note:
             'A detail page: 16 at the sides, 12 between rows, 8 between controls.',
-        child: AppCard(
+        child: PpForgeCard(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.all(PpForgeSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AppText('lg padding', role: AppTextRole.title),
-                const SizedBox(height: AppSpacing.md),
-                const AppText('md between rows', role: AppTextRole.body),
-                const SizedBox(height: AppSpacing.sm),
+                const PpForgeText('lg padding', role: PpForgeTextRole.title),
+                const SizedBox(height: PpForgeSpacing.md),
+                const PpForgeText(
+                  'md between rows',
+                  role: PpForgeTextRole.body,
+                ),
+                const SizedBox(height: PpForgeSpacing.sm),
                 Row(
                   children: const [
-                    AppChip(label: 'sm'),
-                    SizedBox(width: AppSpacing.sm),
-                    AppChip(label: 'between controls'),
+                    PpForgeChip(label: 'sm'),
+                    SizedBox(width: PpForgeSpacing.sm),
+                    PpForgeChip(label: 'between controls'),
                   ],
                 ),
               ],
@@ -86,20 +89,20 @@ Widget buildSpacingPage(BuildContext context) {
 /// `/dev/tokens/radius-duration` — corner radii and motion durations.
 Widget buildRadiusDurationPage(BuildContext context) {
   const radii = <(String, double)>[
-    ('xs', AppRadius.xs),
-    ('sm', AppRadius.sm),
-    ('md', AppRadius.md),
-    ('lg', AppRadius.lg),
-    ('xl', AppRadius.xl),
-    ('xxl', AppRadius.xxl),
-    ('pill', AppRadius.pill),
+    ('xs', PpForgeRadius.xs),
+    ('sm', PpForgeRadius.sm),
+    ('md', PpForgeRadius.md),
+    ('lg', PpForgeRadius.lg),
+    ('xl', PpForgeRadius.xl),
+    ('xxl', PpForgeRadius.xxl),
+    ('pill', PpForgeRadius.pill),
   ];
   final scheme = Theme.of(context).colorScheme;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       HubDemo(
-        title: 'AppRadius',
+        title: 'PpForgeRadius',
         child: HubRow(
           cells: [
             for (final (name, r) in radii)
@@ -119,18 +122,18 @@ Widget buildRadiusDurationPage(BuildContext context) {
         ),
       ),
       HubDemo(
-        title: 'AppDurations',
+        title: 'PpForgeDurations',
         note:
             'Motion lengths. Every animation also respects the device’s '
             '“reduce motion” setting (zero duration).',
         child: Column(
           children: [
             for (final (name, d) in <(String, Duration)>[
-              ('instant', AppDurations.instant),
-              ('fast', AppDurations.fast),
-              ('normal', AppDurations.normal),
-              ('slow', AppDurations.slow),
-              ('chrome', AppDurations.chrome),
+              ('instant', PpForgeDurations.instant),
+              ('fast', PpForgeDurations.fast),
+              ('normal', PpForgeDurations.normal),
+              ('slow', PpForgeDurations.slow),
+              ('chrome', PpForgeDurations.chrome),
             ])
               _DurationBar(name: name, duration: d),
           ],
@@ -160,14 +163,14 @@ class _DurationBarState extends State<_DurationBar> {
     return InkWell(
       onTap: () => setState(() => _right = !_right),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
         child: Row(
           children: [
             SizedBox(
               width: 110,
-              child: AppText(
+              child: PpForgeText(
                 '${widget.name} · ${widget.duration.inMilliseconds} ms',
-                role: AppTextRole.caption,
+                role: PpForgeTextRole.caption,
               ),
             ),
             Expanded(
@@ -175,7 +178,7 @@ class _DurationBarState extends State<_DurationBar> {
                 height: 20,
                 child: AnimatedAlign(
                   duration: reduce ? Duration.zero : widget.duration,
-                  curve: AppDurations.chromeCurve,
+                  curve: PpForgeDurations.chromeCurve,
                   alignment: _right
                       ? Alignment.centerRight
                       : Alignment.centerLeft,
@@ -214,27 +217,35 @@ Widget buildSizesPage(BuildContext context) {
             for (final s in ChipSize.values)
               HubCell(
                 caption: '${s.name} · ${s.height.toInt()}',
-                child: AppChip(label: 'Label', icon: AppIcons.tag, size: s),
+                child: PpForgeChip(
+                  label: 'Label',
+                  icon: PpForgeIcons.tag,
+                  size: s,
+                ),
               ),
           ],
         ),
       ),
       HubDemo(
-        title: 'AppIconSize',
+        title: 'PpForgeIconSize',
         note: 'xs 12 · sm 16 · md 20 · lg 24 · xl 32 · hero 56.',
         child: HubRow(
           cells: [
             for (final (name, v) in <(String, double)>[
-              ('xs', AppIconSize.xs),
-              ('sm', AppIconSize.sm),
-              ('md', AppIconSize.md),
-              ('lg', AppIconSize.lg),
-              ('xl', AppIconSize.xl),
-              ('hero', AppIconSize.hero),
+              ('xs', PpForgeIconSize.xs),
+              ('sm', PpForgeIconSize.sm),
+              ('md', PpForgeIconSize.md),
+              ('lg', PpForgeIconSize.lg),
+              ('xl', PpForgeIconSize.xl),
+              ('hero', PpForgeIconSize.hero),
             ])
               HubCell(
                 caption: '$name · ${v.toInt()}',
-                child: AppIcon(AppIcons.wallet, size: v, color: scheme.primary),
+                child: PpForgeIcon(
+                  PpForgeIcons.wallet,
+                  size: v,
+                  color: scheme.primary,
+                ),
               ),
           ],
         ),
@@ -248,13 +259,13 @@ Widget buildSizesPage(BuildContext context) {
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             border: Border.all(color: scheme.outlineVariant),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(PpForgeRadius.sm),
           ),
           alignment: Alignment.center,
-          child: AppChip(
+          child: PpForgeChip(
             label: 'Tap near me',
             size: ChipSize.chip,
-            onTap: () => showAppSnackBar(context, 'Tapped'),
+            onTap: () => showPpForgeSnackBar(context, 'Tapped'),
           ),
         ),
       ),

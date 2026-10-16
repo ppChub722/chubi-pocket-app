@@ -97,7 +97,7 @@ void main() {
       isEmpty,
       reason:
           'generic widgets take strings / data / behaviour as parameters or '
-          'scopes (UiConfig, PageExitScope); app pieces live in ui/domain:\n'
+          'scopes (PpForgeConfig, PageExitScope); app pieces live in ui/domain:\n'
           '${bad.join('\n')}',
     );
     expect(lib.existsSync(), isTrue);

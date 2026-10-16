@@ -22,12 +22,12 @@ void main() {
         ),
       );
 
-  // The real tap state of an AppButton (it may hold an onPressed and still be
+  // The real tap state of an PpForgeButton (it may hold an onPressed and still be
   // disabled: a `submits` button while offline).
   bool enabled(WidgetTester t, String label) => t
       .widget<ButtonStyleButton>(
         find.descendant(
-          of: find.widgetWithText(AppButton, label),
+          of: find.widgetWithText(PpForgeButton, label),
           matching: find.bySubtype<ButtonStyleButton>(),
         ),
       )
@@ -100,15 +100,15 @@ void main() {
     expect(find.text('half-written note'), findsOneWidget);
   });
 
-  testWidgets('AppButton(submits): off while offline, others untouched', (
+  testWidgets('PpForgeButton(submits): off while offline, others untouched', (
     t,
   ) async {
     var taps = 0;
     Widget buttons({required bool offline}) => host(
       Column(
         children: [
-          AppButton(label: 'Send', submits: true, onPressed: () => taps++),
-          AppButton(label: 'Local', onPressed: () => taps++),
+          PpForgeButton(label: 'Send', submits: true, onPressed: () => taps++),
+          PpForgeButton(label: 'Local', onPressed: () => taps++),
         ],
       ),
       offline: offline,
@@ -164,9 +164,9 @@ void main() {
       ),
       offline: offline,
     );
-    AppIconButton delete() => t.widget<AppIconButton>(
+    PpForgeIconButton delete() => t.widget<PpForgeIconButton>(
       find.byWidgetPredicate(
-        (w) => w is AppIconButton && w.tooltip == 'Delete',
+        (w) => w is PpForgeIconButton && w.tooltip == 'Delete',
       ),
     );
     await t.pumpWidget(sheet(offline: false));
@@ -185,10 +185,10 @@ void main() {
       BulkDeleteButton(tooltip: 'Delete', onPressed: () {}),
       offline: offline,
     );
-    AppIconButton button() => t.widget<AppIconButton>(
+    PpForgeIconButton button() => t.widget<PpForgeIconButton>(
       find.descendant(
         of: find.byType(BulkDeleteButton),
-        matching: find.byType(AppIconButton),
+        matching: find.byType(PpForgeIconButton),
       ),
     );
     await t.pumpWidget(bar(offline: false));

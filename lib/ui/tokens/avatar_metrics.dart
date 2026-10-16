@@ -5,7 +5,7 @@ import 'dart:math' as math;
 /// smaller the avatar the LARGER the glyph is relative to it (less padding), so
 /// a 20 px avatar is not a tiny icon in an empty ring.
 ///
-/// Every framed avatar (AppAvatar, the icon maker's IconCodeWidget, IconTile,
+/// Every framed avatar (PpForgeAvatar, the icon maker's IconCodeWidget, IconTile,
 /// the corner badges, the pencil badge of EditableCircle) takes its numbers from
 /// here — never a literal fraction. The ladder (the hub page atoms/badge-avatar
 /// shows it):

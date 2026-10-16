@@ -26,10 +26,10 @@ void main() {
         height: 700,
         child: DetailPageBody(
           hero: const Text('HERO'),
-          tabBar: AppTabBar<int>(
+          tabBar: PpForgeTabBar<int>(
             tabs: const [
-              AppTab(value: 0, label: 'Periods'),
-              AppTab(value: 1, label: 'Items'),
+              PpForgeTab(value: 0, label: 'Periods'),
+              PpForgeTab(value: 1, label: 'Items'),
             ],
             selected: 0,
             onChanged: (_) {},
@@ -61,7 +61,7 @@ void main() {
         extraActions: [
           ManageAction(
             label: 'Close budget',
-            icon: AppIcons.success,
+            icon: PpForgeIcons.success,
             onTap: () => closed++,
           ),
         ],
@@ -82,7 +82,11 @@ void main() {
       t,
       ManageSection(
         extraActions: [
-          ManageAction(label: 'Close', icon: AppIcons.success, onTap: () {}),
+          ManageAction(
+            label: 'Close',
+            icon: PpForgeIcons.success,
+            onTap: () {},
+          ),
         ],
       ),
     );
@@ -96,9 +100,9 @@ void main() {
         label: 'Categories',
         emptyText: 'None',
         valueChips: const [
-          AppChip(label: 'Food', selected: true),
-          AppChip(label: 'Travel', selected: true),
-          AppChip(label: 'Home', selected: true),
+          PpForgeChip(label: 'Food', selected: true),
+          PpForgeChip(label: 'Travel', selected: true),
+          PpForgeChip(label: 'Home', selected: true),
         ],
         onTap: () {},
       ),

@@ -42,7 +42,7 @@ void main() {
     await pump(t, description: 'ข้าวมันไก่', category: 'อาหาร');
     expect(find.text('ข้าวมันไก่'), findsOneWidget);
     expect(find.text('·'), findsOneWidget);
-    expect(find.widgetWithText(AppChip, 'อาหาร'), findsOneWidget);
+    expect(find.widgetWithText(PpForgeChip, 'อาหาร'), findsOneWidget);
     // No type chip.
     expect(find.text('รายจ่าย'), findsNothing);
   });
@@ -51,13 +51,13 @@ void main() {
     await pump(t, description: '  ', category: 'อาหาร');
     expect(find.text('อาหาร'), findsOneWidget);
     expect(find.text('·'), findsNothing);
-    expect(find.byType(AppChip), findsNothing);
+    expect(find.byType(PpForgeChip), findsNothing);
   });
 
   testWidgets('no description, no category: the type names it', (t) async {
     await pump(t, description: '');
     expect(find.text('รายจ่าย'), findsOneWidget);
-    expect(find.byType(AppChip), findsNothing);
+    expect(find.byType(PpForgeChip), findsNothing);
   });
 
   testWidgets('a transfer: description only, never a category chip', (t) async {
@@ -68,6 +68,6 @@ void main() {
       type: TransactionType.transfer,
     );
     expect(find.text('ย้ายเงิน'), findsOneWidget);
-    expect(find.byType(AppChip), findsNothing);
+    expect(find.byType(PpForgeChip), findsNothing);
   });
 }

@@ -104,10 +104,10 @@ class EventRow extends StatelessWidget {
       if (onTap == null || locked) {
         return DetailPlaceholder(l.quickEventNone);
       }
-      return AppChip(
-        icon: AppIcons.add,
+      return PpForgeChip(
+        icon: PpForgeIcons.add,
         label: l.quickEventAdd,
-        tone: AppChipTone.primary,
+        tone: PpForgeChipTone.primary,
         selected: true,
         dashed: _compact,
         size: _compact ? ChipSize.chip : ChipSize.control,
@@ -120,24 +120,24 @@ class EventRow extends StatelessWidget {
       children: [
         Flexible(
           child: LayoutBuilder(
-            builder: (context, c) => AppChip(
-              icon: AppIcons.project,
+            builder: (context, c) => PpForgeChip(
+              icon: PpForgeIcons.project,
               color: accent,
               label: n,
               size: ChipSize.chip,
               maxWidth: c.maxWidth.isFinite ? c.maxWidth : null,
               onTap: locked ? null : onTap,
               trailing: removable
-                  ? AppChipTrailing.remove
-                  : AppChipTrailing.none,
+                  ? PpForgeChipTrailing.remove
+                  : PpForgeChipTrailing.none,
               onRemove: removable ? onClear : null,
               tooltip: removable ? l.quickEventRemove : null,
             ),
           ),
         ),
         if (locked) ...[
-          const SizedBox(width: AppSpacing.xs),
-          const AppIcon(AppIcons.lock),
+          const SizedBox(width: PpForgeSpacing.xs),
+          const PpForgeIcon(PpForgeIcons.lock),
         ],
       ],
     );
@@ -222,7 +222,7 @@ class _SplitEventSectionState extends State<SplitEventSection> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!widget.first) const SizedBox(height: AppSpacing.lg),
+          if (!widget.first) const SizedBox(height: PpForgeSpacing.lg),
           CollapsibleSection(
             title: l.txSplitSectionTitle,
             hint: l.txSplitSectionHint,
@@ -267,36 +267,39 @@ class _SplitEventSectionState extends State<SplitEventSection> {
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
-          const SizedBox(width: AppSpacing.xs),
+          const SizedBox(width: PpForgeSpacing.xs),
         ],
         if (widget.collapsible)
           AnimatedRotation(
             turns: open ? 0.5 : 0,
             duration: const Duration(milliseconds: 160),
-            child: AppIcon(AppIcons.expand, color: scheme.onSurfaceVariant),
+            child: PpForgeIcon(
+              PpForgeIcons.expand,
+              color: scheme.onSurfaceVariant,
+            ),
           ),
       ],
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!widget.first) const SizedBox(height: AppSpacing.lg),
+        if (!widget.first) const SizedBox(height: PpForgeSpacing.lg),
         InkWell(
           onTap: widget.collapsible
               ? () => setState(() => _open = !_open)
               : null,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
             child: header,
           ),
         ),
         if (open) ...[
           if (widget.splits != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             widget.splits!,
           ],
           if (e != null) ...[
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: PpForgeSpacing.xs),
             EventRow(
               name: e.name,
               onTap: e.onTap,
@@ -309,7 +312,7 @@ class _SplitEventSectionState extends State<SplitEventSection> {
             Padding(
               padding: const EdgeInsets.only(
                 left: DraftFieldRow.labelWidth,
-                top: AppSpacing.xs,
+                top: PpForgeSpacing.xs,
               ),
               child: Text(
                 widget.helper!,

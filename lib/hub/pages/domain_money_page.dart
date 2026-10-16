@@ -20,7 +20,7 @@ class _MoneyPageState extends State<_MoneyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return Column(
@@ -125,7 +125,7 @@ class _MoneyPageState extends State<_MoneyPage> {
               ),
               const HubCell(
                 caption: 'hidden (static look)',
-                child: AppText('฿••••', role: AppTextRole.money),
+                child: PpForgeText('฿••••', role: PpForgeTextRole.money),
               ),
               const HubCell(
                 caption: 'MoneyVisibilityToggle (empty while off)',
@@ -144,13 +144,13 @@ class _MoneyPageState extends State<_MoneyPage> {
           child: Column(
             children: [
               MoneyListTile(
-                leading: const AppIcon(AppIcons.cash),
+                leading: const PpForgeIcon(PpForgeIcons.cash),
                 title: 'Salary',
                 amount: 32000,
                 onTap: () {},
               ),
               MoneyListTile(
-                leading: const AppIcon(AppIcons.cash),
+                leading: const PpForgeIcon(PpForgeIcons.cash),
                 title: 'Old subscription (cancelled)',
                 amount: -199,
                 dimmed: true,
@@ -170,14 +170,17 @@ class _MoneyPageState extends State<_MoneyPage> {
             children: [
               const DateGroupHeader(label: 'Today', total: 4460),
               MoneyListTile(
-                leading: IconTile(icon: AppIcons.cash, color: palette.income),
+                leading: IconTile(
+                  icon: PpForgeIcons.cash,
+                  color: palette.income,
+                ),
                 title: 'Salary',
                 subtitle: const Text('Main bank'),
                 amount: 5000,
               ),
               MoneyListTile(
                 leading: IconTile(
-                  icon: AppIcons.expense,
+                  icon: PpForgeIcons.expense,
                   color: palette.expense,
                 ),
                 title: 'Lunch',
@@ -187,15 +190,18 @@ class _MoneyPageState extends State<_MoneyPage> {
                 amountCaption: 'split 3',
                 onTap: () {},
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               const DateGroupHeader(label: 'Yesterday'),
               MoneyListTile(
-                leading: IconTile(icon: AppIcons.debt, color: scheme.primary),
+                leading: IconTile(
+                  icon: PpForgeIcons.debt,
+                  color: scheme.primary,
+                ),
                 title: 'Owed by Alex',
                 subtitle: Row(
                   children: [
-                    Icon(AppIcons.warning, color: palette.warning),
-                    const SizedBox(width: AppSpacing.xs),
+                    Icon(PpForgeIcons.warning, color: palette.warning),
+                    const SizedBox(width: PpForgeSpacing.xs),
                     const Flexible(
                       child: Text(
                         'Overdue 5 days',
@@ -209,7 +215,7 @@ class _MoneyPageState extends State<_MoneyPage> {
               ),
               MoneyListTile(
                 leading: IconTile(
-                  icon: AppIcons.transfer,
+                  icon: PpForgeIcons.transfer,
                   color: scheme.secondary,
                 ),
                 title: 'Transfer to savings',
@@ -217,7 +223,7 @@ class _MoneyPageState extends State<_MoneyPage> {
               ),
               MoneyListTile(
                 leading: IconTile(
-                  icon: AppIcons.expense,
+                  icon: PpForgeIcons.expense,
                   color: palette.expense,
                 ),
                 title: 'Forced expense tone',
@@ -239,9 +245,9 @@ class _MoneyPageState extends State<_MoneyPage> {
                 value: _currency,
                 onChanged: (v) => setState(() => _currency = v),
               ),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               const CurrencyTile(value: 'THB', onChanged: null),
-              const AppDivider.row(),
+              const PpForgeDivider.row(),
               CurrencyTile(
                 value: 'EUR',
                 label: 'Account currency',

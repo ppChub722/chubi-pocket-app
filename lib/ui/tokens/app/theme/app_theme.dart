@@ -4,8 +4,8 @@ import '../app_colors.dart';
 import '../module_colors.dart';
 
 @immutable
-class AppTheme {
-  const AppTheme({
+class PpForgeTheme {
+  const PpForgeTheme({
     required this.id,
     required this.nameKey,
     required this.isPremium,
@@ -29,10 +29,10 @@ class AppTheme {
   final String nameKey;
   final bool isPremium;
   final String? sku;
-  final AppColors lightColors;
-  final AppColors darkColors;
+  final PpForgeColors lightColors;
+  final PpForgeColors darkColors;
   final List<Color> previewSwatch;
 
-  AppColors colorsFor(Brightness brightness) =>
+  PpForgeColors colorsFor(Brightness brightness) =>
       brightness == Brightness.dark ? darkColors : lightColors;
 }

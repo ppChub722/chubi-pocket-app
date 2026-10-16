@@ -38,10 +38,14 @@ Widget buildCollapsibleSectionPage(BuildContext context) => Column(
       title: 'With a mark and an action',
       child: CollapsibleSection(
         title: 'History',
-        leading: const AppIcon(AppIcons.scheduled),
+        leading: const PpForgeIcon(PpForgeIcons.scheduled),
         summary: '5 payments',
         initiallyOpen: false,
-        trailing: AppChip(label: 'Filter', size: ChipSize.chip, onTap: () {}),
+        trailing: PpForgeChip(
+          label: 'Filter',
+          size: ChipSize.chip,
+          onTap: () {},
+        ),
         children: _rows(['12 Oct · 500', '5 Oct · 300']),
       ),
     ),

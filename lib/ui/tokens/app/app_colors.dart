@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 @immutable
-class AppColors extends ThemeExtension<AppColors> {
-  const AppColors({
+class PpForgeColors extends ThemeExtension<PpForgeColors> {
+  const PpForgeColors({
     required this.brightness,
     required this.primary,
     required this.onPrimary,
@@ -98,7 +98,7 @@ class AppColors extends ThemeExtension<AppColors> {
   }
 
   @override
-  AppColors copyWith({
+  PpForgeColors copyWith({
     Brightness? brightness,
     Color? primary,
     Color? onPrimary,
@@ -129,7 +129,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? walletAsset,
     Color? walletLiability,
   }) {
-    return AppColors(
+    return PpForgeColors(
       brightness: brightness ?? this.brightness,
       primary: primary ?? this.primary,
       onPrimary: onPrimary ?? this.onPrimary,
@@ -163,9 +163,9 @@ class AppColors extends ThemeExtension<AppColors> {
   }
 
   @override
-  AppColors lerp(ThemeExtension<AppColors>? other, double t) {
-    if (other is! AppColors) return this;
-    return AppColors(
+  PpForgeColors lerp(ThemeExtension<PpForgeColors>? other, double t) {
+    if (other is! PpForgeColors) return this;
+    return PpForgeColors(
       brightness: t < 0.5 ? brightness : other.brightness,
       primary: Color.lerp(primary, other.primary, t)!,
       onPrimary: Color.lerp(onPrimary, other.onPrimary, t)!,

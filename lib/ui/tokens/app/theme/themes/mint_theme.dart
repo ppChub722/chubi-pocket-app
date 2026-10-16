@@ -9,7 +9,7 @@ const _mintPrimaryDark = Color(0xFF4DD6C1);
 const _deepTeal = Color(0xFF0E7C7B);
 const _deepTealLight = Color(0xFF4FB3B2);
 
-final mintTheme = AppTheme(
+final mintTheme = PpForgeTheme(
   id: 'mint',
   nameKey: 'theme_mint',
   isPremium: false,
@@ -25,7 +25,7 @@ final mintTheme = AppTheme(
     people: Color(0xFF38BDF8),
     planning: Color(0xFF818CF8),
   ),
-  lightColors: const AppColors(
+  lightColors: const PpForgeColors(
     brightness: Brightness.light,
     primary: _mintPrimary,
     onPrimary: Color(0xFFFFFFFF),
@@ -56,7 +56,7 @@ final mintTheme = AppTheme(
     walletAsset: Color(0xFF0D9488),
     walletLiability: Color(0xFFEA580C),
   ),
-  darkColors: const AppColors(
+  darkColors: const PpForgeColors(
     brightness: Brightness.dark,
     primary: _mintPrimaryDark,
     onPrimary: Color(0xFF003830),

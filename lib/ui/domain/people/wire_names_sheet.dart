@@ -46,7 +46,7 @@ Future<T?> showWireNamesSheet<T>(
   required WireNamesLabels labels,
   required List<WireNameRow> rows,
   required Future<T?> Function(Set<String> picked) onSave,
-}) => showAppSheetCustom<T>(
+}) => showPpForgeSheetCustom<T>(
   context,
   builder: (_) => WireNamesSheet<T>(labels: labels, rows: rows, onSave: onSave),
 );
@@ -106,8 +106,8 @@ class _WireNamesSheetState<T> extends State<WireNamesSheet<T>> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppText(l.body, role: AppTextRole.caption),
-          AppInput.search(
+          PpForgeText(l.body, role: PpForgeTextRole.caption),
+          PpForgeInput.search(
             hint: l.searchHint,
             onChanged: (v) => setState(() => _query = v),
           ),

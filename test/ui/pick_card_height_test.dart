@@ -26,7 +26,7 @@ void main() {
     subtitle: subtitle,
     errorText: error,
     reserveSubtitle: true,
-    leading: const PickCardEmptyIcon(AppIcons.wallet),
+    leading: const PickCardEmptyIcon(PpForgeIcons.wallet),
     onTap: () {},
   );
 
@@ -35,7 +35,7 @@ void main() {
     placeholder: 'Choose a member',
     value: value,
     errorText: error,
-    leading: const PickCardEmptyIcon(AppIcons.contact),
+    leading: const PickCardEmptyIcon(PpForgeIcons.contact),
     onTap: () {},
   );
 

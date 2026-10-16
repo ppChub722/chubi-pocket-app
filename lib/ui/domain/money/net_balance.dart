@@ -52,7 +52,7 @@ class NetBalance extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
     final hero = size == NetBalanceSize.hero;
     final align = hero ? CrossAxisAlignment.start : CrossAxisAlignment.end;
     final textAlign = hero ? TextAlign.start : TextAlign.end;

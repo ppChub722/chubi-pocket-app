@@ -52,8 +52,8 @@ void main() {
       host(
         TabbedListPageBody<int>(
           tabs: const [
-            AppTab(value: 0, label: 'one'),
-            AppTab(value: 1, label: 'two'),
+            PpForgeTab(value: 0, label: 'one'),
+            PpForgeTab(value: 1, label: 'two'),
           ],
           selected: 0,
           onChanged: (_) {},
@@ -101,7 +101,7 @@ void main() {
       );
       // header→row hairline ×2 + the a|b row hairline = 3 hairlines, and ONE thick
       // band between the two day groups.
-      expect(find.byType(AppDivider), findsNWidgets(3));
+      expect(find.byType(PpForgeDivider), findsNWidgets(3));
       expect(
         find.byWidgetPredicate((w) => w is SizedBox && w.height == 8),
         findsOneWidget,

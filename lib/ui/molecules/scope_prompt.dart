@@ -28,19 +28,19 @@ Future<EditScope?> showScopePrompt(
     DialogChoice(
       value: null,
       label: cancelLabel,
-      variant: AppButtonVariant.text,
+      variant: PpForgeButtonVariant.text,
     ),
     DialogChoice(
       value: EditScope.following,
       label: followingLabel,
-      variant: AppButtonVariant.outlined,
+      variant: PpForgeButtonVariant.outlined,
     ),
     DialogChoice(
       value: EditScope.all,
       label: allLabel,
       variant: destructive
-          ? AppButtonVariant.destructive
-          : AppButtonVariant.primary,
+          ? PpForgeButtonVariant.destructive
+          : PpForgeButtonVariant.primary,
     ),
   ],
 );

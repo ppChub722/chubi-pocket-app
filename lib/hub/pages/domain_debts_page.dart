@@ -27,20 +27,20 @@ class _DebtsPageState extends State<_DebtsPage> {
 
   void _note(String s) => setState(() => _last = s);
 
-  Widget _list(List<Widget> rows) => AppCard(
+  Widget _list(List<Widget> rows) => PpForgeCard(
     padding: EdgeInsets.zero,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final (i, r) in rows.indexed) ...[
-          if (i > 0) const AppDivider.row(),
+          if (i > 0) const PpForgeDivider.row(),
           r,
         ],
       ],
     ),
   );
 
-  static const _walletIcon = Icon(AppIcons.wallet, size: 12);
+  static const _walletIcon = Icon(PpForgeIcons.wallet, size: 12);
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class _DebtsPageState extends State<_DebtsPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('Last tap: $_last', style: text.bodySmall),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PpForgeSpacing.md),
         // ---- PersonRow ----
         HubDemo(
           title: 'PersonRow',
@@ -64,7 +64,7 @@ class _DebtsPageState extends State<_DebtsPage> {
               level: PersonLevel.linked,
               caption: 'ผูกบัญชีแล้ว',
               role: 'เจ้าของ',
-              roleTone: AppChipTone.primary,
+              roleTone: PpForgeChipTone.primary,
               onTap: () => _note('PersonRow มาตาก'),
             ),
             PersonRow(
@@ -72,8 +72,8 @@ class _DebtsPageState extends State<_DebtsPage> {
               level: PersonLevel.contact,
               caption: 'ผู้ติดต่อ',
               role: 'สมาชิก',
-              trailing: AppIconButton.flat(
-                icon: AppIcons.chevronRight,
+              trailing: PpForgeIconButton.flat(
+                icon: PpForgeIcons.chevronRight,
                 dense: true,
                 onPressed: () => _note('PersonRow trailing'),
               ),

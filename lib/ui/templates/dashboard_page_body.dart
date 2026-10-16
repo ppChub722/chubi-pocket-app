@@ -28,8 +28,8 @@ import '../tokens/tone.dart';
 ///   ([kpis] · [charts] · [tiles] · [lists]). Both zones dim while
 ///   [refreshing] (a new period loading) — the period bar never does.
 /// - **Slots are plain widgets / lists:** pass `[]` / null to leave one out;
-///   the template only spaces them ([AppSpacing.md] under the snapshot,
-///   [AppSpacing.sm] under the period bar, [AppSpacing.lg] before the tiles).
+///   the template only spaces them ([PpForgeSpacing.md] under the snapshot,
+///   [PpForgeSpacing.sm] under the period bar, [PpForgeSpacing.lg] before the tiles).
 /// - **Data state:** [loading] / [error] / [isEmpty] / [onRetry] as
 ///   `AsyncStateView`; [banner] shows above the content (a failed refresh
 ///   with data still on screen). The first-load skeleton is the template's
@@ -50,9 +50,9 @@ class DashboardPageBody extends StatelessWidget {
     this.tiles,
     this.lists = const [],
     this.skeletonShape = const DashboardSkeletonShape(),
-    this.topInset = AppSpacing.xs,
+    this.topInset = PpForgeSpacing.xs,
     this.bottomInset = 96,
-    this.sidePadding = AppSpacing.lg,
+    this.sidePadding = PpForgeSpacing.lg,
     super.key,
   });
 
@@ -64,7 +64,7 @@ class DashboardPageBody extends StatelessWidget {
   /// Data is on screen but a new period / refresh is loading: both zones dim.
   final bool refreshing;
 
-  /// Above everything (an `AppMessage` banner "couldn't refresh").
+  /// Above everything (an `PpForgeMessage` banner "couldn't refresh").
   final String? banner;
 
   /// "Right now" blocks, in order — a net-worth KPI card, the attention block.
@@ -92,7 +92,7 @@ class DashboardPageBody extends StatelessWidget {
   final double sidePadding;
 
   static Widget _dim(bool dim, Widget child) => AnimatedOpacity(
-    duration: AppDurations.fast,
+    duration: PpForgeDurations.fast,
     opacity: dim ? 0.5 : 1,
     child: child,
   );
@@ -129,8 +129,8 @@ class DashboardPageBody extends StatelessWidget {
           ),
           children: [
             if (banner != null) ...[
-              AppMessage(message: banner!, tone: Tone.danger),
-              const SizedBox(height: AppSpacing.md),
+              PpForgeMessage(message: banner!, tone: Tone.danger),
+              const SizedBox(height: PpForgeSpacing.md),
             ],
             _dim(
               refreshing,
@@ -140,10 +140,10 @@ class DashboardPageBody extends StatelessWidget {
               ),
             ),
             if (period != null) ...[
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: PpForgeSpacing.md),
               // Never dims: the period is what is loading.
               period!,
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
             ],
             _dim(
               refreshing,
@@ -153,7 +153,7 @@ class DashboardPageBody extends StatelessWidget {
                   ...kpis,
                   ...charts,
                   if (tiles != null) ...[
-                    const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: PpForgeSpacing.lg),
                     tiles!,
                   ],
                   ...lists,

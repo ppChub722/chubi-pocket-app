@@ -72,26 +72,26 @@ class _NetworkPageState extends State<NetworkPage> {
       ),
       body: Column(
         children: [
-          AppInput.search(
+          PpForgeInput.search(
             hint: 'Search path or page',
             onChanged: (v) => setState(() => _query = v),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
+              PpForgeSpacing.lg,
               0,
-              AppSpacing.lg,
-              AppSpacing.xs,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.xs,
             ),
             child: Row(
               children: [
                 for (final v in _View.values) ...[
-                  AppChip(
+                  PpForgeChip(
                     label: v == _View.calls ? 'Calls' : 'By endpoint',
                     selected: _view == v,
                     onTap: () => setState(() => _view = v),
                   ),
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
                 ],
               ],
             ),
@@ -100,10 +100,12 @@ class _NetworkPageState extends State<NetworkPage> {
             height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(
+                horizontal: PpForgeSpacing.lg,
+              ),
               children: [
                 for (final f in _Filter.values) ...[
-                  AppChip(
+                  PpForgeChip(
                     label: switch (f) {
                       _Filter.all => 'All',
                       _Filter.failed => 'Failed',
@@ -115,7 +117,7 @@ class _NetworkPageState extends State<NetworkPage> {
                     size: ChipSize.chip,
                     onTap: () => setState(() => _filter = f),
                   ),
-                  const SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: PpForgeSpacing.xs),
                 ],
               ],
             ),
@@ -168,7 +170,7 @@ class _CallList extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return ListView.separated(
       itemCount: calls.length,
-      separatorBuilder: (_, _) => const AppDivider.row(),
+      separatorBuilder: (_, _) => const PpForgeDivider.row(),
       itemBuilder: (context, i) {
         final c = calls[i];
         final status = c.pending
@@ -178,8 +180,8 @@ class _CallList extends StatelessWidget {
           onTap: () => _showDetail(context, c),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.sm,
+              horizontal: PpForgeSpacing.lg,
+              vertical: PpForgeSpacing.sm,
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,10 +250,10 @@ class _CallList extends StatelessWidget {
         child: ListView(
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
             0,
-            AppSpacing.lg,
-            AppSpacing.lg,
+            PpForgeSpacing.lg,
+            PpForgeSpacing.lg,
           ),
           children: [
             for (final (k, v) in rows)
@@ -305,14 +307,14 @@ class _EndpointSummary extends StatelessWidget {
       ..sort((a, b) => b.value.count.compareTo(a.value.count));
     return ListView.separated(
       itemCount: rows.length,
-      separatorBuilder: (_, _) => const AppDivider.row(),
+      separatorBuilder: (_, _) => const PpForgeDivider.row(),
       itemBuilder: (context, i) {
         final e = rows[i];
         final a = e.value;
         return Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
+            horizontal: PpForgeSpacing.lg,
+            vertical: PpForgeSpacing.sm,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,

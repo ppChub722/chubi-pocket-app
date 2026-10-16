@@ -5,9 +5,9 @@ import 'app_colors.dart';
 /// Colour of each feature **group** — the เพิ่มเติม hub's sections
 /// (คลัง / คน / วางแผน). Every card in a group shares its group's colour.
 ///
-/// Kept apart from [AppColors] on purpose: those are *semantic* colours
+/// Kept apart from [PpForgeColors] on purpose: those are *semantic* colours
 /// (income, expense, error …); these only mark "which part of the app".
-/// Each [AppTheme] ships its own set (light + dark) in its own family —
+/// Each [PpForgeTheme] ships its own set (light + dark) in its own family —
 /// warm pinks for Sweet, cool greens / blues for Mint. A theme without a
 /// set falls back to its primary colour everywhere ([of]).
 @immutable
@@ -34,7 +34,7 @@ class ModuleColors extends ThemeExtension<ModuleColors> {
     final set = theme.extension<ModuleColors>();
     if (set != null) return set;
     final primary =
-        theme.extension<AppColors>()?.primary ?? theme.colorScheme.primary;
+        theme.extension<PpForgeColors>()?.primary ?? theme.colorScheme.primary;
     return ModuleColors(library: primary, people: primary, planning: primary);
   }
 

@@ -25,7 +25,7 @@ class AddTile extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.variant = AddTileVariant.card,
-    this.icon = AppIcons.add,
+    this.icon = PpForgeIcons.add,
     this.circleSize = 48,
     super.key,
   });
@@ -52,7 +52,7 @@ class AddTile extends StatelessWidget {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: SizedBox(
-            width: circleSize + AppSpacing.lg,
+            width: circleSize + PpForgeSpacing.lg,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -65,7 +65,7 @@ class AddTile extends StatelessWidget {
                     child: Icon(icon, color: color),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
+                const SizedBox(height: PpForgeSpacing.xs),
                 Text(
                   label,
                   maxLines: 1,
@@ -81,7 +81,7 @@ class AddTile extends StatelessWidget {
       case AddTileVariant.card:
       case AddTileVariant.row:
         final isCard = variant == AddTileVariant.card;
-        final radius = isCard ? AppRadius.lg : AppRadius.md;
+        final radius = isCard ? PpForgeRadius.lg : PpForgeRadius.md;
         return DashedRectBorder(
           color: color,
           borderRadius: Radius.circular(radius),
@@ -94,14 +94,14 @@ class AddTile extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: isCard ? 64 : 48),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
+                    horizontal: PpForgeSpacing.md,
+                    vertical: PpForgeSpacing.sm,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(icon, size: isCard ? 24 : 20, color: color),
-                      const SizedBox(width: AppSpacing.sm),
+                      const SizedBox(width: PpForgeSpacing.sm),
                       Flexible(
                         child: Text(
                           label,

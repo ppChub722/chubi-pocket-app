@@ -27,7 +27,7 @@ Future<Set<DateTime>?> showMultiDatePicker(
   required String Function(int count) confirmLabel,
   ValueChanged<Set<DateTime>>? onChanged,
 }) {
-  return showAppSheetCustom<Set<DateTime>>(
+  return showPpForgeSheetCustom<Set<DateTime>>(
     context,
     builder: (ctx) => MultiDatePickerSheet(
       initial: initial,
@@ -42,7 +42,7 @@ Future<Set<DateTime>?> showMultiDatePicker(
 }
 
 /// A calendar where you pick SEVERAL days (a custom recurrence's hand-picked
-/// dates) — the same look as [AppDateRangePickerSheet]:
+/// dates) — the same look as [PpForgeDateRangePickerSheet]:
 ///
 /// - ‹ month › navigation, kept inside [first] … [last];
 /// - tap a day to toggle it; a picked day is highlighted (filled), never
@@ -52,8 +52,8 @@ Future<Set<DateTime>?> showMultiDatePicker(
 /// - a footer: Clear (with something picked) and the confirm, labelled by
 ///   [confirmLabel] with the count and off while nothing is picked.
 ///
-/// Builds its own [AppSheetScaffold] — open it with [showMultiDatePicker]
-/// (or [showAppSheetCustom]); to show it inline, give it a bounded height.
+/// Builds its own [PpForgeSheetScaffold] — open it with [showMultiDatePicker]
+/// (or [showPpForgeSheetCustom]); to show it inline, give it a bounded height.
 /// Dates are day-only: [initial] is normalised to y / m / d and days outside
 /// the bounds are dropped. The caller keeps the span sensible (≤ 2 years).
 class MultiDatePickerSheet extends StatefulWidget {
@@ -139,7 +139,7 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = UiConfig.stringsOf(context);
+    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final loc = MaterialLocalizations.of(context);
@@ -154,23 +154,23 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
         ? loc.formatShortMonthDay(d)
         : '${loc.formatShortMonthDay(d)} ${loc.formatYear(d)}';
 
-    return AppSheetScaffold(
+    return PpForgeSheetScaffold(
       title: widget.title,
       footer: Row(
         children: [
           if (_picked.isNotEmpty) ...[
             Expanded(
-              child: AppButton(
+              child: PpForgeButton(
                 label: strings.clear,
-                variant: AppButtonVariant.outlined,
+                variant: PpForgeButtonVariant.outlined,
                 onPressed: () => _set(<DateTime>{}),
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: PpForgeSpacing.sm),
           ],
           Expanded(
             flex: 2,
-            child: AppButton(
+            child: PpForgeButton(
               label: widget.confirmLabel(_picked.length),
               expand: true,
               onPressed: _picked.isEmpty
@@ -185,13 +185,13 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.sm),
             child: Row(
               children: [
                 IconButton(
                   tooltip: strings.monthPrev,
                   onPressed: _canPrev ? () => _shift(-1) : null,
-                  icon: const AppIcon(Icons.chevron_left),
+                  icon: const PpForgeIcon(Icons.chevron_left),
                 ),
                 Expanded(
                   child: Text(
@@ -203,13 +203,13 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
                 IconButton(
                   tooltip: strings.monthNext,
                   onPressed: _canNext ? () => _shift(1) : null,
-                  icon: const AppIcon(Icons.chevron_right),
+                  icon: const PpForgeIcon(Icons.chevron_right),
                 ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: Row(
               children: [
                 for (var i = 0; i < 7; i++)
@@ -226,9 +226,9 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: PpForgeSpacing.xs),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: PpForgeSpacing.lg),
             child: Column(
               children: [
                 for (var row = 0; row < cells ~/ 7; row++)
@@ -245,10 +245,10 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.sm,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.md,
+              PpForgeSpacing.lg,
+              PpForgeSpacing.sm,
             ),
             child: sorted.isEmpty
                 ? Text(
@@ -258,15 +258,15 @@ class _MultiDatePickerSheetState extends State<MultiDatePickerSheet> {
                     ),
                   )
                 : Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
+                    spacing: PpForgeSpacing.sm,
+                    runSpacing: PpForgeSpacing.sm,
                     children: [
                       for (final d in sorted)
-                        AppChip(
+                        PpForgeChip(
                           key: ValueKey(d),
                           label: chipLabel(d),
                           selected: true,
-                          trailing: AppChipTrailing.remove,
+                          trailing: PpForgeChipTrailing.remove,
                           onRemove: () => _remove(d),
                         ),
                     ],

@@ -17,15 +17,15 @@ final _serverError = ApiException(
 );
 final _unknownError = ApiException(code: 'X', message: 'x');
 
-/// A demo-only [UiErrors] with its own words, to show the hook.
-class _DemoErrors extends UiErrors {
+/// A demo-only [PpForgeErrors] with its own words, to show the hook.
+class _DemoErrors extends PpForgeErrors {
   const _DemoErrors();
 
   @override
-  UiErrorInfo describe(Object error) => const UiErrorInfo(
-    icon: AppIcons.offline,
+  PpForgeErrorInfo describe(Object error) => const PpForgeErrorInfo(
+    icon: PpForgeIcons.offline,
     title: 'Custom headline',
-    message: 'Every error reads this way inside this UiConfig.',
+    message: 'Every error reads this way inside this PpForgeConfig.',
   );
 }
 
@@ -101,13 +101,13 @@ class _FeedbackPageState extends State<_FeedbackPage> {
         DialogChoice(
           value: 'draft',
           label: 'Keep as draft',
-          variant: AppButtonVariant.primary,
+          variant: PpForgeButtonVariant.primary,
         ),
         DialogChoice(value: 'edit', label: 'Keep editing'),
         DialogChoice(
           value: 'discard',
           label: 'Discard',
-          variant: AppButtonVariant.destructive,
+          variant: PpForgeButtonVariant.destructive,
         ),
       ],
     );
@@ -117,7 +117,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
   @override
   Widget build(BuildContext context) {
     final messenger = ScaffoldMessenger.of(context);
-    const gap = SizedBox(height: AppSpacing.md);
+    const gap = SizedBox(height: PpForgeSpacing.md);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -126,18 +126,18 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           note: 'The real presets and where they are used.',
         ),
         HubDemo(
-          title: 'AppMessage — icon override',
+          title: 'PpForgeMessage — icon override',
           note:
               'icon: replaces the tone\'s icon (a lock on a "locked" banner); the '
               'colour stays the tone\'s.',
-          child: const AppMessage(
+          child: const PpForgeMessage(
             message: 'This wallet is shared — only its owner can change it',
             tone: Tone.warning,
-            icon: AppIcons.lock,
+            icon: PpForgeIcons.lock,
           ),
         ),
         HubDemo(
-          title: 'AppMessage — banner and snackbar, one design',
+          title: 'PpForgeMessage — banner and snackbar, one design',
           note:
               'The snackbar and the banner share ONE body — the same tone '
               'colours, icon set, radius, padding and type; only placement and '
@@ -155,54 +155,56 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                 Tone.warning,
                 Tone.danger,
               ]) ...[
-                AppMessage(message: 'Tone ${t.name}, text only', tone: t),
-                const SizedBox(height: AppSpacing.sm),
+                PpForgeMessage(message: 'Tone ${t.name}, text only', tone: t),
+                const SizedBox(height: PpForgeSpacing.sm),
               ],
-              AppMessage(
+              PpForgeMessage(
                 message: 'No connection — changes are kept on this device',
                 tone: Tone.warning,
                 onClose: () {},
               ),
-              const SizedBox(height: AppSpacing.sm),
-              AppMessage(
+              const SizedBox(height: PpForgeSpacing.sm),
+              PpForgeMessage(
                 message: 'Could not load wallets',
                 tone: Tone.danger,
-                actions: [AppMessageAction(label: 'Retry', onPressed: () {})],
+                actions: [
+                  PpForgeMessageAction(label: 'Retry', onPressed: () {}),
+                ],
               ),
-              const SizedBox(height: AppSpacing.sm),
-              AppMessage(
+              const SizedBox(height: PpForgeSpacing.sm),
+              PpForgeMessage(
                 message: 'Update available — a new version is ready to install',
                 tone: Tone.info,
                 onClose: () {},
                 actions: [
-                  AppMessageAction(label: 'Later', onPressed: () {}),
-                  AppMessageAction(label: 'Update', onPressed: () {}),
+                  PpForgeMessageAction(label: 'Later', onPressed: () {}),
+                  PpForgeMessageAction(label: 'Update', onPressed: () {}),
                 ],
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: PpForgeSpacing.lg),
               Text('Snackbar', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PpForgeSpacing.xs),
               Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                padding: const EdgeInsets.all(PpForgeSpacing.md),
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
                   ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(PpForgeRadius.md),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AppMessage(
+                    PpForgeMessage(
                       message: 'Wallet deleted',
                       tone: Tone.success,
                       floating: true,
                       actions: [
-                        AppMessageAction(label: 'Undo', onPressed: () {}),
+                        PpForgeMessageAction(label: 'Undo', onPressed: () {}),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    const AppMessage(
+                    const SizedBox(height: PpForgeSpacing.sm),
+                    const PpForgeMessage(
                       message: 'Could not save — check your connection',
                       tone: Tone.danger,
                       floating: true,
@@ -210,15 +212,15 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: PpForgeSpacing.sm),
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'Show: success + Undo',
-                    variant: AppButtonVariant.outlined,
-                    onPressed: () => showAppSnackBar(
+                    variant: PpForgeButtonVariant.outlined,
+                    onPressed: () => showPpForgeSnackBar(
                       context,
                       'Wallet deleted',
                       tone: Tone.success,
@@ -226,10 +228,10 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                       onAction: () {},
                     ),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Show: error + Retry',
-                    variant: AppButtonVariant.tonal,
-                    onPressed: () => showAppSnackBar(
+                    variant: PpForgeButtonVariant.tonal,
+                    onPressed: () => showPpForgeSnackBar(
                       context,
                       'Could not save',
                       tone: Tone.danger,
@@ -288,59 +290,59 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
         HubDemo(
-          title: 'showAppSnackBar',
+          title: 'showPpForgeSnackBar',
           note:
               'Floating, replaces the current one. Tone adds a leading icon; '
               'an action needs both actionLabel and onAction.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               for (final t in Tone.values)
-                AppButton(
+                PpForgeButton(
                   label: t.name,
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   onPressed: () =>
-                      showAppSnackBar(context, 'Tone ${t.name}', tone: t),
+                      showPpForgeSnackBar(context, 'Tone ${t.name}', tone: t),
                 ),
-              AppButton(
+              PpForgeButton(
                 label: 'with action',
-                onPressed: () => showAppSnackBar(
+                onPressed: () => showPpForgeSnackBar(
                   context,
                   'Wallet deleted',
                   tone: Tone.success,
                   actionLabel: 'Undo',
-                  onAction: () => showAppSnackBar(context, 'Undone'),
+                  onAction: () => showPpForgeSnackBar(context, 'Undone'),
                 ),
               ),
             ],
           ),
         ),
         HubDemo(
-          title: 'showAppSnackBarOn',
+          title: 'showPpForgeSnackBarOn',
           note:
               'Same, on a messenger captured up front, for calls after an '
               'await or a pop when the context may be gone.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               for (final t in Tone.values)
-                AppButton(
+                PpForgeButton(
                   label: t.name,
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   onPressed: () async {
                     await Future<void>.delayed(const Duration(seconds: 1));
-                    showAppSnackBarOn(
+                    showPpForgeSnackBarOn(
                       messenger,
                       'After a pause: ${t.name}',
                       tone: t,
                     );
                   },
                 ),
-              AppButton(
+              PpForgeButton(
                 label: 'with action',
-                onPressed: () => showAppSnackBarOn(
+                onPressed: () => showPpForgeSnackBarOn(
                   messenger,
                   'Saved',
                   tone: Tone.info,
@@ -355,25 +357,25 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           title: 'showErrorSnackBar',
           note:
               'A failure with data on screen: a danger snackbar worded by '
-              'UiErrors; onRetry adds the Retry action.',
+              'PpForgeErrors; onRetry adds the Retry action.',
           child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
+            spacing: PpForgeSpacing.sm,
+            runSpacing: PpForgeSpacing.sm,
             children: [
               for (final (label, err) in [
                 ('network', _networkError),
                 ('server', _serverError),
                 ('unknown', _unknownError),
               ]) ...[
-                AppButton(
+                PpForgeButton(
                   label: '$label, retry',
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   onPressed: () =>
                       showErrorSnackBar(context, err, onRetry: () {}),
                 ),
-                AppButton(
+                PpForgeButton(
                   label: '$label, no retry',
-                  variant: AppButtonVariant.outlined,
+                  variant: PpForgeButtonVariant.outlined,
                   onPressed: () => showErrorSnackBar(context, err),
                 ),
               ],
@@ -393,37 +395,37 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'Confirm',
                     onPressed: () => _confirm(destructive: false),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Confirm (destructive)',
-                    variant: AppButtonVariant.destructiveOutlined,
+                    variant: PpForgeButtonVariant.destructiveOutlined,
                     onPressed: () => _confirm(destructive: true),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Choice dialog',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: _choice,
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Linked prompt (save)',
-                    variant: AppButtonVariant.tonal,
+                    variant: PpForgeButtonVariant.tonal,
                     onPressed: () => _linked(delete: false),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Linked prompt (delete)',
-                    variant: AppButtonVariant.destructiveOutlined,
+                    variant: PpForgeButtonVariant.destructiveOutlined,
                     onPressed: () => _linked(delete: true),
                   ),
                 ],
               ),
               gap,
-              AppText(_result, role: AppTextRole.caption),
+              PpForgeText(_result, role: PpForgeTextRole.caption),
             ],
           ),
         ),
@@ -449,17 +451,17 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               ),
               gap,
               Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+                spacing: PpForgeSpacing.sm,
+                runSpacing: PpForgeSpacing.sm,
                 children: [
-                  AppButton(
+                  PpForgeButton(
                     label: 'Five scopes',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => _scope(all: true),
                   ),
-                  AppButton(
+                  PpForgeButton(
                     label: 'Rule change (two)',
-                    variant: AppButtonVariant.outlined,
+                    variant: PpForgeButtonVariant.outlined,
                     onPressed: () => _scope(all: false),
                   ),
                 ],
@@ -477,7 +479,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               const HubCell(
                 caption: 'No cta',
                 child: EmptyView(
-                  icon: AppIcons.empty,
+                  icon: PpForgeIcons.empty,
                   title: 'Nothing here',
                   message: 'Transactions you add will show up here.',
                 ),
@@ -485,7 +487,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               HubCell(
                 caption: 'With AddTile cta',
                 child: EmptyView(
-                  icon: AppIcons.empty,
+                  icon: PpForgeIcons.empty,
                   title: 'No wallets yet',
                   message: 'Create your first wallet to start.',
                   cta: AddTile(label: 'Add wallet', onTap: () {}),
@@ -498,7 +500,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           title: 'ErrorView',
           note:
               'Full-view failure when no data is on screen. The words come '
-              'from the installed UiErrors; retry is optional.',
+              'from the installed PpForgeErrors; retry is optional.',
           child: Column(
             children: [
               HubCell(
@@ -537,7 +539,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
                   skeleton: Column(
                     children: [
                       SkeletonBox(height: 48),
-                      SizedBox(height: AppSpacing.sm),
+                      SizedBox(height: PpForgeSpacing.sm),
                       SkeletonBox(height: 48),
                     ],
                   ),
@@ -547,11 +549,12 @@ class _FeedbackPageState extends State<_FeedbackPage> {
           ),
         ),
         HubDemo(
-          title: 'UiConfig / UiStrings / UiErrors / UiErrorInfo / AppUiConfig',
+          title:
+              'PpForgeConfig / PpForgeStrings / PpForgeErrors / PpForgeErrorInfo / AppUiConfig',
           note:
-              'Generic widgets read their words from UiConfig; the app '
+              'Generic widgets read their words from PpForgeConfig; the app '
               'installs AppUiConfig once at its root. Below, the same '
-              'ErrorView under the app config and under a custom UiConfig.',
+              'ErrorView under the app config and under a custom PpForgeConfig.',
           child: Column(
             children: [
               HubCell(
@@ -560,10 +563,10 @@ class _FeedbackPageState extends State<_FeedbackPage> {
               ),
               HubCell(
                 caption:
-                    'Custom UiConfig(strings: UiStrings(retry: ...), errors: '
-                    'UiErrors subclass returning UiErrorInfo)',
-                child: UiConfig(
-                  strings: const UiStrings(retry: 'Try again'),
+                    'Custom PpForgeConfig(strings: PpForgeStrings(retry: ...), errors: '
+                    'PpForgeErrors subclass returning PpForgeErrorInfo)',
+                child: PpForgeConfig(
+                  strings: const PpForgeStrings(retry: 'Try again'),
                   errors: const _DemoErrors(),
                   child: ErrorView(error: _networkError, onRetry: () {}),
                 ),
@@ -579,7 +582,7 @@ class _FeedbackPageState extends State<_FeedbackPage> {
         ),
 
         HubPlayground(
-          title: 'AppMessage',
+          title: 'PpForgeMessage',
           controls: [
             PlayChoice<Tone>('tone', [
               ('info', Tone.info),
@@ -592,14 +595,14 @@ class _FeedbackPageState extends State<_FeedbackPage> {
             const PlayBool('onClose'),
             const PlayBool('floating'),
           ],
-          builder: (context, v) => AppMessage(
+          builder: (context, v) => PpForgeMessage(
             message: v<String>('message'),
             tone: v<Tone>('tone'),
             floating: v<bool>('floating'),
             onClose: v<bool>('onClose') ? () {} : null,
             actions: [
               for (var i = 0; i < v<double>('actions').round(); i++)
-                AppMessageAction(
+                PpForgeMessageAction(
                   label: i == 0 ? 'Undo' : 'Dismiss',
                   onPressed: () {},
                 ),
