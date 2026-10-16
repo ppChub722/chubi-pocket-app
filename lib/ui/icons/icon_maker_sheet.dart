@@ -1,11 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
-import '../../../l10n/gen/app_localizations.dart';
 import 'packs/icon_pack.dart';
 import 'packs/pack_registry.dart';
-import '../../atoms/dashed_rect_border.dart';
-import '../../ui.dart';
+import '../atoms/dashed_rect_border.dart';
+import '../atoms/app_chip.dart';
+import '../atoms/app_divider.dart';
+import '../atoms/app_icon_button.dart';
+import '../atoms/app_input.dart';
+import '../atoms/locked_in_edit.dart';
+import '../atoms/ui_config.dart';
+import '../molecules/app_tab_bar.dart';
+import '../molecules/confirm_dialog.dart';
+import '../molecules/mode_action_bar.dart';
+import '../molecules/option_menu.dart';
+import '../molecules/selectable_frame.dart';
+import '../organisms/option_sheet.dart';
+import '../tokens/app/app_icons.dart';
+import '../tokens/app/app_colors.dart';
+import '../tokens/app_spacing.dart';
+import 'color_token.dart';
+import 'icon_code.dart';
+import 'icon_code_widget.dart';
+import 'icon_shape.dart';
+import 'icon_type.dart';
 
 /// Return type from [showIconMakerSheet].
 sealed class IconMakerResult {
@@ -29,7 +47,7 @@ class IconMakerRemoved extends IconMakerResult {
 /// Returns [IconMakerSelected], [IconMakerRemoved], or `null` (dismissed).
 Future<IconMakerResult?> showIconMakerSheet({
   required BuildContext context,
-  required IconType type,
+  required PpForgeIconType type,
   IconCode? initial,
   Widget? previewSubtitle,
   Widget Function(IconCode)? previewBuilder,
@@ -181,7 +199,7 @@ class _Sheet extends StatefulWidget {
     this.showColorPicker = true,
   });
 
-  final IconType type;
+  final PpForgeIconType type;
   final List<IconPack> packs;
   final IconCode? initial;
   final Widget Function(IconCode)? previewBuilder;
@@ -348,10 +366,10 @@ class _SheetState extends State<_Sheet> {
     }
   }
 
-  String _roleLabel(AppLocalizations l, _Role role) => switch (role) {
-    _Role.icon => l.iconMakerRoleIcon,
-    _Role.background => l.iconMakerRoleBackground,
-    _Role.border => l.iconMakerRoleBorder,
+  String _roleLabel(PpForgeIconMakerStrings l, _Role role) => switch (role) {
+    _Role.icon => l.roleIcon,
+    _Role.background => l.roleBackground,
+    _Role.border => l.roleBorder,
   };
 
   // ── Undo ─────────────────────────────────────────────────────────────────
@@ -548,7 +566,7 @@ class _SheetState extends State<_Sheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
+    final l = PpForgeConfig.stringsOf(context).iconMaker;
     final showTabs = widget.showIconPicker && widget.showColorPicker;
     return SafeArea(
       top: false,
@@ -576,8 +594,8 @@ class _SheetState extends State<_Sheet> {
                 selected: _tab,
                 onChanged: (t) => setState(() => _tab = t),
                 tabs: [
-                  PpForgeTab(value: _Tab.style, label: l.iconMakerTabStyle),
-                  PpForgeTab(value: _Tab.color, label: l.iconMakerTabColor),
+                  PpForgeTab(value: _Tab.style, label: l.tabStyle),
+                  PpForgeTab(value: _Tab.color, label: l.tabColor),
                 ],
               ),
             ),
@@ -599,9 +617,9 @@ class _SheetState extends State<_Sheet> {
           ModeActionBar(
             canSave: true,
             canUndo: _undoStack.isNotEmpty,
-            undoTooltip: l.commonUndo,
-            cancelLabel: l.commonCancel,
-            saveLabel: widget.useThisLabel ?? l.iconPickerUseThis,
+            undoTooltip: PpForgeConfig.stringsOf(context).undo,
+            cancelLabel: PpForgeConfig.stringsOf(context).cancel,
+            saveLabel: widget.useThisLabel ?? l.useThis,
             onCancel: () => Navigator.of(context).pop<IconMakerResult>(null),
             onUndo: _undo,
             onSave: () => Navigator.of(
@@ -615,7 +633,7 @@ class _SheetState extends State<_Sheet> {
 
   // ── Header + preview ─────────────────────────────────────────────────────
 
-  Widget _buildHeader(BuildContext context, AppLocalizations l) {
+  Widget _buildHeader(BuildContext context, PpForgeIconMakerStrings l) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         PpForgeSpacing.xl,
@@ -627,7 +645,7 @@ class _SheetState extends State<_Sheet> {
         children: [
           Expanded(
             child: Text(
-              widget.title ?? l.iconMakerTitle,
+              widget.title ?? l.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleLarge,
@@ -637,13 +655,13 @@ class _SheetState extends State<_Sheet> {
             options: [
               SheetOption(
                 value: 'reset',
-                label: l.iconMakerReset,
+                label: l.reset,
                 leading: const Icon(PpForgeIcons.reset),
               ),
               if (widget.removeLabel != null)
                 SheetOption(
                   value: 'default',
-                  label: l.iconMakerUseDefault,
+                  label: l.useDefault,
                   leading: const Icon(PpForgeIcons.useDefaultIcon),
                 ),
             ],
@@ -651,9 +669,9 @@ class _SheetState extends State<_Sheet> {
               if (v == 'reset') {
                 final ok = await showConfirmDialog(
                   context,
-                  title: l.iconMakerResetConfirmTitle,
-                  message: l.iconMakerResetConfirmBody,
-                  confirmLabel: l.iconMakerReset,
+                  title: l.resetConfirmTitle,
+                  message: l.resetConfirmBody,
+                  confirmLabel: l.reset,
                   destructive: true,
                 );
                 if (ok && mounted) _resetToDefault();
@@ -711,7 +729,7 @@ class _SheetState extends State<_Sheet> {
 
   // ── Layer switcher ────────────────────────────────────────────────────────
 
-  Widget _buildLayerSwitcher(BuildContext context, AppLocalizations l) {
+  Widget _buildLayerSwitcher(BuildContext context, PpForgeIconMakerStrings l) {
     final scheme = Theme.of(context).colorScheme;
     final roles = widget.roles;
     return Container(
@@ -731,7 +749,11 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  Widget _layerSegment(BuildContext context, AppLocalizations l, _Role role) {
+  Widget _layerSegment(
+    BuildContext context,
+    PpForgeIconMakerStrings l,
+    _Role role,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     final active = _role == role;
     final off = _assetId(role) == null;
@@ -859,7 +881,7 @@ class _SheetState extends State<_Sheet> {
     ),
   );
 
-  Widget _buildStyleTab(BuildContext context, AppLocalizations l) {
+  Widget _buildStyleTab(BuildContext context, PpForgeIconMakerStrings l) {
     final role = _role;
     final children = <Widget>[];
 
@@ -867,7 +889,7 @@ class _SheetState extends State<_Sheet> {
       children.add(
         PpForgeInput.search(
           padding: EdgeInsets.zero,
-          hint: l.iconMakerSearchHint,
+          hint: l.searchHint,
           onChanged: (q) => setState(() => _query = q),
         ),
       );
@@ -881,7 +903,7 @@ class _SheetState extends State<_Sheet> {
             spacing: PpForgeSpacing.sm,
             children: [
               PpForgeChip(
-                label: l.transactionsRangeAll,
+                label: l.all,
                 selected: _packFilter == null,
                 onTap: () => setState(() => _packFilter = null),
               ),
@@ -899,7 +921,7 @@ class _SheetState extends State<_Sheet> {
 
     if (role == _Role.background) {
       // Background = shape × pattern.
-      children.add(_section(l.iconMakerShape));
+      children.add(_section(l.shape));
       children.add(
         _grid([
           for (final s in IconShape.values)
@@ -914,7 +936,7 @@ class _SheetState extends State<_Sheet> {
             ),
         ], withLabels: true),
       );
-      children.add(_section(l.iconMakerPattern));
+      children.add(_section(l.pattern));
     } else {
       children.add(const SizedBox(height: PpForgeSpacing.md));
     }
@@ -936,7 +958,7 @@ class _SheetState extends State<_Sheet> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xl),
           child: Text(
-            l.iconMakerNoMatch(_query.trim()),
+            l.noMatch(_query.trim()),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1043,7 +1065,7 @@ class _SheetState extends State<_Sheet> {
     return '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
-  Widget _buildColorTab(BuildContext context, AppLocalizations l) {
+  Widget _buildColorTab(BuildContext context, PpForgeIconMakerStrings l) {
     final role = _role;
     final colors = _effectiveColors(role);
     final off = _assetId(role) == null;
@@ -1061,11 +1083,11 @@ class _SheetState extends State<_Sheet> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _section(l.iconMakerThemeColors),
+              _section(l.themeColors),
               _swatchRow([for (final s in _themeRowSpecs) _swatch(s, colors)]),
-              _section(l.iconMakerCommonColors),
+              _section(l.commonColors),
               _swatchRow([for (final s in _commonRowSpecs) _swatch(s, colors)]),
-              _section(l.iconMakerCustomColors),
+              _section(l.customColors),
               _swatchRow([
                 _pickerButton(l),
                 for (var i = 0; i < 5; i++)
@@ -1084,7 +1106,7 @@ class _SheetState extends State<_Sheet> {
   /// hex under each) | hex field for the focused slot + reset-to-default.
   Widget _buildSlotRow(
     BuildContext context,
-    AppLocalizations l,
+    PpForgeIconMakerStrings l,
     _Role role,
     List<String> colors,
     bool off,
@@ -1097,9 +1119,7 @@ class _SheetState extends State<_Sheet> {
       content = Padding(
         padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.sm),
         child: Text(
-          off
-              ? l.iconMakerLayerOff(_roleLabel(l, role))
-              : l.iconMakerNotRecolorable,
+          off ? l.layerOff(_roleLabel(l, role)) : l.notRecolorable,
           style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
         ),
       );
@@ -1175,7 +1195,7 @@ class _SheetState extends State<_Sheet> {
             ),
           ),
           IconButton(
-            tooltip: l.iconMakerResetSlot,
+            tooltip: l.resetSlot,
             onPressed: def == null || _hexOf(def) == current
                 ? null
                 : () => _applyColor(def, isCustom: false),
@@ -1236,13 +1256,13 @@ class _SheetState extends State<_Sheet> {
     );
   }
 
-  Widget _pickerButton(AppLocalizations l) {
+  Widget _pickerButton(PpForgeIconMakerStrings l) {
     final scheme = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, c) {
         final d = c.maxWidth;
         return Tooltip(
-          message: l.iconMakerPickColor,
+          message: l.pickColor,
           child: InkResponse(
             onTap: _pickCustomHex,
             radius: d / 2,
@@ -1285,12 +1305,12 @@ class _SheetState extends State<_Sheet> {
 /// Popup HSV wheel + hex field (flutter_colorpicker). Returns the picked
 /// colour, or null if cancelled.
 Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
-  final l = AppLocalizations.of(context)!;
+  final l = PpForgeConfig.stringsOf(context).iconMaker;
   var selected = seed;
   return showDialog<Color>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(l.colorPickerTitle),
+      title: Text(l.colorWheelTitle),
       contentPadding: const EdgeInsets.fromLTRB(
         PpForgeSpacing.lg,
         PpForgeSpacing.md,
@@ -1311,11 +1331,11 @@ Future<Color?> _showColorWheelDialog(BuildContext context, Color seed) {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: Text(l.commonCancel),
+          child: Text(PpForgeConfig.stringsOf(context).cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(selected),
-          child: Text(l.colorPickerUse),
+          child: Text(l.colorWheelUse),
         ),
       ],
     ),

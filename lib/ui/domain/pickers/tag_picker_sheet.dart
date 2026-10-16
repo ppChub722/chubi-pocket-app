@@ -12,9 +12,9 @@ import '../../tokens/app/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
 import '../tokens/text_limits.dart';
 import '../../tokens/app_spacing.dart';
-import '../icons/color_token.dart';
-import '../icons/icon_code.dart';
-import '../icons/icon_registry.dart';
+import '../../icons/color_token.dart';
+import '../../icons/icon_code.dart';
+import '../../icons/icon_registry.dart';
 
 /// One tag of [showTagPicker] — plain values, no feature model. [name] is
 /// the label to show (the caller substitutes a placeholder for an empty

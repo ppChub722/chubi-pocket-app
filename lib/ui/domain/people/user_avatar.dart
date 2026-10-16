@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../icons/icon_code.dart';
-import '../icons/icon_display.dart';
+import '../../icons/icon_code.dart';
+import '../../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import '../../atoms/app_avatar.dart';
 

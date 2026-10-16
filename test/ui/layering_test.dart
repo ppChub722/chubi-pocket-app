@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// The layering of the app hub (owner 2026-10-12):
 ///
-///   lib/ui/{tokens,atoms,molecules,organisms,templates}  generic — the future ppForge core
+///   lib/ui/{tokens,atoms,molecules,organisms,templates,icons}  generic — the future ppForge core
 ///   lib/ui/domain                                         the app's own pieces (money, people, icons…)
 ///   lib/ui/ui.dart                                        THE GATE
 ///   lib/features/**                                       imports ONLY the gate
@@ -64,7 +64,14 @@ void main() {
   }
 
   test('generic layers stand alone — the future ppForge package', () {
-    const generic = ['tokens', 'atoms', 'molecules', 'organisms', 'templates'];
+    const generic = [
+      'tokens',
+      'atoms',
+      'molecules',
+      'organisms',
+      'templates',
+      'icons',
+    ];
     // Inside lib/, a generic piece may reach only the generic layers.
     const allowed = [
       'ui/tokens/',
@@ -72,6 +79,7 @@ void main() {
       'ui/molecules/',
       'ui/organisms/',
       'ui/templates/',
+      'ui/icons/',
     ];
     // The app's own stack — never in the kit.
     const bannedPackages = ['package:flutter_bloc/', 'package:go_router/'];

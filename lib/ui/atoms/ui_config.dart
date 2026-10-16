@@ -47,6 +47,7 @@ class PpForgeStrings {
     this.reorderIndent = 'Move in a level',
     this.loadMoreFailed = "Couldn't load more",
     this.pickDatesHint = 'Tap the days to pick them',
+    this.iconMaker = const PpForgeIconMakerStrings(),
   });
 
   final String close;
@@ -112,7 +113,100 @@ class PpForgeStrings {
   final String reorderMoveDown;
   final String reorderIndent;
 
+  /// The icon maker sheet and the icon shapes.
+  final PpForgeIconMakerStrings iconMaker;
+
   static String _dayEveryMonth(int d) => '$d of every month';
+}
+
+/// The icon maker's words ([PpForgeStrings.iconMaker]).
+@immutable
+class PpForgeIconMakerStrings {
+  const PpForgeIconMakerStrings({
+    this.title = 'Icon',
+    this.useThis = 'Use this',
+    this.useDefault = "Use the app's default icon",
+    this.tabStyle = 'Style',
+    this.tabColor = 'Color',
+    this.roleIcon = 'Icon',
+    this.roleBackground = 'Background',
+    this.roleBorder = 'Border',
+    this.searchHint = 'Search icons, e.g. car, home',
+    this.all = 'All',
+    this.noMatch = _noMatch,
+    this.shape = 'Shape',
+    this.pattern = 'Pattern',
+    this.themeColors = 'Theme',
+    this.commonColors = 'Common',
+    this.customColors = 'Custom',
+    this.layerOff = _layerOff,
+    this.notRecolorable = 'This style has fixed colors',
+    this.pickColor = 'Pick a color',
+    this.resetSlot = 'Reset this color',
+    this.reset = 'Reset to default',
+    this.resetConfirmTitle = 'Reset icon?',
+    this.resetConfirmBody =
+        'Icon, colors, background and border go back to the defaults. '
+        'You can undo it.',
+    this.colorWheelTitle = 'Pick a colour',
+    this.colorWheelUse = 'Use colour',
+    this.shapeCircle = 'Circle',
+    this.shapeSquircle = 'Squircle',
+    this.shapeRounded = 'Rounded',
+    this.shapeSquare = 'Square',
+    this.shapeLeaf = 'Leaf',
+    this.shapeDrop = 'Drop',
+  });
+
+  /// The sheet's default heading.
+  final String title;
+  final String useThis;
+
+  /// The ⋯ menu row that drops the custom icon.
+  final String useDefault;
+  final String tabStyle;
+  final String tabColor;
+
+  /// The three editable layers.
+  final String roleIcon;
+  final String roleBackground;
+  final String roleBorder;
+  final String searchHint;
+
+  /// The search's "every group" chip.
+  final String all;
+  final String Function(String query) noMatch;
+  final String shape;
+  final String pattern;
+
+  /// The colour tab's swatch sections.
+  final String themeColors;
+  final String commonColors;
+  final String customColors;
+
+  /// A layer with no style yet ("{layer}: none — pick a style first").
+  final String Function(String layer) layerOff;
+  final String notRecolorable;
+  final String pickColor;
+  final String resetSlot;
+  final String reset;
+  final String resetConfirmTitle;
+  final String resetConfirmBody;
+
+  /// The HSV colour wheel dialog.
+  final String colorWheelTitle;
+  final String colorWheelUse;
+
+  /// The background outlines (`IconShape`).
+  final String shapeCircle;
+  final String shapeSquircle;
+  final String shapeRounded;
+  final String shapeSquare;
+  final String shapeLeaf;
+  final String shapeDrop;
+
+  static String _noMatch(String q) => 'No icons match "$q"';
+  static String _layerOff(String layer) => '$layer: none — pick a style first';
 }
 
 /// How a failure reads to the user: an icon, a headline, a sentence.

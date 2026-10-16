@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/ui/domain/icons/icon_code.dart';
+import 'package:chubi_pocket/ui/icons/icon_code.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/theme_registry.dart';
 import 'package:chubi_pocket/ui/tokens/color_contrast.dart';
 import 'package:flutter/material.dart';

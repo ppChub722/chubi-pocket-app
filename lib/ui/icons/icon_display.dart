@@ -22,7 +22,7 @@ class IconDisplay extends StatelessWidget {
     super.key,
   });
 
-  final IconType type;
+  final PpForgeIconType type;
   final double size;
   final String? imageUrl;
   final IconCode? iconCode;

@@ -124,7 +124,7 @@ export 'atoms/connection_scope.dart';
 
 // Popovers (short lists) & sheets (long / searchable lists)
 export 'molecules/option_menu.dart';
-export 'domain/icons/icon_swatch_grid.dart';
+export 'icons/icon_swatch_grid.dart';
 export 'organisms/action_sheet.dart';
 export 'organisms/app_sheet.dart';
 export 'molecules/day_of_month_picker.dart';
@@ -198,13 +198,17 @@ export 'domain/people/user_avatar.dart';
 // Tokens, icons and mixins features reach for (absorbed from direct imports).
 export 'atoms/skeleton_box.dart';
 export 'domain/feedback/offline_banner.dart';
-export 'domain/icons/color_token.dart';
-export 'domain/icons/icon_code.dart';
-export 'domain/icons/icon_code_widget.dart';
-export 'domain/icons/icon_display.dart';
-export 'domain/icons/icon_maker_sheet.dart';
-export 'domain/icons/icon_registry.dart';
-export 'domain/icons/icon_shape.dart';
+export 'icons/color_token.dart';
+export 'icons/icon_code.dart';
+export 'icons/icon_code_widget.dart';
+export 'icons/icon_display.dart';
+export 'icons/icon_maker_sheet.dart';
+export 'icons/icon_registry.dart';
+export 'icons/icon_shape.dart';
+export 'icons/icon_type.dart';
+export 'icons/packs/icon_pack.dart';
+export 'icons/packs/pack_registry.dart';
+export 'icons/brand_palette.dart';
 export 'domain/icons/icon_type.dart';
 export 'domain/people/user_profile_preview.dart';
 export 'organisms/reorder/reorder_outline.dart';

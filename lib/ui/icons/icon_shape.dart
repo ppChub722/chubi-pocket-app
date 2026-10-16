@@ -1,6 +1,6 @@
 import 'package:flutter/painting.dart';
 
-import '../../../l10n/gen/app_localizations.dart';
+import '../atoms/ui_config.dart';
 
 /// Outline of an icon's background (and the border that follows it).
 /// Stored as `IconCode.shape` by [name]; `null` / unknown = [circle], so
@@ -40,12 +40,12 @@ enum IconShape {
     };
   }
 
-  String label(AppLocalizations l) => switch (this) {
-    IconShape.circle => l.iconShapeCircle,
-    IconShape.squircle => l.iconShapeSquircle,
-    IconShape.rounded => l.iconShapeRounded,
-    IconShape.square => l.iconShapeSquare,
-    IconShape.leaf => l.iconShapeLeaf,
-    IconShape.drop => l.iconShapeDrop,
+  String label(PpForgeIconMakerStrings l) => switch (this) {
+    IconShape.circle => l.shapeCircle,
+    IconShape.squircle => l.shapeSquircle,
+    IconShape.rounded => l.shapeRounded,
+    IconShape.square => l.shapeSquare,
+    IconShape.leaf => l.shapeLeaf,
+    IconShape.drop => l.shapeDrop,
   };
 }

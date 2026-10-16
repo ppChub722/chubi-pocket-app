@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../tokens/app_spacing.dart';
-import '../icons/icon_code.dart';
+import '../../icons/icon_code.dart';
 import 'user_avatar.dart';
 
 /// Compact user preview row: `[ avatar ] displayName`.

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../tokens/app_spacing.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../icons/icon_code.dart';
+import '../../icons/icon_code.dart';
 import '../../atoms/add_tile.dart';
 import 'user_avatar.dart';
 

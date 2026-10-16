@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_avatar.dart';
-import '../../molecules/option_menu.dart';
-import '../../molecules/selectable_frame.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
+import '../atoms/app_avatar.dart';
+import '../molecules/option_menu.dart';
+import '../molecules/selectable_frame.dart';
+import '../tokens/app/app_icons.dart';
+import '../tokens/app_spacing.dart';
 import 'icon_registry.dart';
 
 /// Icon-swatch grid for [PopoverAnchor] — the [ColorSwatchGrid] of glyphs

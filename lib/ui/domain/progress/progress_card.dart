@@ -4,8 +4,8 @@ import '../../atoms/skeleton_box.dart';
 import '../../molecules/progress_row.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../tokens/app_spacing.dart';
-import '../icons/icon_code.dart';
-import '../icons/icon_code_widget.dart';
+import '../../icons/icon_code.dart';
+import '../../icons/icon_code_widget.dart';
 import 'progress_tone.dart';
 
 /// One progress item — a budget, a saving goal, a budget PERIOD (owner

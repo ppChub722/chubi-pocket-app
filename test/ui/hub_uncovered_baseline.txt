@@ -1,4 +1,6 @@
 AvatarMetrics
+BrandPalette
+BrandSwatch
 Currencies
 EditModeMixin
 FontRegistry
@@ -11,11 +13,15 @@ IconMakerLayers
 IconMakerRemoved
 IconMakerResult
 IconMakerSelected
+IconPack
+IconPackItem
 IconRegistry
 IconShape
 IconType
-IconTypeX
+PackRegistry
 PageExitScope
+PpForgeIconMakerStrings
+PpForgeIconType
 PpForgeTheme
 ReorderOutline
 SecretTapDetector

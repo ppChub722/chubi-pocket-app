@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../molecules/list_row.dart';
-import '../icons/icon_code.dart';
+import '../../icons/icon_code.dart';
 import '../money/net_balance.dart';
 import 'person_mark.dart';
 import 'person_row.dart';

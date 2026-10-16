@@ -1,5 +1,5 @@
-import 'package:chubi_pocket/ui/domain/icons/icon_code.dart';
-import 'package:chubi_pocket/ui/domain/icons/icon_shape.dart';
+import 'package:chubi_pocket/ui/icons/icon_code.dart';
+import 'package:chubi_pocket/ui/icons/icon_shape.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 

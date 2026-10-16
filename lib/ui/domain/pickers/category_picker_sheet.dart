@@ -8,8 +8,8 @@ import '../../organisms/app_sheet.dart';
 import '../../organisms/picker_sheet.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
-import '../icons/icon_code.dart';
-import '../icons/icon_display.dart';
+import '../../icons/icon_code.dart';
+import '../../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 
 /// One category row of [showCategoryPicker] — plain values, no feature

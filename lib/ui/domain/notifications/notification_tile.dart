@@ -11,7 +11,7 @@ import '../../tokens/app/app_icons.dart';
 import '../../tokens/app_spacing.dart';
 import '../../tokens/chip_size.dart';
 import '../../tokens/typography.dart';
-import '../icons/icon_code.dart';
+import '../../icons/icon_code.dart';
 
 /// The words of the reject confirmation of a [NotificationTileView].
 class NotificationRejectConfirm {

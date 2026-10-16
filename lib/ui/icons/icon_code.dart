@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_avatar.dart';
-import '../../tokens/app/app_colors.dart';
+import '../atoms/app_avatar.dart';
+import '../tokens/app/app_colors.dart';
 import 'color_token.dart';
 
 /// Unified icon descriptor stored as JSONB on the server.

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_colors.dart';
+import '../tokens/app/app_colors.dart';
 
 /// Resolves a colour spec against the active [PpForgeColors] palette.
 ///
