@@ -27,7 +27,7 @@ class ThemeBuilder {
       scaffoldBackgroundColor: colors.background,
       canvasColor: colors.background,
       textTheme: textTheme,
-      extensions: [colors, ?theme.modulesFor(brightness)],
+      extensions: [colors, ...theme.extensionsFor(brightness)],
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: PpForgePageTransitionsBuilder(),

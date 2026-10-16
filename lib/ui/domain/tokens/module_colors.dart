@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import '../../tokens/app/app_colors.dart';
 
 /// Colour of each feature **group** — the เพิ่มเติม hub's sections
 /// (คลัง / คน / วางแผน). Every card in a group shares its group's colour.
 ///
 /// Kept apart from [PpForgeColors] on purpose: those are *semantic* colours
 /// (income, expense, error …); these only mark "which part of the app".
-/// Each [PpForgeTheme] ships its own set (light + dark) in its own family —
+/// Each theme carries its own set (light + dark) as a theme extension
+/// ([chubiThemes]) in its own family —
 /// warm pinks for Sweet, cool greens / blues for Mint. A theme without a
 /// set falls back to its primary colour everywhere ([of]).
 @immutable

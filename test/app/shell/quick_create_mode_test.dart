@@ -142,6 +142,9 @@ GoRouter _router() => GoRouter(
 );
 
 void main() {
+  // The debt mode takes the app's people colour (a chubiPocket extension).
+  setUpAll(configureChubiThemes);
+
   late GoRouter router;
 
   Future<void> pump(WidgetTester t) async {

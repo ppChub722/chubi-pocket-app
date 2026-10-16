@@ -1,6 +1,7 @@
 import 'app_font.dart';
 
-/// Central registry of all fonts available in the app.
+/// The fonts the app offers — ppForge's [builtIn] set unless the host app
+/// [configure]s its own.
 ///
 /// Adding a new font:
 ///   1. Append an [PpForgeFont] entry here.
@@ -47,7 +48,8 @@ class FontRegistry {
   );
 
   // ── Aggregate ────────────────────────────────────────────────────────────
-  static const List<PpForgeFont> all = [
+  /// The fonts ppForge ships. A host app offers its own set with [configure].
+  static const List<PpForgeFont> builtIn = [
     inter,
     nunito,
     poppins,
@@ -55,12 +57,34 @@ class FontRegistry {
     mitr,
   ];
 
-  /// Per-language defaults — used when the app first launches and when the
-  /// current font does not support a newly-selected locale.
-  static const Map<String, String> defaultsByLanguage = {
+  static const Map<String, String> builtInDefaults = {
     'en': 'Inter',
     'th': 'IBM Plex Sans Thai',
   };
+
+  static List<PpForgeFont> _all = builtIn;
+  static Map<String, String> _defaults = builtInDefaults;
+
+  static List<PpForgeFont> get all => _all;
+
+  /// Per-language defaults — used when the app first launches and when the
+  /// current font does not support a newly-selected locale.
+  static Map<String, String> get defaultsByLanguage => _defaults;
+
+  /// Replaces the offered fonts and the per-language defaults (ids from
+  /// [fonts]) — once, before `runApp`.
+  static void configure(
+    List<PpForgeFont> fonts, {
+    required Map<String, String> defaultsByLanguage,
+  }) {
+    assert(fonts.isNotEmpty, 'FontRegistry needs at least one font');
+    assert(
+      defaultsByLanguage.values.every((id) => fonts.any((f) => f.id == id)),
+      'a default font is not in the list',
+    );
+    _all = List.unmodifiable(fonts);
+    _defaults = Map.unmodifiable(defaultsByLanguage);
+  }
 
   static String defaultIdFor(String languageCode) =>
       defaultsByLanguage[languageCode] ?? all.first.id;

@@ -56,6 +56,9 @@ Future<void> main() async {
 
       final prefs = await SharedPreferences.getInstance();
 
+      // ppForge's themes with chubiPocket's module colours.
+      configureChubiThemes();
+
       // Font preload is a nice-to-have — never let it block or kill boot
       // (it downloads from the network via google_fonts; offline/slow
       // devices fall back to system fonts and the app must still open).

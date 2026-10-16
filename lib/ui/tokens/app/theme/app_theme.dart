@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../app_colors.dart';
-import '../module_colors.dart';
 
 @immutable
 class PpForgeTheme {
@@ -13,17 +12,18 @@ class PpForgeTheme {
     required this.darkColors,
     required this.previewSwatch,
     this.sku,
-    this.lightModules,
-    this.darkModules,
+    this.lightExtensions = const [],
+    this.darkExtensions = const [],
   });
 
-  /// Feature-group colours (the เพิ่มเติม hub's sections). Null → the
-  /// theme's primary for every group (see [ModuleColors.of]).
-  final ModuleColors? lightModules;
-  final ModuleColors? darkModules;
+  /// The host app's own [ThemeExtension]s (e.g. its feature-group colours),
+  /// installed next to [PpForgeColors] by `ThemeBuilder`. Add them to a
+  /// ready-made theme with [withExtensions].
+  final List<ThemeExtension<dynamic>> lightExtensions;
+  final List<ThemeExtension<dynamic>> darkExtensions;
 
-  ModuleColors? modulesFor(Brightness brightness) =>
-      brightness == Brightness.dark ? darkModules : lightModules;
+  List<ThemeExtension<dynamic>> extensionsFor(Brightness brightness) =>
+      brightness == Brightness.dark ? darkExtensions : lightExtensions;
 
   final String id;
   final String nameKey;
@@ -35,4 +35,20 @@ class PpForgeTheme {
 
   PpForgeColors colorsFor(Brightness brightness) =>
       brightness == Brightness.dark ? darkColors : lightColors;
+
+  /// This theme with the host app's [light] / [dark] extensions.
+  PpForgeTheme withExtensions({
+    List<ThemeExtension<dynamic>> light = const [],
+    List<ThemeExtension<dynamic>> dark = const [],
+  }) => PpForgeTheme(
+    id: id,
+    nameKey: nameKey,
+    isPremium: isPremium,
+    sku: sku,
+    lightColors: lightColors,
+    darkColors: darkColors,
+    previewSwatch: previewSwatch,
+    lightExtensions: light,
+    darkExtensions: dark,
+  );
 }

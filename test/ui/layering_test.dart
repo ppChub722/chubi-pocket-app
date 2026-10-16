@@ -80,9 +80,6 @@ void main() {
       final dir = Directory('lib/ui/$layer');
       if (!dir.existsSync()) continue;
       for (final f in dartFiles(dir.path)) {
-        // tokens/app = the app's own values (themes, module colours) —
-        // split into kit / app when the theme is made injectable.
-        if (norm(f.path).contains('/tokens/app/')) continue;
         for (final i in importsOf(f)) {
           final target = libPathOf(f, i);
           final leaves = target != null && !allowed.any(target.startsWith);

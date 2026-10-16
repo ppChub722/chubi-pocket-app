@@ -1,4 +1,3 @@
-PpForgeTheme
 AvatarMetrics
 Currencies
 EditModeMixin
@@ -17,6 +16,7 @@ IconShape
 IconType
 IconTypeX
 PageExitScope
+PpForgeTheme
 ReorderOutline
 SecretTapDetector
 ShellChrome
@@ -25,6 +25,7 @@ ShellChromeHider
 TapUnlockCounter
 TextLimits
 ThemeRegistry
+configureChubiThemes
 detailLabelStyle
 detailMetaLines
 isMoneyHidden

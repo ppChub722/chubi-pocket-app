@@ -10,7 +10,7 @@ import '../../organisms/picker_sheet.dart';
 import '../../templates/form_sheet.dart';
 import '../../tokens/app/app_colors.dart';
 import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/text_limits.dart';
+import '../tokens/text_limits.dart';
 import '../../tokens/app_spacing.dart';
 import '../icons/color_token.dart';
 import '../icons/icon_code.dart';

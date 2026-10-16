@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atoms/app_chip.dart';
-import '../../tokens/app/quick_create_mode.dart';
+import '../tokens/quick_create_mode.dart';
 import '../../tokens/app_spacing.dart';
 
 /// The quick create's mode switch at the very top of the sheet, above the

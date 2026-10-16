@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../app_colors.dart';
 import '../app_theme.dart';
-import '../../module_colors.dart';
 
 const _sweetPink = Color(0xFFFFB3C6);
 const _sweetPinkDeep = Color(0xFFFF8FB1);
@@ -13,17 +12,6 @@ final sweetTheme = PpForgeTheme(
   nameKey: 'theme_sweet',
   isPremium: false,
   previewSwatch: const [_sweetPink, _sweetAccent, Color(0xFFFFFFFF)],
-  // Feature groups — warm pink family: pink · peach · purple.
-  lightModules: const ModuleColors(
-    library: Color(0xFFEC4899),
-    people: Color(0xFFF97316),
-    planning: Color(0xFFA855F7),
-  ),
-  darkModules: const ModuleColors(
-    library: Color(0xFFF472B6),
-    people: Color(0xFFFB923C),
-    planning: Color(0xFFC084FC),
-  ),
   lightColors: const PpForgeColors(
     brightness: Brightness.light,
     primary: _sweetPinkDeep,
