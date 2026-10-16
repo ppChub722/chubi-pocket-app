@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_formatter.dart';
-import '../../tokens/app/app_colors.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'money_text.dart';
 
 /// Where a [NetBalance] sits — it sets the text sizes and the alignment.

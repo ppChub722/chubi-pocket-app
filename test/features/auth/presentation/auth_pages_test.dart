@@ -9,7 +9,6 @@ import 'package:chubi_pocket/features/auth/presentation/pages/register_page.dart
 import 'package:chubi_pocket/features/preferences/presentation/cubit/locale_cubit.dart';
 import 'package:chubi_pocket/features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/theme_builder.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/select_check.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../../icons/icon_code.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../money/money_text.dart';
 import '../people/person_mark.dart';
 import 'event_card.dart';

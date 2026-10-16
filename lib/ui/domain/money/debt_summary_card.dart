@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_card.dart';
-import '../../molecules/selectable_frame.dart';
-import '../../tokens/app/app_colors.dart';
-import '../../tokens/app_radius.dart';
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'money_text.dart';
 
 /// The debts people list's summary (owner 2026-10-12, debts rework):

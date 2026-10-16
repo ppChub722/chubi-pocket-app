@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_icon.dart';
-import '../../molecules/detail_rows.dart';
-import '../../molecules/empty_view.dart';
-import '../../organisms/app_sheet.dart';
-import '../../organisms/picker_sheet.dart';
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge/pp_forge.dart';
 
 /// One wallet of [showAccountMultiPicker], as plain display data.
 @immutable

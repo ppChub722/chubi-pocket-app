@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../molecules/list_row.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
-import '../../icons/icon_code.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'person_mark.dart';
 
 /// A member / contact row (owner 2026-10-12, debts rework) — a [ListRow]

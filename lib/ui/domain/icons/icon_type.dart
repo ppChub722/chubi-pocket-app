@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../icons/icon_type.dart';
-import '../../icons/packs/base/pack_account.dart';
-import '../../icons/packs/base/pack_category.dart';
-import '../../icons/packs/base/pack_contact.dart';
-import '../../icons/packs/base/pack_project.dart';
-import '../../icons/packs/base/pack_project_member.dart';
-import '../../icons/packs/base/pack_project_transaction.dart';
-import '../../icons/packs/base/pack_tag.dart';
-import '../../icons/packs/base/pack_user_profile.dart';
+import 'package:pp_forge/pp_forge.dart';
 
 /// chubiPocket's icon types: which ppForge pack and fallback each thing that
 /// has an icon uses (`IconType.account`, …).

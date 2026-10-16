@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../tokens/quick_create_mode.dart';
-import '../../tokens/app_spacing.dart';
 
 /// The quick create's mode switch at the very top of the sheet, above the
 /// EntryCard (owner 2026-10-12): `[รายการ] [หนี้]`. Each chip takes its

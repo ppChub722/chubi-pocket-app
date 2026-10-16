@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_spacing.dart';
-import '../../atoms/list_break.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'money_text.dart';
 
 /// A money row: leading visual, title, subtitle line, signed amount on the

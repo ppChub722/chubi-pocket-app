@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge/pp_forge.dart';
 
 /// One thing that feeds a budget / goal: a category, a tag, a wallet — or a
 /// "kind" of money (normal · event · recurring ahead · pending).

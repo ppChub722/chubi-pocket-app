@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_chip.dart';
-import '../../atoms/icon_tile.dart';
-import '../../tokens/app/app_colors.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../money/money_text.dart';
 
 /// The kind of a saving tx (goals v2): its own record, never a real tx.

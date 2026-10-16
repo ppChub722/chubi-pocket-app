@@ -1,4 +1,4 @@
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'package:chubi_pocket/features/notifications/domain/notification.dart';
 import 'package:chubi_pocket/features/notifications/presentation/widgets/notification_tile.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';

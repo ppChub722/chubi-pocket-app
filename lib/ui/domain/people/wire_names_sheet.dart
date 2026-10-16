@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_input.dart';
-import '../../atoms/app_text.dart';
-import '../../tokens/typography.dart';
-import '../../molecules/detail_rows.dart';
-import '../../molecules/list_row.dart';
-import '../../organisms/app_sheet.dart';
-import '../../templates/form_sheet.dart';
+import 'package:pp_forge/pp_forge.dart';
 
 /// One typed name of [WireNamesSheet] — plain values, not a model.
 @immutable

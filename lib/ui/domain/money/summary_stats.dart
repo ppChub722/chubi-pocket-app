@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'money_text.dart';
 
 /// One labelled amount in a [SummaryStats] row.

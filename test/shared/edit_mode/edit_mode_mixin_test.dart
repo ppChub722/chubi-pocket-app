@@ -1,6 +1,5 @@
-import 'package:chubi_pocket/ui/templates/shell_chrome.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/templates/edit_mode_mixin.dart';
 import 'package:chubi_pocket/ui/domain/l10n/app_ui_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_colors.dart';
+import 'package:pp_forge/pp_forge.dart';
 
 /// Colour of each feature **group** — the เพิ่มเติม hub's sections
 /// (คลัง / คน / วางแผน). Every card in a group shares its group's colour.

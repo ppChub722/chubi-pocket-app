@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../atoms/ui_config.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app/app_colors.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../features/preferences/presentation/cubit/money_visibility_cubit.dart';
 import '../../../l10n/gen/app_localizations.dart';

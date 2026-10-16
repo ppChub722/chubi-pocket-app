@@ -11,7 +11,6 @@ import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.d
 import 'package:chubi_pocket/features/saving_goals/presentation/cubit/saving_goals_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/theme_builder.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

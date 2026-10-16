@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/progress_row.dart';
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../money/money_text.dart';
 
 /// One line of a breakdown ("by source", "by sub-category", a goal's

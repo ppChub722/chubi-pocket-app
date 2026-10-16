@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:chubi_pocket/core/network/api_client.dart';
 import 'package:chubi_pocket/core/storage/secure_token_storage.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'package:chubi_pocket/features/app_version/data/app_version_repository.dart';
 import 'package:chubi_pocket/features/app_version/domain/app_version_info.dart';
 import 'package:chubi_pocket/features/app_version/presentation/cubit/app_version_cubit.dart';

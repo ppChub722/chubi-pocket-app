@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../icons/icon_code.dart';
-import '../../icons/icon_display.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../icons/icon_type.dart';
-import '../../atoms/app_avatar.dart';
 
 /// A user's avatar: their chosen icon ([iconCode], rendered by the icon
 /// maker) or, without one, an [PpForgeAvatar] of their initials.

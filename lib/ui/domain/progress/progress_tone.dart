@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_colors.dart';
+import 'package:pp_forge/pp_forge.dart';
 
 /// How a progress bar (a budget, a saving goal) is coloured — decided by the
 /// caller (for budgets the BE sends it: neutral / warning / danger), never

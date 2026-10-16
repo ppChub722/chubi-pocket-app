@@ -34,6 +34,11 @@ void main() {
       final dir = path.substring(0, path.lastIndexOf('/'));
       for (final m in exportRe.allMatches(src)) {
         final rel = m.group(1)!;
+        // The ppForge kit — a path dependency next to this app.
+        if (rel.startsWith('package:pp_forge/')) {
+          visit('../pp-forge/lib/${rel.substring('package:pp_forge/'.length)}');
+          continue;
+        }
         if (rel.startsWith('package:') || rel.startsWith('dart:')) continue;
         // App* aliases of PpForge* pieces — covered by what they alias.
         if (rel == 'app_aliases.dart') continue;

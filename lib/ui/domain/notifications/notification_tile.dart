@@ -1,17 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_chip.dart';
-import '../../atoms/app_text.dart';
-import '../../atoms/corner_badge.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../people/user_avatar.dart';
-import '../../molecules/confirm_dialog.dart';
-import '../../molecules/list_row.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../../tokens/chip_size.dart';
-import '../../tokens/typography.dart';
-import '../../icons/icon_code.dart';
 
 /// The words of the reject confirmation of a [NotificationTileView].
 class NotificationRejectConfirm {

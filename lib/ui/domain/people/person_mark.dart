@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
-import '../../icons/icon_code.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'user_avatar.dart';
 
 /// Who a person is to me — the three looks of a person everywhere (owner

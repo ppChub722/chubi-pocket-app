@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/detail_rows.dart';
-import '../../molecules/empty_view.dart';
-import '../../organisms/app_sheet.dart';
-import '../../organisms/picker_sheet.dart';
-import '../../tokens/app_spacing.dart';
-import '../../icons/icon_code.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'person_mark.dart';
 
 /// One contact row of [ContactPickerSheet] — plain values, not a model.

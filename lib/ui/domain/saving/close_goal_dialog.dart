@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atoms/app_button.dart';
-import '../../atoms/app_card.dart';
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../money/money_text.dart';
 
 /// Where a closed goal's money goes.

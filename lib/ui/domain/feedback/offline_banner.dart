@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/connection_cubit.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../molecules/connection_banner.dart';
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge/pp_forge.dart';
 
 /// The server-connection banner at the top of every page (owner 2026-10-12,
 /// offline mode): the kit's [ConnectionBanner] with the app's words. Nothing

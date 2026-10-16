@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../icons/icon_code.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../people/person_mark.dart';
 
 /// A project member's own icon, else their initial — a thin skin over

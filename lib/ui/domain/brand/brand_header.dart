@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../debug/secret_tap.dart';
-import '../../tokens/app_spacing.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'brand_logo.dart';
 
 /// Logo · app name · tagline (the auth pages' header). [onSecretUnlock]: the

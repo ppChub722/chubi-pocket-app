@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/theme/theme_registry.dart';
-import '../../tokens/app/theme/themes/mint_theme.dart';
-import '../../tokens/app/theme/themes/sweet_theme.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'module_colors.dart';
 
 /// chubiPocket's themes: ppForge's Mint and Sweet, each with the app's

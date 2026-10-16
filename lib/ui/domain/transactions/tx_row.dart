@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
-import '../../tokens/app_spacing.dart';
-import '../../atoms/app_chip.dart';
-import '../../tokens/chip_size.dart';
+import 'package:pp_forge/pp_forge.dart';
 import '../money/money_list_tile.dart';
 import '../money/money_text.dart';
 

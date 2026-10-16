@@ -4,15 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// The layering of the app hub (owner 2026-10-12):
 ///
-///   lib/ui/{tokens,atoms,molecules,organisms,templates,icons}  generic — the future ppForge core
+///   ../pp-forge (package:pp_forge)                        generic — the ppForge kit
 ///   lib/ui/domain                                         the app's own pieces (money, people, icons…)
 ///   lib/ui/ui.dart                                        THE GATE
 ///   lib/features/**                                       imports ONLY the gate
 ///
 /// 1. A feature file imports nothing from lib/ui except `ui/ui.dart`.
-/// 2. A generic piece imports only the generic layers (plus Flutter and
-///    neutral packages) — no core, features, app, l10n, hub, ui/domain,
-///    go_router or flutter_bloc. It is what moves into the ppForge package.
+/// 2. Generic pieces live in ppForge, which imports no app code (nor
+///    go_router / flutter_bloc); lib/ui keeps only the gate, the App*
+///    aliases and lib/ui/domain. Features reach ppForge through the gate.
 void main() {
   final lib = Directory('lib');
 
@@ -44,26 +44,7 @@ void main() {
     );
   });
 
-  /// [import] as a path under lib/ (`ui/atoms/x.dart`), or null for a
-  /// `dart:` / third-party package import.
-  String? libPathOf(File from, String import) {
-    if (import.startsWith('package:chubi_pocket/')) {
-      return import.substring('package:chubi_pocket/'.length);
-    }
-    if (import.contains(':')) return null;
-    final parts = norm(from.parent.path).split('/');
-    for (final s in import.split('/')) {
-      if (s == '..') {
-        parts.removeLast();
-      } else if (s != '.') {
-        parts.add(s);
-      }
-    }
-    final at = parts.indexOf('lib');
-    return parts.skip(at + 1).join('/');
-  }
-
-  test('generic layers stand alone — the future ppForge package', () {
+  test('the kit lives in ppForge, not in lib/ui', () {
     const generic = [
       'tokens',
       'atoms',
@@ -72,39 +53,51 @@ void main() {
       'templates',
       'icons',
     ];
-    // Inside lib/, a generic piece may reach only the generic layers.
-    const allowed = [
-      'ui/tokens/',
-      'ui/atoms/',
-      'ui/molecules/',
-      'ui/organisms/',
-      'ui/templates/',
-      'ui/icons/',
+    final back = [
+      for (final layer in generic)
+        if (Directory('lib/ui/$layer').existsSync()) 'lib/ui/$layer',
     ];
-    // The app's own stack — never in the kit.
-    const bannedPackages = ['package:flutter_bloc/', 'package:go_router/'];
+    expect(
+      back,
+      isEmpty,
+      reason:
+          'generic pieces belong in ../pp-forge/lib/src; app pieces in '
+          'lib/ui/domain:\n${back.join('\n')}',
+    );
+  });
+
+  test('ppForge stands alone — no app code, no app stack', () {
+    const banned = [
+      'package:chubi_pocket/',
+      'package:flutter_bloc/',
+      'package:go_router/',
+    ];
     final bad = <String>[];
-    for (final layer in generic) {
-      final dir = Directory('lib/ui/$layer');
-      if (!dir.existsSync()) continue;
-      for (final f in dartFiles(dir.path)) {
-        for (final i in importsOf(f)) {
-          final target = libPathOf(f, i);
-          final leaves = target != null && !allowed.any(target.startsWith);
-          if (leaves || bannedPackages.any(i.startsWith)) {
-            bad.add('${norm(f.path)} → ${target ?? i}');
-          }
-        }
+    for (final f in dartFiles('../pp-forge/lib')) {
+      for (final i in importsOf(f)) {
+        if (banned.any(i.startsWith)) bad.add('${norm(f.path)} → $i');
       }
     }
     expect(
       bad,
       isEmpty,
       reason:
-          'generic widgets take strings / data / behaviour as parameters or '
-          'scopes (PpForgeConfig, PageExitScope); app pieces live in ui/domain:\n'
-          '${bad.join('\n')}',
+          'the kit takes strings / data / behaviour as parameters or scopes '
+          '(PpForgeConfig, PageExitScope):\n${bad.join('\n')}',
     );
     expect(lib.existsSync(), isTrue);
+  });
+
+  test('features reach ppForge through the gate', () {
+    final bad = [
+      for (final f in dartFiles('lib/features'))
+        for (final i in importsOf(f))
+          if (i.startsWith('package:pp_forge/')) '${norm(f.path)} → $i',
+    ];
+    expect(
+      bad,
+      isEmpty,
+      reason: 'import ui/ui.dart instead:\n${bad.join('\n')}',
+    );
   });
 }

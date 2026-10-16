@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../tokens/app/app_icons.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'currencies.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../molecules/option_menu.dart';
-import '../../organisms/option_sheet.dart';
-import '../../molecules/detail_rows.dart';
 
 /// Currency field: a [DetailRow] picker (›) that opens a popover of
 /// [Currencies.codes] (short list → popover, per the app rule).

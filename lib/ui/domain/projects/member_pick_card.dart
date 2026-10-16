@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../molecules/pick_card.dart';
-import '../../tokens/app/app_icons.dart';
-import '../../icons/icon_code.dart';
+import 'package:pp_forge/pp_forge.dart';
 import 'project_member_avatar.dart';
 
 /// A project member as a [PickCard] — the payer of a project row, with their

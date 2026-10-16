@@ -16,6 +16,10 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  # The UI kit, extracted from this app (tokens → templates + icons).
+  pp_forge:
+    path: ../pp-forge
+
   cupertino_icons: ^1.0.8
 
   # State management — Bloc + Cubit + Repository pattern (locked)

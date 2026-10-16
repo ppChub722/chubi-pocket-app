@@ -12,7 +12,6 @@ import 'package:chubi_pocket/features/preferences/presentation/cubit/locale_cubi
 import 'package:chubi_pocket/features/preferences/presentation/cubit/theme_mode_cubit.dart';
 import 'package:chubi_pocket/features/settings/presentation/pages/change_password_page.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/theme_builder.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

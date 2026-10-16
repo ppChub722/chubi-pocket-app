@@ -1,4 +1,3 @@
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';

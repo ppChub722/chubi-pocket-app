@@ -15,7 +15,6 @@ import 'package:chubi_pocket/features/transactions/presentation/cubit/transactio
 import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_form.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/quick_create_sheet.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
-import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
