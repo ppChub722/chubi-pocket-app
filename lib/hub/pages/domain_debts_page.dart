@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge/hub.dart';
 
 /// `/dev/domain/debts` — the debts rework pieces: PersonRow,
 /// PersonBalanceRow, NetBalance, DebtSummaryCard and LedgerRow. Sample data

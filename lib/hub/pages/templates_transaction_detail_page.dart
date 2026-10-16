@@ -11,7 +11,7 @@ import '../../features/transactions/presentation/widgets/draft_form.dart';
 import '../../features/transactions/presentation/widgets/tx_compact_hero.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 
 /// `/dev/templates/transaction-detail` — the transaction detail page's
 /// anatomy, on sample data. The page is exempt from the generic detail-page

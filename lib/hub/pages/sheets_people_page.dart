@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 
 /// `/dev/sheets/people` — the people sheets: contact picker, wire names.
 Widget buildSheetsPeoplePage(BuildContext context) => const _SheetsPeoplePage();

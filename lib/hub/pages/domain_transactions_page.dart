@@ -20,7 +20,7 @@ import '../../features/transactions/presentation/widgets/period_summary_card.dar
 import '../../features/transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../features/transactions/presentation/widgets/transaction_tile.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 
 /// `/dev/domain/transactions` — the transaction row, hero card, chip
 /// builders and the pieces that need live app data.

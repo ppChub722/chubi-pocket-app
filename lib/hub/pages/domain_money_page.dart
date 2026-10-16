@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 
 /// Money pieces: MoneyText, MoneyVisibilityToggle, MoneyListTile,
 /// DateGroupHeader, CurrencyTile. (IconTile is on Atoms → Badge & avatar,

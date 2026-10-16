@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 
 /// `/dev/domain/budgets` — the budget-only pieces: the source chips, the
 /// scope prompt, the simple period editor (RecurrenceEditor `simple`), the

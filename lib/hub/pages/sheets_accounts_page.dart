@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
-import '../hub_playground.dart';
+import 'package:pp_forge/hub.dart';
 
 /// `/dev/domain/sheets-accounts` — the wallet sheets as presentational
 /// organisms (sample data, no cubit / repository): adjust balance, bank

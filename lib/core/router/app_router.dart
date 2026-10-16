@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,9 +9,7 @@ import '../../app/shell/more_page.dart';
 import '../../app/shell/quick_create_context.dart';
 import 'package:pp_forge/pp_forge.dart';
 import '../../app/shell/tab_nav.dart';
-import '../../hub/hub_index_screen.dart';
-import '../../hub/hub_page_frame.dart';
-import '../../hub/hub_registry.dart';
+import 'package:pp_forge/hub.dart';
 import '../../app/shell/fade_branch_container.dart';
 import '../../features/app_version/presentation/cubit/app_version_cubit.dart';
 import '../../features/app_version/presentation/pages/update_required_page.dart';
@@ -179,7 +176,7 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
       GoRoute(
         path: '/dev',
         name: 'dev-hub',
-        builder: (context, state) => const HubIndexScreen(),
+        builder: (context, state) => hubScreenFor(context),
         routes: [
           // The portal's menus and pages (lib/hub):
           //   /dev/ui                      → the UI levels (cards)
@@ -190,24 +187,16 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
           GoRoute(
             path: 'ui/:level',
             name: 'hub-ui-level',
-            builder: (context, state) {
-              final level = HubLevel.values
-                  .where(
-                    (l) => l.isUi && l.name == state.pathParameters['level'],
-                  )
-                  .firstOrNull;
-              return level == null
-                  ? const HubIndexScreen()
-                  : HubLevelScreen(level: level);
-            },
+            builder: (context, state) =>
+                hubScreenFor(context, level: state.pathParameters['level']),
             routes: [
               GoRoute(
                 path: ':slug',
                 name: 'hub-ui-page',
-                builder: (context, state) => _hubPage(
+                builder: (context, state) => hubScreenFor(
                   context,
-                  state.pathParameters['level']!,
-                  state.pathParameters['slug']!,
+                  level: state.pathParameters['level'],
+                  slug: state.pathParameters['slug'],
                 ),
               ),
             ],
@@ -215,22 +204,16 @@ GoRouter buildAppRouter(AuthCubit authCubit, {AppVersionCubit? versionCubit}) {
           GoRoute(
             path: ':section',
             name: 'hub-section',
-            builder: (context, state) {
-              final section = HubSection.byName(
-                state.pathParameters['section']!,
-              );
-              return section == null
-                  ? const HubIndexScreen()
-                  : HubSectionScreen(section: section);
-            },
+            builder: (context, state) =>
+                hubScreenFor(context, section: state.pathParameters['section']),
             routes: [
               GoRoute(
                 path: ':slug',
                 name: 'hub-page',
-                builder: (context, state) => _hubPage(
+                builder: (context, state) => hubScreenFor(
                   context,
-                  state.pathParameters['section']!,
-                  state.pathParameters['slug']!,
+                  section: state.pathParameters['section'],
+                  slug: state.pathParameters['slug'],
                 ),
               ),
             ],
@@ -659,12 +642,4 @@ class _StreamToListenable extends ChangeNotifier {
     _sub.cancel();
     super.dispose();
   }
-}
-
-/// The hub page for [group]/[slug] (a UI level name or an api | labs | debug
-/// section name), else the portal index.
-Widget _hubPage(BuildContext context, String group, String slug) {
-  final page = hubPageFor(group, slug);
-  if (page == null) return const HubIndexScreen();
-  return page.screen?.call(context) ?? HubPageScreen(page: page);
 }

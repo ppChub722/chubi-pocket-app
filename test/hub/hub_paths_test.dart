@@ -1,6 +1,15 @@
 import 'package:chubi_pocket/core/network/network_recorder.dart';
 import 'package:chubi_pocket/hub/hub_registry.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pp_forge/hub.dart';
+
+/// The page at `<level or section>/<slug>` — what the router resolves.
+HubPage? hubPageFor(String group, String slug) => hubPages
+    .where(
+      (p) =>
+          p.slug == slug && (p.level.name == group || p.level.section == group),
+    )
+    .firstOrNull;
 
 void main() {
   group('hub URLs', () {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/shell/main_bottom_nav.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 
 /// The shell's bottom bar and its centre + (owner 2026-10-12: quick create =
 /// ONE sheet with a per-page default; the + wears the mode's colour).

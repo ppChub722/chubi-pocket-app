@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 import 'sheet_demos/account_picker_sheet_demo.dart';
 import 'sheet_demos/description_picker_sheet_demo.dart';
 import 'sheet_demos/event_target_sheet_demo.dart';

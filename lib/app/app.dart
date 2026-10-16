@@ -3,7 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pp_forge/hub.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../hub/app_hub_settings.dart';
+import '../hub/hub_registry.dart';
 
 import 'shell/keyboard_insets_guard.dart';
 import 'shell/tab_nav.dart';
@@ -318,7 +322,13 @@ class _ChubiPocketAppState extends State<ChubiPocketApp> {
                         // Offline mode: ConnectionScope + banners for every
                         // page and sheet below.
                         child: ConnectionShell(
-                          child: child ?? const SizedBox.shrink(),
+                          // The developer portal (/dev) on ppForge's hub.
+                          child: HubScope(
+                            catalog: hubCatalog,
+                            open: openPage,
+                            settings: const AppHubSettings(),
+                            child: child ?? const SizedBox.shrink(),
+                          ),
                         ),
                       ),
                     ),

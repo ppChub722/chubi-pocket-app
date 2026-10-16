@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
-import '../hub_kit.dart';
+import 'package:pp_forge/hub.dart';
 
 /// `/dev/domain/multi-pickers` - the multi-select pickers: a category tree
 /// with a per-row "include subcategories" switch, and a wallet list.
