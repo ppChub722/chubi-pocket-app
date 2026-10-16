@@ -7,7 +7,7 @@ import 'hub_registry.dart';
 
 /// A section of the developer portal: one card on `/dev`, its own menu at
 /// `/dev/<id>`. [levels] are the registry levels it lists. The UI section's
-/// menu is one card per level (Tokens … Domain), each opening that level's
+/// menu is one card per level (Tokens … Icons, Domain), each opening that level's
 /// items at `/dev/ui/<level>`; the other sections list their pages directly.
 enum HubSection {
   ui(
@@ -20,6 +20,7 @@ enum HubSection {
       HubLevel.molecules,
       HubLevel.organisms,
       HubLevel.templates,
+      HubLevel.icons,
       HubLevel.domain,
     ],
   ),
@@ -74,6 +75,7 @@ IconData _levelIcon(HubLevel l) => switch (l) {
   HubLevel.molecules => Icons.hub_outlined,
   HubLevel.organisms => Icons.view_agenda_outlined,
   HubLevel.templates => Icons.web_asset_outlined,
+  HubLevel.icons => Icons.interests_outlined,
   HubLevel.domain => Icons.apps_outlined,
   HubLevel.api => Icons.api_outlined,
   HubLevel.labs => Icons.science_outlined,

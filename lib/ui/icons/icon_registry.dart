@@ -17,6 +17,9 @@ class IconRegistry {
     return _all[id] ?? fallback;
   }
 
+  /// Every known id, in registry order (galleries, search).
+  static Iterable<String> get ids => _all.keys;
+
   static const Map<String, IconData> _all = {
     // accounts
     'wallet': Icons.account_balance_wallet,

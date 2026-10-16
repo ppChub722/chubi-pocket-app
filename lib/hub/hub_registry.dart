@@ -49,6 +49,7 @@ import 'pages/sheets_projects_page.dart';
 import 'pages/sheets_accounts_page.dart';
 import 'pages/sheets_pickers_page.dart';
 import 'pages/sheets_people_page.dart';
+import 'pages/icons_icon_maker_page.dart';
 
 /// The app hub — the single source of truth for the UI (owner 2026-10-12).
 /// Every piece the app is built from has a page here; every UI change lands
@@ -76,6 +77,10 @@ enum HubLevel {
   templates(
     'Templates',
     'A page skeleton with slots: detail page, list page, form sheet.',
+  ),
+  icons(
+    'Icons',
+    'The icon system: icon codes, shapes, theme colours, packs and the icon maker.',
   ),
   domain(
     'Domain',
@@ -687,6 +692,40 @@ final List<HubPage> hubPages = [
     covers: [],
     builder: buildTransactionDetailPage,
   ),
+  // ── Icons
+  const HubPage(
+    level: HubLevel.icons,
+    slug: 'icon-maker',
+    title: 'Icon system & icon maker',
+    summary:
+        'IconCode drawn by IconCodeWidget / IconDisplay, edited with the icon '
+        'maker from the packs of a PpForgeIconType.',
+    usedBy: 'Every entity icon; the icon maker on every edit page',
+    covers: [
+      'IconCode',
+      'IconCodeWidget',
+      'IconDisplayMode',
+      'IconDisplay',
+      'IconShape',
+      'PpForgeIconType',
+      'showIconMakerSheet',
+      'IconMakerResult',
+      'IconMakerSelected',
+      'IconMakerRemoved',
+      'IconMakerLayers',
+      'PpForgeIconMakerStrings',
+      'resolveColor',
+      'isThemeToken',
+      'BrandPalette',
+      'BrandSwatch',
+      'IconPack',
+      'IconPackItem',
+      'PackRegistry',
+      'IconRegistry',
+    ],
+    builder: buildIconMakerPage,
+  ),
+
   // ── Domain
   const HubPage(
     level: HubLevel.domain,
