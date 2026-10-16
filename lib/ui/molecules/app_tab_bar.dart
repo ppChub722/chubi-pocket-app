@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/count_badge.dart';
+import 'page_dots.dart';
 
 import '../tokens/app_spacing.dart';
 
@@ -151,6 +152,7 @@ class AppTabPager<T> extends StatefulWidget {
     required this.controller,
     required this.builder,
     this.enabled = true,
+    this.showPageDots = true,
     super.key,
   });
 
@@ -163,6 +165,11 @@ class AppTabPager<T> extends StatefulWidget {
   final PageController controller;
   final Widget Function(BuildContext context, T value) builder;
   final bool enabled;
+
+  /// Each page ends with the [PageDots]: a `ListPageBody` inside adds them
+  /// itself (via [PageDotsScope]); a custom scrollable puts a
+  /// [PageDotsFooter] last.
+  final bool showPageDots;
 
   /// A tap on the bar → this slide.
   static const duration = Duration(milliseconds: 320);
@@ -207,8 +214,18 @@ class _AppTabPagerState<T> extends State<AppTabPager<T>> {
           : const NeverScrollableScrollPhysics(),
       onPageChanged: _onPage,
       children: [
-        for (final v in widget.values)
-          _KeepAlive(child: Builder(builder: (c) => widget.builder(c, v))),
+        for (var i = 0; i < widget.values.length; i++)
+          _KeepAlive(
+            child: widget.showPageDots && widget.values.length > 1
+                ? PageDotsScope(
+                    count: widget.values.length,
+                    index: i,
+                    child: Builder(
+                      builder: (c) => widget.builder(c, widget.values[i]),
+                    ),
+                  )
+                : Builder(builder: (c) => widget.builder(c, widget.values[i])),
+          ),
       ],
     );
   }

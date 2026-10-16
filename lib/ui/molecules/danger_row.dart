@@ -21,8 +21,12 @@ class DangerRow extends StatelessWidget {
     this.padding = const EdgeInsets.only(top: AppSpacing.xl),
     this.caution = false,
     this.neutral = false,
+    this.consequence,
     super.key,
   });
+
+  /// A small muted line under the label: what the action does.
+  final String? consequence;
 
   /// The primary colour, same shape: a harmless action that ends something
   /// without losing it (ปิดงบ) — not a warning.
@@ -65,20 +69,37 @@ class DangerRow extends StatelessWidget {
                 horizontal: AppSpacing.md,
                 vertical: AppSpacing.sm,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 20, color: color),
-                  const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: Text(
-                      label,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 20, color: color),
+                      const SizedBox(width: AppSpacing.sm),
+                      Flexible(
+                        child: Text(
+                          label,
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (consequence != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        consequence!,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

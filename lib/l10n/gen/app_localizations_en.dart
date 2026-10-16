@@ -810,10 +810,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtsNet => 'Net';
 
   @override
-  String get debtsOwedToMe => 'Owe you';
+  String get debtsOwedToMe => 'To receive';
 
   @override
-  String get debtsIOwe => 'You owe';
+  String get debtsIOwe => 'To pay';
 
   @override
   String get debtsEven => 'Settled up';
@@ -1071,7 +1071,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get projectTabDashboard => 'Dashboard';
+  String get projectTabDashboard => 'Overview';
 
   @override
   String get projectTabTransactions => 'Transactions';
@@ -4358,7 +4358,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactFieldNotSet => 'Not set';
 
   @override
-  String get txSplitSectionTitle => 'Split transaction';
+  String get txSplitSectionTitle => 'Linked to';
 
   @override
   String get txSplitSectionHint =>

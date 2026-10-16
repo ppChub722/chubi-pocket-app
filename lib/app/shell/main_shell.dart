@@ -111,8 +111,15 @@ class _MainShellState extends State<MainShell>
   bool _swiping = false;
   double _dragDx = 0;
 
-  /// Swipe between the tabs of one on-screen row ([ShellRow] — the nav,
-  /// the top bar's chips, each เพิ่มเติม section; owner 2026-10-09/10) —
+  /// Owner 2026-10-17: the shell swipe only exists on the roots of the 4
+  /// bottom tabs and the 3 top tabs (pending, notifications, profile /
+  /// settings). The เพิ่มเติม cards' pages (budgets, goals, categories …)
+  /// have none.
+  static bool _swipesBetweenTabs(ShellTab tab) =>
+      tab.row == ShellRow.nav || tab.row == ShellRow.top;
+
+  /// Swipe between the tabs of the nav / top row ([ShellRow] — the nav and
+  /// the top bar's chips; owner 2026-10-09/10, narrowed 2026-10-17) —
   /// only on a tab's root page (nothing pushed in that tab) and not while
   /// a page has taken over the bottom chrome (edit / reorder). Anything
   /// inside that wants a sideways drag — an in-page tab pager, a horizontal
@@ -121,7 +128,10 @@ class _MainShellState extends State<MainShell>
   void _onDragStart(DragStartDetails _) {
     final shell = widget.navigationShell;
     final branchNav = shell.route.branches[shell.currentIndex].navigatorKey;
-    _swiping = !_chrome.hidden && !(branchNav.currentState?.canPop() ?? true);
+    _swiping =
+        _swipesBetweenTabs(_current) &&
+        !_chrome.hidden &&
+        !(branchNav.currentState?.canPop() ?? true);
     _dragDx = 0;
     if (_swiping) _nudge.stop();
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../molecules/app_tab_bar.dart';
 import '../molecules/empty_view.dart';
 import '../molecules/load_more_error_row.dart';
+import '../molecules/page_dots.dart';
 import '../organisms/async_state_view.dart';
 import '../organisms/divided_rows.dart';
 import '../organisms/page_skeletons.dart';
@@ -220,6 +221,7 @@ class _ListPageBodyState extends State<ListPageBody> {
                   ] else if (w.loadMoreError != null)
                     LoadMoreErrorRow(onRetry: w.onRetryMore ?? w.onLoadMore),
                   ?w.footer,
+                  const PageDotsFooter(),
                 ],
               ),
         ),
@@ -257,6 +259,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
     this.topInset = 0,
     this.clearTopBar = true,
     this.swipeEnabled = true,
+    this.showPageDots = true,
     super.key,
   });
 
@@ -283,6 +286,9 @@ class TabbedListPageBody<T> extends StatelessWidget {
 
   /// false while a drag-reorder is running in a tab.
   final bool swipeEnabled;
+
+  /// The page indicator at the end of each tab's list (see [PageDots]).
+  final bool showPageDots;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +317,7 @@ class TabbedListPageBody<T> extends StatelessWidget {
               onChanged: onChanged,
               controller: controller,
               enabled: swipeEnabled,
+              showPageDots: showPageDots,
               builder: pageBuilder,
             ),
           ),

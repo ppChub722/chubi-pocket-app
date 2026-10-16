@@ -4,7 +4,7 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// The one "แบ่งรายการ" section (owner 2026-10-12): heading + one-line
+/// The one "ผูกกับ" section (owner 2026-10-12): heading + one-line
 /// description, a "แบ่งยอด" row and an "อีเวนต์" row, no separators inside;
 /// collapsible (pending closed / quick create open) or always open (detail).
 void main() {
@@ -33,7 +33,7 @@ void main() {
         event: SplitEventSlot(),
       ),
     );
-    expect(find.text('แบ่งรายการ'), findsOneWidget);
+    expect(find.text('ผูกกับ'), findsOneWidget);
     expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsOneWidget);
     expect(find.text('แบ่งยอด'), findsOneWidget);
     expect(find.text('อีเวนต์'), findsOneWidget);
@@ -41,7 +41,7 @@ void main() {
     expect(find.text('ไม่ได้เลือก'), findsOneWidget);
     expect(find.byType(AppDivider), findsNothing);
     // Not collapsible: no chevron, tapping the heading changes nothing.
-    await t.tap(find.text('แบ่งรายการ'));
+    await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.text('อีเวนต์'), findsOneWidget);
   });
@@ -64,12 +64,12 @@ void main() {
     expect(find.text('อีเวนต์'), findsNothing);
     expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsNothing);
 
-    await t.tap(find.text('แบ่งรายการ'));
+    await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.text('อีเวนต์'), findsOneWidget);
     expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsOneWidget);
 
-    await t.tap(find.text('แบ่งรายการ'));
+    await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.text('อีเวนต์'), findsNothing);
   });
@@ -141,7 +141,7 @@ void _compactTests() {
 
   testWidgets('no description line; labels align with the note row', (t) async {
     await pump(t, section(const SplitEventSlot(onTap: _noop)));
-    expect(find.text('แบ่งรายการ'), findsOneWidget);
+    expect(find.text('ผูกกับ'), findsOneWidget);
     expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsNothing);
     expect(find.text('helper line'), findsOneWidget);
     final note = t.getTopLeft(find.text('โน้ต')).dx;
@@ -193,7 +193,7 @@ void _compactTests() {
     );
     expect(find.text('แบ่ง 2 คน'), findsOneWidget);
     expect(find.text('อีเวนต์'), findsNothing);
-    await t.tap(find.text('แบ่งรายการ'));
+    await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.text('อีเวนต์'), findsOneWidget);
   });

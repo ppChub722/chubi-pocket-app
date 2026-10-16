@@ -7,6 +7,7 @@ import 'pages/tokens_basics_page.dart';
 import 'pages/tokens_colors_type_icons_page.dart';
 import 'pages/molecules_feedback_page.dart';
 import 'pages/organisms_collapsible_section_page.dart';
+import 'pages/organisms_list_summary_card_page.dart';
 import 'pages/organisms_sheets_page.dart';
 import 'pages/organisms_states_page.dart';
 import 'pages/molecules_pickers_inputs_page.dart';
@@ -37,9 +38,11 @@ import 'pages/atoms_switch_check_divider_page.dart';
 import 'pages/molecules_bars_page.dart';
 import 'pages/molecules_rows_page.dart';
 import 'pages/organisms_reorder_charts_page.dart';
+import 'pages/organisms_hero_card_page.dart';
 import 'pages/organisms_section_hero_page.dart';
 import 'pages/templates_detail_page.dart';
 import 'pages/templates_tabbed_detail_page.dart';
+import 'pages/templates_detail_sections_page.dart';
 import 'pages/domain_others_page.dart';
 import 'pages/domain_people_accounts_page.dart';
 import 'pages/templates_auth_page.dart';
@@ -505,6 +508,24 @@ final List<HubPage> hubPages = [
   ),
   const HubPage(
     level: HubLevel.organisms,
+    slug: 'hero-card',
+    title: 'Hero card',
+    summary:
+        'The 0.4.0 detail hero: rows A–G, edit variant, and the DetailLayout slot order.',
+    usedBy: 'every detail page (0.4.0)',
+    covers: [
+      'HeroCard',
+      'HeroNumber',
+      'HeroAmountField',
+      'HeroBar',
+      'HeroAlert',
+      'DetailLayout',
+      'DetailSections',
+    ],
+    builder: buildHeroCardPage,
+  ),
+  const HubPage(
+    level: HubLevel.organisms,
     slug: 'sheets',
     title: 'Sheets',
     summary:
@@ -553,6 +574,16 @@ final List<HubPage> hubPages = [
     usedBy: 'split block, debt history',
     covers: ['CollapsibleSection'],
     builder: buildCollapsibleSectionPage,
+  ),
+  const HubPage(
+    level: HubLevel.organisms,
+    slug: 'list-summary-card',
+    title: 'List summary card',
+    summary:
+        'The card on top of every list page: caption + action slot, big number, bar, info line, alert, 2-4 filter tiles, optional big button.',
+    usedBy: 'budgets, goals, scheduled, wallets, events (adopting)',
+    covers: ['ListSummaryCard', 'SummaryTile', 'SummaryTileTone', 'SummaryCta'],
+    builder: buildListSummaryCardPage,
   ),
   const HubPage(
     level: HubLevel.organisms,
@@ -615,8 +646,32 @@ final List<HubPage> hubPages = [
     summary:
         'Hero → below-hero block → pinned tab bar → one lazy ListPageBody per tab; compact hero bar.',
     usedBy: 'Debts person page, events, wallets (adopting)',
-    covers: ['TabbedDetailBody'],
+    covers: ['TabbedDetailBody', 'PageDots', 'PageDotsScope', 'PageDotsFooter'],
     builder: buildTabbedDetailTemplate,
+  ),
+  const HubPage(
+    level: HubLevel.templates,
+    slug: 'detail-sections',
+    title: 'Detail sections',
+    summary:
+        'Info box (one row / auto-stacked), settings, people strip, note, end zone, tag row.',
+    usedBy: 'Detail pages (adopting)',
+    covers: [
+      'InfoBox',
+      'InfoRow',
+      'SettingsSection',
+      'SettingToggleRow',
+      'SettingSummaryRow',
+      'PeopleStrip',
+      'PeopleStripMember',
+      'NoteSection',
+      'EndZone',
+      'EndZoneAction',
+      'EndZoneKind',
+      'PeopleTone',
+      'TagRow',
+    ],
+    builder: buildDetailSectionsPage,
   ),
   const HubPage(
     level: HubLevel.templates,

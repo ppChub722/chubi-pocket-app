@@ -32,7 +32,7 @@ class _Projects extends MockCubit<ProjectsState> implements ProjectsCubit {}
 
 /// The pending drafts' layout (owner 2026-10-11, "เพิ่มร่าง" + "แก้ร่าง"):
 /// dashed pick chips lead a wallet row above a category row, the note is
-/// inline, and แบ่งรายการ is collapsed until tapped. A draft keeps
+/// inline, and ผูกกับ is collapsed until tapped. A draft keeps
 /// half-filled splits and its event.
 void main() {
   late DraftFormController c;
@@ -112,20 +112,20 @@ void main() {
     expect(find.byType(DraftFieldRow), findsWidgets);
   });
 
-  testWidgets('แบ่งรายการ is collapsed; tap opens it, tap closes', (t) async {
+  testWidgets('ผูกกับ is collapsed; tap opens it, tap closes', (t) async {
     c.setProject('p1', name: 'ทริปเชียงใหม่');
     await pump(t);
-    expect(find.text('แบ่งรายการ'), findsOneWidget);
+    expect(find.text('ผูกกับ'), findsOneWidget);
     // Closed: the one-line summary (the event), no editor.
     expect(find.text('ทริปเชียงใหม่'), findsOneWidget);
     expect(find.byType(SplitsSection), findsNothing);
 
-    await t.tap(find.text('แบ่งรายการ'));
+    await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.byType(SplitsSection), findsOneWidget);
     expect(find.byType(EventRow), findsOneWidget);
 
-    await t.tap(find.text('แบ่งรายการ'));
+    await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.byType(SplitsSection), findsNothing);
   });
@@ -139,7 +139,7 @@ void main() {
     expect(find.text('เลือกกระเป๋าต้นทาง'), findsOneWidget);
     expect(find.text('เลือกกระเป๋าปลายทาง'), findsOneWidget);
     expect(find.text('เลือกหมวด'), findsNothing);
-    expect(find.text('แบ่งรายการ'), findsNothing);
+    expect(find.text('ผูกกับ'), findsNothing);
   });
 
   test('a draft keeps half-filled splits and its event; confirm does not', () {

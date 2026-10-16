@@ -23,6 +23,7 @@ class ProgressRow extends StatelessWidget {
     this.overColor,
     this.height = 8,
     this.marker,
+    this.ticks = const [],
     super.key,
   });
 
@@ -43,6 +44,10 @@ class ProgressRow extends StatelessWidget {
   /// A thin tick across the bar at this ratio (0..1) — where spending "should"
   /// be today (a budget's pace, owner 2026-10-16). null = none.
   final double? marker;
+
+  /// Thin white ticks at these ratios (0..1): a goal's 25 / 50 / 75 % (owner
+  /// 2026-10-17). Empty = none.
+  final List<double> ticks;
 
   /// The bar's two fractions of the track, both clamped to 0..1: where the
   /// used part ends, and where used + expected ends (the total, clamped).
@@ -92,6 +97,16 @@ class ProgressRow extends StatelessWidget {
                     widthFactor: v.dx,
                     child: ColoredBox(color: barColor),
                   ),
+                  if (ticks.isNotEmpty)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        key: const ValueKey('progressTicks'),
+                        painter: _TicksPainter(
+                          ticks,
+                          Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ),
                   if (marker != null)
                     Positioned.fill(
                       child: CustomPaint(
@@ -187,4 +202,24 @@ class _MarkerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_MarkerPainter old) => old.at != at || old.color != color;
+}
+
+/// Thin vertical ticks at [at] ratios of the track.
+class _TicksPainter extends CustomPainter {
+  const _TicksPainter(this.at, this.color);
+
+  final List<double> at;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    for (final r in at) {
+      final x = size.width * r.clamp(0, 1);
+      canvas.drawRect(Rect.fromLTWH(x - 1, 1, 2, size.height - 2), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TicksPainter old) => old.at != at || old.color != color;
 }

@@ -337,13 +337,13 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get accountDetailNotFoundMessage =>
-      'กระเป๋านี้อาจถูกเก็บเข้าคลังหรือลบไปแล้ว';
+      'กระเป๋านี้อาจถูกเก็บถาวรหรือลบไปแล้ว';
 
   @override
   String get accountDetailAdjustBalance => 'ปรับยอด';
 
   @override
-  String get accountDetailArchive => 'เก็บเข้าคลัง';
+  String get accountDetailArchive => 'เก็บถาวร';
 
   @override
   String accountDetailCreditAvailable(String available, String limit) {
@@ -798,10 +798,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtsNet => 'สุทธิ';
 
   @override
-  String get debtsOwedToMe => 'ติดคุณ';
+  String get debtsOwedToMe => 'รอรับ';
 
   @override
-  String get debtsIOwe => 'คุณติด';
+  String get debtsIOwe => 'รอจ่าย';
 
   @override
   String get debtsEven => 'เคลียร์แล้ว';
@@ -834,7 +834,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtsEmptyMessage =>
-      'บันทึกว่าใครติดเงินคุณ หรือคุณติดเงินใคร — หรือหารบิลจากรายการ';
+      'บันทึกรายการรอรับ / รอจ่ายกับเพื่อน — หรือหารบิลจากรายการ';
 
   @override
   String get debtsNoMatch => 'ไม่พบคนที่ค้นหา';
@@ -866,12 +866,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String debtTheyOweYou(String name) {
-    return '$name ติดคุณ';
+    return 'รอรับจาก $name';
   }
 
   @override
   String debtYouOwe(String name) {
-    return 'คุณติด $name';
+    return 'รอจ่าย $name';
   }
 
   @override
@@ -1051,7 +1051,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get projectTabDashboard => 'แดชบอร์ด';
+  String get projectTabDashboard => 'ภาพรวม';
 
   @override
   String get projectTabTransactions => 'รายการ';
@@ -2001,7 +2001,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String moreLiveDebts(String owed, String owe) {
-    return 'เขาติด $owed · คุณติด $owe';
+    return 'รอรับ $owed · รอจ่าย $owe';
   }
 
   @override
@@ -3555,7 +3555,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get walletErrorHasMembers =>
-      'กระเป๋านี้ยังมีสมาชิกคนอื่นอยู่ จึงเก็บเข้าคลังหรือลบไม่ได้';
+      'กระเป๋านี้ยังมีสมาชิกคนอื่นอยู่ จึงเก็บถาวรหรือลบไม่ได้';
 
   @override
   String get walletErrorCategoryAuthorOnly =>
@@ -4073,12 +4073,12 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String txShareOthersOweYou(String amount) {
-    return 'คนอื่นติดคุณ $amount';
+    return 'รอรับจากคนอื่น $amount';
   }
 
   @override
   String txShareYouOweOthers(String amount) {
-    return 'คุณติดคนอื่น $amount';
+    return 'รอจ่ายคนอื่น $amount';
   }
 
   @override
@@ -4255,7 +4255,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get contactFieldNotSet => 'ไม่ระบุ';
 
   @override
-  String get txSplitSectionTitle => 'แบ่งรายการ';
+  String get txSplitSectionTitle => 'ผูกกับ';
 
   @override
   String get txSplitSectionHint => 'แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์';

@@ -1553,13 +1553,13 @@ abstract class AppLocalizations {
   /// No description provided for @debtsOwedToMe.
   ///
   /// In en, this message translates to:
-  /// **'Owe you'**
+  /// **'To receive'**
   String get debtsOwedToMe;
 
   /// No description provided for @debtsIOwe.
   ///
   /// In en, this message translates to:
-  /// **'You owe'**
+  /// **'To pay'**
   String get debtsIOwe;
 
   /// No description provided for @debtsEven.
@@ -1997,7 +1997,7 @@ abstract class AppLocalizations {
   /// No description provided for @projectTabDashboard.
   ///
   /// In en, this message translates to:
-  /// **'Dashboard'**
+  /// **'Overview'**
   String get projectTabDashboard;
 
   /// No description provided for @projectTabTransactions.
@@ -7618,7 +7618,7 @@ abstract class AppLocalizations {
   /// No description provided for @txSplitSectionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Split transaction'**
+  /// **'Linked to'**
   String get txSplitSectionTitle;
 
   /// No description provided for @txSplitSectionHint.

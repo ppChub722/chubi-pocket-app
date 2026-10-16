@@ -21,6 +21,7 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
   _Tab _tab = _Tab.ledger;
   int _shown = 8;
   bool _failNext = false;
+  bool _dots = true;
   Object? _moreError;
   bool _loadingMore = false;
 
@@ -100,6 +101,11 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
                     selected: _failNext,
                     onTap: () => setState(() => _failNext = !_failNext),
                   ),
+                  AppChip(
+                    label: 'page dots',
+                    selected: _dots,
+                    onTap: () => setState(() => _dots = !_dots),
+                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -111,6 +117,7 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: TabbedDetailBody<_Tab>(
+                  showPageDots: _dots,
                   selected: _tab,
                   onChanged: (t) => setState(() => _tab = t),
                   tabs: const [
@@ -137,6 +144,21 @@ class _TabbedDetailDemoState extends State<_TabbedDetailDemo> {
                   },
                 ),
               ),
+            ],
+          ),
+        ),
+        const HubDemo(
+          title: 'PageDots, the swipe-tab page indicator',
+          note:
+              'The current page is the wider primary pill, the others small '
+              'dots. Swipe tabs end each tab with it, IN the flow (it '
+              'scrolls with the list, never floats): scroll a tab to its '
+              'end above. Off with showPageDots: false.',
+          child: Column(
+            children: [
+              PageDots(count: 2, index: 0),
+              PageDots(count: 3, index: 1),
+              PageDots(count: 4, index: 3),
             ],
           ),
         ),

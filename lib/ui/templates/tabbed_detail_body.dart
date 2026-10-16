@@ -37,6 +37,7 @@ class TabbedDetailBody<T> extends StatefulWidget {
     this.belowHero = const [],
     this.compactBar,
     this.editing = false,
+    this.showPageDots = true,
     super.key,
   });
 
@@ -55,6 +56,9 @@ class TabbedDetailBody<T> extends StatefulWidget {
   /// The small version of the hero once it has scrolled away (null = none).
   final CompactHeroBar? compactBar;
   final bool editing;
+
+  /// The page indicator at the end of each tab's content (see [PageDots]).
+  final bool showPageDots;
 
   @override
   State<TabbedDetailBody<T>> createState() => _TabbedDetailBodyState<T>();
@@ -142,6 +146,7 @@ class _TabbedDetailBodyState<T> extends State<TabbedDetailBody<T>> {
             selected: w.selected,
             onChanged: w.onChanged,
             enabled: !w.editing,
+            showPageDots: w.showPageDots,
             builder: w.tabBuilder,
           ),
         ),
