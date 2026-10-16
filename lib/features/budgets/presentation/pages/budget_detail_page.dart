@@ -6,6 +6,7 @@ import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
@@ -538,7 +539,9 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
     }
     final b = _budget;
     return BlocListener<TransactionsCubit, TransactionsState>(
-      listenWhen: (a, c) => a.revision != c.revision,
+      listenWhen: (a, c) =>
+          a.revision != c.revision ||
+          !identical(a.transactions, c.transactions),
       // A transaction write: this page's figures moved — one reload.
       listener: (_, _) {
         if (!widget.isCreate && !isSaving) _load(periodId: _periodId);
@@ -733,6 +736,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                   : l.bgFieldAmountOnce,
               child: AmountInput(
                 controller: _ctrl[_Field.amount]!,
+                currencySymbol: context.readUserCurrencySymbol,
                 onChanged: (v) => _onText(_Field.amount, v),
                 validator: (v) {
                   final n = AmountInput.parse(v);

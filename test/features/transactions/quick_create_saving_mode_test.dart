@@ -6,6 +6,8 @@ import 'package:chubi_pocket/features/auth/domain/user.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/categories/presentation/cubit/categories_cubit.dart';
 import 'package:chubi_pocket/features/home/presentation/cubit/dashboard_cubit.dart';
+import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart';
+import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
 import 'package:chubi_pocket/features/saving_goals/data/saving_goals_repository.dart';
 import 'package:chubi_pocket/features/saving_goals/domain/saving_entry.dart';
 import 'package:chubi_pocket/features/saving_goals/domain/saving_goals_overview.dart';
@@ -38,6 +40,8 @@ class _Txs extends MockCubit<TransactionsState> implements TransactionsCubit {}
 class _Dashboard extends MockCubit<DashboardState> implements DashboardCubit {}
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
+
+class _Pending extends MockCubit<PendingState> implements PendingCubit {}
 
 class _Goals extends MockCubit<SavingGoalsState> implements SavingGoalsCubit {}
 
@@ -114,8 +118,13 @@ void main() {
   late _SavingRepo savings;
   late _Dashboard dashboard;
   late _Goals goals;
+  late _Pending pending;
 
-  Future<void> open(WidgetTester t, {QuickCreatePreset? preset}) async {
+  Future<void> open(
+    WidgetTester t, {
+    QuickCreatePreset? preset,
+    PendingTransaction? draft,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     t.view.physicalSize = const Size(800, 2400);
     t.view.devicePixelRatio = 1;
@@ -123,6 +132,8 @@ void main() {
     savings = _SavingRepo();
     dashboard = _Dashboard();
     goals = _Goals();
+    pending = _Pending();
+    when(() => pending.state).thenReturn(const PendingState());
     final accounts = _Accounts();
     final categories = _Categories();
     final tags = _Tags();
@@ -159,6 +170,7 @@ void main() {
             BlocProvider<DashboardCubit>.value(value: dashboard),
             BlocProvider<AuthCubit>.value(value: auth),
             BlocProvider<SavingGoalsCubit>.value(value: goals),
+            BlocProvider<PendingCubit>.value(value: pending),
           ],
           child: MaterialApp(
             theme: ThemeData(extensions: [sweetTheme.lightColors]),
@@ -173,6 +185,7 @@ void main() {
                     context,
                     account: _wallet(),
                     preset: preset,
+                    draft: draft,
                   ),
                   child: const Text('open'),
                 ),
@@ -225,5 +238,74 @@ void main() {
     verify(() => dashboard.markStale()).called(1);
     verify(() => goals.markStale()).called(1);
     expect(find.byType(QuickCreateSheetShell), findsNothing);
+  });
+
+  group('a pending 🐷 saving draft', () {
+    PendingTransaction draft() => PendingTransaction.fromJson({
+      'id': 'p1',
+      'source': 'recurring',
+      'kind': 'saving',
+      'draft': {
+        'type': 'saving',
+        'amount': 150,
+        'account_id': 'w1',
+        'goal_id': 'g1',
+        'date': '2026-10-13',
+        'note': 'monthly',
+      },
+      'resolved': {
+        'transfer_to_account': null,
+        'category': null,
+        'tags': <dynamic>[],
+        'project': null,
+        'splits': <dynamic>[],
+        'goal': {'id': 'g1', 'name': 'ทริปญี่ปุ่น', 'icon_code': null},
+        'missing': <dynamic>[],
+      },
+      'created_at': '2026-10-13T08:00:00Z',
+      'updated_at': '2026-10-13T08:00:00Z',
+    });
+
+    setUpAll(() => registerFallbackValue(const PendingDraft()));
+
+    testWidgets('opens the ออม form prefilled — nothing is confirmed yet', (
+      t,
+    ) async {
+      await open(t, draft: draft());
+      expect(find.byType(QuickCreateModeChips), findsNothing);
+      expect(find.text('Not allocated'), findsOneWidget);
+      expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
+      expect(find.text('150'), findsOneWidget);
+      expect(find.text('monthly'), findsOneWidget);
+      verifyNever(() => pending.submit(any()));
+    });
+
+    testWidgets('"confirm" saves the edits, then submits this draft', (
+      t,
+    ) async {
+      await open(t, draft: draft());
+      when(
+        () => pending.updateDraft(any(), any()),
+      ).thenAnswer((_) async => draft());
+      when(() => pending.submit(any())).thenAnswer(
+        (_) async => const PendingSubmitResult(submitted: ['p1'], failed: {}),
+      );
+      await t.enterText(amountField(t), '200');
+      await t.pumpAndSettle();
+      await t.tap(find.text('Confirm this one').last);
+      await t.pumpAndSettle();
+      final sent =
+          verify(() => pending.updateDraft('p1', captureAny())).captured.single
+              as PendingDraft;
+      expect(sent.isSaving, isTrue);
+      expect(sent.amount, 200);
+      expect(sent.goalId, 'g1');
+      expect(sent.accountId, 'w1');
+      expect(sent.date, '2026-10-13');
+      verify(() => pending.submit(['p1'])).called(1);
+      verify(() => goals.markStale()).called(1);
+      verify(() => dashboard.markStale()).called(1);
+      expect(find.byType(QuickCreateSheetShell), findsNothing);
+    });
   });
 }

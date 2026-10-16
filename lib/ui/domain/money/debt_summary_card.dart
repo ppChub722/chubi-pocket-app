@@ -38,6 +38,7 @@ class DebtSummaryCard extends StatelessWidget {
     this.onIOweTap,
     this.currencySymbol = '฿',
     this.margin = EdgeInsets.zero,
+    this.action,
     super.key,
   });
 
@@ -58,6 +59,10 @@ class DebtSummaryCard extends StatelessWidget {
   final VoidCallback? onIOweTap;
   final String currencySymbol;
   final EdgeInsetsGeometry margin;
+
+  /// The card's standard top-right action slot (next to the 👁): a
+  /// [CardActionButton], e.g. the list's 🔍 [ToolbarToggleButton].
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +88,10 @@ class DebtSummaryCard extends StatelessWidget {
                 ),
               ),
               const MoneyVisibilityToggle(),
+              if (action != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                action!,
+              ],
             ],
           ),
           MoneyText(

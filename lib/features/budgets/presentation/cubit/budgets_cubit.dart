@@ -16,13 +16,32 @@ class BudgetsState extends Equatable {
     this.sort = BudgetSort.risk,
     this.status = BudgetsStatus.initial,
     this.error,
+    this.query = '',
+    this.health = BudgetHealth.all,
   });
+
+  /// The name search (applied locally to [budgets]: `listBudgets` has no
+  /// search param).
+  final String query;
+
+  /// [budgets] whose name contains [query] (case-insensitive).
+  List<Budget> get visible {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return budgets;
+    return [
+      for (final b in budgets)
+        if (b.name.toLowerCase().contains(q)) b,
+    ];
+  }
 
   /// Each budget at its current period (the BE's `listBudgets`).
   final List<Budget> budgets;
   final BudgetListSummary summary;
   final BudgetFilter filter;
   final BudgetSort sort;
+
+  /// The summary tile picked (a server filter of `data`).
+  final BudgetHealth health;
   final BudgetsStatus status;
   final ApiException? error;
 
@@ -33,20 +52,33 @@ class BudgetsState extends Equatable {
     BudgetListSummary? summary,
     BudgetFilter? filter,
     BudgetSort? sort,
+    BudgetHealth? health,
     BudgetsStatus? status,
     ApiException? error,
+    String? query,
     bool clearError = false,
   }) => BudgetsState(
+    query: query ?? this.query,
     budgets: budgets ?? this.budgets,
     summary: summary ?? this.summary,
     filter: filter ?? this.filter,
     sort: sort ?? this.sort,
+    health: health ?? this.health,
     status: status ?? this.status,
     error: clearError ? null : (error ?? this.error),
   );
 
   @override
-  List<Object?> get props => [budgets, summary, filter, sort, status, error];
+  List<Object?> get props => [
+    budgets,
+    summary,
+    filter,
+    sort,
+    health,
+    status,
+    error,
+    query,
+  ];
 }
 
 enum BudgetsStatus { initial, loading, loaded, error }
@@ -92,7 +124,11 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
     final request = ++_request;
     emit(state.copyWith(status: BudgetsStatus.loading, clearError: true));
     try {
-      final list = await _repo.list(filter: state.filter, sort: state.sort);
+      final list = await _repo.list(
+        filter: state.filter,
+        sort: state.sort,
+        health: state.health,
+      );
       if (request != _request) return;
       emit(
         state.copyWith(
@@ -116,8 +152,28 @@ class BudgetsCubit extends Cubit<BudgetsState> with Clearable {
   /// A chip: show another list (1 call; the old rows go at once).
   Future<void> setFilter(BudgetFilter filter) {
     if (filter == state.filter) return Future.value();
-    emit(state.copyWith(filter: filter, budgets: const []));
+    emit(
+      state.copyWith(
+        filter: filter,
+        health: BudgetHealth.all,
+        budgets: const [],
+      ),
+    );
     return load();
+  }
+
+  /// A summary tile: narrows `data` by health (1 call). The same tile again
+  /// clears it.
+  Future<void> setHealth(BudgetHealth health) {
+    final next = health == state.health ? BudgetHealth.all : health;
+    emit(state.copyWith(health: next));
+    return load();
+  }
+
+  /// The search box: filters the loaded rows by name, no call.
+  void search(String query) {
+    if (query == state.query) return;
+    emit(state.copyWith(query: query));
   }
 
   Future<void> setSort(BudgetSort sort) {

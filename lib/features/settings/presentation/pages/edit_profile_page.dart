@@ -14,7 +14,7 @@ import '../../../users/presentation/refresh_me.dart';
 
 /// `/settings/profile` — the profile detail page, on the same template as the
 /// contact page: hero (avatar · name · @username, tinted with the avatar's
-/// colour), ONE headless box (display name · username 🔒 · email · currency 🔒),
+/// colour), ONE headless box (display name · username 🔒 · email · currency),
 /// an Account section (change password) and the meta. Opens in view mode; ✏️ /
 /// long-press edits.
 class EditProfilePage extends StatefulWidget {
@@ -90,6 +90,16 @@ class _EditProfilePageState extends State<EditProfilePage>
     final email = w.email.trim();
     final emailChanged = email.isNotEmpty && email != o.email;
     final iconChanged = w.iconCode != o.iconCode;
+    final currencyChanged = w.currency != o.currency;
+    if (currencyChanged) {
+      final ok = await showConfirmDialog(
+        context,
+        title: l.profileCurrencyChangeTitle,
+        message: l.profileCurrencyChangeMessage,
+        confirmLabel: l.profileCurrencyChangeConfirm,
+      );
+      if (!ok || !mounted) return;
+    }
     final auth = context.read<AuthCubit>();
     FocusScope.of(context).unfocus();
     setSaving(true);
@@ -100,6 +110,7 @@ class _EditProfilePageState extends State<EditProfilePage>
         email: emailChanged ? email : null,
         iconCode: iconChanged ? w.iconCode : null,
         clearIconCode: iconChanged && w.iconCode == null,
+        currency: currencyChanged ? w.currency : null,
       );
       auth.updateUser(updated);
       if (!mounted) return;
@@ -251,15 +262,21 @@ class _EditProfilePageState extends State<EditProfilePage>
                               : l.editProfileEmailInvalid;
                         },
                       ),
-                      DetailRow(
-                        leading: const AppIcon(AppIcons.currency),
-                        label: l.profileCurrencyLabel,
-                        locked: true,
-                        trailing: Text(
-                          '${Currencies.symbolOf(_user.currency)}  '
-                          '${_user.currency}',
-                        ),
-                      ),
+                      editing
+                          ? CurrencyTile(
+                              value: w.currency,
+                              label: l.profileCurrencyLabel,
+                              onChanged: (c) =>
+                                  applyChange(working.copyWith(currency: c)),
+                            )
+                          : DetailRow(
+                              leading: const AppIcon(AppIcons.currency),
+                              label: l.profileCurrencyLabel,
+                              trailing: Text(
+                                '${Currencies.symbolOf(_user.currency)}  '
+                                '${_user.currency}',
+                              ),
+                            ),
                     ],
                   ),
                 ],
@@ -279,26 +296,35 @@ class _EditProfilePageState extends State<EditProfilePage>
 }
 
 class _ProfileDraft {
-  const _ProfileDraft({required this.name, required this.email, this.iconCode});
+  const _ProfileDraft({
+    required this.name,
+    required this.email,
+    required this.currency,
+    this.iconCode,
+  });
 
   factory _ProfileDraft.from(User u) => _ProfileDraft(
     name: u.displayName,
     email: u.email ?? '',
+    currency: u.currency,
     iconCode: u.iconCode,
   );
 
   final String name;
   final String email;
+  final String currency;
   final IconCode? iconCode;
 
   _ProfileDraft copyWith({
     String? name,
     String? email,
+    String? currency,
     IconCode? iconCode,
     bool clearIcon = false,
   }) => _ProfileDraft(
     name: name ?? this.name,
     email: email ?? this.email,
+    currency: currency ?? this.currency,
     iconCode: clearIcon ? null : (iconCode ?? this.iconCode),
   );
 
@@ -307,8 +333,9 @@ class _ProfileDraft {
       other is _ProfileDraft &&
       other.name == name &&
       other.email == email &&
+      other.currency == currency &&
       other.iconCode == iconCode;
 
   @override
-  int get hashCode => Object.hash(name, email, iconCode);
+  int get hashCode => Object.hash(name, email, currency, iconCode);
 }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../event_errors.dart';
 import '../../../../ui/ui.dart';
@@ -93,7 +94,7 @@ class ProjectTxTreeTile extends StatelessWidget {
     final payer = view.memberOf(parent);
     final myId = view.me?.id;
     final marked = myId != null && parent.isMarkedBy(myId);
-    final symbol = Currencies.symbolOf(parent.currency);
+    final symbol = context.readUserCurrencySymbol;
     final locked = view.rowsLocked;
     final showTag = onShowTag;
     return EventBillRow(
@@ -284,7 +285,7 @@ class ProjectTxTreeTile extends StatelessWidget {
         ].join(' · '),
         trailing: MoneyText(
           tx.type == 'expense' ? -tx.amount : tx.amount,
-          symbol: Currencies.symbolOf(tx.currency),
+          symbol: context.readUserCurrencySymbol,
           tone: MoneyTone.signed,
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
+import '../../../core/utils/user_currency.dart';
 import '../../../ui/ui.dart';
 import '../domain/budget_period.dart';
 
@@ -82,6 +83,7 @@ class _PeriodSheetState extends State<_PeriodSheet> {
         children: [
           AmountInput(
             controller: _amount,
+            currencySymbol: context.readUserCurrencySymbol,
             label: l.bgPeriodAmountField,
             onChanged: (_) => setState(() => _useBase = false),
           ),

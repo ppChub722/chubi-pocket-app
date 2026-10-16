@@ -13,6 +13,9 @@ import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
 import 'package:chubi_pocket/features/recurring/presentation/pages/recurring_home_page.dart';
 import 'package:chubi_pocket/features/recurring/presentation/pages/recurring_page.dart';
 import 'package:chubi_pocket/features/recurring/presentation/pages/recurring_settings_page.dart';
+import 'package:chubi_pocket/features/recurring/presentation/widgets/recurring_summary_card.dart';
+import 'package:chubi_pocket/features/recurring/domain/recurring_summary.dart';
+import 'package:chubi_pocket/features/recurring/presentation/recurring_rows.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
@@ -41,7 +44,10 @@ const _down = ApiException(code: 'NETWORK_ERROR', message: 'no connection');
 class _Repo extends Fake implements RecurringRepository {
   Map<String, dynamic> detail = _prodDetail();
   bool networkDown = false;
+  String listStatus = 'active';
+  RecurringSummary? listSummary;
   final calls = <String>[];
+  final queries = <String>[];
 
   void _hit(String call) {
     calls.add(call);
@@ -52,11 +58,16 @@ class _Repo extends Fake implements RecurringRepository {
   Future<RecurringList> list({
     RecurringFilter filter = RecurringFilter.current,
     int page = 1,
+    String q = '',
   }) async {
+    queries.add(q);
     _hit('list:${filter.name}');
     return RecurringList(
-      items: [Recurring.fromJson(_prodRecurring())],
+      items: [
+        Recurring.fromJson({..._prodRecurring(), 'status': listStatus}),
+      ],
       counts: const {'current': 1, 'archived': 0, 'all': 1},
+      summary: listSummary,
     );
   }
 
@@ -204,6 +215,7 @@ void main() {
   late QuickCreateContext registry;
 
   setUp(() {
+    ToolbarToggleState.resetAll();
     repo = _Repo();
     registry = QuickCreateContext();
   });
@@ -372,12 +384,112 @@ void main() {
       expect(find.byType(ErrorView), findsNothing);
     });
 
+    testWidgets('Debts list pattern: card → tabs → toolbar → rows', (t) async {
+      await pump(t, const RecurringHomePage());
+      await t.tap(find.byType(ToolbarToggleButton));
+      await t.pumpAndSettle();
+      final card = find.byType(RecurringSummaryCard);
+      expect(card, findsOneWidget);
+      // The card's own margin: inset from the screen edge.
+      final box = find
+          .descendant(of: card, matching: find.byType(Material))
+          .first;
+      expect(t.getTopLeft(box).dx, AppSpacing.lg);
+      final cardY = t.getTopLeft(card).dy;
+      final tabsY = t.getTopLeft(find.byType(AppTabBar<RecurringHomeTab>)).dy;
+      final toolbarY = t.getTopLeft(find.byType(ListToolbar)).dy;
+      final rowY = t.getTopLeft(find.byType(RecurringRow)).dy;
+      expect(cardY, lessThan(tabsY));
+      expect(tabsY, lessThan(toolbarY));
+      expect(toolbarY, lessThan(rowY));
+      // No summary in the response: the boxes show a dash, not a number.
+      expect(find.text('—'), findsNWidgets(2));
+    });
+
+    testWidgets('summary from the BE fills the card', (t) async {
+      repo.listSummary = RecurringSummary.fromJson({
+        'month_pay': 1234.5,
+        'month_receive': 30000,
+        'next': {
+          'id': 'r1',
+          'name': 'Netflix',
+          'date': '2026-11-03',
+          'amount': 419,
+          'type': 'expense',
+        },
+      });
+      await pump(t, const RecurringHomePage());
+      expect(find.text('—'), findsNothing);
+      expect(find.textContaining('1,234.50'), findsOneWidget);
+      expect(find.textContaining('30,000.00'), findsOneWidget);
+      expect(find.textContaining('Netflix'), findsWidgets);
+    });
+
+    testWidgets('search sends q to the BE (one call per change)', (t) async {
+      await pump(t, const RecurringHomePage());
+      await t.tap(find.byType(ToolbarToggleButton));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField), 'netf');
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.queries, ['', 'netf']);
+      expect(find.text('Netflix'), findsOneWidget);
+    });
+
+    testWidgets('search toggle in the card; toolbar hidden; red dot', (
+      t,
+    ) async {
+      await pump(t, const RecurringHomePage());
+      final btn = find.byType(ToolbarToggleButton);
+      expect(
+        find.descendant(of: find.byType(RecurringSummaryCard), matching: btn),
+        findsOneWidget,
+      );
+      CardActionButton button() => t.widget<CardActionButton>(
+        find.descendant(of: btn, matching: find.byType(CardActionButton)),
+      );
+      expect(find.byType(TextField), findsNothing);
+      expect(button().showDot, isFalse);
+      await t.tap(btn);
+      await t.pumpAndSettle();
+      expect(find.byType(TextField), findsOneWidget);
+      await t.enterText(find.byType(TextField), 'netf');
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 100));
+      await t.tap(btn);
+      await t.pumpAndSettle();
+      expect(find.byType(TextField), findsNothing);
+      expect(button().showDot, isTrue);
+    });
+
+    testWidgets('status dropdown chip shows the status and changes it', (
+      t,
+    ) async {
+      await pump(t, const RecurringHomePage());
+      await t.tap(find.byType(ToolbarToggleButton));
+      await t.pumpAndSettle();
+      expect(find.text('Status: Active'), findsOneWidget);
+      await t.tap(find.text('Status: Active'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Archived').last);
+      await t.pumpAndSettle();
+      expect(repo.calls.last, 'list:archived');
+      expect(find.text('Status: Archived'), findsOneWidget);
+    });
+
     testWidgets('?tab=upcoming opens on the upcoming items', (t) async {
       await pump(
         t,
         const RecurringHomePage(initialTab: RecurringHomeTab.upcoming),
       );
       expect(repo.calls, ['upcoming']);
+      expect(find.text('Netflix'), findsOneWidget);
+    });
+
+    testWidgets('a paused recurring stays in the default list', (t) async {
+      repo.listStatus = 'paused';
+      await pump(t, const RecurringHomePage());
+      expect(repo.calls, ['list:current']);
       expect(find.text('Netflix'), findsOneWidget);
     });
 

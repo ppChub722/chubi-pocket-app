@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
@@ -46,7 +47,7 @@ class ProjectDashboardTab extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final v = view;
     final s = v.summary;
-    final symbol = v.symbol;
+    final symbol = context.readUserCurrencySymbol;
     final palette = Theme.of(context).extension<AppColors>()!;
     final members = v.currentMembers;
     final total = s?.totalExpense ?? 0;

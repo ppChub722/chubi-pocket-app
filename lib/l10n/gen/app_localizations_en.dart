@@ -6105,4 +6105,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sgv2EntryDeleted => 'Saving entry deleted';
+
+  @override
+  String get profileCurrencyChangeTitle => 'Change currency?';
+
+  @override
+  String get profileCurrencyChangeMessage =>
+      'Only the label changes. Your amounts are NOT converted: 100 stays 100.';
+
+  @override
+  String get profileCurrencyChangeConfirm => 'Change currency';
+
+  @override
+  String get bgSearchHint => 'Search budgets';
+
+  @override
+  String get bgNoMatch => 'No matching budgets';
+
+  @override
+  String get sgv2SearchHint => 'Search goals';
+
+  @override
+  String get recurringSearchHint => 'Search recurring';
+
+  @override
+  String get recurringNoMatch => 'No matching recurring';
+
+  @override
+  String get recurringSummaryMonth => 'Per month';
+
+  @override
+  String get recurringSummaryPay => 'Pay';
+
+  @override
+  String get recurringSummaryReceive => 'Receive';
+
+  @override
+  String get recurringSummaryNext => 'Next due';
+
+  @override
+  String get recurringStatusLabel => 'Status';
+
+  @override
+  String get accountsSearchHint => 'Search wallets';
+
+  @override
+  String get accountsNoMatch => 'No matching wallets';
+
+  @override
+  String get bgSummaryUsedCaption => 'Current period · total used';
+
+  @override
+  String bgSummaryRemaining(String amount) {
+    return '$amount left in total';
+  }
+
+  @override
+  String get bgTileAll => 'All';
+
+  @override
+  String get bgTileOk => 'Normal';
+
+  @override
+  String get bgStatusFieldLabel => 'Status';
+
+  @override
+  String get bgRowLeft => 'Left';
+
+  @override
+  String get bgRowOverAmount => 'Over';
+
+  @override
+  String get bgRowOneOff => 'One-off';
 }

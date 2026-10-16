@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/user_currency.dart';
 
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -32,7 +33,7 @@ class WalletSavingsSection extends StatelessWidget {
     final s = account.savings;
     if (s == null || s.isEmpty) return const SizedBox.shrink();
     final l = AppLocalizations.of(context)!;
-    final symbol = Currencies.symbolOf(account.currency);
+    final symbol = context.readUserCurrencySymbol;
     final tracked = account.trackBalance && s.available != null;
     Widget money(num v, {TextStyle? style}) =>
         MoneyText(v, symbol: symbol, style: style);

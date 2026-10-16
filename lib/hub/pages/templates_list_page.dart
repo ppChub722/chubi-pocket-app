@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
 import '../hub_playground.dart';
+import 'toolbar_toggle_demo.dart';
 
 /// `/dev/templates/list-page` — the ListPage template: search + filters
 /// pinned above a list that has one loading / error / empty / refresh story.
@@ -136,6 +137,7 @@ class _ListPageTemplateState extends State<_ListPageTemplate> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const ToolbarToggleDemo(),
         HubInApp(
           note:
               'The real list pages all use this skeleton. The first one is '

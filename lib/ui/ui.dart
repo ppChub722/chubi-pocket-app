@@ -73,6 +73,7 @@ export 'tokens/tone.dart';
 
 // Layout
 export 'atoms/add_tile.dart';
+export 'molecules/card_action_button.dart';
 export 'molecules/app_tab_bar.dart';
 export 'molecules/compact_hero_bar.dart';
 export 'molecules/danger_row.dart';

@@ -32,6 +32,10 @@ class _Accounts extends MockCubit<AccountsState> implements AccountsCubit {}
 class _Repo extends Fake implements ProjectsRepository {
   bool networkDown = false;
   Map<String, dynamic>? detailBody;
+
+  /// Rows per page and the page count the fake server reports.
+  int rowsPerPage = 2;
+  int totalPages = 1;
   final calls = <String>[];
 
   void _net() {
@@ -51,6 +55,18 @@ class _Repo extends Fake implements ProjectsRepository {
   }) async {
     calls.add('list q=${q ?? ''} page=$page');
     _net();
+    if (rowsPerPage > 2) {
+      return ProjectPage(
+        projects: [
+          for (var i = 0; i < rowsPerPage; i++)
+            Project.fromJson(
+              eventJson(id: 'p$page-$i', name: 'Event $page-$i'),
+            ),
+        ],
+        page: page,
+        totalPages: totalPages,
+      );
+    }
     return ProjectPage(
       projects: [
         Project.fromJson(
@@ -63,7 +79,7 @@ class _Repo extends Fake implements ProjectsRepository {
         Project.fromJson(eventJson(id: 'e2', name: 'Office party')),
       ],
       page: page,
-      totalPages: 1,
+      totalPages: totalPages,
     );
   }
 
@@ -190,6 +206,30 @@ void main() {
       await t.pump();
       expect(repo.calls.last, 'list q=trip page=1');
       expect(repo.calls.length, 2);
+    });
+
+    testWidgets('a page that fits the screen still pulls the next one', (
+      t,
+    ) async {
+      repo.totalPages = 2;
+      await pump(t, const ProjectsPage());
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls, ['list q= page=1', 'list q= page=2']);
+    });
+
+    testWidgets('scrolling to the end loads the next page (paging)', (t) async {
+      repo.rowsPerPage = 20;
+      repo.totalPages = 2;
+      await pump(t, const ProjectsPage());
+      expect(repo.calls, ['list q= page=1']);
+      await t.drag(find.byType(ListView).first, const Offset(0, -6000));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 100));
+      await t.drag(find.byType(ListView).first, const Offset(0, -6000));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls, contains('list q= page=2'));
+      expect(projects.state.projects.length, 40);
+      expect(projects.state.hasMore, isFalse);
     });
 
     testWidgets('network down → error + retry', (t) async {

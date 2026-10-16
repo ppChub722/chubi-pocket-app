@@ -10404,6 +10404,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saving entry deleted'**
   String get sgv2EntryDeleted;
+
+  /// No description provided for @profileCurrencyChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change currency?'**
+  String get profileCurrencyChangeTitle;
+
+  /// No description provided for @profileCurrencyChangeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the label changes. Your amounts are NOT converted: 100 stays 100.'**
+  String get profileCurrencyChangeMessage;
+
+  /// No description provided for @profileCurrencyChangeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Change currency'**
+  String get profileCurrencyChangeConfirm;
+
+  /// No description provided for @bgSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search budgets'**
+  String get bgSearchHint;
+
+  /// No description provided for @bgNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching budgets'**
+  String get bgNoMatch;
+
+  /// No description provided for @sgv2SearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search goals'**
+  String get sgv2SearchHint;
+
+  /// No description provided for @recurringSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recurring'**
+  String get recurringSearchHint;
+
+  /// No description provided for @recurringNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching recurring'**
+  String get recurringNoMatch;
+
+  /// No description provided for @recurringSummaryMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Per month'**
+  String get recurringSummaryMonth;
+
+  /// No description provided for @recurringSummaryPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay'**
+  String get recurringSummaryPay;
+
+  /// No description provided for @recurringSummaryReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive'**
+  String get recurringSummaryReceive;
+
+  /// No description provided for @recurringSummaryNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next due'**
+  String get recurringSummaryNext;
+
+  /// No description provided for @recurringStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get recurringStatusLabel;
+
+  /// No description provided for @accountsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search wallets'**
+  String get accountsSearchHint;
+
+  /// No description provided for @accountsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching wallets'**
+  String get accountsNoMatch;
+
+  /// No description provided for @bgSummaryUsedCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Current period · total used'**
+  String get bgSummaryUsedCaption;
+
+  /// No description provided for @bgSummaryRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left in total'**
+  String bgSummaryRemaining(String amount);
+
+  /// No description provided for @bgTileAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get bgTileAll;
+
+  /// No description provided for @bgTileOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get bgTileOk;
+
+  /// No description provided for @bgStatusFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get bgStatusFieldLabel;
+
+  /// No description provided for @bgRowLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get bgRowLeft;
+
+  /// No description provided for @bgRowOverAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Over'**
+  String get bgRowOverAmount;
+
+  /// No description provided for @bgRowOneOff.
+  ///
+  /// In en, this message translates to:
+  /// **'One-off'**
+  String get bgRowOneOff;
 }
 
 class _AppLocalizationsDelegate

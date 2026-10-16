@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Never "-฿0.00" (owner 2026-10-11): anything that shows as zero prints
 /// as a plain zero.
 void main() {
+  currencyDecimalsTests();
   test('-0.0 and tiny negatives print as ฿0.00', () {
     expect(CurrencyFormatter.format(-0.0), '฿0.00');
     expect(CurrencyFormatter.format(-0.004), '฿0.00');
@@ -21,5 +22,18 @@ void main() {
     expect(CurrencyFormatter.roundsToZero(-0.004), isTrue);
     expect(CurrencyFormatter.roundsToZero(-0.005), isFalse);
     expect(CurrencyFormatter.roundsToZero(-0.4, decimalDigits: 0), isTrue);
+  });
+}
+
+void currencyDecimalsTests() {
+  group('decimals follow the currency', () {
+    test('JPY symbol prints no decimals', () {
+      expect(CurrencyFormatter.format(1234.5, symbol: '¥'), '¥1,235');
+      expect(CurrencyFormatter.format(1234.5, symbol: '฿'), '฿1,234.50');
+    });
+    test('roundsToZero uses the currency decimals', () {
+      expect(CurrencyFormatter.roundsToZero(0.4, symbol: '¥'), isTrue);
+      expect(CurrencyFormatter.roundsToZero(0.4), isFalse);
+    });
   });
 }

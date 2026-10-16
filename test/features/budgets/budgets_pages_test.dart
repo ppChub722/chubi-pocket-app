@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/app/shell/quick_create_context.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
@@ -8,6 +10,7 @@ import 'package:chubi_pocket/features/budgets/domain/budget.dart';
 import 'package:chubi_pocket/features/budgets/domain/budget_detail.dart';
 import 'package:chubi_pocket/features/budgets/domain/budget_period.dart';
 import 'package:chubi_pocket/features/budgets/presentation/budget_draft.dart';
+import 'package:chubi_pocket/features/budgets/presentation/budget_labels.dart';
 import 'package:chubi_pocket/features/budgets/presentation/cubit/budgets_cubit.dart';
 import 'package:chubi_pocket/features/budgets/presentation/pages/budget_detail_page.dart';
 import 'package:chubi_pocket/features/budgets/presentation/pages/budgets_list_page.dart';
@@ -16,6 +19,7 @@ import 'package:chubi_pocket/features/home/presentation/cubit/dashboard_cubit.da
 import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_badge_cubit.dart';
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
+import 'package:chubi_pocket/features/transactions/domain/transaction.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
@@ -61,8 +65,10 @@ class _Repo extends Fake implements BudgetsRepository {
   Future<BudgetList> list({
     BudgetFilter filter = BudgetFilter.active,
     BudgetSort sort = BudgetSort.risk,
+    BudgetHealth health = BudgetHealth.all,
   }) async {
-    _hit('list:${filter.name}:${sort.name}');
+    final h = health == BudgetHealth.all ? '' : ':${health.name}';
+    _hit('list:${filter.name}:${sort.name}$h');
     return BudgetList.fromJson(listBody);
   }
 
@@ -124,6 +130,7 @@ Map<String, dynamic> _period({
   'status': status,
   'tone': tone,
   'days_left': current ? 24 : null,
+  'on_pace_to_exceed': status == 'pace',
 };
 
 /// A budget as `listBudgets` / `getBudget` send it.
@@ -177,6 +184,11 @@ Map<String, dynamic> _list() => {
     'pace_count': 1,
     'ended_count': 3,
     'archived_count': 0,
+    'total_limit': 12000,
+    'total_used': 7980,
+    'total_remaining': 4020,
+    'used_pct': 67,
+    'counts': {'all': 2, 'ok': 1, 'near': 0, 'over': 1},
   },
   'data': [
     _budget(
@@ -288,15 +300,19 @@ void main() {
   late _Repo repo;
   late QuickCreateContext registry;
   BudgetsCubit? budgets;
+  late StreamController<TransactionsState> txBook;
 
   setUp(() {
+    ToolbarToggleState.resetAll();
     repo = _Repo();
     registry = QuickCreateContext();
+    txBook = StreamController<TransactionsState>.broadcast();
   });
 
   tearDown(() async {
     registry.dispose();
     await budgets?.close();
+    await txBook.close();
   });
 
   Future<void> pump(WidgetTester t, Widget page) async {
@@ -322,7 +338,11 @@ void main() {
     when(() => tags.state).thenReturn(const TagsState());
     when(() => tags.loadIfNeeded()).thenAnswer((_) async {});
     when(() => dashboard.state).thenReturn(const DashboardState());
-    when(() => transactions.state).thenReturn(const TransactionsState());
+    whenListen(
+      transactions,
+      txBook.stream,
+      initialState: const TransactionsState(),
+    );
     await t.pumpWidget(
       RepositoryProvider<BudgetsRepository>.value(
         value: repo,
@@ -373,6 +393,24 @@ void main() {
       expect(l.budgets.last.rule?.freq, 'monthly');
       expect(l.budgets.last.scope.tags, ['เที่ยว']);
       expect(l.budgets.last.scope.categories.single.includeChildren, isTrue);
+      expect(l.summary.totalLimit, 12000);
+      expect(l.summary.totalUsed, 7980);
+      expect(l.summary.totalRemaining, 4020);
+      expect(l.summary.usedPct, 67);
+      expect(l.summary.countAll, 2);
+      expect(l.summary.countOk, 1);
+      expect(l.summary.countOver, 1);
+      expect(l.budgets.last.period.onPaceToExceed, isTrue);
+    });
+
+    test('the pace tick: elapsed fraction of the period, null when open', () {
+      final start = DateTime(2026, 10, 1);
+      final end = DateTime(2026, 10, 31);
+      expect(budgetPaceFraction(start, end, DateTime(2026, 10, 16)), 0.5);
+      expect(budgetPaceFraction(start, end, DateTime(2026, 9, 1)), 0);
+      expect(budgetPaceFraction(start, end, DateTime(2026, 12, 1)), 1);
+      expect(budgetPaceFraction(start, null, DateTime(2026, 10, 16)), isNull);
+      expect(budgetPaceFraction(start, start, DateTime(2026, 10, 1)), isNull);
     });
 
     test('the detail parses forecast, sources, periods and items', () {
@@ -458,12 +496,122 @@ void main() {
       expect(find.byType(ErrorView), findsNothing);
     });
 
-    testWidgets('a chip is ONE call', (t) async {
+    testWidgets('a transaction write refreshes the spent figures', (t) async {
       await pump(t, const BudgetsListPage());
-      await t.tap(find.text('Ended'));
+      expect(repo.calls, ['list:active:risk']);
+      // A write bumps the revision.
+      txBook.add(const TransactionsState(revision: 1));
+      await t.pump(const Duration(milliseconds: 500));
+      await t.pump();
+      expect(repo.calls, ['list:active:risk', 'list:active:risk']);
+      // A book-wide refresh (pending submit, debt settle) swaps the rows.
+      txBook.add(TransactionsState(revision: 1, transactions: <Transaction>[]));
+      await t.pump(const Duration(milliseconds: 500));
+      await t.pump();
+      expect(repo.calls.length, 3);
+    });
+
+    Future<void> openToolbar(WidgetTester t) async {
+      await t.tap(find.byType(ToolbarToggleButton));
+      await t.pumpAndSettle();
+    }
+
+    testWidgets('summary card: totals, tiles, 🔍; toolbar hidden by default', (
+      t,
+    ) async {
+      await pump(t, const BudgetsListPage());
+      final label = find.text('Current period · total used');
+      final card = find.ancestor(of: label, matching: find.byType(AppCard));
+      expect(card, findsOneWidget);
+      final screen = t.view.physicalSize.width / t.view.devicePixelRatio;
+      final r = t.getRect(label);
+      expect(r.left, AppSpacing.lg * 2);
+      expect(screen - r.right, greaterThanOrEqualTo(AppSpacing.lg * 2));
+      expect(find.textContaining('฿7,980', findRichText: true), findsWidgets);
+      expect(find.textContaining('of ฿12,000'), findsOneWidget);
+      expect(find.text('฿4,020 left in total'), findsOneWidget);
+      expect(find.byKey(const ValueKey('budgetSummaryPct')), findsOneWidget);
+      for (final k in ['all', 'normal', 'near', 'over']) {
+        expect(find.byKey(ValueKey('budgetTile_$k')), findsOneWidget);
+      }
+      // 🔍 in the card; the toolbar is hidden until it is tapped.
+      expect(find.byIcon(AppIcons.search), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      await openToolbar(t);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(
+        t.getTopLeft(card).dy,
+        lessThan(t.getTopLeft(find.byType(ListToolbar)).dy),
+      );
+    });
+
+    testWidgets('search by name (local, no call)', (t) async {
+      await pump(t, const BudgetsListPage());
+      await openToolbar(t);
+      await t.enterText(find.byType(TextField), 'ช้อป');
+      await t.pump();
+      expect(find.text('ช้อปปิ้ง'), findsOneWidget);
+      expect(find.text('อาหาร'), findsNothing);
+      await t.enterText(find.byType(TextField), 'zzz');
+      await t.pump();
+      expect(find.text('No matching budgets'), findsOneWidget);
+      expect(repo.calls, ['list:active:risk']);
+    });
+
+    testWidgets('red dot on the 🔍 while hidden with a search typed', (
+      t,
+    ) async {
+      await pump(t, const BudgetsListPage());
+      await openToolbar(t);
+      await t.enterText(find.byType(TextField), 'ช้อป');
+      await t.pump();
+      bool dot() =>
+          t.widget<CardActionButton>(find.byType(CardActionButton)).showDot;
+      expect(dot(), isFalse);
+      await openToolbar(t); // hide again
+      expect(find.byType(TextField), findsNothing);
+      expect(dot(), isTrue);
+    });
+
+    testWidgets('status is ONE dropdown chip and changes the filter', (
+      t,
+    ) async {
+      await pump(t, const BudgetsListPage());
+      await openToolbar(t);
+      expect(find.text('Status: Active'), findsOneWidget);
+      await t.tap(find.text('Status: Active'));
+      await t.pump(const Duration(milliseconds: 300));
+      await t.tap(find.text('Ended').last);
       await t.pump();
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls, ['list:active:risk', 'list:ended:risk']);
+      expect(find.text('Status: Ended'), findsOneWidget);
+    });
+
+    testWidgets('a health tile is ONE call; the same tile clears it', (
+      t,
+    ) async {
+      await pump(t, const BudgetsListPage());
+      await t.tap(find.byKey(const ValueKey('budgetTile_over')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls, ['list:active:risk', 'list:active:risk:over']);
+      await t.tap(find.byKey(const ValueKey('budgetTile_over')));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls.last, 'list:active:risk');
+    });
+
+    testWidgets('a row: remaining on the name line, short caption, badges', (
+      t,
+    ) async {
+      await pump(t, const BudgetsListPage());
+      expect(find.textContaining('฿4,880', findRichText: true), findsOneWidget);
+      expect(find.textContaining('฿860', findRichText: true), findsOneWidget);
+      expect(find.text('Monthly · 24 days left'), findsNWidgets(2));
+      expect(find.text('Used ฿3,120 of ฿8,000'), findsOneWidget);
+      expect(find.text('On pace to exceed'), findsOneWidget);
+      expect(find.text('Over'), findsOneWidget);
     });
 
     testWidgets('network down → full-page error + retry', (t) async {

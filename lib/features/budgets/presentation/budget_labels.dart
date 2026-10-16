@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/user_currency.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
 import '../domain/budget.dart';
@@ -130,3 +132,45 @@ Color budgetToneColor(BuildContext context, Budget budget, BudgetPeriod p) =>
     budgetProgressTone(
       p,
     ).resolve(context, entityTint: budgetTint(context, budget));
+
+/// The row's bar tone: the BE's neutral reads as the primary (teal) bar, then
+/// amber (warning) and red (danger).
+ProgressTone budgetRowTone(BudgetPeriod p) => switch (p.tone) {
+  BudgetTone.danger => ProgressTone.danger,
+  BudgetTone.warning => ProgressTone.warning,
+  BudgetTone.neutral => ProgressTone.normal,
+};
+
+/// How far [today] is through a period, 0..1 (the row's pace tick); null for
+/// an open-ended or empty period.
+double? budgetPaceFraction(DateTime start, DateTime? end, DateTime today) {
+  if (end == null) return null;
+  final total = end.difference(start).inHours;
+  if (total <= 0) return null;
+  final elapsed = today.difference(start).inHours;
+  return (elapsed / total).clamp(0.0, 1.0);
+}
+
+/// An amount for a row: the user's currency, no decimals when whole.
+String budgetRowMoney(BuildContext context, num amount) {
+  final symbol = context.readUserCurrencySymbol;
+  if (isMoneyHidden(context)) return moneyString(context, amount);
+  final whole = amount == amount.roundToDouble();
+  return CurrencyFormatter.format(
+    amount,
+    symbol: symbol,
+    decimalDigits: whole ? 0 : null,
+  );
+}
+
+/// "รายปี · เหลือ 77 วัน": the period kind and the days left.
+String budgetRowCaption(BuildContext context, AppLocalizations l, Budget b) {
+  final kind = b.recurring && b.rule != null
+      ? budgetRuleLabel(l, b.rule!)
+      : (b.period.end == null ? l.bgRowOpenEnded : l.bgRowOneOff);
+  final left = b.period.daysLeft;
+  return [
+    kind,
+    if (left != null && b.state == BudgetState.active) l.bgRowDaysLeft(left),
+  ].join(' · ');
+}

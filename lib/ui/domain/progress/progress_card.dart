@@ -49,6 +49,9 @@ class ProgressCard extends StatelessWidget {
     this.percentText,
     this.onTap,
     this.dimmed = false,
+    this.trailing,
+    this.paceMarker,
+    this.alignWithTitle = false,
     super.key,
   }) : compact = false,
        skeleton = false,
@@ -68,6 +71,9 @@ class ProgressCard extends StatelessWidget {
     this.percentText,
     this.onTap,
     this.dimmed = false,
+    this.trailing,
+    this.paceMarker,
+    this.alignWithTitle = false,
     super.key,
   }) : iconCode = null,
        fallbackIcon = null,
@@ -95,6 +101,9 @@ class ProgressCard extends StatelessWidget {
        overLabel = null,
        struckLabel = null,
        percentText = null,
+       trailing = null,
+       paceMarker = null,
+       alignWithTitle = false,
        onTap = null,
        dimmed = false,
        skeleton = true,
@@ -119,6 +128,15 @@ class ProgressCard extends StatelessWidget {
   final String? percentText;
   final VoidCallback? onTap;
   final bool dimmed;
+
+  /// Far right of the name line, after the [badge] (a budget's "เหลือ ฿X").
+  final Widget? trailing;
+
+  /// Where on the bar a thin tick marks today's pace (0..1); null = none.
+  final double? paceMarker;
+
+  /// Bar and footer start under the title, not under the icon tile.
+  final bool alignWithTitle;
   final bool compact;
   final bool skeleton;
   final bool skeletonIcon;
@@ -134,7 +152,7 @@ class ProgressCard extends StatelessWidget {
     final tint = iconCode.tintFor(palette);
     final color = tone.resolve(context, entityTint: tint);
     final hasTile = leading != null || iconCode != null || fallbackIcon != null;
-    final tinted = tone != ProgressTone.neutral;
+    final tinted = tone != ProgressTone.neutral && tone != ProgressTone.normal;
     final small = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
     final header = Row(
@@ -173,6 +191,10 @@ class ProgressCard extends StatelessWidget {
           ),
         ),
         if (badge != null) ...[const SizedBox(width: AppSpacing.sm), badge!],
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          trailing!,
+        ],
       ],
     );
 
@@ -244,6 +266,7 @@ class ProgressCard extends StatelessWidget {
             ),
           );
 
+    final indent = alignWithTitle && hasTile ? _tile + AppSpacing.md : 0.0;
     final body = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
@@ -255,14 +278,24 @@ class ProgressCard extends StatelessWidget {
         children: [
           header,
           const SizedBox(height: AppSpacing.sm),
-          ProgressRow(
-            value: value,
-            expected: expected,
-            color: color,
-            overColor: color,
-            height: compact ? 6 : 8,
+          Padding(
+            padding: EdgeInsets.only(left: indent),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ProgressRow(
+                  value: value,
+                  expected: expected,
+                  color: color,
+                  overColor: color,
+                  height: compact ? 6 : 8,
+                  marker: paceMarker,
+                ),
+                footer,
+              ],
+            ),
           ),
-          footer,
         ],
       ),
     );

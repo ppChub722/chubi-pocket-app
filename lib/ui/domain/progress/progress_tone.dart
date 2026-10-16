@@ -9,6 +9,11 @@ enum ProgressTone {
   /// The entity's own tint (its icon colour), else the primary colour.
   neutral,
 
+  /// A healthy state (budgets, owner 2026-10-16): the primary (teal) colour,
+  /// whatever the entity's icon tint — the bar reads normal → warning →
+  /// danger as one scale.
+  normal,
+
   /// Close to the limit.
   warning,
 
@@ -28,6 +33,7 @@ enum ProgressTone {
     final palette = Theme.of(context).extension<AppColors>()!;
     return switch (this) {
       ProgressTone.neutral => entityTint ?? scheme.primary,
+      ProgressTone.normal => scheme.primary,
       ProgressTone.warning => palette.warning,
       ProgressTone.danger => palette.error,
       ProgressTone.success => palette.success,

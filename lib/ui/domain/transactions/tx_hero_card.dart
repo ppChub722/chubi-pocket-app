@@ -244,10 +244,10 @@ class TxHeroCard extends StatelessWidget {
       onTap: editing ? onPickDate : null,
     );
     final editChip = !editing && onEdit != null
-        ? AppIconButton.edit(
-            size: AppIconButton.sizeHero,
+        ? CardActionButton(
+            icon: AppIcons.edit,
             tooltip: l.commonEdit,
-            onPressed: onEdit,
+            onTap: onEdit,
           )
         : null;
     final baseAmount = compact

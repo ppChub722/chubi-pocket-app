@@ -195,9 +195,39 @@ void main() {
     await t.pump(const Duration(milliseconds: 100));
   }
 
-  setUp(() => repo = _Repo());
+  setUp(() {
+    repo = _Repo();
+    ToolbarToggleState.resetAll();
+  });
 
   group('people list', () {
+    testWidgets('🔍 in the card; toolbar hidden until tapped; red dot', (
+      t,
+    ) async {
+      await pump(t, const PersonalDebtsPage());
+      final toggle = find.descendant(
+        of: find.byType(DebtSummaryCard),
+        matching: find.byType(ToolbarToggleButton),
+      );
+      expect(toggle, findsOneWidget);
+      expect(find.byType(AppChip), findsNothing);
+      CardActionButton button() => t.widget(
+        find.descendant(
+          of: find.byType(ToolbarToggleButton),
+          matching: find.byType(CardActionButton),
+        ),
+      );
+      expect(button().showDot, isFalse);
+      await t.tap(toggle);
+      await t.pumpAndSettle();
+      expect(find.widgetWithText(AppChip, 'All'), findsOneWidget);
+      await t.enterText(find.byType(TextField), 'Mom');
+      await t.tap(toggle);
+      await t.pumpAndSettle();
+      expect(find.widgetWithText(AppChip, 'All'), findsNothing);
+      expect(button().showDot, isTrue);
+    });
+
     testWidgets('open = 1 call; rows + totals from the BE', (t) async {
       await pump(t, const PersonalDebtsPage());
       expect(repo.calls, ['people all=false']);
@@ -210,6 +240,8 @@ void main() {
 
     testWidgets('"All" chip = 1 call with all=true', (t) async {
       await pump(t, const PersonalDebtsPage());
+      await t.tap(find.byType(ToolbarToggleButton));
+      await t.pumpAndSettle();
       await t.tap(find.widgetWithText(AppChip, 'All'));
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.calls.last, 'people all=true');

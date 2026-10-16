@@ -91,16 +91,16 @@ class AddTile extends StatelessWidget {
               onTap: onTap,
               borderRadius: BorderRadius.circular(radius),
               child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: isCard ? 64 : 48),
+                constraints: const BoxConstraints(minHeight: 44),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(icon, size: isCard ? 24 : 20, color: color),
+                      Icon(icon, size: 20, color: color),
                       const SizedBox(width: AppSpacing.sm),
                       Flexible(
                         child: Text(

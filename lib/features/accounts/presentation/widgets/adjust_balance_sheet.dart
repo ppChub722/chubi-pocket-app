@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/user_currency.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -22,7 +23,7 @@ Future<AdjustBalanceInput?> showAdjustBalanceSheet(
     context,
     name: account.name,
     balance: account.balance,
-    symbol: Currencies.symbolOf(account.currency),
+    symbol: context.readUserCurrencySymbol,
     tint: account.iconCode.tintFor(palette, fallback: scheme.primary),
     isCredit: credit,
     strings: AdjustBalanceStrings(
@@ -60,7 +61,7 @@ Future<double?> showSetBalanceSheet(
     context,
     name: account.name,
     balance: 0,
-    symbol: Currencies.symbolOf(account.currency),
+    symbol: context.readUserCurrencySymbol,
     tint: account.iconCode.tintFor(palette, fallback: scheme.primary),
     isCredit: credit,
     setOnly: true,

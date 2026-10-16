@@ -22,6 +22,7 @@ class ProgressRow extends StatelessWidget {
     this.color,
     this.overColor,
     this.height = 8,
+    this.marker,
     super.key,
   });
 
@@ -38,6 +39,10 @@ class ProgressRow extends StatelessWidget {
   final Color? color;
   final Color? overColor;
   final double height;
+
+  /// A thin tick across the bar at this ratio (0..1) — where spending "should"
+  /// be today (a budget's pace, owner 2026-10-16). null = none.
+  final double? marker;
 
   /// The bar's two fractions of the track, both clamped to 0..1: where the
   /// used part ends, and where used + expected ends (the total, clamped).
@@ -87,6 +92,16 @@ class ProgressRow extends StatelessWidget {
                     widthFactor: v.dx,
                     child: ColoredBox(color: barColor),
                   ),
+                  if (marker != null)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        key: const ValueKey('progressMarker'),
+                        painter: _MarkerPainter(
+                          marker!.clamp(0, 1).toDouble(),
+                          scheme.onSurface.withValues(alpha: 0.55),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -152,4 +167,24 @@ class _StripePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_StripePainter old) => old.color != color;
+}
+
+/// The pace tick: a 2px line across the full bar height at [at] of the track.
+class _MarkerPainter extends CustomPainter {
+  const _MarkerPainter(this.at, this.color);
+
+  final double at;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final x = (size.width * at).clamp(1.0, size.width - 1);
+    canvas.drawRect(
+      Rect.fromLTWH(x - 1, 0, 2, size.height),
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MarkerPainter old) => old.at != at || old.color != color;
 }

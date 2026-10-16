@@ -12,6 +12,7 @@ import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../event_errors.dart';
 import '../../../../ui/ui.dart';
@@ -105,13 +106,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       if (!mounted) return;
       // The list shows this event too: keep it fresh without its own reload.
       projects.patch(detail.project);
-      _show(
-        ProjectView.of(
-          detail,
-          currentUserId: user?.id,
-          userCurrency: user?.currency,
-        ),
-      );
+      _show(ProjectView.of(detail, currentUserId: user?.id));
       if (enterEdit && _view!.isOwner) this.enterEdit();
     } catch (e, st) {
       // ANY failure (a parse error too) lands in the error + retry view.
@@ -751,7 +746,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
                 AmountInput(
                   controller: _ctrl[_Field.planned]!,
                   label: l.projectFormPlannedLabel,
-                  currencySymbol: v.symbol,
+                  currencySymbol: context.readUserCurrencySymbol,
                   onChanged: (t) => _onText(_Field.planned, t),
                   validator: (t) {
                     if (t == null || t.trim().isEmpty) return null;

@@ -43,6 +43,8 @@ const double _cardExtent = 156;
 
 class _AccountsPageState extends State<AccountsPage> {
   _WalletSort _sort = _WalletSort.custom;
+  final _search = TextEditingController();
+  final _toolbarOpen = ToolbarToggleState.of('wallets');
 
   /// Non-null while reordering — the kit's flat reorder mode.
   ReorderController? _reorder;
@@ -67,6 +69,7 @@ class _AccountsPageState extends State<AccountsPage> {
     if (_reordering) _shellChrome?.show();
     _reorder?.dispose();
     _reorderScroll.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -245,33 +248,45 @@ class _AccountsPageState extends State<AccountsPage> {
     );
   }
 
-  /// `✏️ ……… [sort ▾]` — the list's edit mode left (✏️ = the list's edit
-  /// mode, owner 2026-10-11), the order right. No search.
-  Widget _toolbar(AppLocalizations l, List<Account> accounts) {
+  /// The collapsible toolbar (🔍 in the summary card): search by name + the
+  /// order chip.
+  Widget _listToolbar(AppLocalizations l) {
+    return ListToolbar(
+      collapse: _toolbarOpen,
+      searchController: _search,
+      onSearchChanged: (_) => setState(() {}),
+      searchHint: l.accountsSearchHint,
+      chips: [
+        OptionMenuAnchor<_WalletSort>(
+          selected: _sort,
+          onSelected: (s) => setState(() => _sort = s),
+          options: [
+            for (final s in _WalletSort.values)
+              SheetOption(value: s, label: _sortLabel(l, s)),
+          ],
+          builder: (context, toggle) => AppChip(
+            label: _sortLabel(l, _sort),
+            icon: AppIcons.sort,
+            selected: _sort != _WalletSort.custom,
+            trailing: AppChipTrailing.dropdown,
+            onTap: toggle,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// `……… ✏️` — the list's edit mode (owner 2026-10-11), always visible.
+  Widget _editRow(AppLocalizations l, List<Account> accounts) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
+        AppSpacing.xs,
         AppSpacing.sm,
-        AppSpacing.sm,
-        AppSpacing.sm,
+        AppSpacing.xs,
       ),
       child: Row(
         children: [
-          OptionMenuAnchor<_WalletSort>(
-            selected: _sort,
-            onSelected: (s) => setState(() => _sort = s),
-            options: [
-              for (final s in _WalletSort.values)
-                SheetOption(value: s, label: _sortLabel(l, s)),
-            ],
-            builder: (context, toggle) => AppChip(
-              label: _sortLabel(l, _sort),
-              icon: AppIcons.sort,
-              selected: _sort != _WalletSort.custom,
-              trailing: AppChipTrailing.dropdown,
-              onTap: toggle,
-            ),
-          ),
           const Spacer(),
           AppIconButton.edit(
             tooltip: l.accountsReorder,
@@ -294,10 +309,28 @@ class _AccountsPageState extends State<AccountsPage> {
   ) {
     final accounts = state.accounts;
     final l = AppLocalizations.of(context)!;
-    final list = _sorted(accounts);
+    // Search is local (the list is not paged): name contains the text.
+    final q = _search.text.trim().toLowerCase();
+    final list = [
+      for (final a in _sorted(accounts))
+        if (q.isEmpty || a.name.toLowerCase().contains(q)) a,
+    ];
     return [
-      _WalletsSummary(state: state),
-      _toolbar(l, accounts),
+      _WalletsSummary(
+        state: state,
+        action: ListenableBuilder(
+          listenable: _search,
+          builder: (context, _) => ToolbarToggleButton(
+            state: _toolbarOpen,
+            filtered: _search.text.isNotEmpty || _sort != _WalletSort.custom,
+            tooltip: l.commonSearch,
+          ),
+        ),
+      ),
+      _listToolbar(l),
+      _editRow(l, accounts),
+      if (list.isEmpty && accounts.isNotEmpty)
+        EmptyView.compact(message: l.accountsNoMatch),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: GridView.builder(
@@ -424,8 +457,11 @@ class _AccountsPageState extends State<AccountsPage> {
 ///   ใช้วงเงิน n% · เหลือ ฿y   (cards with a limit; liability colour)
 ///   หนี้บัตร ฿a               (only when non-zero)
 class _WalletsSummary extends StatelessWidget {
-  const _WalletsSummary({required this.state});
+  const _WalletsSummary({required this.state, this.action});
   final AccountsState state;
+
+  /// The card's top-right action (the list's 🔍), after the 👁.
+  final Widget? action;
 
   /// A type's segment / legend colour: its group's theme token
   /// ([AccountType.colorOf] — have = cool, owe = warm, owner 2026-10-11),
@@ -518,6 +554,10 @@ class _WalletsSummary extends StatelessWidget {
                   ),
                 ),
                 const MoneyVisibilityToggle(),
+                if (action != null) ...[
+                  const SizedBox(width: AppSpacing.xs),
+                  action!,
+                ],
               ],
             ),
             Padding(

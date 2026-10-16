@@ -24,12 +24,17 @@ class SavingGoalsState extends Equatable {
     this.filter = SavingGoalsFilter.active,
     this.status = SavingGoalsStatus.initial,
     this.error,
+    this.staleTick = 0,
   });
 
   final SavingGoalsOverview overview;
   final SavingGoalsFilter filter;
   final SavingGoalsStatus status;
   final ApiException? error;
+
+  /// Bumped when savings changed elsewhere ([SavingGoalsCubit.markStale]);
+  /// open pages listen to it and reload.
+  final int staleTick;
 
   List<SavingGoal> get goals => overview.goals;
 
@@ -38,16 +43,18 @@ class SavingGoalsState extends Equatable {
     SavingGoalsFilter? filter,
     SavingGoalsStatus? status,
     ApiException? error,
+    int? staleTick,
     bool clearError = false,
   }) => SavingGoalsState(
     overview: overview ?? this.overview,
     filter: filter ?? this.filter,
     status: status ?? this.status,
     error: clearError ? null : (error ?? this.error),
+    staleTick: staleTick ?? this.staleTick,
   );
 
   @override
-  List<Object?> get props => [overview, filter, status, error];
+  List<Object?> get props => [overview, filter, status, error, staleTick];
 }
 
 /// The list page's state: ONE call per open (`GET /saving-goals?status=`).
@@ -66,7 +73,10 @@ class SavingGoalsCubit extends Cubit<SavingGoalsState> with Clearable {
   void clear() => emit(const SavingGoalsState());
 
   /// The list changed elsewhere: reload on the next [loadIfNeeded].
-  void markStale() => _stale = true;
+  void markStale({bool silent = false}) {
+    _stale = true;
+    if (!silent) emit(state.copyWith(staleTick: state.staleTick + 1));
+  }
 
   Future<void> loadIfNeeded() {
     final fresh = state.status == SavingGoalsStatus.loaded && !_stale;

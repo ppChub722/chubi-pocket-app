@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/user_currency.dart';
 
 import '../../../../ui/ui.dart';
 import '../../domain/account.dart';
@@ -20,7 +21,7 @@ CompactHeroBar walletCompactHero(
     trailing: account.showsBalance
         ? MoneyText(
             accountDisplayBalance(account),
-            symbol: Currencies.symbolOf(account.currency),
+            symbol: context.readUserCurrencySymbol,
             style: AppTypography.of(
               context,
               AppTextRole.money,

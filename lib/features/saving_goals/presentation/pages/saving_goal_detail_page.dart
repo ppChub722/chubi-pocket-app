@@ -5,10 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../ui/ui.dart';
+import '../../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/saving_goals_repository.dart';
 import '../../domain/saving_entry.dart';
@@ -179,7 +181,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   // ── Writes ──────────────────────────────────────────────────────────
 
   /// Tells the list (and through it Home) that savings changed.
-  void _listChanged() => context.read<SavingGoalsCubit>().markStale();
+  void _listChanged() =>
+      context.read<SavingGoalsCubit>().markStale(silent: true);
 
   Future<void> _save(SavingGoal? goal) async {
     commitTextSession();
@@ -277,7 +280,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
   Future<void> _close(SavingGoal g, List<SavingWalletShare> wallets) async {
     final l = AppLocalizations.of(context)!;
-    final symbol = Currencies.symbolOf(g.currency);
+    final symbol = context.readUserCurrencySymbol;
     final choice = await showCloseGoalDialog(
       context,
       title: l.sgv2CloseTitle(g.name),
@@ -325,18 +328,40 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     if (widget.isCreate) return _page(l, null, null);
-    return BlocProvider.value(
-      value: _cubit!,
-      child: BlocConsumer<SavingGoalCubit, SavingPageState>(
-        listener: _onState,
-        builder: (context, state) {
-          final d = state.detail;
-          if (d == null) return _fallback(l, state);
-          if (d.isSpare) return _spare(l, d, state);
-          return _page(l, d, state);
-        },
+    return MultiBlocListener(
+      listeners: [
+        // A transaction write / a saving written elsewhere (the + sheet,
+        // a pending draft): this page's figures moved — one reload.
+        BlocListener<TransactionsCubit, TransactionsState>(
+          listenWhen: _bookMoved,
+          listener: (_, _) => _reloadQuietly(),
+        ),
+        BlocListener<SavingGoalsCubit, SavingGoalsState>(
+          listenWhen: (a, b) => a.staleTick != b.staleTick,
+          listener: (_, _) => _reloadQuietly(),
+        ),
+      ],
+      child: BlocProvider.value(
+        value: _cubit!,
+        child: BlocConsumer<SavingGoalCubit, SavingPageState>(
+          listener: _onState,
+          builder: (context, state) {
+            final d = state.detail;
+            if (d == null) return _fallback(l, state);
+            if (d.isSpare) return _spare(l, d, state);
+            return _page(l, d, state);
+          },
+        ),
       ),
     );
+  }
+
+  static bool _bookMoved(TransactionsState a, TransactionsState b) =>
+      a.revision != b.revision || !identical(a.transactions, b.transactions);
+
+  void _reloadQuietly() {
+    if (!mounted || isEditing || isSaving) return;
+    _cubit?.load();
   }
 
   /// No data yet: skeleton on the first load, error + retry (never lose a
@@ -448,14 +473,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     );
   }
 
-  /// The currency a page shows: the goal's, else the first wallet's.
-  String _currency(SavingGoalDetail d) =>
-      d.goal?.currency ??
-      (d.byWallet.isEmpty ? '' : d.byWallet.first.wallet.currency ?? '');
-
   /// The spare bucket page (GET /saving-goals/spare): total, by wallet, entries.
   Widget _spare(AppLocalizations l, SavingGoalDetail d, SavingPageState s) {
-    final symbol = Currencies.symbolOf(_currency(d));
+    final symbol = context.readUserCurrencySymbol;
     return Scaffold(
       appBar: AppTopBar(title: l.sgv2SpareTitle, showBack: true),
       extendBodyBehindAppBar: true,
@@ -491,7 +511,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final editing = isEditing;
     final palette = Theme.of(context).extension<AppColors>()!;
     final accent = working.iconCode.tintFor(palette);
-    final symbol = Currencies.symbolOf(goal?.currency ?? '');
+    final symbol = context.readUserCurrencySymbol;
     return HeaderCard(
       accent: accent,
       glyph: AppIcons.savingGoal,
@@ -547,7 +567,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   /// Heading-less top box: target, deadline, auto-save, note.
   Widget _basics(AppLocalizations l, SavingGoal? goal, bool first) {
     final editing = isEditing;
-    final symbol = Currencies.symbolOf(goal?.currency ?? '');
+    final symbol = context.readUserCurrencySymbol;
     final deadline = working.deadline;
     final locale = Localizations.localeOf(context).toLanguageTag();
     return SectionCard(
@@ -779,7 +799,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   /// the history chart.
   Widget _overview(AppLocalizations l, SavingGoalDetail d, bool first) {
     final g = d.goal!;
-    final symbol = Currencies.symbolOf(g.currency);
+    final symbol = context.readUserCurrencySymbol;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final eta = g.etaDate == null ? null : DateTime.tryParse(g.etaDate!);
     final palette = Theme.of(context).extension<AppColors>()!;
@@ -880,7 +900,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
 
   Widget? _byWallet(AppLocalizations l, SavingGoalDetail d, bool first) {
     if (d.byWallet.isEmpty) return null;
-    final symbol = Currencies.symbolOf(_currency(d));
+    final symbol = context.readUserCurrencySymbol;
     return SectionCard(
       first: first,
       title: l.sgv2ByWallet,

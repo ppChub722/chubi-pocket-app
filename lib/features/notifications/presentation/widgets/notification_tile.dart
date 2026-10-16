@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/user_currency.dart';
 
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -102,8 +103,7 @@ class NotificationTile extends StatelessWidget {
   String? _amount(BuildContext context) {
     final a = notification.payload['amount'];
     if (a is! num) return null;
-    final cur = (notification.payload['currency'] as String?) ?? 'THB';
-    return moneyString(context, a, symbol: Currencies.symbolOf(cur));
+    return moneyString(context, a, symbol: context.readUserCurrencySymbol);
   }
 
   static IconData _iconFor(NotificationType t) => switch (t) {
@@ -172,7 +172,7 @@ String _splitChangeTitle(
       l.notificationsSomeone;
   final what = (p['description'] as String?)?.trim() ?? '';
   if (p['change'] == 'removed') return l.notifSplitRemovedYou(who, what);
-  final symbol = Currencies.symbolOf((p['currency'] as String?) ?? 'THB');
+  final symbol = context.readUserCurrencySymbol;
   String money(Object? v) =>
       v is num ? moneyString(context, v, symbol: symbol) : '—';
   return l.notifSplitAmountChanged(

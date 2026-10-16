@@ -6,9 +6,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../../tags/presentation/widgets/tag_picker_sheet.dart';
 import '../../domain/project.dart';
 import '../cubit/projects_cubit.dart';
@@ -27,6 +27,10 @@ class ProjectsPage extends StatefulWidget {
 class _ProjectsPageState extends State<ProjectsPage> {
   final _search = TextEditingController();
   Timer? _debounce;
+  final _scroll = ScrollController();
+
+  /// A page-fill load failed: stop asking until the user scrolls / reloads.
+  bool _fillFailed = false;
 
   @override
   void initState() {
@@ -42,6 +46,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
   void dispose() {
     _debounce?.cancel();
     _search.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -77,6 +82,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
       try {
         await cubit.loadMore();
       } catch (_) {
+        _fillFailed = true;
         if (mounted) {
           showAppSnackBar(context, l.uiLoadMoreFailed, tone: Tone.danger);
         }
@@ -84,15 +90,25 @@ class _ProjectsPageState extends State<ProjectsPage> {
     });
   }
 
+  /// A page that fits the screen never scrolls, so nothing asks for the
+  /// next one: after each update, ask until the list overflows.
+  void _fillScreen() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _fillFailed || !_scroll.hasClients) return;
+      final s = context.read<ProjectsCubit>().state;
+      if (s.hasMore &&
+          !s.loadingMore &&
+          s.status == ProjectsStatus.loaded &&
+          _scroll.position.maxScrollExtent <= 0) {
+        _loadMore();
+      }
+    });
+  }
+
   void _create() => context.push('/projects/new');
 
   /// The user's currency (one per user; events are in it).
-  String get _symbol {
-    final auth = context.read<AuthCubit>().state;
-    return Currencies.symbolOf(
-      auth is AuthAuthenticated ? auth.user.currency : 'THB',
-    );
-  }
+  String get _symbol => context.readUserCurrencySymbol;
 
   Widget _row(AppLocalizations l, Project p, String symbol) {
     final planned = p.plannedAmount;
@@ -144,6 +160,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
         child: BlocBuilder<ProjectsCubit, ProjectsState>(
           builder: (ctx, state) {
             final cubit = ctx.read<ProjectsCubit>();
+            if (state.status == ProjectsStatus.loading) _fillFailed = false;
+            _fillScreen();
             // The skeleton only while nothing is on screen (first load).
             final firstLoad =
                 state.projects.isEmpty &&
@@ -221,6 +239,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
               // Hairline rows, edge to edge (list rows aren't boxed).
               sidePadding: 0,
               rowDividers: true,
+              controller: _scroll,
               hasMore: state.hasMore,
               loadingMore: state.loadingMore,
               onLoadMore: _loadMore,

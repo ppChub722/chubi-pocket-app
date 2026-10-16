@@ -81,27 +81,22 @@ class ProjectView {
     required this.summary,
     required this.currentUserId,
     this.eventTags = const [],
-    this.userCurrency,
     this.page = 1,
     this.totalPages = 1,
   }) : trees = buildProjectTxTree(txs);
 
   /// From the page's one "open" call.
-  factory ProjectView.of(
-    ProjectDetail d, {
-    required String? currentUserId,
-    String? userCurrency,
-  }) => ProjectView(
-    project: d.project,
-    members: d.members,
-    txs: d.transactions,
-    summary: d.summary,
-    eventTags: d.tags,
-    currentUserId: currentUserId,
-    userCurrency: userCurrency,
-    page: d.page,
-    totalPages: d.totalPages,
-  );
+  factory ProjectView.of(ProjectDetail d, {required String? currentUserId}) =>
+      ProjectView(
+        project: d.project,
+        members: d.members,
+        txs: d.transactions,
+        summary: d.summary,
+        eventTags: d.tags,
+        currentUserId: currentUserId,
+        page: d.page,
+        totalPages: d.totalPages,
+      );
 
   ProjectView _copy({
     Project? project,
@@ -118,7 +113,6 @@ class ProjectView {
     summary: summary ?? this.summary,
     eventTags: eventTags ?? this.eventTags,
     currentUserId: currentUserId,
-    userCurrency: userCurrency,
     page: page ?? this.page,
     totalPages: totalPages ?? this.totalPages,
   );
@@ -183,9 +177,6 @@ class ProjectView {
   final List<BoardTag> eventTags;
   final String? currentUserId;
 
-  /// The signed-in user's currency (single-currency app, owner 2026-10-12).
-  final String? userCurrency;
-
   /// The board's paging (the detail call brings the first page).
   final int page;
   final int totalPages;
@@ -205,18 +196,6 @@ class ProjectView {
     }
     return null;
   }
-
-  /// Mine (one currency per user); a row's when the user's is unknown.
-  String get currency {
-    final mine = userCurrency;
-    if (mine != null && mine.isNotEmpty) return mine;
-    for (final t in txs) {
-      if (t.currency.isNotEmpty) return t.currency;
-    }
-    return 'THB';
-  }
-
-  String get symbol => Currencies.symbolOf(currency);
 
   /// The BE decides (active event, I'm an active owner / contributor).
   bool get canAddTx => project.canAddBill;

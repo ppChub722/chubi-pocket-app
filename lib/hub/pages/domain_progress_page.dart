@@ -48,6 +48,17 @@ class _ProgressPage extends StatelessWidget {
               bar('total past 100% (cut)', 0.9, 0.4, ProgressTone.neutral),
               bar('over 122% (full, danger)', 1.22, null, ProgressTone.danger),
               bar('expected only', 0, 0.2, ProgressTone.neutral),
+              SizedBox(
+                width: 300,
+                child: HubCell(
+                  caption: 'normal + pace marker at 52%',
+                  child: ProgressRow(
+                    value: 0.4,
+                    color: ProgressTone.normal.resolve(context),
+                    marker: 0.52,
+                  ),
+                ),
+              ),
             ],
           ),
         ),

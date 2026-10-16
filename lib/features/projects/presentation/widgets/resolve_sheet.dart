@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../event_errors.dart';
 import '../../../../ui/ui.dart';
@@ -39,7 +40,7 @@ Future<bool> showResolveSheet(
   if (accounts.state.accounts.isEmpty) accounts.load();
   categories.loadIfNeeded();
 
-  final symbol = Currencies.symbolOf(tx.currency);
+  final symbol = context.readUserCurrencySymbol;
   final name = counterparty?.displayName ?? '?';
   final iAmDebtor = tx.transactionMemberId == myMemberId;
   final share = tx.amount - childrenTotal;

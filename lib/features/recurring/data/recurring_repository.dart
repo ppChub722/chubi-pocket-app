@@ -8,6 +8,7 @@ import '../../../ui/ui.dart';
 import '../../pending/domain/pending_transaction.dart';
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
+import '../domain/recurring_summary.dart';
 
 /// The recurring list + its filter counts (`listRecurring`, one call).
 class RecurringList {
@@ -16,9 +17,13 @@ class RecurringList {
     this.counts = const {},
     this.page = 1,
     this.totalPages = 1,
+    this.summary,
   });
 
   final List<Recurring> items;
+
+  /// The summary card's numbers (`summary`); null when absent.
+  final RecurringSummary? summary;
 
   /// {current, archived, all} → n.
   final Map<String, int> counts;
@@ -54,10 +59,15 @@ class RecurringRepository {
   Future<RecurringList> list({
     RecurringFilter filter = RecurringFilter.current,
     int page = 1,
+    String q = '',
   }) => _call((dio) async {
     final res = await dio.get<Map<String, dynamic>>(
       '/recurring',
-      queryParameters: {'status': filter.toJson(), 'page': page},
+      queryParameters: {
+        'status': filter.toJson(),
+        'page': page,
+        if (q.trim().isNotEmpty) 'q': q.trim(),
+      },
     );
     final body = res.data!;
     final counts = body['counts'];
@@ -74,6 +84,7 @@ class RecurringRepository {
       },
       page: (p?['page'] as num?)?.toInt() ?? 1,
       totalPages: (p?['total_pages'] as num?)?.toInt() ?? 1,
+      summary: RecurringSummary.fromJson(body['summary']),
     );
   });
 

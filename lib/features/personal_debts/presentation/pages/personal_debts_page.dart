@@ -37,6 +37,7 @@ class _PeopleView extends StatefulWidget {
 
 class _PeopleViewState extends State<_PeopleView> {
   final _search = TextEditingController();
+  final _toolbar = ToolbarToggleState.of('personal_debts');
 
   @override
   void dispose() {
@@ -95,6 +96,14 @@ class _PeopleViewState extends State<_PeopleView> {
                   onOwedToMeTap: () => cubit.toggleSide(NetSide.owedToMe),
                   onIOweTap: () => cubit.toggleSide(NetSide.iOwe),
                   currencySymbol: symbol,
+                  action: ListenableBuilder(
+                    listenable: _search,
+                    builder: (context, _) => ToolbarToggleButton(
+                      state: _toolbar,
+                      filtered: _search.text.isNotEmpty || s.all,
+                      tooltip: l.commonSearch,
+                    ),
+                  ),
                   margin: const EdgeInsets.fromLTRB(
                     AppSpacing.lg,
                     AppSpacing.sm,
@@ -103,6 +112,7 @@ class _PeopleViewState extends State<_PeopleView> {
                   ),
                 ),
                 ListToolbar(
+                  collapse: _toolbar,
                   searchController: _search,
                   onSearchChanged: cubit.search,
                   searchHint: l.debtsSearchHint,

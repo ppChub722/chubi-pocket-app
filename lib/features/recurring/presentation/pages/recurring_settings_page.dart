@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
@@ -645,6 +646,7 @@ class _RecurringSettingsPageState extends State<RecurringSettingsPage>
     }
     final r = _recurring;
     final editing = isEditing;
+    final symbol = context.readUserCurrencySymbol;
     return editScope(
       Scaffold(
         appBar: AppTopBar(
@@ -665,7 +667,7 @@ class _RecurringSettingsPageState extends State<RecurringSettingsPage>
                   AppSpacing.huge + MediaQuery.paddingOf(context).bottom,
               hero: _hero(l, r),
               tags: _tags(l),
-              sections: [(first) => _box(l, first)],
+              sections: [(first) => _box(l, first, symbol)],
               manage: editing && r != null
                   ? ManageSection(
                       archiveLabel: r.status == RecurringStatus.archived
@@ -822,7 +824,7 @@ class _RecurringSettingsPageState extends State<RecurringSettingsPage>
     );
   }
 
-  Widget _box(AppLocalizations l, bool first) {
+  Widget _box(AppLocalizations l, bool first, String symbol) {
     final editing = isEditing;
     final accounts = context.watch<AccountsCubit>();
     final cats = context.watch<CategoriesCubit>();
@@ -834,7 +836,6 @@ class _RecurringSettingsPageState extends State<RecurringSettingsPage>
     final saving = w.saving;
     final transfer = w.type == TransactionType.transfer && !saving;
     final goalName = w.goalId == null ? null : _goalNames[w.goalId!];
-    final symbol = Currencies.symbolOf(account?.currency ?? 'THB');
     final rule = w.rule;
     final end = rule.end;
     return SectionCard(

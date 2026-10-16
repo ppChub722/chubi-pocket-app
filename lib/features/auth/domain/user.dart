@@ -19,7 +19,7 @@ class User extends Equatable {
   final String username;
   final String displayName;
 
-  /// Read-only and locked: lives on the profile only.
+  /// The user's one currency: a label, never converted; editable on the profile.
   final String currency;
   final String? email;
   final IconCode? iconCode;

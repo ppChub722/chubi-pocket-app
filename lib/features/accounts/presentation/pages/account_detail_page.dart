@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/utils/user_currency.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -932,7 +933,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final viewing = !editing && !_isCreate;
     return _HeroHeader(
       account: _preview(l),
-      symbol: Currencies.symbolOf(_currency),
+      symbol: context.readUserCurrencySymbol,
       balanceField: _isCreate && working.trackBalance ? _openingField(l) : null,
       nameField: HeroNameInput(
         editing: editing,
@@ -982,7 +983,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       cursorColor: Theme.of(context).colorScheme.primary,
       focusColor: accent,
       symbolScale: 0.7,
-      currencySymbol: Currencies.symbolOf(_currency),
+      currencySymbol: context.readUserCurrencySymbol,
       minWidth: 12,
       size: AppInputSize.hero,
       labelPlacement: AppInputLabelPlacement.above,
@@ -1051,7 +1052,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   /// in the hero's bar); none set → no section.
   Widget? _creditSection(AppLocalizations l, {required bool first}) {
     if (!working.type.isCredit) return null;
-    final rows = _creditRows(l, Currencies.symbolOf(_currency));
+    final rows = _creditRows(l, context.readUserCurrencySymbol);
     if (rows.isEmpty) return null;
     return SectionCard(
       first: first,
@@ -1527,10 +1528,10 @@ class _HeroHeader extends StatelessWidget {
             ],
             trailing: [
               if (onEdit != null)
-                AppIconButton.edit(
-                  size: HeroSpacing.controlHeight,
+                CardActionButton(
+                  icon: AppIcons.edit,
                   tooltip: l.commonEdit,
-                  onPressed: onEdit,
+                  onTap: onEdit,
                 ),
             ],
           ),

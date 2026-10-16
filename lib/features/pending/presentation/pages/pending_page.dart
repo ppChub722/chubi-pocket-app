@@ -297,20 +297,10 @@ class _PendingPageState extends State<PendingPage> {
     );
   }
 
+  /// A tap opens the draft in the `+` sheet (a 🐷 saving draft in its ออม
+  /// form); confirming happens from the sheet.
   Future<void> _open(PendingTransaction p) async {
-    if (!p.isSaving) {
-      await showQuickCreateSheet(context, draft: p);
-      return;
-    }
-    // TODO(quick-create-saving): open the saving draft in the quick create
-    // sheet's ออม mode; until then a tap just offers to confirm it.
-    final l = AppLocalizations.of(context)!;
-    final ok = await showConfirmDialog(
-      context,
-      title: l.pendingSavingConfirmTitle,
-      confirmLabel: l.pendingSavingConfirm,
-    );
-    if (ok && mounted) await _submit([p.id]);
+    await showQuickCreateSheet(context, draft: p);
   }
 
   /// Rows under day headers (the draft's date; undated first) — the same

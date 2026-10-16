@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/hero_style.dart';
-import '../atoms/app_icon_button.dart';
+import '../molecules/card_action_button.dart';
+import '../tokens/app/app_icons.dart';
 import '../molecules/hero_shell.dart';
 
 /// The bordered card at the top of every detail page: leading visual
@@ -94,10 +95,10 @@ class HeaderCard extends StatelessWidget {
         : null;
     final edit = onEdit == null
         ? null
-        : AppIconButton.edit(
-            size: HeroSpacing.controlHeight,
+        : CardActionButton(
+            icon: AppIcons.edit,
             tooltip: UiConfig.stringsOf(context).edit,
-            onPressed: onEdit,
+            onTap: onEdit,
           );
     // The kit's hero spacing ([HeroContent]): 16 inside, 12 between rows,
     // 8 between the title column and the ✏️ / trailing controls.

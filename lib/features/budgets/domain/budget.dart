@@ -30,6 +30,16 @@ enum BudgetFilter {
   String toJson() => name;
 }
 
+/// The health tile of the list (`health` of `listBudgets`); [all] = no param.
+enum BudgetHealth {
+  all,
+  normal,
+  near,
+  over;
+
+  String? toJson() => this == BudgetHealth.all ? null : name;
+}
+
 /// The list sort (`sort` of `listBudgets`).
 enum BudgetSort {
   risk,
@@ -300,6 +310,14 @@ class BudgetListSummary extends Equatable {
     this.paceCount = 0,
     this.endedCount = 0,
     this.archivedCount = 0,
+    this.totalLimit = 0,
+    this.totalUsed = 0,
+    this.totalRemaining = 0,
+    this.usedPct = 0,
+    this.countAll = 0,
+    this.countOk = 0,
+    this.countNear = 0,
+    this.countOver = 0,
   });
 
   final int activeCount;
@@ -309,8 +327,24 @@ class BudgetListSummary extends Equatable {
   final int endedCount;
   final int archivedCount;
 
+  /// Active budgets at their current period: the plain sum of the amounts.
+  final double totalLimit;
+  final double totalUsed;
+
+  /// limit - used (negative when over).
+  final double totalRemaining;
+  final int usedPct;
+
+  /// The health tiles: all = ok + near + over.
+  final int countAll;
+  final int countOk;
+  final int countNear;
+  final int countOver;
+
   factory BudgetListSummary.fromJson(Map<String, dynamic>? json) {
     int n(String k) => (json?[k] as num?)?.toInt() ?? 0;
+    final counts = json?['counts'] as Map<String, dynamic>?;
+    int c(String k) => (counts?[k] as num?)?.toInt() ?? 0;
     return BudgetListSummary(
       activeCount: n('active_count'),
       overCount: n('over_count'),
@@ -318,6 +352,14 @@ class BudgetListSummary extends Equatable {
       paceCount: n('pace_count'),
       endedCount: n('ended_count'),
       archivedCount: n('archived_count'),
+      totalLimit: _money(json?['total_limit']),
+      totalUsed: _money(json?['total_used']),
+      totalRemaining: _money(json?['total_remaining']),
+      usedPct: n('used_pct'),
+      countAll: c('all'),
+      countOk: c('ok'),
+      countNear: c('near'),
+      countOver: c('over'),
     );
   }
 
@@ -329,6 +371,14 @@ class BudgetListSummary extends Equatable {
     paceCount,
     endedCount,
     archivedCount,
+    totalLimit,
+    totalUsed,
+    totalRemaining,
+    usedPct,
+    countAll,
+    countOk,
+    countNear,
+    countOver,
   ];
 }
 

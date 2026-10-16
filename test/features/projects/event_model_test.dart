@@ -4,11 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'event_fixtures.dart';
 
-ProjectView _view() => ProjectView.of(
-  ProjectDetail.fromJson(detailJson()),
-  currentUserId: 'u-me',
-  userCurrency: 'THB',
-);
+ProjectView _view() =>
+    ProjectView.of(ProjectDetail.fromJson(detailJson()), currentUserId: 'u-me');
 
 void main() {
   group('ProjectDetail.fromJson (spec EventDetail)', () {
@@ -85,9 +82,5 @@ void main() {
       const BoardTag(id: 't1', name: 'Food', mine: true),
     ]);
     expect(v.txs.last.tagRefs.single.mine, isTrue);
-  });
-
-  test('currency is the user’s (single currency)', () {
-    expect(_view().currency, 'THB');
   });
 }

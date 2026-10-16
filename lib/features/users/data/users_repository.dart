@@ -5,8 +5,8 @@ import '../../../core/network/api_exception.dart';
 import '../../auth/domain/user.dart';
 import '../../../ui/ui.dart';
 
-/// `PUT /v1/users/me` — partial update of profile fields (never the
-/// currency: read-only on the profile).
+/// `PUT /v1/users/me` — partial update of profile fields (the currency is
+/// a relabel: no conversion, owner 2026-10-15).
 ///
 /// `GET /v1/users/me` is owned by [AuthRepository] (used at cold-start to
 /// validate the stored token); putting the writer here keeps user-profile
@@ -21,10 +21,12 @@ class UsersRepository {
     String? email,
     IconCode? iconCode,
     bool clearIconCode = false,
+    String? currency,
   }) async {
     final body = <String, dynamic>{};
     if (displayName != null) body['display_name'] = displayName;
     if (email != null) body['email'] = email;
+    if (currency != null) body['currency'] = currency;
     if (clearIconCode) {
       body['icon_code'] = null;
     } else if (iconCode != null) {

@@ -9,6 +9,7 @@ import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/constants/storage_keys.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
@@ -342,6 +343,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   bool get _editingDraft => widget.draft != null;
 
+  /// A pending 🐷 saving draft: the ออม form, prefilled, confirmed from here.
+  bool get _isSavingDraft => widget.draft?.isSaving ?? false;
+
   /// [showEntrySheet]: one item, the caller's actions save it.
   bool get _isEntry => widget.entry != null;
 
@@ -423,7 +427,11 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       problem = l.projectTxAmountRequired;
     } else if (_c.memberSplitSum > amount + 0.005) {
       problem = l.projectTxSplitsOver(
-        moneyString(context, _c.memberSplitSum, symbol: view.symbol),
+        moneyString(
+          context,
+          _c.memberSplitSum,
+          symbol: context.readUserCurrencySymbol,
+        ),
       );
     }
     if (problem == null && payer == null) {
@@ -607,6 +615,10 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (rc != null && !categories.any((c) => c.id == rc.id)) {
         categories.add(rc.toCategory());
       }
+      if (p.isSaving) {
+        _prefillSavingDraft(p, accounts);
+        return;
+      }
       _c.prefill(p.draft, accounts: accounts, categories: categories);
       _draftBaseline = _c.toDraft(keepIncomplete: true);
     }
@@ -680,6 +692,112 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       if (!mounted) return;
       setState(() => _saving = false);
       showSaveFailure(context, e, retry: _submitDraft);
+    }
+  }
+
+  // ── Saving draft (🐷 pending) ─────────────────────────────────────
+
+  /// The saving form as first shown — its baseline decides dirty.
+  String? _savBaseline;
+
+  String _savSnapshot() => [
+    _sav.amount.text,
+    _sav.account?.id,
+    _sav.goalId,
+    _ymd(_sav.date),
+    _sav.note.text,
+  ].join('|');
+
+  void _prefillSavingDraft(PendingTransaction p, List<Account> accounts) {
+    final d = p.draft;
+    _sav.amount.text = _amountText(d.amount);
+    _sav.note.text = d.note ?? '';
+    final date = d.date == null ? null : DateTime.tryParse(d.date!);
+    if (date != null) _sav.date = date;
+    _sav.goalId = d.goalId;
+    final ra = p.resolved.account;
+    if (ra != null && !accounts.any((a) => a.id == ra.id)) {
+      accounts.add(ra.toAccount());
+    }
+    // The ออม form lists the app-wide wallets (with their savings).
+    _sav.account = [
+      ...context.read<AccountsCubit>().state.accounts,
+      ...accounts,
+    ].where((a) => a.id == d.accountId).firstOrNull;
+    // Not null: the sheet's skeleton / dirty gates look at it.
+    _draftBaseline = const PendingDraft(isSaving: true);
+    _savBaseline = _savSnapshot();
+  }
+
+  PendingDraft _savingDraft() => PendingDraft(
+    isSaving: true,
+    goalId: _sav.goalId,
+    amount: _sav.amountValue > 0 ? _sav.amountValue : null,
+    accountId: _sav.account?.id,
+    date: _ymd(_sav.date),
+    note: _sav.note.text.trim().isEmpty ? null : _sav.note.text.trim(),
+  );
+
+  /// Saving draft "บันทึกร่าง": keep the edits in รอยืนยัน.
+  Future<void> _saveSavingDraft() async {
+    final l = AppLocalizations.of(context)!;
+    final pending = context.read<PendingCubit>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _saving = true);
+    try {
+      await pending.updateDraft(widget.draft!.id, _savingDraft());
+      navigator.pop(true);
+      showAppSnackBarOn(messenger, l.pendingSavedAsDraft, tone: Tone.success);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSaveFailure(context, e, retry: _saveSavingDraft);
+    }
+  }
+
+  /// Saving draft "ยืนยันรายการนี้": save the edits, then submit this one.
+  Future<void> _submitSavingDraft() async {
+    final l = AppLocalizations.of(context)!;
+    final s = _sav;
+    final problem = s.amountValue <= 0
+        ? l.quickAmountRequired
+        : s.account == null
+        ? l.savingEntryWalletRequired
+        : null;
+    if (problem != null) {
+      HapticFeedback.lightImpact();
+      _toast(problem);
+      return;
+    }
+    final pending = context.read<PendingCubit>();
+    final accounts = context.read<AccountsCubit>();
+    final goals = context.read<SavingGoalsCubit>();
+    final dashboard = context.read<DashboardCubit>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final id = widget.draft!.id;
+    setState(() => _saving = true);
+    try {
+      await pending.updateDraft(id, _savingDraft());
+      final result = await pending.submit([id]);
+      final failed = result.failed[id];
+      if (failed != null) {
+        if (!mounted) return;
+        setState(() => _saving = false);
+        _toast(pendingErrorText(l, failed));
+        return;
+      }
+      accounts.patchBalances(result.accountBalances);
+      goals.markStale();
+      dashboard.markStale();
+      await TransactionsCubit.bookChanged();
+      navigator.pop(true);
+      showAppSnackBarOn(messenger, l.savingEntrySaved, tone: Tone.success);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      showSaveFailure(context, e, retry: _submitSavingDraft);
     }
   }
 
@@ -770,7 +888,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   /// รายการ / หนี้ — only a new plain entry switches (not a draft or an
   /// event row).
-  late QuickCreateMode _mode = _canSwitchMode
+  late QuickCreateMode _mode = _isSavingDraft
+      ? QuickCreateMode.saving
+      : _canSwitchMode
       ? widget.initialMode
       : QuickCreateMode.tx;
   late final DebtEntryController _debt =
@@ -1238,7 +1358,9 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           ? _discardDraft
           : null,
       saving: _saving,
-      dirty: _isDebt
+      dirty: _isSavingDraft
+          ? _savBaseline != null && _savSnapshot() != _savBaseline
+          : _isDebt
           ? _debt.hasKeyData
           : _isSaving
           ? _sav.hasKeyData
@@ -1253,11 +1375,13 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
       // Debt entries have no drafts.
       draftLabel: _isEntry
           ? _entrySecondary?.label
-          : _isEvent || _isDebt || _isSaving
+          : _isEvent || _isDebt || (_isSaving && !_isSavingDraft)
           ? null
           : l.pendingSaveDraft,
       onSave: _isEntry
           ? (waiting ? null : () => _runEntry(_entryAction(primary: true)))
+          : _isSavingDraft
+          ? _submitSavingDraft
           : _isDebt
           ? _saveDebt
           : _isSaving
@@ -1272,6 +1396,8 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
           ? (_entrySecondary == null || _saving || waiting
                 ? null
                 : () => _runEntry(_entrySecondary!))
+          : _isSavingDraft
+          ? (_saving ? null : _saveSavingDraft)
           : _isDebt ||
                 _isSaving ||
                 _saving ||
@@ -1311,7 +1437,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 event: _isEvent
                     ? DraftEvent(
                         members: widget.project!.currentMembers,
-                        symbol: widget.project!.symbol,
+                        symbol: context.readUserCurrencySymbol,
                         pastDescriptions: _pastDescriptions,
                         tags: _eventTags,
                       )
@@ -1339,6 +1465,12 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   /// The mode chips on top (a new entry only), then the mode's body: the
   /// debt form, or [txBody].
   Widget _withModes(AppLocalizations l, Widget Function() txBody) {
+    if (_isSavingDraft) {
+      // A saving draft: the ออม form only, no mode chips.
+      return _draftBaseline == null
+          ? const EntryCardSkeleton()
+          : SavingEntryForm(controller: _sav, heroKey: _heroKey);
+    }
     if (!_canSwitchMode) {
       return txBody();
     }

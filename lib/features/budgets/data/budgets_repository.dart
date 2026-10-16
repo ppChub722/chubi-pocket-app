@@ -32,10 +32,15 @@ class BudgetsRepository {
   Future<BudgetList> list({
     BudgetFilter filter = BudgetFilter.active,
     BudgetSort sort = BudgetSort.risk,
+    BudgetHealth health = BudgetHealth.all,
   }) => _call((dio) async {
     final res = await dio.get<Map<String, dynamic>>(
       '/budgets',
-      queryParameters: {'status': filter.toJson(), 'sort': sort.toJson()},
+      queryParameters: {
+        'status': filter.toJson(),
+        'sort': sort.toJson(),
+        'health': ?health.toJson(),
+      },
     );
     return BudgetList.fromJson(res.data!);
   });

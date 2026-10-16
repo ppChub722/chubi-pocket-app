@@ -5960,4 +5960,76 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get sgv2EntryDeleted => 'ลบรายการออมแล้ว';
+
+  @override
+  String get profileCurrencyChangeTitle => 'เปลี่ยนสกุลเงิน?';
+
+  @override
+  String get profileCurrencyChangeMessage =>
+      'เปลี่ยนแค่สัญลักษณ์ ตัวเลขจะไม่ถูกแปลงค่า: 100 ก็ยังเป็น 100';
+
+  @override
+  String get profileCurrencyChangeConfirm => 'เปลี่ยนสกุลเงิน';
+
+  @override
+  String get bgSearchHint => 'Search budgets';
+
+  @override
+  String get bgNoMatch => 'No matching budgets';
+
+  @override
+  String get sgv2SearchHint => 'ค้นหาเป้าหมาย';
+
+  @override
+  String get recurringSearchHint => 'ค้นหารายการประจำ';
+
+  @override
+  String get recurringNoMatch => 'ไม่พบรายการประจำที่ค้นหา';
+
+  @override
+  String get recurringSummaryMonth => 'ต่อเดือน';
+
+  @override
+  String get recurringSummaryPay => 'จ่าย';
+
+  @override
+  String get recurringSummaryReceive => 'รับ';
+
+  @override
+  String get recurringSummaryNext => 'ถึงกำหนดถัดไป';
+
+  @override
+  String get recurringStatusLabel => 'สถานะ';
+
+  @override
+  String get accountsSearchHint => 'ค้นหากระเป๋า';
+
+  @override
+  String get accountsNoMatch => 'ไม่พบกระเป๋าที่ค้นหา';
+
+  @override
+  String get bgSummaryUsedCaption => 'รอบปัจจุบัน · ใช้ไปรวม';
+
+  @override
+  String bgSummaryRemaining(String amount) {
+    return 'เหลือรวม $amount';
+  }
+
+  @override
+  String get bgTileAll => 'ทั้งหมด';
+
+  @override
+  String get bgTileOk => 'ปกติ';
+
+  @override
+  String get bgStatusFieldLabel => 'สถานะ';
+
+  @override
+  String get bgRowLeft => 'เหลือ';
+
+  @override
+  String get bgRowOverAmount => 'เกิน';
+
+  @override
+  String get bgRowOneOff => 'ครั้งเดียว';
 }

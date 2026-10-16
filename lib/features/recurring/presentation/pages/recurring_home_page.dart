@@ -9,6 +9,7 @@ import '../../../../ui/ui.dart';
 import '../../data/recurring_repository.dart';
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
+import '../widgets/recurring_summary_card.dart';
 import '../recurring_rows.dart';
 import '../recurring_item_actions.dart';
 
@@ -39,6 +40,10 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   );
 
   // ── รายการประจำ ────────────────────────────────────────────────────
+  final _search = TextEditingController();
+  final _toolbar = ToolbarToggleState.of('recurring');
+  int _listSeq = 0;
+  String _query = '';
   RecurringFilter _filter = RecurringFilter.current;
   RecurringList? _list;
   bool _listLoading = false;
@@ -64,6 +69,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   @override
   void dispose() {
     _pager.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -78,19 +84,38 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   }
 
   Future<void> _loadList() async {
+    final seq = ++_listSeq;
     setState(() {
       _listLoading = true;
       _listError = null;
     });
     try {
-      final list = await _repo.list(filter: _filter);
-      if (mounted) setState(() => _list = list);
+      // The BE filters by name (`q`): one call per change.
+      final list = await _repo.list(filter: _filter, q: _query);
+      if (mounted && seq == _listSeq) setState(() => _list = list);
     } catch (e, st) {
-      if (mounted) setState(() => _listError = ApiException.from(e, st));
+      if (mounted && seq == _listSeq) {
+        setState(() => _listError = ApiException.from(e, st));
+      }
     } finally {
-      if (mounted) setState(() => _listLoading = false);
+      if (mounted && seq == _listSeq) setState(() => _listLoading = false);
     }
   }
+
+  void _setQuery(String v) {
+    _query = v;
+    // Keep the shown rows while the new answer loads (no skeleton flicker).
+    _loadList();
+  }
+
+  bool get _filtered =>
+      _search.text.trim().isNotEmpty || _filter != RecurringFilter.current;
+
+  String _statusLabel(AppLocalizations l, RecurringFilter f) => switch (f) {
+    RecurringFilter.current => l.recurringFilterCurrent,
+    RecurringFilter.archived => l.recurringFilterArchived,
+    RecurringFilter.all => l.recurringFilterAll,
+  };
 
   void _setFilter(RecurringFilter f) {
     if (f == _filter) return;
@@ -181,6 +206,29 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
               label: l.recurringTabUpcoming,
             ),
           ],
+          header: [
+            RecurringSummaryCard(
+              summary: _list?.summary,
+              margin: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xs,
+              ),
+              // The toolbar exists on the recurring tab only: no 🔍 on the
+              // upcoming tab.
+              action: _tab == RecurringHomeTab.recurring
+                  ? ListenableBuilder(
+                      listenable: _search,
+                      builder: (context, _) => ToolbarToggleButton(
+                        state: _toolbar,
+                        filtered: _filtered,
+                        tooltip: l.recurringSearchHint,
+                      ),
+                    )
+                  : null,
+            ),
+          ],
           selected: _tab,
           onChanged: (t) {
             setState(() => _tab = t);
@@ -198,8 +246,9 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
 
   Widget _recurringTab(AppLocalizations l) {
     final list = _list;
-    final items = list?.items ?? const <Recurring>[];
-    final counts = list?.counts ?? const <String, int>{};
+    final all = list?.items ?? const <Recurring>[];
+    final q = _query.trim();
+    final items = all;
     return ListPageBody(
       // No data yet = loading (skeleton) until the call answers or fails.
       loading: list == null && _listError == null,
@@ -207,36 +256,47 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       isEmpty: items.isEmpty,
       onRetry: _loadList,
       rowDividers: true,
+      topInset: AppSpacing.sm,
       header: [
         ListToolbar(
+          collapse: _toolbar,
+          searchController: _search,
+          onSearchChanged: _setQuery,
+          searchHint: l.recurringSearchHint,
           chips: [
-            for (final f in RecurringFilter.values)
-              AppChip(
-                label: switch (f) {
-                  RecurringFilter.current => l.recurringFilterCurrent,
-                  RecurringFilter.archived => l.recurringFilterArchived,
-                  RecurringFilter.all => l.recurringFilterAll,
-                },
-                count: counts[f.toJson()] ?? 0,
-                selected: _filter == f,
-                onTap: () => _setFilter(f),
+            OptionMenuAnchor<RecurringFilter>(
+              selected: _filter,
+              onSelected: _setFilter,
+              options: [
+                for (final f in RecurringFilter.values)
+                  SheetOption(value: f, label: _statusLabel(l, f)),
+              ],
+              builder: (context, toggle) => AppChip(
+                label:
+                    '${l.recurringStatusLabel}: ${_statusLabel(l, _filter)}',
+                selected: _filter != RecurringFilter.current,
+                trailing: AppChipTrailing.dropdown,
+                onTap: toggle,
               ),
+            ),
           ],
         ),
       ],
-      empty: EmptyView(
-        icon: AppIcons.scheduled,
-        title: _filter == RecurringFilter.archived
-            ? l.recurringArchivedEmpty
-            : l.recurringEmptyTitle,
-        message: l.recurringEmptyMessage,
-        cta: _filter == RecurringFilter.archived
-            ? null
-            : AddTile(
-                label: l.recurringAdd,
-                onTap: () => _open(() => context.push('/recurring/new')),
-              ),
-      ),
+      empty: q.isNotEmpty
+          ? EmptyView.compact(message: l.recurringNoMatch)
+          : EmptyView(
+              icon: AppIcons.scheduled,
+              title: _filter == RecurringFilter.archived
+                  ? l.recurringArchivedEmpty
+                  : l.recurringEmptyTitle,
+              message: l.recurringEmptyMessage,
+              cta: _filter == RecurringFilter.archived
+                  ? null
+                  : AddTile(
+                      label: l.recurringAdd,
+                      onTap: () => _open(() => context.push('/recurring/new')),
+                    ),
+            ),
       children: [
         for (final r in items)
           RecurringRow(
@@ -261,6 +321,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       isEmpty: items.isEmpty,
       onRetry: _loadUpcoming,
       rowDividers: true,
+      topInset: AppSpacing.sm,
       hasMore: page?.hasMore ?? false,
       loadingMore: _upcomingMore,
       onLoadMore: _loadMoreUpcoming,

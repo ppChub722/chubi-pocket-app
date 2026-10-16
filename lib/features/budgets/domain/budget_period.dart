@@ -51,6 +51,7 @@ class BudgetPeriod extends Equatable {
     this.status = BudgetStatus.ok,
     this.tone = BudgetTone.neutral,
     this.daysLeft,
+    this.onPaceToExceed = false,
   });
 
   final String id;
@@ -83,6 +84,9 @@ class BudgetPeriod extends Equatable {
   /// Today included; null for past / open-ended periods.
   final int? daysLeft;
 
+  /// The forecast ends this (current) period over its amount: a row badge.
+  final bool onPaceToExceed;
+
   /// used / amount as a bar ratio (0 when the amount is 0).
   double get usedRatio => amount <= 0 ? 0 : used / amount;
 
@@ -107,6 +111,7 @@ class BudgetPeriod extends Equatable {
     status: BudgetStatus.fromJson(json['status'] as String?),
     tone: BudgetTone.fromJson(json['tone'] as String?),
     daysLeft: (json['days_left'] as num?)?.toInt(),
+    onPaceToExceed: json['on_pace_to_exceed'] as bool? ?? false,
   );
 
   @override
@@ -128,6 +133,7 @@ class BudgetPeriod extends Equatable {
     status,
     tone,
     daysLeft,
+    onPaceToExceed,
   ];
 }
 

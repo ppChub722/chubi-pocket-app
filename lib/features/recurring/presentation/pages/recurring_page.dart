@@ -199,6 +199,26 @@ class _RecurringPageState extends State<RecurringPage> {
       }
       _selected.removeAll(r.deletedIds);
     });
+    _syncRecurring();
+  }
+
+  /// An item write does not return the setting, yet the header (next date,
+  /// status, counts) moves with it, e.g. after the last installment. Re-read
+  /// the setting quietly and keep the items the page already holds.
+  Future<void> _syncRecurring() async {
+    try {
+      final d = await _repo.get(widget.id);
+      if (!mounted) return;
+      setState(
+        () => _detail = RecurringDetail(
+          recurring: d.recurring,
+          produced: _detail?.produced ?? d.produced,
+          balances: d.balances,
+        ),
+      );
+    } on ApiException {
+      // The next pull-to-refresh recovers.
+    }
   }
 
   Future<void> _action(RecurringAction a) async {

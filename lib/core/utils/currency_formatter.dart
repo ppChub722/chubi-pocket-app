@@ -10,8 +10,9 @@ class CurrencyFormatter {
     num amount, {
     String symbol = '฿',
     String locale = 'en_US',
-    int decimalDigits = 2,
+    int? decimalDigits,
   }) {
+    decimalDigits ??= decimalsOfSymbol(symbol);
     final formatter = NumberFormat.currency(
       locale: locale,
       symbol: symbol,
@@ -24,8 +25,19 @@ class CurrencyFormatter {
 
   /// True when [amount] shows as zero at [decimalDigits] — a sign or a
   /// +/− colour on it would be noise.
-  static bool roundsToZero(num amount, {int decimalDigits = 2}) =>
-      (amount * _scale(decimalDigits)).round() == 0;
+  static bool roundsToZero(
+    num amount, {
+    String symbol = '฿',
+    int? decimalDigits,
+  }) =>
+      (amount * _scale(decimalDigits ?? decimalsOfSymbol(symbol))).round() == 0;
+
+  /// Minor-unit digits by symbol (JPY ¥ = 0, others 2), so every caller that
+  /// already passes the symbol gets the right decimals.
+  static int decimalsOfSymbol(String symbol) => symbol == '¥' ? 0 : 2;
+
+  /// Same, by currency code.
+  static int decimalsOf(String code) => code == 'JPY' ? 0 : 2;
 
   static int _scale(int decimalDigits) {
     var scale = 1;
