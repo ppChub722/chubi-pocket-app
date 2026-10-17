@@ -163,6 +163,13 @@ class BudgetPeriodPage extends Equatable {
     );
   }
 
+  /// The same page with [p] in place of the period that has its id.
+  BudgetPeriodPage replace(BudgetPeriod p) => BudgetPeriodPage(
+    periods: [for (final x in periods) x.id == p.id ? p : x],
+    hasMore: hasMore,
+    page: page,
+  );
+
   /// This page followed by [next].
   BudgetPeriodPage append(BudgetPeriodPage next) => BudgetPeriodPage(
     periods: [...periods, ...next.periods],

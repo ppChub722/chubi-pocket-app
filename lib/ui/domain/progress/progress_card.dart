@@ -347,3 +347,68 @@ class ProgressCard extends StatelessWidget {
     ),
   );
 }
+
+/// A ProgressCard row's far-right figure (owner 2026-10-17): the small
+/// [label] ("เหลือ" / "เกิน") + the bold [amount], in the error colour when
+/// [over]. Pass it as `ProgressCard.trailing`.
+class ProgressRemainder extends StatelessWidget {
+  const ProgressRemainder({
+    required this.label,
+    required this.amount,
+    this.over = false,
+    super.key,
+  });
+
+  /// e.g. "เหลือ" / "เกิน".
+  final String label;
+
+  /// The formatted amount.
+  final String amount;
+  final bool over;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final small = Theme.of(context).textTheme.bodySmall;
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$label ',
+            style: small?.copyWith(
+              color: over ? palette.error : scheme.onSurfaceVariant,
+            ),
+          ),
+          TextSpan(
+            text: amount,
+            style: small?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: over ? palette.error : scheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+      maxLines: 1,
+    );
+  }
+}
+
+/// Two or more mini chips side by side with the standard gap — a
+/// ProgressCard `badge` that carries a status AND another flag.
+class ProgressBadges extends StatelessWidget {
+  const ProgressBadges({required this.children, super.key});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final (i, c) in children.indexed) ...[
+        if (i > 0) const SizedBox(width: AppSpacing.xs),
+        c,
+      ],
+    ],
+  );
+}

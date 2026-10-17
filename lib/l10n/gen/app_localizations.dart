@@ -10836,6 +10836,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Earlier cycles'**
   String get fpDebtsEarlierLink;
+
+  /// No description provided for @fpBudgetsRangeDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{range} · day {elapsed}/{total}'**
+  String fpBudgetsRangeDay(String range, int elapsed, int total);
+
+  /// No description provided for @fpBudgetsLeftLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Still available'**
+  String get fpBudgetsLeftLabel;
+
+  /// No description provided for @fpBudgetsOverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Over budget'**
+  String get fpBudgetsOverLabel;
+
+  /// No description provided for @fpBudgetsLimitTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'/ {amount}'**
+  String fpBudgetsLimitTarget(String amount);
+
+  /// No description provided for @fpBudgetsUsedCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Used {amount}'**
+  String fpBudgetsUsedCaption(String amount);
+
+  /// No description provided for @fpBudgetsPaceCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Should be at {pct}% by today'**
+  String fpBudgetsPaceCaption(int pct);
+
+  /// No description provided for @fpBudgetsTileDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Can spend per day'**
+  String get fpBudgetsTileDaily;
+
+  /// No description provided for @fpBudgetsTileProjected.
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast at the end'**
+  String get fpBudgetsTileProjected;
+
+  /// No description provided for @fpBudgetsTileDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get fpBudgetsTileDaysLabel;
+
+  /// No description provided for @fpBudgetsDaysValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String fpBudgetsDaysValue(int count);
+
+  /// No description provided for @fpBudgetsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'What this budget counts, and when it warns'**
+  String get fpBudgetsSettingsDesc;
+
+  /// No description provided for @fpBudgetsCountsWhat.
+  ///
+  /// In en, this message translates to:
+  /// **'What it counts'**
+  String get fpBudgetsCountsWhat;
+
+  /// No description provided for @fpBudgetsWarnAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Warn at'**
+  String get fpBudgetsWarnAt;
+
+  /// No description provided for @fpBudgetsRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat every period'**
+  String get fpBudgetsRepeat;
+
+  /// No description provided for @fpBudgetsRepeatCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Each period\'s limit can be edited on its own'**
+  String get fpBudgetsRepeatCaption;
+
+  /// No description provided for @fpBudgetsTabItems.
+  ///
+  /// In en, this message translates to:
+  /// **'This period'**
+  String get fpBudgetsTabItems;
+
+  /// No description provided for @fpBudgetsTabPeriods.
+  ///
+  /// In en, this message translates to:
+  /// **'All periods'**
+  String get fpBudgetsTabPeriods;
+
+  /// No description provided for @fpBudgetsLimitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget limit'**
+  String get fpBudgetsLimitLabel;
+
+  /// No description provided for @fpBudgetsReasonAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: every expense'**
+  String get fpBudgetsReasonAll;
+
+  /// No description provided for @fpBudgetsReasonCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: category {name}'**
+  String fpBudgetsReasonCategory(String name);
+
+  /// No description provided for @fpBudgetsReasonSubCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: sub-category of {name}'**
+  String fpBudgetsReasonSubCategory(String name);
+
+  /// No description provided for @fpBudgetsReasonSubCategoryAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: sub-category of a counted category'**
+  String get fpBudgetsReasonSubCategoryAny;
+
+  /// No description provided for @fpBudgetsReasonTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: tag {name}'**
+  String fpBudgetsReasonTag(String name);
+
+  /// No description provided for @fpBudgetsReasonWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Counted because: wallet {name}'**
+  String fpBudgetsReasonWallet(String name);
+
+  /// No description provided for @fpBudgetsPeriodReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the base amount ({amount})'**
+  String fpBudgetsPeriodReset(String amount);
+
+  /// No description provided for @fpBudgetsCloseConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends this budget, no new periods, old ones stay visible'**
+  String get fpBudgetsCloseConsequence;
+
+  /// No description provided for @fpBudgetsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted in totals, restorable'**
+  String get fpBudgetsArchiveConsequence;
+
+  /// No description provided for @fpBudgetsRestoreConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Back in the list and counted again'**
+  String get fpBudgetsRestoreConsequence;
+
+  /// No description provided for @fpBudgetsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good, every period'**
+  String get fpBudgetsDeleteConsequence;
 }
 
 class _AppLocalizationsDelegate

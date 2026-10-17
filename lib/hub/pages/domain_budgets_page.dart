@@ -18,6 +18,7 @@ class _BudgetsPage extends StatefulWidget {
 
 class _BudgetsPageState extends State<_BudgetsPage> {
   String _picked = '—';
+  String _limit = '—';
   RecurrenceRule _rule = RecurrenceRule(
     freq: RecurrenceFreq.monthly,
     start: DateTime(2026, 10, 1),
@@ -169,6 +170,44 @@ class _BudgetsPageState extends State<_BudgetsPage> {
                 ],
                 onTap: () {},
               ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'showPeriodLimitSheet — one period\'s own limit',
+          note:
+              'Amount + a "back to the base amount" chip (only when the '
+              'period differs from the base) + note. Resolves '
+              'PeriodLimitResult (amount null = back to base), or null.',
+          child: Row(
+            children: [
+              AppButton(
+                label: 'Open sheet',
+                variant: AppButtonVariant.outlined,
+                onPressed: () async {
+                  final r = await showPeriodLimitSheet(
+                    context,
+                    title: 'แก้เพดานของรอบนี้',
+                    amountLabel: 'เพดานของรอบนี้',
+                    noteLabel: 'โน้ต',
+                    saveLabel: 'บันทึก',
+                    symbol: '฿',
+                    amount: 9000,
+                    baseAmount: 10000,
+                    overridden: true,
+                    resetLabel: 'คืนเป็นค่าเดิม (฿10,000)',
+                  );
+                  if (mounted) {
+                    setState(
+                      () => _limit = r == null
+                          ? 'cancelled'
+                          : '${r.amount ?? 'base'} / ${r.note ?? '—'}',
+                    );
+                  }
+                },
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Text('→ $_limit'),
             ],
           ),
         ),

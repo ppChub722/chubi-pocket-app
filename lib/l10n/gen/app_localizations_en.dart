@@ -6360,4 +6360,123 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpDebtsEarlierLink => 'Earlier cycles';
+
+  @override
+  String fpBudgetsRangeDay(String range, int elapsed, int total) {
+    return '$range · day $elapsed/$total';
+  }
+
+  @override
+  String get fpBudgetsLeftLabel => 'Still available';
+
+  @override
+  String get fpBudgetsOverLabel => 'Over budget';
+
+  @override
+  String fpBudgetsLimitTarget(String amount) {
+    return '/ $amount';
+  }
+
+  @override
+  String fpBudgetsUsedCaption(String amount) {
+    return 'Used $amount';
+  }
+
+  @override
+  String fpBudgetsPaceCaption(int pct) {
+    return 'Should be at $pct% by today';
+  }
+
+  @override
+  String get fpBudgetsTileDaily => 'Can spend per day';
+
+  @override
+  String get fpBudgetsTileProjected => 'Forecast at the end';
+
+  @override
+  String get fpBudgetsTileDaysLabel => 'Left';
+
+  @override
+  String fpBudgetsDaysValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fpBudgetsSettingsDesc =>
+      'What this budget counts, and when it warns';
+
+  @override
+  String get fpBudgetsCountsWhat => 'What it counts';
+
+  @override
+  String get fpBudgetsWarnAt => 'Warn at';
+
+  @override
+  String get fpBudgetsRepeat => 'Repeat every period';
+
+  @override
+  String get fpBudgetsRepeatCaption =>
+      'Each period\'s limit can be edited on its own';
+
+  @override
+  String get fpBudgetsTabItems => 'This period';
+
+  @override
+  String get fpBudgetsTabPeriods => 'All periods';
+
+  @override
+  String get fpBudgetsLimitLabel => 'Budget limit';
+
+  @override
+  String get fpBudgetsReasonAll => 'Counted because: every expense';
+
+  @override
+  String fpBudgetsReasonCategory(String name) {
+    return 'Counted because: category $name';
+  }
+
+  @override
+  String fpBudgetsReasonSubCategory(String name) {
+    return 'Counted because: sub-category of $name';
+  }
+
+  @override
+  String get fpBudgetsReasonSubCategoryAny =>
+      'Counted because: sub-category of a counted category';
+
+  @override
+  String fpBudgetsReasonTag(String name) {
+    return 'Counted because: tag $name';
+  }
+
+  @override
+  String fpBudgetsReasonWallet(String name) {
+    return 'Counted because: wallet $name';
+  }
+
+  @override
+  String fpBudgetsPeriodReset(String amount) {
+    return 'Back to the base amount ($amount)';
+  }
+
+  @override
+  String get fpBudgetsCloseConsequence =>
+      'Ends this budget, no new periods, old ones stay visible';
+
+  @override
+  String get fpBudgetsArchiveConsequence =>
+      'Hidden, not counted in totals, restorable';
+
+  @override
+  String get fpBudgetsRestoreConsequence =>
+      'Back in the list and counted again';
+
+  @override
+  String get fpBudgetsDeleteConsequence => 'Deleted for good, every period';
 }
