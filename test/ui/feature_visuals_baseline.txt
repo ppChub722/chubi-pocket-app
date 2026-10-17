@@ -3,15 +3,12 @@ lib/app/connection_shell.dart	1
 lib/app/shell/app_top_bar.dart	3
 lib/app/shell/main_bottom_nav.dart	3
 lib/app/shell/more_page.dart	1
-lib/features/accounts/presentation/pages/account_detail_page.dart	3
-lib/features/accounts/presentation/pages/accounts_page.dart	1
-lib/features/accounts/presentation/widgets/account_card.dart	3
+lib/features/accounts/presentation/pages/account_detail_page.dart	1
 lib/features/accounts/presentation/widgets/identifier_widgets.dart	1
 lib/features/accounts/presentation/widgets/wallet_members_view.dart	2
 lib/features/accounts/presentation/widgets/wallet_savings_section.dart	1
 lib/features/app_version/presentation/pages/update_required_page.dart	1
 lib/features/app_version/presentation/widgets/update_banner.dart	1
-lib/features/budgets/presentation/budget_summary_card.dart	3
 lib/features/categories/presentation/pages/categories_page.dart	2
 lib/features/categories/presentation/widgets/category_preview_card.dart	1
 lib/features/home/presentation/pages/home_page.dart	13
@@ -19,9 +16,6 @@ lib/features/notifications/presentation/pages/notification_settings_page.dart	1
 lib/features/notifications/presentation/pages/notifications_inbox_page.dart	1
 lib/features/pending/presentation/pages/pending_batch_add_page.dart	1
 lib/features/pending/presentation/pages/pending_page.dart	1
-lib/features/projects/presentation/widgets/project_dashboard_tab.dart	1
-lib/features/projects/presentation/widgets/project_tx_list_tab.dart	1
-lib/features/recurring/presentation/widgets/recurring_summary_card.dart	2
 lib/features/settings/presentation/pages/settings_page.dart	1
 lib/features/tags/presentation/pages/tags_page.dart	1
 lib/features/transactions/presentation/pages/debt_entry_detail_page.dart	1

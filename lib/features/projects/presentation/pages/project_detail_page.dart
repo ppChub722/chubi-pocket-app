@@ -1165,6 +1165,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           );
     final archived = p?.status == ProjectStatus.archived;
     return DetailLayout(
+      // Edit mode: no refresh while the form is open (the view has it).
+      onRefresh: null,
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
       hero: HeroCard(

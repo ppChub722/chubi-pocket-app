@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/fade_branch_container.dart';
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -171,14 +171,9 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     if (t == RecurringHomeTab.calendar && _calendar == null) _loadCalendar();
   }
 
-  /// Coming back from a recurring page (it may have replaced itself with a
-  /// copy, so its answer is not trusted): reload what is shown.
-  Future<void> _open(String path) async {
-    await context.push<Object?>(path);
-    if (!mounted) return;
-    _loadList();
-    if (_calendar != null) _loadCalendar();
-  }
+  /// Another tab-aware page open (a cross-tab link). Coming back, the page
+  /// template re-runs the page call by itself (refresh on show).
+  void _open(String path) => openPage(context, path);
 
   @override
   Widget build(BuildContext context) {
