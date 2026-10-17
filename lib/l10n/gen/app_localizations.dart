@@ -11222,12 +11222,6 @@ abstract class AppLocalizations {
   /// **'Close the goal first'**
   String get fpGoalsArchiveNeedsClose;
 
-  /// No description provided for @fpGoalsArchiveHasSavings.
-  ///
-  /// In en, this message translates to:
-  /// **'Close the goal before archiving it'**
-  String get fpGoalsArchiveHasSavings;
-
   /// No description provided for @fpGoalsDeleteConsequence.
   ///
   /// In en, this message translates to:
@@ -11245,6 +11239,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this goal for good, with its saving history.'**
   String get fpGoalsDeleteConfirmBody;
+
+  /// No description provided for @fpGoalsGroupOngoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get fpGoalsGroupOngoing;
+
+  /// No description provided for @fpGoalsOngoingRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing · this month +{amount}'**
+  String fpGoalsOngoingRow(String amount);
+
+  /// No description provided for @fpGoalsTileAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-saving'**
+  String get fpGoalsTileAuto;
+
+  /// No description provided for @fpGoalsPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount}/mo'**
+  String fpGoalsPerMonth(String amount);
+
+  /// No description provided for @fpGoalsArchiveConsequenceMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden · {amount} not counted in savings · can be restored'**
+  String fpGoalsArchiveConsequenceMoney(String amount);
+
+  /// No description provided for @fpGoalsArchiveConfirmBodyMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this goal. The {amount} saved in it won’t count in your savings. You can restore it later.'**
+  String fpGoalsArchiveConfirmBodyMoney(String amount);
+
+  /// No description provided for @savingGoalFormTargetOptionalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty for an ongoing goal with no target'**
+  String get savingGoalFormTargetOptionalHint;
 
   /// No description provided for @fpGoalsRefreshFailed.
   ///

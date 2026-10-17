@@ -6614,9 +6614,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fpGoalsArchiveNeedsClose => 'Close the goal first';
 
   @override
-  String get fpGoalsArchiveHasSavings => 'Close the goal before archiving it';
-
-  @override
   String get fpGoalsDeleteConsequence =>
       'Deleted for good, with its saving history';
 
@@ -6627,6 +6624,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fpGoalsDeleteConfirmBody =>
       'Delete this goal for good, with its saving history.';
+
+  @override
+  String get fpGoalsGroupOngoing => 'Ongoing';
+
+  @override
+  String fpGoalsOngoingRow(String amount) {
+    return 'Ongoing · this month +$amount';
+  }
+
+  @override
+  String get fpGoalsTileAuto => 'Auto-saving';
+
+  @override
+  String fpGoalsPerMonth(String amount) {
+    return '$amount/mo';
+  }
+
+  @override
+  String fpGoalsArchiveConsequenceMoney(String amount) {
+    return 'Hidden · $amount not counted in savings · can be restored';
+  }
+
+  @override
+  String fpGoalsArchiveConfirmBodyMoney(String amount) {
+    return 'Hide this goal. The $amount saved in it won’t count in your savings. You can restore it later.';
+  }
+
+  @override
+  String get savingGoalFormTargetOptionalHint =>
+      'Leave empty for an ongoing goal with no target';
 
   @override
   String get fpGoalsRefreshFailed => 'Refresh failed, showing the latest data';

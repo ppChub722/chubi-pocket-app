@@ -20,12 +20,13 @@ import '../icons/icon_code_widget.dart';
 ///
 /// No buttons: a tap opens the goal. Every word is a param (no l10n here);
 /// [value] is the bar fraction (presentation only — the BE sends the
-/// numbers). [badge] is the ETA chip, amber via [badgeTone] when behind.
+/// numbers); null = no bar (a goal with no target, 0.4.0-1). [badge] is the
+/// ETA chip, amber via [badgeTone] when behind.
 class SavingGoalRow extends StatelessWidget {
   const SavingGoalRow({
     required this.title,
-    required this.value,
     required this.amountText,
+    this.value,
     this.iconCode,
     this.fallbackIcon,
     this.trailing,
@@ -39,8 +40,8 @@ class SavingGoalRow extends StatelessWidget {
 
   final String title;
 
-  /// Bar fill, 0–1 (over 1 stays full).
-  final double value;
+  /// Bar fill, 0–1 (over 1 stays full); null = no bar.
+  final double? value;
 
   /// "฿60,000 / ฿200,000".
   final String amountText;
@@ -111,8 +112,10 @@ class SavingGoalRow extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                ProgressRow(value: value, color: tint, height: 9),
+                if (value != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  ProgressRow(value: value!, color: tint, height: 9),
+                ],
                 const SizedBox(height: AppSpacing.xs),
                 Row(
                   children: [

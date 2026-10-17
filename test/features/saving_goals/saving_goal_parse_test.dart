@@ -78,6 +78,35 @@ Map<String, dynamic> prodGoal({
   'updated_at': '2026-10-13T08:00:00Z',
 };
 
+/// A goal with no target (ออมต่อเนื่อง, 0.4.0-1) as the BE sends it: no %,
+/// remaining, milestones, ETA or month_short; status none; group ongoing.
+Map<String, dynamic> prodOngoingGoal({
+  String id = 'g9',
+  String name = 'เงินเก็บให้ลูก',
+  num saved = 45000,
+  Map<String, dynamic>? autoSave,
+}) => {
+  ...prodGoal(id: id, name: name, saved: saved, autoSave: autoSave),
+  'description': 'เก็บไว้ให้น้องโต',
+  'target_amount': null,
+  'deadline': null,
+  'progress_pct': null,
+  'remaining_amount': null,
+  'days_remaining': null,
+  'needed_monthly': null,
+  'pace_monthly': null,
+  'eta_date': null,
+  'pace': 'none',
+  'late_months': null,
+  'milestones': <dynamic>[],
+  'month_plan': autoSave == null ? null : autoSave['amount'],
+  'month_saved': 2000,
+  'month_short': null,
+  'status': 'none',
+  'behind_months': null,
+  'group': 'ongoing',
+};
+
 Map<String, dynamic> prodEntry({
   String id = 'e1',
   bool withWallet = true,
@@ -198,6 +227,24 @@ void main() {
     expect(g.status, SavingStatus.reached);
     expect(g.monthPlan, isNull);
     expect(g.monthShort, isNull);
+  });
+
+  test('a goal with no target parses as ongoing (0.4.0-1)', () {
+    final g = SavingGoal.fromJson(prodOngoingGoal());
+    expect(g.isOngoing, isTrue);
+    expect(g.group, 'ongoing');
+    expect(g.targetAmount, isNull);
+    expect(g.progressPct, isNull);
+    expect(g.remainingAmount, isNull);
+    expect(g.monthShort, isNull);
+    expect(g.status, SavingStatus.none);
+    expect(SavingGoal.fromJson(prodGoal()).isOngoing, isFalse);
+  });
+
+  test('no target writes target_amount null (clears it on update)', () {
+    final json = SavingGoal.fromJson(prodOngoingGoal()).toWriteJson();
+    expect(json.containsKey('target_amount'), isTrue);
+    expect(json['target_amount'], isNull);
   });
 
   test('the write body has no wallet and no %', () {

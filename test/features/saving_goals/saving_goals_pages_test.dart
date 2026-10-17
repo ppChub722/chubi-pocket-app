@@ -19,10 +19,17 @@ import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'saving_goal_parse_test.dart'
-    show prodAutoSave, prodDetail, prodGoal, prodList, prodSpareDetail;
+    show
+        prodAutoSave,
+        prodDetail,
+        prodGoal,
+        prodList,
+        prodOngoingGoal,
+        prodSpareDetail;
 
 class _Auth extends MockCubit<AuthState> implements AuthCubit {}
 
@@ -135,7 +142,8 @@ void main() {
     txBook.close();
   });
 
-  Future<void> pump(WidgetTester t, Widget home) async {
+  /// [router]: under a GoRouter, for flows that leave the page (archive).
+  Future<void> pump(WidgetTester t, Widget home, {bool router = false}) async {
     // Tall view: the page is a lazy ListView.
     t.view.physicalSize = const Size(800, 3000);
     t.view.devicePixelRatio = 1;
@@ -165,22 +173,49 @@ void main() {
               create: (_) => SavingGoalsCubit(repository: repo),
             ),
           ],
-          child: MaterialApp(
-            theme: ThemeData(
-              extensions: [
-                ThemeRegistry.byId(
-                  ThemeRegistry.defaultThemeId,
-                ).colorsFor(Brightness.light),
-              ],
-            ),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            builder: (context, child) => AppUiConfig(
-              child: QuickCreateContextScope(registry: registry, child: child!),
-            ),
-            home: home,
-          ),
+          child: router
+              ? MaterialApp.router(
+                  theme: ThemeData(
+                    extensions: [
+                      ThemeRegistry.byId(
+                        ThemeRegistry.defaultThemeId,
+                      ).colorsFor(Brightness.light),
+                    ],
+                  ),
+                  localizationsDelegates:
+                      AppLocalizations.localizationsDelegates,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  locale: const Locale('en'),
+                  builder: (context, child) => AppUiConfig(
+                    child: QuickCreateContextScope(
+                      registry: registry,
+                      child: child!,
+                    ),
+                  ),
+                  routerConfig: GoRouter(
+                    routes: [GoRoute(path: '/', builder: (_, _) => home)],
+                  ),
+                )
+              : MaterialApp(
+                  theme: ThemeData(
+                    extensions: [
+                      ThemeRegistry.byId(
+                        ThemeRegistry.defaultThemeId,
+                      ).colorsFor(Brightness.light),
+                    ],
+                  ),
+                  localizationsDelegates:
+                      AppLocalizations.localizationsDelegates,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  locale: const Locale('en'),
+                  builder: (context, child) => AppUiConfig(
+                    child: QuickCreateContextScope(
+                      registry: registry,
+                      child: child!,
+                    ),
+                  ),
+                  home: home,
+                ),
         ),
       ),
     );
@@ -240,6 +275,38 @@ void main() {
     expect(find.textContaining('0 months late'), findsNothing);
     expect(find.text('Goal May 2027 · 0 months late'), findsNothing);
     expect(find.text('Add saving goal'), findsOneWidget);
+  });
+
+  testWidgets('list: a goal with no target sits in its own group (0.4.0-1)', (
+    t,
+  ) async {
+    repo.listJson = prodList(goals: [prodGoal(), prodOngoingGoal()]);
+    await pump(t, const SavingGoalsListPage());
+    final ongoing = find.widgetWithText(SectionHeader, 'Ongoing');
+    expect(ongoing, findsOneWidget);
+    // Its row: the saved amount on the right, this month below — no bar,
+    // no "saved / target", no ETA badge.
+    final row = find.ancestor(
+      of: find.text('เงินเก็บให้ลูก'),
+      matching: find.byType(SavingGoalRow),
+    );
+    expect(t.widget<SavingGoalRow>(row).value, isNull);
+    expect(
+      find.descendant(of: row, matching: find.text('\$45,000.00')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: row,
+        matching: find.text('Ongoing · this month +\$2,000.00'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(ProgressRow), findsWidgets); // the other goal's bar
+    expect(
+      find.descendant(of: row, matching: find.byType(ProgressRow)),
+      findsNothing,
+    );
   });
 
   testWidgets('list: the search row is hidden until the card button', (
@@ -484,8 +551,11 @@ void main() {
     expect(find.text('On plan'), findsOneWidget);
   });
 
-  testWidgets('detail edit: its own form; archive says close first', (t) async {
-    await pump(t, const SavingGoalDetailPage(id: 'g1'));
+  testWidgets('detail edit: its own form; archive while it holds money', (
+    t,
+  ) async {
+    repo.goalJson = prodGoal(actions: {'archive': true});
+    await pump(t, const SavingGoalDetailPage(id: 'g1'), router: true);
     await t.tap(find.byIcon(AppIcons.edit));
     await t.pumpAndSettle();
     // No tabs, no status, no tiles in the edit form.
@@ -497,28 +567,32 @@ void main() {
     expect(find.text('Mar 15, 2027'), findsOneWidget);
     expect(find.textContaining('to go'), findsOneWidget);
     expect(find.text('Save \$5,600.00/month'), findsOneWidget);
-    // End zone: close + archive (with its reason) — no delete (flag off).
+    // End zone: close + archive — no delete (flag off). Archiving a goal
+    // that holds money is fine (0.4.0-1): the line says what stops counting.
     expect(find.text('Close goal'), findsOneWidget);
     expect(find.text('Archive'), findsOneWidget);
-    expect(find.text('Close the goal first'), findsOneWidget);
+    expect(
+      find.text(
+        'Hidden · \$52,000.00 not counted in savings · can be restored',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Close the goal first'), findsNothing);
     expect(find.text('Delete this goal'), findsNothing);
     await t.ensureVisible(find.text('Archive'));
     await t.tap(find.text('Archive'));
     await t.pumpAndSettle();
-    expect(find.text('Close the goal before archiving it'), findsOneWidget);
-    expect(repo.writes, isEmpty);
+    expect(find.textContaining('The \$52,000.00 saved in it'), findsOneWidget);
+    await t.tap(find.widgetWithText(AppButton, 'Archive'));
+    await t.pumpAndSettle();
+    expect(repo.writes, ['POST g1 archive']);
   });
 
-  testWidgets('detail edit: a 409 on archive shows the close-first message', (
+  testWidgets('detail edit: an empty goal archives with the plain line', (
     t,
   ) async {
     repo.goalJson = prodGoal(saved: 0, actions: {'archive': true});
-    repo.archiveError = const ApiException(
-      code: 'GOAL_HAS_SAVINGS',
-      message: 'goal has savings',
-      statusCode: 409,
-    );
-    await pump(t, const SavingGoalDetailPage(id: 'g1'));
+    await pump(t, const SavingGoalDetailPage(id: 'g1'), router: true);
     await t.tap(find.byIcon(AppIcons.edit));
     await t.pumpAndSettle();
     expect(find.text('Hidden, not counted, can be restored'), findsOneWidget);
@@ -529,7 +603,51 @@ void main() {
     await t.tap(find.widgetWithText(AppButton, 'Archive'));
     await t.pumpAndSettle();
     expect(repo.writes, ['POST g1 archive']);
-    expect(find.text('Close the goal before archiving it'), findsOneWidget);
+  });
+
+  testWidgets('detail: a goal with no target — chip, saved, two tiles', (
+    t,
+  ) async {
+    repo.goalJson = prodOngoingGoal(
+      autoSave: {...prodAutoSave(), 'amount': 2000},
+    );
+    await pump(t, const SavingGoalDetailPage(id: 'g9'));
+    expect(find.widgetWithText(StatusChip, 'Ongoing'), findsOneWidget);
+    expect(find.text('เก็บไว้ให้น้องโต'), findsOneWidget);
+    // No bar, target, %, due date, behind badge or short tile.
+    expect(find.byType(HeroBar), findsNothing);
+    expect(find.textContaining('%'), findsNothing);
+    expect(find.textContaining('months late'), findsNothing);
+    expect(find.text('Short this month'), findsNothing);
+    // This month saved + the auto-saving amount.
+    expect(find.text('\$2,000.00'), findsWidgets);
+    expect(find.text('Auto-saving'), findsWidgets);
+    expect(find.text('\$2,000.00/mo'), findsOneWidget);
+  });
+
+  testWidgets('detail edit: the target is optional (empty = ongoing)', (
+    t,
+  ) async {
+    repo.goalJson = prodOngoingGoal();
+    await pump(t, const SavingGoalDetailPage(id: 'g9'));
+    await t.tap(find.byIcon(AppIcons.edit));
+    await t.pumpAndSettle();
+    expect(
+      find.text('Leave empty for an ongoing goal with no target'),
+      findsOneWidget,
+    );
+    // No due date / monthly-need box without a target.
+    expect(find.byType(InfoBox), findsNothing);
+    // Typing a target brings the plan box back.
+    await t.enterText(
+      find.descendant(
+        of: find.byType(HeroAmountField),
+        matching: find.byType(EditableText),
+      ),
+      '100000',
+    );
+    await t.pumpAndSettle();
+    expect(find.byType(InfoBox), findsOneWidget);
   });
 
   testWidgets('create: the form only — no tabs, no auto-save, no end zone', (
@@ -539,7 +657,8 @@ void main() {
     expect(repo.detailCalls, 0);
     expect(find.byType(HeroAmountField), findsOneWidget);
     expect(find.text('Target amount'), findsOneWidget);
-    expect(find.byType(InfoBox), findsOneWidget);
+    // No target typed yet = no due-date box (0.4.0-1: the target is optional).
+    expect(find.byType(InfoBox), findsNothing);
     expect(find.byType(AppSwitch), findsNothing);
     expect(find.byType(EndZone), findsNothing);
     expect(find.text('Saving entries'), findsNothing);

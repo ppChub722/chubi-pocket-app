@@ -189,16 +189,16 @@ class SavingGoal extends Equatable {
   const SavingGoal({
     required this.id,
     required this.name,
-    required this.targetAmount,
     required this.currency,
+    this.targetAmount,
     this.state = SavingGoalState.active,
     this.deadline,
     this.iconCode,
     this.description,
     this.note,
     this.savedAmount = 0,
-    this.progressPct = 0,
-    this.remainingAmount = 0,
+    this.progressPct,
+    this.remainingAmount,
     this.daysRemaining,
     this.neededMonthly,
     this.paceMonthly,
@@ -209,6 +209,7 @@ class SavingGoal extends Equatable {
     this.monthSaved = 0,
     this.monthShort,
     this.autoSave,
+    this.group,
     this.milestones = const [],
     this.actions = const SavingGoalActions(),
     this.closedAt,
@@ -218,7 +219,9 @@ class SavingGoal extends Equatable {
 
   final String id;
   final String name;
-  final double targetAmount;
+
+  /// Null = no target: an open-ended goal (ออมต่อเนื่อง, 0.4.0-1).
+  final double? targetAmount;
   final String currency;
   final SavingGoalState state;
   final String? deadline; // ISO YYYY-MM-DD
@@ -227,9 +230,11 @@ class SavingGoal extends Equatable {
   final String? note;
   final double savedAmount;
 
-  /// Uncapped (104 % is possible).
-  final double progressPct;
-  final double remainingAmount;
+  /// Uncapped (104 % is possible); null without a target.
+  final double? progressPct;
+
+  /// Null without a target.
+  final double? remainingAmount;
   final int? daysRemaining;
   final double? neededMonthly;
   final double? paceMonthly;
@@ -245,6 +250,10 @@ class SavingGoal extends Equatable {
 
   /// The goal's auto-saving (null = off).
   final SavingAutoSave? autoSave;
+
+  /// The list group the BE puts the goal in whatever this month:
+  /// `ongoing` (ออมต่อเนื่อง) for a goal with no target; null = by month.
+  final String? group;
   final List<SavingMilestone> milestones;
 
   /// What the BE allows right now (buttons follow these flags).
@@ -256,6 +265,9 @@ class SavingGoal extends Equatable {
   bool get isCompleted => state == SavingGoalState.completed;
   bool get isArchived => state == SavingGoalState.archived;
 
+  /// No target: no bar, %, ETA or behind / on-track (ออมต่อเนื่อง).
+  bool get isOngoing => targetAmount == null;
+
   static DateTime? _date(Object? v) =>
       v is String ? DateTime.tryParse(v)?.toLocal() : null;
 
@@ -264,7 +276,7 @@ class SavingGoal extends Equatable {
     return SavingGoal(
       id: json['id'] as String,
       name: json['name'] as String,
-      targetAmount: (json['target_amount'] as num).toDouble(),
+      targetAmount: (json['target_amount'] as num?)?.toDouble(),
       currency: json['currency'] as String? ?? '',
       state: SavingGoalState.fromJson(json['state'] as String?),
       deadline: json['deadline'] as String?,
@@ -272,8 +284,8 @@ class SavingGoal extends Equatable {
       description: json['description'] as String?,
       note: json['note'] as String?,
       savedAmount: (json['saved_amount'] as num?)?.toDouble() ?? 0,
-      progressPct: (json['progress_pct'] as num?)?.toDouble() ?? 0,
-      remainingAmount: (json['remaining_amount'] as num?)?.toDouble() ?? 0,
+      progressPct: (json['progress_pct'] as num?)?.toDouble(),
+      remainingAmount: (json['remaining_amount'] as num?)?.toDouble(),
       daysRemaining: (json['days_remaining'] as num?)?.toInt(),
       neededMonthly: (json['needed_monthly'] as num?)?.toDouble(),
       paceMonthly: (json['pace_monthly'] as num?)?.toDouble(),
@@ -288,6 +300,7 @@ class SavingGoal extends Equatable {
               (json['auto_save'] as Map).cast<String, dynamic>(),
             )
           : null,
+      group: json['group'] as String?,
       milestones: [
         for (final m in (json['milestones'] as List? ?? const []))
           SavingMilestone.fromJson((m as Map).cast<String, dynamic>()),
@@ -303,8 +316,8 @@ class SavingGoal extends Equatable {
     );
   }
 
-  /// Create / update body: name, target, deadline, icon, description, note.
-  /// No wallet and no % (goals v2).
+  /// Create / update body: name, target (null = none: clears it on update),
+  /// deadline, icon, description, note. No wallet and no % (goals v2).
   Map<String, dynamic> toWriteJson() => <String, dynamic>{
     'name': name,
     'target_amount': targetAmount,
@@ -338,6 +351,7 @@ class SavingGoal extends Equatable {
     monthSaved,
     monthShort,
     autoSave,
+    group,
     milestones,
     actions,
     closedAt,

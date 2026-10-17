@@ -204,7 +204,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final draft = SavingGoal(
       id: goal?.id ?? 'draft',
       name: w.name.trim(),
-      targetAmount: AmountInput.parse(w.target)!,
+      // Empty = no target (ออมต่อเนื่อง); on update null clears it.
+      targetAmount: AmountInput.parse(w.target),
       currency: goal?.currency ?? '',
       deadline: w.deadline == null ? null : _isoDate(w.deadline!),
       iconCode: w.iconCode,
@@ -269,22 +270,28 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     return true;
   }
 
-  /// 409 GOAL_HAS_SAVINGS = the goal still holds money: close it first.
-  String? _needsClose(ApiException e) => e.code == 'GOAL_HAS_SAVINGS'
-      ? AppLocalizations.of(context)!.fpGoalsArchiveHasSavings
-      : null;
-
-  Future<void> _archive() async {
+  /// เก็บถาวร — also while the goal holds money (0.4.0-1): the money stays in
+  /// the goal but counts in no total until it is restored.
+  Future<void> _archive(SavingGoal g) async {
     final l = AppLocalizations.of(context)!;
+    final held = g.savedAmount;
     final ok = await showConfirmDialog(
       context,
       title: l.savingGoalArchiveConfirmTitle,
-      message: l.fpGoalsArchiveConfirmBody,
+      message: held > 0
+          ? l.fpGoalsArchiveConfirmBodyMoney(
+              moneyString(
+                context,
+                held,
+                symbol: context.readUserCurrencySymbol,
+              ),
+            )
+          : l.fpGoalsArchiveConfirmBody,
       confirmLabel: l.savingGoalArchiveConfirmAction,
       destructive: true,
     );
     if (!ok || !mounted) return;
-    if (await _run(_cubit!.archive, message: _needsClose) && mounted) {
+    if (await _run(_cubit!.archive) && mounted) {
       commitSaved(working);
       leavePage();
     }
@@ -790,6 +797,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final due = g.deadline == null ? null : DateTime.tryParse(g.deadline!);
     final days = g.daysRemaining;
     final short = g.monthShort;
+    final target = g.targetAmount;
+    if (target == null) return _ongoingHero(l, g, style, accent, symbol);
     return HeroCard(
       style: style,
       chips: [?savingGoalStatusChip(l, g)],
@@ -817,12 +826,12 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         value: MoneyText(g.savedAmount, symbol: symbol),
         color: accent,
         target: l.fpGoalsTargetSuffix(
-          money(g.targetAmount),
-          g.progressPct.round(),
+          money(target),
+          (g.progressPct ?? 0).round(),
         ),
       ),
       bar: HeroBar(
-        value: g.progressPct / 100,
+        value: (g.progressPct ?? 0) / 100,
         color: accent,
         ticks: const [0.25, 0.5, 0.75],
         left: due == null
@@ -855,6 +864,67 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                   value: g.neededMonthly == null
                       ? '—'
                       : money(g.neededMonthly!),
+                ),
+              ),
+            ],
+    );
+  }
+
+  /// A goal with no target (ออมต่อเนื่อง, 0.4.0-1): the chip, icon +
+  /// description, ออมแล้ว — no target, %, bar, due date or behind — and two
+  /// tiles: saved this month and the auto-saving amount.
+  Widget _ongoingHero(
+    AppLocalizations l,
+    SavingGoal g,
+    HeroStyle style,
+    Color accent,
+    String symbol,
+  ) {
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    final auto = g.autoSave;
+    return HeroCard(
+      style: style,
+      chips: [?savingGoalStatusChip(l, g)],
+      onEdit: enterEdit,
+      icon: EditableCircle(
+        size: 40,
+        onLongPress: _enterEditThenOpenMaker,
+        child: IconCodeWidget(
+          iconCode: g.iconCode,
+          size: 40,
+          fallbackIcon: AppIcons.savingGoal,
+          fallbackColor: accent,
+        ),
+      ),
+      description: HeroDescription(
+        controller: _descriptionCtrl,
+        editing: false,
+        hint: l.commonDescription,
+        maxLength: TextLimits.description,
+        focusNode: _descriptionFocus,
+        onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+      ),
+      number: HeroNumber(
+        label: l.fpGoalsSavedLabel,
+        value: MoneyText(g.savedAmount, symbol: symbol),
+        color: accent,
+      ),
+      tiles: g.state != SavingGoalState.active
+          ? const []
+          : [
+              SummaryTileView(
+                tile: SummaryTile(
+                  label: l.fpGoalsTileSaved,
+                  value: money(g.monthSaved),
+                  onTap: () => setState(() => _tab = _GoalTab.entries),
+                ),
+              ),
+              SummaryTileView(
+                tile: SummaryTile(
+                  label: l.fpGoalsTileAuto,
+                  value: auto == null
+                      ? '—'
+                      : l.fpGoalsPerMonth(money(auto.amount)),
                 ),
               ),
             ],
@@ -1019,10 +1089,10 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         showNeeded: false,
         color: accent,
         monthLabels: [for (final p in d.history) p.month.substring(5)],
-        targetLabel: g == null
+        targetLabel: g?.targetAmount == null
             ? null
             : l.sgv2ChartTarget(
-                moneyString(context, g.targetAmount, symbol: symbol),
+                moneyString(context, g!.targetAmount!, symbol: symbol),
               ),
         actualLegend: l.fpGoalsChartActual,
         plan: [for (final p in d.history) p.plan],
@@ -1144,8 +1214,11 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           label: l.savingGoalFormTargetLabel,
           accent: accent,
           symbol: symbol,
+          helper: l.savingGoalFormTargetOptionalHint,
           onChanged: (v) => _onText(_Field.target, v),
+          // Optional (0.4.0-1): empty = no target; a given one must be > 0.
           validator: (v) {
+            if (v == null || v.trim().isEmpty) return null;
             final n = AmountInput.parse(v);
             return (n == null || n <= 0) ? l.savingGoalFormTargetInvalid : null;
           },
@@ -1188,12 +1261,15 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     String money(double v) => moneyString(context, v, symbol: symbol);
     final deadline = working.deadline;
     final saved = goal?.savedAmount ?? 0;
+    final target = AmountInput.parse(working.target);
     final plan = SavingPlanPreview.of(
-      target: AmountInput.parse(working.target) ?? 0,
+      target: target ?? 0,
       saved: saved,
       deadline: deadline,
     );
     final needed = plan.neededMonthly;
+    // No target (ออมต่อเนื่อง): no due date and no "ต้องออม/เดือน" line.
+    if (target == null) return const SizedBox.shrink();
     return InfoBox(
       rows: [
         InfoRow(
@@ -1220,9 +1296,9 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     String symbol,
   ) => _settings(l, d, symbol);
 
-  /// ปิดเป้าหมาย / เก็บถาวร / ลบ — each shown only when it can apply; archive
-  /// stays visible while the goal holds money, saying why it can't (the BE's
-  /// 409 GOAL_HAS_SAVINGS maps to the same words).
+  /// ปิดเป้าหมาย / เก็บถาวร / ลบ — each shown only when it can apply.
+  /// Archiving a goal that holds money is fine (0.4.0-1): the line says the
+  /// money stops counting until the goal is restored.
   Widget? _endZone(AppLocalizations l, SavingGoalDetail d, SavingGoal g) {
     final a = g.actions;
     final holds = g.savedAmount > 0;
@@ -1234,18 +1310,20 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           consequence: l.fpGoalsCloseConsequence,
           onTap: isSaving ? null : () => _close(g, d.byWallet),
         ),
-      if (!g.isArchived && (a.archive || holds))
+      if (!g.isArchived && a.archive)
         EndZoneAction(
           kind: EndZoneKind.archive,
           label: l.savingGoalDetailArchive,
           consequence: holds
-              ? l.fpGoalsArchiveNeedsClose
+              ? l.fpGoalsArchiveConsequenceMoney(
+                  moneyString(
+                    context,
+                    g.savedAmount,
+                    symbol: context.readUserCurrencySymbol,
+                  ),
+                )
               : l.fpGoalsArchiveConsequence,
-          onTap: isSaving
-              ? null
-              : holds
-              ? () => _snack(l.fpGoalsArchiveHasSavings, tone: Tone.warning)
-              : _archive,
+          onTap: isSaving ? null : () => _archive(g),
         ),
       if (a.delete)
         EndZoneAction(
@@ -1275,7 +1353,7 @@ class _GoalDraft {
 
   factory _GoalDraft.from(SavingGoal g) => _GoalDraft(
     name: g.name,
-    target: AmountInput.format(g.targetAmount),
+    target: g.targetAmount == null ? '' : AmountInput.format(g.targetAmount!),
     deadline: g.deadline == null ? null : DateTime.tryParse(g.deadline!),
     iconCode: g.iconCode,
     description: g.description ?? '',

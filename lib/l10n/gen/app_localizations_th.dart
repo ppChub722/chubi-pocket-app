@@ -6457,9 +6457,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get fpGoalsArchiveNeedsClose => 'ปิดเป้าหมายก่อน';
 
   @override
-  String get fpGoalsArchiveHasSavings => 'ปิดเป้าหมายก่อนจึงจะเก็บถาวรได้';
-
-  @override
   String get fpGoalsDeleteConsequence => 'ลบถาวร พร้อมประวัติการออม';
 
   @override
@@ -6469,6 +6466,36 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get fpGoalsDeleteConfirmBody =>
       'ลบเป้าหมายนี้ถาวร พร้อมประวัติการออมของเป้าหมาย';
+
+  @override
+  String get fpGoalsGroupOngoing => 'ออมต่อเนื่อง';
+
+  @override
+  String fpGoalsOngoingRow(String amount) {
+    return 'ออมต่อเนื่อง · เดือนนี้ +$amount';
+  }
+
+  @override
+  String get fpGoalsTileAuto => 'ออมอัตโนมัติ';
+
+  @override
+  String fpGoalsPerMonth(String amount) {
+    return '$amount/ด.';
+  }
+
+  @override
+  String fpGoalsArchiveConsequenceMoney(String amount) {
+    return 'ซ่อนไว้ · เงิน $amount ไม่นับในยอดออม · กู้คืนได้';
+  }
+
+  @override
+  String fpGoalsArchiveConfirmBodyMoney(String amount) {
+    return 'ซ่อนเป้าหมายนี้ เงิน $amount ที่ออมไว้จะไม่นับในยอดออม กู้คืนได้ภายหลัง';
+  }
+
+  @override
+  String get savingGoalFormTargetOptionalHint =>
+      'เว้นว่าง = ออมต่อเนื่อง ไม่มียอดเป้า';
 
   @override
   String get fpGoalsRefreshFailed => 'รีเฟรชไม่สำเร็จ แสดงข้อมูลล่าสุดที่มี';

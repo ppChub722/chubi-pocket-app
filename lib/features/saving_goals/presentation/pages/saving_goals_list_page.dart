@@ -220,18 +220,25 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       for (final g in state.goals)
         if (q.isEmpty || g.name.toLowerCase().contains(q)) g,
     ];
-    // The BE's order, split by what it says about this month.
+    // The BE's order, split by what it says about this month. Goals with
+    // no target sit in their own group (the BE's `group: ongoing`).
+    final ongoing = [
+      for (final g in goals)
+        if (g.isOngoing) g,
+    ];
     final short = [
       for (final g in goals)
-        if ((g.monthShort ?? 0) > 0) g,
+        if (!g.isOngoing && (g.monthShort ?? 0) > 0) g,
     ];
     final done = [
       for (final g in goals)
-        if (g.monthShort == 0 || (g.monthShort == null && _isDone(g))) g,
+        if (!g.isOngoing &&
+            (g.monthShort == 0 || (g.monthShort == null && _isDone(g))))
+          g,
     ];
     final noPlan = [
       for (final g in goals)
-        if (!short.contains(g) && !done.contains(g)) g,
+        if (!g.isOngoing && !short.contains(g) && !done.contains(g)) g,
     ];
     return [
       _summary(context, l, state),
@@ -241,6 +248,7 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       if (active) ...[
         ..._group(context, l, l.fpGoalsGroupShort, short, _Group.short),
         ..._group(context, l, l.fpGoalsGroupDone, done, _Group.done),
+        ..._group(context, l, l.fpGoalsGroupOngoing, ongoing, _Group.ongoing),
         ..._group(context, l, l.fpGoalsGroupNoPlan, noPlan, _Group.noPlan),
       ] else
         for (final g in goals) _row(context, l, g, _Group.noPlan),
@@ -276,17 +284,34 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
     final badge = savingGoalEtaBadge(context, l, g);
+    final target = g.targetAmount;
+    // No target (ออมต่อเนื่อง): no bar, the saved amount on the right and
+    // what went in this month below.
+    if (target == null) {
+      return SavingGoalRow(
+        key: ValueKey(g.id),
+        title: g.name,
+        iconCode: g.iconCode,
+        fallbackIcon: AppIcons.savingGoal,
+        amountText: l.fpGoalsOngoingRow(money(g.monthSaved)),
+        trailing: money(g.savedAmount),
+        badge: badge?.label,
+        badgeTone: badge?.tone ?? Tone.success,
+        dimmed: g.isArchived,
+        onTap: () => context.push('/saving-goals/${g.id}'),
+      );
+    }
     return SavingGoalRow(
       key: ValueKey(g.id),
       title: g.name,
       iconCode: g.iconCode,
       fallbackIcon: AppIcons.savingGoal,
-      value: g.progressPct / 100,
-      amountText: '${money(g.savedAmount)} / ${money(g.targetAmount)}',
+      value: (g.progressPct ?? 0) / 100,
+      amountText: '${money(g.savedAmount)} / ${money(target)}',
       trailing: switch (group) {
         _Group.short => l.fpGoalsRowShort(money(g.monthShort ?? 0)),
         _Group.done => '✓',
-        _Group.noPlan => null,
+        _Group.ongoing || _Group.noPlan => null,
       },
       trailingTone: group == _Group.short ? Tone.warning : Tone.success,
       badge: badge?.label,
@@ -297,4 +322,4 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
   }
 }
 
-enum _Group { short, done, noPlan }
+enum _Group { short, done, ongoing, noPlan }
