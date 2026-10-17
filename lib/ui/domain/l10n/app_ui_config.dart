@@ -76,14 +76,13 @@ class AppUiConfig extends StatelessWidget {
 /// legacy +/− in colour when nobody is signed in / there is no [AuthCubit].
 MoneyStyle _userMoneyStyle(BuildContext context) {
   try {
-    return MoneyStyle.fromPreference(
-      context.select<AuthCubit, String?>(
-        (c) => switch (c.state) {
-          AuthAuthenticated(:final user) => user.moneyStyle,
-          _ => null,
-        },
-      ),
+    final (style, decimals) = context.select<AuthCubit, (String?, String?)>(
+      (c) => switch (c.state) {
+        AuthAuthenticated(:final user) => (user.moneyStyle, user.moneyDecimals),
+        _ => (null, null),
+      },
     );
+    return MoneyStyle.fromPreferences(style: style, decimals: decimals);
   } on ProviderNotFoundException {
     return MoneyStyle.legacy;
   }

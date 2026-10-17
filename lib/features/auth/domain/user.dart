@@ -53,6 +53,7 @@ class User extends Equatable {
     this.iconCode,
     this.feeCategoryId,
     this.moneyStyle,
+    this.moneyDecimals,
     this.defaultAccount,
     this.autoCopyOwnEventBills = false,
     this.notificationSummary,
@@ -79,6 +80,9 @@ class User extends Equatable {
   /// income / expense; null = a user from before it (+/− in colour). Only on
   /// `GET`/`PUT /users/me`, like [feeCategoryId].
   final String? moneyStyle;
+
+  /// Server preference `money_decimals`: always / never / auto (null = auto).
+  final String? moneyDecimals;
 
   /// The default wallet (`default_account`; null = none).
   final DefaultWalletRef? defaultAccount;
@@ -110,6 +114,10 @@ class User extends Equatable {
       },
       moneyStyle: switch (json['preferences']) {
         {'money_style': final String style} => style,
+        _ => null,
+      },
+      moneyDecimals: switch (json['preferences']) {
+        {'money_decimals': final String decimals} => decimals,
         _ => null,
       },
       defaultAccount: json['default_account'] is Map
@@ -152,6 +160,7 @@ class User extends Equatable {
           ? null
           : (feeCategoryId ?? this.feeCategoryId),
       moneyStyle: moneyStyle,
+      moneyDecimals: moneyDecimals,
     );
   }
 
@@ -165,6 +174,7 @@ class User extends Equatable {
     iconCode,
     feeCategoryId,
     moneyStyle,
+    moneyDecimals,
     defaultAccount,
     autoCopyOwnEventBills,
     notificationSummary,

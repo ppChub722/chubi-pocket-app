@@ -12,6 +12,27 @@ enum MoneySign {
   none,
 }
 
+/// The satang / cents of an amount (owner 2026-10-17).
+enum MoneyDecimals {
+  /// ฿1,000.00 · ฿99.50.
+  always,
+
+  /// Rounded to whole units: ฿1,000 · ฿99.50 → ฿100.
+  never,
+
+  /// No .00: ฿1,000 · ฿99.50 stays (the default).
+  auto;
+
+  /// From the `money_decimals` preference (null / unknown = [auto]).
+  static MoneyDecimals fromPreference(String? value) => switch (value) {
+    'always' => always,
+    'never' => never,
+    _ => auto,
+  };
+
+  String get preference => name;
+}
+
 /// The user's money style (owner 2026-10-17, settings → money): a [sign] and
 /// whether amounts take the income / expense [colored] colours. "Colour
 /// only" ([MoneySign.none]) is always coloured — with neither, nothing would
@@ -19,10 +40,16 @@ enum MoneySign {
 /// users get colour only, users from before it (no value) keep +/− in colour.
 @immutable
 class MoneyStyle {
-  const MoneyStyle({this.sign = MoneySign.plusMinus, bool colored = true})
-    : _colored = colored;
+  const MoneyStyle({
+    this.sign = MoneySign.plusMinus,
+    bool colored = true,
+    this.decimals = MoneyDecimals.always,
+  }) : _colored = colored;
 
-  /// What users from before the setting always saw.
+  /// What users from before the settings always saw (+ / − in colour, .00);
+  /// also the style with no [MoneyStyleScope] (tests, the hub). A signed-in
+  /// user's unset `money_decimals` is [MoneyDecimals.auto]
+  /// ([MoneyStyle.fromPreferences]).
   static const legacy = MoneyStyle();
 
   /// What new users get.
@@ -30,6 +57,9 @@ class MoneyStyle {
 
   final MoneySign sign;
   final bool _colored;
+
+  /// How many satang / cents show ([digitsFor]).
+  final MoneyDecimals decimals;
 
   bool get colored => sign == MoneySign.none || _colored;
 
@@ -44,6 +74,31 @@ class MoneyStyle {
     'color_only' => colorOnly,
     _ => legacy,
   };
+
+  /// The style from both preferences (`money_style`, `money_decimals`).
+  factory MoneyStyle.fromPreferences({String? style, String? decimals}) =>
+      MoneyStyle.fromPreference(
+        style,
+      ).copyWith(decimals: MoneyDecimals.fromPreference(decimals));
+
+  /// The decimal digits [amount] shows with, given the currency's own
+  /// ([currencyDigits]: 2, or 0 for ¥): never → 0; auto → 0 when it is a
+  /// whole amount at the currency's digits.
+  int digitsFor(num amount, int currencyDigits) {
+    switch (decimals) {
+      case MoneyDecimals.always:
+        return currencyDigits;
+      case MoneyDecimals.never:
+        return 0;
+      case MoneyDecimals.auto:
+        var scale = 1;
+        for (var i = 0; i < currencyDigits; i++) {
+          scale *= 10;
+        }
+        final units = (amount.abs() * scale).round();
+        return units % scale == 0 ? 0 : currencyDigits;
+    }
+  }
 
   /// The `money_style` preference value.
   String get preference => switch (sign) {
@@ -60,15 +115,25 @@ class MoneyStyle {
     MoneySign.none => text,
   };
 
-  MoneyStyle copyWith({MoneySign? sign, bool? colored}) =>
-      MoneyStyle(sign: sign ?? this.sign, colored: colored ?? _colored);
+  MoneyStyle copyWith({
+    MoneySign? sign,
+    bool? colored,
+    MoneyDecimals? decimals,
+  }) => MoneyStyle(
+    sign: sign ?? this.sign,
+    colored: colored ?? _colored,
+    decimals: decimals ?? this.decimals,
+  );
 
   @override
   bool operator ==(Object other) =>
-      other is MoneyStyle && other.sign == sign && other.colored == colored;
+      other is MoneyStyle &&
+      other.sign == sign &&
+      other.colored == colored &&
+      other.decimals == decimals;
 
   @override
-  int get hashCode => Object.hash(sign, colored);
+  int get hashCode => Object.hash(sign, colored, decimals);
 }
 
 /// Provides the user's [MoneyStyle] (AppUiConfig installs it from /me).

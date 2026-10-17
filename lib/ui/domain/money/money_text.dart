@@ -59,13 +59,17 @@ class MoneyText extends StatelessWidget {
     final hidden = hideable && isMoneyHidden(context);
     final palette = Theme.of(context).extension<AppColors>()!;
     final money = MoneyStyleScope.of(context);
-    // negative: null = no mark (plain, or something that shows as ฿0.00).
+    final digits = money.digitsFor(
+      amount,
+      CurrencyFormatter.decimalsOfSymbol(symbol),
+    );
+    // negative: null = no mark (plain, or something that shows as zero).
     final (Color? tint, bool? negative) = switch (tone) {
       MoneyTone.plain => (null, null),
       MoneyTone.income => (palette.income, false),
       MoneyTone.expense => (palette.expense, true),
       MoneyTone.signed =>
-        CurrencyFormatter.roundsToZero(amount)
+        CurrencyFormatter.roundsToZero(amount, decimalDigits: digits)
             ? (null, null)
             : amount > 0
             ? (palette.income, false)
@@ -73,7 +77,11 @@ class MoneyText extends StatelessWidget {
     };
     final color = money.colored ? tint : null;
     final magnitude = tone == MoneyTone.plain ? amount : amount.abs();
-    final formatted = CurrencyFormatter.format(magnitude, symbol: symbol);
+    final formatted = CurrencyFormatter.format(
+      magnitude,
+      symbol: symbol,
+      decimalDigits: digits,
+    );
     final text = hidden
         ? '$symbol••••'
         : negative == null
@@ -93,6 +101,21 @@ class MoneyText extends StatelessWidget {
   }
 }
 
+/// [amount] formatted with [style]'s decimals (no mark, no privacy) — for
+/// previews of a style the user hasn't picked yet (settings).
+String formatMoneyWith(
+  MoneyStyle style,
+  num amount, {
+  required String symbol,
+}) => CurrencyFormatter.format(
+  amount,
+  symbol: symbol,
+  decimalDigits: style.digitsFor(
+    amount,
+    CurrencyFormatter.decimalsOfSymbol(symbol),
+  ),
+);
+
 /// An income / expense amount as text for captions ("เดือนนี้ +฿2,000"),
 /// marked the user's way ([MoneyStyle]; no colour in a sentence).
 String signedMoneyString(
@@ -111,9 +134,15 @@ String moneyString(BuildContext context, num amount, {String? symbol}) =>
 
 String _moneyString(BuildContext context, num amount, String? symbolOrNull) {
   final symbol = symbolOrNull ?? UiConfig.stringsOf(context).currencySymbol;
-  return isMoneyHidden(context)
-      ? '$symbol••••'
-      : CurrencyFormatter.format(amount, symbol: symbol);
+  if (isMoneyHidden(context)) return '$symbol••••';
+  final digits = MoneyStyleScope.of(
+    context,
+  ).digitsFor(amount, CurrencyFormatter.decimalsOfSymbol(symbol));
+  return CurrencyFormatter.format(
+    amount,
+    symbol: symbol,
+    decimalDigits: digits,
+  );
 }
 
 /// Whether the 👁 money-privacy toggle is offered at all. Off for now

@@ -11828,6 +11828,30 @@ abstract class AppLocalizations {
   /// **'Income in green, expenses in red'**
   String get settingsMoneyColorHint;
 
+  /// No description provided for @settingsMoneyDecimals.
+  ///
+  /// In en, this message translates to:
+  /// **'Decimals'**
+  String get settingsMoneyDecimals;
+
+  /// No description provided for @settingsMoneyDecimalsAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get settingsMoneyDecimalsAlways;
+
+  /// No description provided for @settingsMoneyDecimalsNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never (rounded)'**
+  String get settingsMoneyDecimalsNever;
+
+  /// No description provided for @settingsMoneyDecimalsAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide .00 only'**
+  String get settingsMoneyDecimalsAuto;
+
   /// No description provided for @settingsMainWalletHint.
   ///
   /// In en, this message translates to:

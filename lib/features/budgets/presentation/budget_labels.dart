@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/date_formatter.dart';
-import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/user_currency.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../ui/ui.dart';
@@ -152,17 +151,9 @@ double? budgetPaceFraction(DateTime start, DateTime? end, DateTime today) {
   return (elapsed / total).clamp(0.0, 1.0);
 }
 
-/// An amount for a row: the user's currency, no decimals when whole.
-String budgetRowMoney(BuildContext context, num amount) {
-  final symbol = context.readUserCurrencySymbol;
-  if (isMoneyHidden(context)) return moneyString(context, amount);
-  final whole = amount == amount.roundToDouble();
-  return CurrencyFormatter.format(
-    amount,
-    symbol: symbol,
-    decimalDigits: whole ? 0 : null,
-  );
-}
+/// An amount for a row: the user's currency and decimals setting.
+String budgetRowMoney(BuildContext context, num amount) =>
+    moneyString(context, amount, symbol: context.readUserCurrencySymbol);
 
 /// What the budget counts, in one line ("Buffet + sub · Tags: เที่ยว"); null
 /// when nothing is picked. [all] = "Every expense".

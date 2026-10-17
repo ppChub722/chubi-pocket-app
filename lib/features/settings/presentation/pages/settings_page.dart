@@ -69,6 +69,7 @@ class SettingsPage extends StatelessWidget {
                     if (MoneyStyle.fromPreference(user.moneyStyle).sign !=
                         MoneySign.none)
                       _MoneyColorRow(user: user),
+                    _MoneyDecimalsRow(user: user),
                     _MainWalletRow(user: user),
                   ],
                 ),
@@ -497,6 +498,73 @@ class _MoneyStyleRowState extends State<_MoneyStyleRow> {
           MoneySign.parentheses => l.settingsMoneySignParentheses,
           MoneySign.none => l.settingsMoneySignNone,
         }),
+        showChevron: true,
+        onTap: _busy ? null : toggle,
+      ),
+    );
+  }
+}
+
+/// Decimals: always / never (rounded) / hide .00 only — each option shows
+/// ฿1,000 and ฿99.50 its way. ONE `PUT /users/me` (`money_decimals`).
+class _MoneyDecimalsRow extends StatefulWidget {
+  const _MoneyDecimalsRow({required this.user});
+
+  final User user;
+
+  @override
+  State<_MoneyDecimalsRow> createState() => _MoneyDecimalsRowState();
+}
+
+class _MoneyDecimalsRowState extends State<_MoneyDecimalsRow> {
+  bool _busy = false;
+
+  Future<void> _change(MoneyDecimals d) async {
+    if (_busy || d == MoneyDecimals.fromPreference(widget.user.moneyDecimals)) {
+      return;
+    }
+    final auth = context.read<AuthCubit>();
+    final users = context.read<UsersRepository>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      auth.updateUser(await users.setMoneyDecimals(d.preference));
+    } on ApiException catch (e) {
+      showErrorSnackBarOn(messenger, e);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final current = MoneyDecimals.fromPreference(widget.user.moneyDecimals);
+    final symbol = UiConfig.stringsOf(context).currencySymbol;
+    String example(MoneyDecimals d) {
+      final s = MoneyStyle(decimals: d);
+      return '${formatMoneyWith(s, 1000, symbol: symbol)} · '
+          '${formatMoneyWith(s, 99.5, symbol: symbol)}';
+    }
+
+    String label(MoneyDecimals d) => switch (d) {
+      MoneyDecimals.always => l.settingsMoneyDecimalsAlways,
+      MoneyDecimals.never => l.settingsMoneyDecimalsNever,
+      MoneyDecimals.auto => l.settingsMoneyDecimalsAuto,
+    };
+
+    return OptionMenuAnchor<MoneyDecimals>(
+      selected: current,
+      onSelected: _change,
+      options: [
+        for (final d in MoneyDecimals.values)
+          SheetOption(value: d, label: label(d), subtitle: example(d)),
+      ],
+      builder: (context, toggle) => DetailRow(
+        leading: const AppIcon(AppIcons.moneyDecimals),
+        label: l.settingsMoneyDecimals,
+        helper: example(current),
+        trailing: Text(label(current)),
         showChevron: true,
         onTap: _busy ? null : toggle,
       ),

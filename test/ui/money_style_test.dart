@@ -73,4 +73,38 @@ void main() {
     expect(shown(t).data, '฿540.00');
     expect(shown(t).style?.color, colors.expense);
   });
+
+  test('decimals: always / never (rounded) / auto (hide .00 only)', () {
+    const always = MoneyStyle();
+    const never = MoneyStyle(decimals: MoneyDecimals.never);
+    const auto = MoneyStyle(decimals: MoneyDecimals.auto);
+    expect(always.digitsFor(1000, 2), 2);
+    expect(never.digitsFor(99.5, 2), 0);
+    expect(auto.digitsFor(1000, 2), 0);
+    expect(auto.digitsFor(99.5, 2), 2);
+    expect(auto.digitsFor(1000.004, 2), 0); // shows as 1,000.00 → whole
+    expect(formatMoneyWith(never, 99.5, symbol: '฿'), '฿100');
+    expect(formatMoneyWith(auto, 99.5, symbol: '฿'), '฿99.50');
+    expect(formatMoneyWith(auto, 1000, symbol: '฿'), '฿1,000');
+  });
+
+  test('a signed-in user with nothing set: + / − in colour, hide .00', () {
+    final s = MoneyStyle.fromPreferences();
+    expect(s.sign, MoneySign.plusMinus);
+    expect(s.colored, isTrue);
+    expect(s.decimals, MoneyDecimals.auto);
+    expect(
+      MoneyStyle.fromPreferences(decimals: 'never').decimals,
+      MoneyDecimals.never,
+    );
+  });
+
+  testWidgets('auto decimals in MoneyText: ฿540 (no .00)', (t) async {
+    await pump(
+      t,
+      const MoneyStyle(decimals: MoneyDecimals.auto),
+      MoneyTone.expense,
+    );
+    expect(shown(t).data, '−฿540');
+  });
 }

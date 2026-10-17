@@ -6977,6 +6977,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMoneyColorHint => 'Income in green, expenses in red';
 
   @override
+  String get settingsMoneyDecimals => 'Decimals';
+
+  @override
+  String get settingsMoneyDecimalsAlways => 'Always';
+
+  @override
+  String get settingsMoneyDecimalsNever => 'Never (rounded)';
+
+  @override
+  String get settingsMoneyDecimalsAuto => 'Hide .00 only';
+
+  @override
   String get settingsMainWalletHint => 'Used as the default when recording';
 
   @override

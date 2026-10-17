@@ -78,6 +78,21 @@ class UsersRepository {
     }
   }
 
+  /// Sets the decimals preference (`money_decimals`: always, never, auto).
+  Future<User> setMoneyDecimals(String decimals) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/users/me',
+        data: {
+          'preferences': {'money_decimals': decimals},
+        },
+      );
+      return User.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   /// Sets (or clears, [categoryId] null) the fee category preference —
   /// the BE checks it is one of the user's expense categories.
   Future<User> setFeeCategory(String? categoryId) async {

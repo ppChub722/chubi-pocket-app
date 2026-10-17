@@ -6808,6 +6808,18 @@ class AppLocalizationsTh extends AppLocalizations {
   String get settingsMoneyColorHint => 'รายรับสีเขียว รายจ่ายสีแดง';
 
   @override
+  String get settingsMoneyDecimals => 'ทศนิยม (สตางค์)';
+
+  @override
+  String get settingsMoneyDecimalsAlways => 'แสดงปกติ';
+
+  @override
+  String get settingsMoneyDecimalsNever => 'ไม่แสดงเลย (ปัดเศษ)';
+
+  @override
+  String get settingsMoneyDecimalsAuto => 'ซ่อนเฉพาะ .00';
+
+  @override
   String get settingsMainWalletHint => 'ใช้เป็นค่าเริ่มต้นตอนบันทึก';
 
   @override
