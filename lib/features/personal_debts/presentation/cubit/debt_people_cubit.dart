@@ -21,6 +21,7 @@ class DebtPeopleState extends Equatable {
     this.paging = const DebtPaging(),
     this.q = '',
     this.all = false,
+    this.sort = DebtPeopleSort.oldest,
     this.side,
     this.loadingMore = false,
     this.error,
@@ -35,6 +36,9 @@ class DebtPeopleState extends Equatable {
 
   /// "ทั้งหมด": settled people too.
   final bool all;
+
+  /// The list order (ค้างนานสุด by default).
+  final DebtPeopleSort sort;
 
   /// The summary-box filter (ติดคุณ / คุณติด); null = both.
   final NetSide? side;
@@ -59,6 +63,7 @@ class DebtPeopleState extends Equatable {
     DebtPaging? paging,
     String? q,
     bool? all,
+    DebtPeopleSort? sort,
     NetSide? side,
     bool clearSide = false,
     bool? loadingMore,
@@ -73,6 +78,7 @@ class DebtPeopleState extends Equatable {
     paging: paging ?? this.paging,
     q: q ?? this.q,
     all: all ?? this.all,
+    sort: sort ?? this.sort,
     side: clearSide ? null : (side ?? this.side),
     loadingMore: loadingMore ?? this.loadingMore,
     error: clearError ? null : (error ?? this.error),
@@ -87,6 +93,7 @@ class DebtPeopleState extends Equatable {
     paging,
     q,
     all,
+    sort,
     side,
     loadingMore,
     error,
@@ -131,6 +138,7 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
         perPage: perPage,
         q: state.q,
         all: state.all,
+        sort: state.sort,
         side: state.side,
       );
       if (gen != _generation || isClosed) return;
@@ -167,6 +175,13 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
     load();
   }
 
+  /// The sort chip: one call with the new order.
+  void setSort(DebtPeopleSort sort) {
+    if (sort == state.sort) return;
+    emit(state.copyWith(sort: sort));
+    load();
+  }
+
   /// Tap a summary box: filter to that side; tap it again: both.
   void toggleSide(NetSide side) {
     if (state.side == side) {
@@ -190,6 +205,7 @@ class DebtPeopleCubit extends Cubit<DebtPeopleState> with DebtBookListener {
         perPage: perPage,
         q: s.q,
         all: s.all,
+        sort: s.sort,
         side: s.side,
       );
       if (gen != _generation || isClosed) return;

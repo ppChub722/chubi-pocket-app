@@ -64,6 +64,8 @@ class PersonBalance extends Equatable {
     this.openCount = 0,
     this.entryCount = 0,
     this.lastActivityAt,
+    this.clearedAt,
+    this.daysOutstanding,
   });
 
   /// `c:<contact id>` or `n:<lower-cased typed name>`.
@@ -80,6 +82,14 @@ class PersonBalance extends Equatable {
   /// The latest entry date (null with no entries).
   final DateTime? lastActivityAt;
 
+  /// The CYCLE boundary: the last entry after which the balance was 0 (null
+  /// = it never was). Entries after it are the current cycle.
+  final DateTime? clearedAt;
+
+  /// Age in days of the oldest unpaid entry of the current cycle (null =
+  /// none) — the BE's number, shown as "ค้าง N วัน".
+  final int? daysOutstanding;
+
   NetSide get side => NetSide.of(net);
 
   factory PersonBalance.fromJson(Map<String, dynamic> json) => PersonBalance(
@@ -91,6 +101,8 @@ class PersonBalance extends Equatable {
     openCount: (json['open_count'] as num?)?.toInt() ?? 0,
     entryCount: (json['entry_count'] as num?)?.toInt() ?? 0,
     lastActivityAt: _date(json['last_activity_at']),
+    clearedAt: _date(json['cleared_at']),
+    daysOutstanding: (json['days_outstanding'] as num?)?.toInt(),
   );
 
   static PersonBalance? maybe(Object? json) =>
@@ -104,6 +116,8 @@ class PersonBalance extends Equatable {
     openCount,
     entryCount,
     lastActivityAt,
+    clearedAt,
+    daysOutstanding,
   ];
 }
 
@@ -115,6 +129,9 @@ class DebtTotals extends Equatable {
     this.iOwe = 0,
     this.net = 0,
     this.openCount = 0,
+    this.owedToMePeople = 0,
+    this.iOwePeople = 0,
+    this.over30DaysPeople = 0,
   });
 
   /// Σ net of the people with net > 0.
@@ -127,6 +144,13 @@ class DebtTotals extends Equatable {
   /// People with something open.
   final int openCount;
 
+  /// People with net > 0 / net < 0 (the tiles' "N คน").
+  final int owedToMePeople;
+  final int iOwePeople;
+
+  /// People whose oldest open entry (current cycle) is over 30 days old.
+  final int over30DaysPeople;
+
   factory DebtTotals.fromJson(Map<String, dynamic>? json) => json == null
       ? const DebtTotals()
       : DebtTotals(
@@ -134,10 +158,21 @@ class DebtTotals extends Equatable {
           iOwe: (json['i_owe'] as num?)?.toDouble() ?? 0,
           net: (json['net'] as num?)?.toDouble() ?? 0,
           openCount: (json['open_count'] as num?)?.toInt() ?? 0,
+          owedToMePeople: (json['owed_to_me_people'] as num?)?.toInt() ?? 0,
+          iOwePeople: (json['i_owe_people'] as num?)?.toInt() ?? 0,
+          over30DaysPeople: (json['over_30_days_people'] as num?)?.toInt() ?? 0,
         );
 
   @override
-  List<Object?> get props => [owedToMe, iOwe, net, openCount];
+  List<Object?> get props => [
+    owedToMe,
+    iOwe,
+    net,
+    openCount,
+    owedToMePeople,
+    iOwePeople,
+    over30DaysPeople,
+  ];
 }
 
 /// `DebtPeopleList` (`GET /personal-debts/people`).
@@ -221,9 +256,14 @@ class DebtEntry extends Equatable {
     this.transaction,
     this.createdAt,
     this.updatedAt,
+    this.inCurrentCycle,
   });
 
   final String id;
+
+  /// Only in a person's entry lists: true = after the cycle boundary
+  /// (`cleared_at`), false = an earlier cycle; null elsewhere.
+  final bool? inCurrentCycle;
 
   /// The person's key.
   final String? key;
@@ -267,6 +307,7 @@ class DebtEntry extends Equatable {
         : null,
     createdAt: _date(json['created_at']),
     updatedAt: _date(json['updated_at']),
+    inCurrentCycle: json['in_current_cycle'] as bool?,
   );
 
   static DebtEntry? maybe(Object? json) =>
@@ -286,6 +327,7 @@ class DebtEntry extends Equatable {
     transaction,
     createdAt,
     updatedAt,
+    inCurrentCycle,
   ];
 }
 
@@ -313,31 +355,103 @@ class DebtPersonDetail extends Equatable {
   const DebtPersonDetail({
     required this.balance,
     required this.entries,
-    this.entryCount = 0,
-    this.moneyCount = 0,
+    this.counts = const DebtCounts(),
+    this.message = const DebtSummaryMessage(),
   });
 
   final PersonBalance balance;
+
+  /// The first page of the asked cycle (the current one by default).
   final DebtEntriesPage entries;
+  final DebtCounts counts;
 
-  /// Tab "รายการหนี้".
-  final int entryCount;
+  /// The text to send the person (BE-built, current cycle).
+  final DebtSummaryMessage message;
 
-  /// Tab "ประวัติการจ่าย" (entries with a wallet transaction).
-  final int moneyCount;
-
-  factory DebtPersonDetail.fromJson(Map<String, dynamic> json) {
-    final counts = _map(json['counts']);
-    return DebtPersonDetail(
-      balance: PersonBalance.fromJson(json),
-      entries: DebtEntriesPage.fromJson(json, key: 'items'),
-      entryCount: (counts?['entries'] as num?)?.toInt() ?? 0,
-      moneyCount: (counts?['money'] as num?)?.toInt() ?? 0,
-    );
-  }
+  factory DebtPersonDetail.fromJson(Map<String, dynamic> json) =>
+      DebtPersonDetail(
+        balance: PersonBalance.fromJson(json),
+        entries: DebtEntriesPage.fromJson(json, key: 'items'),
+        counts: DebtCounts.fromJson(_map(json['counts'])),
+        message: DebtSummaryMessage.fromJson(_map(json['summary_message'])),
+      );
 
   @override
-  List<Object?> get props => [balance, entries, entryCount, moneyCount];
+  List<Object?> get props => [balance, entries, counts, message];
+}
+
+/// `counts` of the person page: all entries, wallet-money entries, and the
+/// current / earlier cycle split (the "รอบก่อนหน้านี้" fold shows when
+/// [earlier] > 0).
+class DebtCounts extends Equatable {
+  const DebtCounts({
+    this.entries = 0,
+    this.money = 0,
+    this.current = 0,
+    this.earlier = 0,
+  });
+
+  final int entries;
+  final int money;
+  final int current;
+  final int earlier;
+
+  factory DebtCounts.fromJson(Map<String, dynamic>? json) => json == null
+      ? const DebtCounts()
+      : DebtCounts(
+          entries: (json['entries'] as num?)?.toInt() ?? 0,
+          money: (json['money'] as num?)?.toInt() ?? 0,
+          current: (json['current'] as num?)?.toInt() ?? 0,
+          earlier: (json['earlier'] as num?)?.toInt() ?? 0,
+        );
+
+  @override
+  List<Object?> get props => [entries, money, current, earlier];
+}
+
+/// `DebtSummaryMessage`: the BE-built text to send a person (current-cycle
+/// entries, both directions) — the person page's message box.
+class DebtSummaryMessage extends Equatable {
+  const DebtSummaryMessage({this.text = '', this.entries = 0, this.net = 0});
+
+  final String text;
+
+  /// Entries listed in [text].
+  final int entries;
+  final double net;
+
+  factory DebtSummaryMessage.fromJson(Map<String, dynamic>? json) =>
+      json == null
+      ? const DebtSummaryMessage()
+      : DebtSummaryMessage(
+          text: (json['text'] as String?) ?? '',
+          entries: (json['entries'] as num?)?.toInt() ?? 0,
+          net: (json['net'] as num?)?.toDouble() ?? 0,
+        );
+
+  @override
+  List<Object?> get props => [text, entries, net];
+}
+
+/// The people list's sort (`sort=`): the longest outstanding first (default),
+/// the biggest amount, or the latest activity.
+enum DebtPeopleSort {
+  oldest('oldest'),
+  amount('amount'),
+  recent('recent');
+
+  const DebtPeopleSort(this.wire);
+  final String wire;
+}
+
+/// Which debt cycle a person's entries come from (`cycle=`): the current one
+/// (after the balance last hit 0) or the earlier ones.
+enum DebtCycle {
+  current('current'),
+  earlier('earlier');
+
+  const DebtCycle(this.wire);
+  final String wire;
 }
 
 /// `DebtEntryDetail` (`GET /personal-debts/{id}`): the tx detail page in
@@ -486,7 +600,6 @@ class DebtEntryQuery extends Equatable {
     this.sort = DebtEntrySort.dateDesc,
     this.direction,
     this.paid,
-    this.moneyOnly = false,
     this.accountId,
   });
 
@@ -496,9 +609,6 @@ class DebtEntryQuery extends Equatable {
 
   /// The "จ่ายแล้ว" label filter (`paid=false` = the mark-paid list).
   final bool? paid;
-
-  /// Only entries that moved wallet money (the "ประวัติการจ่าย" tab).
-  final bool moneyOnly;
   final String? accountId;
 
   /// Search / filter / sort differ from the default view.
@@ -514,7 +624,6 @@ class DebtEntryQuery extends Equatable {
     'sort': sort.wire,
     'direction': ?direction?.wire,
     if (paid != null) 'paid': paid.toString(),
-    if (moneyOnly) 'money': 'true',
     'account_id': ?accountId,
   };
 
@@ -532,12 +641,11 @@ class DebtEntryQuery extends Equatable {
     sort: sort ?? this.sort,
     direction: clearDirection ? null : (direction ?? this.direction),
     paid: clearPaid ? null : (paid ?? this.paid),
-    moneyOnly: moneyOnly,
     accountId: clearAccount ? null : (accountId ?? this.accountId),
   );
 
   @override
-  List<Object?> get props => [q, sort, direction, paid, moneyOnly, accountId];
+  List<Object?> get props => [q, sort, direction, paid, accountId];
 }
 
 /// The person key for a contact / a typed name (what the BE groups by; it

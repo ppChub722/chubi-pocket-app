@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/shell/app_top_bar.dart';
+import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
@@ -12,18 +15,21 @@ import '../../../../ui/ui.dart';
 import '../../../contacts/presentation/cubit/contacts_cubit.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../../transactions/domain/refs.dart';
-import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
+
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_ledger.dart';
 import '../cubit/debt_people_cubit.dart';
 import '../cubit/debt_person_cubit.dart';
 import '../debt_wiring.dart';
 
-/// `/personal-debts/people/:key` — everything with one person: the hero
-/// (net), ONE button "+ บันทึกรายการ" (quick create in debt mode, preset to
-/// this person), then the tabs "รายการหนี้" (every entry) / "ประวัติการจ่าย"
-/// (entries that moved wallet money). Open = 1 call; the money tab = 1 call
-/// on its first open; search / filter / sort / next page = 1 call each.
+/// `/personal-debts/people/:key` — a STATEMENT with one person (reference
+/// §4): the hero (name · age, the side pill + the amount, the editable
+/// summary message while a balance is open), then the entries grouped by
+/// debt cycle — "ที่มาของยอด · ตั้งแต่เคลียร์ครบ `date`" (the current cycle),
+/// and behind "รอบก่อนหน้านี้ ›" the earlier ones. No tabs, no buttons under
+/// the card; the shell's + opens debt mode preset to this person. Open = 1
+/// call; the earlier cycles = 1 call on the fold's first open; search /
+/// filter / sort / next page = 1 call each.
 class DebtPersonPage extends StatelessWidget {
   const DebtPersonPage({required this.personKey, this.name, super.key});
 
@@ -53,17 +59,14 @@ class _PersonView extends StatefulWidget {
 }
 
 class _PersonViewState extends State<_PersonView> {
-  DebtPersonTab _tab = DebtPersonTab.entries;
-  final _search = {
-    for (final t in DebtPersonTab.values) t: TextEditingController(),
-  };
+  final _search = TextEditingController();
+  final _toolbar = ToolbarToggleState.local();
   bool _linking = false;
 
   @override
   void dispose() {
-    for (final c in _search.values) {
-      c.dispose();
-    }
+    _search.dispose();
+    _toolbar.dispose();
     super.dispose();
   }
 
@@ -84,21 +87,12 @@ class _PersonViewState extends State<_PersonView> {
     );
   }
 
-  void _selectTab(DebtPersonTab t) {
-    setState(() => _tab = t);
-    _cubit.openTab(t);
-  }
-
-  /// The shell's + and this button open the same preset. The page patches
-  /// from the write response through [DebtBook] (no re-fetch).
+  /// The shell's + opens this preset. A saved entry reaches the page through
+  /// [DebtBook] (the balance patches, the page call re-runs).
   QuickCreatePreset _preset(DebtPersonState s) => QuickCreatePreset.debt(
     person: _person(s),
     debtDirection: debtDirectionFor(s.balance?.net),
   );
-
-  Future<void> _addEntry() async {
-    await showQuickCreateSheet(context, preset: _preset(_cubit.state));
-  }
 
   /// The entry's detail = the transaction detail page in debt mode
   /// (fe-core). TODO(debt-mode): push `/personal-debts/entries/<id>` once
@@ -107,6 +101,16 @@ class _PersonViewState extends State<_PersonView> {
     final tx = e.transaction;
     if (tx != null) openPage(context, '/transactions/${tx.id}');
   }
+
+  Future<void> _copy(String text) async {
+    final l = AppLocalizations.of(context)!;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    showAppSnackBar(context, l.fpDebtsCopied, tone: Tone.success);
+  }
+
+  Future<void> _share(String text) =>
+      SharePlus.instance.share(ShareParams(text: text));
 
   /// A typed name joins a contact (absorb); the page moves to the contact's
   /// key.
@@ -127,7 +131,6 @@ class _PersonViewState extends State<_PersonView> {
         l.debtsPersonLinked(n, contact.name),
         tone: Tone.success,
       );
-      // Same tab: the page moves to the contact's key.
       context.pushReplacement(
         Uri(path: '/personal-debts/people/c:${contact.id}').toString(),
         extra: contact.name,
@@ -150,17 +153,27 @@ class _PersonViewState extends State<_PersonView> {
           child: Scaffold(
             appBar: AppTopBar(title: _name(s), showBack: true),
             extendBodyBehindAppBar: true,
-            body: AsyncStateView(
-              loading: s.firstLoad,
-              error: notFound ? null : s.error,
-              isEmpty: s.balance == null,
-              onRetry: _cubit.load,
-              empty: EmptyView(
-                icon: AppIcons.debt,
-                title: l.debtsTimelineEmpty,
-                message: l.debtsEmptyMessage,
+            body: TabSwitchBody(
+              child: ListPageBody(
+                loading: s.firstLoad,
+                error: notFound ? null : s.error,
+                isEmpty: s.balance == null,
+                onRetry: _cubit.load,
+                empty: EmptyView(
+                  icon: AppIcons.debt,
+                  title: l.debtsTimelineEmpty,
+                  message: l.debtsEmptyMessage,
+                ),
+                hasMore: s.hasMore,
+                loadingMore: s.current.loadingMore || s.earlier.loadingMore,
+                onLoadMore: _cubit.loadMore,
+                loadMoreError: s.current.moreError ?? s.earlier.moreError,
+                rowDividers: true,
+                scrollHeader: s.balance == null
+                    ? const []
+                    : _header(context, s),
+                children: s.balance == null ? const [] : _statement(context, s),
               ),
-              builder: (context) => _body(context, s),
             ),
           ),
         );
@@ -168,186 +181,184 @@ class _PersonViewState extends State<_PersonView> {
     );
   }
 
-  Widget _body(BuildContext context, DebtPersonState s) {
+  /// Scrolls with the list: the hero, the link row, the hidden toolbar.
+  List<Widget> _header(BuildContext context, DebtPersonState s) {
+    final l = AppLocalizations.of(context)!;
+    final q = s.query;
+    return [
+      _hero(context, s),
+      if (s.balance!.person.contactId == null)
+        SectionCard(
+          children: [
+            DetailRow(
+              leading: _linking
+                  ? const AppSpinner(size: AppSpinnerSize.medium)
+                  : const AppIcon(AppIcons.link),
+              label: l.debtsPersonLinkContact,
+              helper: l.debtsPersonLinkContactHint,
+              showChevron: true,
+              onTap: _linking ? null : _linkToContact,
+            ),
+          ],
+        ),
+      ListToolbar(
+        collapse: _toolbar,
+        searchController: _search,
+        onSearchChanged: _cubit.search,
+        searchHint: l.debtsEntrySearchHint,
+        chips: [
+          _optionChip<DebtEntryDirection?>(
+            label: l.debtsDirLabel,
+            value: q.direction,
+            options: {
+              null: l.debtsStatusAll,
+              DebtEntryDirection.paid: l.debtsDirPaid,
+              DebtEntryDirection.received: l.debtsDirReceived,
+            },
+            onSelected: (d) => _cubit.setQuery(
+              q.copyWith(direction: d, clearDirection: d == null),
+            ),
+          ),
+        ],
+        trailing: SortChip<DebtEntrySort>(
+          value: q.sort,
+          tooltip: l.debtsSortLabel,
+          options: [
+            SortOption(DebtEntrySort.dateDesc, l.debtsSortNewest),
+            SortOption(DebtEntrySort.dateAsc, l.debtsSortOldest),
+            SortOption(DebtEntrySort.amountDesc, l.debtsSortAmountDesc),
+            SortOption(DebtEntrySort.amountAsc, l.debtsSortAmountAsc),
+          ],
+          onChanged: (v) => _cubit.setQuery(q.copyWith(sort: v)),
+        ),
+      ),
+    ];
+  }
+
+  /// The statement: the current cycle, then the earlier ones behind a fold.
+  List<Widget> _statement(BuildContext context, DebtPersonState s) {
+    final l = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).languageCode;
+    final q = s.query;
+    final cleared = s.balance!.clearedAt;
+    return [
+      // The current cycle: where the balance comes from.
+      if (s.current.items.isNotEmpty || s.counts.current > 0)
+        SectionHeader(
+          title: cleared == null
+              ? l.fpDebtsCycleHeader
+              : l.fpDebtsCycleHeaderSince(
+                  DateFormatter.short(cleared, locale: locale),
+                ),
+        ),
+      ..._rows(context, s, s.current),
+      if (s.current.items.isEmpty &&
+          s.current.status == DebtLoadStatus.loaded &&
+          (q.isFiltered || s.counts.earlier == 0))
+        EmptyView.compact(
+          message: q.isFiltered ? l.debtsEntriesNoMatch : l.debtsTimelineEmpty,
+        ),
+      // The earlier cycles, behind the fold.
+      if (s.counts.earlier > 0)
+        if (!s.earlier.opened)
+          DetailRow(
+            label: l.fpDebtsEarlierLink,
+            showChevron: true,
+            onTap: _cubit.openEarlier,
+          )
+        else ...[
+          SectionHeader(title: l.fpDebtsEarlierHeader),
+          ..._rows(context, s, s.earlier),
+        ],
+    ];
+  }
+
+  Widget _hero(BuildContext context, DebtPersonState s) {
     final l = AppLocalizations.of(context)!;
     final b = s.balance!;
     final symbol = debtCurrencySymbol(context);
     final palette = Theme.of(context).extension<AppColors>()!;
-    final style = HeroStyle.tinted(
-      color: b.person.iconCode.tintFor(palette, avatarName: b.person.name),
-    );
-    return TabbedDetailBody<DebtPersonTab>(
-      hero: HeaderCard(
-        heroStyle: style,
-        leading: PersonMark(
-          name: b.person.name,
-          level: debtPersonLevel(b.person),
-          iconCode: b.person.iconCode,
-          size: 52,
-        ),
-        title: Text(b.person.name),
-        trailing: b.person.contactId == null
-            ? null
-            : AppIconButton(
-                icon: AppIcons.contact,
-                tooltip: l.debtsPersonOpenContact,
-                onPressed: () =>
-                    openPage(context, '/contacts/${b.person.contactId}'),
-              ),
-        footer: NetBalance(
-          amount: b.net,
-          size: NetBalanceSize.hero,
-          owedToMeLabel: l.debtsOwedToMe,
-          iOweLabel: l.debtsIOwe,
-          settledLabel: l.debtsEven,
-          currencySymbol: symbol,
-        ),
-      ),
-      compactBar: CompactHeroBar(
-        title: Text(b.person.name),
-        leading: PersonMark(
-          name: b.person.name,
-          level: debtPersonLevel(b.person),
-          iconCode: b.person.iconCode,
-          size: 28,
-        ),
-        style: style,
-      ),
-      belowHero: [
-        AppButton(
-          label: l.debtsAddEntry,
-          icon: AppIcons.add,
-          expand: true,
-          onPressed: _addEntry,
-        ),
-        if (b.person.contactId == null)
-          SectionCard(
-            children: [
-              DetailRow(
-                leading: _linking
-                    ? const AppSpinner(size: AppSpinnerSize.medium)
-                    : const AppIcon(AppIcons.link),
-                label: l.debtsPersonLinkContact,
-                helper: l.debtsPersonLinkContactHint,
-                showChevron: true,
-                onTap: _linking ? null : _linkToContact,
-              ),
-            ],
+    final side = NetSide.of(b.net);
+    final style = switch (side) {
+      NetSide.owedToMe => HeroStyle.tinted(color: palette.income),
+      NetSide.iOwe => HeroStyle.tinted(color: palette.expense),
+      NetSide.even => const HeroStyle.plain(),
+    };
+    final days = b.daysOutstanding;
+    return HeroCard(
+      style: style,
+      links: [
+        if (b.person.contactId != null)
+          CardActionButton(
+            icon: AppIcons.contact,
+            tooltip: l.debtsPersonOpenContact,
+            onTap: () => openPage(context, '/contacts/${b.person.contactId}'),
           ),
       ],
-      tabs: [
-        AppTab(value: DebtPersonTab.entries, label: l.debtsTabEntries),
-        AppTab(value: DebtPersonTab.money, label: l.debtsTabMoney),
-      ],
-      selected: _tab,
-      onChanged: _selectTab,
-      tabBuilder: (context, t) => BlocBuilder<DebtPersonCubit, DebtPersonState>(
-        buildWhen: (a, b) => a.tab(t) != b.tab(t) || a.balance != b.balance,
-        builder: (context, s) => _tabList(context, s, t),
+      search: ListenableBuilder(
+        listenable: _search,
+        builder: (context, _) => ToolbarToggleButton(
+          state: _toolbar,
+          filtered: _search.text.isNotEmpty || s.query.isFiltered,
+          tooltip: l.commonSearch,
+        ),
       ),
+      icon: PersonMark(
+        name: b.person.name,
+        level: debtPersonLevel(b.person),
+        iconCode: b.person.iconCode,
+        size: 40,
+      ),
+      name: Text(b.person.name),
+      fact: days == null
+          ? null
+          : DebtAgeText(l.fpDebtsDaysOutstanding(days), warn: days > 30),
+      number: DebtAmountLine(
+        net: b.net,
+        owedToMeLabel: l.debtsOwedToMe,
+        iOweLabel: l.debtsIOwe,
+        settledLabel: l.debtsEven,
+        currencySymbol: symbol,
+      ),
+      // Only while a balance is open.
+      embedded: side == NetSide.even || s.message.text.isEmpty
+          ? null
+          : DebtSummaryMessageBox(
+              text: s.message.text,
+              label: l.fpDebtsMessageLabel,
+              copyLabel: l.fpDebtsCopy,
+              shareLabel: l.fpDebtsShare,
+              onCopy: _copy,
+              onShare: _share,
+            ),
     );
   }
 
-  Widget _tabList(BuildContext context, DebtPersonState s, DebtPersonTab t) {
+  /// One cycle's rows (a skeleton / retry while the list has none yet).
+  List<Widget> _rows(
+    BuildContext context,
+    DebtPersonState s,
+    DebtEntryList list,
+  ) {
     final l = AppLocalizations.of(context)!;
-    final list = s.tab(t);
-    final q = list.query;
     final symbol = debtCurrencySymbol(context);
     final locale = Localizations.localeOf(context).languageCode;
     final name = _name(s);
-    return ListPageBody(
-      clearTopBar: false,
-      loading:
-          list.status == DebtLoadStatus.initial ||
-          list.status == DebtLoadStatus.loading,
-      error: list.error,
-      isEmpty: list.items.isEmpty,
-      onRetry: _cubit.load,
-      empty: q.isFiltered
-          ? EmptyView.compact(message: l.debtsEntriesNoMatch)
-          : EmptyView.compact(
-              message: t == DebtPersonTab.entries
-                  ? l.debtsTimelineEmpty
-                  : l.debtsMoneyEmpty,
-            ),
-      hasMore: list.hasMore,
-      loadingMore: list.loadingMore,
-      onLoadMore: () => _cubit.loadMore(t),
-      loadMoreError: list.moreError,
-      rowDividers: true,
-      header: [
-        ListToolbar(
-          searchController: _search[t],
-          onSearchChanged: (v) => _cubit.search(t, v),
-          searchHint: l.debtsEntrySearchHint,
-          chips: [
-            _optionChip<DebtEntryDirection?>(
-              label: l.debtsDirLabel,
-              value: q.direction,
-              options: {
-                null: l.debtsStatusAll,
-                DebtEntryDirection.paid: l.debtsDirPaid,
-                DebtEntryDirection.received: l.debtsDirReceived,
-              },
-              onSelected: (d) => _cubit.setQuery(
-                t,
-                q.copyWith(direction: d, clearDirection: d == null),
-              ),
-            ),
-            if (t == DebtPersonTab.entries)
-              _optionChip<bool?>(
-                label: l.debtsStatusLabel,
-                value: q.paid,
-                options: {
-                  null: l.debtsStatusAll,
-                  false: l.debtsStatusOpen,
-                  true: l.debtsPaidChip,
-                },
-                onSelected: (p) => _cubit.setQuery(
-                  t,
-                  q.copyWith(paid: p, clearPaid: p == null),
-                ),
-              ),
-          ],
-          trailing: SortChip<DebtEntrySort>(
-            value: q.sort,
-            tooltip: l.debtsSortLabel,
-            options: [
-              SortOption(DebtEntrySort.dateDesc, l.debtsSortNewest),
-              SortOption(DebtEntrySort.dateAsc, l.debtsSortOldest),
-              SortOption(DebtEntrySort.amountDesc, l.debtsSortAmountDesc),
-              SortOption(DebtEntrySort.amountAsc, l.debtsSortAmountAsc),
-            ],
-            onChanged: (v) => _cubit.setQuery(t, q.copyWith(sort: v)),
-          ),
-        ),
-      ],
-      children: [
-        for (final row in _rows(list.items, q))
-          row is DateTime
-              ? DateGroupHeader(label: _dayLabel(l, row, locale))
-              : _ledgerRow(l, row as DebtEntry, name, symbol, locale),
-      ],
-    );
-  }
-
-  /// Day headers only in the default date order (a search / filter / amount
-  /// sort shows the entries alone).
-  List<Object> _rows(List<DebtEntry> items, DebtEntryQuery q) {
-    final byDate =
-        q.sort == DebtEntrySort.dateDesc || q.sort == DebtEntrySort.dateAsc;
-    if (!byDate) return items;
-    final out = <Object>[];
-    DateTime? day;
-    for (final e in items) {
-      final d = e.date;
-      if (d != null && (day == null || !DateUtils.isSameDay(day, d))) {
-        day = d;
-        out.add(d);
+    if (list.items.isEmpty) {
+      if (list.status == DebtLoadStatus.loading) {
+        return const [ListRowSkeleton(), ListRowSkeleton()];
       }
-      out.add(e);
+      if (list.status == DebtLoadStatus.error) {
+        return [
+          LoadMoreErrorRow(
+            onRetry: identical(list, s.earlier)
+                ? _cubit.retryEarlier
+                : _cubit.load,
+          ),
+        ];
+      }
     }
-    return out;
+    return [for (final e in list.items) _ledgerRow(l, e, name, symbol, locale)];
   }
 
   Widget _ledgerRow(
@@ -362,6 +373,7 @@ class _PersonViewState extends State<_PersonView> {
       key: ValueKey(e.id),
       direction: e.iPaid ? LedgerDirection.paid : LedgerDirection.received,
       amount: e.amount,
+      signed: true,
       title:
           e.description ??
           (e.iPaid ? l.debtEntryPaidTo(name) : l.debtEntryReceivedFrom(name)),
@@ -382,14 +394,6 @@ class _PersonViewState extends State<_PersonView> {
       onTap: e.transaction == null ? null : () => _openEntry(e),
     );
   }
-
-  String _dayLabel(AppLocalizations l, DateTime d, String locale) =>
-      DateFormatter.friendly(
-        d,
-        today: l.commonToday,
-        yesterday: l.commonYesterday,
-        locale: locale,
-      );
 
   /// A filter chip with the central popover (few short options).
   Widget _optionChip<T>({
