@@ -467,6 +467,15 @@ const List<PageFlow> pageFlows = [
       FlowCall('getProjectDetail', note: '?include=delete_preview'),
     ]),
     FlowStep.action('Delete dialog "ยืนยัน"', [FlowCall('deleteProject')]),
+    // fe-pages: archive / restore + the event-tag manager sheet.
+    FlowStep.action('Button "เก็บถาวร" / "กู้คืน"', [
+      FlowCall('archiveProject'),
+      FlowCall('restoreProject'),
+    ]),
+    FlowStep.action('Tag manager: rename / restyle / delete', [
+      FlowCall('updateProjectTag'),
+      FlowCall('deleteProjectTag'),
+    ]),
     FlowStep.action('Button "เชิญสมาชิก"', [FlowCall('addProjectMember')]),
     FlowStep.action('Tick a bill / split', [
       FlowCall('markProjectTransaction'),
@@ -547,6 +556,13 @@ const List<PageFlow> pageFlows = [
       FlowCall('getSavingGoal', note: 'include=delete_preview'),
       FlowCall('deleteSavingGoal'),
     ]),
+    // fe-pages: the auto-save switch and its sheet (a goal and the spare pool).
+    FlowStep.action('ออมอัตโนมัติ: switch / edit', [
+      FlowCall('setGoalAutoSave'),
+      FlowCall('clearGoalAutoSave'),
+      FlowCall('setSpareAutoSave'),
+      FlowCall('clearSpareAutoSave'),
+    ]),
     FlowStep.action('Button "เก็บถาวร"', [FlowCall('archiveSavingGoal')]),
     FlowStep.action('Button "กู้คืน"', [FlowCall('restoreSavingGoal')]),
   ]),
@@ -599,6 +615,9 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('ข้าม / กู้คืน', [
       FlowCall('archiveRecurringItem'),
       FlowCall('restoreRecurringItem'),
+    ]),
+    FlowStep.action('Unlink from a transaction', [
+      FlowCall('unlinkRecurringItem'),
     ]),
   ]),
   PageFlow('recurring-duplicate', 'Copy a recurring (edit mode end zone).', [

@@ -1102,6 +1102,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final barInset = MediaQuery.paddingOf(ctx).top;
     final bottom = AppSpacing.huge + MediaQuery.paddingOf(ctx).bottom;
     return DetailLayout(
+      // Edit mode: no refresh while the form is open (the view has it).
+      onRefresh: null,
       topInset: barInset + AppSpacing.lg,
       bottomInset: bottom,
       hero: HeroCard(
