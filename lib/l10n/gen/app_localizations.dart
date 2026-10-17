@@ -10692,6 +10692,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Avg spend {amount}/day'**
   String fpTxAvgDaily(String amount);
+
+  /// No description provided for @fpContactsNotLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Not linked to an app user'**
+  String get fpContactsNotLinked;
+
+  /// No description provided for @fpContactsLinkedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked with {user}'**
+  String fpContactsLinkedWith(String user);
+
+  /// No description provided for @fpContactsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The name used for this person across the app'**
+  String get fpContactsSettingsDesc;
+
+  /// No description provided for @fpContactsLinkSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Link account'**
+  String get fpContactsLinkSection;
+
+  /// No description provided for @fpContactsLinkSectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to an app user and match names in splits'**
+  String get fpContactsLinkSectionDesc;
+
+  /// No description provided for @fpContactsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden from the list and person pickers; debts unchanged'**
+  String get fpContactsArchiveConsequence;
+
+  /// No description provided for @fpContactsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Old records keep just the name; amounts unchanged'**
+  String get fpContactsDeleteConsequence;
 }
 
 class _AppLocalizationsDelegate

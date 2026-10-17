@@ -8,7 +8,6 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/contact.dart';
 import '../cubit/contacts_cubit.dart';
-import '../widgets/contact_linked_mark.dart';
 
 /// `/contacts` (owner 2026-10-10) — the library list look shared with
 /// categories and tags:
@@ -271,7 +270,13 @@ class _ContactRow extends StatelessWidget {
       contact.email?.trim() ?? '',
     ].where((s) => s.isNotEmpty).join(' · ');
     return ListRow(
-      leading: ContactAvatar(contact: contact),
+      leading: PersonMark(
+        name: contact.name,
+        level: contact.isLinked ? PersonLevel.linked : PersonLevel.contact,
+        iconCode: contact.iconCode,
+        size: 40,
+        reserveLinkSlot: true,
+      ),
       title: contact.name,
       subtitle: sub,
       dimmed: contact.isArchived,

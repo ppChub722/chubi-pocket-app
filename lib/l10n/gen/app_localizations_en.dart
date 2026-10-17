@@ -6272,4 +6272,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String fpTxAvgDaily(String amount) {
     return 'Avg spend $amount/day';
   }
+
+  @override
+  String get fpContactsNotLinked => 'Not linked to an app user';
+
+  @override
+  String fpContactsLinkedWith(String user) {
+    return 'Linked with $user';
+  }
+
+  @override
+  String get fpContactsSettingsDesc =>
+      'The name used for this person across the app';
+
+  @override
+  String get fpContactsLinkSection => 'Link account';
+
+  @override
+  String get fpContactsLinkSectionDesc =>
+      'Link to an app user and match names in splits';
+
+  @override
+  String get fpContactsArchiveConsequence =>
+      'Hidden from the list and person pickers; debts unchanged';
+
+  @override
+  String get fpContactsDeleteConsequence =>
+      'Old records keep just the name; amounts unchanged';
 }
