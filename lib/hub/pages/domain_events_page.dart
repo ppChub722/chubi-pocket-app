@@ -22,6 +22,8 @@ const _stay = EventTagRef(
 );
 const _travel = EventTagRef('เดินทาง');
 
+String _deleteTitle(String name) => 'ลบแท็ก $name?';
+
 class _EventsPage extends StatefulWidget {
   const _EventsPage();
 
@@ -104,6 +106,103 @@ class _EventsPageState extends State<_EventsPage> {
                 onTap: () => _tapped('card: locked'),
               ),
             ],
+          ),
+        ),
+        HubDemo(
+          title: 'EventListRow — the 0.4.0 events list row',
+          note:
+              'Icon, name, ONE muted line (dates · spent · my share) and my '
+              'position at the right: รอรับ (green, +) / รอจ่าย (red, −) with '
+              'a small caption, a plain ฿0 when even. dimmed = ended / '
+              'archived. The list page puts these on hairlines.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              EventListRow(
+                name: 'ทริปญี่ปุ่น',
+                iconCode: _trip,
+                subtitle: '1–9 พ.ย. · ใช้ไป ฿42,800 · ส่วนฉัน ฿10,700',
+                amount: 8250,
+                tone: MoneyTone.income,
+                caption: 'รอรับ',
+                onTap: () => _tapped('row: owed'),
+              ),
+              const AppDivider.row(),
+              EventListRow(
+                name: 'งานสัมมนา',
+                iconCode: _work,
+                subtitle: '12–13 ก.ย. · ใช้ไป ฿11,800 · ส่วนฉัน ฿3,000',
+                amount: 420,
+                tone: MoneyTone.expense,
+                caption: 'รอจ่าย',
+                onTap: () => _tapped('row: owe'),
+              ),
+              const AppDivider.row(),
+              EventListRow(
+                name: 'ปาร์ตี้ปีใหม่',
+                iconCode: _party,
+                subtitle: '10 ต.ค. · ใช้ไป ฿3,589 · ส่วนฉัน ฿3,589',
+                onTap: () => _tapped('row: even'),
+              ),
+              const AppDivider.row(),
+              const EventListRow(
+                name: 'ทริปภูเก็ต',
+                subtitle: '2–4 ส.ค. · ใช้ไป ฿9,000 · ส่วนฉัน ฿3,000',
+                dimmed: true,
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'EventTagsSheet — จัดการแท็กอีเวนต์',
+          note:
+              'Presentational: every write is a callback (here: a log line). '
+              'Rows with a ⋯ menu (rename · icon / colour · import to my tags '
+              '· delete), "+ add", "import all". The name / icon / delete '
+              'steps open from the sheet.',
+          child: AppButton(
+            label: 'เปิดชีต',
+            variant: AppButtonVariant.tonal,
+            onPressed: () => showAppSheetCustom<void>(
+              context,
+              builder: (_) => EventTagsSheet(
+                tags: const [
+                  EventTagItem(
+                    id: 't1',
+                    name: 'อาหาร',
+                    subtitle: '5 บิล · มีในแท็กของฉันแล้ว',
+                    canImport: false,
+                  ),
+                  EventTagItem(id: 't2', name: 'ที่พัก', subtitle: '2 บิล'),
+                  EventTagItem(id: 't3', name: 'เดินทาง', subtitle: '0 บิล'),
+                ],
+                labels: const EventTagsLabels(
+                  title: 'แท็กอีเวนต์ · ใช้ร่วมกับสมาชิก',
+                  add: 'เพิ่มแท็กอีเวนต์',
+                  importAll: 'นำเข้าทั้งหมดไปแท็กของฉัน',
+                  rename: 'เปลี่ยนชื่อ',
+                  restyle: 'เปลี่ยนไอคอน/สี',
+                  importOne: 'นำเข้าแท็กของฉัน',
+                  delete: 'ลบ',
+                  nameLabel: 'ชื่อแท็ก',
+                  nameRequired: 'ใส่ชื่อแท็ก',
+                  addTitle: 'แท็กอีเวนต์ใหม่',
+                  renameTitle: 'เปลี่ยนชื่อแท็ก',
+                  save: 'บันทึก',
+                  restyleTitle: 'ไอคอนแท็ก',
+                  deleteTitle: _deleteTitle,
+                  deleteBody: 'บิลที่ใช้อยู่จะหลุดแท็กนี้',
+                  deleteConfirm: 'ลบ',
+                  empty: 'ยังไม่มีแท็กอีเวนต์',
+                ),
+                onAdd: (n) => _tapped('tags: add $n'),
+                onRename: (id, n) => _tapped('tags: rename $id → $n'),
+                onRestyle: (id, _) => _tapped('tags: restyle $id'),
+                onImport: (id) => _tapped('tags: import $id'),
+                onDelete: (id) => _tapped('tags: delete $id'),
+                onImportAll: () => _tapped('tags: import all'),
+              ),
+            ),
           ),
         ),
         HubDemo(

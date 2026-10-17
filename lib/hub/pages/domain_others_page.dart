@@ -204,17 +204,17 @@ Widget buildOthersPage(BuildContext context) {
           HubUse(
             label: 'ProjectTxIcon — expense',
             page: 'Project dashboard tab',
-            child: ProjectTxIcon(tx: ptx('expense')),
+            child: projectTxIcon(context, ptx('expense')),
           ),
           HubUse(
             label: 'ProjectTxIcon — income',
             page: 'Project dashboard tab',
-            child: ProjectTxIcon(tx: ptx('income')),
+            child: projectTxIcon(context, ptx('income')),
           ),
           HubUse(
             label: 'ProjectTxIcon — size 28',
             page: 'Project dashboard tab',
-            child: ProjectTxIcon(tx: ptx('expense'), size: 28),
+            child: projectTxIcon(context, ptx('expense'), size: 28),
           ),
           HubUse(
             label: 'ProjectMemberAvatar — a coloured initial',
@@ -481,8 +481,9 @@ Widget buildOthersPage(BuildContext context) {
           cells: [
             HubCell(
               caption: 'ProjectTxIcon',
-              child: ProjectTxIcon(
-                tx: ptx(v<String>('type')),
+              child: projectTxIcon(
+                context,
+                ptx(v<String>('type')),
                 size: v<double>('size'),
               ),
             ),

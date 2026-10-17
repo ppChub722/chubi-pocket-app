@@ -104,6 +104,7 @@ abstract final class AppIcons {
   static const reorder = Icons.drag_indicator;
   static const share = Icons.ios_share;
   static const copy = Icons.content_copy;
+  static const download = Icons.file_download_outlined;
   static const send = Icons.send_outlined;
   static const importSlip = Icons.document_scanner_outlined;
   static const chat = Icons.chat_bubble_outline;

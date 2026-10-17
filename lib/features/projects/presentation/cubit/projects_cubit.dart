@@ -21,9 +21,14 @@ class ProjectsState extends Equatable {
     this.query = '',
     this.tagIds = const [],
     this.sort = ProjectSort.updatedDesc,
+    this.summary,
   });
 
   final List<Project> projects;
+
+  /// The summary card's numbers (BE `summary`, the same whatever the
+  /// filter); null before the first load.
+  final ProjectListSummary? summary;
   final ProjectsStatus status;
   final ApiException? error;
   String? get errorMessage => error?.message;
@@ -58,9 +63,11 @@ class ProjectsState extends Equatable {
     String? query,
     List<String>? tagIds,
     ProjectSort? sort,
+    ProjectListSummary? summary,
     bool clearError = false,
   }) {
     return ProjectsState(
+      summary: summary ?? this.summary,
       projects: projects ?? this.projects,
       status: status ?? this.status,
       error: clearError ? null : (error ?? this.error),
@@ -76,6 +83,7 @@ class ProjectsState extends Equatable {
 
   @override
   List<Object?> get props => [
+    summary,
     projects,
     status,
     error,
@@ -138,6 +146,7 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
       emit(
         state.copyWith(
           projects: p.projects,
+          summary: p.summary,
           status: ProjectsStatus.loaded,
           page: p.page,
           totalPages: p.totalPages,
@@ -184,13 +193,50 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     }
   }
 
-  Future<ProjectPage> _list(ProjectsState s, {int page = 1}) => _repo.list(
-    status: s.statusFilter,
-    q: s.query,
-    tagIds: s.tagIds,
-    sort: s.sort,
-    page: page,
-  );
+  /// The list tiles' filters. The BE's `status` knows active / completed /
+  /// cancelled / archived / all; `unsettled` and `ended` (the summary's own
+  /// counts) are read from `all` and narrowed here by what the BE sent on
+  /// each row (status, my_receivable / my_payable) — no numbers computed.
+  /// Pages that narrow to nothing keep paging (a few) until a row shows.
+  Future<ProjectPage> _list(ProjectsState s, {int page = 1}) async {
+    final narrowed = s.statusFilter == 'unsettled' || s.statusFilter == 'ended';
+    final wire = narrowed ? 'all' : s.statusFilter;
+    var at = page;
+    ProjectPage p;
+    List<Project> rows;
+    do {
+      p = await _repo.list(
+        status: wire,
+        q: s.query,
+        tagIds: s.tagIds,
+        sort: s.sort,
+        page: at,
+      );
+      rows = narrowed
+          ? [
+              for (final x in p.projects)
+                if (_inFilter(s.statusFilter, x)) x,
+            ]
+          : p.projects;
+      at++;
+    } while (narrowed && rows.isEmpty && p.hasMore && at < page + 5);
+    return ProjectPage(
+      projects: rows,
+      page: p.page,
+      totalPages: p.totalPages,
+      summary: p.summary,
+    );
+  }
+
+  /// Whether [p] belongs under the tile [filter].
+  static bool _inFilter(String filter, Project p) => switch (filter) {
+    'unsettled' => p.status != ProjectStatus.archived && p.isUnsettled,
+    'ended' =>
+      p.status == ProjectStatus.completed ||
+          p.status == ProjectStatus.cancelled,
+    'all' => true,
+    _ => p.status.wire == filter,
+  };
 
   static bool _same(ProjectsState a, ProjectsState b) =>
       a.statusFilter == b.statusFilter &&
@@ -284,6 +330,21 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     return p;
   }
 
+  /// `POST /projects/:id/archive` (owner): the list drops it (or shows it
+  /// archived under another filter); returns the event page's patch.
+  Future<EventPatch> archive(String id) async {
+    final p = await _repo.archive(id);
+    patch(p.project);
+    return p;
+  }
+
+  /// `POST /projects/:id/restore` (owner): back to active.
+  Future<EventPatch> restore(String id) async {
+    final p = await _repo.restore(id);
+    patch(p.project);
+    return p;
+  }
+
   /// Returns the wallets the deleted transactions moved.
   Future<Map<String, double>> delete(
     String id, {
@@ -299,8 +360,7 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   /// filter / page); a status change out of the current filter drops it.
   void patch(Project p) {
     if (!state.projects.any((x) => x.id == p.id)) return;
-    final filter = state.statusFilter;
-    if (filter != 'all' && p.status.wire != filter) return remove(p.id);
+    if (!_inFilter(state.statusFilter, p)) return remove(p.id);
     emit(
       state.copyWith(
         projects: [

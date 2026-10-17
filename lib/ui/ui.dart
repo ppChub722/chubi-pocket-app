@@ -180,6 +180,8 @@ export 'domain/people/person_balance_row.dart';
 export 'domain/people/person_row.dart';
 export 'domain/events/event_bill_row.dart';
 export 'domain/events/event_card.dart';
+export 'domain/events/event_list_row.dart';
+export 'domain/events/event_tags_sheet.dart';
 export 'domain/events/position_row.dart';
 export 'domain/transactions/entry_card.dart';
 export 'domain/transactions/entry_card_skeleton.dart';

@@ -27,10 +27,15 @@ class ListToolbar extends StatelessWidget {
     this.chips = const [],
     this.trailing,
     this.collapse,
+    this.sidePadding = AppSpacing.lg,
     super.key,
   });
 
   static const double gap = AppSpacing.sm;
+
+  /// The block's own side margin (16); 0 inside a page that already pads
+  /// its content (a detail page's records section).
+  final double sidePadding;
 
   final TextEditingController? searchController;
   final ValueChanged<String>? onSearchChanged;
@@ -71,7 +76,7 @@ class ListToolbar extends StatelessWidget {
               controller: searchController,
               onChanged: onSearchChanged,
               hint: searchHint,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: EdgeInsets.symmetric(horizontal: sidePadding),
             ),
           if (hasSearch && hasFilters) const SizedBox(height: gap),
           // The chip row sits one size below the search capsule (chip 28 under
@@ -82,12 +87,7 @@ class ListToolbar extends StatelessWidget {
               child: FilterBar(
                 chips: chips,
                 trailing: trailing,
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  0,
-                  AppSpacing.lg,
-                  0,
-                ),
+                padding: EdgeInsets.fromLTRB(sidePadding, 0, sidePadding, 0),
               ),
             ),
         ],

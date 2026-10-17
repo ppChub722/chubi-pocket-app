@@ -165,3 +165,28 @@ class DetailSections extends StatelessWidget {
     );
   }
 }
+
+/// The `records` slot's content when it is more than one piece (a filter row,
+/// chips, grouped record boxes, an add tile): the pieces in a column, one
+/// [gap] apart. Null entries are skipped.
+class DetailRecords extends StatelessWidget {
+  const DetailRecords({required this.children, this.gap = 12, super.key});
+
+  final List<Widget?> children;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = [for (final c in children) ?c];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (i, c) in shown.indexed) ...[
+          if (i > 0) SizedBox(height: gap),
+          c,
+        ],
+      ],
+    );
+  }
+}
