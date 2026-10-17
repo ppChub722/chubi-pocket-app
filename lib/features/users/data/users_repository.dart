@@ -62,6 +62,22 @@ class UsersRepository {
     }
   }
 
+  /// Sets the money style preference (`money_style`: plus_minus,
+  /// plus_minus_plain, parentheses, parentheses_plain, color_only).
+  Future<User> setMoneyStyle(String style) async {
+    try {
+      final res = await _client.dio.put<Map<String, dynamic>>(
+        '/users/me',
+        data: {
+          'preferences': {'money_style': style},
+        },
+      );
+      return User.fromJson(res.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
   /// Sets (or clears, [categoryId] null) the fee category preference —
   /// the BE checks it is one of the user's expense categories.
   Future<User> setFeeCategory(String? categoryId) async {

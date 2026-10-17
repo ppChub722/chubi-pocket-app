@@ -52,6 +52,7 @@ class User extends Equatable {
     this.email,
     this.iconCode,
     this.feeCategoryId,
+    this.moneyStyle,
     this.defaultAccount,
     this.autoCopyOwnEventBills = false,
     this.notificationSummary,
@@ -73,6 +74,11 @@ class User extends Equatable {
   /// fee drafts from bank slips get. Only on `GET`/`PUT /users/me` —
   /// login answers without preferences, so it may be stale until then.
   final String? feeCategoryId;
+
+  /// Server preference `money_style` (owner 2026-10-17): how amounts mark
+  /// income / expense; null = a user from before it (+/− in colour). Only on
+  /// `GET`/`PUT /users/me`, like [feeCategoryId].
+  final String? moneyStyle;
 
   /// The default wallet (`default_account`; null = none).
   final DefaultWalletRef? defaultAccount;
@@ -100,6 +106,10 @@ class User extends Equatable {
       updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? ''),
       feeCategoryId: switch (json['preferences']) {
         {'fee_category_id': final String id} => id,
+        _ => null,
+      },
+      moneyStyle: switch (json['preferences']) {
+        {'money_style': final String style} => style,
         _ => null,
       },
       defaultAccount: json['default_account'] is Map
@@ -141,6 +151,7 @@ class User extends Equatable {
       feeCategoryId: clearFeeCategory
           ? null
           : (feeCategoryId ?? this.feeCategoryId),
+      moneyStyle: moneyStyle,
     );
   }
 
@@ -153,6 +164,7 @@ class User extends Equatable {
     email,
     iconCode,
     feeCategoryId,
+    moneyStyle,
     defaultAccount,
     autoCopyOwnEventBills,
     notificationSummary,

@@ -10,6 +10,7 @@ import '../../../features/auth/presentation/cubit/auth_cubit.dart';
 import '../../atoms/ui_config.dart';
 import '../../tokens/app/app_icons.dart';
 import '../../tokens/app/currencies.dart';
+import '../money/money_style.dart';
 
 /// The app's Thai: fills the generic kit's [UiConfig] from the app
 /// localisation and maps [ApiException] to the three failure descriptions
@@ -66,8 +67,25 @@ class AppUiConfig extends StatelessWidget {
         currencySymbol: _userCurrencySymbol(context),
       ),
       errors: _AppErrors(l),
-      child: child,
+      child: MoneyStyleScope(style: _userMoneyStyle(context), child: child),
     );
+  }
+}
+
+/// The signed-in user's money style (preference `money_style`), or the
+/// legacy +/− in colour when nobody is signed in / there is no [AuthCubit].
+MoneyStyle _userMoneyStyle(BuildContext context) {
+  try {
+    return MoneyStyle.fromPreference(
+      context.select<AuthCubit, String?>(
+        (c) => switch (c.state) {
+          AuthAuthenticated(:final user) => user.moneyStyle,
+          _ => null,
+        },
+      ),
+    );
+  } on ProviderNotFoundException {
+    return MoneyStyle.legacy;
   }
 }
 

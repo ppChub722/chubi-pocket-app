@@ -6634,7 +6634,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fpGoalsOngoingRow(String amount) {
-    return 'Ongoing · this month +$amount';
+    return 'Ongoing · this month $amount';
   }
 
   @override
@@ -6957,6 +6957,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsMainWallet => 'Main wallet';
+
+  @override
+  String get settingsMoneyStyle => 'Money format';
+
+  @override
+  String get settingsMoneySignPlusMinus => '+ / −';
+
+  @override
+  String get settingsMoneySignParentheses => 'Parentheses ( )';
+
+  @override
+  String get settingsMoneySignNone => 'Colour only';
+
+  @override
+  String get settingsMoneyColor => 'Red / green colours';
+
+  @override
+  String get settingsMoneyColorHint => 'Income in green, expenses in red';
 
   @override
   String get settingsMainWalletHint => 'Used as the default when recording';

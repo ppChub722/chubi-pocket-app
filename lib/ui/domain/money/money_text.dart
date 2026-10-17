@@ -7,19 +7,22 @@ import '../../tokens/app/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../features/preferences/presentation/cubit/money_visibility_cubit.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'money_style.dart';
 
 /// How a [MoneyText] colours and signs its amount.
 enum MoneyTone {
   /// Plain onSurface, no sign.
   plain,
 
-  /// Always income colour, `+` prefix.
+  /// Income: its colour and mark follow the user's [MoneyStyle] (+฿1,000 /
+  /// ฿1,000, green or not).
   income,
 
-  /// Always expense colour, `−` prefix.
+  /// Expense: −฿540 / (฿540) / ฿540, red or not ([MoneyStyle]).
   expense,
 
-  /// Colour + sign from the amount itself (>0 income, <0 expense, 0 plain).
+  /// Income or expense from the amount itself (>0 income, <0 expense, 0
+  /// plain).
   signed,
 }
 
@@ -55,22 +58,27 @@ class MoneyText extends StatelessWidget {
     final symbol = this.symbol ?? UiConfig.stringsOf(context).currencySymbol;
     final hidden = hideable && isMoneyHidden(context);
     final palette = Theme.of(context).extension<AppColors>()!;
-    final (Color? color, String sign) = switch (tone) {
-      MoneyTone.plain => (null, ''),
-      MoneyTone.income => (palette.income, '+'),
-      MoneyTone.expense => (palette.expense, '−'),
-      // Something that shows as ฿0.00 gets no sign or colour.
+    final money = MoneyStyleScope.of(context);
+    // negative: null = no mark (plain, or something that shows as ฿0.00).
+    final (Color? tint, bool? negative) = switch (tone) {
+      MoneyTone.plain => (null, null),
+      MoneyTone.income => (palette.income, false),
+      MoneyTone.expense => (palette.expense, true),
       MoneyTone.signed =>
         CurrencyFormatter.roundsToZero(amount)
-            ? (null, '')
+            ? (null, null)
             : amount > 0
-            ? (palette.income, '+')
-            : (palette.expense, '−'),
+            ? (palette.income, false)
+            : (palette.expense, true),
     };
+    final color = money.colored ? tint : null;
     final magnitude = tone == MoneyTone.plain ? amount : amount.abs();
+    final formatted = CurrencyFormatter.format(magnitude, symbol: symbol);
     final text = hidden
         ? '$symbol••••'
-        : '$sign${CurrencyFormatter.format(magnitude, symbol: symbol)}';
+        : negative == null
+        ? formatted
+        : money.apply(formatted, negative: negative);
     final base = style ?? DefaultTextStyle.of(context).style;
     return Text(
       text,
@@ -84,6 +92,17 @@ class MoneyText extends StatelessWidget {
     );
   }
 }
+
+/// An income / expense amount as text for captions ("เดือนนี้ +฿2,000"),
+/// marked the user's way ([MoneyStyle]; no colour in a sentence).
+String signedMoneyString(
+  BuildContext context,
+  num amount, {
+  required bool negative,
+  String? symbol,
+}) => MoneyStyleScope.of(
+  context,
+).apply(_moneyString(context, amount.abs(), symbol), negative: negative);
 
 /// An amount as plain text for captions / sentences ("คืนแล้ว ฿300 จาก
 /// ฿500") — honours the 👁 privacy toggle like [MoneyText].

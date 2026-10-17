@@ -226,6 +226,25 @@ void main() {
     expect((auth.state as AuthAuthenticated).user.currency, 'USD');
   });
 
+  testWidgets('money format: an option sends ONE PUT (money_style)', (t) async {
+    when(() => users.setMoneyStyle('parentheses')).thenAnswer(
+      (_) async => User.fromJson({
+        ..._meJson(),
+        'preferences': {'money_style': 'parentheses'},
+      }),
+    );
+    await pump(t, const SettingsPage());
+    // A user from before the setting: + / − in colour, the colour switch on.
+    expect(find.text('Money format'), findsOneWidget);
+    expect(find.text('Red / green colours'), findsOneWidget);
+    await t.tap(find.text('Money format'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Parentheses ( )').last);
+    await t.pumpAndSettle();
+    verify(() => users.setMoneyStyle('parentheses')).called(1);
+    expect((auth.state as AuthAuthenticated).user.moneyStyle, 'parentheses');
+  });
+
   testWidgets('changing the main wallet sends ONE PUT', (t) async {
     when(
       () => users.updateMe(defaultAccountId: 'w2', clearDefaultAccount: false),

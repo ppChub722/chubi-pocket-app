@@ -146,6 +146,7 @@ export 'organisms/side_sheet.dart';
 
 // Data display
 export 'domain/money/money_list_tile.dart';
+export 'domain/money/money_style.dart';
 export 'domain/money/money_text.dart';
 export 'domain/money/wallet_value_chip.dart';
 export 'domain/progress/progress_tone.dart';

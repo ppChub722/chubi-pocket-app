@@ -111,6 +111,9 @@ abstract final class AppIcons {
   static const logout = Icons.logout;
   static const iconPicker = Icons.interests_outlined;
   static const colorPicker = Icons.palette_outlined;
+
+  /// Settings → money format (how amounts mark income / expense).
+  static const moneyStyle = Icons.exposure_outlined;
   static const eyedropper = Icons.colorize_outlined;
   static const useDefaultIcon = Icons.hide_image_outlined;
   static const pause = Icons.pause_circle_outline;

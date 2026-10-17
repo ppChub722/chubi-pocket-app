@@ -64,6 +64,11 @@ class SettingsPage extends StatelessWidget {
                   title: l.settingsSectionMoney,
                   children: [
                     _CurrencyRow(user: user),
+                    _MoneyStyleRow(user: user),
+                    // Colour only is always coloured: no switch for it.
+                    if (MoneyStyle.fromPreference(user.moneyStyle).sign !=
+                        MoneySign.none)
+                      _MoneyColorRow(user: user),
                     _MainWalletRow(user: user),
                   ],
                 ),
@@ -421,6 +426,112 @@ class _CurrencyRowState extends State<_CurrencyRow> {
         showChevron: true,
         onTap: _busy ? null : toggle,
       ),
+    );
+  }
+}
+
+/// Saves the money style (ONE `PUT /users/me`, preference `money_style`);
+/// the whole app re-draws its amounts from the answer.
+Future<void> _saveMoneyStyle(BuildContext context, MoneyStyle style) async {
+  final auth = context.read<AuthCubit>();
+  final users = context.read<UsersRepository>();
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    auth.updateUser(await users.setMoneyStyle(style.preference));
+  } on ApiException catch (e) {
+    showErrorSnackBarOn(messenger, e);
+  }
+}
+
+/// Money format (owner 2026-10-17): + / −, ( ) or colour only — each option
+/// and the row's helper show an example in that style.
+class _MoneyStyleRow extends StatefulWidget {
+  const _MoneyStyleRow({required this.user});
+
+  final User user;
+
+  @override
+  State<_MoneyStyleRow> createState() => _MoneyStyleRowState();
+}
+
+class _MoneyStyleRowState extends State<_MoneyStyleRow> {
+  bool _busy = false;
+
+  Future<void> _change(MoneySign sign) async {
+    final current = MoneyStyle.fromPreference(widget.user.moneyStyle);
+    if (sign == current.sign || _busy) return;
+    setState(() => _busy = true);
+    await _saveMoneyStyle(context, current.copyWith(sign: sign));
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final current = MoneyStyle.fromPreference(widget.user.moneyStyle);
+    String example(MoneySign sign) {
+      final s = current.copyWith(sign: sign);
+      final income = moneyString(context, 1000);
+      final expense = moneyString(context, 540);
+      return '${s.apply(income, negative: false)} · '
+          '${s.apply(expense, negative: true)}';
+    }
+
+    return OptionMenuAnchor<MoneySign>(
+      selected: current.sign,
+      onSelected: _change,
+      options: [
+        for (final (sign, label) in [
+          (MoneySign.plusMinus, l.settingsMoneySignPlusMinus),
+          (MoneySign.parentheses, l.settingsMoneySignParentheses),
+          (MoneySign.none, l.settingsMoneySignNone),
+        ])
+          SheetOption(value: sign, label: label, subtitle: example(sign)),
+      ],
+      builder: (context, toggle) => DetailRow(
+        leading: const AppIcon(AppIcons.moneyStyle),
+        label: l.settingsMoneyStyle,
+        helper: example(current.sign),
+        trailing: Text(switch (current.sign) {
+          MoneySign.plusMinus => l.settingsMoneySignPlusMinus,
+          MoneySign.parentheses => l.settingsMoneySignParentheses,
+          MoneySign.none => l.settingsMoneySignNone,
+        }),
+        showChevron: true,
+        onTap: _busy ? null : toggle,
+      ),
+    );
+  }
+}
+
+/// Red / green on or off, for + / − and ( ) (colour only is always on).
+class _MoneyColorRow extends StatefulWidget {
+  const _MoneyColorRow({required this.user});
+
+  final User user;
+
+  @override
+  State<_MoneyColorRow> createState() => _MoneyColorRowState();
+}
+
+class _MoneyColorRowState extends State<_MoneyColorRow> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final current = MoneyStyle.fromPreference(widget.user.moneyStyle);
+    return SettingToggleRow(
+      label: l.settingsMoneyColor,
+      caption: l.settingsMoneyColorHint,
+      value: current.colored,
+      onChanged: _busy
+          ? null
+          : (on) async {
+              setState(() => _busy = true);
+              await _saveMoneyStyle(context, current.copyWith(colored: on));
+              if (mounted) setState(() => _busy = false);
+            },
     );
   }
 }

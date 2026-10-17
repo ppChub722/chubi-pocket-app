@@ -6475,7 +6475,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String fpGoalsOngoingRow(String amount) {
-    return 'ออมต่อเนื่อง · เดือนนี้ +$amount';
+    return 'ออมต่อเนื่อง · เดือนนี้ $amount';
   }
 
   @override
@@ -6788,6 +6788,24 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get settingsMainWallet => 'กระเป๋าหลัก';
+
+  @override
+  String get settingsMoneyStyle => 'รูปแบบตัวเลขเงิน';
+
+  @override
+  String get settingsMoneySignPlusMinus => '+ / −';
+
+  @override
+  String get settingsMoneySignParentheses => 'วงเล็บ ( )';
+
+  @override
+  String get settingsMoneySignNone => 'สีอย่างเดียว';
+
+  @override
+  String get settingsMoneyColor => 'ใช้สีแดง / เขียว';
+
+  @override
+  String get settingsMoneyColorHint => 'รายรับสีเขียว รายจ่ายสีแดง';
 
   @override
   String get settingsMainWalletHint => 'ใช้เป็นค่าเริ่มต้นตอนบันทึก';

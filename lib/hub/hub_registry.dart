@@ -770,6 +770,10 @@ final List<HubPage> hubPages = [
     usedBy: '28 files',
     covers: [
       'MoneyText',
+      'MoneyStyle',
+      'MoneySign',
+      'MoneyStyleScope',
+      'signedMoneyString',
       'MoneyTone',
       'MoneyVisibilityToggle',
       'MoneyListTile',

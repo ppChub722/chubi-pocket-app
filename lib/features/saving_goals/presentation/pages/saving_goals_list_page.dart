@@ -293,7 +293,14 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
         title: g.name,
         iconCode: g.iconCode,
         fallbackIcon: AppIcons.savingGoal,
-        amountText: l.fpGoalsOngoingRow(money(g.monthSaved)),
+        amountText: l.fpGoalsOngoingRow(
+          signedMoneyString(
+            context,
+            g.monthSaved,
+            negative: g.monthSaved < 0,
+            symbol: symbol,
+          ),
+        ),
         trailing: money(g.savedAmount),
         badge: badge?.label,
         badgeTone: badge?.tone ?? Tone.success,

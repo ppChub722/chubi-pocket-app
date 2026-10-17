@@ -11255,7 +11255,7 @@ abstract class AppLocalizations {
   /// No description provided for @fpGoalsOngoingRow.
   ///
   /// In en, this message translates to:
-  /// **'Ongoing · this month +{amount}'**
+  /// **'Ongoing · this month {amount}'**
   String fpGoalsOngoingRow(String amount);
 
   /// No description provided for @fpGoalsTileAuto.
@@ -11791,6 +11791,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Main wallet'**
   String get settingsMainWallet;
+
+  /// No description provided for @settingsMoneyStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Money format'**
+  String get settingsMoneyStyle;
+
+  /// No description provided for @settingsMoneySignPlusMinus.
+  ///
+  /// In en, this message translates to:
+  /// **'+ / −'**
+  String get settingsMoneySignPlusMinus;
+
+  /// No description provided for @settingsMoneySignParentheses.
+  ///
+  /// In en, this message translates to:
+  /// **'Parentheses ( )'**
+  String get settingsMoneySignParentheses;
+
+  /// No description provided for @settingsMoneySignNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Colour only'**
+  String get settingsMoneySignNone;
+
+  /// No description provided for @settingsMoneyColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Red / green colours'**
+  String get settingsMoneyColor;
+
+  /// No description provided for @settingsMoneyColorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Income in green, expenses in red'**
+  String get settingsMoneyColorHint;
 
   /// No description provided for @settingsMainWalletHint.
   ///
