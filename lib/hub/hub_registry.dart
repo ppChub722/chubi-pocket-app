@@ -903,6 +903,7 @@ final List<HubPage> hubPages = [
       'CloseGoalChoice',
       'CloseGoalReturn',
       'SavingGoalRow',
+      'ChartSection',
       'showSavingAutoSaveSheet',
       'SavingAutoSaveSheet',
       'SavingAutoSaveWallet',

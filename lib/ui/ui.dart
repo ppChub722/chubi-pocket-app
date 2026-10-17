@@ -165,6 +165,7 @@ export 'domain/pickers/category_multi_picker_sheet.dart';
 export 'domain/money/account_multi_picker_sheet.dart';
 export 'molecules/milestone_row.dart';
 export 'organisms/charts/saving_history_chart.dart';
+export 'organisms/chart_section.dart';
 export 'domain/saving/saving_tx_row.dart';
 export 'domain/saving/saving_move_sheet.dart';
 export 'domain/saving/close_goal_dialog.dart';

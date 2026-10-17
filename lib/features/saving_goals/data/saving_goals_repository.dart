@@ -96,7 +96,31 @@ class SavingGoalsRepository {
     return SavingGoalDetail.fromJson(res.data!);
   });
 
-  /// `POST /saving-goals/{id}/close` — `toWallets` false = into spare, true =
+  /// `PUT /saving-goals/{id}/auto-save` (or `spare`) — creates / replaces the
+  /// auto-saving: [amount] on [day] of each month, from [accountId] or no
+  /// wallet. Answers the goal page / the spare page.
+  Future<SavingGoalDetail> setAutoSave(
+    String id, {
+    required double amount,
+    required int day,
+    String? accountId,
+  }) => _guard(() async {
+    final res = await _client.dio.put<Map<String, dynamic>>(
+      '/saving-goals/$id/auto-save',
+      data: {'amount': amount, 'day': day, 'account_id': accountId},
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
+
+  /// `DELETE /saving-goals/{id}/auto-save` (or `spare`) — turns it off.
+  Future<SavingGoalDetail> clearAutoSave(String id) => _guard(() async {
+    final res = await _client.dio.delete<Map<String, dynamic>>(
+      '/saving-goals/$id/auto-save',
+    );
+    return SavingGoalDetail.fromJson(res.data!);
+  });
+
+  /// `POST /saving-goals/{id}/close` —`toWallets` false = into spare, true =
   /// each part back to its own wallet.
   Future<SavingWriteResult> close(String id, {required bool toWallets}) =>
       _guard(() async {

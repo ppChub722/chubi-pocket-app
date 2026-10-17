@@ -183,6 +183,27 @@ class _SavingPageState extends State<_SavingPage> {
           ),
         ),
         HubDemo(
+          title: 'ChartSection — a headed detail box around one chart',
+          note:
+              'The goal page\'s "ยอดสะสม" box: green title + description over '
+              'the rounded box, the chart inset inside. Shown only with two or '
+              'more entries.',
+          child: ChartSection(
+            first: true,
+            title: 'Cumulative savings',
+            description: 'What is saved, month by month',
+            chart: SavingHistoryChart(
+              actual: actual,
+              target: 80,
+              showNeeded: false,
+              monthLabels: months,
+              targetLabel: 'Goal 80',
+              tone: Tone.info,
+              actualLegend: 'Saved',
+            ),
+          ),
+        ),
+        HubDemo(
           title: 'SavingHistoryChart.skeleton',
           child: box(const SavingHistoryChart.skeleton()),
         ),

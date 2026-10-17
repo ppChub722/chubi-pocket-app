@@ -11,6 +11,9 @@ class SavingSummary extends Equatable {
     this.inGoals = 0,
     this.spare = 0,
     this.currency = '',
+    this.savedTotal = 0,
+    this.monthShortTotal = 0,
+    this.unallocated = 0,
   });
 
   final double saved;
@@ -18,15 +21,35 @@ class SavingSummary extends Equatable {
   final double spare;
   final String currency;
 
+  /// Every saving now, wallet-less money included (= [saved]).
+  final double savedTotal;
+
+  /// Σ the active goals' month_short.
+  final double monthShortTotal;
+
+  /// The spare bucket ("ยังไม่จัดสรร").
+  final double unallocated;
+
   factory SavingSummary.fromJson(Map<String, dynamic> json) => SavingSummary(
     saved: (json['saved'] as num?)?.toDouble() ?? 0,
     inGoals: (json['in_goals'] as num?)?.toDouble() ?? 0,
     spare: (json['spare'] as num?)?.toDouble() ?? 0,
     currency: json['currency'] as String? ?? '',
+    savedTotal: (json['saved_total'] as num?)?.toDouble() ?? 0,
+    monthShortTotal: (json['month_short_total'] as num?)?.toDouble() ?? 0,
+    unallocated: (json['unallocated'] as num?)?.toDouble() ?? 0,
   );
 
   @override
-  List<Object?> get props => [saved, inGoals, spare, currency];
+  List<Object?> get props => [
+    saved,
+    inGoals,
+    spare,
+    currency,
+    savedTotal,
+    monthShortTotal,
+    unallocated,
+  ];
 }
 
 /// The "ยังไม่จัดสรร" bucket: money saved but not in a goal.
@@ -95,34 +118,6 @@ class SavingHistoryPoint extends Equatable {
   List<Object?> get props => [month, cumulative];
 }
 
-/// An active recurring ออม into this bucket.
-class SavingAutoSave extends Equatable {
-  const SavingAutoSave({
-    required this.recurringId,
-    required this.name,
-    required this.amount,
-    this.nextDate,
-  });
-
-  final String recurringId;
-  final String name;
-  final double amount;
-  final String? nextDate;
-
-  factory SavingAutoSave.fromJson(Map<String, dynamic> json) {
-    final r = (json['recurring'] as Map).cast<String, dynamic>();
-    return SavingAutoSave(
-      recurringId: r['id'] as String,
-      name: r['name'] as String? ?? '',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0,
-      nextDate: json['next_date'] as String?,
-    );
-  }
-
-  @override
-  List<Object?> get props => [recurringId, name, amount, nextDate];
-}
-
 /// A goal page, or the spare bucket's page (`GET /saving-goals/spare`): then
 /// [goal] is null and [spare] is set.
 class SavingGoalDetail extends Equatable {
@@ -131,7 +126,7 @@ class SavingGoalDetail extends Equatable {
     this.spare,
     this.byWallet = const [],
     this.history = const [],
-    this.autoSave = const [],
+    this.spareAutoSave,
     this.entries = const SavingEntryPage(),
   });
 
@@ -139,10 +134,15 @@ class SavingGoalDetail extends Equatable {
   final SavingSpare? spare;
   final List<SavingWalletShare> byWallet;
   final List<SavingHistoryPoint> history;
-  final List<SavingAutoSave> autoSave;
+
+  /// The spare page's auto-saving (a goal page carries it on the goal).
+  final SavingAutoSave? spareAutoSave;
   final SavingEntryPage entries;
 
   bool get isSpare => goal == null;
+
+  /// This page's auto-saving (null = off), goal or spare.
+  SavingAutoSave? get autoSave => goal?.autoSave ?? spareAutoSave;
 
   factory SavingGoalDetail.fromJson(Map<String, dynamic> json) {
     final goal = json['goal'] is Map
@@ -164,10 +164,11 @@ class SavingGoalDetail extends Equatable {
         for (final p in (json['history'] as List? ?? const []))
           SavingHistoryPoint.fromJson((p as Map).cast<String, dynamic>()),
       ],
-      autoSave: [
-        for (final a in (json['auto_save'] as List? ?? const []))
-          SavingAutoSave.fromJson((a as Map).cast<String, dynamic>()),
-      ],
+      spareAutoSave: goal == null && json['auto_save'] is Map
+          ? SavingAutoSave.fromJson(
+              (json['auto_save'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       entries: json['entries'] is Map
           ? SavingEntryPage.fromJson(
               (json['entries'] as Map).cast<String, dynamic>(),
@@ -181,7 +182,7 @@ class SavingGoalDetail extends Equatable {
     spare: spare,
     byWallet: byWallet,
     history: history,
-    autoSave: autoSave,
+    spareAutoSave: spareAutoSave,
     entries: entries ?? this.entries,
   );
 
@@ -191,7 +192,7 @@ class SavingGoalDetail extends Equatable {
     spare,
     byWallet,
     history,
-    autoSave,
+    spareAutoSave,
     entries,
   ];
 }

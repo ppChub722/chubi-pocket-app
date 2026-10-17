@@ -12,9 +12,16 @@ import '../../domain/saving_goal.dart';
 import '../cubit/saving_goals_cubit.dart';
 import '../widgets/saving_goal_texts.dart';
 
-/// `/saving-goals` — the savings notebook: total saved / spare in the header,
-/// the "ยังไม่จัดสรร" bucket, then one row per goal (progress, deadline, pace).
-/// Open = ONE call (`GET /saving-goals?status=`); the chips re-open it.
+/// `/saving-goals` (reference §2, owner 2026-10-17):
+///
+///   summary card: all savings now · "เดือนนี้ขาดอีก ฿x" · "🐷 ยังไม่จัดสรร ฿x ›"
+///   hidden search row: [สถานะ: กำลังออม ▾]
+///   เดือนนี้ยังขาด · rows ("ขาด ฿x")   /   เดือนนี้ครบแล้ว ✓ · rows
+///   dashed "+ เพิ่มเป้าหมาย"
+///
+/// Open = ONE call (`GET /saving-goals?status=`); the status chip re-opens it
+/// and pull-to-refresh / show-again reload it. Every number is the BE's;
+/// adding a saving is the shell's bottom + (ออม mode).
 class SavingGoalsListPage extends StatefulWidget {
   const SavingGoalsListPage({super.key});
 
@@ -71,22 +78,21 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
               listenWhen: (a, b) => a.staleTick != b.staleTick,
               listener: (c, _) => c.read<SavingGoalsCubit>().load(),
             ),
+            // A failed reload keeps the rows on screen and says so.
+            BlocListener<SavingGoalsCubit, SavingGoalsState>(
+              listenWhen: (a, b) =>
+                  a.status != b.status &&
+                  b.status == SavingGoalsStatus.error &&
+                  b.overview.summary.currency.isNotEmpty,
+              listener: (c, _) =>
+                  showAppSnackBar(c, l.fpGoalsRefreshFailed, tone: Tone.danger),
+            ),
           ],
           child: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(
             builder: (context, state) {
               final cubit = context.read<SavingGoalsCubit>();
-              final active = state.filter == SavingGoalsFilter.active;
-              final summary = state.overview.summary;
-              final symbol = context.readUserCurrencySymbol;
-              final q = _query.toLowerCase();
-              final goals = q.isEmpty
-                  ? state.goals
-                  : [
-                      for (final g in state.goals)
-                        if (g.name.toLowerCase().contains(q)) g,
-                    ];
               // The BE always sends the user currency: empty = never loaded.
-              final neverLoaded = summary.currency.isEmpty;
+              final neverLoaded = state.overview.summary.currency.isEmpty;
               return ListPageBody(
                 // Only the FIRST load shows the skeleton: a reload keeps the
                 // rows (a skeleton would kill a pull-to-refresh).
@@ -99,127 +105,15 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
                     : null,
                 isEmpty: neverLoaded,
                 onRetry: cubit.load,
-                rowDividers: true,
-                rowDividerIndent: 72,
-                topInset: AppSpacing.sm,
-                header: [
-                  AppCard(
-                    margin: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      AppSpacing.sm,
-                      AppSpacing.lg,
-                      AppSpacing.xs,
-                    ),
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                l.sgv2SavedTotal,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                            ),
-                            const MoneyVisibilityToggle(),
-                            const SizedBox(width: AppSpacing.xs),
-                            ToolbarToggleButton(
-                              state: _toolbar,
-                              filtered: _query.isNotEmpty || !active,
-                              tooltip: l.commonSearch,
-                            ),
-                          ],
-                        ),
-                        MoneyText(
-                          summary.saved,
-                          symbol: symbol,
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        StatGrid(
-                          children: [
-                            StatTile(
-                              caption: l.sgv2InGoals,
-                              valueWidget: MoneyText(
-                                summary.inGoals,
-                                symbol: symbol,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                            StatTile(
-                              caption: l.sgv2Spare,
-                              valueWidget: MoneyText(
-                                summary.spare,
-                                symbol: symbol,
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  ListToolbar(
-                    collapse: _toolbar,
-                    searchController: _search,
-                    onSearchChanged: (v) => setState(() => _query = v.trim()),
-                    searchHint: l.sgv2SearchHint,
-                    chips: [
-                      OptionMenuAnchor<SavingGoalsFilter>(
-                        selected: state.filter,
-                        onSelected: cubit.setFilter,
-                        options: [
-                          for (final f in SavingGoalsFilter.values)
-                            SheetOption(value: f, label: _filterLabel(l, f)),
-                        ],
-                        builder: (context, toggle) => AppChip(
-                          label:
-                              '${l.contactsStatusLabel}: ${_filterLabel(l, state.filter)}',
-                          selected: !active,
-                          trailing: AppChipTrailing.dropdown,
-                          onTap: toggle,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
                 empty: EmptyView(
                   icon: AppIcons.savingGoal,
                   title: l.savingGoalsEmptyTitle,
                   message: l.savingGoalsEmptyMessage,
                 ),
-                children: [
-                  if (active && _query.isEmpty)
-                    ListRow(
-                      leading: IconTile(
-                        icon: AppIcons.savingGoal,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 40,
-                      ),
-                      title: l.sgv2Spare,
-                      subtitle: l.sgv2SpareHint,
-                      trailing: MoneyText(
-                        state.overview.spare.amount,
-                        symbol: symbol,
-                      ),
-                      onTap: () => context.push('/saving-goals/spare'),
-                    ),
-                  for (final g in goals) _goalRow(context, l, g),
-                  if (goals.isEmpty && (!active || _query.isNotEmpty))
-                    EmptyView.compact(message: l.sgv2EmptyFilteredTitle),
-                  if (active) AddTile(label: l.savingGoalsAddNew, onTap: _add),
-                ],
+                // Full-width children: the card and the rows pad themselves.
+                sidePadding: 0,
+                topInset: 0,
+                children: _children(context, l, state, cubit),
               );
             },
           ),
@@ -228,63 +122,154 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
     );
   }
 
-  Widget _goalRow(BuildContext context, AppLocalizations l, SavingGoal g) {
+  Widget _summary(
+    BuildContext context,
+    AppLocalizations l,
+    SavingGoalsState state,
+  ) {
+    final s = state.overview.summary;
     final symbol = context.readUserCurrencySymbol;
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    final palette = Theme.of(context).extension<AppColors>()!;
-    final tint = g.iconCode.tintFor(palette);
-    final tone = g.isCompleted || g.pace == SavingPace.reached
-        ? ProgressTone.success
-        : (g.isArchived ? ProgressTone.muted : ProgressTone.neutral);
-    final badge = savingGoalStatusChip(l, g);
-    final paceLine = savingGoalPaceLine(l, g, symbol);
-    return ListRow(
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    return ListSummaryCard(
+      caption: l.fpGoalsListCaption,
+      style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
+      actions: [
+        ToolbarToggleButton(
+          state: _toolbar,
+          filtered:
+              _query.isNotEmpty || state.filter != SavingGoalsFilter.active,
+          tooltip: l.commonSearch,
+        ),
+      ],
+      amount: s.savedTotal,
+      symbol: symbol,
+      alert: s.monthShortTotal > 0
+          ? l.fpGoalsMonthShortLine(money(s.monthShortTotal))
+          : null,
+      infoLine: AppText(
+        l.fpGoalsSpareLine(money(s.unallocated)),
+        role: AppTextRole.caption,
+      ),
+      onInfoTap: () => context.push('/saving-goals/spare'),
+    );
+  }
+
+  Widget _toolbarRow(
+    AppLocalizations l,
+    SavingGoalsState state,
+    SavingGoalsCubit cubit,
+  ) {
+    return ListToolbar(
+      collapse: _toolbar,
+      searchController: _search,
+      onSearchChanged: (v) => setState(() => _query = v.trim()),
+      searchHint: l.sgv2SearchHint,
+      chips: [
+        OptionMenuAnchor<SavingGoalsFilter>(
+          selected: state.filter,
+          onSelected: cubit.setFilter,
+          options: [
+            for (final f in SavingGoalsFilter.values)
+              SheetOption(value: f, label: _filterLabel(l, f)),
+          ],
+          builder: (context, toggle) => AppChip(
+            label: l.fpGoalsStatusChip(_filterLabel(l, state.filter)),
+            selected: state.filter != SavingGoalsFilter.active,
+            trailing: AppChipTrailing.dropdown,
+            onTap: toggle,
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _children(
+    BuildContext context,
+    AppLocalizations l,
+    SavingGoalsState state,
+    SavingGoalsCubit cubit,
+  ) {
+    final active = state.filter == SavingGoalsFilter.active;
+    final q = _query.toLowerCase();
+    final goals = [
+      for (final g in state.goals)
+        if (q.isEmpty || g.name.toLowerCase().contains(q)) g,
+    ];
+    // The BE's order, split by what it says about this month.
+    final short = [
+      for (final g in goals)
+        if ((g.monthShort ?? 0) > 0) g,
+    ];
+    final done = [
+      for (final g in goals)
+        if (g.monthShort == 0 || (g.monthShort == null && _isDone(g))) g,
+    ];
+    final noPlan = [
+      for (final g in goals)
+        if (!short.contains(g) && !done.contains(g)) g,
+    ];
+    return [
+      _summary(context, l, state),
+      _toolbarRow(l, state, cubit),
+      if (goals.isEmpty && (!active || _query.isNotEmpty))
+        EmptyView.compact(message: l.sgv2EmptyFilteredTitle),
+      if (active) ...[
+        ..._group(context, l, l.fpGoalsGroupShort, short, _Group.short),
+        ..._group(context, l, l.fpGoalsGroupDone, done, _Group.done),
+        ..._group(context, l, l.fpGoalsGroupNoPlan, noPlan, _Group.noPlan),
+      ] else
+        for (final g in goals) _row(context, l, g, _Group.noPlan),
+      if (active)
+        AddTile(label: l.savingGoalsAddNew, onTap: _add, inList: true),
+    ];
+  }
+
+  /// A goal with no month figure that has nothing left to do this month.
+  static bool _isDone(SavingGoal g) =>
+      g.status == SavingStatus.reached || g.isCompleted;
+
+  List<Widget> _group(
+    BuildContext context,
+    AppLocalizations l,
+    String title,
+    List<SavingGoal> goals,
+    _Group group,
+  ) {
+    if (goals.isEmpty) return const [];
+    return [
+      SectionHeader(title: title, count: goals.length),
+      for (final g in goals) _row(context, l, g, group),
+    ];
+  }
+
+  Widget _row(
+    BuildContext context,
+    AppLocalizations l,
+    SavingGoal g,
+    _Group group,
+  ) {
+    final symbol = context.readUserCurrencySymbol;
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    final badge = savingGoalEtaBadge(context, l, g);
+    return SavingGoalRow(
       key: ValueKey(g.id),
+      title: g.name,
+      iconCode: g.iconCode,
+      fallbackIcon: AppIcons.savingGoal,
+      value: g.progressPct / 100,
+      amountText: '${money(g.savedAmount)} / ${money(g.targetAmount)}',
+      trailing: switch (group) {
+        _Group.short => l.fpGoalsRowShort(money(g.monthShort ?? 0)),
+        _Group.done => '✓',
+        _Group.noPlan => null,
+      },
+      trailingTone: group == _Group.short ? Tone.warning : Tone.success,
+      badge: badge?.label,
+      badgeTone: badge?.tone ?? Tone.success,
       dimmed: g.isArchived,
       onTap: () => context.push('/saving-goals/${g.id}'),
-      leading: IconCodeWidget(
-        iconCode: g.iconCode,
-        size: 40,
-        displayMode: IconDisplayMode.compact,
-        fallbackIcon: AppIcons.savingGoal,
-        fallbackColor: tint,
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  g.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ),
-              if (badge != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                badge,
-              ],
-            ],
-          ),
-          Text(
-            savingGoalDueLine(context, l, g, symbol),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          ProgressRow(
-            value: g.progressPct / 100,
-            color: tone.resolve(context, entityTint: tint),
-            label: paceLine,
-            trailing: '${g.progressPct.toStringAsFixed(0)}%',
-          ),
-        ],
-      ),
     );
   }
 }
+
+enum _Group { short, done, noPlan }

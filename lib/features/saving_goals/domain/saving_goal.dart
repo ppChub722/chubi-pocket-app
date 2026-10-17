@@ -19,18 +19,19 @@ enum SavingGoalState {
   };
 }
 
-/// How the real saving pace compares with what the deadline needs (BE).
-enum SavingPace {
+/// Where a goal stands against its plan (BE `status`): the BE decides, the
+/// FE only maps it to a chip / badge.
+enum SavingStatus {
   none,
   reached,
   onTrack,
-  late;
+  behind;
 
-  static SavingPace fromJson(String? raw) => switch (raw) {
-    'on_track' => SavingPace.onTrack,
-    'late' => SavingPace.late,
-    'reached' => SavingPace.reached,
-    _ => SavingPace.none,
+  static SavingStatus fromJson(String? raw) => switch (raw) {
+    'reached' => SavingStatus.reached,
+    'on_track' => SavingStatus.onTrack,
+    'behind' => SavingStatus.behind,
+    _ => SavingStatus.none,
   };
 }
 
@@ -81,6 +82,38 @@ class SavingWalletRef extends Equatable {
     currency,
     archived,
   ];
+}
+
+/// A goal's (or the spare bucket's) auto-saving: on [day] of each month a
+/// pending saving draft of [amount] is made — from [wallet], or none.
+class SavingAutoSave extends Equatable {
+  const SavingAutoSave({
+    required this.amount,
+    required this.day,
+    this.wallet,
+    this.nextDate,
+  });
+
+  final double amount;
+
+  /// 1–31 (31 = the last day of the month).
+  final int day;
+  final SavingWalletRef? wallet;
+  final String? nextDate;
+
+  factory SavingAutoSave.fromJson(Map<String, dynamic> json) => SavingAutoSave(
+    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    day: (json['day'] as num?)?.toInt() ?? 1,
+    wallet: json['wallet'] is Map
+        ? SavingWalletRef.fromJson(
+            (json['wallet'] as Map).cast<String, dynamic>(),
+          )
+        : null,
+    nextDate: json['next_date'] as String?,
+  );
+
+  @override
+  List<Object?> get props => [amount, day, wallet, nextDate];
 }
 
 /// One 25 / 50 / 75 / 100 % step of a goal (BE computes `reached`).
@@ -170,8 +203,12 @@ class SavingGoal extends Equatable {
     this.neededMonthly,
     this.paceMonthly,
     this.etaDate,
-    this.pace = SavingPace.none,
-    this.lateMonths,
+    this.status = SavingStatus.none,
+    this.behindMonths,
+    this.monthPlan,
+    this.monthSaved = 0,
+    this.monthShort,
+    this.autoSave,
     this.milestones = const [],
     this.actions = const SavingGoalActions(),
     this.closedAt,
@@ -197,8 +234,17 @@ class SavingGoal extends Equatable {
   final double? neededMonthly;
   final double? paceMonthly;
   final String? etaDate;
-  final SavingPace pace;
-  final int? lateMonths;
+  final SavingStatus status;
+  final int? behindMonths;
+
+  /// This month: the plan (auto-saving amount, else the needed monthly),
+  /// what is saved so far and what is still short — all BE numbers.
+  final double? monthPlan;
+  final double monthSaved;
+  final double? monthShort;
+
+  /// The goal's auto-saving (null = off).
+  final SavingAutoSave? autoSave;
   final List<SavingMilestone> milestones;
 
   /// What the BE allows right now (buttons follow these flags).
@@ -232,8 +278,16 @@ class SavingGoal extends Equatable {
       neededMonthly: (json['needed_monthly'] as num?)?.toDouble(),
       paceMonthly: (json['pace_monthly'] as num?)?.toDouble(),
       etaDate: json['eta_date'] as String?,
-      pace: SavingPace.fromJson(json['pace'] as String?),
-      lateMonths: (json['late_months'] as num?)?.toInt(),
+      status: SavingStatus.fromJson(json['status'] as String?),
+      behindMonths: (json['behind_months'] as num?)?.toInt(),
+      monthPlan: (json['month_plan'] as num?)?.toDouble(),
+      monthSaved: (json['month_saved'] as num?)?.toDouble() ?? 0,
+      monthShort: (json['month_short'] as num?)?.toDouble(),
+      autoSave: json['auto_save'] is Map
+          ? SavingAutoSave.fromJson(
+              (json['auto_save'] as Map).cast<String, dynamic>(),
+            )
+          : null,
       milestones: [
         for (final m in (json['milestones'] as List? ?? const []))
           SavingMilestone.fromJson((m as Map).cast<String, dynamic>()),
@@ -278,8 +332,12 @@ class SavingGoal extends Equatable {
     neededMonthly,
     paceMonthly,
     etaDate,
-    pace,
-    lateMonths,
+    status,
+    behindMonths,
+    monthPlan,
+    monthSaved,
+    monthShort,
+    autoSave,
     milestones,
     actions,
     closedAt,
