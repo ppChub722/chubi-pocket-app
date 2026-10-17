@@ -84,10 +84,28 @@ class _Repo extends Fake implements RecurringRepository {
     return ItemPage.fromJson({'data': calendarData, 'pagination': _page});
   }
 
+  /// The BE's delete preview numbers (`?include=delete_preview`).
+  Map<String, dynamic> preview = {
+    'items': 4,
+    'linked_transactions': 0,
+    'pending_drafts': 1,
+  };
+
+  /// What an item write answers with: the owning setting (null = several).
+  bool settingInWrites = true;
+
+  Map<String, dynamic>? get _setting => settingInWrites
+      ? {..._prodRecurring(), 'next_date': '2026-12-03', 'pending_count': 7}
+      : null;
+
   @override
-  Future<RecurringDetail> get(String id) async {
-    _hit('get:$id');
-    return RecurringDetail.fromJson(detail);
+  Future<RecurringDetail> get(String id, {bool deletePreview = false}) async {
+    _hit(deletePreview ? 'preview:$id' : 'get:$id');
+    return RecurringDetail.fromJson({
+      'upcoming': {'data': upcomingData, 'pagination': _page},
+      ...detail,
+      if (deletePreview) 'delete_preview': preview,
+    });
   }
 
   @override
@@ -114,6 +132,7 @@ class _Repo extends Fake implements RecurringRepository {
     final base = upcomingData.firstWhere((j) => j['id'] == id);
     return ItemWriteResult.fromJson({
       'item': {...base, 'amount': amount ?? base['amount'], 'edited': true},
+      'setting': _setting,
       'account_balances': const [],
     });
   }
@@ -127,6 +146,7 @@ class _Repo extends Fake implements RecurringRepository {
     final base = upcomingData.firstWhere((j) => j['id'] == id);
     return ItemWriteResult.fromJson({
       'item': {...base, 'status': archived ? 'archived' : 'upcoming'},
+      'setting': _setting,
       'account_balances': const [],
     });
   }
@@ -167,6 +187,7 @@ Map<String, dynamic> _prodRecurring() => {
   'amount': 419,
   'trial_until': null,
   'yearly_cost': 5028,
+  'monthly_amount': 838,
   'saved_count': 1,
   'pending_count': 2,
   'next_amount': 419,
@@ -226,6 +247,7 @@ Map<String, dynamic> _reminder() => {
   'note': null,
   'kind': 'reminder',
   'amount': null,
+  'monthly_amount': null,
   'yearly_cost': 0,
   'saved_count': 0,
   'pending_count': 1,
@@ -616,7 +638,8 @@ void main() {
       await pump(t, const RecurringDetailPage(id: 'r1'));
       await t.tap(find.text('Upcoming'));
       await settle(t);
-      expect(repo.calls, ['get:r1', 'items:upcoming']);
+      // The first upcoming page rode along with the open call.
+      expect(repo.calls, ['get:r1']);
       expect(find.byType(NextOccurrenceCard), findsOneWidget);
       expect(find.text('Edit amount'), findsOneWidget);
       expect(find.text('Move date'), findsOneWidget);
@@ -652,6 +675,41 @@ void main() {
       expect(repo.writes.single['amount'], 500);
       expect(repo.writes.single['date'], isNull);
       expect(find.text('Edited'), findsOneWidget);
+    });
+
+    testWidgets('hero ต่อเดือน = monthly_amount; info row = amount each time', (
+      t,
+    ) async {
+      await pump(t, const RecurringDetailPage(id: 'r1'));
+      expect(find.text('Per month'), findsOneWidget);
+      expect(find.textContaining('838'), findsOneWidget);
+      expect(find.text('Amount each time'), findsOneWidget);
+      expect(find.textContaining('419'), findsWidgets);
+    });
+
+    testWidgets('an item write patches the setting: no re-read', (t) async {
+      await pump(t, const RecurringDetailPage(id: 'r1'));
+      await t.tap(find.text('Upcoming'));
+      await settle(t);
+      await t.tap(find.text('Skip'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Skip').last);
+      await t.pumpAndSettle();
+      expect(repo.calls, ['get:r1', 'archive:i-2026-11-03']);
+      // The pending tile came from the write's `setting` (7 here).
+      expect(find.text('7 times'), findsOneWidget);
+    });
+
+    testWidgets('a write with no setting re-runs the page call', (t) async {
+      repo.settingInWrites = false;
+      await pump(t, const RecurringDetailPage(id: 'r1'));
+      await t.tap(find.text('Upcoming'));
+      await settle(t);
+      await t.tap(find.text('Skip'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Skip').last);
+      await t.pumpAndSettle();
+      expect(repo.calls, ['get:r1', 'archive:i-2026-11-03', 'get:r1']);
     });
 
     testWidgets('ข้าม: confirm, then ONE archive call', (t) async {
@@ -775,6 +833,23 @@ void main() {
       expect(find.text('Per year'), findsNothing);
       expect(find.text('Upcoming'), findsNothing);
       expect(find.byType(NextOccurrenceCard), findsNothing);
+    });
+
+    testWidgets('ลบ: ONE preview call, the dialog prints its numbers', (
+      t,
+    ) async {
+      await pump(t, const RecurringDetailPage(id: 'r1', startEditing: true));
+      await t.ensureVisible(find.text('Delete recurring'));
+      await t.tap(find.text('Delete recurring'));
+      await t.pumpAndSettle();
+      expect(repo.calls, ['get:r1', 'preview:r1']);
+      expect(
+        find.text(
+          'This deletes 4 occurrences, 1 waiting drafts and touches 0 saved '
+          'records.',
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

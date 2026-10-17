@@ -110,10 +110,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   final Set<String> _selected = {};
   bool _selecting = false;
 
-  // Upcoming: lazy, the first time the tab shows.
-  ItemPage? _upcoming;
-  bool _upcomingLoading = false;
-  Object? _upcomingError;
+  // Upcoming: page 1 comes with the detail; more pages on scroll.
+  ItemPage _upcoming = const ItemPage();
   bool _upcomingMore = false;
   Object? _upcomingMoreError;
 
@@ -167,7 +165,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         _error = null;
         _refreshError = null;
       });
-      if (_upcoming != null) _loadUpcoming();
       if (first && widget.startEditing) enterEdit();
     } catch (e, st) {
       if (!mounted) return;
@@ -190,6 +187,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     setState(() {
       _detail = d;
       _produced = d.produced;
+      _upcoming = d.upcoming;
       _selected.retainAll(d.produced.items.map((i) => i.id));
     });
     if (!isEditing) resetDraft(RecurringDraft.from(d.recurring));
@@ -218,34 +216,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  Future<void> _loadUpcoming() async {
-    setState(() {
-      _upcomingLoading = true;
-      _upcomingError = null;
-    });
-    try {
-      final page = await _repo.items(widget.id!, upcoming: true);
-      if (mounted) setState(() => _upcoming = page);
-    } catch (e, st) {
-      if (!mounted) return;
-      final err = ApiException.from(e, st);
-      if (_upcoming == null) {
-        setState(() => _upcomingError = err);
-      } else {
-        showAppSnackBar(
-          context,
-          AppLocalizations.of(context)!.fpRecurringRefreshFailed,
-          tone: Tone.danger,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _upcomingLoading = false);
-    }
-  }
-
   Future<void> _loadMoreUpcoming() async {
     final current = _upcoming;
-    if (current == null || !current.hasMore || _upcomingMore) return;
+    if (!current.hasMore || _upcomingMore) return;
     setState(() {
       _upcomingMore = true;
       _upcomingMoreError = null;
@@ -266,12 +239,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  void _onTab(_Tab t) {
-    setState(() => _tab = t);
-    if (t == _Tab.upcoming && _upcoming == null && !_upcomingLoading) {
-      _loadUpcoming();
-    }
-  }
+  void _onTab(_Tab t) => setState(() => _tab = t);
 
   // ── Occurrence writes ───────────────────────────────────────────────
 
@@ -279,7 +247,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   /// between the tabs (a skip) moves with it.
   void _applyItems(ItemWriteResult r) {
     _changed = true;
-    final all = [..._produced.items, ...?_upcoming?.items];
+    final all = [..._produced.items, ..._upcoming.items];
     final known = {for (final i in all) i.id};
     final merged = [
       ...r.applyTo(all),
@@ -296,38 +264,30 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         page: _produced.page,
         totalPages: _produced.totalPages,
       );
-      if (up != null) {
-        _upcoming = ItemPage(
-          items: [
-            for (final i in merged)
-              if (i.state == OccurrenceState.upcoming) i,
-          ]..sort((a, b) => a.date.compareTo(b.date)),
-          page: up.page,
-          totalPages: up.totalPages,
+      _upcoming = ItemPage(
+        items: [
+          for (final i in merged)
+            if (i.state == OccurrenceState.upcoming) i,
+        ]..sort((a, b) => a.date.compareTo(b.date)),
+        page: up.page,
+        totalPages: up.totalPages,
+      );
+      _selected.removeAll(r.deletedIds);
+      // The write returns the owning setting (next date, counts, status):
+      // patch the card from it, no re-read.
+      final setting = r.setting;
+      final d = _detail;
+      if (setting != null && d != null) {
+        _detail = RecurringDetail(
+          recurring: setting,
+          produced: d.produced,
+          upcoming: d.upcoming,
+          balances: d.balances,
         );
       }
-      _selected.removeAll(r.deletedIds);
     });
-    _syncRecurring();
-  }
-
-  /// An item write does not return the setting, yet the card (next date,
-  /// counts, status) moves with it. Re-read it quietly and keep the items the
-  /// page already holds. (BE request: return the setting with item writes.)
-  Future<void> _syncRecurring() async {
-    try {
-      final d = await _repo.get(widget.id!);
-      if (!mounted) return;
-      setState(
-        () => _detail = RecurringDetail(
-          recurring: d.recurring,
-          produced: _detail?.produced ?? d.produced,
-          balances: d.balances,
-        ),
-      );
-    } on ApiException {
-      // The next pull-to-refresh recovers.
-    }
+    // No setting in the answer: run the page's one call again.
+    if (r.setting == null) _load();
   }
 
   /// One occurrence call: busy while it runs, the answer patches the page.
@@ -503,7 +463,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       HapticFeedback.mediumImpact();
       markRecurringChanged(context);
       _take(d);
-      if (_upcoming != null) _loadUpcoming();
     } on ApiException catch (e) {
       if (mounted) showAppSnackBar(context, e.message, tone: Tone.danger);
     } finally {
@@ -937,7 +896,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         return;
       }
       _take(d);
-      if (_upcoming != null) _loadUpcoming();
       commitSaved(RecurringDraft.from(d.recurring));
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -1003,14 +961,33 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   Future<void> _delete(Recurring r) async {
     final l = AppLocalizations.of(context)!;
     bool deleteTxs = false;
-    if (r.counts.done > 0) {
+    // ONE call on this button: what the delete touches (the BE's numbers).
+    final RecurringDeletePreview? preview;
+    try {
+      preview = (await _repo.get(r.id, deletePreview: true)).deletePreview;
+    } on ApiException catch (e) {
+      if (mounted) {
+        showAppSnackBarOn(pageMessenger!, e.message, tone: Tone.danger);
+      }
+      return;
+    }
+    if (!mounted) return;
+    final linked = preview?.linkedTransactions ?? 0;
+    final numbers = preview == null
+        ? l.recurringDeleteBody
+        : l.fpM5bRecurringDeleteNumbers(
+            preview.items,
+            preview.pendingDrafts,
+            preview.linkedTransactions,
+          );
+    if (linked > 0) {
       final choice = await showLinkedPrompt(
         context,
         title: l.recurringDeleteTitle,
-        message: l.recurringDeleteLinkedBody(r.counts.done),
+        message: numbers,
         cancelLabel: l.linkedCancel,
         thisSideLabel: l.recurringDeleteKeepTxs,
-        bothSidesLabel: l.recurringDeleteWithTxs(r.counts.done),
+        bothSidesLabel: l.recurringDeleteWithTxs(linked),
         destructive: true,
       );
       if (!mounted || choice == null) return;
@@ -1019,7 +996,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       final ok = await showConfirmDialog(
         context,
         title: l.recurringDeleteTitle,
-        message: l.recurringDeleteBody,
+        message: numbers,
         confirmLabel: l.commonDelete,
         destructive: true,
       );
@@ -1209,6 +1186,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final symbol = context.readUserCurrencySymbol;
     final amount = r.amount;
     final known = amount != null && amount > 0;
+    final monthly = r.monthlyAmount;
     final next = r.nextDate;
     final installment = r.kind == RecurringKind.installment;
     SummaryTileView tile(String label, String value, [SummaryTileTone? tone]) =>
@@ -1273,10 +1251,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         onEnterEdit: () => enterEdit(focus: _descriptionFocus),
       ),
       number: HeroNumber(
-        label: l.fpRecurringPerRound,
-        value: known
+        label: l.fpM5bRecurringPerMonth,
+        value: monthly != null && monthly > 0
             ? MoneyText(
-                signedOf(r.type, amount),
+                signedOf(r.type, monthly),
                 tone: toneOf(r.type),
                 symbol: symbol,
               )
@@ -1447,6 +1425,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               onTap: _pickTrial,
             ),
         ] else ...[
+          if (r != null && r.hasAmount)
+            InfoRow(
+              label: l.fpM5bRecurringAmountPerTime,
+              value: moneyString(
+                context,
+                r.amount!,
+                symbol: context.readUserCurrencySymbol,
+              ),
+            ),
           if (rule.freq != RecurrenceFreq.dates)
             InfoRow(
               label: l.fpRecurringInfoSpan,
@@ -1562,7 +1549,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   /// date chips (edited amber, skipped struck, "โหลดเพิ่ม ›").
   Widget _upcomingTab(AppLocalizations l, Recurring r) {
     final page = _upcoming;
-    final items = page?.items ?? const <RecurringItem>[];
+    final items = page.items;
     final next = items.isEmpty ? null : items.first;
     final locale = Localizations.localeOf(context).toLanguageTag();
     String day(DateTime d) => DateFormat.MMMd(locale).format(d);
@@ -1596,10 +1583,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
 
     return ListPageBody(
-      loading: page == null && _upcomingError == null,
-      error: page == null ? _upcomingError : null,
+      loading: false,
+      error: null,
       isEmpty: items.isEmpty,
-      onRetry: _loadUpcoming,
+      onRetry: _load,
       rowDividers: false,
       topInset: AppSpacing.sm,
       empty: EmptyView(
@@ -1614,7 +1601,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           OccurrenceDates(
             title: l.fpRecurringThenTitle(r.counts.upcoming),
             dates: [for (final i in rest) chip(i)],
-            moreLabel: (page?.hasMore ?? false) ? l.fpRecurringMoreDates : null,
+            moreLabel: page.hasMore ? l.fpRecurringMoreDates : null,
             onMore: _upcomingMore ? null : _loadMoreUpcoming,
           ),
         ],

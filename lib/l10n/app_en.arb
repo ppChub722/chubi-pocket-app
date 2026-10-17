@@ -2545,5 +2545,22 @@
   "fpRecurringRestoreConsequence": "Active again, making occurrences",
   "fpRecurringDeleteConsequence": "Deletes this recurring with its unsaved occurrences",
   "fpRecurringDuplicate": "Duplicate",
-  "fpRecurringDuplicateConsequence": "Creates the same recurring, starting today"
+  "fpRecurringDuplicateConsequence": "Creates the same recurring, starting today",
+  "fpM5bRecurringPerMonth": "Per month",
+  "fpM5bRecurringAmountPerTime": "Amount each time",
+  "fpM5bRecurringDeleteNumbers": "This deletes {items} occurrences, {drafts} waiting drafts and touches {linked} saved records.",
+  "@fpM5bRecurringDeleteNumbers": {
+    "placeholders": {
+      "items": { "type": "int" },
+      "drafts": { "type": "int" },
+      "linked": { "type": "int" }
+    }
+  },
+  "fpM5bEventDeleteNumbers": "This deletes {bills} bills and {members} members.",
+  "@fpM5bEventDeleteNumbers": {
+    "placeholders": {
+      "bills": { "type": "int" },
+      "members": { "type": "int" }
+    }
+  }
 }

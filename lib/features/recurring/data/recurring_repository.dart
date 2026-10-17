@@ -90,10 +90,18 @@ class RecurringRepository {
   });
 
   /// `getRecurring`: the setting + its first produced items.
-  Future<RecurringDetail> get(String id) => _call((dio) async {
-    final res = await dio.get<Map<String, dynamic>>('/recurring/$id');
-    return RecurringDetail.fromJson(res.data!);
-  });
+  ///
+  /// [deletePreview] adds what a delete touches (`include=delete_preview`).
+  Future<RecurringDetail> get(String id, {bool deletePreview = false}) =>
+      _call((dio) async {
+        final res = await dio.get<Map<String, dynamic>>(
+          '/recurring/$id',
+          queryParameters: deletePreview
+              ? const {'include': 'delete_preview'}
+              : null,
+        );
+        return RecurringDetail.fromJson(res.data!);
+      });
 
   /// `createRecurring`.
   Future<RecurringDetail> create(RecurringWrite write) => _call((dio) async {

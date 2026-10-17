@@ -7324,4 +7324,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fpRecurringDuplicateConsequence =>
       'Creates the same recurring, starting today';
+
+  @override
+  String get fpM5bRecurringPerMonth => 'Per month';
+
+  @override
+  String get fpM5bRecurringAmountPerTime => 'Amount each time';
+
+  @override
+  String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked) {
+    return 'This deletes $items occurrences, $drafts waiting drafts and touches $linked saved records.';
+  }
+
+  @override
+  String fpM5bEventDeleteNumbers(int bills, int members) {
+    return 'This deletes $bills bills and $members members.';
+  }
 }

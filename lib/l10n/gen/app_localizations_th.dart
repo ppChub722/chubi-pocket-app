@@ -7152,4 +7152,20 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get fpRecurringDuplicateConsequence =>
       'สร้างรายการประจำใหม่ที่เหมือนกัน เริ่มวันนี้';
+
+  @override
+  String get fpM5bRecurringPerMonth => 'ต่อเดือน';
+
+  @override
+  String get fpM5bRecurringAmountPerTime => 'จำนวนต่อครั้ง';
+
+  @override
+  String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked) {
+    return 'จะลบ $items งวด ร่างที่รออยู่ $drafts รายการ และเกี่ยวข้องกับรายการที่บันทึกแล้ว $linked รายการ';
+  }
+
+  @override
+  String fpM5bEventDeleteNumbers(int bills, int members) {
+    return 'จะลบบิล $bills รายการ และสมาชิก $members คน';
+  }
 }
