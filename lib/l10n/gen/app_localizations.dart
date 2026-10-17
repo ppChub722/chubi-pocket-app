@@ -12528,6 +12528,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On plan'**
   String get fpM5GoalsChartPlan;
+
+  /// No description provided for @fpM5bRecurringPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Per month'**
+  String get fpM5bRecurringPerMonth;
+
+  /// No description provided for @fpM5bRecurringAmountPerTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount each time'**
+  String get fpM5bRecurringAmountPerTime;
+
+  /// No description provided for @fpM5bRecurringDeleteNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes {items} occurrences, {drafts} waiting drafts and touches {linked} saved records.'**
+  String fpM5bRecurringDeleteNumbers(int items, int drafts, int linked);
+
+  /// No description provided for @fpM5bEventDeleteNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes {bills} bills and {members} members.'**
+  String fpM5bEventDeleteNumbers(int bills, int members);
 }
 
 class _AppLocalizationsDelegate

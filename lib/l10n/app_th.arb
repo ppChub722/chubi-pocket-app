@@ -2277,5 +2277,10 @@
   "fpM5GoalsSortName": "ชื่อ",
   "fpM5GoalsMonthSaved": "ออมแล้ว {saved} / {plan}",
   "@fpM5GoalsMonthSaved": {"placeholders": {"saved": {"type": "String"}, "plan": {"type": "String"}}},
-  "fpM5GoalsChartPlan": "ตามแผน"
+  "fpM5GoalsChartPlan": "ตามแผน",
+  "fpRecurringDuplicateConsequence": "สร้างรายการประจำใหม่ที่เหมือนกัน เริ่มวันนี้",
+  "fpM5bRecurringPerMonth": "ต่อเดือน",
+  "fpM5bRecurringAmountPerTime": "จำนวนต่อครั้ง",
+  "fpM5bRecurringDeleteNumbers": "จะลบ {items} งวด ร่างที่รออยู่ {drafts} รายการ และเกี่ยวข้องกับรายการที่บันทึกแล้ว {linked} รายการ",
+  "fpM5bEventDeleteNumbers": "จะลบบิล {bills} รายการ และสมาชิก {members} คน"
 }

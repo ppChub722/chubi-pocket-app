@@ -2564,5 +2564,23 @@
   "fpM5GoalsSortName": "Name",
   "fpM5GoalsMonthSaved": "Saved {saved} / {plan}",
   "@fpM5GoalsMonthSaved": {"placeholders": {"saved": {"type": "String"}, "plan": {"type": "String"}}},
-  "fpM5GoalsChartPlan": "On plan"
+  "fpM5GoalsChartPlan": "On plan",
+  "fpRecurringDuplicateConsequence": "Creates the same recurring, starting today",
+  "fpM5bRecurringPerMonth": "Per month",
+  "fpM5bRecurringAmountPerTime": "Amount each time",
+  "fpM5bRecurringDeleteNumbers": "This deletes {items} occurrences, {drafts} waiting drafts and touches {linked} saved records.",
+  "@fpM5bRecurringDeleteNumbers": {
+    "placeholders": {
+      "items": { "type": "int" },
+      "drafts": { "type": "int" },
+      "linked": { "type": "int" }
+    }
+  },
+  "fpM5bEventDeleteNumbers": "This deletes {bills} bills and {members} members.",
+  "@fpM5bEventDeleteNumbers": {
+    "placeholders": {
+      "bills": { "type": "int" },
+      "members": { "type": "int" }
+    }
+  }
 }

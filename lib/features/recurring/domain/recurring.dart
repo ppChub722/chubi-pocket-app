@@ -160,6 +160,7 @@ class Recurring extends Equatable {
     this.tags = const [],
     this.trialUntil,
     this.yearlyCost = 0,
+    this.monthlyAmount,
     this.savedCount = 0,
     this.pendingCount = 0,
     this.nextAmount,
@@ -200,6 +201,10 @@ class Recurring extends Equatable {
 
   /// The BE's yearly cost / counts (the detail tiles).
   final double yearlyCost;
+
+  /// Amount x the times it happens in an average month (the hero's ต่อเดือน);
+  /// null = no amount.
+  final double? monthlyAmount;
   final int savedCount;
   final int pendingCount;
 
@@ -259,6 +264,7 @@ class Recurring extends Equatable {
       status: RecurringStatus.fromJson(json['status'] as String?),
       trialUntil: parseYmd(json['trial_until'] as String?),
       yearlyCost: (json['yearly_cost'] as num?)?.toDouble() ?? 0,
+      monthlyAmount: (json['monthly_amount'] as num?)?.toDouble(),
       savedCount: (json['saved_count'] as num?)?.toInt() ?? 0,
       pendingCount: (json['pending_count'] as num?)?.toInt() ?? 0,
       nextAmount: (json['next_amount'] as num?)?.toDouble(),
@@ -300,6 +306,7 @@ class Recurring extends Equatable {
     status,
     trialUntil,
     yearlyCost,
+    monthlyAmount,
     savedCount,
     pendingCount,
     nextAmount,

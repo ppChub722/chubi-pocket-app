@@ -7,6 +7,7 @@ import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.d
 import 'package:chubi_pocket/features/projects/data/projects_repository.dart';
 import 'package:chubi_pocket/features/projects/domain/project.dart';
 import 'package:chubi_pocket/features/projects/presentation/cubit/projects_cubit.dart';
+import 'package:chubi_pocket/features/projects/presentation/project_board_controller.dart';
 import 'package:chubi_pocket/features/projects/presentation/pages/project_detail_page.dart';
 import 'package:chubi_pocket/features/projects/presentation/pages/projects_page.dart';
 import 'package:chubi_pocket/features/tags/presentation/cubit/tags_cubit.dart';
@@ -41,6 +42,7 @@ class _Repo extends Fake implements ProjectsRepository {
   int totalPages = 1;
   final calls = <String>[];
   final statuses = <String?>[];
+  final payers = <String?>[];
 
   void _net() {
     if (networkDown) {
@@ -92,10 +94,19 @@ class _Repo extends Fake implements ProjectsRepository {
   }
 
   @override
-  Future<ProjectDetail> detail(String id, {int perPage = 50}) async {
-    calls.add('detail $id');
+  Future<ProjectDetail> detail(
+    String id, {
+    int perPage = 50,
+    bool deletePreview = false,
+  }) async {
+    calls.add(deletePreview ? 'preview $id' : 'detail $id');
     _net();
-    return ProjectDetail.fromJson(detailBody ?? detailJson());
+    return ProjectDetail.fromJson({
+      ...(detailBody ?? detailJson()),
+      'delete_preview': deletePreview
+          ? {'bills': 3, 'members': 2, 'linked_tx_count': 2}
+          : null,
+    });
   }
 
   @override
@@ -108,8 +119,10 @@ class _Repo extends Fake implements ProjectsRepository {
     String? q,
     String? tagId,
     String? sort,
+    String? payerMemberId,
   }) async {
     calls.add('bills tag=$tagId mine=$mine');
+    payers.add(payerMemberId);
     _net();
     return ProjectTransaction.flatten(
       boardRowJson(id: 'b9', description: 'Tagged bill'),
@@ -258,15 +271,25 @@ void main() {
       await t.tap(find.text('Not settled'));
       await t.pump();
       await t.pump(const Duration(milliseconds: 100));
-      // Read from "all", narrowed by what the BE sent on each row.
-      expect(repo.statuses.last, 'all');
-      expect(find.byType(EventListRow), findsNWidgets(2));
-      expect(find.text('Picnic'), findsNothing);
+      // The derived filter is the server's: sent as `status`, the rows it
+      // answers are shown as they are (no client-side narrowing).
+      expect(repo.statuses.last, 'unsettled');
+      expect(find.byType(EventListRow), findsNWidgets(3));
+      expect(repo.calls.length, 2);
       // Tapping the ringed tile again goes back to the default.
       await t.tap(find.text('Not settled'));
       await t.pump();
       await t.pump(const Duration(milliseconds: 100));
       expect(repo.statuses.last, 'active');
+    });
+
+    testWidgets('the ended tile sends status=ended', (t) async {
+      await pump(t, const ProjectsPage());
+      await t.tap(find.text('Ended'));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.statuses.last, 'ended');
+      expect(repo.calls.length, 2);
     });
 
     testWidgets('search runs on the server (debounced, one call)', (t) async {
@@ -376,6 +399,19 @@ void main() {
       expect(find.text('Dinner'), findsOneWidget);
     });
 
+    test('the payer filter is ONE server call with payer_member_id', () async {
+      final repo = _Repo();
+      final board = ProjectBoardController(repository: repo, projectId: 'e1');
+      await board.change(payerId: 'm-lee');
+      expect(repo.payers, ['m-lee']);
+      expect(repo.calls, ['bills tag=null mine=false']);
+      expect(board.serverFiltered, isTrue);
+      await board.change(payerId: null);
+      expect(repo.calls.length, 1);
+      expect(board.rows, isNull);
+      board.dispose();
+    });
+
     testWidgets('network down → error + retry; retry loads it', (t) async {
       repo.networkDown = true;
       await pump(t, const ProjectDetailPage(id: 'e1'));
@@ -469,7 +505,7 @@ void main() {
 
     group('delete (owner 2026-10-13)', () {
       Future<void> openDelete(WidgetTester t) async {
-        repo.detailBody = detailJson(linkedTxCount: 2);
+        repo.detailBody = detailJson();
         // /projects → /projects/e1: the page leaves to the list after a
         // delete.
         final router = GoRouter(
@@ -502,6 +538,9 @@ void main() {
         t,
       ) async {
         await openDelete(t);
+        // ONE preview call on the button; its numbers are in the dialog.
+        expect(repo.calls, ['detail e1', 'preview e1']);
+        expect(find.textContaining('3 bills and 2 members'), findsOneWidget);
         expect(find.text('Not now'), findsOneWidget);
         expect(find.text('Delete, keep my transactions'), findsOneWidget);
         await t.tap(find.text('Delete and remove 2 transactions'));

@@ -463,7 +463,10 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Button "บันทึก" (edit event) / status / my tags', [
       FlowCall('updateProject'),
     ]),
-    FlowStep.action('Button "ลบอีเวนต์นี้"', [FlowCall('deleteProject')]),
+    FlowStep.action('Button "ลบอีเวนต์นี้"', [
+      FlowCall('getProjectDetail', note: '?include=delete_preview'),
+    ]),
+    FlowStep.action('Delete dialog "ยืนยัน"', [FlowCall('deleteProject')]),
     FlowStep.action('Button "เชิญสมาชิก"', [FlowCall('addProjectMember')]),
     FlowStep.action('Tick a bill / split', [
       FlowCall('markProjectTransaction'),
@@ -611,7 +614,10 @@ const List<PageFlow> pageFlows = [
       FlowCall('archiveRecurring'),
       FlowCall('restoreRecurring'),
     ]),
-    FlowStep.action('Button "ลบ"', [FlowCall('deleteRecurring')]),
+    FlowStep.action('Button "ลบ"', [
+      FlowCall('getRecurring', note: '?include=delete_preview'),
+    ]),
+    FlowStep.action('Delete dialog "ยืนยัน"', [FlowCall('deleteRecurring')]),
   ]),
 
   // ── Debts ───────────────────────────────────────────────────────────────────

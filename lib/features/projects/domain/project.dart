@@ -125,7 +125,6 @@ class Project extends Equatable {
     this.canAddBill = false,
     this.canEdit = false,
     this.canManageMembers = false,
-    this.linkedTxCount = 0,
     this.createdAt,
     this.updatedAt,
   });
@@ -183,10 +182,6 @@ class Project extends Equatable {
   final bool canEdit;
   final bool canManageMembers;
 
-  /// My personal transactions linked to its bills (the delete confirm's
-  /// "ยืนยันและลบ [x] รายการ").
-  final int linkedTxCount;
-
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -235,7 +230,6 @@ class Project extends Equatable {
       canAddBill: json['can_add_bill'] == true,
       canEdit: json['can_edit'] == true,
       canManageMembers: json['can_manage_members'] == true,
-      linkedTxCount: (json['linked_tx_count'] as num?)?.toInt() ?? 0,
       createdAt: _date(json['created_at']),
       updatedAt: _date(json['updated_at']),
     );
@@ -270,7 +264,6 @@ class Project extends Equatable {
     canAddBill,
     canEdit,
     canManageMembers,
-    linkedTxCount,
     createdAt,
     updatedAt,
   ];
@@ -866,6 +859,29 @@ List<ProjectTransaction> _board(Object? rows) => [
   for (final r in _list(rows)) ...ProjectTransaction.flatten(r),
 ];
 
+/// What deleting an event removes (`GET /projects/:id/detail?include=
+/// delete_preview`): the confirm dialog's numbers.
+class EventDeletePreview {
+  const EventDeletePreview({
+    this.bills = 0,
+    this.members = 0,
+    this.linkedTxCount = 0,
+  });
+
+  factory EventDeletePreview.fromJson(Map<String, dynamic> json) =>
+      EventDeletePreview(
+        bills: (json['bills'] as num?)?.toInt() ?? 0,
+        members: (json['members'] as num?)?.toInt() ?? 0,
+        linkedTxCount: (json['linked_tx_count'] as num?)?.toInt() ?? 0,
+      );
+
+  final int bills;
+  final int members;
+
+  /// My own book records linked to the event (delete_linked_txs).
+  final int linkedTxCount;
+}
+
 /// Everything the event page shows (API `EventDetail`, the one "open"
 /// call).
 class ProjectDetail {
@@ -877,7 +893,11 @@ class ProjectDetail {
     this.tags = const [],
     this.page = 1,
     this.totalPages = 1,
+    this.deletePreview,
   });
+
+  /// Only with `include=delete_preview`, else null.
+  final EventDeletePreview? deletePreview;
 
   final Project project;
   final List<ProjectMember> members;
@@ -911,6 +931,11 @@ class ProjectDetail {
       tags: [for (final t in _list(json['tags'])) BoardTag.fromJson(t)],
       page: (pag?['page'] as num?)?.toInt() ?? 1,
       totalPages: (pag?['total_pages'] as num?)?.toInt() ?? 1,
+      deletePreview: json['delete_preview'] is Map<String, dynamic>
+          ? EventDeletePreview.fromJson(
+              json['delete_preview'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 }

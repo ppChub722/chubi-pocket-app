@@ -193,50 +193,16 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
     }
   }
 
-  /// The list tiles' filters. The BE's `status` knows active / completed /
-  /// cancelled / archived / all; `unsettled` and `ended` (the summary's own
-  /// counts) are read from `all` and narrowed here by what the BE sent on
-  /// each row (status, my_receivable / my_payable) — no numbers computed.
-  /// Pages that narrow to nothing keep paging (a few) until a row shows.
-  Future<ProjectPage> _list(ProjectsState s, {int page = 1}) async {
-    final narrowed = s.statusFilter == 'unsettled' || s.statusFilter == 'ended';
-    final wire = narrowed ? 'all' : s.statusFilter;
-    var at = page;
-    ProjectPage p;
-    List<Project> rows;
-    do {
-      p = await _repo.list(
-        status: wire,
-        q: s.query,
-        tagIds: s.tagIds,
-        sort: s.sort,
-        page: at,
-      );
-      rows = narrowed
-          ? [
-              for (final x in p.projects)
-                if (_inFilter(s.statusFilter, x)) x,
-            ]
-          : p.projects;
-      at++;
-    } while (narrowed && rows.isEmpty && p.hasMore && at < page + 5);
-    return ProjectPage(
-      projects: rows,
-      page: p.page,
-      totalPages: p.totalPages,
-      summary: p.summary,
-    );
-  }
-
-  /// Whether [p] belongs under the tile [filter].
-  static bool _inFilter(String filter, Project p) => switch (filter) {
-    'unsettled' => p.status != ProjectStatus.archived && p.isUnsettled,
-    'ended' =>
-      p.status == ProjectStatus.completed ||
-          p.status == ProjectStatus.cancelled,
-    'all' => true,
-    _ => p.status.wire == filter,
-  };
+  /// ONE call: the tile's filter goes to the BE as `status` (active /
+  /// completed / cancelled / archived / all, and the derived unsettled /
+  /// receivable / ended that match the summary counts).
+  Future<ProjectPage> _list(ProjectsState s, {int page = 1}) => _repo.list(
+    status: s.statusFilter,
+    q: s.query,
+    tagIds: s.tagIds,
+    sort: s.sort,
+    page: page,
+  );
 
   static bool _same(ProjectsState a, ProjectsState b) =>
       a.statusFilter == b.statusFilter &&
@@ -360,7 +326,12 @@ class ProjectsCubit extends Cubit<ProjectsState> with Clearable {
   /// filter / page); a status change out of the current filter drops it.
   void patch(Project p) {
     if (!state.projects.any((x) => x.id == p.id)) return;
-    if (!_inFilter(state.statusFilter, p)) return remove(p.id);
+    // A stored-status tile drops a row whose status left it; the derived
+    // tiles (unsettled / receivable / ended) are the server's: the row stays
+    // until the next load.
+    final f = state.statusFilter;
+    const stored = {'active', 'completed', 'cancelled', 'archived'};
+    if (stored.contains(f) && p.status.wire != f) return remove(p.id);
     emit(
       state.copyWith(
         projects: [
