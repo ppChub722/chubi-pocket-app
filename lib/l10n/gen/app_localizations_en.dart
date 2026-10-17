@@ -6479,4 +6479,155 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpBudgetsDeleteConsequence => 'Deleted for good, every period';
+
+  @override
+  String get fpGoalsListCaption => 'Total savings now';
+
+  @override
+  String fpGoalsMonthShortLine(String amount) {
+    return 'Still short this month $amount';
+  }
+
+  @override
+  String fpGoalsSpareLine(String amount) {
+    return '🐷 Not allocated $amount ›';
+  }
+
+  @override
+  String fpGoalsStatusChip(String status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String get fpGoalsGroupShort => 'Still short this month';
+
+  @override
+  String get fpGoalsGroupDone => 'Done this month ✓';
+
+  @override
+  String get fpGoalsGroupNoPlan => 'No monthly plan yet';
+
+  @override
+  String fpGoalsRowShort(String amount) {
+    return 'Short $amount';
+  }
+
+  @override
+  String fpGoalsEtaOn(String date) {
+    return 'Goal $date';
+  }
+
+  @override
+  String fpGoalsEtaBehind(String date, int n) {
+    return 'Goal $date · $n months late';
+  }
+
+  @override
+  String get fpGoalsBehind => 'Behind plan';
+
+  @override
+  String get fpGoalsReached => 'Reached';
+
+  @override
+  String get fpGoalsClosed => 'Closed';
+
+  @override
+  String get fpGoalsSavedLabel => 'Saved';
+
+  @override
+  String fpGoalsTargetSuffix(String target, int pct) {
+    return '/ $target · $pct%';
+  }
+
+  @override
+  String fpGoalsDaysLeft(int count) {
+    return '$count days left';
+  }
+
+  @override
+  String get fpGoalsTileShort => 'Short this month';
+
+  @override
+  String get fpGoalsTileSaved => 'Saved this month';
+
+  @override
+  String get fpGoalsTileNeeded => 'Needed / month';
+
+  @override
+  String get fpGoalsActionSave => 'Save';
+
+  @override
+  String get fpGoalsActionRestore => 'Restore';
+
+  @override
+  String get fpGoalsSettingsDesc => 'Save automatically';
+
+  @override
+  String fpGoalsAutoCaption(String day, String amount, String wallet) {
+    return '$day · $amount from $wallet';
+  }
+
+  @override
+  String get fpGoalsAutoOffHint =>
+      'Turn on to get a saving to confirm every month';
+
+  @override
+  String get fpGoalsAutoEdit => 'Edit amount, day and wallet';
+
+  @override
+  String get fpGoalsAutoSheetTitle => 'Auto-saving';
+
+  @override
+  String get fpGoalsAutoDay => 'Day of the month';
+
+  @override
+  String get fpGoalsAutoFrom => 'Take from';
+
+  @override
+  String get fpGoalsNoWallet => 'No wallet';
+
+  @override
+  String get fpGoalsChartActual => 'Saved';
+
+  @override
+  String get fpGoalsAutoTag => 'Auto';
+
+  @override
+  String fpGoalsPlanLeft(String saved, String left) {
+    return 'Saved $saved · $left to go';
+  }
+
+  @override
+  String fpGoalsPlanNeeded(String amount) {
+    return 'Save $amount/month';
+  }
+
+  @override
+  String get fpGoalsCloseConsequence =>
+      'Move the money to “Not allocated” or back to its wallets';
+
+  @override
+  String get fpGoalsArchiveConsequence =>
+      'Hidden, not counted, can be restored';
+
+  @override
+  String get fpGoalsArchiveNeedsClose => 'Close the goal first';
+
+  @override
+  String get fpGoalsArchiveHasSavings => 'Close the goal before archiving it';
+
+  @override
+  String get fpGoalsDeleteConsequence =>
+      'Deleted for good, with its saving history';
+
+  @override
+  String get fpGoalsArchiveConfirmBody =>
+      'Hide this goal. It is not counted and can be restored later.';
+
+  @override
+  String get fpGoalsDeleteConfirmBody =>
+      'Delete this goal for good, with its saving history.';
+
+  @override
+  String get fpGoalsRefreshFailed => 'Refresh failed, showing the latest data';
 }

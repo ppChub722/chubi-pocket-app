@@ -27,7 +27,7 @@ class ActionBarItem {
   final bool submits;
 }
 
-/// The actions under a hero (owner 2026-10-12): 2–4 EQUAL-width buttons in one
+/// The actions under a hero (owner 2026-10-12): 1–4 EQUAL-width buttons in one
 /// row, control height 40, icon + label — e.g. a wallet's
 /// `[⟳ ปรับยอด] [+ รายการ] [⇄ โอน]`. Labels stay short; a longer one is
 /// ellipsised, never wraps.
@@ -44,8 +44,8 @@ class ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     assert(
-      actions.length >= 2 && actions.length <= 4,
-      'ActionBar holds 2–4 actions',
+      actions.isNotEmpty && actions.length <= 4,
+      'ActionBar holds 1–4 actions',
     );
     return Padding(
       padding: padding,

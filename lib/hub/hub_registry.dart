@@ -888,7 +888,7 @@ final List<HubPage> hubPages = [
     slug: 'saving',
     title: 'Saving goals',
     summary:
-        'Saving goals v2: milestone steps, history chart, saving-tx row (+ draft), move / withdraw sheet, close-goal dialog, action row.',
+        'Saving goals v2: milestone steps, history chart, goal row, saving-tx row (+ draft), move / withdraw sheet, auto-saving sheet, close-goal dialog, action row.',
     generic: false,
     usedBy: 'Saving goals list / detail, wallet page, pending list',
     covers: [
@@ -908,6 +908,12 @@ final List<HubPage> hubPages = [
       'CloseGoalDialog',
       'CloseGoalChoice',
       'CloseGoalReturn',
+      'SavingGoalRow',
+      'ChartSection',
+      'showSavingAutoSaveSheet',
+      'SavingAutoSaveSheet',
+      'SavingAutoSaveWallet',
+      'SavingAutoSaveResult',
     ],
     builder: buildDomainSavingPage,
   ),

@@ -11010,6 +11010,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deleted for good, every period'**
   String get fpBudgetsDeleteConsequence;
+
+  /// No description provided for @fpGoalsListCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Total savings now'**
+  String get fpGoalsListCaption;
+
+  /// No description provided for @fpGoalsMonthShortLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Still short this month {amount}'**
+  String fpGoalsMonthShortLine(String amount);
+
+  /// No description provided for @fpGoalsSpareLine.
+  ///
+  /// In en, this message translates to:
+  /// **'🐷 Not allocated {amount} ›'**
+  String fpGoalsSpareLine(String amount);
+
+  /// No description provided for @fpGoalsStatusChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Status: {status}'**
+  String fpGoalsStatusChip(String status);
+
+  /// No description provided for @fpGoalsGroupShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Still short this month'**
+  String get fpGoalsGroupShort;
+
+  /// No description provided for @fpGoalsGroupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done this month ✓'**
+  String get fpGoalsGroupDone;
+
+  /// No description provided for @fpGoalsGroupNoPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'No monthly plan yet'**
+  String get fpGoalsGroupNoPlan;
+
+  /// No description provided for @fpGoalsRowShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short {amount}'**
+  String fpGoalsRowShort(String amount);
+
+  /// No description provided for @fpGoalsEtaOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal {date}'**
+  String fpGoalsEtaOn(String date);
+
+  /// No description provided for @fpGoalsEtaBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal {date} · {n} months late'**
+  String fpGoalsEtaBehind(String date, int n);
+
+  /// No description provided for @fpGoalsBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'Behind plan'**
+  String get fpGoalsBehind;
+
+  /// No description provided for @fpGoalsReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Reached'**
+  String get fpGoalsReached;
+
+  /// No description provided for @fpGoalsClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get fpGoalsClosed;
+
+  /// No description provided for @fpGoalsSavedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get fpGoalsSavedLabel;
+
+  /// No description provided for @fpGoalsTargetSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'/ {target} · {pct}%'**
+  String fpGoalsTargetSuffix(String target, int pct);
+
+  /// No description provided for @fpGoalsDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days left'**
+  String fpGoalsDaysLeft(int count);
+
+  /// No description provided for @fpGoalsTileShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Short this month'**
+  String get fpGoalsTileShort;
+
+  /// No description provided for @fpGoalsTileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved this month'**
+  String get fpGoalsTileSaved;
+
+  /// No description provided for @fpGoalsTileNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed / month'**
+  String get fpGoalsTileNeeded;
+
+  /// No description provided for @fpGoalsActionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get fpGoalsActionSave;
+
+  /// No description provided for @fpGoalsActionRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get fpGoalsActionRestore;
+
+  /// No description provided for @fpGoalsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Save automatically'**
+  String get fpGoalsSettingsDesc;
+
+  /// No description provided for @fpGoalsAutoCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} · {amount} from {wallet}'**
+  String fpGoalsAutoCaption(String day, String amount, String wallet);
+
+  /// No description provided for @fpGoalsAutoOffHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on to get a saving to confirm every month'**
+  String get fpGoalsAutoOffHint;
+
+  /// No description provided for @fpGoalsAutoEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit amount, day and wallet'**
+  String get fpGoalsAutoEdit;
+
+  /// No description provided for @fpGoalsAutoSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-saving'**
+  String get fpGoalsAutoSheetTitle;
+
+  /// No description provided for @fpGoalsAutoDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of the month'**
+  String get fpGoalsAutoDay;
+
+  /// No description provided for @fpGoalsAutoFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Take from'**
+  String get fpGoalsAutoFrom;
+
+  /// No description provided for @fpGoalsNoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallet'**
+  String get fpGoalsNoWallet;
+
+  /// No description provided for @fpGoalsChartActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get fpGoalsChartActual;
+
+  /// No description provided for @fpGoalsAutoTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get fpGoalsAutoTag;
+
+  /// No description provided for @fpGoalsPlanLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {saved} · {left} to go'**
+  String fpGoalsPlanLeft(String saved, String left);
+
+  /// No description provided for @fpGoalsPlanNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Save {amount}/month'**
+  String fpGoalsPlanNeeded(String amount);
+
+  /// No description provided for @fpGoalsCloseConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the money to “Not allocated” or back to its wallets'**
+  String get fpGoalsCloseConsequence;
+
+  /// No description provided for @fpGoalsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted, can be restored'**
+  String get fpGoalsArchiveConsequence;
+
+  /// No description provided for @fpGoalsArchiveNeedsClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the goal first'**
+  String get fpGoalsArchiveNeedsClose;
+
+  /// No description provided for @fpGoalsArchiveHasSavings.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the goal before archiving it'**
+  String get fpGoalsArchiveHasSavings;
+
+  /// No description provided for @fpGoalsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good, with its saving history'**
+  String get fpGoalsDeleteConsequence;
+
+  /// No description provided for @fpGoalsArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this goal. It is not counted and can be restored later.'**
+  String get fpGoalsArchiveConfirmBody;
+
+  /// No description provided for @fpGoalsDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this goal for good, with its saving history.'**
+  String get fpGoalsDeleteConfirmBody;
+
+  /// No description provided for @fpGoalsRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh failed, showing the latest data'**
+  String get fpGoalsRefreshFailed;
 }
 
 class _AppLocalizationsDelegate
