@@ -6118,4 +6118,153 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'สมาชิก';
+
+  @override
+  String get fpGoalsListCaption => 'เงินออมทั้งหมดตอนนี้';
+
+  @override
+  String fpGoalsMonthShortLine(String amount) {
+    return 'เดือนนี้ขาดอีก $amount';
+  }
+
+  @override
+  String fpGoalsSpareLine(String amount) {
+    return '🐷 ยังไม่จัดสรร $amount ›';
+  }
+
+  @override
+  String fpGoalsStatusChip(String status) {
+    return 'สถานะ: $status';
+  }
+
+  @override
+  String get fpGoalsGroupShort => 'เดือนนี้ยังขาด';
+
+  @override
+  String get fpGoalsGroupDone => 'เดือนนี้ครบแล้ว ✓';
+
+  @override
+  String get fpGoalsGroupNoPlan => 'ยังไม่มีแผนรายเดือน';
+
+  @override
+  String fpGoalsRowShort(String amount) {
+    return 'ขาด $amount';
+  }
+
+  @override
+  String fpGoalsEtaOn(String date) {
+    return 'ถึงเป้า $date';
+  }
+
+  @override
+  String fpGoalsEtaBehind(String date, int n) {
+    return 'ถึงเป้า $date · ช้า $n เดือน';
+  }
+
+  @override
+  String get fpGoalsBehind => 'ช้ากว่าแผน';
+
+  @override
+  String get fpGoalsReached => 'ครบแล้ว';
+
+  @override
+  String get fpGoalsClosed => 'ปิดแล้ว';
+
+  @override
+  String get fpGoalsSavedLabel => 'ออมแล้ว';
+
+  @override
+  String fpGoalsTargetSuffix(String target, int pct) {
+    return '/ $target · $pct%';
+  }
+
+  @override
+  String fpGoalsDaysLeft(int count) {
+    return 'อีก $count วัน';
+  }
+
+  @override
+  String get fpGoalsTileShort => 'เดือนนี้ขาด';
+
+  @override
+  String get fpGoalsTileSaved => 'เดือนนี้ออมแล้ว';
+
+  @override
+  String get fpGoalsTileNeeded => 'ต้องออม/เดือน';
+
+  @override
+  String get fpGoalsActionSave => 'ออม';
+
+  @override
+  String get fpGoalsActionRestore => 'กู้คืน';
+
+  @override
+  String get fpGoalsSettingsDesc => 'ระบบออมให้อัตโนมัติ';
+
+  @override
+  String fpGoalsAutoCaption(String day, String amount, String wallet) {
+    return '$day · $amount จาก $wallet';
+  }
+
+  @override
+  String get fpGoalsAutoOffHint =>
+      'เปิดเพื่อให้ระบบสร้างรายการออมให้ยืนยันทุกเดือน';
+
+  @override
+  String get fpGoalsAutoEdit => 'แก้จำนวน วัน และกระเป๋า';
+
+  @override
+  String get fpGoalsAutoSheetTitle => 'ออมอัตโนมัติ';
+
+  @override
+  String get fpGoalsAutoDay => 'วันที่ออมของทุกเดือน';
+
+  @override
+  String get fpGoalsAutoFrom => 'กันเงินจาก';
+
+  @override
+  String get fpGoalsNoWallet => 'ไม่มีกระเป๋า';
+
+  @override
+  String get fpGoalsChartActual => 'ออมจริง';
+
+  @override
+  String get fpGoalsAutoTag => 'อัตโนมัติ';
+
+  @override
+  String fpGoalsPlanLeft(String saved, String left) {
+    return 'ออมแล้ว $saved · เหลือ $left';
+  }
+
+  @override
+  String fpGoalsPlanNeeded(String amount) {
+    return 'ต้องออม $amount/เดือน';
+  }
+
+  @override
+  String get fpGoalsCloseConsequence =>
+      'ย้ายเงินไป “ยังไม่จัดสรร” หรือคืนกระเป๋าเดิม';
+
+  @override
+  String get fpGoalsArchiveConsequence => 'ซ่อนไว้ ไม่นับในยอด กู้คืนได้';
+
+  @override
+  String get fpGoalsArchiveNeedsClose => 'ปิดเป้าหมายก่อน';
+
+  @override
+  String get fpGoalsArchiveHasSavings => 'ปิดเป้าหมายก่อนจึงจะเก็บถาวรได้';
+
+  @override
+  String get fpGoalsDeleteConsequence => 'ลบถาวร พร้อมประวัติการออม';
+
+  @override
+  String get fpGoalsArchiveConfirmBody =>
+      'ซ่อนเป้าหมายนี้ ไม่นับในยอด กู้คืนได้ภายหลัง';
+
+  @override
+  String get fpGoalsDeleteConfirmBody =>
+      'ลบเป้าหมายนี้ถาวร พร้อมประวัติการออมของเป้าหมาย';
+
+  @override
+  String get fpGoalsRefreshFailed => 'รีเฟรชไม่สำเร็จ แสดงข้อมูลล่าสุดที่มี';
 }

@@ -265,6 +265,82 @@ class _SavingPageState extends State<_SavingPage> {
           ),
         ),
         HubDemo(
+          title: 'SavingGoalRow — behind · on track · reached · archived',
+          note:
+              'A goals-list row (reference §2): icon · name · "ขาด ฿x" / ✓ · '
+              'thick bar in the goal colour · "saved / target" · ETA badge '
+              '(amber when behind, green on track / reached). No buttons; tap '
+              'opens the goal. Every word is a param.',
+          child: AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                SavingGoalRow(
+                  title: 'Wedding',
+                  value: 0.3,
+                  amountText: '฿60,000 / ฿200,000',
+                  trailing: 'Short ฿2,500',
+                  trailingTone: Tone.warning,
+                  badge: 'Goal Aug 2029 · 2 months late',
+                  badgeTone: Tone.warning,
+                  onTap: () {},
+                ),
+                SavingGoalRow(
+                  title: 'Japan trip',
+                  value: 0.65,
+                  amountText: '฿52,000 / ฿80,000',
+                  trailing: '✓',
+                  trailingTone: Tone.success,
+                  badge: 'Goal Mar 2027',
+                  onTap: () {},
+                ),
+                const SavingGoalRow(
+                  title: 'Old goal',
+                  value: 1,
+                  amountText: '฿10,000 / ฿10,000',
+                  badge: 'Archived',
+                  badgeTone: Tone.neutral,
+                  dimmed: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+        HubDemo(
+          title: 'showSavingAutoSaveSheet',
+          note:
+              'The auto-saving sheet: amount · day of the month · the wallet '
+              '(the app owns the wallet picker — "no wallet" is a valid '
+              'source). Save is disabled until the amount is above zero. '
+              'Resolves (amount, day, accountId) or null.',
+          child: AppButton(
+            label: 'Auto-saving sheet',
+            variant: AppButtonVariant.outlined,
+            onPressed: () async {
+              final r = await showSavingAutoSaveSheet(
+                context,
+                title: 'Auto-saving',
+                amountLabel: 'Amount',
+                dayLabel: 'Day of the month',
+                walletLabel: 'Take from',
+                saveLabel: 'Save',
+                amount: 5500,
+                day: 25,
+                wallet: const SavingAutoSaveWallet(label: 'No wallet'),
+                onPickWallet: () async =>
+                    const SavingAutoSaveWallet(id: 'kbank', label: 'KBank'),
+              );
+              if (mounted) {
+                setState(
+                  () => _result = r == null
+                      ? 'Auto-saving sheet resolved: null'
+                      : 'Auto-saving: ${r.amount} on day ${r.day} from ${r.accountId}',
+                );
+              }
+            },
+          ),
+        ),
+        HubDemo(
           title: 'Goal action row — ActionBar under the hero',
           note:
               'No new piece: ActionBar (2–4 equal buttons, first = primary) '

@@ -75,6 +75,7 @@ class ListSummaryCard extends StatelessWidget {
     this.alert,
     this.onAlertTap,
     this.infoLine,
+    this.onInfoTap,
     this.tiles = const [],
     this.cta,
     this.style = const HeroStyle.plain(),
@@ -109,6 +110,9 @@ class ListSummaryCard extends StatelessWidget {
 
   /// A free line under the bar.
   final Widget? infoLine;
+
+  /// Makes the [infoLine] tappable (a link to another page).
+  final VoidCallback? onInfoTap;
   final List<SummaryTile> tiles;
   final SummaryCta? cta;
   final HeroStyle style;
@@ -178,7 +182,12 @@ class ListSummaryCard extends StatelessWidget {
           ],
         ),
       if (bar != null) ...[small, bar!],
-      if (infoLine != null) ...[small, infoLine!],
+      if (infoLine != null) ...[
+        small,
+        onInfoTap == null
+            ? infoLine!
+            : InkWell(onTap: onInfoTap, child: infoLine!),
+      ],
       if (alert != null) ...[
         small,
         _AlertLine(text: alert!, onTap: onAlertTap),

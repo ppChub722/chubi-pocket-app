@@ -168,6 +168,8 @@ export 'organisms/charts/saving_history_chart.dart';
 export 'domain/saving/saving_tx_row.dart';
 export 'domain/saving/saving_move_sheet.dart';
 export 'domain/saving/close_goal_dialog.dart';
+export 'domain/saving/saving_goal_row.dart';
+export 'domain/saving/saving_auto_save_sheet.dart';
 export 'domain/money/ledger_row.dart';
 export 'domain/money/net_balance.dart';
 export 'domain/people/person_balance_row.dart';
