@@ -7299,4 +7299,59 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fpRecurringDuplicateConsequence =>
       'Creates the same recurring, starting today';
+
+  @override
+  String fpM5ContactDeleteDebts(int n) {
+    return '$n debt records keep only the name';
+  }
+
+  @override
+  String fpM5ContactDeleteMembers(int n) {
+    return 'Member of $n events';
+  }
+
+  @override
+  String get fpM5ContactDeleteLinked =>
+      'Linked to an account, the link is removed';
+
+  @override
+  String fpM5BudgetDeleteBody(
+    int periods,
+    int overridden,
+    int categories,
+    int wallets,
+  ) {
+    return 'Deletes $periods periods ($overridden adjusted) · $categories categories · $wallets wallets. Transactions are not affected.';
+  }
+
+  @override
+  String fpM5GoalDeleteBody(int n) {
+    return 'Deletes this goal for good. $n saving entries stay, detached from it.';
+  }
+
+  @override
+  String get fpM5GoalsSortTooltip => 'Sort';
+
+  @override
+  String get fpM5GoalsSortCreated => 'By created';
+
+  @override
+  String get fpM5GoalsSortDeadline => 'Nearest deadline';
+
+  @override
+  String get fpM5GoalsSortProgress => 'Progress';
+
+  @override
+  String get fpM5GoalsSortRemaining => 'Remaining';
+
+  @override
+  String get fpM5GoalsSortName => 'Name';
+
+  @override
+  String fpM5GoalsMonthSaved(String saved, String plan) {
+    return 'Saved $saved / $plan';
+  }
+
+  @override
+  String get fpM5GoalsChartPlan => 'On plan';
 }

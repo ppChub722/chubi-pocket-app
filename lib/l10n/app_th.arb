@@ -2254,4 +2254,23 @@
   "fpRecurringDeleteConsequence": "ลบรายการประจำนี้ พร้อมงวดที่ยังไม่บันทึก",
   "fpRecurringDuplicate": "ทำสำเนา",
   "fpRecurringDuplicateConsequence": "สร้างรายการประจำใหม่ที่เหมือนกัน เริ่มวันนี้"
+,
+  "fpM5ContactDeleteDebts": "รายการหนี้ {n} รายการ จะเหลือแค่ชื่อ",
+  "@fpM5ContactDeleteDebts": {"placeholders": {"n": {"type": "int"}}},
+  "fpM5ContactDeleteMembers": "เป็นสมาชิกอีเวนต์ {n} งาน",
+  "@fpM5ContactDeleteMembers": {"placeholders": {"n": {"type": "int"}}},
+  "fpM5ContactDeleteLinked": "เชื่อมบัญชีอยู่ จะถูกตัดการเชื่อมต่อ",
+  "fpM5BudgetDeleteBody": "ลบถาวร {periods} รอบ (ปรับเอง {overridden} รอบ) · {categories} หมวด · {wallets} กระเป๋า · รายการธุรกรรมไม่ได้รับผลกระทบ",
+  "@fpM5BudgetDeleteBody": {"placeholders": {"periods": {"type": "int"}, "overridden": {"type": "int"}, "categories": {"type": "int"}, "wallets": {"type": "int"}}},
+  "fpM5GoalDeleteBody": "ลบเป้าหมายนี้ถาวร รายการออม {n} รายการจะไม่ผูกกับเป้าหมายอีก",
+  "@fpM5GoalDeleteBody": {"placeholders": {"n": {"type": "int"}}},
+  "fpM5GoalsSortTooltip": "เรียงลำดับ",
+  "fpM5GoalsSortCreated": "เรียงตามสร้าง",
+  "fpM5GoalsSortDeadline": "ใกล้ถึงก่อน",
+  "fpM5GoalsSortProgress": "ความคืบหน้า",
+  "fpM5GoalsSortRemaining": "ที่เหลือ",
+  "fpM5GoalsSortName": "ชื่อ",
+  "fpM5GoalsMonthSaved": "ออมแล้ว {saved} / {plan}",
+  "@fpM5GoalsMonthSaved": {"placeholders": {"saved": {"type": "String"}, "plan": {"type": "String"}}},
+  "fpM5GoalsChartPlan": "ตามแผน"
 }

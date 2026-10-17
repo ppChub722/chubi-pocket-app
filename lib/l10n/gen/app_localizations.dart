@@ -12408,6 +12408,89 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Creates the same recurring, starting today'**
   String get fpRecurringDuplicateConsequence;
+
+  /// No description provided for @fpM5ContactDeleteDebts.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} debt records keep only the name'**
+  String fpM5ContactDeleteDebts(int n);
+
+  /// No description provided for @fpM5ContactDeleteMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Member of {n} events'**
+  String fpM5ContactDeleteMembers(int n);
+
+  /// No description provided for @fpM5ContactDeleteLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to an account, the link is removed'**
+  String get fpM5ContactDeleteLinked;
+
+  /// No description provided for @fpM5BudgetDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes {periods} periods ({overridden} adjusted) · {categories} categories · {wallets} wallets. Transactions are not affected.'**
+  String fpM5BudgetDeleteBody(
+    int periods,
+    int overridden,
+    int categories,
+    int wallets,
+  );
+
+  /// No description provided for @fpM5GoalDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes this goal for good. {n} saving entries stay, detached from it.'**
+  String fpM5GoalDeleteBody(int n);
+
+  /// No description provided for @fpM5GoalsSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get fpM5GoalsSortTooltip;
+
+  /// No description provided for @fpM5GoalsSortCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'By created'**
+  String get fpM5GoalsSortCreated;
+
+  /// No description provided for @fpM5GoalsSortDeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest deadline'**
+  String get fpM5GoalsSortDeadline;
+
+  /// No description provided for @fpM5GoalsSortProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get fpM5GoalsSortProgress;
+
+  /// No description provided for @fpM5GoalsSortRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining'**
+  String get fpM5GoalsSortRemaining;
+
+  /// No description provided for @fpM5GoalsSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get fpM5GoalsSortName;
+
+  /// No description provided for @fpM5GoalsMonthSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {saved} / {plan}'**
+  String fpM5GoalsMonthSaved(String saved, String plan);
+
+  /// No description provided for @fpM5GoalsChartPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'On plan'**
+  String get fpM5GoalsChartPlan;
 }
 
 class _AppLocalizationsDelegate

@@ -187,9 +187,10 @@ class SavingWalletShare extends Equatable {
 
 /// A wallet's chosen part of a withdraw / move (sent only when edited).
 class SavingSplit extends Equatable {
-  const SavingSplit({required this.walletId, required this.amount});
+  const SavingSplit({this.walletId, required this.amount});
 
-  final String walletId;
+  /// Null = the wallet-less part ("ไม่มีกระเป๋า"); always sent explicitly.
+  final String? walletId;
   final double amount;
 
   Map<String, dynamic> toJson() => {'wallet_id': walletId, 'amount': amount};

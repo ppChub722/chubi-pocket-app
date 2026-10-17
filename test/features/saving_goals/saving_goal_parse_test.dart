@@ -118,10 +118,11 @@ Map<String, dynamic> prodDetail({
     {'wallet': wallet('w2', 'ไทยพาณิชย์'), 'amount': 12000, 'share_pct': 23},
   ],
   'history': [
-    {'month': '2026-09', 'cumulative': 48000},
-    {'month': '2026-10', 'cumulative': 52000},
+    {'month': '2026-09', 'cumulative': 48000, 'plan': 45000},
+    {'month': '2026-10', 'cumulative': 52000, 'plan': 50500},
   ],
   'entries': prodEntries(entries ?? [prodEntry(), prodEntry(id: 'e2')]),
+  'delete_preview': null,
 };
 
 Map<String, dynamic> prodSpare() => {
@@ -147,6 +148,8 @@ Map<String, dynamic> prodList({List<Map<String, dynamic>>? goals}) => {
     'currency': 'THB',
     'saved_total': 60500,
     'month_short_total': 2500,
+    'month_plan_total': 5500,
+    'month_saved_total': 3000,
     'unallocated': 8500,
   },
   'spare': prodSpare(),

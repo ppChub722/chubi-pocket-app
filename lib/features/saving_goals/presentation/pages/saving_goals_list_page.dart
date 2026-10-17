@@ -137,12 +137,25 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
         ToolbarToggleButton(
           state: _toolbar,
           filtered:
-              _query.isNotEmpty || state.filter != SavingGoalsFilter.active,
+              _query.isNotEmpty ||
+              state.filter != SavingGoalsFilter.active ||
+              state.sort != SavingGoalsSort.created,
           tooltip: l.commonSearch,
         ),
       ],
       amount: s.savedTotal,
       symbol: symbol,
+      // The month plan bar: "ออมแล้ว ฿saved / ฿plan" (the BE's two totals;
+      // the fraction is presentation).
+      bar: s.monthPlanTotal > 0
+          ? ProgressRow(
+              value: s.monthSavedTotal / s.monthPlanTotal,
+              trailing: l.fpM5GoalsMonthSaved(
+                money(s.monthSavedTotal),
+                money(s.monthPlanTotal),
+              ),
+            )
+          : null,
       alert: s.monthShortTotal > 0
           ? l.fpGoalsMonthShortLine(money(s.monthShortTotal))
           : null,
@@ -164,6 +177,18 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
       searchController: _search,
       onSearchChanged: (v) => setState(() => _query = v.trim()),
       searchHint: l.sgv2SearchHint,
+      trailing: SortChip<SavingGoalsSort>(
+        value: state.sort,
+        tooltip: l.fpM5GoalsSortTooltip,
+        options: [
+          SortOption(SavingGoalsSort.created, l.fpM5GoalsSortCreated),
+          SortOption(SavingGoalsSort.deadline, l.fpM5GoalsSortDeadline),
+          SortOption(SavingGoalsSort.progress, l.fpM5GoalsSortProgress),
+          SortOption(SavingGoalsSort.remaining, l.fpM5GoalsSortRemaining),
+          SortOption(SavingGoalsSort.byName, l.fpM5GoalsSortName),
+        ],
+        onChanged: cubit.setSort,
+      ),
       chips: [
         OptionMenuAnchor<SavingGoalsFilter>(
           selected: state.filter,

@@ -59,11 +59,15 @@ class ContactsRepository {
 
   /// `GET /contacts/:id?include=unlinked_names` — one call: the contact plus
   /// the split names still free to wire to it.
-  Future<ContactDetail> get(String id) async {
+  Future<ContactDetail> get(String id, {bool deletePreview = false}) async {
     try {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/contacts/$id',
-        queryParameters: const {'include': 'unlinked_names'},
+        queryParameters: {
+          'include': deletePreview
+              ? 'unlinked_names,delete_preview'
+              : 'unlinked_names',
+        },
       );
       return ContactDetail.fromJson(res.data!);
     } on DioException catch (e) {

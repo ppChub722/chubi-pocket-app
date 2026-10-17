@@ -39,6 +39,9 @@ class _Repo extends Fake implements SavingGoalsRepository {
   int listCalls = 0;
   int detailCalls = 0;
   final writes = <String>[];
+  final sorts = <String>[];
+  int previewCalls = 0;
+  Map<String, dynamic>? preview;
 
   Map<String, dynamic> listJson = prodList();
   Map<String, dynamic> goalJson = prodGoal();
@@ -51,22 +54,36 @@ class _Repo extends Fake implements SavingGoalsRepository {
   }
 
   @override
-  Future<SavingGoalsOverview> list({String status = 'active'}) async {
+  Future<SavingGoalsOverview> list({
+    String status = 'active',
+    String sort = 'created',
+  }) async {
+    sorts.add(sort);
     listCalls++;
     _check();
     return SavingGoalsOverview.fromJson(listJson);
   }
 
   @override
-  Future<SavingGoalDetail> detail(String id) async {
+  Future<SavingGoalDetail> detail(
+    String id, {
+    bool deletePreview = false,
+  }) async {
+    if (deletePreview) previewCalls++;
     detailCalls++;
     _check();
     return SavingGoalDetail.fromJson(
       id == SavingGoalsRepository.spareId
           ? prodSpareDetail()
-          : prodDetail(goal: goalJson),
+          : {
+              ...prodDetail(goal: goalJson),
+              if (deletePreview) 'delete_preview': preview,
+            },
     );
   }
+
+  @override
+  Future<void> delete(String id) async => writes.add('DELETE $id');
 
   /// The BE answers the goal page with the auto-saving in place.
   @override
@@ -399,6 +416,72 @@ void main() {
     expect(repo.writes.last, 'DELETE g1 auto-save');
     expect(t.widget<AppSwitch>(find.byType(AppSwitch)).value, isFalse);
     expect(repo.detailCalls, 1);
+  });
+
+  testWidgets('list: the sort chip sends sort= (one call); dot when set', (
+    t,
+  ) async {
+    await pump(t, const SavingGoalsListPage());
+    expect(repo.sorts, ['created']);
+    final btn = find.byType(ToolbarToggleButton);
+    await t.tap(btn);
+    await t.pumpAndSettle();
+    await t.tap(find.text('By created'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Nearest deadline').last);
+    await t.pumpAndSettle();
+    expect(repo.sorts, ['created', 'deadline']);
+    await t.tap(btn);
+    await t.pumpAndSettle();
+    final button = t.widget<CardActionButton>(
+      find.descendant(of: btn, matching: find.byType(CardActionButton)),
+    );
+    expect(button.showDot, isTrue);
+  });
+
+  testWidgets('list: the card shows saved / plan of the month (BE totals)', (
+    t,
+  ) async {
+    await pump(t, const SavingGoalsListPage());
+    expect(find.text('Saved \$3,000.00 / \$5,500.00'), findsOneWidget);
+  });
+
+  testWidgets('detail edit: delete with money held says close first', (
+    t,
+  ) async {
+    repo.goalJson = prodGoal(actions: {'delete': true});
+    repo.preview = {'entries': 4, 'saved_amount': 52000, 'can_delete': false};
+    await pump(t, const SavingGoalDetailPage(id: 'g1'));
+    await t.tap(find.byIcon(AppIcons.edit));
+    await t.pumpAndSettle();
+    await t.ensureVisible(find.text('Delete this goal'));
+    await t.tap(find.text('Delete this goal'));
+    await t.pumpAndSettle();
+    expect(repo.previewCalls, 1);
+    expect(find.text('Close the goal first'), findsWidgets);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(repo.writes, isEmpty);
+  });
+
+  testWidgets('detail edit: delete confirm says how many entries', (t) async {
+    repo.goalJson = prodGoal(actions: {'delete': true});
+    repo.preview = {'entries': 4, 'saved_amount': 0, 'can_delete': true};
+    await pump(t, const SavingGoalDetailPage(id: 'g1'));
+    await t.tap(find.byIcon(AppIcons.edit));
+    await t.pumpAndSettle();
+    await t.ensureVisible(find.text('Delete this goal'));
+    await t.tap(find.text('Delete this goal'));
+    await t.pumpAndSettle();
+    expect(repo.previewCalls, 1);
+    expect(find.textContaining('4 saving entries'), findsOneWidget);
+    expect(repo.writes, isEmpty);
+  });
+
+  testWidgets('detail: the chart gets the plan line and its legend', (t) async {
+    await pump(t, const SavingGoalDetailPage(id: 'g1'));
+    final chart = t.widget<SavingHistoryChart>(find.byType(SavingHistoryChart));
+    expect(chart.plan, [45000, 50500]);
+    expect(find.text('On plan'), findsOneWidget);
   });
 
   testWidgets('detail edit: its own form; archive says close first', (t) async {

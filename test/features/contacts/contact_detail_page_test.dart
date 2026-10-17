@@ -29,14 +29,24 @@ class _Repo extends Fake implements ContactsRepository {
   Map<String, dynamic>? body;
   bool networkDown = false;
   int calls = 0;
+  int previewCalls = 0;
 
   @override
-  Future<ContactDetail> get(String id) async {
+  Future<ContactDetail> get(String id, {bool deletePreview = false}) async {
+    if (deletePreview) previewCalls++;
     calls++;
     if (networkDown) {
       throw const ApiException(code: 'NETWORK_ERROR', message: 'no connection');
     }
-    return ContactDetail.fromJson(body!);
+    return ContactDetail.fromJson({
+      ...body!,
+      if (deletePreview)
+        'delete_preview': {
+          'debt_records': 3,
+          'event_members': 2,
+          'linked': true,
+        },
+    });
   }
 }
 
@@ -65,6 +75,7 @@ Map<String, dynamic> _prodContact() => {
   'created_at': '2026-10-01T08:00:00Z',
   'updated_at': '2026-10-11T08:00:00Z',
   'unlinked_total': {'names': 1, 'records': 2},
+  'delete_preview': null,
   'unlinked_names': [
     {'name': 'Cooper', 'count': 2},
   ],
@@ -233,6 +244,27 @@ void main() {
     expect(find.text('Link account'), findsNothing);
     expect(find.text('Send link request'), findsNothing);
     expect(find.byIcon(AppIcons.debt), findsNothing);
+  });
+
+  testWidgets('delete: ONE preview call, the confirm prints the BE numbers', (
+    t,
+  ) async {
+    t.view.physicalSize = const Size(800, 3000);
+    t.view.devicePixelRatio = 1;
+    addTearDown(t.view.reset);
+    await pump(t);
+    await t.tap(find.byIcon(AppIcons.edit));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    await t.tap(find.text('Delete this contact'));
+    await t.pumpAndSettle();
+    expect(repo.previewCalls, 1);
+    expect(
+      find.textContaining('3 debt records keep only the name'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Member of 2 events'), findsOneWidget);
+    expect(find.textContaining('Linked to an account'), findsOneWidget);
   });
 
   testWidgets('edit mode of a linked contact hides the email (it follows the '

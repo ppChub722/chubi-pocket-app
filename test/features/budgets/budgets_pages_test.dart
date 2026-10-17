@@ -73,9 +73,25 @@ class _Repo extends Fake implements BudgetsRepository {
   }
 
   @override
-  Future<BudgetDetail> get(String id, {String? periodId}) async {
-    _hit('get:$id${periodId == null ? '' : ':$periodId'}');
-    return BudgetDetail.fromJson(detail);
+  Future<BudgetDetail> get(
+    String id, {
+    String? periodId,
+    bool deletePreview = false,
+  }) async {
+    _hit(
+      'get:$id${periodId == null ? '' : ':$periodId'}'
+      '${deletePreview ? ':preview' : ''}',
+    );
+    return BudgetDetail.fromJson({
+      ...detail,
+      if (deletePreview)
+        'delete_preview': {
+          'periods': 6,
+          'overridden_periods': 2,
+          'categories': 3,
+          'wallets': 1,
+        },
+    });
   }
 
   /// What the next period write answers (the page at that period).
@@ -1004,9 +1020,17 @@ void main() {
       await t.tap(find.text('Delete this budget'));
       await t.pumpAndSettle();
       expect(find.text('Delete this budget?'), findsOneWidget);
+      // The BE's preview, printed as sent.
+      expect(
+        find.textContaining(
+          'Deletes 6 periods (2 adjusted) · 3 categories · 1 wallets',
+        ),
+        findsOneWidget,
+      );
       await t.tap(find.text('Cancel').last);
       await t.pumpAndSettle();
-      expect(repo.calls, ['get:b1']);
+      // ONE preview call on the button; nothing else on cancel.
+      expect(repo.calls, ['get:b1', 'get:b1:preview']);
     });
 
     testWidgets('create: no call, the form opens, no end zone', (t) async {

@@ -2540,4 +2540,23 @@
   "fpRecurringDeleteConsequence": "Deletes this recurring with its unsaved occurrences",
   "fpRecurringDuplicate": "Duplicate",
   "fpRecurringDuplicateConsequence": "Creates the same recurring, starting today"
+,
+  "fpM5ContactDeleteDebts": "{n} debt records keep only the name",
+  "@fpM5ContactDeleteDebts": {"placeholders": {"n": {"type": "int"}}},
+  "fpM5ContactDeleteMembers": "Member of {n} events",
+  "@fpM5ContactDeleteMembers": {"placeholders": {"n": {"type": "int"}}},
+  "fpM5ContactDeleteLinked": "Linked to an account, the link is removed",
+  "fpM5BudgetDeleteBody": "Deletes {periods} periods ({overridden} adjusted) · {categories} categories · {wallets} wallets. Transactions are not affected.",
+  "@fpM5BudgetDeleteBody": {"placeholders": {"periods": {"type": "int"}, "overridden": {"type": "int"}, "categories": {"type": "int"}, "wallets": {"type": "int"}}},
+  "fpM5GoalDeleteBody": "Deletes this goal for good. {n} saving entries stay, detached from it.",
+  "@fpM5GoalDeleteBody": {"placeholders": {"n": {"type": "int"}}},
+  "fpM5GoalsSortTooltip": "Sort",
+  "fpM5GoalsSortCreated": "By created",
+  "fpM5GoalsSortDeadline": "Nearest deadline",
+  "fpM5GoalsSortProgress": "Progress",
+  "fpM5GoalsSortRemaining": "Remaining",
+  "fpM5GoalsSortName": "Name",
+  "fpM5GoalsMonthSaved": "Saved {saved} / {plan}",
+  "@fpM5GoalsMonthSaved": {"placeholders": {"saved": {"type": "String"}, "plan": {"type": "String"}}},
+  "fpM5GoalsChartPlan": "On plan"
 }

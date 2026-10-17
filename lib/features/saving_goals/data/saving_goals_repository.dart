@@ -27,22 +27,26 @@ class SavingGoalsRepository {
 
   /// `GET /saving-goals?status=` — the whole list page (summary + spare +
   /// goals) in one call.
-  Future<SavingGoalsOverview> list({String status = 'active'}) =>
-      _guard(() async {
-        final res = await _client.dio.get<Map<String, dynamic>>(
-          '/saving-goals',
-          queryParameters: {'status': status},
-        );
-        return SavingGoalsOverview.fromJson(res.data!);
-      });
+  Future<SavingGoalsOverview> list({
+    String status = 'active',
+    String sort = 'created',
+  }) => _guard(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/saving-goals',
+      queryParameters: {'status': status, 'sort': sort},
+    );
+    return SavingGoalsOverview.fromJson(res.data!);
+  });
 
   /// `GET /saving-goals/{id}` (or `spare`) — the whole goal page in one call.
-  Future<SavingGoalDetail> detail(String id) => _guard(() async {
-    final res = await _client.dio.get<Map<String, dynamic>>(
-      '/saving-goals/$id',
-    );
-    return SavingGoalDetail.fromJson(res.data!);
-  });
+  Future<SavingGoalDetail> detail(String id, {bool deletePreview = false}) =>
+      _guard(() async {
+        final res = await _client.dio.get<Map<String, dynamic>>(
+          '/saving-goals/$id',
+          queryParameters: {if (deletePreview) 'include': 'delete_preview'},
+        );
+        return SavingGoalDetail.fromJson(res.data!);
+      });
 
   /// `GET /saving-entries` — one page of a bucket entries (newest first).
   Future<SavingEntryPage> entries({

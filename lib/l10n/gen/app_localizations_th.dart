@@ -7127,4 +7127,58 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get fpRecurringDuplicateConsequence =>
       'สร้างรายการประจำใหม่ที่เหมือนกัน เริ่มวันนี้';
+
+  @override
+  String fpM5ContactDeleteDebts(int n) {
+    return 'รายการหนี้ $n รายการ จะเหลือแค่ชื่อ';
+  }
+
+  @override
+  String fpM5ContactDeleteMembers(int n) {
+    return 'เป็นสมาชิกอีเวนต์ $n งาน';
+  }
+
+  @override
+  String get fpM5ContactDeleteLinked => 'เชื่อมบัญชีอยู่ จะถูกตัดการเชื่อมต่อ';
+
+  @override
+  String fpM5BudgetDeleteBody(
+    int periods,
+    int overridden,
+    int categories,
+    int wallets,
+  ) {
+    return 'ลบถาวร $periods รอบ (ปรับเอง $overridden รอบ) · $categories หมวด · $wallets กระเป๋า · รายการธุรกรรมไม่ได้รับผลกระทบ';
+  }
+
+  @override
+  String fpM5GoalDeleteBody(int n) {
+    return 'ลบเป้าหมายนี้ถาวร รายการออม $n รายการจะไม่ผูกกับเป้าหมายอีก';
+  }
+
+  @override
+  String get fpM5GoalsSortTooltip => 'เรียงลำดับ';
+
+  @override
+  String get fpM5GoalsSortCreated => 'เรียงตามสร้าง';
+
+  @override
+  String get fpM5GoalsSortDeadline => 'ใกล้ถึงก่อน';
+
+  @override
+  String get fpM5GoalsSortProgress => 'ความคืบหน้า';
+
+  @override
+  String get fpM5GoalsSortRemaining => 'ที่เหลือ';
+
+  @override
+  String get fpM5GoalsSortName => 'ชื่อ';
+
+  @override
+  String fpM5GoalsMonthSaved(String saved, String plan) {
+    return 'ออมแล้ว $saved / $plan';
+  }
+
+  @override
+  String get fpM5GoalsChartPlan => 'ตามแผน';
 }
