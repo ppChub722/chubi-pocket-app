@@ -39,7 +39,7 @@ class RecurringItem extends Equatable {
     required this.id,
     required this.date,
     required this.type,
-    required this.amount,
+    this.amount,
     required this.state,
     this.recurring,
     this.seq,
@@ -48,8 +48,6 @@ class RecurringItem extends Equatable {
     this.account,
     this.toAccount,
     this.category,
-    this.isSaving = false,
-    this.goal,
     this.tags = const [],
     this.description,
     this.note,
@@ -70,14 +68,12 @@ class RecurringItem extends Equatable {
   /// Negative = in the past.
   final int daysUntil;
   final TransactionType type;
-  final double amount;
+
+  /// null = not known yet (a reminder).
+  final double? amount;
   final AccountRef? account;
   final AccountRef? toAccount;
   final EmbeddedCategory? category;
-
-  /// ออม 🐷: a saving item (type `saving`) into [goal] (null = spare).
-  final bool isSaving;
-  final SavingGoalRef? goal;
   final List<TagRef> tags;
   final String? description;
   final String? note;
@@ -103,7 +99,11 @@ class RecurringItem extends Equatable {
   }
 
   /// Signed for display (expense negative).
-  double get signedAmount => type == TransactionType.expense ? -amount : amount;
+  double? get signedAmount {
+    final a = amount;
+    if (a == null) return null;
+    return type == TransactionType.expense ? -a : a;
+  }
 
   factory RecurringItem.fromJson(Map<String, dynamic> json) => RecurringItem(
     id: json['id'] as String,
@@ -114,14 +114,8 @@ class RecurringItem extends Equatable {
     total: (json['total'] as num?)?.toInt(),
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
     daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
-    type: (json['type'] as String?) == 'saving'
-        ? TransactionType.expense
-        : TransactionType.fromJson((json['type'] as String?) ?? 'expense'),
-    isSaving: json['type'] == 'saving',
-    goal: json['goal'] is Map<String, dynamic>
-        ? SavingGoalRef.fromJson(json['goal'] as Map<String, dynamic>)
-        : null,
-    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    type: TransactionType.fromJson((json['type'] as String?) ?? 'expense'),
+    amount: (json['amount'] as num?)?.toDouble(),
     account: json['account'] is Map<String, dynamic>
         ? AccountRef.fromJson(json['account'] as Map<String, dynamic>)
         : null,
@@ -146,9 +140,7 @@ class RecurringItem extends Equatable {
 
   /// The item as a tx-shaped draft (what the entry sheet edits).
   PendingDraft toDraft() => PendingDraft(
-    type: isSaving ? null : type,
-    isSaving: isSaving,
-    goalId: goal?.id,
+    type: type,
     amount: amount,
     accountId: account?.id,
     transferToAccountId: toAccount?.id,
@@ -172,8 +164,6 @@ class RecurringItem extends Equatable {
     account,
     toAccount,
     category,
-    isSaving,
-    goal,
     tags,
     description,
     note,
@@ -200,8 +190,7 @@ enum ItemTarget {
 
 /// The `RecurringFields` body of an item write (+ its date), from a draft.
 Map<String, dynamic> itemFieldsJson(PendingDraft d) => <String, dynamic>{
-  'type': ?(d.isSaving ? 'saving' : d.type?.toJson()),
-  if (d.isSaving) 'goal_id': d.goalId,
+  'type': ?d.type?.toJson(),
   'amount': ?d.amount,
   'account_id': d.accountId,
   'to_account_id': d.transferToAccountId,

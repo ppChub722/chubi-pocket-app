@@ -77,6 +77,141 @@ class _RecurringPage extends StatelessWidget {
           ),
         ),
         HubDemo(
+          title: 'MonthCalendar — month grid with dots (generic organism)',
+          note:
+              'Mon–Sun grid under a ‹ month › stepper. dots: day of the '
+              'month → colours (3 drawn at most); selected / today marks; '
+              'the page feeds the data (nothing fetched here). Used by the '
+              'recurring list\'s ปฏิทิน tab.',
+          child: const _CalendarDemo(),
+        ),
+        HubDemo(
+          title: 'NextOccurrenceCard + OccurrenceDates — the ล่วงหน้า tab',
+          note:
+              'The next occurrence as a prominent card with its actions '
+              '(แก้ยอด / เลื่อนวัน / ข้าม; a reminder with no amount gets '
+              'ใส่ยอด as the main one); the rest as date chips — edited '
+              'amber, skipped struck through, "+N ›" for more.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              NextOccurrenceCard(
+                title: 'งวดถัดไป · อีก 30 วัน',
+                caption: 'จะขึ้นร่างใน pending วันนั้น',
+                amount: const MoneyText(-3023),
+                actions: [
+                  NextOccurrenceAction(label: 'แก้ยอด', onTap: () {}),
+                  NextOccurrenceAction(label: 'เลื่อนวัน', onTap: () {}),
+                  NextOccurrenceAction(label: 'ข้าม', onTap: () {}),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              NextOccurrenceCard(
+                title: 'งวดถัดไป · อีก 5 วัน',
+                amount: const Text('รอใส่ยอด'),
+                actions: [
+                  NextOccurrenceAction(
+                    label: 'ใส่ยอด',
+                    primary: true,
+                    onTap: () {},
+                  ),
+                  NextOccurrenceAction(label: 'เลื่อนวัน', onTap: () {}),
+                  NextOccurrenceAction(label: 'ข้าม', onTap: () {}),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              OccurrenceDates(
+                title: 'ต่อจากนั้น · อีก 11 งวด',
+                dates: const [
+                  OccurrenceDate(label: '16 ธ.ค.'),
+                  OccurrenceDate(
+                    label: '16 ม.ค. · ฿3,500',
+                    kind: OccurrenceDateKind.edited,
+                  ),
+                  OccurrenceDate(
+                    label: '16 ก.พ. · ข้าม',
+                    kind: OccurrenceDateKind.skipped,
+                  ),
+                  OccurrenceDate(label: '16 มี.ค.'),
+                ],
+                moreLabel: '+6 ›',
+                onMore: () {},
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
+          title: 'showOccurrenceSheet — edit ONE occurrence',
+          note:
+              'Amount + date in a FormSheet (แก้ยอด / เลื่อนวัน / ใส่ยอด). '
+              'amountRequired = a reminder with no amount: needs an amount '
+              '> 0 to save. withAmount: false = the date only.',
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              AppButton(
+                label: 'Edit amount',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showOccurrenceSheet(
+                  context,
+                  title: 'Edit amount',
+                  saveLabel: 'Save',
+                  dateLabel: 'Date',
+                  amountLabel: 'Amount',
+                  date: inDays(3),
+                  amount: 419,
+                  symbol: '฿',
+                  first: inDays(0),
+                  last: inDays(400),
+                ),
+              ),
+              AppButton(
+                label: 'Enter amount (reminder)',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showOccurrenceSheet(
+                  context,
+                  title: 'Enter amount',
+                  saveLabel: 'Save',
+                  dateLabel: 'Date',
+                  amountLabel: 'Amount',
+                  date: inDays(3),
+                  symbol: '฿',
+                  first: inDays(0),
+                  last: inDays(400),
+                  amountRequired: true,
+                ),
+              ),
+              AppButton(
+                label: 'Count (showCountSheet)',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showCountSheet(
+                  context,
+                  title: 'Number of payments',
+                  label: 'Payments',
+                  saveLabel: 'Save',
+                  initial: 10,
+                ),
+              ),
+              AppButton(
+                label: 'Move date',
+                variant: AppButtonVariant.outlined,
+                onPressed: () => showOccurrenceSheet(
+                  context,
+                  title: 'Move date',
+                  saveLabel: 'Save',
+                  dateLabel: 'Date',
+                  date: inDays(3),
+                  symbol: '฿',
+                  first: inDays(0),
+                  last: inDays(400),
+                  withAmount: false,
+                  focus: OccurrenceFocus.date,
+                ),
+              ),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'DueText — relative due date',
           note:
               'date + the BE\'s days_until (null = computed from today) → '
@@ -444,6 +579,40 @@ class _RecurrenceSheetDemoState extends State<_RecurrenceSheetDemo> {
           role: AppTextRole.caption,
         ),
       ],
+    );
+  }
+}
+
+class _CalendarDemo extends StatefulWidget {
+  const _CalendarDemo();
+
+  @override
+  State<_CalendarDemo> createState() => _CalendarDemoState();
+}
+
+class _CalendarDemoState extends State<_CalendarDemo> {
+  DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime? _selected = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
+    return MonthCalendar(
+      month: _month,
+      today: DateTime.now(),
+      selected: _selected,
+      dots: {
+        3: [CalendarDot.expense],
+        5: [CalendarDot.warning, CalendarDot.expense],
+        16: [
+          CalendarDot.expense,
+          CalendarDot.neutral,
+          CalendarDot.income,
+          CalendarDot.warning,
+        ],
+        25: [CalendarDot.income],
+      },
+      onMonthChanged: (m) => setState(() => _month = m),
+      onSelect: (d) => setState(() => _selected = d),
     );
   }
 }

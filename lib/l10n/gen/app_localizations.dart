@@ -11256,6 +11256,384 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh failed, showing the latest data'**
   String get fpGoalsRefreshFailed;
+
+  /// No description provided for @fpRecurringTabReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get fpRecurringTabReminder;
+
+  /// No description provided for @fpRecurringTabCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get fpRecurringTabCalendar;
+
+  /// No description provided for @fpRecurringListCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Next 30 days to pay'**
+  String get fpRecurringListCaption;
+
+  /// No description provided for @fpRecurringAwaitingAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} waiting for an amount'**
+  String fpRecurringAwaitingAlert(int n);
+
+  /// No description provided for @fpRecurringMonthLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Per month: pay {pay} · receive {receive}'**
+  String fpRecurringMonthLine(String pay, String receive);
+
+  /// No description provided for @fpRecurringPausedGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get fpRecurringPausedGroup;
+
+  /// No description provided for @fpRecurringGroupDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due · in pending'**
+  String get fpRecurringGroupDue;
+
+  /// No description provided for @fpRecurringGroupComing.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get fpRecurringGroupComing;
+
+  /// No description provided for @fpRecurringAwaitingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'No amount yet'**
+  String get fpRecurringAwaitingAmount;
+
+  /// No description provided for @fpRecurringAddReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reminder'**
+  String get fpRecurringAddReminder;
+
+  /// No description provided for @fpRecurringKindSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get fpRecurringKindSubscription;
+
+  /// No description provided for @fpRecurringKindInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment'**
+  String get fpRecurringKindInstallment;
+
+  /// No description provided for @fpRecurringKindIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get fpRecurringKindIncome;
+
+  /// No description provided for @fpRecurringKindReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get fpRecurringKindReminder;
+
+  /// No description provided for @fpRecurringRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh failed, showing the latest data'**
+  String get fpRecurringRefreshFailed;
+
+  /// No description provided for @fpRecurringCalendarNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on this day'**
+  String get fpRecurringCalendarNone;
+
+  /// No description provided for @fpRecurringPerRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Each time'**
+  String get fpRecurringPerRound;
+
+  /// No description provided for @fpRecurringAwaitingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount'**
+  String get fpRecurringAwaitingValue;
+
+  /// No description provided for @fpRecurringTileYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Per year'**
+  String get fpRecurringTileYearly;
+
+  /// No description provided for @fpRecurringTileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get fpRecurringTileSaved;
+
+  /// No description provided for @fpRecurringTilePending.
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm'**
+  String get fpRecurringTilePending;
+
+  /// No description provided for @fpRecurringTileInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment'**
+  String get fpRecurringTileInstallment;
+
+  /// No description provided for @fpRecurringCountUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} times'**
+  String fpRecurringCountUnit(int n);
+
+  /// No description provided for @fpRecurringAlertAwaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the amount · {due}'**
+  String fpRecurringAlertAwaiting(String due);
+
+  /// No description provided for @fpRecurringInfoSpan.
+  ///
+  /// In en, this message translates to:
+  /// **'Start – end'**
+  String get fpRecurringInfoSpan;
+
+  /// No description provided for @fpRecurringNextInline.
+  ///
+  /// In en, this message translates to:
+  /// **'next {date} ({due})'**
+  String fpRecurringNextInline(String date, String due);
+
+  /// No description provided for @fpRecurringTrialUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Free trial until'**
+  String get fpRecurringTrialUntil;
+
+  /// No description provided for @fpRecurringTabPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get fpRecurringTabPast;
+
+  /// No description provided for @fpRecurringTabUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get fpRecurringTabUpcoming;
+
+  /// No description provided for @fpRecurringNextTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next · {due}'**
+  String fpRecurringNextTitle(String due);
+
+  /// No description provided for @fpRecurringNextCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Becomes a draft in pending on that day'**
+  String get fpRecurringNextCaption;
+
+  /// No description provided for @fpRecurringEditedChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get fpRecurringEditedChip;
+
+  /// No description provided for @fpRecurringActEditAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit amount'**
+  String get fpRecurringActEditAmount;
+
+  /// No description provided for @fpRecurringActMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move date'**
+  String get fpRecurringActMove;
+
+  /// No description provided for @fpRecurringActSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get fpRecurringActSkip;
+
+  /// No description provided for @fpRecurringActEnterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter amount'**
+  String get fpRecurringActEnterAmount;
+
+  /// No description provided for @fpRecurringThenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} upcoming in total'**
+  String fpRecurringThenTitle(int n);
+
+  /// No description provided for @fpRecurringMoreDates.
+  ///
+  /// In en, this message translates to:
+  /// **'More ›'**
+  String get fpRecurringMoreDates;
+
+  /// No description provided for @fpRecurringChipEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · {amount}'**
+  String fpRecurringChipEdited(String date, String amount);
+
+  /// No description provided for @fpRecurringChipSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · skipped'**
+  String fpRecurringChipSkipped(String date);
+
+  /// No description provided for @fpRecurringOccEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this occurrence'**
+  String get fpRecurringOccEditTitle;
+
+  /// No description provided for @fpRecurringOccMoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move this occurrence'**
+  String get fpRecurringOccMoveTitle;
+
+  /// No description provided for @fpRecurringOccEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the amount'**
+  String get fpRecurringOccEnterTitle;
+
+  /// No description provided for @fpRecurringOccDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get fpRecurringOccDate;
+
+  /// No description provided for @fpRecurringOccAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get fpRecurringOccAmount;
+
+  /// No description provided for @fpRecurringSkipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this occurrence?'**
+  String get fpRecurringSkipTitle;
+
+  /// No description provided for @fpRecurringSkipBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will not become a draft in pending. You can restore it later.'**
+  String get fpRecurringSkipBody;
+
+  /// No description provided for @fpRecurringAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount / time'**
+  String get fpRecurringAmountLabel;
+
+  /// No description provided for @fpRecurringAmountOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount / time (optional)'**
+  String get fpRecurringAmountOptional;
+
+  /// No description provided for @fpRecurringReminderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No amount needed. On the day, enter the real amount in the draft.'**
+  String get fpRecurringReminderHint;
+
+  /// No description provided for @fpRecurringFieldCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of payments'**
+  String get fpRecurringFieldCount;
+
+  /// No description provided for @fpRecurringCountValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} payments'**
+  String fpRecurringCountValue(int n);
+
+  /// No description provided for @fpRecurringCountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'An installment needs a number of payments'**
+  String get fpRecurringCountRequired;
+
+  /// No description provided for @fpRecurringFieldMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get fpRecurringFieldMode;
+
+  /// No description provided for @fpRecurringFieldPayFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay from'**
+  String get fpRecurringFieldPayFrom;
+
+  /// No description provided for @fpRecurringFieldIntoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Into wallet'**
+  String get fpRecurringFieldIntoWallet;
+
+  /// No description provided for @fpRecurringFieldFromWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'From wallet'**
+  String get fpRecurringFieldFromWallet;
+
+  /// No description provided for @fpRecurringSelectDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get fpRecurringSelectDone;
+
+  /// No description provided for @fpRecurringArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops making new occurrences. Hidden, can be restored.'**
+  String get fpRecurringArchiveConsequence;
+
+  /// No description provided for @fpRecurringRestoreConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Active again, making occurrences'**
+  String get fpRecurringRestoreConsequence;
+
+  /// No description provided for @fpRecurringDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deletes this recurring with its unsaved occurrences'**
+  String get fpRecurringDeleteConsequence;
+
+  /// No description provided for @fpRecurringDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate'**
+  String get fpRecurringDuplicate;
+
+  /// No description provided for @fpRecurringDuplicateConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Creates the same recurring, starting today'**
+  String get fpRecurringDuplicateConsequence;
 }
 
 class _AppLocalizationsDelegate

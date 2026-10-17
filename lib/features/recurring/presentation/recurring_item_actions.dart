@@ -303,9 +303,7 @@ Future<void> addRecurringItem(
     context,
     title: l.recurringAddItem,
     initial: PendingDraft(
-      type: recurring.isSaving ? null : recurring.type,
-      isSaving: recurring.isSaving,
-      goalId: recurring.goal?.id,
+      type: recurring.type,
       amount: recurring.amount,
       accountId: recurring.account?.id,
       transferToAccountId: recurring.toAccount?.id,
