@@ -12,10 +12,12 @@ import '../../domain/debt_ledger.dart';
 import '../cubit/debt_people_cubit.dart';
 import '../debt_wiring.dart';
 
-/// `/personal-debts` — ONE people list (ติดคุณ and คุณติด together): the
-/// summary (net + the two sides, a tap filters), search + "ทั้งหมด", then
-/// one row per person → their page. Open = 1 call; search / filter / next
-/// page = 1 call each, on the server. The centre + opens debt mode.
+/// `/personal-debts` — ONE people list (รอรับ and รอจ่าย together): the
+/// summary card (two side tiles that filter, the BE's net line when both are
+/// open, an amber "ค้างเกิน 30 วัน" alert), the hidden toolbar (search ·
+/// รวมคนที่เคลียร์แล้ว · sort), then one row per person (name · ค้าง N วัน ·
+/// amount) → their page. Open = 1 call; search / filter / sort / next page =
+/// 1 call each, on the server. The centre + opens debt mode.
 class PersonalDebtsPage extends StatelessWidget {
   const PersonalDebtsPage({super.key});
 
@@ -84,32 +86,48 @@ class _PeopleViewState extends State<_PeopleView> {
               rowDividerIndent: 72,
               topInset: AppSpacing.sm,
               header: [
-                DebtSummaryCard(
-                  net: s.totals.net,
-                  owedToMe: s.totals.owedToMe,
-                  iOwe: s.totals.iOwe,
-                  netLabel: l.debtsNet,
-                  owedToMeLabel: l.debtsOwedToMe,
-                  iOweLabel: l.debtsIOwe,
-                  owedToMeSelected: s.side == NetSide.owedToMe,
-                  iOweSelected: s.side == NetSide.iOwe,
-                  onOwedToMeTap: () => cubit.toggleSide(NetSide.owedToMe),
-                  onIOweTap: () => cubit.toggleSide(NetSide.iOwe),
-                  currencySymbol: symbol,
-                  action: ListenableBuilder(
-                    listenable: _search,
-                    builder: (context, _) => ToolbarToggleButton(
-                      state: _toolbar,
-                      filtered: _search.text.isNotEmpty || s.all,
-                      tooltip: l.commonSearch,
+                ListSummaryCard(
+                  caption: l.fpDebtsTotalCaption,
+                  actions: [
+                    ListenableBuilder(
+                      listenable: _search,
+                      builder: (context, _) => ToolbarToggleButton(
+                        state: _toolbar,
+                        filtered:
+                            _search.text.isNotEmpty ||
+                            s.all ||
+                            s.sort != DebtPeopleSort.oldest,
+                        tooltip: l.commonSearch,
+                      ),
                     ),
-                  ),
-                  margin: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.sm,
-                    AppSpacing.lg,
-                    AppSpacing.xs,
-                  ),
+                  ],
+                  tiles: [
+                    SummaryTile(
+                      label: l.fpDebtsOwedToMeTile(s.totals.owedToMePeople),
+                      value: moneyString(context, s.totals.owedToMe),
+                      tone: SummaryTileTone.green,
+                      selected: s.side == NetSide.owedToMe,
+                      onTap: () => cubit.toggleSide(NetSide.owedToMe),
+                    ),
+                    SummaryTile(
+                      label: l.fpDebtsIOweTile(s.totals.iOwePeople),
+                      value: moneyString(context, s.totals.iOwe),
+                      tone: SummaryTileTone.red,
+                      selected: s.side == NetSide.iOwe,
+                      onTap: () => cubit.toggleSide(NetSide.iOwe),
+                    ),
+                  ],
+                  // The BE's net, only when both sides are open.
+                  infoLine: s.totals.owedToMe > 0 && s.totals.iOwe > 0
+                      ? DebtNetLine(
+                          label: l.debtsNet,
+                          net: s.totals.net,
+                          currencySymbol: symbol,
+                        )
+                      : null,
+                  alert: s.totals.over30DaysPeople > 0
+                      ? l.fpDebtsOver30(s.totals.over30DaysPeople)
+                      : null,
                 ),
                 ListToolbar(
                   collapse: _toolbar,
@@ -118,11 +136,21 @@ class _PeopleViewState extends State<_PeopleView> {
                   searchHint: l.debtsSearchHint,
                   chips: [
                     AppChip(
-                      label: l.debtsStatusAll,
+                      label: l.fpDebtsIncludeCleared,
                       selected: s.all,
                       onTap: () => cubit.showAll(!s.all),
                     ),
                   ],
+                  trailing: SortChip<DebtPeopleSort>(
+                    value: s.sort,
+                    tooltip: l.debtsSortLabel,
+                    options: [
+                      SortOption(DebtPeopleSort.oldest, l.fpDebtsSortOldest),
+                      SortOption(DebtPeopleSort.amount, l.fpDebtsSortAmount),
+                      SortOption(DebtPeopleSort.recent, l.fpDebtsSortRecent),
+                    ],
+                    onChanged: cubit.setSort,
+                  ),
                 ),
               ],
               children: [
@@ -132,7 +160,11 @@ class _PeopleViewState extends State<_PeopleView> {
                     name: p.person.name,
                     level: debtPersonLevel(p.person),
                     iconCode: p.person.iconCode,
-                    subtitle: l.debtsOpenCount(p.openCount),
+                    subtitle: p.daysOutstanding == null
+                        ? null
+                        : l.fpDebtsDaysOutstanding(p.daysOutstanding!),
+                    subtitleWarn: (p.daysOutstanding ?? 0) > 30,
+                    showCaption: false,
                     net: p.net,
                     owedToMeLabel: l.debtsOwedToMe,
                     iOweLabel: l.debtsIOwe,

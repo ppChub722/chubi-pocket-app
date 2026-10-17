@@ -6299,4 +6299,65 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fpContactsDeleteConsequence =>
       'Old records keep just the name; amounts unchanged';
+
+  @override
+  String get fpDebtsTotalCaption => 'Total outstanding';
+
+  @override
+  String fpDebtsOwedToMeTile(int count) {
+    return 'To receive · $count people';
+  }
+
+  @override
+  String fpDebtsIOweTile(int count) {
+    return 'To pay · $count people';
+  }
+
+  @override
+  String fpDebtsOver30(int count) {
+    return 'Over 30 days: $count people';
+  }
+
+  @override
+  String fpDebtsDaysOutstanding(int count) {
+    return 'Outstanding $count days';
+  }
+
+  @override
+  String get fpDebtsIncludeCleared => 'Show cleared';
+
+  @override
+  String get fpDebtsSortOldest => 'Longest owed';
+
+  @override
+  String get fpDebtsSortAmount => 'Largest';
+
+  @override
+  String get fpDebtsSortRecent => 'Latest';
+
+  @override
+  String get fpDebtsMessageLabel => 'Summary message · editable before sending';
+
+  @override
+  String get fpDebtsCopy => 'Copy';
+
+  @override
+  String get fpDebtsShare => 'Share';
+
+  @override
+  String get fpDebtsCopied => 'Message copied';
+
+  @override
+  String get fpDebtsCycleHeader => 'Where the balance comes from';
+
+  @override
+  String fpDebtsCycleHeaderSince(String date) {
+    return 'Where the balance comes from · since cleared $date';
+  }
+
+  @override
+  String get fpDebtsEarlierHeader => 'Earlier cycle · cleared';
+
+  @override
+  String get fpDebtsEarlierLink => 'Earlier cycles';
 }

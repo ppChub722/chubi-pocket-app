@@ -6152,4 +6152,65 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get fpContactsDeleteConsequence =>
       'รายการเก่าเหลือแค่ชื่อ ยอดไม่เปลี่ยน';
+
+  @override
+  String get fpDebtsTotalCaption => 'ยอดค้างทั้งหมด';
+
+  @override
+  String fpDebtsOwedToMeTile(int count) {
+    return 'รอรับ · $count คน';
+  }
+
+  @override
+  String fpDebtsIOweTile(int count) {
+    return 'รอจ่าย · $count คน';
+  }
+
+  @override
+  String fpDebtsOver30(int count) {
+    return 'ค้างเกิน 30 วัน $count คน';
+  }
+
+  @override
+  String fpDebtsDaysOutstanding(int count) {
+    return 'ค้าง $count วัน';
+  }
+
+  @override
+  String get fpDebtsIncludeCleared => 'รวมคนที่เคลียร์แล้ว';
+
+  @override
+  String get fpDebtsSortOldest => 'ค้างนานสุด';
+
+  @override
+  String get fpDebtsSortAmount => 'ยอดมากสุด';
+
+  @override
+  String get fpDebtsSortRecent => 'ล่าสุด';
+
+  @override
+  String get fpDebtsMessageLabel => 'ข้อความสรุปยอด · แก้ได้ก่อนส่ง';
+
+  @override
+  String get fpDebtsCopy => 'คัดลอก';
+
+  @override
+  String get fpDebtsShare => 'แชร์';
+
+  @override
+  String get fpDebtsCopied => 'คัดลอกข้อความแล้ว';
+
+  @override
+  String get fpDebtsCycleHeader => 'ที่มาของยอด';
+
+  @override
+  String fpDebtsCycleHeaderSince(String date) {
+    return 'ที่มาของยอด · ตั้งแต่เคลียร์ครบ $date';
+  }
+
+  @override
+  String get fpDebtsEarlierHeader => 'รอบก่อน · เคลียร์ครบแล้ว';
+
+  @override
+  String get fpDebtsEarlierLink => 'รอบก่อนหน้านี้';
 }

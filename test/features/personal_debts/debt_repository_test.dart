@@ -100,7 +100,12 @@ void main() {
       'totals': {'owed_to_me': 200, 'i_owe': 0, 'net': 200, 'open_count': 1},
       'pagination': {'page': 1, 'per_page': 30, 'total': 1, 'total_pages': 1},
     };
-    final p = await repo.listPeople(q: ' mo ', all: true, side: NetSide.iOwe);
+    final p = await repo.listPeople(
+      q: ' mo ',
+      all: true,
+      side: NetSide.iOwe,
+      sort: DebtPeopleSort.amount,
+    );
     expect(http.last!.path, '/personal-debts/people');
     expect(http.last!.queryParameters, {
       'page': '1',
@@ -108,7 +113,11 @@ void main() {
       'q': 'mo',
       'all': 'true',
       'side': 'i_owe',
+      'sort': 'amount',
     });
+    // The default order is the BE's: longest outstanding first.
+    await repo.listPeople();
+    expect(http.last!.queryParameters['sort'], 'oldest');
     expect(p.items.single.key, 'n:mom');
     expect(p.items.single.entryCount, 3);
     expect(p.totals.openCount, 1);
@@ -118,14 +127,23 @@ void main() {
   test('person page: the key is URL-encoded; flat DebtPersonPage', () async {
     http.body = {
       ..._person,
-      'counts': {'entries': 3, 'money': 1},
+      'cleared_at': '2026-10-05',
+      'days_outstanding': 7,
+      'counts': {'entries': 3, 'money': 1, 'current': 2, 'earlier': 1},
+      'summary_message': {'text': 'สรุป', 'entries': 2, 'net': 200},
       'items': [_entry],
       'pagination': {'page': 1, 'per_page': 30, 'total': 3, 'total_pages': 1},
     };
     final d = await repo.person('n:mom & dad');
     expect(http.last!.uri.path, '/personal-debts/people/n%3Amom%20%26%20dad');
+    // The current cycle, asked for explicitly.
+    expect(http.last!.queryParameters['cycle'], 'current');
     expect(d.balance.net, 200);
-    expect(d.moneyCount, 1);
+    expect(d.balance.daysOutstanding, 7);
+    expect(d.counts.earlier, 1);
+    expect(d.message.text, 'สรุป');
+    await repo.entries('n:mom', cycle: DebtCycle.earlier);
+    expect(http.last!.queryParameters['cycle'], 'earlier');
     final e = d.entries.items.single;
     expect(e.source!.kind, 'partner');
     expect(e.source!.id, isNull);

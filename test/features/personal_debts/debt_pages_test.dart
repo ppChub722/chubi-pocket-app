@@ -8,6 +8,9 @@ import 'package:chubi_pocket/features/notifications/presentation/cubit/unread_ba
 import 'package:chubi_pocket/features/pending/presentation/cubit/pending_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/data/personal_debts_repository.dart';
 import 'package:chubi_pocket/features/personal_debts/domain/debt_ledger.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_book.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_people_cubit.dart';
+import 'package:chubi_pocket/features/personal_debts/presentation/cubit/debt_person_cubit.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/pages/debt_person_page.dart';
 import 'package:chubi_pocket/features/personal_debts/presentation/pages/personal_debts_page.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
@@ -43,8 +46,9 @@ class _Repo extends PersonalDebtsRepository {
     String? q,
     bool all = false,
     NetSide? side,
+    DebtPeopleSort sort = DebtPeopleSort.oldest,
   }) async {
-    calls.add('people all=$all');
+    calls.add('people all=$all side=${side?.wire} sort=${sort.wire}');
     final f = failPeople;
     if (f != null) {
       failPeople = null;
@@ -52,29 +56,58 @@ class _Repo extends PersonalDebtsRepository {
     }
     return DebtPeoplePage.fromJson({
       'data': [
-        _person('c:c1', 'Mom', 200, contactId: 'c1'),
-        _person('n:bank', 'Bank', -50),
+        _person('c:c1', 'Mom', 200, contactId: 'c1', days: 45),
+        _person('n:bank', 'Bank', -50, days: 6),
+        _person('n:gone', 'Gone', 0),
       ],
-      'totals': {'owed_to_me': 200, 'i_owe': 50, 'net': 150, 'open_count': 2},
-      'pagination': {'page': 1, 'per_page': 30, 'total': 2, 'total_pages': 1},
+      'totals': {
+        'owed_to_me': 200,
+        'i_owe': 50,
+        'net': 150,
+        'open_count': 2,
+        'owed_to_me_people': 1,
+        'i_owe_people': 1,
+        'over_30_days_people': 1,
+      },
+      'pagination': {'page': 1, 'per_page': 30, 'total': 3, 'total_pages': 1},
     });
   }
 
+  /// The net the person page answers with (0 = a settled person).
+  num personNet = 200;
+
+  /// Earlier-cycle entries behind the fold.
+  int earlier = 1;
+
   @override
-  Future<DebtPersonDetail> person(String key, {int perPage = 30}) async {
-    calls.add('person $key');
+  Future<DebtPersonDetail> person(
+    String key, {
+    int perPage = 30,
+    DebtCycle cycle = DebtCycle.current,
+  }) async {
+    calls.add('person $key cycle=${cycle.wire}');
     final f = failPerson;
     if (f != null) {
       failPerson = null;
       throw f;
     }
     return DebtPersonDetail.fromJson({
-      ..._person(key, 'Mom', 200, contactId: 'c1'),
-      'counts': {'entries': 2, 'money': 1},
+      ..._person(key, 'Mom', personNet, contactId: 'c1', days: 6),
+      'counts': {
+        'entries': 2 + earlier,
+        'money': 1,
+        'current': 2,
+        'earlier': earlier,
+      },
       'items': [
         _entry('e1', 'paid', 300, 'Lunch money', withTx: true),
         _entry('e2', 'received', 100, null),
       ],
+      'summary_message': {
+        'text': 'Summary with Mom\n• Lunch money +300\nTotal 200',
+        'entries': 2,
+        'net': personNet,
+      },
       'pagination': {'page': 1, 'per_page': 30, 'total': 2, 'total_pages': 1},
     });
   }
@@ -85,10 +118,11 @@ class _Repo extends PersonalDebtsRepository {
     DebtEntryQuery query = const DebtEntryQuery(),
     int page = 1,
     int perPage = 30,
+    DebtCycle? cycle,
   }) async {
-    calls.add('entries money=${query.moneyOnly}');
+    calls.add('entries cycle=${cycle?.wire} q=${query.q}');
     return DebtEntriesPage.fromJson({
-      'data': [_entry('e1', 'paid', 300, 'Lunch money', withTx: true)],
+      'data': [_entry('old1', 'received', 200, 'Old repayment')],
       'pagination': {'page': 1, 'per_page': 30, 'total': 1, 'total_pages': 1},
     });
   }
@@ -99,7 +133,10 @@ Map<String, dynamic> _person(
   String name,
   num net, {
   String? contactId,
+  int? days,
 }) => {
+  'cleared_at': '2026-10-05',
+  'days_outstanding': days,
   'key': key,
   'person': {
     'name': name,
@@ -146,6 +183,7 @@ Map<String, dynamic> _entry(
         }
       : null,
   'created_at': '2026-10-12T09:30:00Z',
+  'in_current_cycle': !id.startsWith('old'),
   'updated_at': '2026-10-12T09:30:00Z',
 };
 
@@ -206,7 +244,7 @@ void main() {
     ) async {
       await pump(t, const PersonalDebtsPage());
       final toggle = find.descendant(
-        of: find.byType(DebtSummaryCard),
+        of: find.byType(ListSummaryCard),
         matching: find.byType(ToolbarToggleButton),
       );
       expect(toggle, findsOneWidget);
@@ -220,31 +258,68 @@ void main() {
       expect(button().showDot, isFalse);
       await t.tap(toggle);
       await t.pumpAndSettle();
-      expect(find.widgetWithText(AppChip, 'All'), findsOneWidget);
+      expect(find.widgetWithText(AppChip, 'Show cleared'), findsOneWidget);
       await t.enterText(find.byType(TextField), 'Mom');
       await t.tap(toggle);
       await t.pumpAndSettle();
-      expect(find.widgetWithText(AppChip, 'All'), findsNothing);
+      expect(find.widgetWithText(AppChip, 'Show cleared'), findsNothing);
       expect(button().showDot, isTrue);
     });
 
-    testWidgets('open = 1 call; rows + totals from the BE', (t) async {
+    testWidgets('open = 1 call; tiles, alert, net line and rows from the BE', (
+      t,
+    ) async {
       await pump(t, const PersonalDebtsPage());
-      expect(repo.calls, ['people all=false']);
-      expect(find.byType(DebtSummaryCard), findsOneWidget);
-      expect(find.byType(PersonBalanceRow), findsNWidgets(2));
-      expect(find.text('Mom'), findsOneWidget);
-      expect(find.text('Bank'), findsOneWidget);
+      expect(repo.calls, ['people all=false side=null sort=oldest']);
+      expect(find.text('Total outstanding'), findsOneWidget);
+      // The tiles carry the BE's people counts + amounts.
+      expect(find.text('To receive · 1 people'), findsOneWidget);
+      expect(find.text('To pay · 1 people'), findsOneWidget);
+      expect(find.text('฿200.00'), findsWidgets);
+      expect(find.text('฿50.00'), findsWidgets);
+      // Both sides open → the BE's net line; the amber alert.
+      expect(find.byType(DebtNetLine), findsOneWidget);
+      expect(find.text('Over 30 days: 1 people'), findsOneWidget);
+      // Rows: name + age (amber over 30) + the amount; nothing else.
+      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
+      expect(find.text('Outstanding 45 days'), findsOneWidget);
+      expect(find.text('Outstanding 6 days'), findsOneWidget);
+      final rows = t.widgetList<PersonBalanceRow>(
+        find.byType(PersonBalanceRow),
+      );
+      expect(rows.map((r) => r.subtitleWarn), [true, false, false]);
+      expect(rows.every((r) => !r.showCaption), isTrue);
       expect(registry.preset.mode, QuickCreateMode.debt);
     });
 
-    testWidgets('"All" chip = 1 call with all=true', (t) async {
+    testWidgets('a tile filters by side (1 call); tap again clears', (t) async {
+      await pump(t, const PersonalDebtsPage());
+      await t.tap(find.text('To receive · 1 people'));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls.last, 'people all=false side=owed_to_me sort=oldest');
+      await t.tap(find.text('To receive · 1 people'));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls.last, 'people all=false side=null sort=oldest');
+    });
+
+    testWidgets('"Show cleared" = 1 call with all=true', (t) async {
       await pump(t, const PersonalDebtsPage());
       await t.tap(find.byType(ToolbarToggleButton));
       await t.pumpAndSettle();
-      await t.tap(find.widgetWithText(AppChip, 'All'));
+      await t.tap(find.widgetWithText(AppChip, 'Show cleared'));
       await t.pump(const Duration(milliseconds: 100));
-      expect(repo.calls.last, 'people all=true');
+      expect(repo.calls.last, 'people all=true side=null sort=oldest');
+    });
+
+    testWidgets('the sort chip sends sort= (1 call)', (t) async {
+      await pump(t, const PersonalDebtsPage());
+      await t.tap(find.byType(ToolbarToggleButton));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Longest owed'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('Largest'));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls.last, 'people all=false side=null sort=amount');
     });
 
     testWidgets('a failed load → full-page error; retry loads', (t) async {
@@ -263,20 +338,90 @@ void main() {
         ),
       );
       await t.pump(const Duration(milliseconds: 100));
-      expect(find.byType(PersonBalanceRow), findsNWidgets(2));
+      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
+    });
+
+    testWidgets('a failed reload keeps the rows on screen', (t) async {
+      await pump(t, const PersonalDebtsPage());
+      repo.failPeople = const ApiException(
+        code: 'INTERNAL',
+        message: 'boom',
+        statusCode: 500,
+      );
+      await t.element(find.byType(ListPageBody)).read<DebtPeopleCubit>().load();
+      await t.pump(const Duration(milliseconds: 100));
+      expect(find.byType(ErrorView), findsNothing);
+      expect(find.byType(PersonBalanceRow), findsNWidgets(3));
     });
   });
 
   group('person page', () {
-    testWidgets('open = 1 call: hero, button, timeline rows', (t) async {
+    testWidgets('open = 1 call: hero, message box, current-cycle rows', (
+      t,
+    ) async {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
-      expect(repo.calls, ['person c:c1']);
-      expect(find.byType(NetBalance), findsOneWidget);
-      expect(find.text('Add entry'), findsOneWidget);
+      expect(repo.calls, ['person c:c1 cycle=current']);
+      // The hero: name, age, side pill + amount, the BE-built message.
+      expect(find.byType(HeroCard), findsOneWidget);
+      expect(find.text('Outstanding 6 days'), findsOneWidget);
+      expect(find.byType(DebtAmountLine), findsOneWidget);
+      expect(find.text('To receive'), findsOneWidget);
+      expect(find.text('฿200.00'), findsOneWidget);
+      expect(find.byType(DebtSummaryMessageBox), findsOneWidget);
+      expect(find.textContaining('Summary with Mom'), findsOneWidget);
+      // No tabs, no buttons under the card.
+      expect(find.byType(AppTabBar), findsNothing);
+      expect(find.text('Add entry'), findsNothing);
+      // The statement: a cycle header, the entries, the earlier fold.
+      expect(
+        find.textContaining('Where the balance comes from · since cleared'),
+        findsOneWidget,
+      );
       expect(find.byType(LedgerRow), findsNWidgets(2));
       expect(find.text('Lunch money'), findsOneWidget);
       // No description → the direction fallback.
       expect(find.text('Received from Mom'), findsOneWidget);
+      expect(find.text('Earlier cycles'), findsOneWidget);
+    });
+
+    testWidgets('the earlier cycles load once, on the fold first tap', (
+      t,
+    ) async {
+      await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
+      await t.tap(find.text('Earlier cycles'));
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls, [
+        'person c:c1 cycle=current',
+        'entries cycle=earlier q=',
+      ]);
+      expect(find.text('Earlier cycle · cleared'), findsOneWidget);
+      expect(find.text('Old repayment'), findsOneWidget);
+      expect(find.text('Earlier cycles'), findsNothing);
+    });
+
+    testWidgets('no earlier cycle → no fold', (t) async {
+      repo.earlier = 0;
+      await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
+      expect(find.text('Earlier cycles'), findsNothing);
+    });
+
+    testWidgets('a settled person: the word, no pill, no message box', (
+      t,
+    ) async {
+      repo.personNet = 0;
+      await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
+      expect(find.text('Settled up'), findsOneWidget);
+      expect(find.text('To receive'), findsNothing);
+      expect(find.byType(DebtSummaryMessageBox), findsNothing);
+    });
+
+    testWidgets('🪪 only with a contact; 🔍 toggles the toolbar', (t) async {
+      await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
+      expect(find.byIcon(AppIcons.contact), findsOneWidget);
+      expect(find.textContaining('Type:'), findsNothing);
+      await t.tap(find.byType(ToolbarToggleButton));
+      await t.pumpAndSettle();
+      expect(find.textContaining('Type:'), findsOneWidget);
     });
 
     testWidgets('quick create preset = debt + this person at once', (t) async {
@@ -285,11 +430,22 @@ void main() {
       expect(registry.active()?.person?.contactId, 'c1');
     });
 
-    testWidgets('the payments tab loads once, on its first open', (t) async {
+    testWidgets('a saved debt (DebtBook) re-runs the page call', (t) async {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
-      await t.tap(find.text('Payments'));
-      await t.pumpAndSettle();
-      expect(repo.calls, ['person c:c1', 'entries money=true']);
+      DebtBook.entrySaved(
+        DebtEntryWriteResult.fromJson({
+          'entry': _entry('e9', 'paid', 10, 'New'),
+          'person_balance': _person('c:c1', 'Mom', 210, contactId: 'c1'),
+          'previous_person_balance': null,
+          'transaction': null,
+          'account_balances': <Object>[],
+        }),
+      );
+      await t.pump(const Duration(milliseconds: 100));
+      expect(repo.calls, [
+        'person c:c1 cycle=current',
+        'person c:c1 cycle=current',
+      ]);
     });
 
     testWidgets('a failed load → full-page error', (t) async {
@@ -301,6 +457,19 @@ void main() {
       await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
       expect(find.byType(ErrorView), findsOneWidget);
       expect(find.byType(LedgerRow), findsNothing);
+    });
+
+    testWidgets('a failed reload keeps the statement on screen', (t) async {
+      await pump(t, const DebtPersonPage(personKey: 'c:c1', name: 'Mom'));
+      repo.failPerson = const ApiException(
+        code: 'INTERNAL',
+        message: 'boom',
+        statusCode: 500,
+      );
+      await t.element(find.byType(HeroCard)).read<DebtPersonCubit>().load();
+      await t.pump(const Duration(milliseconds: 100));
+      expect(find.byType(ErrorView), findsNothing);
+      expect(find.byType(LedgerRow), findsNWidgets(2));
     });
 
     testWidgets('a gone typed name (404) → not found, no error', (t) async {

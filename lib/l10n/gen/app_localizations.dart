@@ -10734,6 +10734,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Old records keep just the name; amounts unchanged'**
   String get fpContactsDeleteConsequence;
+
+  /// No description provided for @fpDebtsTotalCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Total outstanding'**
+  String get fpDebtsTotalCaption;
+
+  /// No description provided for @fpDebtsOwedToMeTile.
+  ///
+  /// In en, this message translates to:
+  /// **'To receive · {count} people'**
+  String fpDebtsOwedToMeTile(int count);
+
+  /// No description provided for @fpDebtsIOweTile.
+  ///
+  /// In en, this message translates to:
+  /// **'To pay · {count} people'**
+  String fpDebtsIOweTile(int count);
+
+  /// No description provided for @fpDebtsOver30.
+  ///
+  /// In en, this message translates to:
+  /// **'Over 30 days: {count} people'**
+  String fpDebtsOver30(int count);
+
+  /// No description provided for @fpDebtsDaysOutstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Outstanding {count} days'**
+  String fpDebtsDaysOutstanding(int count);
+
+  /// No description provided for @fpDebtsIncludeCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Show cleared'**
+  String get fpDebtsIncludeCleared;
+
+  /// No description provided for @fpDebtsSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest owed'**
+  String get fpDebtsSortOldest;
+
+  /// No description provided for @fpDebtsSortAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest'**
+  String get fpDebtsSortAmount;
+
+  /// No description provided for @fpDebtsSortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get fpDebtsSortRecent;
+
+  /// No description provided for @fpDebtsMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary message · editable before sending'**
+  String get fpDebtsMessageLabel;
+
+  /// No description provided for @fpDebtsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get fpDebtsCopy;
+
+  /// No description provided for @fpDebtsShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get fpDebtsShare;
+
+  /// No description provided for @fpDebtsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Message copied'**
+  String get fpDebtsCopied;
+
+  /// No description provided for @fpDebtsCycleHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the balance comes from'**
+  String get fpDebtsCycleHeader;
+
+  /// No description provided for @fpDebtsCycleHeaderSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the balance comes from · since cleared {date}'**
+  String fpDebtsCycleHeaderSince(String date);
+
+  /// No description provided for @fpDebtsEarlierHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier cycle · cleared'**
+  String get fpDebtsEarlierHeader;
+
+  /// No description provided for @fpDebtsEarlierLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier cycles'**
+  String get fpDebtsEarlierLink;
 }
 
 class _AppLocalizationsDelegate

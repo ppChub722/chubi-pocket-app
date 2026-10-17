@@ -203,36 +203,70 @@ void main() {
     });
   });
 
-  group('DebtSummaryCard', () {
-    testWidgets('net, totals, tints; box taps fire', (t) async {
-      var owedTaps = 0;
-      var oweTaps = 0;
+  group('debt hero pieces', () {
+    testWidgets('DebtAmountLine: pill + coloured amount; settled = word', (
+      t,
+    ) async {
       await pump(
         t,
-        DebtSummaryCard(
-          owedToMe: 3000,
-          iOwe: 1750,
-          netLabel: 'ยอดสุทธิ',
-          owedToMeLabel: owed,
-          iOweLabel: owe,
-          owedToMeSelected: true,
-          onOwedToMeTap: () => owedTaps++,
-          onIOweTap: () => oweTaps++,
+        const DebtAmountLine(
+          net: 1189.67,
+          owedToMeLabel: 'รอรับ',
+          iOweLabel: 'รอจ่าย',
+          settledLabel: even,
         ),
       );
-      expect(find.text('ยอดสุทธิ'), findsOneWidget);
-      expect(find.text('+฿1,250.00'), findsOneWidget);
-      expect(colorOf(t, '+฿1,250.00'), colors.income);
-      expect(colorOf(t, '฿3,000.00'), colors.income);
-      expect(colorOf(t, '฿1,750.00'), colors.expense);
-      final frames = t
-          .widgetList<SelectableFrame>(find.byType(SelectableFrame))
-          .toList();
-      expect(frames.map((f) => f.selected), [true, false]);
-      await t.tap(find.text(owed));
-      await t.tap(find.text(owe));
-      expect((owedTaps, oweTaps), (1, 1));
+      expect(find.text('รอรับ'), findsOneWidget);
+      expect(colorOf(t, '฿1,189.67'), colors.income);
+      await pump(
+        t,
+        const DebtAmountLine(
+          net: -50,
+          owedToMeLabel: 'รอรับ',
+          iOweLabel: 'รอจ่าย',
+          settledLabel: even,
+        ),
+      );
+      expect(find.text('รอจ่าย'), findsOneWidget);
+      expect(colorOf(t, '฿50.00'), colors.expense);
+      await pump(
+        t,
+        const DebtAmountLine(
+          net: 0,
+          owedToMeLabel: 'รอรับ',
+          iOweLabel: 'รอจ่าย',
+          settledLabel: even,
+        ),
+      );
+      expect(find.text(even), findsOneWidget);
+      expect(find.byType(AppChip), findsNothing);
     });
+
+    testWidgets(
+      'DebtSummaryMessageBox: prefilled, edits go out, new text wins',
+      (t) async {
+        final out = <String>[];
+        Widget box(String text) => DebtSummaryMessageBox(
+          text: text,
+          label: 'ข้อความ',
+          copyLabel: 'คัดลอก',
+          shareLabel: 'แชร์',
+          onCopy: (v) => out.add('copy:$v'),
+          onShare: (v) => out.add('share:$v'),
+        );
+        await pump(t, box('hello'));
+        expect(find.text('hello'), findsOneWidget);
+        await t.enterText(
+          find.byKey(const ValueKey('debtSummaryMessage')),
+          'hi',
+        );
+        await t.tap(find.text('คัดลอก'));
+        await t.tap(find.text('แชร์'));
+        expect(out, ['copy:hi', 'share:hi']);
+        await pump(t, box('fresh'));
+        expect(find.text('fresh'), findsOneWidget);
+      },
+    );
   });
 
   group('SortChip', () {
