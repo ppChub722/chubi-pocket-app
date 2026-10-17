@@ -35,7 +35,6 @@ import '../../features/pending/presentation/pages/pending_page.dart';
 import '../../features/personal_debts/presentation/pages/debt_person_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debts_page.dart';
 import '../../features/projects/presentation/pages/project_detail_page.dart';
-import '../../features/projects/presentation/pages/project_form_page.dart';
 import '../../features/projects/presentation/pages/project_members_page.dart';
 import '../../features/projects/presentation/pages/projects_page.dart';
 import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.dart';
@@ -411,7 +410,7 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       path: '/projects/new',
       name: 'project-new',
       // Forms hide the nav themselves (EditModeMixin).
-      builder: (context, state) => const ProjectFormPage(),
+      builder: (context, state) => const ProjectDetailPage(),
     ),
     GoRoute(
       path: '/projects/:id',

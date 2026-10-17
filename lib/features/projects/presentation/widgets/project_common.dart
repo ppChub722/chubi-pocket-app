@@ -134,7 +134,8 @@ class ProjectView {
     return _copy(
       project: p.project,
       members: p.members,
-      txs: rows,
+      // A tag renamed / restyled / deleted shows on the rows at once.
+      txs: [for (final t in rows) t.withTagsFrom(p.tags)],
       summary: p.summary,
       eventTags: p.tags,
     );
