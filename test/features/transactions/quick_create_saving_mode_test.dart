@@ -55,8 +55,10 @@ class _SavingRepo extends Fake implements SavingGoalsRepository {
   final writes = <Map<String, Object?>>[];
 
   @override
-  Future<SavingGoalsOverview> list({String status = 'active'}) async =>
-      SavingGoalsOverview.fromJson(prodList());
+  Future<SavingGoalsOverview> list({
+    String status = 'active',
+    String sort = 'created',
+  }) async => SavingGoalsOverview.fromJson(prodList());
 
   @override
   Future<SavingWriteResult> addEntry({
