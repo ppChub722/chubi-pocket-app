@@ -6118,4 +6118,230 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'สมาชิก';
+
+  @override
+  String get fpEventsSummaryCaption => 'event ที่กำลังทำ · ส่วนของฉัน';
+
+  @override
+  String fpEventsPaidLine(String paid, String receivable) {
+    return 'ฉันจ่ายไป $paid → รอรับ $receivable';
+  }
+
+  @override
+  String get fpEventsTileActive => 'กำลังทำ';
+
+  @override
+  String get fpEventsTileUnsettled => 'ยังเคลียร์ไม่หมด';
+
+  @override
+  String get fpEventsTileEnded => 'จบแล้ว';
+
+  @override
+  String get fpEventsSortRecent => 'ล่าสุดก่อน';
+
+  @override
+  String get fpEventsSortOldest => 'เก่าสุดก่อน';
+
+  @override
+  String get fpEventsSortAmount => 'ยอดมากสุดก่อน';
+
+  @override
+  String get fpEventsCreate => 'สร้างอีเวนต์';
+
+  @override
+  String fpEventsRowSpent(String amount) {
+    return 'ใช้ไป $amount';
+  }
+
+  @override
+  String fpEventsRowShare(String amount) {
+    return 'ส่วนฉัน $amount';
+  }
+
+  @override
+  String get fpEventsOwed => 'รอรับ';
+
+  @override
+  String get fpEventsOwe => 'รอจ่าย';
+
+  @override
+  String get fpEventsSpentTotal => 'ใช้ไปรวม';
+
+  @override
+  String fpEventsBudgetUsed(String spent, String planned) {
+    return 'ใช้ไป $spent จากงบ $planned';
+  }
+
+  @override
+  String fpEventsBudgetLeft(String amount) {
+    return 'เหลือ $amount';
+  }
+
+  @override
+  String fpEventsBudgetOver(String amount) {
+    return 'เกินงบ $amount';
+  }
+
+  @override
+  String get fpEventsMyShare => 'ส่วนของฉัน';
+
+  @override
+  String get fpEventsIncomeTotal => 'รายรับรวม';
+
+  @override
+  String get fpEventsMyTags => 'แท็กของฉัน';
+
+  @override
+  String get fpEventsTagPick => 'เลือก';
+
+  @override
+  String get fpEventsMembersTitle => 'สมาชิก · ใครจ่าย / ใครค้าง';
+
+  @override
+  String get fpEventsManage => 'จัดการ ›';
+
+  @override
+  String fpEventsMemberPaid(String amount) {
+    return 'จ่าย $amount';
+  }
+
+  @override
+  String fpEventsMemberOwed(String amount) {
+    return 'รอรับ $amount';
+  }
+
+  @override
+  String fpEventsMemberOwe(String amount) {
+    return 'รอจ่าย $amount';
+  }
+
+  @override
+  String get fpEventsInvite => 'เชิญ';
+
+  @override
+  String get fpEventsBillsSearchHint => 'ค้นหารายการในอีเวนต์';
+
+  @override
+  String get fpEventsPayerFilter => 'คนจ่าย';
+
+  @override
+  String get fpEventsPayerAll => 'ทุกคน';
+
+  @override
+  String get fpEventsTagsFilterLabel => 'แท็กอีเวนต์';
+
+  @override
+  String get fpEventsTagAll => 'ทั้งหมด';
+
+  @override
+  String fpEventsSplitCount(int count) {
+    return 'หาร $count คน';
+  }
+
+  @override
+  String fpEventsPaidBy(String name) {
+    return '$name จ่าย';
+  }
+
+  @override
+  String get fpEventsBudgetLabel => 'ตั้งงบไว้ (ไม่บังคับ)';
+
+  @override
+  String get fpEventsBudgetHelper =>
+      'ยอดที่ตั้งใจจะใช้ · ล้างค่าเพื่อไม่แสดงแผน';
+
+  @override
+  String get fpEventsDatesLabel => 'วันเริ่ม – สิ้นสุด';
+
+  @override
+  String get fpEventsSettingsDesc =>
+      'แท็กของบิลในอีเวนต์นี้ ใช้ร่วมกับสมาชิกทุกคน';
+
+  @override
+  String get fpEventsManageTags => 'จัดการแท็กอีเวนต์';
+
+  @override
+  String fpEventsTagsCount(int count) {
+    return '$count แท็ก';
+  }
+
+  @override
+  String get fpEventsArchiveConsequence => 'ซ่อนไว้ ไม่นับในยอด กู้คืนได้';
+
+  @override
+  String get fpEventsDeleteConsequence => 'เลือกได้ว่าจะลบบิลในอีเวนต์ด้วยไหม';
+
+  @override
+  String get fpEventsRestore => 'กู้คืนอีเวนต์';
+
+  @override
+  String get fpEventsRestoreConsequence => 'กลับมาเป็นกำลังดำเนินการ';
+
+  @override
+  String get fpEventsArchived => 'เก็บถาวรแล้ว';
+
+  @override
+  String get fpEventsRestored => 'กู้คืนแล้ว';
+
+  @override
+  String get fpEventsArchiveConfirmTitle => 'เก็บถาวรอีเวนต์นี้?';
+
+  @override
+  String get fpEventsArchiveConfirmBody =>
+      'ซ่อนไว้ ไม่นับในยอด และแก้ไขไม่ได้ กู้คืนได้ทุกเมื่อ';
+
+  @override
+  String get fpEventsTagsTitle => 'แท็กอีเวนต์ · ใช้ร่วมกับสมาชิก';
+
+  @override
+  String get fpEventsTagAdd => 'เพิ่มแท็กอีเวนต์';
+
+  @override
+  String get fpEventsTagsImportAll => 'นำเข้าทั้งหมดไปแท็กของฉัน';
+
+  @override
+  String get fpEventsTagRename => 'เปลี่ยนชื่อ';
+
+  @override
+  String get fpEventsTagRestyle => 'เปลี่ยนไอคอน/สี';
+
+  @override
+  String get fpEventsTagImportOne => 'นำเข้าแท็กของฉัน';
+
+  @override
+  String get fpEventsTagNameLabel => 'ชื่อแท็ก';
+
+  @override
+  String get fpEventsTagNameRequired => 'ใส่ชื่อแท็ก';
+
+  @override
+  String get fpEventsTagNewTitle => 'แท็กอีเวนต์ใหม่';
+
+  @override
+  String get fpEventsTagRenameTitle => 'เปลี่ยนชื่อแท็ก';
+
+  @override
+  String get fpEventsTagIconTitle => 'ไอคอนแท็ก';
+
+  @override
+  String fpEventsTagDeleteTitle(String name) {
+    return 'ลบแท็ก $name?';
+  }
+
+  @override
+  String get fpEventsTagDeleteBody => 'บิลที่ใช้แท็กนี้จะหลุดแท็ก';
+
+  @override
+  String get fpEventsTagsEmpty => 'ยังไม่มีแท็กอีเวนต์';
+
+  @override
+  String fpEventsTagBills(int count) {
+    return '$count บิล';
+  }
+
+  @override
+  String get fpEventsTagInMine => 'มีในแท็กของฉันแล้ว';
+
+  @override
+  String get fpEventsLoadFailed => 'โหลดใหม่ไม่ได้ · แสดงข้อมูลล่าสุด';
 }

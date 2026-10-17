@@ -49,6 +49,7 @@ class ChipRow extends StatelessWidget {
   const ChipRow({
     required this.chips,
     this.icon,
+    this.label,
     this.onMore,
     this.moreLabel,
     this.moreFirst = false,
@@ -59,6 +60,10 @@ class ChipRow extends StatelessWidget {
 
   /// Null = no leading icon (a titled section shows it instead).
   final IconData? icon;
+
+  /// A small muted text before the chips (a filter row's name, "Event tags");
+  /// shown after [icon] when both are given.
+  final String? label;
   final List<Widget> chips;
 
   /// Null = no "เพิ่มเติม" (a view-only row).
@@ -96,6 +101,16 @@ class ChipRow extends StatelessWidget {
       children: [
         if (icon != null) ...[
           Icon(icon, size: 18, color: scheme.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+        if (label != null) ...[
+          Text(
+            label!,
+            maxLines: 1,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
           const SizedBox(width: AppSpacing.sm),
         ],
         Expanded(

@@ -10680,6 +10680,396 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Member'**
   String get fpWalletMemberCaption;
+
+  /// No description provided for @fpEventsSummaryCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Active events · my share'**
+  String get fpEventsSummaryCaption;
+
+  /// No description provided for @fpEventsPaidLine.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid {paid} → owed {receivable}'**
+  String fpEventsPaidLine(String paid, String receivable);
+
+  /// No description provided for @fpEventsTileActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get fpEventsTileActive;
+
+  /// No description provided for @fpEventsTileUnsettled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not settled'**
+  String get fpEventsTileUnsettled;
+
+  /// No description provided for @fpEventsTileEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get fpEventsTileEnded;
+
+  /// No description provided for @fpEventsSortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest first'**
+  String get fpEventsSortRecent;
+
+  /// No description provided for @fpEventsSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get fpEventsSortOldest;
+
+  /// No description provided for @fpEventsSortAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Biggest first'**
+  String get fpEventsSortAmount;
+
+  /// No description provided for @fpEventsCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create event'**
+  String get fpEventsCreate;
+
+  /// No description provided for @fpEventsRowSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent {amount}'**
+  String fpEventsRowSpent(String amount);
+
+  /// No description provided for @fpEventsRowShare.
+  ///
+  /// In en, this message translates to:
+  /// **'My share {amount}'**
+  String fpEventsRowShare(String amount);
+
+  /// No description provided for @fpEventsOwed.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed to me'**
+  String get fpEventsOwed;
+
+  /// No description provided for @fpEventsOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe'**
+  String get fpEventsOwe;
+
+  /// No description provided for @fpEventsSpentTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total spent'**
+  String get fpEventsSpentTotal;
+
+  /// No description provided for @fpEventsBudgetUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent {spent} of {planned} budget'**
+  String fpEventsBudgetUsed(String spent, String planned);
+
+  /// No description provided for @fpEventsBudgetLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} left'**
+  String fpEventsBudgetLeft(String amount);
+
+  /// No description provided for @fpEventsBudgetOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over by {amount}'**
+  String fpEventsBudgetOver(String amount);
+
+  /// No description provided for @fpEventsMyShare.
+  ///
+  /// In en, this message translates to:
+  /// **'My share'**
+  String get fpEventsMyShare;
+
+  /// No description provided for @fpEventsIncomeTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total income'**
+  String get fpEventsIncomeTotal;
+
+  /// No description provided for @fpEventsMyTags.
+  ///
+  /// In en, this message translates to:
+  /// **'My tags'**
+  String get fpEventsMyTags;
+
+  /// No description provided for @fpEventsTagPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick'**
+  String get fpEventsTagPick;
+
+  /// No description provided for @fpEventsMembersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members · who paid / who owes'**
+  String get fpEventsMembersTitle;
+
+  /// No description provided for @fpEventsManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage ›'**
+  String get fpEventsManage;
+
+  /// No description provided for @fpEventsMemberPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {amount}'**
+  String fpEventsMemberPaid(String amount);
+
+  /// No description provided for @fpEventsMemberOwed.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed {amount}'**
+  String fpEventsMemberOwed(String amount);
+
+  /// No description provided for @fpEventsMemberOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'Owes {amount}'**
+  String fpEventsMemberOwe(String amount);
+
+  /// No description provided for @fpEventsInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get fpEventsInvite;
+
+  /// No description provided for @fpEventsBillsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search bills in this event'**
+  String get fpEventsBillsSearchHint;
+
+  /// No description provided for @fpEventsPayerFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid by'**
+  String get fpEventsPayerFilter;
+
+  /// No description provided for @fpEventsPayerAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get fpEventsPayerAll;
+
+  /// No description provided for @fpEventsTagsFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Event tags'**
+  String get fpEventsTagsFilterLabel;
+
+  /// No description provided for @fpEventsTagAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get fpEventsTagAll;
+
+  /// No description provided for @fpEventsSplitCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Split {count}'**
+  String fpEventsSplitCount(int count);
+
+  /// No description provided for @fpEventsPaidBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} paid'**
+  String fpEventsPaidBy(String name);
+
+  /// No description provided for @fpEventsBudgetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned budget (optional)'**
+  String get fpEventsBudgetLabel;
+
+  /// No description provided for @fpEventsBudgetHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'What you intend to spend · clear to hide the plan'**
+  String get fpEventsBudgetHelper;
+
+  /// No description provided for @fpEventsDatesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start – end'**
+  String get fpEventsDatesLabel;
+
+  /// No description provided for @fpEventsSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill tags in this event, shared with every member'**
+  String get fpEventsSettingsDesc;
+
+  /// No description provided for @fpEventsManageTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage event tags'**
+  String get fpEventsManageTags;
+
+  /// No description provided for @fpEventsTagsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tags'**
+  String fpEventsTagsCount(int count);
+
+  /// No description provided for @fpEventsArchiveConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted, can be restored'**
+  String get fpEventsArchiveConsequence;
+
+  /// No description provided for @fpEventsDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'You choose whether its bills go too'**
+  String get fpEventsDeleteConsequence;
+
+  /// No description provided for @fpEventsRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore event'**
+  String get fpEventsRestore;
+
+  /// No description provided for @fpEventsRestoreConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to in progress'**
+  String get fpEventsRestoreConsequence;
+
+  /// No description provided for @fpEventsArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Event archived'**
+  String get fpEventsArchived;
+
+  /// No description provided for @fpEventsRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Event restored'**
+  String get fpEventsRestored;
+
+  /// No description provided for @fpEventsArchiveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive this event?'**
+  String get fpEventsArchiveConfirmTitle;
+
+  /// No description provided for @fpEventsArchiveConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden, not counted and read-only. You can restore it any time.'**
+  String get fpEventsArchiveConfirmBody;
+
+  /// No description provided for @fpEventsTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event tags · shared with members'**
+  String get fpEventsTagsTitle;
+
+  /// No description provided for @fpEventsTagAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add event tag'**
+  String get fpEventsTagAdd;
+
+  /// No description provided for @fpEventsTagsImportAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Import all to my tags'**
+  String get fpEventsTagsImportAll;
+
+  /// No description provided for @fpEventsTagRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get fpEventsTagRename;
+
+  /// No description provided for @fpEventsTagRestyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change icon / colour'**
+  String get fpEventsTagRestyle;
+
+  /// No description provided for @fpEventsTagImportOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Import to my tags'**
+  String get fpEventsTagImportOne;
+
+  /// No description provided for @fpEventsTagNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag name'**
+  String get fpEventsTagNameLabel;
+
+  /// No description provided for @fpEventsTagNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a tag name'**
+  String get fpEventsTagNameRequired;
+
+  /// No description provided for @fpEventsTagNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New event tag'**
+  String get fpEventsTagNewTitle;
+
+  /// No description provided for @fpEventsTagRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename tag'**
+  String get fpEventsTagRenameTitle;
+
+  /// No description provided for @fpEventsTagIconTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag icon'**
+  String get fpEventsTagIconTitle;
+
+  /// No description provided for @fpEventsTagDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag {name}?'**
+  String fpEventsTagDeleteTitle(String name);
+
+  /// No description provided for @fpEventsTagDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Bills using it lose the tag.'**
+  String get fpEventsTagDeleteBody;
+
+  /// No description provided for @fpEventsTagsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No event tags yet'**
+  String get fpEventsTagsEmpty;
+
+  /// No description provided for @fpEventsTagBills.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 bill} other{{count} bills}}'**
+  String fpEventsTagBills(int count);
+
+  /// No description provided for @fpEventsTagInMine.
+  ///
+  /// In en, this message translates to:
+  /// **'In my tags already'**
+  String get fpEventsTagInMine;
+
+  /// No description provided for @fpEventsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh · showing the last data'**
+  String get fpEventsLoadFailed;
 }
 
 class _AppLocalizationsDelegate

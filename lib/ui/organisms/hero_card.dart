@@ -289,6 +289,7 @@ class HeroAmountField extends StatelessWidget {
     required this.label,
     this.accent,
     this.symbol,
+    this.helper,
     this.focusNode,
     this.validator,
     this.onChanged,
@@ -298,6 +299,9 @@ class HeroAmountField extends StatelessWidget {
 
   final TextEditingController controller;
   final String label;
+
+  /// A muted line under the field ("What you intend to spend").
+  final String? helper;
 
   /// Outline colour (the hero's tint); null = the theme's.
   final Color? accent;
@@ -312,6 +316,7 @@ class HeroAmountField extends StatelessWidget {
     controller: controller,
     focusNode: focusNode,
     label: label,
+    helper: helper,
     type: AppInputType.amount,
     currencySymbol: symbol ?? UiConfig.stringsOf(context).currencySymbol,
     validator: validator,
@@ -436,6 +441,39 @@ class HeroBar extends StatelessWidget {
               ],
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// A small "label ... value" line on a hero (the embedded slot): a muted
+/// [label] at the left, the [value] (a `MoneyText`, any text widget) at the
+/// right — an extra fact that is not worth a tile ("รายรับรวม +฿500").
+class HeroValueLine extends StatelessWidget {
+  const HeroValueLine({required this.label, required this.value, super.key});
+
+  final String label;
+  final Widget value;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        DefaultTextStyle.merge(
+          style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          child: value,
+        ),
       ],
     );
   }

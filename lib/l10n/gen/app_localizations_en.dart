@@ -6264,4 +6264,237 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'Member';
+
+  @override
+  String get fpEventsSummaryCaption => 'Active events · my share';
+
+  @override
+  String fpEventsPaidLine(String paid, String receivable) {
+    return 'I paid $paid → owed $receivable';
+  }
+
+  @override
+  String get fpEventsTileActive => 'Active';
+
+  @override
+  String get fpEventsTileUnsettled => 'Not settled';
+
+  @override
+  String get fpEventsTileEnded => 'Ended';
+
+  @override
+  String get fpEventsSortRecent => 'Latest first';
+
+  @override
+  String get fpEventsSortOldest => 'Oldest first';
+
+  @override
+  String get fpEventsSortAmount => 'Biggest first';
+
+  @override
+  String get fpEventsCreate => 'Create event';
+
+  @override
+  String fpEventsRowSpent(String amount) {
+    return 'Spent $amount';
+  }
+
+  @override
+  String fpEventsRowShare(String amount) {
+    return 'My share $amount';
+  }
+
+  @override
+  String get fpEventsOwed => 'Owed to me';
+
+  @override
+  String get fpEventsOwe => 'I owe';
+
+  @override
+  String get fpEventsSpentTotal => 'Total spent';
+
+  @override
+  String fpEventsBudgetUsed(String spent, String planned) {
+    return 'Spent $spent of $planned budget';
+  }
+
+  @override
+  String fpEventsBudgetLeft(String amount) {
+    return '$amount left';
+  }
+
+  @override
+  String fpEventsBudgetOver(String amount) {
+    return 'Over by $amount';
+  }
+
+  @override
+  String get fpEventsMyShare => 'My share';
+
+  @override
+  String get fpEventsIncomeTotal => 'Total income';
+
+  @override
+  String get fpEventsMyTags => 'My tags';
+
+  @override
+  String get fpEventsTagPick => 'Pick';
+
+  @override
+  String get fpEventsMembersTitle => 'Members · who paid / who owes';
+
+  @override
+  String get fpEventsManage => 'Manage ›';
+
+  @override
+  String fpEventsMemberPaid(String amount) {
+    return 'Paid $amount';
+  }
+
+  @override
+  String fpEventsMemberOwed(String amount) {
+    return 'Owed $amount';
+  }
+
+  @override
+  String fpEventsMemberOwe(String amount) {
+    return 'Owes $amount';
+  }
+
+  @override
+  String get fpEventsInvite => 'Invite';
+
+  @override
+  String get fpEventsBillsSearchHint => 'Search bills in this event';
+
+  @override
+  String get fpEventsPayerFilter => 'Paid by';
+
+  @override
+  String get fpEventsPayerAll => 'Everyone';
+
+  @override
+  String get fpEventsTagsFilterLabel => 'Event tags';
+
+  @override
+  String get fpEventsTagAll => 'All';
+
+  @override
+  String fpEventsSplitCount(int count) {
+    return 'Split $count';
+  }
+
+  @override
+  String fpEventsPaidBy(String name) {
+    return '$name paid';
+  }
+
+  @override
+  String get fpEventsBudgetLabel => 'Planned budget (optional)';
+
+  @override
+  String get fpEventsBudgetHelper =>
+      'What you intend to spend · clear to hide the plan';
+
+  @override
+  String get fpEventsDatesLabel => 'Start – end';
+
+  @override
+  String get fpEventsSettingsDesc =>
+      'Bill tags in this event, shared with every member';
+
+  @override
+  String get fpEventsManageTags => 'Manage event tags';
+
+  @override
+  String fpEventsTagsCount(int count) {
+    return '$count tags';
+  }
+
+  @override
+  String get fpEventsArchiveConsequence =>
+      'Hidden, not counted, can be restored';
+
+  @override
+  String get fpEventsDeleteConsequence => 'You choose whether its bills go too';
+
+  @override
+  String get fpEventsRestore => 'Restore event';
+
+  @override
+  String get fpEventsRestoreConsequence => 'Back to in progress';
+
+  @override
+  String get fpEventsArchived => 'Event archived';
+
+  @override
+  String get fpEventsRestored => 'Event restored';
+
+  @override
+  String get fpEventsArchiveConfirmTitle => 'Archive this event?';
+
+  @override
+  String get fpEventsArchiveConfirmBody =>
+      'Hidden, not counted and read-only. You can restore it any time.';
+
+  @override
+  String get fpEventsTagsTitle => 'Event tags · shared with members';
+
+  @override
+  String get fpEventsTagAdd => 'Add event tag';
+
+  @override
+  String get fpEventsTagsImportAll => 'Import all to my tags';
+
+  @override
+  String get fpEventsTagRename => 'Rename';
+
+  @override
+  String get fpEventsTagRestyle => 'Change icon / colour';
+
+  @override
+  String get fpEventsTagImportOne => 'Import to my tags';
+
+  @override
+  String get fpEventsTagNameLabel => 'Tag name';
+
+  @override
+  String get fpEventsTagNameRequired => 'Enter a tag name';
+
+  @override
+  String get fpEventsTagNewTitle => 'New event tag';
+
+  @override
+  String get fpEventsTagRenameTitle => 'Rename tag';
+
+  @override
+  String get fpEventsTagIconTitle => 'Tag icon';
+
+  @override
+  String fpEventsTagDeleteTitle(String name) {
+    return 'Delete tag $name?';
+  }
+
+  @override
+  String get fpEventsTagDeleteBody => 'Bills using it lose the tag.';
+
+  @override
+  String get fpEventsTagsEmpty => 'No event tags yet';
+
+  @override
+  String fpEventsTagBills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bills',
+      one: '1 bill',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fpEventsTagInMine => 'In my tags already';
+
+  @override
+  String get fpEventsLoadFailed => 'Couldn\'t refresh · showing the last data';
 }
