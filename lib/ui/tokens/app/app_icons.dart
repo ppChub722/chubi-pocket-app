@@ -38,6 +38,9 @@ abstract final class AppIcons {
   static const savingGoal = Icons.flag_outlined;
   // Saving txs (goals v2): a record of its own, never a real tx.
   static const savingDeposit = Icons.savings; // ออม
+  // The quick create "ออม" mode (owner 2026-10-17: 🐷 / savings is the
+  // budget's icon; temporary, until the icon overhaul).
+  static const quickSaving = Icons.inventory_2_outlined;
   static const savingWithdraw = Icons.keyboard_return; // ถอนออม
   static const savingAllocate = Icons.shuffle; // จัดสรร
   static const goalClose = Icons.flag; // ปิดเป้าหมาย

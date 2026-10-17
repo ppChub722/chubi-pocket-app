@@ -1,17 +1,22 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/bloc/clearable_cubit.dart';
 import '../../data/notifications_repository.dart';
 
 /// App-wide unread-count cubit. Powers the bell badge in the top app bar.
-/// Polls `GET /notifications/unread-count` every 30s while authenticated;
+/// Polls `GET /notifications/unread-count` every 60s while authenticated;
 /// spec §13.4.8 (in-app polling in 1b).
-class UnreadBadgeCubit extends Cubit<int> with Clearable {
+///
+/// Foreground only: the timer is cancelled when the app goes to the
+/// background and one refresh + a fresh timer start on resume.
+class UnreadBadgeCubit extends Cubit<int>
+    with Clearable, WidgetsBindingObserver {
   UnreadBadgeCubit({
     required NotificationsRepository repository,
-    Duration interval = const Duration(seconds: 30),
+    Duration interval = const Duration(seconds: 60),
   }) : _repo = repository,
        _interval = interval,
        super(0);
@@ -30,16 +35,44 @@ class UnreadBadgeCubit extends Cubit<int> with Clearable {
   void start() {
     if (_running) return;
     _running = true;
+    WidgetsFlutterBinding.ensureInitialized().addObserver(this);
     _tick();
-    _timer = Timer.periodic(_interval, (_) => _tick());
+    _startTimer();
   }
 
   /// Stop polling — called on logout.
   void stop() {
     _running = false;
+    WidgetsBinding.instance.removeObserver(this);
+    _stopTimer();
+    if (state != 0) emit(0);
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(_interval, (_) => _tick());
+  }
+
+  void _stopTimer() {
     _timer?.cancel();
     _timer = null;
-    if (state != 0) emit(0);
+  }
+
+  @override
+  // ignore: avoid_renaming_method_parameters — `state` is the cubit's int.
+  void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
+    if (!_running) return;
+    switch (lifecycle) {
+      case AppLifecycleState.resumed:
+        _tick();
+        _startTimer();
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _stopTimer();
+      case AppLifecycleState.inactive:
+        break; // transient (dialogs, app switcher) — keep polling
+    }
   }
 
   /// One-shot refresh (e.g. after the user opens the inbox).
@@ -62,6 +95,7 @@ class UnreadBadgeCubit extends Cubit<int> with Clearable {
 
   @override
   Future<void> close() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     return super.close();
   }

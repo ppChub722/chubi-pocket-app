@@ -32,7 +32,9 @@ void main() {
     ),
   );
 
-  testWidgets('swiping steps through the types, without wrapping', (t) async {
+  testWidgets('swiping the card does NOT change the type (chips only)', (
+    t,
+  ) async {
     var type = TransactionType.expense;
     await pump(
       t,
@@ -49,16 +51,10 @@ void main() {
     final card = find.byType(TxHeroCard);
     await t.fling(card, const Offset(-300, 0), 1500);
     await t.pumpAndSettle();
-    expect(type, TransactionType.income);
-    await t.fling(card, const Offset(-300, 0), 1500);
-    await t.pumpAndSettle();
-    expect(type, TransactionType.transfer);
-    await t.fling(card, const Offset(-300, 0), 1500);
-    await t.pumpAndSettle();
-    expect(type, TransactionType.transfer);
+    expect(type, TransactionType.expense);
     await t.fling(card, const Offset(300, 0), 1500);
     await t.pumpAndSettle();
-    expect(type, TransactionType.income);
+    expect(type, TransactionType.expense);
   });
 
   testWidgets('a chip tap picks that type; no transfer when not allowed', (
@@ -200,7 +196,9 @@ void main() {
     expect(amountFocus.hasFocus, isTrue);
   });
 
-  testWidgets('a locked type in edit mode shows the 🔒 chip', (t) async {
+  testWidgets('a locked type in edit mode: a plain solid chip, no 🔒', (
+    t,
+  ) async {
     await pump(
       t,
       TxHeroCard(
@@ -213,8 +211,8 @@ void main() {
     );
     expect(find.widgetWithText(AppChip, 'รายรับ'), findsOneWidget);
     expect(find.text('รายจ่าย'), findsNothing);
-    expect(find.byIcon(AppIcons.lock), findsOneWidget);
-    expect(find.byType(Tooltip), findsWidgets);
+    expect(find.byIcon(AppIcons.lock), findsNothing);
+    expect(t.widget<AppChip>(find.widgetWithText(AppChip, 'รายรับ')).dashed, isFalse);
   });
 
   testWidgets('description and amount underlines share one bottom line', (

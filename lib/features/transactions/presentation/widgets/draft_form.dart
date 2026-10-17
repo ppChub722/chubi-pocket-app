@@ -601,13 +601,12 @@ class DraftForm extends StatefulWidget {
     this.readOnly = false,
     this.editing = true,
     this.onEnterEdit,
+    this.onViewTap,
     this.onEdit,
     this.eventPending = false,
     this.eventSlot,
     this.recurringSlot,
     this.splitsReadOnly,
-    this.splitsCollapsible = false,
-    this.splitsInitiallyOpen = true,
     this.event,
     this.heroKey,
     this.chipLayout = false,
@@ -670,6 +669,10 @@ class DraftForm extends StatefulWidget {
   /// View mode: long-press on a field → enter edit, focusing that field.
   final ValueChanged<FocusNode?>? onEnterEdit;
 
+  /// View mode: what a tap on a changeable card does (the page says "long-press
+  /// to edit"); the long-press itself goes through [onEnterEdit].
+  final VoidCallback? onViewTap;
+
   /// View mode: the hero's ✏️.
   final VoidCallback? onEdit;
 
@@ -691,11 +694,6 @@ class DraftForm extends StatefulWidget {
   /// The "แบ่งยอด" row when the people can't be edited here (view mode, or
   /// another member's row): a read-only list / the lock note.
   final Widget? splitsReadOnly;
-
-  /// The section's heading toggles it: pending drafts closed by default, the
-  /// quick create open. The transaction detail never collapses.
-  final bool splitsCollapsible;
-  final bool splitsInitiallyOpen;
 
   final DraftFormController controller;
 
@@ -720,10 +718,8 @@ class _DraftFormState extends State<DraftForm> {
 
   /// The chip rows' orders, fixed for the form's life (one per type for
   /// categories) — see [ChipOrder].
-  final _categoryOrders = <TransactionType, ChipOrder>{};
-  final _tagOrder = ChipOrder();
+  final _categoryOrders = <TransactionType, ChipOrder>{};
   final _walletOrder = ChipOrder();
-  final _toWalletOrder = ChipOrder();
 
   DraftFormController get _c => widget.controller;
 
@@ -825,10 +821,9 @@ class _DraftFormState extends State<DraftForm> {
       return [
         TagChipRow(
           selected: _c.tagIds,
-          onToggle: _c.toggleTag,
+          onRemove: _c.toggleTag,
           onMore: _moreTags,
-          known: _c.knownTags,
-          order: _tagOrder,
+          known: _c.knownTags,
         ),
       ];
     }
@@ -866,6 +861,15 @@ class _DraftFormState extends State<DraftForm> {
   VoidCallback? _heroTap(VoidCallback pick, {bool locked = false}) {
     if (locked || widget.readOnly) return null;
     if (widget.editing) return pick;
+    // View mode (owner 2026-10-17): a tap only says how to edit; the
+    // long-press does it ([_heroLongPress]).
+    if (widget.onEnterEdit == null) return null;
+    return widget.onViewTap;
+  }
+
+  /// View mode: a long-press enters edit mode and opens the picker.
+  VoidCallback? _heroLongPress(VoidCallback pick, {bool locked = false}) {
+    if (locked || widget.readOnly || widget.editing) return null;
     final enter = widget.onEnterEdit;
     if (enter == null) return null;
     return () {
@@ -899,6 +903,8 @@ class _DraftFormState extends State<DraftForm> {
       placeholder: placeholder,
       dense: true,
       onTap: _heroTap(onPick),
+      onLongPress: _heroLongPress(onPick),
+      editable: widget.editing && !widget.readOnly,
     );
   }
 
@@ -920,6 +926,14 @@ class _DraftFormState extends State<DraftForm> {
       placeholder: l.transactionFormCategoryNone,
       dense: true,
       onTap: _heroTap(_pickCategory, locked: widget.categoryLockedHint != null),
+      onLongPress: _heroLongPress(
+        _pickCategory,
+        locked: widget.categoryLockedHint != null,
+      ),
+      editable:
+          widget.editing &&
+          !widget.readOnly &&
+          widget.categoryLockedHint == null,
     );
   }
 
@@ -979,8 +993,18 @@ class _DraftFormState extends State<DraftForm> {
                     ? _ShareLine.of(_c)
                     : null,
                 missing: widget.missing,
-                walletRow: _entryWalletRow(l, isTransfer: isTransfer),
-                toWalletRow: isTransfer ? _entryToWalletRow(l) : null,
+                // A transfer: no description (the system names it) and the two
+                // wallets as flow cards; others keep the chip rows.
+                showTitle: !isTransfer,
+                titleHint: isTransfer
+                    ? null
+                    : (_c.type == TransactionType.income
+                          ? l.txTitleHintIncome
+                          : l.txTitleHintExpense),
+                flowRow: isTransfer ? _transferFlow(l) : null,
+                walletRow: isTransfer
+                    ? null
+                    : _entryWalletRow(l, isTransfer: false),
                 categoryRow: isTransfer ? null : _entryCategoryRow(l),
               )
             else
@@ -1005,6 +1029,12 @@ class _DraftFormState extends State<DraftForm> {
                 titleFocus: _descriptionFocus,
                 onEdit: widget.onEdit,
                 onLongPressField: enterEdit,
+                onLongPressDate: enterEdit == null
+                    ? null
+                    : () {
+                        enterEdit(null);
+                        _pickDate();
+                      },
                 inline: true,
                 // "ส่วนของคุณ" under the total — while editing only where
                 // splits can be edited; in view whenever the people loaded.
@@ -1086,13 +1116,29 @@ class _DraftFormState extends State<DraftForm> {
         excludeId: isTransfer ? _c.toAccount?.id : null,
       );
 
-  Widget _entryToWalletRow(AppLocalizations l) => WalletChipRow(
-    selectedId: _c.toAccount?.id,
-    onPick: _c.setToAccount,
-    onMore: () => _pickAccount(to: true),
-    order: _toWalletOrder,
-    pickLabel: l.draftPickWalletTo,
-    excludeId: _c.account?.id,
+  /// [จาก] → [ไป]: two wallet cards (two lines, picked in the full picker),
+  /// the arrow swaps them.
+  Widget _transferFlow(AppLocalizations l) => FlowCards(
+    from: WalletPickCard(
+      account: _c.account,
+      label: l.quickFrom,
+      placeholder: l.quickPickWallet,
+      dense: true,
+      twoLine: true,
+      editable: true,
+      onTap: () => _pickAccount(),
+    ),
+    to: WalletPickCard(
+      account: _c.toAccount,
+      label: l.quickTo,
+      placeholder: l.quickPickWallet,
+      dense: true,
+      twoLine: true,
+      editable: true,
+      onTap: () => _pickAccount(to: true),
+    ),
+    swapTooltip: l.quickSwap,
+    onSwap: _c.swapAccounts,
   );
 
   Widget _entryCategoryRow(AppLocalizations l) => CategoryChipRow(
@@ -1115,10 +1161,9 @@ class _DraftFormState extends State<DraftForm> {
       const SizedBox(height: HeroSpacing.after),
       TagChipRow(
         selected: _c.tagIds,
-        onToggle: _c.toggleTag,
+        onRemove: _c.toggleTag,
         onMore: _moreTags,
-        known: _c.knownTags,
-        order: _tagOrder,
+        known: _c.knownTags,
       ),
       gap,
       DraftFieldRow(
@@ -1258,24 +1303,11 @@ class _DraftFormState extends State<DraftForm> {
       splits: splits,
       event: slot,
       recurring: widget.recurringSlot,
-      // The drafts collapse it, closed; quick create, open.
-      collapsible: widget.chipLayout || widget.splitsCollapsible,
-      initiallyOpen: !widget.chipLayout && widget.splitsInitiallyOpen,
-      summary: _splitSummary(l, slot),
+      // Always open, no toggle (owner 2026-10-17): the rows are short and
+      // each says what it holds.
+      collapsible: false,
+      initiallyOpen: true,
     );
-  }
-
-  /// "แบ่ง 2 คน · ทริป…" — what a closed section says; null = nothing set.
-  String? _splitSummary(AppLocalizations l, SplitEventSlot? slot) {
-    final people = _c.splits
-        .where((s) => s.personName.trim().isNotEmpty || (s.owedAmount ?? 0) > 0)
-        .length;
-    final parts = [
-      if (people > 0) l.draftExtrasSplits(people),
-      ?slot?.name,
-      ?widget.recurringSlot?.name,
-    ];
-    return parts.isEmpty ? null : parts.join(' · ');
   }
 
   /// A draft's event (`project_id`): an existing event only.

@@ -2166,6 +2166,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionDeleteThis => 'Delete this transaction';
 
   @override
+  String get transactionDeleteConsequence =>
+      'Deleted for good · the wallet balance goes back to before it was saved';
+
+  @override
   String get categoriesReorderEnter => 'Reorder';
 
   @override
@@ -4338,7 +4342,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txSplitSectionHint =>
-      'Split the amount with other people, or put it in an event';
+      'Split the amount, put it in an event, or link a recurring';
 
   @override
   String get txSplitRowLabel => 'Split';
@@ -4527,6 +4531,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtMarkPaidNone => 'Nothing open';
+
+  @override
+  String get debtCloseLabel => 'Close debts';
+
+  @override
+  String get debtClosePick => 'Pick debts';
+
+  @override
+  String debtCloseChosen(int n) {
+    return '$n debts picked';
+  }
+
+  @override
+  String debtCloseConfirm(int n) {
+    return 'Pick $n debts';
+  }
+
+  @override
+  String get debtCreateTxLabel => 'Also create a transaction';
+
+  @override
+  String get debtCreateTxHint =>
+      'Off = only noted in the debt book, not counted in income or expenses';
+
+  @override
+  String get txFilterNoWallet => 'No wallet';
+
+  @override
+  String get txFilterNoCategory => 'No category';
+
+  @override
+  String get txFilterNoTag => 'No tag';
+
+  @override
+  String get txTitleHintExpense => 'What did you pay for?';
+
+  @override
+  String get txTitleHintIncome => 'What is the money for?';
+
+  @override
+  String get debtTitleHintPaid => 'What did you pay for them?';
+
+  @override
+  String get debtTitleHintReceived => 'What are they paying back?';
+
+  @override
+  String get savingTitleHint => 'Saving for what?';
+
+  @override
+  String get savingEntryGoalLabel => 'Saving goal';
+
+  @override
+  String get savingEntryWalletOptional => 'Pick a wallet (optional)';
 
   @override
   String get debtEntrySaved => 'Debt saved';
@@ -5980,7 +6037,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get savingEntryWalletRequired => 'Pick the wallet to save from';
+  String get savingEntryWalletRequired => 'Pick a wallet';
 
   @override
   String get savingEntrySaved => 'Saving recorded';
@@ -6243,9 +6300,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'Member';
-
-  @override
-  String get fpTxNetCaption => 'Net';
 
   @override
   String fpTxAvgDaily(String amount) {

@@ -8,7 +8,7 @@ import '../../../ui/ui.dart';
 Widget buildTxFilterSheetDemo(BuildContext context) =>
     const _TxFilterSheetDemo();
 
-const _labels = TxFilterSheetLabels(
+final _labels = TxFilterSheetLabels(
   title: 'Filters',
   apply: 'Apply',
   clear: 'Clear',
@@ -22,8 +22,37 @@ const _labels = TxFilterSheetLabels(
   income: 'Income',
   transfer: 'Transfer',
   noWallet: 'No wallet',
-  uncategorized: 'Uncategorized',
+  uncategorized: 'No category',
+  noTag: 'No tag',
+  walletPicker: const AccountPickerLabels(
+    title: 'Wallet',
+    none: 'No wallet',
+    create: 'Add wallet',
+    empty: 'No wallets',
+  ),
+  categoryPicker: CategoryMultiPickerLabels(
+    title: 'Category',
+    searchHint: 'Search',
+    includeChildren: 'Include subcategories',
+    confirm: (n) => 'OK ($n)',
+    empty: 'No categories',
+    noMatch: 'No match',
+  ),
+  tagPicker: const TagPickerLabels(
+    title: 'Tag',
+    searchHint: 'Search tags',
+    ok: 'OK',
+    addTag: 'Add tag',
+    createNamed: _createNamed,
+    empty: 'No tags',
+    noMatch: 'No match',
+    nameSave: 'Save',
+    nameHint: 'Tag name',
+  ),
+  confirm: (n) => n == 0 ? 'OK' : 'OK ($n)',
 );
+
+String _createNamed(String name) => 'Add "$name"';
 
 const _options = TxFilterOptions(
   wallets: [
@@ -89,9 +118,10 @@ class _TxFilterSheetDemoState extends State<_TxFilterSheetDemo> {
     setState(
       () => _result = r == null
           ? 'dismissed'
-          : 'type ${r.type?.name} · wallet ${r.noWallet ? 'none' : r.walletId} '
-                '· category ${r.uncategorized ? 'none' : r.categoryId} '
-                '· tags ${r.tagIds}',
+          : 'types ${r.types.map((t) => t.name).toList()} '
+                '· wallets ${r.walletIds}${r.noWallet ? ' + none' : ''} '
+                '· categories ${r.categoryIds}${r.uncategorized ? ' + none' : ''} '
+                '· tags ${r.tagIds}${r.noTags ? ' + none' : ''}',
     );
   }
 

@@ -45,6 +45,8 @@ class ManageSection extends StatelessWidget {
     this.onArchive,
     this.deleteLabel,
     this.onDelete,
+    this.archiveConsequence,
+    this.deleteConsequence,
     this.extraActions = const [],
     this.first = false,
     super.key,
@@ -57,6 +59,10 @@ class ManageSection extends StatelessWidget {
   final VoidCallback? onArchive;
   final String? deleteLabel;
   final VoidCallback? onDelete;
+
+  /// A small muted line under the archive / delete label: what it does.
+  final String? archiveConsequence;
+  final String? deleteConsequence;
 
   /// Neutral buttons above archive / delete (ปิดงบ).
   final List<ManageAction> extraActions;
@@ -82,6 +88,7 @@ class ManageSection extends StatelessWidget {
             DangerRow(
               icon: AppIcons.archive,
               label: archiveLabel!,
+              consequence: archiveConsequence,
               caution: true,
               padding: EdgeInsets.only(
                 top: extraActions.isNotEmpty ? AppSpacing.sm : 0,
@@ -92,6 +99,7 @@ class ManageSection extends StatelessWidget {
             DangerRow(
               icon: AppIcons.delete,
               label: deleteLabel!,
+              consequence: deleteConsequence,
               padding: EdgeInsets.only(
                 top: archiveLabel != null || extraActions.isNotEmpty
                     ? AppSpacing.sm

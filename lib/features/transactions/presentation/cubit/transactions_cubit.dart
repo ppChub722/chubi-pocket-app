@@ -158,6 +158,10 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
     List<String> tagIds = const [],
     bool includeChildren = false,
     bool uncategorized = false,
+    List<String> accountIds = const [],
+    List<String> categoryIds = const [],
+    Set<TransactionType> types = const {},
+    bool noTags = false,
     String sort = 'date_desc',
     int perPage = 20,
   }) async {
@@ -172,6 +176,10 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
       tagIds: tagIds,
       includeChildren: includeChildren,
       uncategorized: uncategorized,
+      accountIds: accountIds,
+      categoryIds: categoryIds,
+      types: types,
+      noTags: noTags,
       sort: sort,
       perPage: perPage,
     );
@@ -249,6 +257,10 @@ class TransactionsCubit extends Cubit<TransactionsState> with Clearable {
         tagIds: f.tagIds,
         includeChildren: f.includeChildren,
         uncategorized: f.uncategorized,
+        accountIds: f.accountIds,
+        categoryIds: f.categoryIds,
+        types: f.types,
+        noTags: f.noTags,
         page: page,
         perPage: f.perPage,
         sort: f.sort,
@@ -574,6 +586,10 @@ class _ListQuery {
     this.tagIds = const [],
     this.includeChildren = false,
     this.uncategorized = false,
+    this.accountIds = const [],
+    this.categoryIds = const [],
+    this.types = const {},
+    this.noTags = false,
     this.sort = 'date_desc',
     this.perPage = 20,
   });
@@ -588,6 +604,13 @@ class _ListQuery {
   final List<String> tagIds;
   final bool includeChildren;
   final bool uncategorized;
+
+  /// The multi-select filters: OR inside a group (wallets / categories / tags
+  /// with their "none" flags, types), AND between groups.
+  final List<String> accountIds;
+  final List<String> categoryIds;
+  final Set<TransactionType> types;
+  final bool noTags;
   final String sort;
   final int perPage;
 
@@ -596,16 +619,28 @@ class _ListQuery {
   bool get judgeable =>
       (q == null || q!.trim().isEmpty) &&
       tagIds.isEmpty &&
-      !(includeChildren && categoryId != null);
+      !noTags &&
+      !(includeChildren && (categoryId != null || categoryIds.isNotEmpty));
 
   /// [t] passes this query's filters (only meaningful when [judgeable]).
   bool matches(Transaction t) {
     final day = t.date.length >= 10 ? t.date.substring(0, 10) : t.date;
-    if (accountId != null && t.accountId != accountId) return false;
-    if (noWallet && t.accountId != null) return false;
-    if (categoryId != null && t.categoryId != categoryId) return false;
-    if (uncategorized && t.categoryId != null) return false;
-    if (type != null && t.type != type) return false;
+    final wallets = [?accountId, ...accountIds];
+    if (wallets.isNotEmpty || noWallet) {
+      final ok =
+          (t.accountId != null && wallets.contains(t.accountId)) ||
+          (noWallet && t.accountId == null);
+      if (!ok) return false;
+    }
+    final cats = [?categoryId, ...categoryIds];
+    if (cats.isNotEmpty || uncategorized) {
+      final ok =
+          (t.categoryId != null && cats.contains(t.categoryId)) ||
+          (uncategorized && t.categoryId == null);
+      if (!ok) return false;
+    }
+    final kinds = {?type, ...types};
+    if (kinds.isNotEmpty && !kinds.contains(t.type)) return false;
     if (from != null && day.compareTo(from!) < 0) return false;
     if (to != null && day.compareTo(to!) > 0) return false;
     return true;

@@ -13,6 +13,7 @@ import 'package:chubi_pocket/features/transactions/domain/form_options.dart';
 import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/presentation/cubit/transactions_cubit.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_form.dart';
+import 'package:chubi_pocket/features/transactions/presentation/widgets/pick_chip_rows.dart';
 import 'package:chubi_pocket/features/transactions/presentation/widgets/quick_create_sheet.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/tokens/app/theme/themes/sweet_theme.dart';
@@ -73,6 +74,7 @@ class _DebtRepo extends Fake implements PersonalDebtsRepository {
     required double amount,
     DateTime? date,
     String? accountId,
+    bool? createTransaction,
     String? description,
     String? note,
     List<String>? tagIds,
@@ -84,6 +86,7 @@ class _DebtRepo extends Fake implements PersonalDebtsRepository {
       'direction': direction,
       'amount': amount,
       'account_id': accountId,
+      'create_transaction': createTransaction,
       'tag_ids': tagIds,
       'description': description,
     });
@@ -183,16 +186,20 @@ void main() {
       t,
       preset: const QuickCreatePreset.debt(person: EmbeddedPerson(name: 'Mom')),
     );
-    final chips = t.widget<QuickCreateModeChips>(
-      find.byType(QuickCreateModeChips),
+    final chips = t.widget<QuickCreateModeTabs>(
+      find.byType(QuickCreateModeTabs),
     );
     expect(chips.mode, QuickCreateMode.debt);
     expect(t.widget<EntryCard>(find.byType(EntryCard)).debt, isTrue);
     expect(find.text('Paid'), findsOneWidget);
     expect(find.text('Received'), findsOneWidget);
     expect(find.text('Mom'), findsWidgets);
-    expect(find.text('No wallet'), findsOneWidget);
-    // No tags without a wallet.
+    // No "no wallet" chip: not choosing one is no wallet. The switch is on
+    // by default, so the wallet row and the tags are there.
+    expect(find.text('No wallet'), findsNothing);
+    expect(find.text('Also create a transaction'), findsOneWidget);
+    expect(find.byType(TagChipRow), findsOneWidget);
+    expect(find.text('Close debts'), findsOneWidget);
     expect(find.byType(DraftForm), findsNothing);
   });
 
@@ -226,10 +233,34 @@ void main() {
     expect(call['direction'], DebtEntryDirection.paid);
     expect(call['amount'], 100);
     expect(call['account_id'], isNull);
-    expect(call['tag_ids'], isNull);
+    // A transaction is written even with no wallet (the default).
+    expect(call['create_transaction'], isTrue);
+    expect(call['tag_ids'], isEmpty);
     expect(saved?.balance.net, 300);
     expect(find.byType(QuickCreateSheetShell), findsNothing);
     verify(() => dashboard.markStale()).called(1);
+  });
+
+  testWidgets('switch off = ledger only: no wallet row, no tags, nothing of '
+      'them sent', (t) async {
+    await open(
+      t,
+      preset: const QuickCreatePreset.debt(person: EmbeddedPerson(name: 'Mom')),
+    );
+    await t.ensureVisible(find.text('Also create a transaction'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Also create a transaction'));
+    await t.pump();
+    expect(find.byType(TagChipRow), findsNothing);
+    expect(find.byType(WalletChipRow), findsNothing);
+    await t.enterText(amountField(t), '100');
+    await t.pump();
+    await t.tap(find.text('Save'));
+    await t.pumpAndSettle();
+    final call = debts.created.single;
+    expect(call['create_transaction'], isFalse);
+    expect(call['account_id'], isNull);
+    expect(call['tag_ids'], isNull);
   });
 
   testWidgets('no person → said, nothing sent', (t) async {
@@ -248,7 +279,7 @@ void main() {
       'amount comes along', (t) async {
     await open(t);
     expect(
-      t.widget<QuickCreateModeChips>(find.byType(QuickCreateModeChips)).mode,
+      t.widget<QuickCreateModeTabs>(find.byType(QuickCreateModeTabs)).mode,
       QuickCreateMode.tx,
     );
     expect(find.byType(DraftForm), findsOneWidget);

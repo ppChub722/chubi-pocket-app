@@ -83,6 +83,53 @@ class _SavingPageState extends State<_SavingPage> {
     }
   }
 
+  String? _pickedGoal;
+
+  Future<void> _pickGoal() async {
+    final purple = Theme.of(context).colorScheme.tertiary;
+    final r = await showSavingGoalPickerSheet(
+      context,
+      title: 'Pick a goal',
+      selectedId: _pickedGoal,
+      items: [
+        SavingGoalPick(
+          id: null,
+          name: 'Unallocated',
+          icon: AppIcons.quickSaving,
+          color: purple,
+          amountText: '฿8,500',
+          caption: 'Kept aside, in no goal yet',
+        ),
+        const SavingGoalPick(
+          id: 'japan',
+          name: 'Japan trip',
+          icon: Icons.flight_outlined,
+          color: Color(0xFF38BDF8),
+          amountText: '฿52,000',
+          targetText: '฿80,000',
+          progress: 0.65,
+          caption: '฿2,500 short this month',
+        ),
+        const SavingGoalPick(
+          id: 'wedding',
+          name: 'Wedding',
+          icon: Icons.favorite_outline,
+          color: Color(0xFFF472B6),
+          amountText: '฿60,000',
+          targetText: '฿200,000',
+          progress: 0.3,
+          caption: '2 months behind',
+        ),
+      ],
+    );
+    if (mounted && r != null) {
+      setState(() {
+        _pickedGoal = r.id;
+        _result = 'Goal picker resolved: ${r.id ?? 'unallocated'}';
+      });
+    }
+  }
+
   Future<void> _close() async {
     final v = await showCloseGoalDialog(
       context,
@@ -412,6 +459,11 @@ class _SavingPageState extends State<_SavingPage> {
                     label: 'Withdraw sheet',
                     variant: AppButtonVariant.outlined,
                     onPressed: () => _move(withdraw: true),
+                  ),
+                  AppButton(
+                    label: 'Goal picker (cards)',
+                    variant: AppButtonVariant.outlined,
+                    onPressed: _pickGoal,
                   ),
                   AppButton(
                     label: 'Close goal dialog',

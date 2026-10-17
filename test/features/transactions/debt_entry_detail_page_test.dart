@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/features/accounts/presentation/cubit/accounts_cubit.dart';
+import 'package:chubi_pocket/features/accounts/presentation/widgets/wallet_pick_card.dart';
 import 'package:chubi_pocket/features/auth/domain/user.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:chubi_pocket/features/categories/presentation/cubit/categories_cubit.dart';
@@ -260,10 +261,39 @@ void main() {
     expect(find.textContaining('Now: Mom owes you'), findsOneWidget);
   });
 
-  testWidgets('a ledger-only entry: the wallet card says no wallet', (t) async {
+  testWidgets('a ledger-only entry: no wallet card, the switch is off', (
+    t,
+  ) async {
     repo.body = _detail(withWallet: false);
     await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
-    expect(find.text('No wallet'), findsWidgets);
+    expect(find.byType(WalletPickCard), findsNothing);
+    expect(find.text('Also create a transaction'), findsOneWidget);
+    final sw = t.widget<AppSwitch>(
+      find.descendant(
+        of: find.widgetWithText(DetailRow, 'Also create a transaction'),
+        matching: find.byType(AppSwitch),
+      ),
+    );
+    expect(sw.value, isFalse);
+  });
+
+  testWidgets('switch off → ONE PUT: create_transaction false, no wallet or '
+      'tags sent', (t) async {
+    await pump(t, const DebtEntryDetailPage(entryId: 'e1'));
+    t.widget<TxHeroCard>(find.byType(TxHeroCard)).onEdit!();
+    await settle(t);
+    await t.ensureVisible(find.text('Also create a transaction'));
+    await settle(t);
+    await t.tap(find.text('Also create a transaction'));
+    await t.pump(const Duration(milliseconds: 600));
+    expect(find.byType(WalletPickCard), findsNothing);
+    await t.tap(find.text('Save'));
+    await settle(t);
+    final u = repo.updates.single;
+    expect(u.createTransaction, isFalse);
+    expect(u.accountId, isNull);
+    expect(u.clearAccount, isFalse);
+    expect(u.tagIds, isNull);
   });
 
   testWidgets('a failed load: error + retry; retry loads', (t) async {

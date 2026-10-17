@@ -82,6 +82,13 @@ class RecurringLinkHandle extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Forget the chosen candidate but keep the open amount question: the link
+  /// is done (the saved row now carries it).
+  void clearChoice() {
+    _candidate = null;
+    notifyListeners();
+  }
+
   void _set({LinkCandidate? candidate, RecurringAmountAsk? ask, bool? busy}) {
     if (candidate != null) _candidate = candidate;
     _ask = ask;
@@ -226,6 +233,8 @@ class RecurringLinkHandle extends ChangeNotifier {
     VoidCallback? onClear,
     VoidCallback? onUnlink,
     bool locked = false,
+    bool editing = true,
+    VoidCallback? onLongPress,
   }) {
     final l = AppLocalizations.of(context)!;
     final c = candidateFor(type);
@@ -254,6 +263,8 @@ class RecurringLinkHandle extends ChangeNotifier {
       onTap: saved ? onOpenLinked : (_busy ? null : onTap),
       onClear: saved ? (_busy ? null : onUnlink) : (c != null ? onClear : null),
       locked: locked,
+      editing: editing,
+      onLongPress: onLongPress,
       ask: ask,
     );
   }

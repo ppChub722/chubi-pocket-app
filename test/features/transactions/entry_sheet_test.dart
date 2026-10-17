@@ -139,7 +139,7 @@ void main() {
     expect(find.byType(EntryCardSkeleton), findsNothing);
     expect(find.byType(EntryCard), findsOneWidget);
     expect(find.text('Netflix'), findsOneWidget);
-    expect(find.byType(QuickCreateModeChips), findsNothing);
+    expect(find.byType(QuickCreateModeTabs), findsNothing);
     expect(find.text('Send to drafts'), findsOneWidget);
     expect(find.text('Save now'), findsOneWidget);
   });

@@ -34,7 +34,7 @@ void main() {
       ),
     );
     expect(find.text('ผูกกับ'), findsOneWidget);
-    expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsOneWidget);
+    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsOneWidget);
     expect(find.text('แบ่งยอด'), findsOneWidget);
     expect(find.text('อีเวนต์'), findsOneWidget);
     // The faint placeholder when no event is set.
@@ -62,12 +62,12 @@ void main() {
     );
     expect(find.text('แบ่ง 2 คน · ทริป'), findsOneWidget);
     expect(find.text('อีเวนต์'), findsNothing);
-    expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsNothing);
+    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsNothing);
 
     await t.tap(find.text('ผูกกับ'));
     await t.pump();
     expect(find.text('อีเวนต์'), findsOneWidget);
-    expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsOneWidget);
+    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsOneWidget);
 
     await t.tap(find.text('ผูกกับ'));
     await t.pump();
@@ -142,7 +142,7 @@ void _compactTests() {
   testWidgets('no description line; labels align with the note row', (t) async {
     await pump(t, section(const SplitEventSlot(onTap: _noop)));
     expect(find.text('ผูกกับ'), findsOneWidget);
-    expect(find.text('แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์'), findsNothing);
+    expect(find.text('แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ'), findsNothing);
     expect(find.text('helper line'), findsOneWidget);
     final note = t.getTopLeft(find.text('โน้ต')).dx;
     expect(t.getTopLeft(find.text('อีเวนต์')).dx, note);
@@ -150,7 +150,8 @@ void _compactTests() {
     // Value column starts one label width in.
     final chip = find.widgetWithText(AppChip, 'เพิ่มอีเวนต์');
     expect(t.widget<AppChip>(chip).dashed, isTrue);
-    expect(t.getTopLeft(chip).dx, closeTo(note + DraftFieldRow.labelWidth, 1));
+    final column = DraftFieldRow.labelWidthOf(t.element(find.text('โน้ต')));
+    expect(t.getTopLeft(chip).dx, closeTo(note + column, 1));
   });
 
   testWidgets('event chip filled has ✕ and clears; locked has neither', (

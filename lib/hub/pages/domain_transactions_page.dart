@@ -566,7 +566,9 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                     ),
                   ),
                   HubCell(
-                    caption: 'txTypeChip selected / locked',
+                    caption:
+                        'txTypeChip: the chosen one is solid (it does nothing '
+                        'on tap); the others are dashed with no icon',
                     child: Wrap(
                       spacing: AppSpacing.xs,
                       children: [
@@ -578,10 +580,51 @@ class _TransactionsPageState extends State<_TransactionsPage> {
                         txTypeChip(
                           context,
                           type: TransactionType.income,
-                          selected: true,
-                          locked: true,
+                          selected: false,
+                          dashed: true,
+                        ),
+                        txTypeChip(
+                          context,
+                          type: TransactionType.transfer,
+                          selected: false,
+                          dashed: true,
                         ),
                       ],
+                    ),
+                  ),
+                ],
+              ),
+              HubRow(
+                cells: [
+                  HubCell(
+                    caption:
+                        'FlowCards: [from] → [to] (quick create transfer / '
+                        'debt / saving) — two-line cards, no row icon, no '
+                        'suggested chips; the arrow swaps',
+                    child: FlowCards(
+                      from: PickCard(
+                        label: 'From',
+                        value: 'KBank',
+                        leading: const PickCardEmptyIcon(
+                          AppIcons.wallet,
+                          size: 32,
+                        ),
+                        dense: true,
+                        editable: true,
+                        onTap: () {},
+                      ),
+                      to: PickCard(
+                        label: 'To',
+                        placeholder: 'Pick a wallet',
+                        leading: const PickCardEmptyIcon(
+                          AppIcons.wallet,
+                          size: 32,
+                        ),
+                        dense: true,
+                        onTap: () {},
+                      ),
+                      swapTooltip: 'Swap',
+                      onSwap: () {},
                     ),
                   ),
                 ],

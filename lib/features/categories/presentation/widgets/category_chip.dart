@@ -10,13 +10,15 @@ import '../category_label.dart';
 /// (owner 2026-10-11: one chip for the whole app). [selected] = the full
 /// colour, otherwise a neutral outline (the icon keeps its colour). [all]
 /// is the category list: L2 / L3 wear their top-level parent's icon, as
-/// everywhere else.
+/// everywhere else. [dashed]: the chip is in an edit form, so it is
+/// changeable (see [AppChip.dashed]).
 AppChip categoryAppChip(
   BuildContext context,
   Category category, {
   required List<Category> all,
   bool selected = false,
   VoidCallback? onTap,
+  bool dashed = false,
   ChipSize size = ChipSize.control,
 }) {
   final palette = Theme.of(context).extension<AppColors>()!;
@@ -27,6 +29,9 @@ AppChip categoryAppChip(
     color: code.tintFor(palette),
     selected: selected,
     onTap: onTap,
+    // In an edit form: dashed = changeable; chosen + changeable = inset line.
+    dashed: dashed,
+    inset: dashed && selected,
     size: size,
   );
 }

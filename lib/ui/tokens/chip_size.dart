@@ -8,11 +8,11 @@ import 'package:flutter/material.dart';
 ///   label). Display only, never the only tap target.
 /// - [chip] 28 — display chips (status, type, label, tag) inside cards,
 ///   detail sections, member / debt rows and the compact hero bar.
-/// - [control] 40 — anything the user operates (filter / pick / choice /
+/// - [control] 32 — anything the user operates (filter / pick / choice /
 ///   action chips, form chip rows, theme chips, removable filters) and every
-///   chip in a hero's top row, so it lines up with the date chip, ✏️, the
-///   search capsule and the top-bar pills: ONE control height, 40
-///   ([HeroSpacing.controlHeight]). The default.
+///   chip in a hero's top row (owner 2026-10-17: 40 was too tall for a
+///   form's rows; 32 keeps the tap area, which [AppChip] widens by itself).
+///   The default.
 enum ChipSize {
   /// Dense list-row chips.
   mini(
@@ -40,14 +40,14 @@ enum ChipSize {
 
   /// Controls, and every chip in a hero's top row.
   control(
-    height: 40,
-    padding: 14,
-    gap: 6,
-    icon: 18,
-    dot: 9,
-    leading: 28,
-    badgeText: 12,
-    badgePad: 6,
+    height: 32,
+    padding: 12,
+    gap: 5,
+    icon: 16,
+    dot: 8,
+    leading: 24,
+    badgeText: 11,
+    badgePad: 5,
   );
 
   const ChipSize({

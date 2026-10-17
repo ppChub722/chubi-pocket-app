@@ -125,6 +125,11 @@ class TransactionsRepository {
     List<String> tagIds = const [],
     bool includeChildren = false,
     bool uncategorized = false,
+    // The multi-select filters (OR inside a group, AND between groups).
+    List<String> accountIds = const [],
+    List<String> categoryIds = const [],
+    Set<TransactionType> types = const {},
+    bool noTags = false,
     int page = 1,
     int perPage = 20,
     String sort = 'date_desc',
@@ -133,14 +138,18 @@ class TransactionsRepository {
       final res = await _client.dio.get<Map<String, dynamic>>(
         '/transactions',
         queryParameters: <String, dynamic>{
-          'account_id': ?accountId,
-          'category_id': ?categoryId,
-          'type': ?type?.toJson(),
+          if (accountId != null || accountIds.isNotEmpty)
+            'account_id': [?accountId, ...accountIds],
+          if (categoryId != null || categoryIds.isNotEmpty)
+            'category_id': [?categoryId, ...categoryIds],
+          if (type != null || types.isNotEmpty)
+            'type': [?type?.toJson(), for (final t in types) t.toJson()],
           'from': ?from,
           'to': ?to,
           if (noWallet) 'no_wallet': 'true',
           if (q != null && q.isNotEmpty) 'q': q,
           if (tagIds.isNotEmpty) 'tag_id': tagIds,
+          if (noTags) 'no_tags': 'true',
           if (includeChildren) 'include_children': 'true',
           if (uncategorized) 'uncategorized': 'true',
           'page': page.toString(),

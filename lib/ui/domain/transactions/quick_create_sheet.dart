@@ -348,18 +348,16 @@ class _QuickCreateSheetShellState extends State<QuickCreateSheetShell> {
                     PinnedBar(
                       child: Row(
                         children: [
-                          Expanded(
-                            child: AppButton(
-                              label: widget.draftLabel!,
-                              variant: AppButtonVariant.outlined,
-                              expand: true,
-                              submits: true,
-                              onPressed: widget.onSaveDraft,
-                            ),
+                          // The draft button is as wide as its text (one line);
+                          // the save button takes the rest.
+                          AppButton(
+                            label: widget.draftLabel!,
+                            variant: AppButtonVariant.outlined,
+                            submits: true,
+                            onPressed: widget.onSaveDraft,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
-                            flex: 3,
                             child: AppButton(
                               label: widget.saveLabel,
                               expand: true,

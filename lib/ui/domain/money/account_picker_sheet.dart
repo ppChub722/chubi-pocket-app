@@ -148,7 +148,7 @@ class AccountPickerSheet extends StatelessWidget {
           for (final a in visible)
             SelectableFrame(
               selected: a.id == selectedId,
-              child: _tile(context, a),
+              child: _walletTile(context, a, () => onPicked(AccountPickWallet(a.id))),
             ),
         ];
         return Padding(
@@ -188,40 +188,39 @@ class AccountPickerSheet extends StatelessWidget {
       },
     );
   }
+}
 
-  Widget _tile(BuildContext context, WalletPickItem a) {
-    void tap() => onPicked(AccountPickWallet(a.id));
-    final builder = a.cardBuilder;
-    if (builder != null) return builder(context, tap);
-    final color = a.color ?? Theme.of(context).colorScheme.primary;
-    return HeroSurface(
-      style: HeroStyle.tinted(color: color, glyph: a.icon, strongBorder: false),
-      glyphSize: 88,
-      onTap: tap,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppIcon(a.icon, size: AppIconSize.xl, color: color),
-            const Spacer(),
-            AppText(
-              a.name,
-              role: AppTextRole.title,
-              weight: FontWeight.w700,
-              maxLines: 1,
-            ),
-            if (a.subtitle != null)
-              AppText(a.subtitle!, role: AppTextRole.caption, maxLines: 1),
-            if (a.balance != null) ...[
-              const SizedBox(height: AppSpacing.xs),
-              AppText(a.balance!, role: AppTextRole.money, color: color),
-            ],
+Widget _walletTile(BuildContext context, WalletPickItem a, VoidCallback tap) {
+  final builder = a.cardBuilder;
+  if (builder != null) return builder(context, tap);
+  final color = a.color ?? Theme.of(context).colorScheme.primary;
+  return HeroSurface(
+    style: HeroStyle.tinted(color: color, glyph: a.icon, strongBorder: false),
+    glyphSize: 88,
+    onTap: tap,
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIcon(a.icon, size: AppIconSize.xl, color: color),
+          const Spacer(),
+          AppText(
+            a.name,
+            role: AppTextRole.title,
+            weight: FontWeight.w700,
+            maxLines: 1,
+          ),
+          if (a.subtitle != null)
+            AppText(a.subtitle!, role: AppTextRole.caption, maxLines: 1),
+          if (a.balance != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            AppText(a.balance!, role: AppTextRole.money, color: color),
           ],
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 /// "No wallet" — same footprint as a wallet card, quiet styling.
@@ -255,6 +254,118 @@ class _NoneTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// What [showAccountMultiPickSheet] picked: the wallets ticked and whether
+/// "no wallet" is ticked too.
+typedef AccountMultiPick = ({Set<String> ids, bool none});
+
+/// Pick several wallets (owner 2026-10-17: the list filter) — the same card
+/// grid as [showAccountPickSheet], a tap toggles a card, "no wallet" is a
+/// card of its own, a confirm bar under the grid says how many. Resolves the
+/// ticked set on confirm, null when dismissed.
+Future<AccountMultiPick?> showAccountMultiPickSheet(
+  BuildContext context, {
+  required List<WalletPickItem> wallets,
+  required AccountPickerLabels labels,
+  required String Function(int count) confirm,
+  Set<String> selectedIds = const {},
+  bool noneSelected = false,
+}) => showAppSheetCustom<AccountMultiPick>(
+  context,
+  builder: (ctx) => AccountCardsMultiPickerSheet(
+    wallets: wallets,
+    labels: labels,
+    confirm: confirm,
+    selectedIds: selectedIds,
+    noneSelected: noneSelected,
+  ),
+);
+
+class AccountCardsMultiPickerSheet extends StatefulWidget {
+  const AccountCardsMultiPickerSheet({
+    required this.wallets,
+    required this.labels,
+    required this.confirm,
+    this.selectedIds = const {},
+    this.noneSelected = false,
+    super.key,
+  });
+
+  final List<WalletPickItem> wallets;
+  final AccountPickerLabels labels;
+  final String Function(int count) confirm;
+  final Set<String> selectedIds;
+  final bool noneSelected;
+
+  @override
+  State<AccountCardsMultiPickerSheet> createState() =>
+      _AccountCardsMultiPickerSheetState();
+}
+
+class _AccountCardsMultiPickerSheetState extends State<AccountCardsMultiPickerSheet> {
+  late final Set<String> _ids = {...widget.selectedIds};
+  late bool _none = widget.noneSelected;
+
+  void _toggle(String id) => setState(() {
+    if (!_ids.remove(id)) _ids.add(id);
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final count = _ids.length + (_none ? 1 : 0);
+    return PickerSheet(
+      title: widget.labels.title,
+      searchable: widget.wallets.length > 8,
+      searchToggle: true,
+      footer: PickerConfirmBar(
+        label: widget.confirm(count),
+        onPressed: () => Navigator.of(context).pop((ids: _ids, none: _none)),
+      ),
+      builder: (context, q) {
+        final visible = q.isEmpty
+            ? widget.wallets
+            : widget.wallets
+                  .where((a) => a.name.toLowerCase().contains(q))
+                  .toList();
+        final tiles = <Widget>[
+          if (q.isEmpty)
+            SelectableFrame(
+              selected: _none,
+              child: _NoneTile(
+                label: widget.labels.none,
+                onTap: () => setState(() => _none = !_none),
+              ),
+            ),
+          for (final a in visible)
+            SelectableFrame(
+              selected: _ids.contains(a.id),
+              child: _walletTile(context, a, () => _toggle(a.id)),
+            ),
+        ];
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          child: GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount:
+                  MediaQuery.sizeOf(context).shortestSide >= 600 ? 3 : 2,
+              mainAxisSpacing: AppSpacing.xs,
+              crossAxisSpacing: AppSpacing.xs,
+              mainAxisExtent: 156,
+            ),
+            children: tiles,
+          ),
+        );
+      },
     );
   }
 }

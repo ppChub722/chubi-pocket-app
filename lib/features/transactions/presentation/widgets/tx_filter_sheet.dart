@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/domain/account.dart';
-import '../../../categories/domain/category.dart';
 import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/category_label.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
@@ -62,64 +60,82 @@ Future<TxFilters?> showTxFilterSheet(
       expense: l.transactionTypeExpense,
       income: l.transactionTypeIncome,
       transfer: l.transactionTypeTransfer,
-      noWallet: l.transactionFormAccountNone,
-      uncategorized: l.homeUncategorized,
+      noWallet: l.txFilterNoWallet,
+      uncategorized: l.txFilterNoCategory,
+      noTag: l.txFilterNoTag,
+      // The pickers behind "more": the same ones the create form opens, here
+      // with several picks.
+      walletPicker: AccountPickerLabels(
+        title: l.transactionsFilterAccount,
+        none: l.txFilterNoWallet,
+        create: l.accountsAddNew,
+        empty: l.transactionFormAccountPickerEmpty,
+      ),
+      categoryPicker: CategoryMultiPickerLabels(
+        title: l.transactionsFilterCategory,
+        searchHint: l.multiPickSearch,
+        includeChildren: l.multiPickIncludeChildren,
+        confirm: l.multiPickConfirm,
+        empty: l.multiPickEmpty,
+        noMatch: l.multiPickNoMatch,
+      ),
+      tagPicker: TagPickerLabels(
+        title: l.transactionsFilterTag,
+        searchHint: l.tagPickerSearchHint,
+        ok: l.commonOk,
+        addTag: l.projectTxAddTag,
+        createNamed: l.tagPickerCreateNamed,
+        empty: l.tagPickerEmpty,
+        noMatch: l.tagPickerNoMatch,
+        nameSave: l.commonSave,
+        nameHint: l.projectTxTagHint,
+      ),
+      confirm: (n) => n == 0 ? l.commonOk : '${l.commonOk} ($n)',
     ),
   );
   if (picked == null) return null;
-  // A drill-down opened with just the category id: take its model (name)
-  // from the loaded options.
-  Category? category;
-  if (picked.categoryId != null) {
-    category = current.category?.id == picked.categoryId
-        ? current.category
-        : null;
-    for (final c in loaded.categoryList) {
-      if (c.id == picked.categoryId) category = c;
-    }
-  }
-  Account? account;
-  if (picked.walletId != null) {
-    final cur = current.wallet;
-    if (cur is TxOneWallet && cur.account.id == picked.walletId) {
-      account = cur.account;
-    }
-    for (final a in loaded.accountList) {
-      if (a.id == picked.walletId) account = a;
-    }
-  }
-  final known = {
+  // The picked ids back to models: what the page already holds, then what
+  // the sheet's load found (a drill-down opens with just an id and a name).
+  final categories = {
+    for (final c in current.categories) c.id: c,
+    for (final c in loaded.categoryList) c.id: c,
+  };
+  final accounts = {
+    for (final a in current.wallets) a.id: a,
+    for (final a in loaded.accountList) a.id: a,
+  };
+  final tags = {
     for (final t in current.tags) t.id: t,
     for (final t in loaded.tags) t.id: t,
   };
   return current.copyWith(
-    type: picked.type,
-    clearType: picked.type == null,
-    wallet: picked.noWallet
-        ? const TxNoWallet()
-        : account != null
-        ? TxOneWallet(account)
-        : const TxAnyWallet(),
-    category: category,
-    clearCategory: category == null,
+    types: picked.types,
+    wallets: [
+      for (final id in picked.walletIds)
+        if (accounts[id] != null) accounts[id]!,
+    ],
+    noWallet: picked.noWallet,
+    categories: [
+      for (final id in picked.categoryIds)
+        if (categories[id] != null) categories[id]!,
+    ],
     uncategorized: picked.uncategorized,
     tags: [
       for (final id in picked.tagIds)
-        if (known[id] != null) known[id]!,
+        if (tags[id] != null) tags[id]!,
     ],
+    noTags: picked.noTags,
   );
 }
 
 TxFilterSelection _selectionOf(TxFilters f) => TxFilterSelection(
-  type: f.type,
-  walletId: switch (f.wallet) {
-    TxOneWallet(:final account) => account.id,
-    _ => null,
-  },
-  noWallet: f.wallet is TxNoWallet,
-  categoryId: f.category?.id,
+  types: f.types,
+  walletIds: [for (final a in f.wallets) a.id],
+  noWallet: f.noWallet,
+  categoryIds: [for (final c in f.categories) c.id],
   uncategorized: f.uncategorized,
   tagIds: [for (final t in f.tags) t.id],
+  noTags: f.noTags,
 );
 
 /// The form options as the organism's pick rows: active non-system
@@ -137,6 +153,7 @@ TxFilterOptions _filterOptions(
         icon: IconRegistry.get(a.iconCode?.icon, fallback: a.type.icon),
         color: a.iconCode.tintFor(palette),
         listIcon: a.type.icon,
+        iconCode: a.iconCode,
       ),
   ],
   categories: [
@@ -153,6 +170,7 @@ TxFilterOptions _filterOptions(
               : l.transactionTypeExpense,
           parentId: c.parentId,
           sortOrder: c.sortOrder,
+          iconCode: c.iconCode,
           types: {
             if (c.type == CategoryType.income)
               TransactionType.income
@@ -170,6 +188,7 @@ TxFilterOptions _filterOptions(
         label: t.name.isEmpty ? l.tagFormNameLabel : t.name,
         icon: IconRegistry.get(t.iconCode?.icon, fallback: AppIcons.tag),
         color: tagColor(t.iconCode, palette),
+        iconCode: t.iconCode,
       ),
   ],
 );
@@ -187,10 +206,4 @@ String txSortLabel(AppLocalizations l, String sort) => switch (sort) {
   'amount_desc' => l.transactionsSortAmountHigh,
   'amount_asc' => l.transactionsSortAmountLow,
   _ => l.transactionsSortNewest,
-};
-
-String? txWalletLabel(AppLocalizations l, TxWalletFilter w) => switch (w) {
-  TxAnyWallet() => null,
-  TxNoWallet() => l.transactionFormAccountNone,
-  TxOneWallet(:final account) => account.name,
 };

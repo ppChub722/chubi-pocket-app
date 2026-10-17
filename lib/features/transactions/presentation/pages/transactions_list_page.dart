@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show setEquals;
+
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -119,25 +121,30 @@ class _TransactionsListPageState extends State<TransactionsListPage>
       var f = _f;
       final locked = widget.lockedAccount;
       // A wallet's รายการ tab opens at this month too (owner 2026-10-10).
-      if (locked != null) f = f.copyWith(wallet: TxOneWallet(locked));
+      if (locked != null) f = f.copyWith(wallets: [locked]);
       final catId = widget.initialCategoryId;
       if (catId != null) {
         final t = widget.initialCategoryType;
         f = f.copyWith(
-          category: Category(
-            id: catId,
-            name: widget.initialCategoryName ?? '',
-            type: t ?? CategoryType.expense,
-          ),
-          type: switch (t) {
-            null => null,
-            CategoryType.income => TransactionType.income,
-            _ => TransactionType.expense,
+          categories: [
+            Category(
+              id: catId,
+              name: widget.initialCategoryName ?? '',
+              type: t ?? CategoryType.expense,
+            ),
+          ],
+          types: switch (t) {
+            null => const {},
+            CategoryType.income => const {TransactionType.income},
+            _ => const {TransactionType.expense},
           },
         );
       }
       if (widget.initialUncategorized) {
-        f = f.copyWith(uncategorized: true, type: TransactionType.expense);
+        f = f.copyWith(
+          uncategorized: true,
+          types: const {TransactionType.expense},
+        );
       }
       final m = widget.initialMonth;
       if (m != null) f = f.copyWith(period: TxPeriod.month(m));
@@ -149,8 +156,9 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   /// The opener's type tile changed (income / expense / none).
   void _onTypeFilter() {
     final t = widget.typeFilter?.value;
-    if (!mounted || t == _f.type) return;
-    _apply(_f.copyWith(type: t, clearType: t == null));
+    final next = t == null ? const <TransactionType>{} : {t};
+    if (!mounted || setEquals(next, _f.types)) return;
+    _apply(_f.copyWith(types: next));
   }
 
   @override
@@ -193,15 +201,13 @@ class _TransactionsListPageState extends State<TransactionsListPage>
   Future<void> _refetch() {
     final b = _f.period.bounds;
     return context.read<TransactionsCubit>().load(
-      type: _f.type,
-      categoryId: _f.category?.id,
-      includeChildren: _f.category != null,
+      types: _f.types,
+      categoryIds: [for (final c in _f.categories) c.id],
+      includeChildren: _f.categories.isNotEmpty,
       uncategorized: _f.uncategorized,
-      accountId: switch (_f.wallet) {
-        TxOneWallet(:final account) => account.id,
-        _ => null,
-      },
-      noWallet: _f.wallet is TxNoWallet,
+      accountIds: [for (final w in _f.wallets) w.id],
+      noWallet: _f.noWallet,
+      noTags: _f.noTags,
       q: _q,
       tagIds: [for (final t in _f.tags) t.id],
       from: b.from,
@@ -246,63 +252,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     _apply(_base.copyWith(period: _f.period, sort: _f.sort));
   }
 
-  // ── Active filter chips ─────────────────────────────────────────────
-
-  /// The filtered category's name: the one we were given, else the first
-  /// loaded row of that category (no category lookup — rows embed it).
-  String _categoryName(TransactionsState state) {
-    final c = _f.category!;
-    if (c.name.isNotEmpty) return c.name;
-    for (final t in state.transactions) {
-      if (t.category?.id == c.id) return t.category!.name;
-    }
-    return '…';
-  }
-
-  /// One removable chip per filter that differs from how the page opened.
-  List<({String label, TxFilters without})> _activeChips(
-    AppLocalizations l,
-    TransactionsState state,
-  ) {
-    final base = _base;
-    return [
-      if (_f.type != base.type)
-        (
-          label: txTypeLabel(l, _f.type),
-          without: _f.copyWith(type: base.type, clearType: base.type == null),
-        ),
-      if (_f.wallet != base.wallet && txWalletLabel(l, _f.wallet) != null)
-        (
-          label: txWalletLabel(l, _f.wallet)!,
-          without: _f.copyWith(wallet: base.wallet),
-        ),
-      if (_f.uncategorized && !base.uncategorized)
-        (
-          label: l.homeUncategorized,
-          without: _f.copyWith(uncategorized: false),
-        ),
-      if (_f.category != null && _f.category!.id != base.category?.id)
-        (
-          label: _categoryName(state),
-          without: _f.copyWith(
-            category: base.category,
-            clearCategory: base.category == null,
-          ),
-        ),
-      for (final t in _f.tags)
-        (
-          label: '#${t.name}',
-          without: _f.copyWith(
-            tags: [
-              for (final x in _f.tags)
-                if (x.id != t.id) x,
-            ],
-          ),
-        ),
-      // The sort shows in its own control, the period in its pill.
-    ];
-  }
-
   // ── Build ───────────────────────────────────────────────────────────
 
   @override
@@ -315,7 +264,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             state.status == TransactionsStatus.initial ||
             (state.status == TransactionsStatus.loading &&
                 state.transactions.isEmpty);
-        final chips = _activeChips(l, state);
+        final activeFilters = _f.activeCount(_base);
         final header = <Widget>[
           // The page's card (month ‹ ›, net, daily bars, รายรับ / รายจ่าย
           // tiles); a wallet's embedded list keeps just the pill — its in /
@@ -324,7 +273,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
             const SizedBox(height: AppSpacing.sm),
             Center(child: _periodPill()),
           ] else if (state.totals case final t?)
-            _summary(l, t, chips.length)
+            _summary(l, t, activeFilters)
           else
             const SizedBox(height: AppSpacing.sm),
           // Hidden behind the card's 🔍 (embedded: always there): search +
@@ -339,9 +288,9 @@ class _TransactionsListPageState extends State<TransactionsListPage>
               AppChip(
                 label: l.transactionsFiltersTitle,
                 icon: Icons.tune,
-                selected: chips.isNotEmpty,
+                selected: activeFilters > 0,
                 trailing: AppChipTrailing.count,
-                count: chips.length,
+                count: activeFilters,
                 onTap: _openFilters,
               ),
             ],
@@ -365,31 +314,6 @@ class _TransactionsListPageState extends State<TransactionsListPage>
               ),
             ),
           ),
-          // Every active filter, wrapping onto more lines (owner: see them
-          // all), each ✕ removes it.
-          if (chips.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg,
-                AppSpacing.xs,
-                AppSpacing.lg,
-                AppSpacing.xs,
-              ),
-              child: Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.xs,
-                children: [
-                  for (final c in chips)
-                    AppChip(
-                      label: c.label,
-                      selected: true,
-                      trailing: AppChipTrailing.remove,
-                      tooltip: l.transactionsFilterRemove,
-                      onRemove: () => _apply(c.without),
-                    ),
-                ],
-              ),
-            ),
         ];
 
         final failed =
@@ -460,20 +384,15 @@ class _TransactionsListPageState extends State<TransactionsListPage>
         : DailyBarKind.future;
     String dayLabel(DateTime? d) =>
         d == null ? '' : DateFormatter.short(d, locale: locale);
-    void toggle(TransactionType type) => _apply(
-      _f.copyWith(
-        type: _f.type == type ? null : type,
-        clearType: _f.type == type,
-      ),
-    );
+    // A tile = "only this type": tap again to clear.
+    bool only(TransactionType type) =>
+        _f.types.length == 1 && _f.types.contains(type);
+    void toggle(TransactionType type) =>
+        _apply(_f.copyWith(types: only(type) ? const {} : {type}));
     return ListSummaryCard(
       captionWidget: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(child: _periodPill()),
-          const SizedBox(width: AppSpacing.xs),
-          AppText('· ${l.fpTxNetCaption}', role: AppTextRole.caption),
-        ],
+        children: [Flexible(child: _periodPill())],
       ),
       actions: [
         ToolbarToggleButton(
@@ -510,14 +429,14 @@ class _TransactionsListPageState extends State<TransactionsListPage>
           label: l.homeIncome,
           value: moneyString(context, t.income),
           tone: SummaryTileTone.green,
-          selected: _f.type == TransactionType.income,
+          selected: only(TransactionType.income),
           onTap: () => toggle(TransactionType.income),
         ),
         SummaryTile(
           label: l.homeExpense,
           value: moneyString(context, t.expense),
           tone: SummaryTileTone.red,
-          selected: _f.type == TransactionType.expense,
+          selected: only(TransactionType.expense),
           onTap: () => toggle(TransactionType.expense),
         ),
       ],
@@ -572,7 +491,7 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     Widget? footer,
   }) {
     final l = AppLocalizations.of(context)!;
-    final hideAccount = _f.wallet is TxOneWallet;
+    final hideAccount = _f.wallets.length == 1 && !_f.noWallet;
     final children = <Widget>[];
     if (_f.sort.startsWith('date')) {
       final days = <String, List<Transaction>>{};

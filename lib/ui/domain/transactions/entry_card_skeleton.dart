@@ -36,13 +36,25 @@ class EntryCardSkeleton extends StatelessWidget {
         ? AppInputSize.scaled(context, AppInputSize.labelRow)
         : 0.0;
     final value = AppInputSize.scaled(context, AppInputSize.hero.valueRow);
-    Widget pill({double? width}) =>
-        SkeletonBox(width: width, height: control, borderRadius: control / 2);
+    // The hero's top row keeps its own 40 min height (✏️ is a 40 control);
+    // the chip rows under the fields are chip-control tall.
+    const top = HeroSpacing.controlHeight;
+    Widget pill({double? width, double height = 0}) => SkeletonBox(
+      width: width,
+      height: height == 0 ? control : height,
+      borderRadius: (height == 0 ? control : height) / 2,
+    );
     return HeroSurface(
       style: const HeroStyle.plain(),
       child: HeroContent(
         rows: [
-          Row(children: [pill(width: 168), const Spacer(), pill(width: 96)]),
+          Row(
+            children: [
+              pill(width: 168, height: top),
+              const Spacer(),
+              pill(width: 96, height: top),
+            ],
+          ),
           SizedBox(
             height: label + value + _fieldBottom,
             child: Row(

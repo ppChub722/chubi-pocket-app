@@ -778,11 +778,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   Future<void> _submitSavingDraft() async {
     final l = AppLocalizations.of(context)!;
     final s = _sav;
-    final problem = s.amountValue <= 0
-        ? l.quickAmountRequired
-        : s.account == null
-        ? l.savingEntryWalletRequired
-        : null;
+    final problem = s.amountValue <= 0 ? l.quickAmountRequired : null;
     if (problem != null) {
       HapticFeedback.lightImpact();
       _toast(problem);
@@ -977,7 +973,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
 
   Widget _modeChips(AppLocalizations l) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-    child: QuickCreateModeChips(
+    child: QuickCreateModeTabs(
       mode: _mode,
       labels: {
         QuickCreateMode.tx: l.quickModeTx,
@@ -1019,10 +1015,13 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         direction: d.direction,
         amount: d.amountValue,
         date: d.date,
-        accountId: d.account?.id,
+        // Ledger only: no wallet, no tags. Else a transaction, with or
+        // without a wallet.
+        accountId: d.createTransaction ? d.account?.id : null,
+        createTransaction: d.createTransaction,
         description: text(d.description),
         note: text(d.note),
-        tagIds: d.account == null ? null : d.tagIds.toList(),
+        tagIds: d.createTransaction ? d.tagIds.toList() : null,
         markPaidIds: d.markPaidIds.isEmpty ? null : d.markPaidIds.toList(),
         personName: person.typedName,
       );
@@ -1049,11 +1048,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
   Future<void> _saveSaving() async {
     final l = AppLocalizations.of(context)!;
     final s = _sav;
-    final problem = s.amountValue <= 0
-        ? l.quickAmountRequired
-        : s.account == null
-        ? l.savingEntryWalletRequired
-        : null;
+    final problem = s.amountValue <= 0 ? l.quickAmountRequired : null;
     if (problem != null) {
       HapticFeedback.lightImpact();
       _toast(problem);
@@ -1076,7 +1071,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
         amount: s.amountValue,
         date: iso,
         goalId: s.goalId,
-        walletId: s.account!.id,
+        walletId: s.account?.id,
         note: note.isEmpty ? null : note,
       );
       accounts.patchSavings(r.walletSavings);
@@ -1510,7 +1505,6 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
                 // collapses it). Drafts keep their own event; here
                 // the อีเวนต์ row only exists when creating, for a
                 // type that can join one ([typeCanJoinEvent]).
-                splitsCollapsible: !_draftLike && !_isEvent,
                 recurringSlot: _recurringSlot(l),
                 eventSlot: !_draftLike && !_isEvent && typeCanJoinEvent(_c.type)
                     ? SplitEventSlot(

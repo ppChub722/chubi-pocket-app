@@ -6,12 +6,26 @@ import 'page_dots.dart';
 import '../tokens/app_spacing.dart';
 
 /// One tab of an [AppTabBar].
+///
+/// [icon] before the label — REQUIRED in spirit for a bar whose pages don't
+/// swipe (a mode switch, e.g. quick create's รายการ · หนี้ · ออม): with no
+/// finger-following page to explain it, the icon says what each tab is.
+/// [color] tints the selected tab and the underline (a mode's own colour);
+/// null = the theme primary.
 class AppTab<T> {
-  const AppTab({required this.value, required this.label, this.badgeCount = 0});
+  const AppTab({
+    required this.value,
+    required this.label,
+    this.badgeCount = 0,
+    this.icon,
+    this.color,
+  });
 
   final T value;
   final String label;
   final int badgeCount;
+  final IconData? icon;
+  final Color? color;
 }
 
 /// Equal-width underline tab bar (categories' expense/income tabs style).
@@ -55,7 +69,7 @@ class AppTabBar<T> extends StatelessWidget {
           final w = box.maxWidth / tabs.length;
           final underline = ColoredBox(
             key: underlineKey,
-            color: scheme.primary,
+            color: (index >= 0 ? tabs[index].color : null) ?? scheme.primary,
           );
           return Stack(
             children: [
@@ -97,15 +111,26 @@ class AppTabBar<T> extends StatelessWidget {
 
   Widget _tab(BuildContext context, ColorScheme scheme, AppTab<T> t) {
     final active = t.value == selected;
-    final label = AnimatedDefaultTextStyle(
+    final tint = active ? (t.color ?? scheme.primary) : scheme.onSurfaceVariant;
+    final text = AnimatedDefaultTextStyle(
       duration: _slide,
       curve: Curves.easeOutCubic,
       style: Theme.of(context).textTheme.titleSmall!.copyWith(
-        color: active ? scheme.primary : scheme.onSurfaceVariant,
+        color: tint,
         fontWeight: active ? FontWeight.w700 : FontWeight.w400,
       ),
       child: Text(t.label, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
+    final label = t.icon == null
+        ? text
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(t.icon, size: 18, color: tint),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(child: text),
+            ],
+          );
     return Expanded(
       child: InkWell(
         onTap: () => onChanged(t.value),

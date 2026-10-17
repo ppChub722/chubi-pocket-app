@@ -90,7 +90,9 @@ class PersonalDebtsRepository {
   /// `POST /personal-debts/people/{key}/entries`: the ONE write for a new
   /// entry (quick create in debt mode). A wallet → the BE also writes the
   /// wallet tx (paid = expense, received = income); none → ledger-only.
-  /// [tagIds] only with [accountId]; [markPaidIds] labels the person's other
+  /// [createTransaction]: write the transaction even with no [accountId] (it
+  /// then counts in income / expense and moves no wallet); false = ledger
+  /// only. [tagIds] only with a transaction; [markPaidIds] labels the person's other
   /// entries paid in the same call; [personName] = the shown spelling of a
   /// typed (`n:`) name.
   Future<DebtEntryWriteResult> createEntry(
@@ -99,6 +101,7 @@ class PersonalDebtsRepository {
     required double amount,
     DateTime? date,
     String? accountId,
+    bool? createTransaction,
     String? description,
     String? note,
     List<String>? tagIds,
@@ -113,9 +116,13 @@ class PersonalDebtsRepository {
           'amount': amount,
           if (date != null) 'date': debtDateWire(date),
           'account_id': ?accountId,
+          // Absent = the old rule (a transaction exactly when there is a wallet).
+          'create_transaction': ?createTransaction,
           'description': ?description,
           'note': ?note,
-          if (accountId != null && tagIds != null) 'tag_ids': tagIds,
+          if ((accountId != null || createTransaction == true) &&
+              tagIds != null)
+            'tag_ids': tagIds,
           if (markPaidIds != null && markPaidIds.isNotEmpty)
             'mark_paid_ids': markPaidIds,
           'person_name': ?personName,
@@ -211,6 +218,7 @@ class DebtEntryUpdate {
     this.date,
     this.accountId,
     this.clearAccount = false,
+    this.createTransaction,
     this.description,
     this.note,
     this.paid,
@@ -227,6 +235,11 @@ class DebtEntryUpdate {
   final DateTime? date;
   final String? accountId;
   final bool clearAccount;
+
+  /// true = there is a transaction after the write (made if missing, with
+  /// [accountId] or none); false = ledger only (deletes it). Null = the old
+  /// rule: [clearAccount] drops it, [accountId] makes / moves it.
+  final bool? createTransaction;
   final String? description;
   final String? note;
   final bool? paid;
@@ -241,6 +254,7 @@ class DebtEntryUpdate {
     'amount': ?amount,
     if (date != null) 'date': debtDateWire(date!),
     if (clearAccount) 'account_id': null else 'account_id': ?accountId,
+    'create_transaction': ?createTransaction,
     'description': ?description,
     'note': ?note,
     'paid': ?paid,

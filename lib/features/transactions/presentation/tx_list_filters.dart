@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
@@ -136,95 +137,105 @@ class TxPeriod {
   int get hashCode => Object.hash(kind, start, end);
 }
 
-/// Wallet filter: everything, rows with no wallet only, or one wallet.
-sealed class TxWalletFilter {
-  const TxWalletFilter();
-}
-
-class TxAnyWallet extends TxWalletFilter {
-  const TxAnyWallet();
-
-  @override
-  bool operator ==(Object other) => other is TxAnyWallet;
-
-  @override
-  int get hashCode => 0;
-}
-
-class TxNoWallet extends TxWalletFilter {
-  const TxNoWallet();
-
-  @override
-  bool operator ==(Object other) => other is TxNoWallet;
-
-  @override
-  int get hashCode => 1;
-}
-
-class TxOneWallet extends TxWalletFilter {
-  const TxOneWallet(this.account);
-  final Account account;
-
-  @override
-  bool operator ==(Object other) =>
-      other is TxOneWallet && other.account.id == account.id;
-
-  @override
-  int get hashCode => account.id.hashCode;
-}
-
 /// Everything the filter sheet sets (search stays in the page's field).
+/// Every group takes SEVERAL values: OR-ed inside the group (wallet KBank OR
+/// cash OR no wallet), AND-ed between groups; an empty group = no filter.
 @immutable
 class TxFilters {
   const TxFilters({
     required this.period,
-    this.type,
-    this.wallet = const TxAnyWallet(),
-    this.category,
+    this.types = const {},
+    this.wallets = const [],
+    this.noWallet = false,
+    this.categories = const [],
     this.uncategorized = false,
     this.tags = const [],
+    this.noTags = false,
     this.sort = 'date_desc',
   });
 
   final TxPeriod period;
-  final TransactionType? type;
-  final TxWalletFilter wallet;
+  final Set<TransactionType> types;
 
-  /// With its sub-categories. Exclusive with [uncategorized].
-  final Category? category;
+  /// Wallets, and/or [noWallet] (rows without one).
+  final List<Account> wallets;
+  final bool noWallet;
 
-  /// Only rows without a category ("ไม่ระบุหมวด").
+  /// Categories (each with its sub-categories), and/or [uncategorized].
+  final List<Category> categories;
   final bool uncategorized;
+
+  /// Tags, and/or [noTags] (rows without any).
   final List<Tag> tags;
+  final bool noTags;
   final String sort;
 
   TxFilters copyWith({
     TxPeriod? period,
-    TransactionType? type,
-    bool clearType = false,
-    TxWalletFilter? wallet,
-    Category? category,
-    bool clearCategory = false,
+    Set<TransactionType>? types,
+    List<Account>? wallets,
+    bool? noWallet,
+    List<Category>? categories,
     bool? uncategorized,
     List<Tag>? tags,
+    bool? noTags,
     String? sort,
   }) => TxFilters(
     period: period ?? this.period,
-    type: clearType ? null : (type ?? this.type),
-    wallet: wallet ?? this.wallet,
-    category: clearCategory ? null : (category ?? this.category),
+    types: types ?? this.types,
+    wallets: wallets ?? this.wallets,
+    noWallet: noWallet ?? this.noWallet,
+    categories: categories ?? this.categories,
     uncategorized: uncategorized ?? this.uncategorized,
     tags: tags ?? this.tags,
+    noTags: noTags ?? this.noTags,
     sort: sort ?? this.sort,
   );
 
+  static Set<String> _ids(Iterable<Object> xs, String Function(Object) id) => {
+    for (final x in xs) id(x),
+  };
+
   /// The same filters, ignoring the period (the pill owns it).
   bool sameFiltersAs(TxFilters o) =>
-      o.type == type &&
-      o.wallet == wallet &&
-      o.category?.id == category?.id &&
+      setEquals(o.types, types) &&
+      o.noWallet == noWallet &&
       o.uncategorized == uncategorized &&
+      o.noTags == noTags &&
       o.sort == sort &&
-      o.tags.map((t) => t.id).toSet().containsAll(tags.map((t) => t.id)) &&
-      o.tags.length == tags.length;
+      setEquals(
+        _ids(o.wallets, (a) => (a as Account).id),
+        _ids(wallets, (a) => (a as Account).id),
+      ) &&
+      setEquals(
+        _ids(o.categories, (c) => (c as Category).id),
+        _ids(categories, (c) => (c as Category).id),
+      ) &&
+      setEquals(
+        _ids(o.tags, (t) => (t as Tag).id),
+        _ids(tags, (t) => (t as Tag).id),
+      );
+
+  /// How many values are on beyond how the page opened [base] (what the
+  /// "ตัวกรอง" button counts).
+  int activeCount(TxFilters base) {
+    int extra(Set<Object> now, Set<Object> was) =>
+        now.where((x) => !was.contains(x)).length;
+    return extra(types, base.types) +
+        extra(
+          {for (final w in wallets) w.id},
+          {for (final w in base.wallets) w.id},
+        ) +
+        (noWallet && !base.noWallet ? 1 : 0) +
+        extra(
+          {for (final c in categories) c.id},
+          {for (final c in base.categories) c.id},
+        ) +
+        (uncategorized && !base.uncategorized ? 1 : 0) +
+        extra(
+          {for (final t in tags) t.id},
+          {for (final t in base.tags) t.id},
+        ) +
+        (noTags && !base.noTags ? 1 : 0);
+  }
 }

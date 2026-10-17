@@ -56,9 +56,6 @@ enum AppChipTrailing {
   /// ✕ — drops it ([AppChip.onRemove]).
   remove,
 
-  /// 🔒 — can't be changed (a saved row's type).
-  lock,
-
   /// A small counter ([AppChip.count]) — how many are picked.
   count,
 }
@@ -99,11 +96,17 @@ class AppChip extends StatelessWidget {
     this.enabled = true,
     this.tooltip,
     this.dashed = false,
+    this.inset = false,
+    this.removeOnly = false,
     this.maxWidth,
     super.key,
   }) : assert(
          trailing != AppChipTrailing.remove || onRemove != null,
          'AppChipTrailing.remove needs onRemove',
+       ),
+       assert(
+         trailing != AppChipTrailing.remove || size != ChipSize.mini,
+         'a removable (✕) chip is not made in mini (20): too small to tap',
        ),
        _size = size;
 
@@ -145,9 +148,20 @@ class AppChip extends StatelessWidget {
   /// A tap-to-read hint (why it's locked, what ✕ drops).
   final String? tooltip;
 
-  /// A dashed outline instead of a solid one — "nothing picked yet, tap to
-  /// pick" (the pending form's `เลือกกระเป๋า` / `เลือกหมวด`).
+  /// A dashed outline instead of a solid one: in an edit form, EVERYTHING the
+  /// user can change is dashed (owner 2026-10-17) — an empty pick ("+ เลือกหมวด"),
+  /// a chip that opens a picker (📅 date, ⋯ เพิ่มเติม), a choice in a row.
+  /// A solid outline = not editable. No 🔒 icon is used for that.
   final bool dashed;
+
+  /// With [dashed] and [selected]: this one is chosen AND still changeable —
+  /// the dashed line is the chip's edge, a thin solid line sits 3 px inside
+  /// it. Takes no extra space (painted over the chip, same size as any chip).
+  final bool inset;
+
+  /// With [AppChipTrailing.remove]: the chip body is inert, only the ✕
+  /// removes (a tag already picked: change tags in the picker, drop one here).
+  final bool removeOnly;
 
   /// The chip never grows wider than this; the label ellipsises first.
   final double? maxWidth;
@@ -169,7 +183,7 @@ class AppChip extends StatelessWidget {
     final iconColor = color != null || tone != null ? tint : fg;
     final iconSize = size.icon;
     final gap = size.gap;
-    final tap = enabled
+    final tap = enabled && !removeOnly
         ? (onTap ?? (trailing == AppChipTrailing.remove ? onRemove : null))
         : null;
 
@@ -200,14 +214,22 @@ class AppChip extends StatelessWidget {
         size: iconSize + 4,
         color: fg,
       ),
-      AppChipTrailing.lock => Icon(
-        AppIcons.lock,
-        size: iconSize - 2,
-        color: fg,
-      ),
       AppChipTrailing.remove =>
-        // Its own target when the chip does something else on tap.
-        onTap == null
+        // Its own target when the chip does something else on tap (or
+        // nothing: [removeOnly]).
+        removeOnly
+            ? InkResponse(
+                onTap: enabled ? onRemove : null,
+                radius: size.height / 2,
+                child: SizedBox(
+                  width: iconSize + 8,
+                  height: size.height,
+                  child: Center(
+                    child: Icon(AppIcons.close, size: iconSize, color: fg),
+                  ),
+                ),
+              )
+            : onTap == null
             ? Icon(AppIcons.close, size: iconSize, color: fg)
             : InkResponse(
                 onTap: enabled ? onRemove : null,
@@ -227,8 +249,40 @@ class AppChip extends StatelessWidget {
           ?.copyWith(color: fg, fontWeight: ChipSize.chipWeight),
     );
 
-    final sidePad = size.padding;
+    // An empty label with an icon = an icon-only chip (a round button chip,
+    // e.g. the search toggle): square, nothing but the glyph. Give it a
+    // [tooltip].
+    final iconOnly = label.isEmpty && lead != null && tail == null;
+    final sidePad = iconOnly ? (size.height - size.icon) / 2 : size.padding;
     final borderColor = selected ? tint : scheme.outlineVariant;
+    // Chosen + changeable: both lines are thin (the look is two lines).
+    final ringed = dashed && inset && selected;
+    final Widget content = ConstrainedBox(
+      constraints: BoxConstraints(minHeight: size.height),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: sidePad,
+          // ▾ / ✕ / 🔒 carry their own air; the filled count badge sits
+          // concentric with the chip's round end instead.
+          right: tail == null || iconOnly
+              ? sidePad
+              : trailing == AppChipTrailing.count
+              ? (size.height - (size.icon + 2)) / 2
+              : removeOnly
+              ? sidePad - AppSpacing.xs - 4
+              : sidePad - AppSpacing.xs,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (lead != null) ...[lead, if (!iconOnly) SizedBox(width: gap)],
+            if (dotMark != null) ...[dotMark, SizedBox(width: gap)],
+            if (!iconOnly) Flexible(child: text),
+            if (tail != null) ...[SizedBox(width: size.gap), tail],
+          ],
+        ),
+      ),
+    );
     Widget chip = Material(
       color: selected ? tint.withValues(alpha: 0.12) : Colors.transparent,
       shape: StadiumBorder(
@@ -239,37 +293,35 @@ class AppChip extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: tap,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: size.height),
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: sidePad,
-              // ▾ / ✕ / 🔒 carry their own air; the filled count badge sits
-              // concentric with the chip's round end instead.
-              right: tail == null
-                  ? sidePad
-                  : trailing == AppChipTrailing.count
-                  ? (size.height - (size.icon + 2)) / 2
-                  : sidePad - AppSpacing.xs,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (lead != null) ...[lead, SizedBox(width: gap)],
-                if (dotMark != null) ...[dotMark, SizedBox(width: gap)],
-                Flexible(child: text),
-                if (tail != null) ...[SizedBox(width: size.gap), tail],
-              ],
-            ),
-          ),
-        ),
+        child: ringed
+            // The inner solid line is painted over the chip (no layout).
+            ? Stack(
+                children: [
+                  content,
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Padding(
+                        padding: const EdgeInsets.all(3),
+                        child: DecoratedBox(
+                          decoration: ShapeDecoration(
+                            shape: StadiumBorder(
+                              side: BorderSide(color: borderColor, width: 1),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : content,
       ),
     );
 
     if (dashed) {
       chip = DashedRectBorder(
         color: borderColor,
-        strokeWidth: selected ? 1.5 : 1,
+        strokeWidth: selected && !ringed ? 1.5 : 1,
         dashLength: 4,
         gapLength: 3,
         borderRadius: Radius.circular(size.height / 2),

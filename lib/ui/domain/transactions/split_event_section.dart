@@ -13,9 +13,11 @@ import '../../ui.dart';
 enum SplitEventVariant { compact, full }
 
 /// A labelled row of a quick form — โน้ต, แบ่งยอด, อีเวนต์: the label in a
-/// fixed column on the left ([labelWidth]) so every field lines up at the
-/// same x. [dense]: the value is a 28 px chip, not a 40 px input, so the label
-/// sits higher to meet the chip's middle.
+/// fixed column on the left ([labelWidthOf]) so every field lines up at the
+/// same x. The column is as wide as the widest label of any such row (so no
+/// label ever wraps, in any language or text size). [dense]: the value is a
+/// chip, not an input: the row centres label and value vertically, so a value
+/// that wraps onto a second line still sits in the middle of the row.
 class DraftFieldRow extends StatelessWidget {
   const DraftFieldRow({
     required this.label,
@@ -28,21 +30,57 @@ class DraftFieldRow extends StatelessWidget {
   final Widget child;
   final bool dense;
 
-  static const labelWidth = 72.0;
+  /// Narrowest the label column gets.
+  static const minLabelWidth = 72.0;
+
+  /// The labels of every row that shares the column (the widest sets its
+  /// width). Add a row's label here when it joins a form.
+  static List<String> _labels(AppLocalizations l) => [
+    l.commonNote,
+    l.txSplitRowLabel,
+    l.txSplitPeopleLabel,
+    l.quickEventLabel,
+    l.txRecurringRowLabel,
+    l.debtCloseLabel,
+  ];
+
+  /// The label column's width: the widest shared label at the current font
+  /// and text scale, never below [minLabelWidth].
+  static double labelWidthOf(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelLarge;
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    var widest = minLabelWidth;
+    for (final label in _labels(AppLocalizations.of(context)!)) {
+      final p = TextPainter(
+        text: TextSpan(text: label, style: style),
+        textDirection: direction,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      if (p.width > widest) widest = p.width;
+      p.dispose();
+    }
+    // A little air before the value.
+    return widest.ceilToDouble() + AppSpacing.xs;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: dense
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: labelWidth,
+          width: labelWidthOf(context),
           child: Padding(
-            // Lines up with the first line of a field / chip beside it.
-            padding: EdgeInsets.only(top: dense ? 4 : 10),
+            // An input's row: the label lines up with its first line.
+            padding: EdgeInsets.only(top: dense ? 0 : 10),
             child: Text(
               label,
-              maxLines: 2,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -55,36 +93,58 @@ class DraftFieldRow extends StatelessWidget {
   }
 }
 
+/// View mode: a long-press anywhere on a link row enters edit mode on it (the
+/// chips' own taps still work: a tap is theirs, only a long-press is ours).
+Widget longPressRow(Widget row, VoidCallback? onLongPress) => onLongPress == null
+    ? row
+    : GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: onLongPress,
+        child: row,
+      );
+
 /// The event row of the section: what [SplitEventSection] needs to draw
 /// "อีเวนต์ [🎉 name ✕]" — the name (null = none), a tap (open the picker,
-/// or the event itself in view), a ✕ and the lock.
+/// or the event itself in view) and a ✕. [editing] false = view mode: the
+/// chips are plain (a filled one opens the event), nothing is changed here;
+/// [locked] = shown but not changeable (a plain chip, no tap, no ✕).
 class SplitEventSlot {
   const SplitEventSlot({
     this.name,
     this.onTap,
     this.onClear,
     this.locked = false,
+    this.editing = true,
+    this.onLongPress,
   });
 
   final String? name;
   final VoidCallback? onTap;
   final VoidCallback? onClear;
   final bool locked;
+  final bool editing;
+
+  /// View mode: a long-press on the row enters edit mode on this field.
+  final VoidCallback? onLongPress;
 }
 
 /// The อีเวนต์ row of a transaction form's sections — "อีเวนต์  [🎉 name ✕]",
 /// the same in quick create, the drafts and the detail page. The event is an
 /// entity chip (event icon, people colour, name); empty with a [onTap] it is
 /// the add chip "+ เพิ่มอีเวนต์" that opens the picker. Tapping the chip opens
-/// the picker (or, in view, the event). [onClear] adds ✕. [locked]: the chip
-/// without ✕ / tap and a 🔒 (a row that can't change its event). Empty and
-/// nothing to tap: "ไม่ได้เลือก", muted.
+/// the picker (or, in view, the event). [onClear] adds ✕. [locked]: a plain
+/// chip without ✕ / tap (a row that can't change its event; no 🔒 — a solid
+/// line already says "not editable"). Edit mode: a chip is dashed (changeable),
+/// a chosen one also has the thin line inside. Empty and nothing to tap:
+/// "ไม่ได้เลือก", muted.
 class EventRow extends StatelessWidget {
   const EventRow({
     required this.name,
     this.onTap,
     this.onClear,
     this.locked = false,
+    this.editing = true,
+    this.onLongPress,
     this.variant = SplitEventVariant.full,
     super.key,
   });
@@ -93,6 +153,8 @@ class EventRow extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onClear;
   final bool locked;
+  final bool editing;
+  final VoidCallback? onLongPress;
   final SplitEventVariant variant;
 
   bool get _compact => variant == SplitEventVariant.compact;
@@ -104,17 +166,19 @@ class EventRow extends StatelessWidget {
       if (onTap == null || locked) {
         return DetailPlaceholder(l.quickEventNone);
       }
+      // Empty and changeable: the dashed "+" chip, in view mode too (it says
+      // there is something to add; a long-press there enters edit mode).
       return AppChip(
         icon: AppIcons.add,
         label: l.quickEventAdd,
         tone: AppChipTone.primary,
         selected: true,
-        dashed: _compact,
-        size: _compact ? ChipSize.chip : ChipSize.control,
+        dashed: true,
         onTap: onTap,
       );
     }
-    final removable = !locked && onClear != null;
+    final removable = editing && !locked && onClear != null;
+    final changeable = editing && !locked;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -124,7 +188,9 @@ class EventRow extends StatelessWidget {
               icon: AppIcons.project,
               color: accent,
               label: n,
-              size: ChipSize.chip,
+              selected: changeable,
+              dashed: changeable,
+              inset: changeable,
               maxWidth: c.maxWidth.isFinite ? c.maxWidth : null,
               onTap: locked ? null : onTap,
               trailing: removable
@@ -135,10 +201,6 @@ class EventRow extends StatelessWidget {
             ),
           ),
         ),
-        if (locked) ...[
-          const SizedBox(width: AppSpacing.xs),
-          const AppIcon(AppIcons.lock),
-        ],
       ],
     );
   }
@@ -147,24 +209,31 @@ class EventRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final value = _value(context, l);
-    if (_compact) {
-      return DraftFieldRow(
-        label: l.quickEventLabel,
-        dense: true,
-        child: Align(alignment: AlignmentDirectional.centerStart, child: value),
-      );
-    }
-    return DetailRow(
-      label: l.quickEventLabel,
-      trailing: Align(alignment: AlignmentDirectional.centerEnd, child: value),
-    );
+    final Widget row = _compact
+        ? DraftFieldRow(
+            label: l.quickEventLabel,
+            dense: true,
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: value,
+            ),
+          )
+        : DetailRow(
+            label: l.quickEventLabel,
+            trailing: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: value,
+            ),
+          );
+    return longPressRow(row, onLongPress);
   }
 }
 
 /// The รายการประจำ row of the section (0.4.0): the recurring this transaction
 /// is linked to — [name] (null = none), [periodLabel] ("งวด 16 ต.ค."), a tap
 /// (open the picker, or the recurring in view), an optional ✕ ([onClear] —
-/// only where the BE can unlink), the lock, and [ask]: an inline question
+/// only where the BE can unlink), [locked] (shown, not changeable), [editing]
+/// (false = view mode, see [SplitEventSlot]) and [ask]: an inline question
 /// shown under the row (an [AskCard]).
 class SplitRecurringSlot {
   const SplitRecurringSlot({
@@ -173,6 +242,8 @@ class SplitRecurringSlot {
     this.onTap,
     this.onClear,
     this.locked = false,
+    this.editing = true,
+    this.onLongPress,
     this.ask,
   });
 
@@ -181,6 +252,8 @@ class SplitRecurringSlot {
   final VoidCallback? onTap;
   final VoidCallback? onClear;
   final bool locked;
+  final bool editing;
+  final VoidCallback? onLongPress;
   final Widget? ask;
 }
 
@@ -210,12 +283,12 @@ class RecurringLinkRow extends StatelessWidget {
         label: l.txRecurringPick,
         tone: AppChipTone.primary,
         selected: true,
-        dashed: _compact,
-        size: _compact ? ChipSize.chip : ChipSize.control,
+        dashed: true,
         onTap: slot.onTap,
       );
     }
-    final removable = !slot.locked && slot.onClear != null;
+    final changeable = slot.editing && !slot.locked;
+    final removable = changeable && slot.onClear != null;
     final period = slot.periodLabel;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -226,7 +299,9 @@ class RecurringLinkRow extends StatelessWidget {
               icon: AppIcons.recurring,
               color: ModuleColors.of(context).planning,
               label: period == null ? n : '$n · $period',
-              size: ChipSize.chip,
+              selected: changeable,
+              dashed: changeable,
+              inset: changeable,
               maxWidth: c.maxWidth.isFinite ? c.maxWidth : null,
               onTap: slot.locked ? null : slot.onTap,
               trailing: removable
@@ -237,10 +312,6 @@ class RecurringLinkRow extends StatelessWidget {
             ),
           ),
         ),
-        if (slot.locked) ...[
-          const SizedBox(width: AppSpacing.xs),
-          const AppIcon(AppIcons.lock),
-        ],
       ],
     );
   }
@@ -266,11 +337,11 @@ class RecurringLinkRow extends StatelessWidget {
             ),
           );
     final ask = slot.ask;
-    if (ask == null) return row;
+    if (ask == null) return longPressRow(row, slot.onLongPress);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        row,
+        longPressRow(row, slot.onLongPress),
         Padding(
           padding: _compact
               ? const EdgeInsets.only(top: AppSpacing.xs)
@@ -367,6 +438,8 @@ class _SplitEventSectionState extends State<SplitEventSection> {
                   onTap: e.onTap,
                   onClear: e.onClear,
                   locked: e.locked,
+                  editing: e.editing,
+                  onLongPress: e.onLongPress,
                 ),
               if (widget.recurring != null)
                 RecurringLinkRow(slot: widget.recurring!),
@@ -434,6 +507,8 @@ class _SplitEventSectionState extends State<SplitEventSection> {
               onTap: e.onTap,
               onClear: e.onClear,
               locked: e.locked,
+              editing: e.editing,
+              onLongPress: e.onLongPress,
               variant: SplitEventVariant.compact,
             ),
           ],
@@ -446,8 +521,8 @@ class _SplitEventSectionState extends State<SplitEventSection> {
           ],
           if (widget.helper != null)
             Padding(
-              padding: const EdgeInsets.only(
-                left: DraftFieldRow.labelWidth,
+              padding: EdgeInsets.only(
+                left: DraftFieldRow.labelWidthOf(context),
                 top: AppSpacing.xs,
               ),
               child: Text(

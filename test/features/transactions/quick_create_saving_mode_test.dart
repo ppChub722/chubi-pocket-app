@@ -212,15 +212,31 @@ void main() {
     t,
   ) async {
     await open(t, preset: const QuickCreatePreset.saving(goalId: 'g1'));
-    final chips = t.widget<QuickCreateModeChips>(
-      find.byType(QuickCreateModeChips),
+    final chips = t.widget<QuickCreateModeTabs>(
+      find.byType(QuickCreateModeTabs),
     );
     expect(chips.mode, QuickCreateMode.saving);
-    // The target row: spare + the user's goal.
-    expect(find.text('Not allocated'), findsOneWidget);
+    // The goal row: the chosen goal (ยังไม่จัดสรร is only a picker card).
+    expect(find.text('Not allocated'), findsNothing);
     expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
     // What the picked wallet still has free.
     expect(find.textContaining('200'), findsWidgets);
+  });
+
+  testWidgets('no goal chosen: "Pick a goal" opens the card picker with '
+      'Not allocated first', (t) async {
+    await open(t, preset: const QuickCreatePreset.saving());
+    // The goal card reads "Not allocated" (the spare pool) until one is picked.
+    expect(find.text('Not allocated'), findsOneWidget);
+    await t.tap(find.text('Not allocated'));
+    await t.pumpAndSettle();
+    expect(find.byType(SavingGoalCard), findsWidgets);
+    // The form's goal card and the picker's first card.
+    expect(find.text('Not allocated'), findsNWidgets(2));
+    await t.tap(find.text('ทริปญี่ปุ่น').last);
+    await t.pumpAndSettle();
+    expect(find.byType(SavingGoalCard), findsNothing);
+    expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
   });
 
   testWidgets('over the free amount warns but still saves, ONE call', (
@@ -274,8 +290,8 @@ void main() {
       t,
     ) async {
       await open(t, draft: draft());
-      expect(find.byType(QuickCreateModeChips), findsNothing);
-      expect(find.text('Not allocated'), findsOneWidget);
+      expect(find.byType(QuickCreateModeTabs), findsNothing);
+      expect(find.text('Not allocated'), findsNothing);
       expect(find.text('ทริปญี่ปุ่น'), findsOneWidget);
       expect(find.text('150'), findsOneWidget);
       expect(find.text('monthly'), findsOneWidget);

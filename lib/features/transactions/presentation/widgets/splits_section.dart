@@ -302,14 +302,15 @@ class _SplitsSectionState extends State<SplitsSection> {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context)!;
     final sectioned = widget.embedded && !widget.compact;
-    final chipSize = widget.compact ? ChipSize.chip : ChipSize.control;
+    // One chip height for every form chip (32), compact or not.
+    const chipSize = ChipSize.control;
     final pillChildren = <Widget>[
       AppChip(
         icon: AppIcons.add,
         label: l.txSplitAddPerson,
         tone: AppChipTone.primary,
         selected: true,
-        dashed: widget.compact,
+        dashed: true,
         size: chipSize,
         onTap: _addPerson,
       ),
@@ -418,8 +419,8 @@ class _SplitsSectionState extends State<SplitsSection> {
           DraftFieldRow(label: widget.label, dense: true, child: pills),
           if (widget.helper != null)
             Padding(
-              padding: const EdgeInsets.only(
-                left: DraftFieldRow.labelWidth,
+              padding: EdgeInsets.only(
+                left: DraftFieldRow.labelWidthOf(context),
                 top: AppSpacing.xs,
               ),
               child: Text(

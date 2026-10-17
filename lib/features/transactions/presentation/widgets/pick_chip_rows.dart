@@ -13,7 +13,6 @@ import '../../../categories/presentation/widgets/category_chip.dart';
 import '../../../tags/domain/tag.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
 import '../../../tags/presentation/widgets/tag_chip.dart';
-import '../../domain/transaction.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/transactions_cubit.dart';
 import '../cubit/tx_form_options_cubit.dart';
@@ -150,10 +149,13 @@ class CategoryChipRow extends StatelessWidget {
                     all: all,
                     selected: true,
                     onTap: onMore,
+                    dashed: true,
                   )
                 : AppChip(
                     label: pickLabel!,
                     icon: AppIcons.add,
+                    tone: AppChipTone.primary,
+                    selected: true,
                     dashed: true,
                     onTap: onMore,
                   ),
@@ -169,6 +171,7 @@ class CategoryChipRow extends StatelessWidget {
               all: all,
               selected: c.id == sel?.id,
               onTap: () => onPick(c),
+              dashed: true,
             ),
           ...trailing,
         ],
@@ -177,35 +180,31 @@ class CategoryChipRow extends StatelessWidget {
   }
 }
 
-/// แท็ก: the ones picked when the screen opened, then the latest used to
-/// make [shown], then by usage — that order frozen. Tapping toggles
-/// ([onToggle]); "เพิ่มเติม" calls [onMore] (the full picker). [editing]
-/// false = the row's own tags only, no เพิ่มเติม. [known] resolves picked
-/// tags missing from this user's list (another member's, on a shared
+/// แท็ก (owner 2026-10-17): only the tags picked, then "⋯ เพิ่มเติม" (dashed,
+/// opens the full tag picker — add or change them there). A picked tag is a
+/// solid chip whose body does nothing; only its ✕ drops it ([onRemove]).
+/// [editing] false = the row's own tags only, no เพิ่มเติม. [known] resolves
+/// picked tags missing from this user's list (another member's, on a shared
 /// wallet).
 class TagChipRow extends StatelessWidget {
   const TagChipRow({
     required this.selected,
-    required this.onToggle,
+    required this.onRemove,
     required this.onMore,
-    required this.order,
     this.editing = true,
     this.known = const {},
     this.leading = const [],
-    this.shown = 3,
     this.leadingIcon = true,
     this.maxLines,
     super.key,
   });
 
   final Set<String> selected;
-  final ValueChanged<String> onToggle;
+  final ValueChanged<String> onRemove;
   final VoidCallback onMore;
-  final ChipOrder order;
   final bool editing;
   final Map<String, Tag> known;
   final List<Widget> leading;
-  final int shown;
 
   /// False under a section title that shows the icon (the filter sheet).
   final bool leadingIcon;
@@ -223,35 +222,6 @@ class TagChipRow extends StatelessWidget {
         ? tagState!.tags
         : (opts.state.options?.tags ?? const <Tag>[]);
     final byId = {for (final t in mine) t.id: t};
-    final txs = editing
-        ? context.watch<TransactionsCubit>().state.transactions
-        : const <Transaction>[];
-    List<String> rank() {
-      final picked = [
-        for (final id in selected)
-          if (byId.containsKey(id) || known.containsKey(id)) id,
-      ];
-      if (picked.length >= shown) return picked;
-      // Latest used first (the cache is newest first), then by usage.
-      final recent = <String>[];
-      for (final t in txs) {
-        for (final e in t.tags) {
-          if (byId.containsKey(e.id) &&
-              !selected.contains(e.id) &&
-              !recent.contains(e.id)) {
-            recent.add(e.id);
-          }
-        }
-        if (recent.length >= shown) break;
-      }
-      final byUsage = mine.where((t) => !selected.contains(t.id)).toList()
-        ..sort((a, b) => b.usageCount.compareTo(a.usageCount));
-      return _topUp(picked, [...recent, for (final t in byUsage) t.id], shown);
-    }
-
-    final ids = editing
-        ? order.ids(ready: mine.isNotEmpty, rank: rank, picked: selected)
-        : selected.toList();
     final loading = opts == null
         ? mine.isEmpty &&
               (tagState!.status == TagsStatus.initial ||
@@ -269,13 +239,14 @@ class TagChipRow extends StatelessWidget {
         chips: [
           ...leading,
           if (loading) ..._skeletonChips(),
-          for (final t in [for (final id in ids) ?(byId[id] ?? known[id])])
-            tagAppChip(
-              context,
-              t,
-              selected: editing ? selected.contains(t.id) : null,
-              onTap: editing ? () => onToggle(t.id) : null,
-            ),
+          for (final id in selected)
+            if (byId[id] ?? known[id] case final t?)
+              tagAppChip(
+                context,
+                t,
+                selected: true,
+                onRemove: editing ? () => onRemove(t.id) : null,
+              ),
         ],
       ),
     );
@@ -386,6 +357,8 @@ class WalletChipRow extends StatelessWidget {
                 : AppChip(
                     label: pickLabel!,
                     icon: AppIcons.add,
+                    tone: AppChipTone.primary,
+                    selected: true,
                     dashed: true,
                     onTap: onMore,
                   ),
@@ -463,4 +436,7 @@ AppChip _walletChip(
   color: a.iconCode.tintFor(palette),
   selected: selected,
   onTap: onTap,
+  // The wallet rows are edit-form rows: changeable = dashed, chosen = inset.
+  dashed: true,
+  inset: selected,
 );

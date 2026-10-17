@@ -17,10 +17,15 @@ class TxFilterOption {
     this.parentId,
     this.sortOrder = 0,
     this.types,
+    this.iconCode,
   });
 
   final String id;
   final String label;
+
+  /// The icon's own code: the pickers behind "more" draw it (a category /
+  /// tag row); [icon] / [color] are the chip's.
+  final IconCode? iconCode;
 
   /// The chip's icon (the wallet / category / tag's own).
   final IconData? icon;
@@ -62,48 +67,52 @@ class TxFilterOptions {
   final List<TxFilterOption> tags;
 }
 
-/// What the sheet edits — ids only, no models. The period and the sort are
-/// not here: they live on the page.
+/// What the sheet edits: ids only, no models. The period and the sort are
+/// not here, they live on the page. Every group takes SEVERAL values, OR-ed
+/// inside the group (wallet KBank OR cash OR no wallet) and AND-ed between
+/// groups; an empty group = no filter there.
 @immutable
 class TxFilterSelection {
   const TxFilterSelection({
-    this.type,
-    this.walletId,
+    this.types = const {},
+    this.walletIds = const [],
     this.noWallet = false,
-    this.categoryId,
+    this.categoryIds = const [],
     this.uncategorized = false,
     this.tagIds = const [],
+    this.noTags = false,
   });
 
-  /// null = every type.
-  final TransactionType? type;
+  final Set<TransactionType> types;
 
-  /// One wallet, or [noWallet] (only rows without a wallet); both unset = any.
-  final String? walletId;
+  /// Wallets, and/or [noWallet] (rows without one).
+  final List<String> walletIds;
   final bool noWallet;
 
-  /// A category (with its sub-categories), or [uncategorized].
-  final String? categoryId;
+  /// Categories (each with its sub-categories), and/or [uncategorized].
+  final List<String> categoryIds;
   final bool uncategorized;
+
+  /// Tags, and/or [noTags] (rows without any).
   final List<String> tagIds;
+  final bool noTags;
 
   TxFilterSelection copyWith({
-    TransactionType? type,
-    bool clearType = false,
-    String? walletId,
+    Set<TransactionType>? types,
+    List<String>? walletIds,
     bool? noWallet,
-    bool clearWallet = false,
-    String? categoryId,
-    bool clearCategory = false,
+    List<String>? categoryIds,
     bool? uncategorized,
     List<String>? tagIds,
+    bool? noTags,
   }) => TxFilterSelection(
-    type: clearType ? null : (type ?? this.type),
-    walletId: clearWallet ? null : (walletId ?? this.walletId),
-    noWallet: clearWallet ? (noWallet ?? false) : (noWallet ?? this.noWallet),
-    categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
+    types: types ?? this.types,
+    walletIds: walletIds ?? this.walletIds,
+    noWallet: noWallet ?? this.noWallet,
+    categoryIds: categoryIds ?? this.categoryIds,
     uncategorized: uncategorized ?? this.uncategorized,
     tagIds: tagIds ?? this.tagIds,
+    noTags: noTags ?? this.noTags,
   );
 }
 
@@ -124,6 +133,11 @@ class TxFilterSheetLabels {
     required this.transfer,
     required this.noWallet,
     required this.uncategorized,
+    required this.noTag,
+    required this.walletPicker,
+    required this.categoryPicker,
+    required this.tagPicker,
+    required this.confirm,
   });
 
   final String title;
@@ -142,6 +156,16 @@ class TxFilterSheetLabels {
   final String transfer;
   final String noWallet;
   final String uncategorized;
+  final String noTag;
+
+  /// The words of the pickers behind each row's "more": the same pickers the
+  /// create form opens.
+  final AccountPickerLabels walletPicker;
+  final CategoryMultiPickerLabels categoryPicker;
+  final TagPickerLabels tagPicker;
+
+  /// The wallet picker's confirm button, from how many are ticked.
+  final String Function(int count) confirm;
 
   String typeLabel(TransactionType? t) => switch (t) {
     null => all,
@@ -212,9 +236,13 @@ class _OptionsLoaderState extends State<_OptionsLoader> {
   Widget build(BuildContext context) => widget.builder(_loaded);
 }
 
-/// The sheet's body: ประเภท · กระเป๋า · หมวด · แท็ก chip rows (each led by
-/// "all" = no filter; wallet / category pick one — tap again → all, tags
-/// several; "more" opens the full list) then [ล้าง] [ใช้ตัวกรอง] pinned.
+/// The sheet's body: ประเภท · กระเป๋า · หมวด · แท็ก chip rows. Every chip is
+/// dashed (tap = toggle) and several can be on in every row; "all" leads a
+/// row (on while nothing in it is picked, tap clears it); each of กระเป๋า /
+/// หมวด / แท็ก has its "no …" chip ("ไม่มีกระเป๋า" …) so you can ask for the
+/// rows that have none, alone or together with a pick (OR inside a row);
+/// "more" opens the full picker of the row — the one the create form opens.
+/// [ล้าง] [ใช้ตัวกรอง] pinned.
 class TxFilterSheet extends StatefulWidget {
   const TxFilterSheet({
     required this.initial,
@@ -253,143 +281,129 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
 
   void _set(TxFilterSelection f) => setState(() => _f = f);
 
-  bool _fits(TxFilterOption c, TransactionType? t) =>
-      t == null || (c.types?.contains(t) ?? true);
+  bool _fits(TxFilterOption c, Set<TransactionType> types) =>
+      types.isEmpty || c.types == null || c.types!.any(types.contains);
 
-  void _setType(TransactionType? t) {
-    final selected = _f.categoryId;
-    var keep = true;
-    if (selected != null) {
-      for (final c in widget.options?.categories ?? const <TxFilterOption>[]) {
-        if (c.id == selected) {
-          keep = _fits(c, t);
-          break;
-        }
-      }
-    }
-    _set(_f.copyWith(type: t, clearType: t == null, clearCategory: !keep));
-  }
+  List<String> _toggled(List<String> ids, String id) =>
+      ids.contains(id) ? [...ids.where((x) => x != id)] : [...ids, id];
 
-  void _setCategory(String? id, {bool uncategorized = false}) => _set(
-    _f.copyWith(
-      categoryId: id,
-      clearCategory: id == null,
-      uncategorized: uncategorized,
-    ),
-  );
-
-  void _toggleTag(String id) {
-    final on = _f.tagIds.contains(id);
+  void _toggleType(TransactionType t) {
+    final next = {..._f.types};
+    if (!next.remove(t)) next.add(t);
+    // A category that fits none of the types now on is dropped.
+    final cats = {
+      for (final c in widget.options?.categories ?? const <TxFilterOption>[])
+        c.id: c,
+    };
     _set(
       _f.copyWith(
-        tagIds: on
-            ? [
-                for (final t in _f.tagIds)
-                  if (t != id) t,
-              ]
-            : [..._f.tagIds, id],
+        types: next,
+        categoryIds: [
+          for (final id in _f.categoryIds)
+            if (cats[id] == null || _fits(cats[id]!, next)) id,
+        ],
       ),
     );
   }
 
   Future<void> _moreWallets(List<TxFilterOption> wallets) async {
-    final picked = await showOptionSheet<String>(
+    final r = await showAccountMultiPickSheet(
       context,
-      title: _l.walletTitle,
-      selected: _f.noWallet ? '-' : _f.walletId ?? '*',
-      options: [
-        SheetOption(value: '*', label: _l.all),
-        SheetOption(
-          value: '-',
-          label: _l.noWallet,
-          leading: const AppIcon(AppIcons.noWallet),
-        ),
+      wallets: [
         for (final a in wallets)
-          SheetOption(
-            value: a.id,
-            label: a.label,
-            leading: AppIcon(a.listIcon ?? a.icon ?? AppIcons.wallet),
+          WalletPickItem(
+            id: a.id,
+            name: a.label,
+            icon: a.listIcon ?? a.icon ?? AppIcons.wallet,
+            color: a.color,
           ),
       ],
+      labels: _l.walletPicker,
+      confirm: _l.confirm,
+      selectedIds: _f.walletIds.toSet(),
+      noneSelected: _f.noWallet,
     );
-    if (picked == null || !mounted) return;
-    _set(switch (picked) {
-      '*' => _f.copyWith(clearWallet: true),
-      '-' => _f.copyWith(clearWallet: true, noWallet: true),
-      _ => _f.copyWith(walletId: picked, noWallet: false),
-    });
+    if (r == null || !mounted) return;
+    _set(_f.copyWith(walletIds: r.ids.toList(), noWallet: r.none));
   }
 
-  /// The category choice: all · uncategorized · a category (with its
-  /// sub-categories).
   Future<void> _moreCategories(List<TxFilterOption> categories) async {
     final pool = [
       for (final c in categories)
-        if (_fits(c, _f.type)) c,
+        if (_fits(c, _f.types)) c,
     ];
-    int order(TxFilterOption a, TxFilterOption b) =>
-        a.sortOrder.compareTo(b.sortOrder);
-    final roots = pool.where((c) => c.parentId == null).toList()..sort(order);
-    final picked = await showOptionSheet<String>(
+    final r = await showCategoryMultiPicker(
       context,
-      title: _l.categoryTitle,
-      searchable: pool.length > 8,
-      selected: _f.uncategorized ? '-' : _f.categoryId ?? '*',
-      options: [
-        SheetOption(value: '*', label: _l.all),
-        SheetOption(
-          value: '-',
-          label: _l.uncategorized,
-          leading: const AppIcon(AppIcons.noCategory),
-        ),
-        for (final root in roots) ...[
-          SheetOption(
-            value: root.id,
-            label: root.label,
-            subtitle: _f.type == null ? root.subtitle : null,
+      rows: [
+        for (final c in pool)
+          CategoryPickerRow(
+            id: c.id,
+            name: c.label,
+            parentId: c.parentId,
+            sortOrder: c.sortOrder,
+            iconCode: c.iconCode,
           ),
-          for (final child
-              in pool.where((c) => c.parentId == root.id).toList()..sort(order))
-            SheetOption(
-              value: child.id,
-              label: child.label,
-              subtitle: root.label,
-            ),
-        ],
       ],
+      labels: _l.categoryPicker,
+      initial: [
+        for (final id in _f.categoryIds) (id: id, includeChildren: false),
+      ],
+      // A picked category always counts its sub-categories here.
+      showIncludeChildren: false,
     );
-    if (picked == null || !mounted) return;
-    switch (picked) {
-      case '*':
-        _setCategory(null);
-      case '-':
-        _setCategory(null, uncategorized: true);
-      default:
-        _setCategory(picked);
-    }
+    if (r == null || !mounted) return;
+    _set(_f.copyWith(categoryIds: [for (final p in r) p.id]));
   }
 
   Future<void> _moreTags(List<TxFilterOption> tags) async {
-    final id = await showOptionSheet<String>(
+    final r = await showTagPicker(
       context,
-      title: _l.tagTitle,
-      searchable: tags.length > 8,
-      options: [
-        for (final t in tags)
-          SheetOption(
-            value: t.id,
-            label: t.label,
-            leading: AppIcon(t.icon ?? AppIcons.tag),
-          ),
-      ],
+      data: ValueNotifier(
+        TagPickerData(
+          items: [
+            for (final t in tags)
+              TagPickerItem(id: t.id, name: t.label, iconCode: t.iconCode),
+          ],
+        ),
+      ),
+      labels: _l.tagPicker,
+      selected: _f.tagIds.toSet(),
     );
-    if (id == null || !mounted) return;
-    if (!_f.tagIds.contains(id)) _toggleTag(id);
+    if (r == null || !mounted) return;
+    _set(_f.copyWith(tagIds: r.toList()));
   }
 
   static List<Widget> _skeletonChips() => [
     for (final w in const [72.0, 56.0, 64.0])
       SkeletonBox(width: w, height: ChipSize.control.height, borderRadius: 999),
+  ];
+
+  /// One chip of the sheet: dashed always (tap toggles), picked = the tint of
+  /// its own colour. No inner line here — nothing on this page is "fixed".
+  AppChip _chip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    IconData? icon,
+    Color? color,
+  }) => AppChip(
+    label: label,
+    icon: icon,
+    color: color,
+    selected: selected,
+    dashed: true,
+    onTap: onTap,
+  );
+
+  /// The shown chips of a row: the first [_chipMax] options, plus any picked
+  /// one beyond them (a pick from "more" must stay visible).
+  List<TxFilterOption> _shown(
+    List<TxFilterOption> all,
+    List<String> picked,
+  ) => [
+    ...all.take(_chipMax),
+    for (final o in all.skip(_chipMax))
+      if (picked.contains(o.id)) o,
   ];
 
   @override
@@ -398,51 +412,46 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
     final wallets = o?.wallets ?? const <TxFilterOption>[];
     final cats = [
       for (final c in o?.categories ?? const <TxFilterOption>[])
-        if (_fits(c, _f.type)) c,
+        if (_fits(c, _f.types)) c,
     ];
     final tags = o?.tags ?? const <TxFilterOption>[];
-    // "all" leads each pick row — selected = no filter there.
+    // "all" leads each row — on while nothing in the row is picked.
     AppChip all({required bool selected, required VoidCallback onTap}) =>
-        AppChip(label: _l.all, selected: selected, onTap: onTap);
-    final anyWallet = _f.walletId == null && !_f.noWallet;
+        _chip(label: _l.all, selected: selected, onTap: onTap);
     return SideSheetScaffold(
       title: _l.title,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Every row the same: the icon goes in front of the section title,
-          // the chips start flush left, one chip geometry ([AppChip]). Types:
-          // selected = a tint of their own colour — all primary, expense red,
-          // income green, transfer grey.
           SideSheetSection(
             title: _l.typeTitle,
             icon: AppIcons.transfer,
             child: ChipRow(
               maxLines: _chipLines,
               chips: [
+                all(
+                  selected: _f.types.isEmpty,
+                  onTap: () => _set(_f.copyWith(types: const {})),
+                ),
                 for (final t in const [
-                  null,
                   TransactionType.expense,
                   TransactionType.income,
                   TransactionType.transfer,
                 ])
-                  AppChip(
+                  _chip(
                     label: _l.typeLabel(t),
                     icon: switch (t) {
-                      null => null,
                       TransactionType.expense => AppIcons.expense,
                       TransactionType.income => AppIcons.income,
                       TransactionType.transfer => AppIcons.transfer,
                     },
-                    // Null = the app primary (all).
-                    color: t == null ? null : txTypeColor(context, t),
-                    selected: t == _f.type,
-                    onTap: t == _f.type ? null : () => _setType(t),
+                    color: txTypeColor(context, t),
+                    selected: _f.types.contains(t),
+                    onTap: () => _toggleType(t),
                   ),
               ],
             ),
           ),
-          // One wallet, or none; "no wallet" lives in more's list.
           if (!widget.walletLocked)
             SideSheetSection(
               title: _l.walletTitle,
@@ -453,34 +462,30 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
                 onMore: o == null ? null : () => _moreWallets(wallets),
                 chips: [
                   all(
-                    selected: anyWallet,
-                    onTap: () => _set(_f.copyWith(clearWallet: true)),
+                    selected: _f.walletIds.isEmpty && !_f.noWallet,
+                    onTap: () =>
+                        _set(_f.copyWith(walletIds: const [], noWallet: false)),
+                  ),
+                  _chip(
+                    label: _l.noWallet,
+                    icon: AppIcons.noWallet,
+                    selected: _f.noWallet,
+                    onTap: () => _set(_f.copyWith(noWallet: !_f.noWallet)),
                   ),
                   if (o == null) ..._skeletonChips(),
-                  for (final a in wallets.take(_chipMax))
-                    AppChip(
+                  for (final a in _shown(wallets, _f.walletIds))
+                    _chip(
                       label: a.label,
                       icon: a.icon,
                       color: a.color,
-                      selected: _f.walletId == a.id,
+                      selected: _f.walletIds.contains(a.id),
                       onTap: () => _set(
-                        _f.walletId == a.id
-                            ? _f.copyWith(clearWallet: true)
-                            : _f.copyWith(walletId: a.id, noWallet: false),
+                        _f.copyWith(walletIds: _toggled(_f.walletIds, a.id)),
                       ),
-                    ),
-                  if (_f.noWallet)
-                    AppChip(
-                      label: _l.noWallet,
-                      icon: AppIcons.noWallet,
-                      selected: true,
-                      onTap: () => _set(_f.copyWith(clearWallet: true)),
                     ),
                 ],
               ),
             ),
-          // One category (with its sub-categories), or "uncategorized" from
-          // more; only the type filter's categories.
           SideSheetSection(
             title: _l.categoryTitle,
             icon: AppIcons.category,
@@ -490,30 +495,32 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
               onMore: o == null ? null : () => _moreCategories(o.categories),
               chips: [
                 all(
-                  selected: _f.categoryId == null && !_f.uncategorized,
-                  onTap: () => _setCategory(null),
+                  selected: _f.categoryIds.isEmpty && !_f.uncategorized,
+                  onTap: () => _set(
+                    _f.copyWith(categoryIds: const [], uncategorized: false),
+                  ),
+                ),
+                _chip(
+                  label: _l.uncategorized,
+                  icon: AppIcons.noCategory,
+                  selected: _f.uncategorized,
+                  onTap: () =>
+                      _set(_f.copyWith(uncategorized: !_f.uncategorized)),
                 ),
                 if (o == null) ..._skeletonChips(),
-                for (final c in cats.take(_chipMax))
-                  AppChip(
+                for (final c in _shown(cats, _f.categoryIds))
+                  _chip(
                     label: c.label,
                     icon: c.icon,
                     color: c.color,
-                    selected: c.id == _f.categoryId,
-                    onTap: () =>
-                        _setCategory(_f.categoryId == c.id ? null : c.id),
-                  ),
-                if (_f.uncategorized)
-                  AppChip(
-                    label: _l.uncategorized,
-                    icon: AppIcons.noCategory,
-                    selected: true,
-                    onTap: () => _setCategory(null),
+                    selected: _f.categoryIds.contains(c.id),
+                    onTap: () => _set(
+                      _f.copyWith(categoryIds: _toggled(_f.categoryIds, c.id)),
+                    ),
                   ),
               ],
             ),
           ),
-          // Several tags at once.
           SideSheetSection(
             title: _l.tagTitle,
             icon: AppIcons.tag,
@@ -523,17 +530,25 @@ class _TxFilterSheetState extends State<TxFilterSheet> {
               onMore: o == null ? null : () => _moreTags(tags),
               chips: [
                 all(
-                  selected: _f.tagIds.isEmpty,
-                  onTap: () => _set(_f.copyWith(tagIds: const [])),
+                  selected: _f.tagIds.isEmpty && !_f.noTags,
+                  onTap: () =>
+                      _set(_f.copyWith(tagIds: const [], noTags: false)),
+                ),
+                _chip(
+                  label: _l.noTag,
+                  icon: AppIcons.tag,
+                  selected: _f.noTags,
+                  onTap: () => _set(_f.copyWith(noTags: !_f.noTags)),
                 ),
                 if (o == null) ..._skeletonChips(),
-                for (final t in tags.take(_chipMax))
-                  AppChip(
+                for (final t in _shown(tags, _f.tagIds))
+                  _chip(
                     label: t.label,
                     icon: t.icon,
                     color: t.color,
                     selected: _f.tagIds.contains(t.id),
-                    onTap: () => _toggleTag(t.id),
+                    onTap: () =>
+                        _set(_f.copyWith(tagIds: _toggled(_f.tagIds, t.id))),
                   ),
               ],
             ),

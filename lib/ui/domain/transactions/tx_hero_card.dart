@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ui.dart';
@@ -56,6 +55,7 @@ class TxHeroCard extends StatelessWidget {
     this.amountLabel,
     this.amountError,
     this.titleHint,
+    this.showTitle = true,
     this.titlePlaceholder,
     this.titleMaxLength = TextLimits.description,
     this.onTitleTap,
@@ -65,6 +65,7 @@ class TxHeroCard extends StatelessWidget {
     this.titleFocus,
     this.onEdit,
     this.onLongPressField,
+    this.onLongPressDate,
     this.inline = false,
     this.footer,
     this.amountNote,
@@ -124,6 +125,10 @@ class TxHeroCard extends StatelessWidget {
   /// Defaults to "ค่าอะไร?".
   final String? titleHint;
 
+  /// false = no description at all (a transfer: the system names it); the
+  /// amount then takes the whole row.
+  final bool showTitle;
+
   /// The description's stand-in (title = description ?? category): the
   /// category's name, else the type's label. View mode shows it in italic,
   /// muted, where an empty description would leave a blank; edit mode keeps
@@ -150,6 +155,10 @@ class TxHeroCard extends StatelessWidget {
   /// View mode: long-press on a field → enter edit focused on it.
   final ValueChanged<FocusNode?>? onLongPressField;
 
+  /// View mode: a long-press on the date chip (enters edit mode and opens
+  /// the date picker).
+  final VoidCallback? onLongPressDate;
+
   /// A transaction's layout: the date pill in the chip row, description
   /// and amount side by side. Off (event rows, scheduled entries): chips,
   /// amount, title and date stacked.
@@ -168,17 +177,6 @@ class TxHeroCard extends StatelessWidget {
     TransactionType.income,
     if (allowTransfer && !debt) TransactionType.transfer,
   ];
-
-  /// Swipe left (+1) → the next type, right (−1) → the previous one (no
-  /// wrap).
-  void _step(int by) {
-    final types = _types;
-    final i = types.indexOf(type);
-    final next = (i + by).clamp(0, types.length - 1);
-    if (next == i) return;
-    HapticFeedback.selectionClick();
-    onTypeChanged!(types[next]);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +227,10 @@ class TxHeroCard extends StatelessWidget {
                   onTap: canSwitch && t != type
                       ? () => onTypeChanged!(t)
                       : null,
-                  locked: editing && onTypeChanged == null,
+                  // Dashed = tappable: the OTHER types. The chosen type does
+                  // nothing on tap, so it is a plain solid chip (and so is a
+                  // locked type, a saved row's — no 🔒; owner 2026-10-17).
+                  dashed: canSwitch && t != type,
                   debt: debt,
                 ),
               ],
@@ -238,11 +239,20 @@ class TxHeroCard extends StatelessWidget {
         ),
     ];
     // The date: a control-height chip, read-only (no ink) in view mode.
-    final datePill = AppChip(
+    final datePillChip = AppChip(
       label: dateLabel,
       icon: AppIcons.date,
       onTap: editing ? onPickDate : null,
+      // Opens the date picker while editing: changeable = dashed.
+      dashed: editing && onPickDate != null,
     );
+    final datePill = !editing && onLongPressDate != null
+        ? GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onLongPress: onLongPressDate,
+            child: datePillChip,
+          )
+        : datePillChip;
     final editChip = !editing && onEdit != null
         ? CardActionButton(
             icon: AppIcons.edit,
@@ -365,6 +375,9 @@ class TxHeroCard extends StatelessWidget {
                             // baseline and underline y by their own tokens.
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              if (!showTitle)
+                                Expanded(child: amountField(align: TextAlign.end))
+                              else
                               Expanded(
                                 // Bottom-aligned (NOT centred): the description cell is as
                                 // tall as the amount cell, its underline on the same y.
@@ -401,10 +414,11 @@ class TxHeroCard extends StatelessWidget {
                               // description wraps.
                               // A tight width: the numeric field fills its cell, so its
                               // underline spans it like the description's.
-                              SizedBox(
-                                width: box.maxWidth * 0.48,
-                                child: amountField(align: TextAlign.end),
-                              ),
+                              if (showTitle)
+                                SizedBox(
+                                  width: box.maxWidth * 0.48,
+                                  child: amountField(align: TextAlign.end),
+                                ),
                             ],
                           ),
                           // The amount's half of the row, whatever the description's height
@@ -414,7 +428,7 @@ class TxHeroCard extends StatelessWidget {
                               top: 0,
                               bottom: 0,
                               right: 0,
-                              width: box.maxWidth * 0.48,
+                              width: showTitle ? box.maxWidth * 0.48 : box.maxWidth,
                               child: GestureDetector(
                                 behavior: HitTestBehavior.translucent,
                                 onTap: amountFocus!.requestFocus,
@@ -474,58 +488,15 @@ class TxHeroCard extends StatelessWidget {
 
     final body = HeroContent(rows: inline ? rows : stacked);
 
-    final card = HeroSurface(style: txHeroStyle(context, type), child: body);
-    if (!canSwitch) return card;
-    return _SwipeSteps(onStep: _step, child: card);
+    // An [accentColor] (the saving mode's planning purple) washes the whole
+    // card, not just the amount, so it never reads as green income.
+    return HeroSurface(
+      style: accentColor != null
+          ? HeroStyle.tinted(color: accentColor!)
+          : txHeroStyle(context, type),
+      child: body,
+    );
   }
-}
-
-/// Reports a quick horizontal flick anywhere over [child] — −1 right,
-/// +1 left. Watches raw pointers instead of joining the gesture arena, so
-/// a flick that starts on the amount or title field still counts (a drag
-/// recognizer would lose to the text field's own).
-class _SwipeSteps extends StatefulWidget {
-  const _SwipeSteps({required this.onStep, required this.child});
-  final ValueChanged<int> onStep;
-  final Widget child;
-
-  @override
-  State<_SwipeSteps> createState() => _SwipeStepsState();
-}
-
-class _SwipeStepsState extends State<_SwipeSteps> {
-  int? _pointer;
-  Offset _start = Offset.zero;
-  Duration _startTime = Duration.zero;
-
-  void _down(PointerDownEvent e) {
-    if (_pointer != null) return;
-    _pointer = e.pointer;
-    _start = e.position;
-    _startTime = e.timeStamp;
-  }
-
-  void _up(PointerUpEvent e) {
-    if (e.pointer != _pointer) return;
-    _pointer = null;
-    final d = e.position - _start;
-    final ms = (e.timeStamp - _startTime).inMilliseconds;
-    // Mostly sideways, far enough, quick enough.
-    if (d.dx.abs() < 48 || d.dx.abs() < d.dy.abs() * 2 || ms > 600) return;
-    widget.onStep(d.dx < 0 ? 1 : -1);
-  }
-
-  void _cancel(PointerCancelEvent e) {
-    if (e.pointer == _pointer) _pointer = null;
-  }
-
-  @override
-  Widget build(BuildContext context) => Listener(
-    onPointerDown: _down,
-    onPointerUp: _up,
-    onPointerCancel: _cancel,
-    child: widget.child,
-  );
 }
 
 /// A type's colour: expense red, income green, transfer neutral.
@@ -553,15 +524,15 @@ Color txTypeColor(BuildContext context, TransactionType t) {
 /// One type chip — `[− รายจ่าย]` — as an [AppChip] at control height (owner
 /// 2026-10-11): [selected] = a tinted border and faint fill in the type's
 /// colour, otherwise the grey outline. [type] null = "ทั้งหมด" (the filter's
-/// any-type chip) in the primary colour, no icon. [locked] (a saved row's
-/// type): a 🔒 and a tap-to-read hint ("can't change after saving") instead
-/// of silently doing nothing.
+/// any-type chip) in the primary colour, no icon. [dashed]: a type that can be
+/// tapped to switch to (in an edit form): dashed, no icon (room; the icon
+/// shows once you pick it). The chosen type is not tappable, so it is solid.
 AppChip txTypeChip(
   BuildContext context, {
   required TransactionType? type,
   required bool selected,
   VoidCallback? onTap,
-  bool locked = false,
+  bool dashed = false,
   bool debt = false,
 }) {
   final l = AppLocalizations.of(context)!;
@@ -579,11 +550,11 @@ AppChip txTypeChip(
   };
   return AppChip(
     label: label,
-    icon: icon,
+    icon: dashed && !selected ? null : icon,
     color: type == null ? null : txTypeColor(context, type),
     selected: selected,
     onTap: onTap,
-    trailing: locked ? AppChipTrailing.lock : AppChipTrailing.none,
-    tooltip: locked ? l.txTypeLockedHint : null,
+    dashed: dashed,
+    inset: dashed && selected,
   );
 }

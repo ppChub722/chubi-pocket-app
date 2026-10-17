@@ -12,6 +12,7 @@ import 'package:chubi_pocket/features/transactions/presentation/widgets/draft_fo
 import 'package:chubi_pocket/features/transactions/presentation/widgets/splits_section.dart';
 import 'package:chubi_pocket/l10n/gen/app_localizations.dart';
 import 'package:chubi_pocket/ui/ui.dart';
+import 'package:chubi_pocket/features/accounts/presentation/widgets/wallet_pick_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -136,8 +137,11 @@ void main() {
     await pump(t);
     c.setType(TransactionType.transfer);
     await t.pump();
-    expect(find.text('เลือกกระเป๋าต้นทาง'), findsOneWidget);
-    expect(find.text('เลือกกระเป๋าปลายทาง'), findsOneWidget);
+    // Two wallet cards, [จาก] → [ไป] (no suggested chips), no description.
+    expect(find.byType(FlowCards), findsOneWidget);
+    expect(find.byType(WalletPickCard), findsNWidgets(2));
+    expect(find.text('จาก'), findsOneWidget);
+    expect(find.text('ไป'), findsOneWidget);
     expect(find.text('เลือกหมวด'), findsNothing);
     expect(find.text('ผูกกับ'), findsNothing);
   });

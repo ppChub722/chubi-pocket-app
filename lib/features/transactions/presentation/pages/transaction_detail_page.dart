@@ -174,12 +174,33 @@ class _LoadedState extends State<_Loaded>
   EventTarget? _eventChange;
 
   /// An event change alone is worth saving (and asking before discarding).
+  /// The recurring link staged in edit mode (owner 2026-10-17: every change
+  /// is made on บันทึก): the saved link's ✕ is held here; a new pick is held
+  /// by [_link]. Both are sent after the row itself is saved.
+  bool _pendingUnlink = false;
+
+  /// Can this row be edited at all? A system row (opening balance,
+  /// adjustment, debt repayment) or a locked one: no ✏️, no edit mode.
   @override
-  bool get isDirty => super.isDirty || _eventChange != null;
+  bool get canEdit {
+    final tx = widget.tx;
+    final isSystemRow =
+        tx.type != TransactionType.transfer && (tx.category?.isSystem ?? false);
+    return !isSystemRow && !tx.isLocked;
+  }
+
+  @override
+  bool get isDirty =>
+      super.isDirty ||
+      _eventChange != null ||
+      _pendingUnlink ||
+      _link.candidateFor(_edited.type) != null;
 
   @override
   void cancelEdit() {
     _eventChange = null;
+    _pendingUnlink = false;
+    _link.clear();
     super.cancelEdit();
   }
 
@@ -259,14 +280,20 @@ class _LoadedState extends State<_Loaded>
   /// ✏️ / long-press: get the split people first when they're missing, so
   /// the form edits the real list. Still missing (offline) → edit mode
   /// opens with splits read-only ([_splitsPrefilled]).
-  Future<void> _enterEdit({FocusNode? focus}) async {
+  Future<void> _enterEdit({FocusNode? focus, VoidCallback? then}) async {
     if (!_splitsPrefilled) {
       await _fetchSplitsIfMissing();
       if (!mounted || isEditing) return;
       _reload();
     }
-    enterEdit(focus: focus);
+    enterEdit(focus: focus, then: then);
   }
+
+  /// View mode: a tap on a changeable "+" chip only says how to edit.
+  void _longPressHint() => _say(
+    AppLocalizations.of(context)!.commonLongPressToEdit,
+    tone: Tone.info,
+  );
 
   void _scrollToTop() {
     if (MediaQuery.disableAnimationsOf(context)) {
@@ -305,11 +332,11 @@ class _LoadedState extends State<_Loaded>
     if (mounted) showAppSnackBar(context, message, tone: tone);
   }
 
-  /// Picks a recurring and links this row to it at once: one call, the
-  /// answer's row goes into the cache (no refetch).
+  /// Picks a recurring to link this row to; it is HELD (by [_link]) and sent
+  /// after the row is saved, with the rest of the edit.
   Future<void> _linkRecurring() async {
     final tx = _edited;
-    final picked = await _link.choose(
+    await _link.choose(
       context,
       type: tx.type,
       categoryId: tx.type == TransactionType.transfer ? null : tx.categoryId,
@@ -322,36 +349,51 @@ class _LoadedState extends State<_Loaded>
         name: tx.description,
       ),
     );
-    if (picked == null || !mounted) return;
-    final cubit = context.read<TransactionsCubit>();
-    final accounts = context.read<AccountsCubit>();
-    final linked = await _link.linkNow(
-      context,
-      tx.id,
-      onLinked: (fresh, balances) {
-        cubit.patchRow(fresh, afterWrite: true);
-        accounts.patchBalances(balances);
-      },
-      error: _say,
-    );
-    // A failed link leaves nothing chosen.
-    if (linked == null) _link.clear();
   }
 
-  /// The ✕ of the saved link: one unlink call, then the cached row loses its
-  /// recurring (no refetch).
-  Future<void> _unlinkRecurring(String itemId) async {
-    final cubit = context.read<TransactionsCubit>();
+  /// The ✕ in edit mode: drop a pick not saved yet, or hold the saved link's
+  /// removal until บันทึก.
+  void _dropRecurring() {
+    if (_link.candidateFor(_edited.type) != null) {
+      _link.clear();
+    } else {
+      setState(() => _pendingUnlink = true);
+    }
+  }
+
+  /// After the row is saved: the held unlink, then the held link (each one
+  /// call; a failure is said, the row stays saved).
+  Future<void> _applyRecurringChange(
+    TransactionsCubit txCubit,
+    AccountsCubit accounts,
+  ) async {
+    final item = widget.tx.recurringItem;
     final cached = widget.tx;
-    await _link.unlinkNow(
-      context,
-      itemId,
-      onUnlinked: () => cubit.patchRow(
-        cached.copyWith(clearRecurringItem: true),
-        afterWrite: true,
-      ),
-      error: _say,
-    );
+    if (_pendingUnlink && item != null) {
+      await _link.unlinkNow(
+        context,
+        item.itemId,
+        onUnlinked: () => txCubit.patchRow(
+          cached.copyWith(clearRecurringItem: true),
+          afterWrite: true,
+        ),
+        error: _say,
+      );
+    }
+    _pendingUnlink = false;
+    if (!mounted) return;
+    if (_link.candidateFor(_edited.type) != null) {
+      await _link.linkNow(
+        context,
+        _edited.id,
+        onLinked: (fresh, balances) {
+          txCubit.patchRow(fresh, afterWrite: true);
+          accounts.patchBalances(balances);
+        },
+        error: _say,
+      );
+      _link.clearChoice();
+    }
   }
 
   /// The row the form edits and the transfer's other wallet, both from the
@@ -515,6 +557,7 @@ class _LoadedState extends State<_Loaded>
     final projects = context.read<ProjectsRepository>();
     final projectsCubit = context.read<ProjectsCubit>();
     final txCubit = context.read<TransactionsCubit>();
+    final accountsCubit = context.read<AccountsCubit>();
     try {
       final outcome = await saveTransactionEdit(
         context,
@@ -573,6 +616,8 @@ class _LoadedState extends State<_Loaded>
         }
         if (!mounted) return;
       }
+      await _applyRecurringChange(txCubit, accountsCubit);
+      if (!mounted) return;
       HapticFeedback.mediumImpact();
       commitSaved(working);
       _reload();
@@ -604,7 +649,6 @@ class _LoadedState extends State<_Loaded>
     // (The row's embedded category says it: is_system / system_kind.)
     final isSystemRow =
         tx.type != TransactionType.transfer && (tx.category?.isSystem ?? false);
-    final canEdit = !isSystemRow && !tx.isLocked;
     // A debt repayment (system Debt Paid / Received): not editable, but
     // deletable — its amount comes off the debt's repaid (BE v2).
     final isRepayment =
@@ -672,18 +716,25 @@ class _LoadedState extends State<_Loaded>
     // mine to edit) and [eventSlot].
     final Widget? splitsReadOnly;
     final SplitEventSlot? eventSlot;
+    final SplitRecurringSlot? recurringSlot;
+    // The recurring link: the saved one (unless its removal is held), else a
+    // held pick.
+    final recurringItem = tx.recurringItem;
+    final savedLink = _pendingUnlink || recurringItem == null
+        ? null
+        : recurringItem;
+    final recurringName = savedLink?.label(l.quickUpcomingHintTitle);
+    void openRecurring() => openPage(
+      context,
+      savedLink?.recurringId == null
+          ? '/recurring?tab=upcoming'
+          : '/recurring/${savedLink!.recurringId}',
+    );
     if (editing) {
-      // Can't edit these people here (another member's row, or the people
-      // didn't load): say so; nothing in splits pushes a page.
-      splitsReadOnly = hasSplits && !canEditSplits
-          ? DetailRow(
-              leading: const AppIcon(AppIcons.lock),
-              label: l.txSplitPeopleLabel,
-              helper: splitCount > 0
-                  ? l.txDetailSplitEditElsewhere(splitCount)
-                  : l.txSplitEditOnDebts,
-            )
-          : null;
+      // Edit mode shows what can change; the rest is HIDDEN, never greyed
+      // (owner 2026-10-17): another member's splits, an event the row can't
+      // join / leave, a link it can't change.
+      splitsReadOnly = null;
       // Joins / moves / leaves on บันทึก (with the rest of the edit).
       eventSlot = canJoinEvent
           ? SplitEventSlot(
@@ -691,8 +742,20 @@ class _LoadedState extends State<_Loaded>
               onTap: _pickEvent,
               onClear: _eventName(l, tx) == null ? null : _clearEvent,
             )
-          : eventName != null
-          ? SplitEventSlot(name: eventName, locked: true)
+          : null;
+      recurringSlot = canEdit
+          ? _link.slot(
+              context,
+              type: _edited.type,
+              linkedName: recurringName,
+              // Edit mode leaves the page where it is.
+              onOpenLinked: null,
+              onTap: _linkRecurring,
+              onClear: _dropRecurring,
+              onUnlink: _dropRecurring,
+              error: _say,
+              done: (m) => _say(m, tone: Tone.success),
+            )
           : null;
     } else {
       splitsReadOnly = tx.splits.isNotEmpty
@@ -709,37 +772,54 @@ class _LoadedState extends State<_Loaded>
           ? splitsLongPressable(
               splitsBlock([DetailRow(label: l.txSplitSeeDebts)]),
             )
+          : canEditSplits
+          // Nothing split yet: the dashed "+" says it can be; a long-press
+          // enters edit mode (owner 2026-10-17).
+          ? splitsLongPressable(
+              DetailRow(
+                label: l.txSplitPeopleLabel,
+                trailing: Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: AppChip(
+                    icon: AppIcons.add,
+                    label: l.txSplitAddPerson,
+                    tone: AppChipTone.primary,
+                    selected: true,
+                    dashed: true,
+                    onTap: _longPressHint,
+                  ),
+                ),
+              ),
+            )
           : null;
       // Tapping opens the event — the one link here, like a split person →
-      // their debts (owner 2026-10-10).
+      // their debts (owner 2026-10-10). Without one, a changeable row shows
+      // the dashed "+": tap = the hint, long-press = edit + the picker.
       eventSlot = eventName != null
-          ? SplitEventSlot(name: eventName, onTap: openProject)
+          ? SplitEventSlot(name: eventName, onTap: openProject, editing: false)
+          : canJoinEvent
+          ? SplitEventSlot(
+              onTap: _longPressHint,
+              editing: false,
+              onLongPress: () => _enterEdit(then: _pickEvent),
+            )
           : null;
-    }
-
-    // The รายการประจำ row of the "ผูกกับ" section (0.4.0): a linked row shows
-    // its recurring (tap opens it; ✕ unlinks, one call); a row I can edit
-    // shows the add chip, which links at once.
-    final recurringItem = tx.recurringItem;
-    final SplitRecurringSlot? recurringSlot = recurringItem == null && !canEdit
-        ? null
-        : _link.slot(
-            context,
-            type: _edited.type,
-            linkedName: recurringItem?.label(l.quickUpcomingHintTitle),
-            onOpenLinked: () => openPage(
+      recurringSlot = recurringItem == null && !canEdit
+          ? null
+          : _link.slot(
               context,
-              recurringItem?.recurringId == null
-                  ? '/recurring?tab=upcoming'
-                  : '/recurring/${recurringItem!.recurringId}',
-            ),
-            onTap: canEdit ? _linkRecurring : null,
-            onUnlink: canEdit && recurringItem != null
-                ? () => _unlinkRecurring(recurringItem.itemId)
-                : null,
-            error: _say,
-            done: (m) => _say(m, tone: Tone.success),
-          );
+              type: _edited.type,
+              linkedName: recurringName,
+              onOpenLinked: openRecurring,
+              onTap: _longPressHint,
+              editing: false,
+              onLongPress: canEdit
+                  ? () => _enterEdit(then: _linkRecurring)
+                  : null,
+              error: _say,
+              done: (m) => _say(m, tone: Tone.success),
+            );
+    }
 
     // The very bottom: small muted record info, one item per line (owner
     // 2026-10-10).
@@ -828,6 +908,7 @@ class _LoadedState extends State<_Loaded>
                         onEnterEdit: canEdit
                             ? (f) => _enterEdit(focus: f)
                             : null,
+                        onViewTap: _longPressHint,
                         splitsReadOnly: splitsReadOnly,
                         eventSlot: eventSlot,
                         recurringSlot: recurringSlot,
@@ -844,6 +925,7 @@ class _LoadedState extends State<_Loaded>
                   manage: (editing && canEdit) || isRepayment
                       ? ManageSection(
                           deleteLabel: l.transactionDeleteThis,
+                          deleteConsequence: l.transactionDeleteConsequence,
                           onDelete: isSaving
                               ? null
                               : () => _confirmDelete(

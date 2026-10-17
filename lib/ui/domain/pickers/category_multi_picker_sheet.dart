@@ -55,6 +55,7 @@ Future<List<CategoryMultiPick>?> showCategoryMultiPicker(
   required CategoryMultiPickerLabels labels,
   List<CategoryMultiPick> initial = const [],
   int maxDepth = 2,
+  bool showIncludeChildren = true,
 }) {
   return showAppSheetCustom<List<CategoryMultiPick>>(
     context,
@@ -63,6 +64,7 @@ Future<List<CategoryMultiPick>?> showCategoryMultiPicker(
       labels: labels,
       initial: initial,
       maxDepth: maxDepth,
+      showIncludeChildren: showIncludeChildren,
     ),
   );
 }
@@ -74,6 +76,7 @@ class CategoryMultiPickerSheet extends StatefulWidget {
     required this.labels,
     this.initial = const [],
     this.maxDepth = 2,
+    this.showIncludeChildren = true,
     super.key,
   });
 
@@ -81,6 +84,10 @@ class CategoryMultiPickerSheet extends StatefulWidget {
   final CategoryMultiPickerLabels labels;
   final List<CategoryMultiPick> initial;
   final int maxDepth;
+
+  /// false = a picked row has no "include subcategories" switch (the caller
+  /// always includes them, e.g. the list filter).
+  final bool showIncludeChildren;
 
   @override
   State<CategoryMultiPickerSheet> createState() =>
@@ -213,7 +220,7 @@ class _CategoryMultiPickerSheetState extends State<CategoryMultiPickerSheet> {
       trailing = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (picked) ...[
+          if (picked && widget.showIncludeChildren) ...[
             Text(
               widget.labels.includeChildren,
               style: theme.textTheme.bodySmall?.copyWith(

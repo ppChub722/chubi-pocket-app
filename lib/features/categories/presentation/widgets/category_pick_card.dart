@@ -20,6 +20,8 @@ class CategoryPickCard extends StatelessWidget {
     required this.onTap,
     this.errorText,
     this.dense = false,
+    this.editable = false,
+    this.onLongPress,
     super.key,
   });
 
@@ -28,6 +30,10 @@ class CategoryPickCard extends StatelessWidget {
   final String placeholder;
   final VoidCallback? onTap;
   final String? errorText;
+
+  /// See [PickCard.editable] / [PickCard.onLongPress].
+  final bool editable;
+  final VoidCallback? onLongPress;
 
   /// [PickCard.dense], with a smaller icon — two cards on one row.
   final bool dense;
@@ -58,6 +64,8 @@ class CategoryPickCard extends StatelessWidget {
       subtitle: path.isEmpty ? null : Text(path),
       accent: iconCode.tintFor(palette),
       onTap: onTap,
+      editable: editable,
+      onLongPress: onLongPress,
       errorText: errorText,
       dense: dense,
     );

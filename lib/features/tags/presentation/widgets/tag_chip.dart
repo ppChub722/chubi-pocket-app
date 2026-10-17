@@ -15,13 +15,15 @@ Color tagColor(IconCode? code, AppColors palette) =>
 /// 2026-10-11: one chip for the whole app). [selected] null = a plain
 /// display chip (the full colour, no ink), true = picked (the full colour),
 /// false = a picker chip not picked (a neutral outline; the icon keeps its
-/// colour). [size]: a detail page's display tags are [ChipSize.chip], picker
+/// colour). [onRemove]: a picked tag in a form — an inert chip with a ✕ that
+/// drops it. [size]: a detail page's display tags are [ChipSize.chip], picker
 /// rows [ChipSize.control].
 AppChip tagAppChip(
   BuildContext context,
   Tag tag, {
   bool? selected,
   VoidCallback? onTap,
+  VoidCallback? onRemove,
   ChipSize size = ChipSize.control,
 }) {
   final l = AppLocalizations.of(context)!;
@@ -32,6 +34,10 @@ AppChip tagAppChip(
     color: tagColor(tag.iconCode, palette),
     selected: selected ?? true,
     onTap: onTap,
+    // A tag picked in a form: the body is inert, only the ✕ drops it.
+    trailing: onRemove == null ? AppChipTrailing.none : AppChipTrailing.remove,
+    onRemove: onRemove,
+    removeOnly: onRemove != null,
     size: size,
   );
 }

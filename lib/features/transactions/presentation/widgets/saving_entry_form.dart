@@ -6,13 +6,14 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../personal_debts/presentation/debt_wiring.dart';
 import '../../../saving_goals/data/saving_goals_repository.dart';
 import '../../../saving_goals/domain/saving_goal.dart';
+import '../../../saving_goals/domain/saving_goals_overview.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import 'account_picker_sheet.dart';
-import 'pick_chip_rows.dart';
 
 /// The fields of quick create's ออม MODE (goals v2): an amount, the wallet it
 /// comes from, where it goes (the spare bucket or a goal), a date and a note.
@@ -73,10 +74,11 @@ class SavingEntryController extends ChangeNotifier {
   }
 }
 
-/// Quick create's ออม-mode body: the SAME EntryCard (a "🐷 ออม" badge in the
-/// mode colour in place of the type chips, a note line in place of the
-/// description), the from-wallet chip row, the target chip row (spare + the
-/// user's active goals). Calls: the goals list once.
+/// Quick create's ออม-mode body: the SAME EntryCard (an "ออม" badge in the
+/// planning colour in place of the type chips, a note line in place of the
+/// description), the from-wallet chip row, the goal row ("+ เลือกเป้าหมาย", or
+/// the chosen goal; ยังไม่จัดสรร = none chosen, picked in the card picker).
+/// Calls: the goals list once.
 class SavingEntryForm extends StatefulWidget {
   const SavingEntryForm({
     required this.controller,
@@ -96,10 +98,10 @@ class SavingEntryForm extends StatefulWidget {
 class _SavingEntryFormState extends State<SavingEntryForm> {
   SavingEntryController get _c => widget.controller;
 
-  final _walletOrder = ChipOrder();
-
-  /// The user's active goals (the target chips), null while loading.
-  List<SavingGoal>? _goals;
+  /// The user's goals + the spare pool (the goal chips and the picker), null
+  /// while loading.
+  SavingGoalsOverview? _overview;
+  List<SavingGoal>? get _goals => _overview?.goals;
 
   @override
   void initState() {
@@ -110,10 +112,10 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
   Future<void> _loadGoals() async {
     try {
       final o = await context.read<SavingGoalsRepository>().list();
-      if (mounted) setState(() => _goals = o.goals);
+      if (mounted) setState(() => _overview = o);
     } catch (_) {
-      // The spare chip still works; no goal chips.
-      if (mounted) setState(() => _goals = const []);
+      // Saving to ยังไม่จัดสรร still works; no goal chips.
+      if (mounted) setState(() => _overview = const SavingGoalsOverview());
     }
   }
 
@@ -127,8 +129,11 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
       accounts: accounts,
       selected: _c.account,
       title: l.transactionFormAccountLabel,
+      // Saving needs no wallet: money kept outside the app goes to the goal.
+      allowNone: true,
     );
-    if (r is AccountPickerSelected && mounted) _c.setAccount(r.account);
+    if (!mounted || r == null) return;
+    _c.setAccount(r is AccountPickerSelected ? r.account : null);
   }
 
   Future<void> _pickDate() async {
@@ -167,35 +172,90 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
     );
   }
 
-  Widget _walletRow(AppLocalizations l) => WalletChipRow(
-    selectedId: _c.account?.id,
-    onPick: _c.setAccount,
-    onMore: _pickAccount,
-    order: _walletOrder,
-    pickLabel: l.savingEntryWalletRequired,
+  /// The wallet it comes from — optional (money kept outside the app counts
+  /// for the goal only).
+  Widget _walletCard(AppLocalizations l) => WalletPickCard(
+    account: _c.account,
+    label: l.transactionFormAccountLabel,
+    placeholder: l.savingEntryWalletOptional,
+    dense: true,
+    twoLine: true,
+    editable: true,
+    onTap: _pickAccount,
   );
 
-  Widget _targetRow(AppLocalizations l) {
-    final goals = _goals;
-    return ChipRow(
-      icon: AppIcons.savingGoal,
-      chips: [
-        AppChip(
-          label: l.savingEntrySpare,
-          selected: _c.goalId == null,
-          onTap: () => _c.setGoal(null),
+  /// Where it goes: the chosen goal, else ยังไม่จัดสรร (the spare pool, which
+  /// is a real choice, so it reads as picked). Picked in the card picker — no
+  /// suggested goals.
+  Widget _goalCard(AppLocalizations l) {
+    final palette = Theme.of(context).extension<AppColors>()!;
+    SavingGoal? chosen;
+    for (final g in _goals ?? const <SavingGoal>[]) {
+      if (g.id == _c.goalId) chosen = g;
+    }
+    return PickCard(
+      label: l.savingEntryGoalLabel,
+      value: chosen?.name ?? l.savingEntrySpare,
+      dense: true,
+      editable: true,
+      accent: chosen == null
+          ? ModuleColors.of(context).planning
+          : chosen.iconCode.tintFor(palette),
+      leading: chosen == null
+          ? const PickCardEmptyIcon(AppIcons.quickSaving, size: 32)
+          : IconDisplay(
+              type: IconType.category,
+              size: 32,
+              iconCode: chosen.iconCode,
+            ),
+      onTap: _pickGoal,
+    );
+  }
+
+  /// The card picker: ยังไม่จัดสรร first, then the goals.
+  Future<void> _pickGoal() async {
+    final l = AppLocalizations.of(context)!;
+    final symbol = debtCurrencySymbol(context);
+    final palette = Theme.of(context).extension<AppColors>()!;
+    final planning = ModuleColors.of(context).planning;
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    final overview = _overview;
+    final r = await showSavingGoalPickerSheet(
+      context,
+      title: l.savingEntryPickGoal,
+      selectedId: _c.goalId,
+      items: [
+        SavingGoalPick(
+          id: null,
+          name: l.savingEntrySpare,
+          icon: AppIcons.quickSaving,
+          color: planning,
+          amountText: overview == null ? null : money(overview.spare.amount),
+          caption: l.sgv2SpareHint,
         ),
-        if (goals == null)
-          for (var i = 0; i < 2; i++)
-            const SkeletonBox(width: 72, height: 28, borderRadius: 14),
-        for (final g in goals ?? const <SavingGoal>[])
-          AppChip(
-            label: g.name,
-            selected: _c.goalId == g.id,
-            onTap: () => _c.setGoal(g.id),
+        for (final g in overview?.goals ?? const <SavingGoal>[])
+          SavingGoalPick(
+            id: g.id,
+            name: g.name,
+            icon: IconRegistry.get(
+              g.iconCode?.icon,
+              fallback: AppIcons.savingGoal,
+            ),
+            color: g.iconCode.tintFor(palette),
+            amountText: money(g.savedAmount),
+            targetText: g.targetAmount == null ? null : money(g.targetAmount!),
+            progress: g.targetAmount == null || g.targetAmount == 0
+                ? null
+                : g.savedAmount / g.targetAmount!,
+            caption: (g.monthShort ?? 0) > 0
+                ? l.fpGoalsMonthShortLine(money(g.monthShort!))
+                : (g.status == SavingStatus.behind && (g.behindMonths ?? 0) > 0)
+                ? l.sgv2PaceLate(g.behindMonths!)
+                : null,
           ),
       ],
     );
+    if (r != null && mounted) _c.setGoal(r.id);
   }
 
   @override
@@ -213,7 +273,9 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
             // Saving has no income / expense: the badge replaces the chips.
             type: TransactionType.income,
             typeBadge: AppChip(
-              label: '🐷 ${l.quickModeSaving}',
+              label: l.quickModeSaving,
+              icon: AppIcons.quickSaving,
+              color: QuickCreateModeColors.of(context, QuickCreateMode.saving),
               selected: true,
             ),
             accentColor: QuickCreateModeColors.of(
@@ -227,8 +289,8 @@ class _SavingEntryFormState extends State<SavingEntryForm> {
             autofocus: widget.autofocus,
             symbol: symbol,
             amountNote: _availableLine(l, symbol),
-            walletRow: _walletRow(l),
-            categoryRow: _targetRow(l),
+            titleHint: l.savingTitleHint,
+            flowRow: FlowCards(from: _walletCard(l), to: _goalCard(l)),
           ),
         ],
       ),

@@ -3830,6 +3830,12 @@ abstract class AppLocalizations {
   /// **'Delete this transaction'**
   String get transactionDeleteThis;
 
+  /// No description provided for @transactionDeleteConsequence.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted for good · the wallet balance goes back to before it was saved'**
+  String get transactionDeleteConsequence;
+
   /// No description provided for @categoriesReorderEnter.
   ///
   /// In en, this message translates to:
@@ -7582,7 +7588,7 @@ abstract class AppLocalizations {
   /// No description provided for @txSplitSectionHint.
   ///
   /// In en, this message translates to:
-  /// **'Split the amount with other people, or put it in an event'**
+  /// **'Split the amount, put it in an event, or link a recurring'**
   String get txSplitSectionHint;
 
   /// No description provided for @txSplitRowLabel.
@@ -7920,6 +7926,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing open'**
   String get debtMarkPaidNone;
+
+  /// No description provided for @debtCloseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Close debts'**
+  String get debtCloseLabel;
+
+  /// No description provided for @debtClosePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick debts'**
+  String get debtClosePick;
+
+  /// No description provided for @debtCloseChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} debts picked'**
+  String debtCloseChosen(int n);
+
+  /// No description provided for @debtCloseConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick {n} debts'**
+  String debtCloseConfirm(int n);
+
+  /// No description provided for @debtCreateTxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Also create a transaction'**
+  String get debtCreateTxLabel;
+
+  /// No description provided for @debtCreateTxHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off = only noted in the debt book, not counted in income or expenses'**
+  String get debtCreateTxHint;
+
+  /// No description provided for @txFilterNoWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallet'**
+  String get txFilterNoWallet;
+
+  /// No description provided for @txFilterNoCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get txFilterNoCategory;
+
+  /// No description provided for @txFilterNoTag.
+  ///
+  /// In en, this message translates to:
+  /// **'No tag'**
+  String get txFilterNoTag;
+
+  /// No description provided for @txTitleHintExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'What did you pay for?'**
+  String get txTitleHintExpense;
+
+  /// No description provided for @txTitleHintIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the money for?'**
+  String get txTitleHintIncome;
+
+  /// No description provided for @debtTitleHintPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'What did you pay for them?'**
+  String get debtTitleHintPaid;
+
+  /// No description provided for @debtTitleHintReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'What are they paying back?'**
+  String get debtTitleHintReceived;
+
+  /// No description provided for @savingTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving for what?'**
+  String get savingTitleHint;
+
+  /// No description provided for @savingEntryGoalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving goal'**
+  String get savingEntryGoalLabel;
+
+  /// No description provided for @savingEntryWalletOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet (optional)'**
+  String get savingEntryWalletOptional;
 
   /// No description provided for @debtEntrySaved.
   ///
@@ -10180,7 +10282,7 @@ abstract class AppLocalizations {
   /// No description provided for @savingEntryWalletRequired.
   ///
   /// In en, this message translates to:
-  /// **'Pick the wallet to save from'**
+  /// **'Pick a wallet'**
   String get savingEntryWalletRequired;
 
   /// No description provided for @savingEntrySaved.
@@ -10644,12 +10746,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Member'**
   String get fpWalletMemberCaption;
-
-  /// No description provided for @fpTxNetCaption.
-  ///
-  /// In en, this message translates to:
-  /// **'Net'**
-  String get fpTxNetCaption;
 
   /// No description provided for @fpTxAvgDaily.
   ///

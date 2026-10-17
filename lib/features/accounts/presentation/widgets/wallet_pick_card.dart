@@ -15,6 +15,9 @@ class WalletPickCard extends StatelessWidget {
     required this.onTap,
     this.errorText,
     this.dense = false,
+    this.editable = false,
+    this.onLongPress,
+    this.twoLine = false,
     super.key,
   });
 
@@ -23,6 +26,14 @@ class WalletPickCard extends StatelessWidget {
   final String placeholder;
   final VoidCallback? onTap;
   final String? errorText;
+
+  /// See [PickCard.editable] / [PickCard.onLongPress].
+  final bool editable;
+  final VoidCallback? onLongPress;
+
+  /// Two lines only (caption + name): no balance line. The flow cards of
+  /// quick create (transfer / debt / saving).
+  final bool twoLine;
 
   /// [PickCard.dense], with a smaller icon — two cards on one row.
   final bool dense;
@@ -45,12 +56,12 @@ class WalletPickCard extends StatelessWidget {
       if (a.isShared) icon = SharedWalletIconBadge(size: _icon, child: icon);
     }
     return PickCard(
-      reserveSubtitle: true,
+      reserveSubtitle: !twoLine,
       label: label,
       value: a?.name,
       placeholder: placeholder,
       leading: icon ?? PickCardEmptyIcon(AppIcons.noWallet, size: _icon),
-      subtitle: a == null || !a.showsBalance
+      subtitle: twoLine || a == null || !a.showsBalance
           ? null
           : MoneyText(
               a.balance,
@@ -62,6 +73,8 @@ class WalletPickCard extends StatelessWidget {
       accent: accent,
       watermark: a?.type.icon,
       onTap: onTap,
+      editable: editable,
+      onLongPress: onLongPress,
       errorText: errorText,
       dense: dense,
     );

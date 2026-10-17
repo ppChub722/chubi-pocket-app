@@ -175,12 +175,7 @@ class _SizeMatrix extends StatelessWidget {
                 trailing: AppChipTrailing.remove,
                 onRemove: () {},
               ),
-              AppChip(
-                label: 'Locked',
-                size: s,
-                selected: selected,
-                trailing: AppChipTrailing.lock,
-              ),
+              AppChip(label: 'Editable', size: s, dashed: true),
               AppChip(
                 label: 'Count',
                 size: s,

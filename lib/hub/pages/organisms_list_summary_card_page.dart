@@ -78,7 +78,7 @@ class _ListSummaryCardDemoState extends State<_ListSummaryCardDemo> {
               'a bar = that day), then the income / expense filter tiles.',
           child: ListSummaryCard(
             margin: _noMargin,
-            captionWidget: const Text('‹ Oct 2026 › · Net'),
+            captionWidget: const Text('‹ Oct 2026 ›'),
             actions: [_search()],
             amount: 12340,
             symbol: '฿',

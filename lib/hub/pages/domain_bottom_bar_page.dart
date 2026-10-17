@@ -41,7 +41,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              QuickCreateModeChips(
+              QuickCreateModeTabs(
                 mode: _mode,
                 labels: _labels,
                 onChanged: (m) => setState(() => _mode = m),
@@ -80,7 +80,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
           ),
         ),
         HubDemo(
-          title: 'QuickCreateModeChips — the sheet’s mode switch',
+          title: 'QuickCreateModeTabs — the sheet’s mode switch',
           note:
               'At the very top of the quick create, above the EntryCard; '
               'each chip in its mode’s colour (the same as the +). Not in the '
@@ -90,7 +90,7 @@ class _BottomBarPageState extends State<_BottomBarPage> {
               for (final m in QuickCreateMode.values)
                 HubCell(
                   caption: '${m.name} selected',
-                  child: QuickCreateModeChips(mode: m, labels: _labels),
+                  child: QuickCreateModeTabs(mode: m, labels: _labels),
                 ),
             ],
           ),

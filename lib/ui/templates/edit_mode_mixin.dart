@@ -28,6 +28,18 @@ import 'edit_mode_scope.dart';
 ///   returns to view mode — or leaves, for create. The ยกเลิก button is
 ///   direct.
 ///
+/// The edit-mode rules every page follows (owner 2026-10-17):
+///
+/// * [canEdit] — can this record be edited AT ALL? false (a system row, a
+///   locked row, someone else's): no ✏️, no edit mode; [enterEdit] does
+///   nothing.
+/// * Each field, in edit mode, is one of: editable (dashed / an input),
+///   not editable but needed to read the form (a plain solid line, no 🔒),
+///   or hidden (the default for anything not editable — never shown greyed).
+/// * View mode shows every field and changes none; a long-press on an
+///   editable one calls [enterEdit] with that field: an input is focused, a
+///   picker is opened (`then`).
+///
 /// Usage:
 /// ```dart
 /// class _FooPageState extends State<FooPage>
@@ -75,6 +87,10 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   bool? _chromeHiddenFor;
 
   bool get isEditing => _editing;
+
+  /// Can the record be edited at all? Override for a page whose record can be
+  /// read-only; false makes [enterEdit] a no-op.
+  bool get canEdit => true;
   bool get isSaving => _saving;
   D get original => _original;
   D get working => _working;
@@ -140,14 +156,20 @@ mixin EditModeMixin<W extends StatefulWidget, D extends Object> on State<W> {
   // ── Mode ────────────────────────────────────────────────────────────
 
   /// Enter edit mode; optionally focus a field once it's editable.
-  void enterEdit({FocusNode? focus}) {
+  /// Enters edit mode (no-op when [!canEdit]). [focus]: an input to focus;
+  /// [then]: a picker to open once edit mode is up (long-pressing a pick
+  /// chip / card in view mode).
+  void enterEdit({FocusNode? focus, VoidCallback? then}) {
+    if (!canEdit) return;
     if (!_editing) {
       HapticFeedback.lightImpact();
       setState(() => _editing = true);
     }
-    if (focus != null) {
+    if (focus != null || then != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) focus.requestFocus();
+        if (!mounted) return;
+        focus?.requestFocus();
+        then?.call();
       });
     }
   }

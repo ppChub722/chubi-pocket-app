@@ -33,9 +33,12 @@ class EntryCard extends StatelessWidget {
     required this.amount,
     required this.title,
     required this.dateLabel,
-    required this.walletRow,
+    this.walletRow,
     this.categoryRow,
     this.toWalletRow,
+    this.flowRow,
+    this.titleHint,
+    this.showTitle = true,
     this.onTypeChanged,
     this.onPickDate,
     this.missing = const {},
@@ -61,14 +64,24 @@ class EntryCard extends StatelessWidget {
   final String dateLabel;
   final VoidCallback? onPickDate;
 
-  /// The wallet chip row (a transfer: the source wallet).
-  final Widget walletRow;
+  /// The wallet chip row (a transfer: the source wallet). Null = no wallet
+  /// row (a debt written to the ledger only).
+  final Widget? walletRow;
 
   /// The category chip row — null for a transfer.
   final Widget? categoryRow;
 
   /// A transfer's destination wallet row.
   final Widget? toWalletRow;
+
+  /// Instead of the wallet / category rows: a [FlowCards] row (transfer, debt,
+  /// saving).
+  final Widget? flowRow;
+
+  /// The description's placeholder ("จ่ายค่าอะไร?" …); [showTitle] false = no
+  /// description (a transfer).
+  final String? titleHint;
+  final bool showTitle;
 
   /// Rows to flag as still missing (danger outline).
   final Set<EntryField> missing;
@@ -124,6 +137,8 @@ class EntryCard extends StatelessWidget {
       amountFocus: amountFocus,
       titleFocus: titleFocus,
       amountNote: amountNote,
+      titleHint: titleHint,
+      showTitle: showTitle,
       debt: debt,
       typeBadge: typeBadge,
       accentColor: accentColor,
@@ -133,13 +148,15 @@ class EntryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _slot(context, walletRow, flagged: walletMissing),
+          if (flowRow != null) _slot(context, flowRow!, flagged: walletMissing),
+          if (walletRow != null)
+            _slot(context, walletRow!, flagged: walletMissing),
           if (isTransfer && toWalletRow != null) ...[
-            const SizedBox(height: HeroSpacing.itemGap),
+            if (walletRow != null) const SizedBox(height: HeroSpacing.itemGap),
             _slot(context, toWalletRow!, flagged: walletMissing),
           ],
           if (!isTransfer && categoryRow != null) ...[
-            const SizedBox(height: HeroSpacing.itemGap),
+            if (walletRow != null) const SizedBox(height: HeroSpacing.itemGap),
             _slot(
               context,
               categoryRow!,

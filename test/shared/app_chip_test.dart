@@ -37,7 +37,9 @@ void main() {
     AppChip(
       label: 'โอนเงิน',
       icon: AppIcons.transfer,
-      trailing: AppChipTrailing.lock,
+      dashed: true,
+      selected: true,
+      inset: true,
       size: size,
     ),
     AppChip(
@@ -146,19 +148,46 @@ void main() {
     expect(find.byType(Opacity), findsOneWidget);
   });
 
-  testWidgets('count shows the number; lock shows 🔒', (t) async {
+  testWidgets('count shows the number', (t) async {
+    await pump(
+      t,
+      const AppChip(label: 'สี', trailing: AppChipTrailing.count, count: 7),
+    );
+    expect(find.text('7'), findsOneWidget);
+  });
+
+  testWidgets('removeOnly: the body is inert, only the ✕ removes', (t) async {
+    var removed = 0;
+    await pump(
+      t,
+      AppChip(
+        label: 'test',
+        selected: true,
+        trailing: AppChipTrailing.remove,
+        removeOnly: true,
+        onRemove: () => removed++,
+      ),
+    );
+    await t.tap(find.text('test'));
+    expect(removed, 0);
+    await t.tap(find.byIcon(AppIcons.close));
+    expect(removed, 1);
+  });
+
+  testWidgets('a picked + changeable chip (inset) is the same size as a plain '
+      'dashed one', (t) async {
     await pump(
       t,
       const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppChip(label: 'สี', trailing: AppChipTrailing.count, count: 7),
-          AppChip(label: 'ประเภท', trailing: AppChipTrailing.lock),
+          AppChip(label: 'Groceries', dashed: true),
+          AppChip(label: 'Groceries', dashed: true, selected: true, inset: true),
         ],
       ),
     );
-    expect(find.text('7'), findsOneWidget);
-    expect(find.byIcon(AppIcons.lock), findsOneWidget);
+    final sizes = [for (final c in find.byType(AppChip).evaluate()) c.size!];
+    expect(sizes[0], sizes[1]);
   });
 
   testWidgets('a short interactive chip answers taps in a 44 band', (t) async {

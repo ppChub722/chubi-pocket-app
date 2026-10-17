@@ -470,6 +470,20 @@ Widget buildPeopleAccountsPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
+            label:
+                'WalletPickCard — picked, editable (edit form: dashed edge + '
+                'thin solid line inside; same size as the plain one)',
+            page: 'Transaction detail (edit), quick create',
+            child: WalletPickCard(
+              account: bank,
+              label: 'Wallet',
+              placeholder: 'Choose a wallet',
+              editable: true,
+              onTap: () {},
+            ),
+          ),
+          HubUse(
+            wide: true,
             label: 'WalletPickCard — picked, untracked (no balance)',
             page: 'Transaction / debt / scheduled draft forms',
             child: WalletPickCard(

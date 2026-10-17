@@ -248,6 +248,7 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
       builder: (context, data, _) => PickerSheet(
         title: l.title,
         searchable: true,
+        searchToggle: true,
         searchHint: l.searchHint,
         searchController: _search,
         loading: data.loading,
@@ -297,6 +298,10 @@ class _TagPickerSheetState extends State<TagPickerSheet> {
                           ),
                           color: _tagColor(t.iconCode, palette),
                           selected: _picked.contains(t.id),
+                          // Every option can be tapped: dashed; a picked one
+                          // also has the thin line inside.
+                          dashed: true,
+                          inset: _picked.contains(t.id),
                           onTap: () => setState(() {
                             if (!_picked.remove(t.id)) _picked.add(t.id);
                           }),

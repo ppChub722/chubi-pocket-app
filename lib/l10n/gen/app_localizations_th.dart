@@ -2119,6 +2119,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get transactionDeleteThis => 'ลบรายการนี้';
 
   @override
+  String get transactionDeleteConsequence =>
+      'ลบถาวร · ยอดในกระเป๋ากลับเป็นเหมือนก่อนบันทึก';
+
+  @override
   String get categoriesReorderEnter => 'จัดลำดับ';
 
   @override
@@ -4233,7 +4237,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get txSplitSectionTitle => 'ผูกกับ';
 
   @override
-  String get txSplitSectionHint => 'แบ่งยอดให้คนอื่น หรือใส่ในอีเวนต์';
+  String get txSplitSectionHint => 'แบ่งยอด ใส่ในอีเวนต์ หรือผูกกับรายการประจำ';
 
   @override
   String get txSplitRowLabel => 'แบ่งยอด';
@@ -4419,6 +4423,59 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get debtMarkPaidNone => 'ไม่มีรายการค้าง';
+
+  @override
+  String get debtCloseLabel => 'ปิดหนี้';
+
+  @override
+  String get debtClosePick => 'เลือกหนี้';
+
+  @override
+  String debtCloseChosen(int n) {
+    return 'เลือกแล้ว $n หนี้';
+  }
+
+  @override
+  String debtCloseConfirm(int n) {
+    return 'เลือก $n หนี้';
+  }
+
+  @override
+  String get debtCreateTxLabel => 'สร้างรายการด้วย';
+
+  @override
+  String get debtCreateTxHint =>
+      'ปิด = จดในสมุดหนี้อย่างเดียว ไม่นับในรายรับรายจ่าย';
+
+  @override
+  String get txFilterNoWallet => 'ไม่มีกระเป๋า';
+
+  @override
+  String get txFilterNoCategory => 'ไม่มีหมวด';
+
+  @override
+  String get txFilterNoTag => 'ไม่มีแท็ก';
+
+  @override
+  String get txTitleHintExpense => 'จ่ายค่าอะไร?';
+
+  @override
+  String get txTitleHintIncome => 'รับเงินค่าอะไร?';
+
+  @override
+  String get debtTitleHintPaid => 'จ่ายแทนค่าอะไร?';
+
+  @override
+  String get debtTitleHintReceived => 'รับคืนค่าอะไร?';
+
+  @override
+  String get savingTitleHint => 'ออมอะไร?';
+
+  @override
+  String get savingEntryGoalLabel => 'เป้าหมายการออม';
+
+  @override
+  String get savingEntryWalletOptional => 'เลือกกระเป๋า (ไม่บังคับ)';
 
   @override
   String get debtEntrySaved => 'บันทึกหนี้แล้ว';
@@ -5834,7 +5891,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get savingEntryWalletRequired => 'เลือกกระเป๋าที่จะออมจาก';
+  String get savingEntryWalletRequired => 'เลือกกระเป๋า';
 
   @override
   String get savingEntrySaved => 'บันทึกเงินออมแล้ว';
@@ -6096,9 +6153,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpWalletMemberCaption => 'สมาชิก';
-
-  @override
-  String get fpTxNetCaption => 'สุทธิ';
 
   @override
   String fpTxAvgDaily(String amount) {

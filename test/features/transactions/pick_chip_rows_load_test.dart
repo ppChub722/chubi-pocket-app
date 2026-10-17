@@ -99,9 +99,8 @@ void main() {
       t,
       TagChipRow(
         selected: const {},
-        onToggle: (_) {},
-        onMore: () {},
-        order: ChipOrder(),
+        onRemove: (_) {},
+        onMore: () {},
       ),
     );
     await t.pump();

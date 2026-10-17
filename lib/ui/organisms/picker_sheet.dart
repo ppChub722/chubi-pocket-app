@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../atoms/app_button.dart';
+import '../atoms/app_chip.dart';
 import '../atoms/app_icon_button.dart';
 import '../atoms/select_check.dart';
 import '../atoms/app_input.dart';
@@ -10,6 +11,7 @@ import '../tokens/app_spacing.dart';
 import '../atoms/ui_config.dart';
 import '../molecules/error_view.dart';
 import '../atoms/skeletons.dart';
+import '../atoms/add_tile.dart';
 
 /// The shell every picker sheet shares (owner 2026-10-10) — open it with
 /// `showAppSheetCustom`:
@@ -31,6 +33,7 @@ class PickerSheet extends StatefulWidget {
     this.searchHint,
     this.searchController,
     this.searchAutofocus = false,
+    this.searchToggle = false,
     this.loading = false,
     this.error,
     this.onRetry,
@@ -52,6 +55,11 @@ class PickerSheet extends StatefulWidget {
   /// Open with the keyboard up, typing into the search.
   final bool searchAutofocus;
 
+  /// The search is closed until an icon-only chip beside ✕ opens it (and
+  /// closing it clears the text) — for a picker whose options are few, so the
+  /// field doesn't take the top of the sheet.
+  final bool searchToggle;
+
   /// Still fetching and nothing to show yet → skeleton rows.
   final bool loading;
   final Object? error;
@@ -66,6 +74,17 @@ class PickerSheet extends StatefulWidget {
 
 class _PickerSheetState extends State<PickerSheet> {
   String _query = '';
+  bool _searchOpen = false;
+
+  void _toggleSearch() {
+    setState(() {
+      _searchOpen = !_searchOpen;
+      if (!_searchOpen) {
+        widget.searchController?.clear();
+        _query = '';
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -127,6 +146,19 @@ class _PickerSheetState extends State<PickerSheet> {
                     ),
                   ),
                 ),
+                if (widget.searchable && widget.searchToggle)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.xs),
+                    child: AppChip(
+                      label: '',
+                      icon: AppIcons.search,
+                      tooltip: widget.searchHint ?? strings.search,
+                      selected: _searchOpen,
+                      dashed: true,
+                      inset: _searchOpen,
+                      onTap: _toggleSearch,
+                    ),
+                  ),
                 AppIconButton.close(
                   tooltip: strings.close,
                   onPressed: () => Navigator.of(context).maybePop(),
@@ -134,7 +166,7 @@ class _PickerSheetState extends State<PickerSheet> {
               ],
             ),
           ),
-          if (widget.searchable)
+          if (widget.searchable && (!widget.searchToggle || _searchOpen))
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
@@ -144,7 +176,7 @@ class _PickerSheetState extends State<PickerSheet> {
               ),
               child: AppInput.search(
                 controller: widget.searchController,
-                autofocus: widget.searchAutofocus,
+                autofocus: widget.searchAutofocus || widget.searchToggle,
                 hint: widget.searchHint ?? strings.search,
                 padding: EdgeInsets.zero,
                 onChanged: (v) => setState(() => _query = v),
@@ -357,29 +389,16 @@ class PickerCreateRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final row = InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        child: Row(
-          children: [
-            Icon(AppIcons.add, size: 22, color: scheme.primary),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
+    // "+ add" is a dashed outline, like every "add something" in the app.
+    final row = Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: AddTile(
+        label: label,
+        onTap: onTap,
+        variant: AddTileVariant.row,
       ),
     );
     return onTap == null ? Opacity(opacity: 0.38, child: row) : row;

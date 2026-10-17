@@ -92,7 +92,12 @@ class ChipRow extends StatelessWidget {
             dashed: true,
             onTap: onMore,
           )
-        : AppChip(label: moreLabel ?? '', icon: AppIcons.more, onTap: onMore);
+        : AppChip(
+            label: moreLabel ?? '',
+            icon: AppIcons.more,
+            dashed: true,
+            onTap: onMore,
+          );
     final lines = maxLines;
     return Row(
       crossAxisAlignment: lines == null

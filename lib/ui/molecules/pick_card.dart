@@ -45,8 +45,19 @@ class PickCard extends StatelessWidget {
     this.dense = false,
     this.reserveSubtitle = false,
     this.trailing,
+    this.editable = false,
+    this.onLongPress,
     super.key,
   });
+
+  /// In an edit form: the card can be changed. A picked one then wears the
+  /// "chosen and still changeable" border — a dashed edge with a thin solid
+  /// line 3 px inside (no layout change); an empty one is dashed already.
+  final bool editable;
+
+  /// View mode: a long-press enters edit mode on this field (and opens its
+  /// picker).
+  final VoidCallback? onLongPress;
 
   /// With [fixedHeight]: keep the third (subtitle) line even when there is
   /// nothing to put on it, so the card is as tall empty as it is picked.
@@ -101,14 +112,18 @@ class PickCard extends StatelessWidget {
       color: tint,
       glyph: empty ? null : watermark,
       glyphSize: 72,
+      // Editable + picked: the dashed / inset lines below are the border.
       borderColor: empty
           ? null
           : hasError
           ? scheme.error
+          : editable
+          ? Colors.transparent
           : tint == null
           ? scheme.outlineVariant
           : null,
       onTap: onTap,
+      onLongPress: onLongPress,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 64),
         child: Padding(
@@ -187,15 +202,48 @@ class PickCard extends StatelessWidget {
       ),
     );
 
-    final framed = empty
-        ? DashedRectBorder(
-            color: hasError ? scheme.error : scheme.outline,
-            borderRadius: const Radius.circular(AppRadius.lg),
-            child: card,
-          )
-        : card;
-
-    return framed;
+    if (empty) {
+      return DashedRectBorder(
+        color: hasError ? scheme.error : scheme.outline,
+        borderRadius: const Radius.circular(AppRadius.lg),
+        child: card,
+      );
+    }
+    if (editable && !hasError) {
+      final line = tint ?? scheme.outline;
+      return Stack(
+        children: [
+          card,
+          // The dashed edge, then the thin solid line 3 px inside it.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DashedRectBorder(
+                color: line,
+                strokeWidth: 1,
+                dashLength: 4,
+                gapLength: 3,
+                borderRadius: const Radius.circular(AppRadius.lg),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.lg - 3),
+                    border: Border.all(color: line),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return card;
   }
 }
 

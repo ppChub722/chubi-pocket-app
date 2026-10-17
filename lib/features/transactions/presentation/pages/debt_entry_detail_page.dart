@@ -116,6 +116,7 @@ class _DebtDraft extends Equatable {
     required this.personKey,
     required this.tagIds,
     required this.paid,
+    required this.createTx,
   });
 
   final DebtEntryDirection direction;
@@ -128,6 +129,9 @@ class _DebtDraft extends Equatable {
   final List<String> tagIds;
   final bool paid;
 
+  /// Also written as a transaction ("สร้างรายการด้วย").
+  final bool createTx;
+
   _DebtDraft copyWith({bool? paid}) => _DebtDraft(
     direction: direction,
     amount: amount,
@@ -138,6 +142,7 @@ class _DebtDraft extends Equatable {
     personKey: personKey,
     tagIds: tagIds,
     paid: paid ?? this.paid,
+    createTx: createTx,
   );
 
   @override
@@ -151,6 +156,7 @@ class _DebtDraft extends Equatable {
     personKey,
     tagIds,
     paid,
+    createTx,
   ];
 }
 
@@ -172,8 +178,7 @@ class _DebtEntryView extends StatefulWidget {
 class _DebtEntryViewState extends State<_DebtEntryView>
     with EditModeMixin<_DebtEntryView, _DebtDraft> {
   final _c = DebtEntryController();
-  final _heroKey = GlobalKey();
-  final _tagOrder = ChipOrder();
+  final _heroKey = GlobalKey();
   bool _paid = false;
 
   /// Pushing a draft into the fields — not a user edit.
@@ -245,6 +250,8 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       _c.tagIds.add(t.id);
     }
     _paid = e.paid;
+    // A transaction exists exactly when the entry has one (wallet or not).
+    _c.createTransaction = tx != null;
     _restoring = false;
   }
 
@@ -265,6 +272,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     personKey: _c.person?.key ?? '',
     tagIds: (_c.tagIds.toList()..sort()),
     paid: _paid,
+    createTx: _c.createTransaction,
   );
 
   @override
@@ -281,6 +289,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
       ..setPerson(_people[w.personKey])
       ..setTagIds(w.tagIds.toSet());
     _paid = w.paid;
+    _c.createTransaction = w.createTx;
     _restoring = false;
     setState(() {});
   }
@@ -296,6 +305,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
         next.accountId == w.accountId &&
         next.personKey == w.personKey &&
         next.paid == w.paid &&
+        next.createTx == w.createTx &&
         next.tagIds.join() == w.tagIds.join();
     if (textOnly) {
       final field = next.note != w.note
@@ -376,16 +386,29 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final o = original;
     final w = working;
     final pick = _people[w.personKey];
+    final txChange = w.createTx != o.createTx;
     final update = DebtEntryUpdate(
       direction: w.direction != o.direction ? w.direction : null,
       amount: w.amount != o.amount ? _c.amountValue : null,
       date: w.date != o.date ? _c.date : null,
-      accountId: w.accountId != o.accountId ? w.accountId : null,
-      clearAccount: o.accountId != null && w.accountId == null,
+      // The transaction is the switch's (a split-sourced entry has none to
+      // change); the wallet and tags only matter while it is on.
+      createTransaction: _sourced ? null : w.createTx,
+      accountId: w.createTx && (w.accountId != o.accountId || txChange)
+          ? w.accountId
+          : null,
+      clearAccount:
+          w.createTx &&
+          !txChange &&
+          o.accountId != null &&
+          w.accountId == null,
       description: w.description != o.description ? w.description.trim() : null,
       note: w.note != o.note ? w.note.trim() : null,
       paid: w.paid != o.paid ? w.paid : null,
-      tagIds: w.accountId != null && w.tagIds.join() != o.tagIds.join()
+      tagIds:
+          w.createTx &&
+              (w.tagIds.join() != o.tagIds.join() ||
+                  (txChange && w.tagIds.isNotEmpty))
           ? w.tagIds
           : null,
       key: w.personKey != o.personKey ? w.personKey : null,
@@ -493,9 +516,14 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     );
   }
 
+  /// View mode: tapping a changeable card only says how to edit.
+  void _longPressHint() =>
+      _say(AppLocalizations.of(context)!.commonLongPressToEdit, Tone.info);
+
   Widget _cards(AppLocalizations l) {
     final editable = isEditing && !_sourced;
     final p = _c.person;
+    final canEditHere = !isEditing && !_sourced;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -514,6 +542,10 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       iconCode: p.person.iconCode,
                       size: 32,
                     ),
+              editable: editable,
+              onLongPress: canEditHere
+                  ? () => enterEdit(then: _pickPerson)
+                  : null,
               // View: the person's page; edit: the picker.
               onTap: editable
                   ? _pickPerson
@@ -522,16 +554,27 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                   : () => openPage(context, debtPersonPath(p.key)),
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: WalletPickCard(
-              account: _c.account,
-              label: l.transactionFormAccountLabel,
-              placeholder: l.debtNoWallet,
-              dense: true,
-              onTap: editable ? _pickAccount : null,
+          // Ledger only: no wallet card.
+          if (_c.createTransaction) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: WalletPickCard(
+                account: _c.account,
+                label: l.transactionFormAccountLabel,
+                placeholder: l.quickPickWallet,
+                dense: true,
+                editable: editable,
+                onLongPress: canEditHere
+                    ? () => enterEdit(then: _pickAccount)
+                    : null,
+                onTap: editable
+                    ? _pickAccount
+                    : canEditHere
+                    ? _longPressHint
+                    : null,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -544,15 +587,14 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     final editing = isEditing;
     final e = _entry;
     final source = e.source;
-    final tags = _c.account == null
+    final tags = !_c.createTransaction
         ? null
         : editing && !_sourced
         ? TagChipRow(
             selected: _c.tagIds,
-            onToggle: _c.toggleTag,
+            onRemove: _c.toggleTag,
             onMore: _moreTags,
-            known: _c.knownTags,
-            order: _tagOrder,
+            known: _c.knownTags,
           )
         : _c.tagIds.isEmpty
         ? null
@@ -644,6 +686,22 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                         placeholderWhenEmpty: true,
                         onEnterEdit: () => enterEdit(),
                       ),
+                      // A split-sourced entry keeps what it is.
+                      if (!_sourced)
+                        DetailRow(
+                          label: l.debtCreateTxLabel,
+                          helper: l.debtCreateTxHint,
+                          // The whole row toggles it (while editing).
+                          onTap: editing
+                              ? () => _c.setCreateTransaction(
+                                  !_c.createTransaction,
+                                )
+                              : null,
+                          trailing: AppSwitch(
+                            value: _c.createTransaction,
+                            onChanged: editing ? _c.setCreateTransaction : null,
+                          ),
+                        ),
                     ],
                   ),
                   if (source != null)

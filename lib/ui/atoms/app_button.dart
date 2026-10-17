@@ -140,13 +140,23 @@ class AppButton extends StatelessWidget {
     if (loading) {
       return AppSpinner(size: AppSpinnerSize.small, color: spinnerColor);
     }
-    if (icon == null) return Text(label);
+    // One line always: a long label ends in "…" instead of wrapping.
+    if (icon == null) {
+      return Text(label, maxLines: 1, softWrap: false, overflow: TextOverflow.ellipsis);
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 18),
         const SizedBox(width: AppSpacing.sm),
-        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }

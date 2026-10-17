@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
+import '../../../accounts/presentation/widgets/wallet_pick_card.dart';
 import '../../../contacts/presentation/widgets/contact_picker_sheet.dart';
 import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../../personal_debts/domain/debt_ledger.dart';
@@ -17,6 +17,7 @@ import '../../domain/refs.dart';
 import '../../domain/transaction_type.dart';
 import '../cubit/tx_form_options_cubit.dart';
 import 'account_picker_sheet.dart';
+import 'debt_close_picker_sheet.dart';
 import 'pick_chip_rows.dart';
 
 /// Who a debt entry is with: the person's key (`c:<contact>` / `n:<name>`),
@@ -58,7 +59,12 @@ class DebtEntryController extends ChangeNotifier {
   final note = TextEditingController();
   DateTime date = DateTime.now();
 
-  /// Null = "ไม่ผูก" (ledger only).
+  /// Also write the entry as a transaction (it counts in income / expense;
+  /// the wallet is optional). Off = ledger only: no wallet, no tags, both
+  /// hidden (owner 2026-10-17). What was picked stays while it is off.
+  bool createTransaction = true;
+
+  /// The wallet of the transaction; null = no wallet.
   Account? account;
   final Set<String> tagIds = {};
   final Map<String, Tag> knownTags = {};
@@ -93,8 +99,24 @@ class DebtEntryController extends ChangeNotifier {
 
   void setAccount(Account? a) {
     account = a;
-    // Tags ride on the wallet transaction: none without a wallet.
-    if (a == null) tagIds.clear();
+    notifyListeners();
+  }
+
+  void setCreateTransaction(bool v) {
+    if (v == createTransaction) return;
+    createTransaction = v;
+    notifyListeners();
+  }
+
+  void clearMarkPaid() {
+    markPaidIds.clear();
+    notifyListeners();
+  }
+
+  void setMarkPaidIds(Set<String> ids) {
+    markPaidIds
+      ..clear()
+      ..addAll(ids);
     notifyListeners();
   }
 
@@ -155,18 +177,6 @@ class DebtEntryForm extends StatefulWidget {
 class _DebtEntryFormState extends State<DebtEntryForm> {
   DebtEntryController get _c => widget.controller;
 
-  final _walletOrder = ChipOrder();
-  final _tagOrder = ChipOrder();
-
-  /// People with something open (the chip row), null while loading.
-  List<PersonBalance>? _people;
-
-  /// The mark-paid list of the person it was loaded for.
-  String? _entriesKey;
-  List<DebtEntry>? _entries;
-  bool _entriesOpen = false;
-  Object? _entriesError;
-
   @override
   void initState() {
     super.initState();
@@ -177,7 +187,6 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     try {
       final page = await context.read<PersonalDebtsRepository>().listPeople();
       if (!mounted) return;
-      setState(() => _people = page.items);
       // A preset person: their balance for the result line.
       final p = _c.person;
       if (p != null && p.net == null) {
@@ -185,43 +194,10 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
         _c.setPerson(p.withNet(known?.net ?? 0));
       }
     } catch (_) {
-      // The picker still works (it loads its own list); no chips.
-      if (mounted) setState(() => _people = const []);
+      // The picker still works (it loads its own list); only the result
+      // line has no balance to start from.
     }
   }
-
-  Future<void> _loadEntries() async {
-    final key = _c.person?.key;
-    if (key == null || key.startsWith('n:') && _c.person?.typedName != null) {
-      setState(() {
-        _entriesKey = key;
-        _entries = const [];
-      });
-      return;
-    }
-    setState(() {
-      _entriesKey = key;
-      _entries = null;
-      _entriesError = null;
-    });
-    try {
-      final page = await context.read<PersonalDebtsRepository>().entries(
-        key,
-        query: const DebtEntryQuery(paid: false),
-        perPage: 50,
-      );
-      if (mounted && _entriesKey == key) {
-        setState(() => _entries = page.items);
-      }
-    } catch (e, st) {
-      if (mounted && _entriesKey == key) {
-        setState(() => _entriesError = ApiException.from(e, st));
-      }
-    }
-  }
-
-  DebtPick _pickOf(PersonBalance p) =>
-      DebtPick(key: p.key, person: p.person, net: p.net);
 
   Future<void> _pickPerson() async {
     final picked = await showDebtPersonPicker(context, selected: _c.person);
@@ -283,99 +259,138 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     return AppText(l.debtResultAfter(result), role: AppTextRole.caption);
   }
 
-  Widget _personChip(
-    DebtPick p, {
-    required bool selected,
-    VoidCallback? onTap,
-  }) => AppChip(
-    label: p.person.name,
-    leading: PersonMark(
-      name: p.person.name,
-      level: debtPersonLevel(p.person),
-      iconCode: p.person.iconCode,
-    ),
-    selected: selected,
-    onTap: onTap,
-  );
-
-  Widget _personRow(AppLocalizations l) {
-    final sel = _c.person;
-    final others = [
-      for (final p in _people ?? const <PersonBalance>[])
-        if (p.key != sel?.key) p,
-    ].take(4);
-    return ChipRow(
-      icon: AppIcons.contact,
-      chips: [
-        if (sel != null)
-          _personChip(sel, selected: true, onTap: _pickPerson)
-        else
-          AppChip(
-            label: l.debtPickPerson,
-            icon: AppIcons.add,
-            dashed: true,
-            onTap: _pickPerson,
-          ),
-        if (_people == null)
-          for (var i = 0; i < 2; i++)
-            const SkeletonBox(width: 72, height: 28, borderRadius: 14),
-        for (final p in others)
-          _personChip(
-            _pickOf(p),
-            selected: false,
-            onTap: () => _c.setPerson(_pickOf(p)),
-          ),
-      ],
+  /// The person: a two-line card (a caption over the name), picked in the full
+  /// picker — no suggested people.
+  Widget _personCard(AppLocalizations l) {
+    final p = _c.person;
+    return PickCard(
+      label: l.debtPersonPickerTitle,
+      value: p?.person.name,
+      placeholder: l.debtPickPerson,
+      dense: true,
+      editable: true,
+      leading: p == null
+          ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
+          : PersonMark(
+              name: p.person.name,
+              level: debtPersonLevel(p.person),
+              iconCode: p.person.iconCode,
+              size: 32,
+            ),
+      onTap: _pickPerson,
     );
   }
 
-  Widget _walletRow(AppLocalizations l) => WalletChipRow(
-    selectedId: _c.account?.id,
-    // Tapping the picked wallet again = no wallet.
-    onPick: (a) => _c.setAccount(_c.account?.id == a.id ? null : a),
-    onMore: _pickAccount,
-    order: _walletOrder,
-    pickLabel: l.quickPickWallet,
-    leading: [
-      AppChip(
-        label: l.debtNoWallet,
-        selected: _c.account == null,
-        onTap: () => _c.setAccount(null),
-      ),
-    ],
+  /// The wallet card ("ไม่ผูก" = none picked; the picker has it to clear).
+  Widget _walletCard(AppLocalizations l) => WalletPickCard(
+    account: _c.account,
+    label: l.transactionFormAccountLabel,
+    placeholder: l.quickPickWallet,
+    dense: true,
+    twoLine: true,
+    editable: true,
+    onTap: _pickAccount,
   );
 
-  List<Widget> _markPaid(AppLocalizations l, String symbol) {
-    final entries = _entries;
-    if (_entriesError != null) {
-      return [ErrorView(error: _entriesError!, onRetry: _loadEntries)];
-    }
-    if (entries == null) {
-      return [for (var i = 0; i < 2; i++) const SkeletonListTile()];
-    }
-    if (entries.isEmpty) {
-      return [EmptyView.compact(message: l.debtMarkPaidNone)];
-    }
-    return [
-      for (final e in entries)
-        PickerRow(
-          title: (e.description ?? '').trim().isNotEmpty
-              ? e.description!.trim()
-              : (e.direction == DebtEntryDirection.paid
-                    ? l.debtsDirPaid
-                    : l.debtsDirReceived),
-          subtitle: e.date == null ? null : _dayLabel(l, e.date!),
-          trailing: MoneyText(
-            e.amount,
-            symbol: symbol,
-            tone: e.direction == DebtEntryDirection.paid
-                ? MoneyTone.expense
-                : MoneyTone.income,
-          ),
-          checked: _c.markPaidIds.contains(e.id),
-          onTap: () => _c.toggleMarkPaid(e.id),
+  /// Money reads left → right: I paid = [wallet] → [person]; they paid me =
+  /// [person] → [wallet]. The arrow flips Paid / Received. Ledger only: just
+  /// the person.
+  Widget _flow(AppLocalizations l) {
+    final paid = _c.direction == DebtEntryDirection.paid;
+    if (!_c.createTransaction) return FlowCards(from: _personCard(l));
+    final wallet = _walletCard(l);
+    final person = _personCard(l);
+    return FlowCards(
+      from: paid ? wallet : person,
+      to: paid ? person : wallet,
+      swapTooltip: l.quickSwap,
+      onSwap: () => _c.setDirection(
+        paid ? DebtEntryDirection.received : DebtEntryDirection.paid,
+      ),
+    );
+  }
+
+  Future<void> _pickClose() async {
+    final person = _c.person;
+    if (person == null) return;
+    final ids = await showDebtClosePickerSheet(
+      context,
+      person: person,
+      selected: _c.markPaidIds,
+    );
+    if (ids != null && mounted) _c.setMarkPaidIds(ids);
+  }
+
+  /// "สร้างรายการด้วย" — the switch under the note.
+  Widget _createTxRow(AppLocalizations l) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: () => _c.setCreateTransaction(!_c.createTransaction),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l.debtCreateTxLabel,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    l.debtCreateTxHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            AppSwitch(
+              value: _c.createTransaction,
+              onChanged: _c.setCreateTransaction,
+              semanticLabel: l.debtCreateTxLabel,
+            ),
+          ],
         ),
-    ];
+      ),
+    );
+  }
+
+  /// "ปิดหนี้" — which of the person's open entries to label paid with this
+  /// one. Same pattern as ผูกกับ: a dashed "+" chip → a picker → one chip
+  /// that says how many (✕ clears). Only a mark; sent on บันทึก.
+  Widget _closeRow(AppLocalizations l) {
+    final n = _c.markPaidIds.length;
+    return DraftFieldRow(
+      label: l.debtCloseLabel,
+      dense: true,
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: n == 0
+            ? AppChip(
+                label: l.debtClosePick,
+                icon: AppIcons.add,
+                tone: AppChipTone.primary,
+                selected: true,
+                dashed: true,
+                onTap: _pickClose,
+              )
+            : AppChip(
+                label: l.debtCloseChosen(n),
+                selected: true,
+                dashed: true,
+                inset: true,
+                trailing: AppChipTrailing.remove,
+                onRemove: _c.clearMarkPaid,
+                onTap: _pickClose,
+              ),
+      ),
+    );
   }
 
   @override
@@ -385,12 +400,7 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
     return ListenableBuilder(
       listenable: _c,
       builder: (context, _) {
-        // The person changed while the section is open: their entries.
-        if (_entriesOpen && _entriesKey != _c.person?.key) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _loadEntries();
-          });
-        }
+        const gap = SizedBox(height: AppSpacing.sm);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -413,20 +423,21 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
               autofocus: widget.autofocus,
               symbol: symbol,
               amountNote: _resultLine(l, symbol),
-              walletRow: _walletRow(l),
-              categoryRow: _personRow(l),
+              titleHint: _c.direction == DebtEntryDirection.paid
+                  ? l.debtTitleHintPaid
+                  : l.debtTitleHintReceived,
+              flowRow: _flow(l),
             ),
             const SizedBox(height: HeroSpacing.after),
-            // Tags belong to the wallet transaction: only with a wallet.
-            if (_c.account != null) ...[
+            // Tags ride on the transaction: only while one is written.
+            if (_c.createTransaction) ...[
               TagChipRow(
                 selected: _c.tagIds,
-                onToggle: _c.toggleTag,
+                onRemove: _c.toggleTag,
                 onMore: _moreTags,
                 known: _c.knownTags,
-                order: _tagOrder,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              gap,
             ],
             DraftFieldRow(
               label: l.commonNote,
@@ -438,18 +449,9 @@ class _DebtEntryFormState extends State<DebtEntryForm> {
                 hint: l.txNoteAddHint,
               ),
             ),
-            if (_c.person != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              CollapsibleSection(
-                title: l.debtMarkPaidTitle,
-                initiallyOpen: false,
-                onToggle: (open) {
-                  _entriesOpen = open;
-                  if (open && _entriesKey != _c.person?.key) _loadEntries();
-                },
-                children: _markPaid(l, symbol),
-              ),
-            ],
+            gap,
+            _createTxRow(l),
+            if (_c.person != null) ...[gap, _closeRow(l)],
           ],
         );
       },

@@ -28,6 +28,10 @@ class _Repo extends Fake implements TransactionsRepository {
     List<String> tagIds = const [],
     bool includeChildren = false,
     bool uncategorized = false,
+    List<String> accountIds = const [],
+    List<String> categoryIds = const [],
+    Set<TransactionType> types = const {},
+    bool noTags = false,
     int page = 1,
     int perPage = 20,
     String sort = 'date_desc',
@@ -143,11 +147,14 @@ void main() {
       ],
     );
     expect(a.sameFiltersAs(b), isTrue);
-    expect(a.sameFiltersAs(b.copyWith(type: TransactionType.expense)), isFalse);
+    expect(
+      a.sameFiltersAs(b.copyWith(types: const {TransactionType.expense})),
+      isFalse,
+    );
     expect(a.sameFiltersAs(b.copyWith(tags: const [])), isFalse);
   });
 
-  test('wallet filters compare by wallet id', () {
+  test('wallet filters compare by wallet id, and "no wallet" counts', () {
     Account acc(String id) => Account.fromJson({
       'id': id,
       'name': id,
@@ -155,9 +162,14 @@ void main() {
       'balance': 0,
       'currency': 'THB',
     });
-    expect(TxOneWallet(acc('a')), TxOneWallet(acc('a')));
-    expect(TxOneWallet(acc('a')) == TxOneWallet(acc('b')), isFalse);
-    expect(const TxNoWallet() == const TxAnyWallet(), isFalse);
+    final p = TxPeriod.all;
+    final a = TxFilters(period: p, wallets: [acc('a')]);
+    expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('a')])), isTrue);
+    expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('b')])), isFalse);
+    expect(a.sameFiltersAs(TxFilters(period: p, wallets: [acc('a')], noWallet: true)), isFalse);
+    // "no wallet" next to a pick: two values on, one more than the base.
+    final base = TxFilters(period: p);
+    expect(TxFilters(period: p, wallets: [acc('a')], noWallet: true).activeCount(base), 2);
   });
 
   // ── Totals ────────────────────────────────────────────────────────
