@@ -416,6 +416,12 @@ abstract class AppLocalizations {
   /// **'Something we did not expect happened. Please try again.'**
   String get errorUnknownMessage;
 
+  /// No description provided for @errorValidationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Some fields aren’t valid — please check them'**
+  String get errorValidationMessage;
+
   /// No description provided for @errorBannerNoConnection.
   ///
   /// In en, this message translates to:

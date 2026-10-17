@@ -58,6 +58,7 @@
   "errorServerMessage": "Our servers had a hiccup. Please try again.",
   "errorUnknownTitle": "Unexpected error",
   "errorUnknownMessage": "Something we did not expect happened. Please try again.",
+  "errorValidationMessage": "Some fields aren’t valid — please check them",
   "errorBannerNoConnection": "No connection. Check your internet.",
   "errorBannerNoConnectionShort": "No connection. Try again.",
 

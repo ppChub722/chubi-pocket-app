@@ -133,7 +133,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
                   ? null
                   : AppMessage(
                       tone: Tone.danger,
-                      message: _bannerMessageFor(l, _error!),
+                      message: UiConfig.of(
+                        context,
+                      ).errors.describe(_error!).message,
                     ),
               sections: [
                 (first) => SectionCard(
@@ -215,13 +217,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     onSubmitted: onSubmitted,
     validator: validator,
   );
-
-  String _bannerMessageFor(AppLocalizations l, ApiException e) {
-    if (e.code == 'NETWORK_ERROR' || e.code == 'NETWORK_TIMEOUT') {
-      return l.errorBannerNoConnectionShort;
-    }
-    return e.message;
-  }
 }
 
 class _PasswordDraft extends Equatable {

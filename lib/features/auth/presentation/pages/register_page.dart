@@ -32,6 +32,15 @@ class _RegisterPageState extends State<RegisterPage> {
   String _currency = 'THB';
 
   @override
+  void initState() {
+    super.initState();
+    // A failure left by another page (a wrong login) is not this page's.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AuthCubit>().acknowledgeFailure();
+    });
+  }
+
+  @override
   void dispose() {
     _usernameCtrl.dispose();
     _displayNameCtrl.dispose();
@@ -81,7 +90,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 ? null
                 : AppMessage(
                     tone: Tone.danger,
-                    message: _bannerMessageFor(l, failure),
+                    message: UiConfig.of(
+                      context,
+                    ).errors.describe(failure.error).message,
                     onClose: () =>
                         context.read<AuthCubit>().acknowledgeFailure(),
                   ),
@@ -220,18 +231,6 @@ class _RegisterPageState extends State<RegisterPage> {
     (oldValue, newValue) =>
         newValue.copyWith(text: newValue.text.toLowerCase()),
   );
-
-  /// Top-banner message — used for non-field-specific failures.
-  String _bannerMessageFor(AppLocalizations l, AuthFailure failure) {
-    final c = failure.error.code;
-    if (c == 'USERNAME_EXISTS') return l.authRegisterUsernameTaken;
-    if (c == 'EMAIL_EXISTS') return l.authRegisterEmailTaken;
-    if (c == 'NETWORK_ERROR' || c == 'NETWORK_TIMEOUT') {
-      return l.errorBannerNoConnection;
-    }
-    if (c == 'VALIDATION_ERROR') return l.authRegisterFixErrors;
-    return failure.error.message;
-  }
 
   /// Field-level mapping. `USERNAME_EXISTS`/`EMAIL_EXISTS` show inline next to
   /// the offending field as well as in the top banner — per spec.

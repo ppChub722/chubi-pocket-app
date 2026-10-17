@@ -25,6 +25,14 @@ class _LoginPageState extends State<LoginPage> {
   final _identifierCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
+  /// Both auth pages read the one [AuthCubit]: a failed login must not show
+  /// on the register page, nor a failed sign-up here on the way back.
+  Future<void> _openRegister() async {
+    final auth = context.read<AuthCubit>()..acknowledgeFailure();
+    await context.push('/auth/register');
+    if (mounted) auth.acknowledgeFailure();
+  }
+
   @override
   void dispose() {
     _identifierCtrl.dispose();
@@ -55,7 +63,9 @@ class _LoginPageState extends State<LoginPage> {
                 ? null
                 : AppMessage(
                     tone: Tone.danger,
-                    message: _messageFor(l, failure),
+                    message: UiConfig.of(
+                      context,
+                    ).errors.describe(failure.error).message,
                     onClose: () =>
                         context.read<AuthCubit>().acknowledgeFailure(),
                   ),
@@ -102,28 +112,12 @@ class _LoginPageState extends State<LoginPage> {
               label: l.authLoginGoToRegister,
               variant: AppButtonVariant.text,
               expand: true,
-              onPressed: isSubmitting
-                  ? null
-                  : () => context.push('/auth/register'),
+              onPressed: isSubmitting ? null : _openRegister,
             ),
             footer: const AuthPrefsBar(),
           );
         },
       ),
     );
-  }
-
-  /// Map backend `code` → user-facing string. Phase 0 covers the common cases;
-  /// the Phase 1+ "error taxonomy mapping" doc (per
-  /// `design/frontend/app/overview.md §11`) will centralise this.
-  String _messageFor(AppLocalizations l, AuthFailure failure) {
-    final c = failure.error.code;
-    if (c == 'INVALID_CREDENTIALS' || failure.error.statusCode == 401) {
-      return l.authLoginInvalidCredentials;
-    }
-    if (c == 'NETWORK_ERROR' || c == 'NETWORK_TIMEOUT') {
-      return l.errorBannerNoConnection;
-    }
-    return failure.error.message;
   }
 }

@@ -172,6 +172,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something we did not expect happened. Please try again.';
 
   @override
+  String get errorValidationMessage =>
+      'Some fields aren’t valid — please check them';
+
+  @override
   String get errorBannerNoConnection => 'No connection. Check your internet.';
 
   @override

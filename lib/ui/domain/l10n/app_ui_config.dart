@@ -99,6 +99,19 @@ class _AppErrors extends UiErrors {
         message: l.errorServerMessage,
       );
     }
+    // THE place the BE's error codes get their words (owner 2026-10-17):
+    // pages show `describe(e).message`, never the BE's own (English) text.
+    final known = switch (e?.code) {
+      'INVALID_CREDENTIALS' => l.authLoginInvalidCredentials,
+      'WRONG_PASSWORD' => l.changePasswordCurrentWrong,
+      'USERNAME_EXISTS' => l.authRegisterUsernameTaken,
+      'EMAIL_EXISTS' => l.authRegisterEmailTaken,
+      'VALIDATION_ERROR' => l.errorValidationMessage,
+      _ => null,
+    };
+    if (known != null) {
+      return UiErrorInfo(icon: AppIcons.error, title: known, message: known);
+    }
     return UiErrorInfo(
       icon: AppIcons.error,
       title: l.errorUnknownTitle,

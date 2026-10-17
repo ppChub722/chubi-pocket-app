@@ -170,6 +170,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get errorUnknownMessage => 'เกิดสิ่งที่ไม่คาดคิด กรุณาลองใหม่';
 
   @override
+  String get errorValidationMessage => 'ข้อมูลบางช่องไม่ถูกต้อง กรุณาตรวจสอบ';
+
+  @override
   String get errorBannerNoConnection =>
       'ไม่มีการเชื่อมต่อ ตรวจสอบอินเทอร์เน็ตของคุณ';
 

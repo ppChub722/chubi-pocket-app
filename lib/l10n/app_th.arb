@@ -56,6 +56,7 @@
   "errorServerMessage": "เซิร์ฟเวอร์มีปัญหาชั่วคราว กรุณาลองใหม่",
   "errorUnknownTitle": "ข้อผิดพลาดที่ไม่คาดคิด",
   "errorUnknownMessage": "เกิดสิ่งที่ไม่คาดคิด กรุณาลองใหม่",
+  "errorValidationMessage": "ข้อมูลบางช่องไม่ถูกต้อง กรุณาตรวจสอบ",
   "errorBannerNoConnection": "ไม่มีการเชื่อมต่อ ตรวจสอบอินเทอร์เน็ตของคุณ",
   "errorBannerNoConnectionShort": "ไม่มีการเชื่อมต่อ ลองใหม่",
 

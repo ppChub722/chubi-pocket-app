@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:chubi_pocket/core/network/api_client.dart';
+import 'package:chubi_pocket/core/network/api_exception.dart';
 import 'package:chubi_pocket/core/storage/secure_token_storage.dart';
 import 'package:chubi_pocket/features/auth/data/auth_repository.dart';
 import 'package:chubi_pocket/features/auth/presentation/cubit/auth_cubit.dart';
@@ -39,6 +40,7 @@ class _FakeApi extends Fake implements ApiClient {
 /// both follow the app theme (dark too).
 void main() {
   late AuthCubit auth;
+  late _MockRepo repo;
   late LocaleCubit locale;
   late ThemeModeCubit themeMode;
   late PendingCubit pendingCubit;
@@ -55,8 +57,9 @@ void main() {
     when(() => unread.state).thenReturn(0);
     pendingCubit = pending;
     unreadCubit = unread;
+    repo = _MockRepo();
     auth = AuthCubit(
-      repository: _MockRepo(),
+      repository: repo,
       tokenStorage: _MockTokens(),
       apiClient: _FakeApi(),
     );
@@ -156,5 +159,59 @@ void main() {
     ).scaffoldBackgroundColor;
     expect(t.widget<Scaffold>(find.byType(Scaffold)).backgroundColor, isNull);
     expect(dark2.computeLuminance(), lessThan(0.3));
+  });
+
+  /// The login fails with [error] (the BE's answer).
+  Future<void> failLogin(WidgetTester t, ApiException error) async {
+    when(
+      () => repo.login(
+        identifier: any(named: 'identifier'),
+        password: any(named: 'password'),
+      ),
+    ).thenThrow(error);
+    await auth.login(identifier: 'ppond', password: 'nope');
+    await t.pump();
+  }
+
+  const wrong = ApiException(
+    code: 'INVALID_CREDENTIALS',
+    message: 'Invalid credentials',
+    statusCode: 401,
+  );
+
+  testWidgets('a wrong login: the words come from the central errors', (
+    t,
+  ) async {
+    await pump(t, const LoginPage());
+    await failLogin(t, wrong);
+    expect(find.text('Username or password incorrect'), findsOneWidget);
+    expect(find.text('Invalid credentials'), findsNothing);
+  });
+
+  testWidgets('an unknown code never shows the BE text', (t) async {
+    await pump(t, const LoginPage());
+    await failLogin(
+      t,
+      const ApiException(
+        code: 'SOMETHING_NEW',
+        message: 'raw english',
+        statusCode: 400,
+      ),
+    );
+    expect(find.text('raw english'), findsNothing);
+    expect(
+      find.text('Something we did not expect happened. Please try again.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('register: a failed login left behind does not show', (t) async {
+    await pump(t, const LoginPage());
+    await failLogin(t, wrong);
+    await pump(t, const RegisterPage());
+    await t.pump();
+    expect(auth.state, isNot(isA<AuthFailure>()));
+    expect(find.text('Invalid credentials'), findsNothing);
+    expect(find.text('Username or password incorrect'), findsNothing);
   });
 }
